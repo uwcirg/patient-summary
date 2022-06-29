@@ -1,0 +1,4 @@
+{
+    "clientId": "hello_world_client",
+    "scope": "profile roles email patient/*.read"
+}
