@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Error from './Error';
 import {queryPatientIdKey} from '../util/util.js';
+import '../style/App.scss';
 
 export default function Launch() {
 
