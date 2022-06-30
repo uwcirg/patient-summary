@@ -117,5 +117,5 @@ module.exports = [
     addHtmlWebpackPluginForLaunch,
     changeOutputFilenameForDev,
     editChunksInHtmlWebpackPluginForIndex,
-    logConfig
+    //logConfig
 ];
