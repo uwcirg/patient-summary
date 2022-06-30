@@ -26,8 +26,6 @@ export default function Summary() {
         entry: []
     };
 
-   // let allLoaded = false;
-
     const getPatient = async () => {
         const client = contextContent.client;
         if (!client) return;
