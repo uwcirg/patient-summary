@@ -62,6 +62,6 @@ A public [SMART<sup>&reg;</sup> App Launcher](https://launch.smarthealthit.org/i
 
 #### Launching from a local instance
 1. Make sure Node and NPM package manager have been installed
-2. Run `npm install` to install all dependencies
+2. Run `npm install` to install all dependencies (this step can be skipped subsequently unless dependencies have changed)
 3. Run `npm start` to install dependencies
 4. Navigate to the public SMART<sup>&reg;</sup> App Launcher and choose the "Provider EHR Launch" Launch Type. **Uncheck** "Simulate launch within the EHR user interface".  Leave all other options unselected. Paste the launch URL, e.g. `http://localhost:3000/launch.html` into the "App Launch URL" box at the bottom of the SMART<sup>&reg;</sup> App Launcher page. Select "Launch App!" which will bring up a patient selector widget before the app is launched.
