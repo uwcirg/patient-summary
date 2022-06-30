@@ -7,6 +7,7 @@ export default function App() {
     return (
         <FhirClientProvider>
             <Summary />
+            {/* add other components as needed */}
         </FhirClientProvider>
     );
 }
