@@ -58,9 +58,9 @@ Parameters for the app are stored in [environmental variables](http://man7.org/l
 ### Using with Public SMART Sandbox
 A public [SMART<sup>&reg;</sup> App Launcher](https://launch.smarthealthit.org/index.html) is available for sandbox tesing of SMART on FHIR apps with synthetic data.
 
-#### Launch for SMART App Launcher
+### Launch for SMART App Launcher
 
-### Launching from a local instance
+#### Launching from a local instance
 1. Make sure Node and NPM package manager have been installed
 2. Run `npm install` to install all dependencies
 3. Run `npm start` to install dependencies
