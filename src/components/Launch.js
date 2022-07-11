@@ -11,13 +11,17 @@ export default function Launch() {
     const [error, setError] = React.useState('');
 
     React.useEffect(() => {
-
+        let authURL = 'launch-context.json';
+        if (process.env.REACT_APP_BACKEND_URL) {
+            authURL = `${process.env.REACT_APP_BACKEND_URL}/auth/auth-info`;
+        }
         const urlParams = new URLSearchParams(window.location.search);
          //retrieve patient id from URL querystring if any
         let patientId = urlParams.get('patient');
         console.log("patient id from url query string: ", patientId);
+	    console.log("authURL: ", authURL);
     
-        fetch('launch-context.json', {
+        fetch(authURL, {
             // include cookies in request
             credentials: 'include'
         })
