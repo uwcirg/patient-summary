@@ -1,0 +1,9 @@
+# docker-compose production overrides
+---
+version: "3.4"
+services:
+  frontend:
+    build:
+      target: prod
+    environment:
+      NODE_ENV: production
