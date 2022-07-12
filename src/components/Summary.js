@@ -1,5 +1,5 @@
 import React from 'react';
-import Worker from '../../node_modules/cql-worker/src/cql.worker.js'; // https://github.com/webpack-contrib/worker-loader
+import Worker from 'cql-worker/src/cql.worker.js'; // https://github.com/webpack-contrib/worker-loader
 import { initialzieCqlWorker } from 'cql-worker';
 import { FhirClientContext } from '../FhirClientContext';
 import Error from './Error';
