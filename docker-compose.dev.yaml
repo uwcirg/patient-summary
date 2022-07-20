@@ -1,0 +1,11 @@
+# docker-compose development overrides
+---
+version: "3.4"
+services:
+  frontend:
+    volumes:
+      # mount code directory into container to allow hot-reloading
+      - ./:/opt/node/app
+    ports:
+      # map container port 3000 to $FRONTEND_EXTERNAL_PORT (port 3000 by default) on localhost (127.0.0.1)
+      - 127.0.0.1:${FRONTEND_EXTERNAL_PORT:-3000}:3000
