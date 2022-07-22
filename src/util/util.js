@@ -14,7 +14,7 @@ export async function getInterventionLogicLib(interventionId) {
     throw new Error("Error loading Cql ELM library " + e);
   }
   return [elmJson, valueSetJson];
-}
+};
 
 export function getFHIRResourcePaths(patientId) {
   if (!patientId) return [];
@@ -42,37 +42,7 @@ export function getFHIRResourcePaths(patientId) {
     }
     return path;
   });
-}
-
-export const getFhirResources = async (client, patientid) => {
-  if (!client) throw new Error("invalid client specified");
-  if (!patientid) throw new Error("Patient id is missing");
-  const resources = getFHIRResourcePaths(patientid);
-  const requests = resources.map((resource) => client.request(resource));
-  return Promise.allSettled(requests).then((results) => {
-    let bundle = [];
-    results.forEach((item) => {
-      if (item.status === "rejected") {
-        console.log("Fhir resource retrieval error ", item.reason);
-        return true;
-      }
-      const result = item.value;
-      if (result.resourceType === "Bundle" && result.entry) {
-        result.entry.forEach((o) => {
-          if (o && o.resource) bundle.push({ resource: o.resource });
-        });
-      } else if (Array.isArray(result)) {
-        result.forEach((o) => {
-          if (o.resourceType) bundle.push({ resource: o });
-        });
-      } else {
-        bundle.push({ resource: result });
-      }
-    });
-    return bundle;
-  });
 };
-
 export const getChartConfig = (questionnaire) =>
   ChartConfig[questionnaire.toLowerCase()] || ChartConfig["default"];
 
@@ -105,4 +75,4 @@ export function injectFaviconByProject() {
   const projectId = getEnv("REACT_APP_PROJECT_ID");
   if (!projectId) return;
   faviconEl.href = `/assets/${projectId}/favicon.ico`;
-} 
+};
