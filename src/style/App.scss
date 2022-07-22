@@ -1,8 +1,43 @@
+$container-background-color: #f4f6f6;
 body {
   padding: 0;
-  margin : 0;
-  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  font-family: "Roboto", sans-serif;
+  font-size: 16px;
 }
-#root {
-  padding: 1em;
+#summary {
+  margin-top: 64px;
+  padding: 16px 24px;
+}
+p {
+  line-height: 1.5;
+}
+.chart__container {
+  background-color: $container-background-color;
+}
+.response-table {
+  min-width: 45%;
+  max-width: 100%;
+}
+@media (min-width: 600px) {
+  .response-table {
+    max-width: 50%;
+  }
+}
+#barGraph .chart__container {
+  padding: 16px 0 16px;
+}
+#barGraph .tick text {
+  font-size: 14px;
+}
+#barGraph .label {
+  font-size: 1.05em;
+  font-weight: 500;
+}
+.invisible {
+  display: none;
+  width: 0;
+  height: 0;
+  padding: 0;
+  margin: 0;
 }

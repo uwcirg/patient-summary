@@ -59,7 +59,7 @@ To get you UMLS API Key:
    4. Your new API key should now be listed.
 
 ### Configuration
-Parameters for the app are stored in [environmental variables](http://man7.org/linux/man-pages/man7/environ.7.html) that are stored in an `.env` file (run `cp default.env .env` at command line to create the .env file) and it allows the environment variables thus specified to be read by the application at build time. The [dotenv package](https://www.npmjs.com/package/dotenv) is used to store the default variable values, which can be overwritten by defining a more specific env (e.g., `.env.local`) file or by setting the variables in the deployment system. For more information, see the [React documentation](https://create-react-app.dev/docs/adding-custom-environment-variables/).
+Parameters for the app are stored in [environmental variables](http://man7.org/linux/man-pages/man7/environ.7.html) that are stored in an `.env` file (run `cp frontend.env.default .env` at command line to create the .env file) and it allows the environment variables thus specified to be read by the application at build time. The [dotenv package](https://www.npmjs.com/package/dotenv) is used to store the default variable values, which can be overwritten by defining a more specific env (e.g., `.env.local`) file or by setting the variables in the deployment system. For more information, see the [React documentation](https://create-react-app.dev/docs/adding-custom-environment-variables/).  **Note**: for setting up environment file for a docker instance, please read under Docker
 
 #### Parameters
 | Parameter | Description | Allowed Values |
@@ -67,6 +67,8 @@ Parameters for the app are stored in [environmental variables](http://man7.org/l
 | `REACT_APP_FHIR_RESOURCES` | Define the FHIR resource(s) to load for the patient | `Condition,Procedure,Observation,Questionnaire,QuestionnaireResponse` |
 | `REACT_APP_FHIR_OBSERVATION_CATEGORIES` | Define what categor(ies) of FHIR observations to load for the patient | `social-history,vital-signs,imaging,laboratory,procedure,survey,exam,therapy,activity` |
 | `REACT_APP_AUTH_SCOPES` | For allowing the app to specify the delegation of a specific set of access rights via launch context. see [App Launch: Scopes and Launch Context](https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html) | `profile roles email patient/*.read openid fhirUser patient/QuestionnaireResponse.write` |
+| `REACT_APP_QUESTIONNAIRES` | Define the questionnaire(s) for which responses and graph should be rendered | example: `minicog,phq9` |
+| `REACT_APP_PROJECT_ID` | Definition of which will allow project-specific theme, logo, etc. | example: `DEM`|
 
 ### Using with Public SMART Sandbox
 A public [SMART<sup>&reg;</sup> App Launcher](https://launch.smarthealthit.org/index.html) is available for sandbox tesing of SMART on FHIR apps with synthetic data.
@@ -75,6 +77,7 @@ A public [SMART<sup>&reg;</sup> App Launcher](https://launch.smarthealthit.org/i
 
 #### Launching from a local instance
 1. Make sure Node and NPM package manager have been installed
+2. Make sure environment file is set up (see under Configuration)
 2. Run `npm install` to install all dependencies (this step can be skipped subsequently unless dependencies have changed)
 3. Run `npm start` to install dependencies
 4. Navigate to the public SMART<sup>&reg;</sup> App Launcher and choose the "Provider EHR Launch" Launch Type. **Uncheck** "Simulate launch within the EHR user interface".  Leave all other options unselected. Paste the launch URL, e.g. `http://localhost:3000/launch.html` into the "App Launch URL" box at the bottom of the SMART<sup>&reg;</sup> App Launcher page. Select "Launch App!" which will bring up a patient selector widget before the app is launched.

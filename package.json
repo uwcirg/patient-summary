@@ -1,5 +1,5 @@
 {
-  "name": "hello-world-react",
+  "name": "patient-summary",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -15,20 +15,23 @@
     "cql-exec-fhir": "^2.0.2",
     "cql-exec-vsac": "^1.2.2",
     "cql-worker": "^1.1.4",
+    "d3": "^7.6.1",
+    "dompurify": "^2.3.10",
     "fhirclient": "^2.4.0",
     "fs": "0.0.1-security",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-error-boundary": "^3.1.4",
     "react-router-dom": "^6.3.0",
     "react-scripts": "4.0.3",
-    "sass": "^1.53.0",
-    "web-vitals": "^2.1.4"
+    "sass": "^1.53.0"
   },
   "scripts": {
     "start": "rescripts start",
     "build": "rescripts build",
     "test": "rescripts test",
-    "eject": "rescripts eject"
+    "eject": "rescripts eject",
+    "upload-test-responses": "node ./src/util/UploadTestQuestionnaireResponseJsons"
   },
   "eslintConfig": {
     "extends": [
@@ -52,6 +55,7 @@
     "@rescripts/cli": "0.0.16",
     "@rescripts/utilities": "0.0.8",
     "cql-execution": "^2.4.1",
+    "node-fetch": "^2.6.7",
     "worker-loader": "^3.0.8"
   }
 }
