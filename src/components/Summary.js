@@ -40,7 +40,7 @@ export default function Summary() {
   const handleSelectorChange = (event) => {
     const selectedQuestionnaire = event.target.value;
     if (!selectedQuestionnaire) {
-      setSummary({ ...summary, responses: [] });
+      setSummary({ ...summary, responses: [], chartData: [], chartConfig: [] });
       setReady(true);
       setChartReady(true);
       return;
@@ -51,17 +51,11 @@ export default function Summary() {
     //get formatted summary for the selected questionnaire
     getCQLEvaluations(selectedQuestionnaire).then(
       (result) => {
-        if (!result || !result.length) {
-          setChartReady(false);
-          setReady(true);
-          return;
-        }
-        console.log("CQL Result ", result)
         setSummary((prevSummary) => {
           return {
             ...prevSummary,
             ...{
-              responses: result,
+              responses: result && result.length? result: [],
             },
           };
         });
@@ -69,18 +63,15 @@ export default function Summary() {
         getChartData().then(
           (chartData) => {
             const hasChartData = chartData && chartData.length;
-            if (hasChartData) {
-              console.log("chart data? ", chartData)
-              setSummary((prevSummary) => {
-                return {
-                  ...prevSummary,
-                  ...{
-                    chartData: chartData,
-                    chartConfig: getChartConfig(selectedQuestionnaire),
-                  },
-                };
-              });
-            }
+            setSummary((prevSummary) => {
+              return {
+                ...prevSummary,
+                ...{
+                  chartData: hasChartData ? chartData: [],
+                  chartConfig: getChartConfig(selectedQuestionnaire),
+                },
+              };
+            });
             setChartReady(hasChartData ? true : false);
             setReady(true);
           },
