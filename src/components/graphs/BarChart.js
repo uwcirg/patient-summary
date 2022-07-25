@@ -115,7 +115,7 @@ export default function BarChart(props) {
     barGroups
       .append("rect")
       .attr("class", "bar")
-      .style("fill", theme.palette.dark.main)
+      .style("fill", theme.palette.primary.main)
       .attr("x", (g) => {
         let scaleVal = xScale(g[xKey]);
         return scaleVal;
@@ -130,6 +130,7 @@ export default function BarChart(props) {
         if (!i[yKey]) return;
         d3.select(this)
           .transition()
+          .delay(50)
           .duration(300)
           .attr("opacity", 0.4)
           .attr("x", (a) => xScale(a[xKey]) - 5)

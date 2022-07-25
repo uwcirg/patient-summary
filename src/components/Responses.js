@@ -1,4 +1,3 @@
-import DOMPurify from "dompurify";
 import { useState } from "react";
 import { useTheme } from "@mui/material/styles";
 import { styled } from "@mui/material/styles";
@@ -111,9 +110,14 @@ export default function Responses(props) {
                 component={Paper}
                 sx={{ marginTop: theme.spacing(2) }}
               >
-                <Table aria-label="responses table" size="small">
+                <Table aria-label="responses table" size="small" role="table">
                   <TableHead
-                    sx={{ backgroundColor: theme.palette.dark.main }}
+                    sx={{
+                      backgroundColor:
+                        theme && theme.palette.dark
+                          ? theme.palette.dark.main
+                          : "#444",
+                    }}
                   >
                     <TableRow>
                       {["Question", "Answer"].map((item, index) => (
@@ -136,7 +140,7 @@ export default function Responses(props) {
                       >
                         <TableCell
                           dangerouslySetInnerHTML={{
-                            __html: DOMPurify.sanitize(getQuestion(row)),
+                            __html: getQuestion(row),
                           }}
                         ></TableCell>
                         <TableCell

@@ -7,7 +7,6 @@ import {
 } from "react";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
-import { Typography } from "@mui/material";
 import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
 import { initialzieCqlWorker } from "cql-worker";
 import { FhirClientContext } from "../FhirClientContext";
@@ -17,6 +16,7 @@ import {
   getFHIRResourcePaths,
   getInterventionLogicLib,
   getChartConfig,
+  getEnv
 } from "../util/util";
 import Responses from "./Responses";
 import Chart from "./Chart";
@@ -56,6 +56,11 @@ export default function Summary() {
     type: "collection",
     entry: [{ resource: patient }],
   });
+  const getQuestionnaireList = () => {
+    const configList = getEnv("REACT_APP_QUESTIONNAIRES");
+    if (configList) return configList.split(",");
+    return [];
+  };
   const shouldDisplayResponses = () =>
     ready && questionnaire && questionnaire.length > 0;
   const handleSelectorChange = (event) => {
@@ -72,6 +77,7 @@ export default function Summary() {
     // get formatted summary for the selected questionnaire
     getCQLEvaluations(selectedQuestionnaire).then(
       (result) => {
+        console.log("cql summary result ", result)
         // set formatted responses
         dispatch({
           type: "responses",
@@ -85,6 +91,7 @@ export default function Summary() {
         // get chart data for the selected questionnaire
         getChartData().then(
           (chartData) => {
+            console.log("chart data ", chartData)
             const hasChartData = chartData && chartData.length;
             dispatch({
               type: "chartData",
@@ -176,16 +183,15 @@ export default function Summary() {
       {!error && !ready && (
         <div>
           <LinearProgress
-            sx={{ width: "300px", marginTop: 7 }}
+            sx={{ width: "300px", marginTop: 8 }}
           ></LinearProgress>
         </div>
       )}
       {!error && ready && (
         <Stack>
-          <Typography variant="h6" component="h2" color="secondary">
-            View Summary by Questionnaire
-          </Typography>
           <QuestionnaireSelector
+            title="View Summary By Questionnaire"
+            list={getQuestionnaireList()}
             selected={questionnaire}
             handleSelectorChange={handleSelectorChange}
           ></QuestionnaireSelector>
@@ -198,7 +204,7 @@ export default function Summary() {
                 borderTop: 1,
                 borderColor: "divider",
                 paddingTop: 2,
-                marginTop: 2,
+                marginTop: 3,
               }}
             >
               <Responses data={summary.responses}></Responses>
