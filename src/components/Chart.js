@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import BarChart from "./graphs/BarChart";
 const Chart = (props) => {
-  const isBarChart = () => props.data && props.data.type === "barchart";
+  const isBarChart = () => props.type === "barchart";
   return (
     <div className="chart__container">
       {isBarChart() && <BarChart {...props.data}></BarChart>}
@@ -11,5 +11,6 @@ const Chart = (props) => {
 };
 Chart.propTypes = {
   data: PropTypes.object,
+  type: PropTypes.string.isRequired
 };
 export default Chart;

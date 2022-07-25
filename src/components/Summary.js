@@ -1,4 +1,10 @@
-import { useCallback, useState, useEffect, useContext } from "react";
+import {
+  useCallback,
+  useState,
+  useEffect,
+  useContext,
+  useReducer,
+} from "react";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import { Typography } from "@mui/material";
@@ -23,7 +29,24 @@ export default function Summary() {
     initialzieCqlWorker(cqlWorker);
   const { client, patient } = useContext(FhirClientContext);
   const [questionnaire, setQuestionnaire] = useState("");
-  const [summary, setSummary] = useState({});
+  const summaryReducer = (summary, action) => {
+    if (action.type === "reset") {
+      return {
+        responses: [],
+        chartConfig: [],
+        chartData: [],
+      };
+    }
+    return {
+      ...summary,
+      [action.type]: action.payload,
+    };
+  };
+  const [summary, dispatch] = useReducer(summaryReducer, {
+    responses: [],
+    chartData: [],
+    chartConfig: [],
+  });
   const [ready, setReady] = useState(false);
   const [chartReady, setChartReady] = useState(false);
   const [error, setError] = useState("");
@@ -32,45 +55,40 @@ export default function Summary() {
     id: "resource-bundle",
     type: "collection",
     entry: [{ resource: patient }],
-    responses: [],
-    chartData: [],
-    chartConfig: [],
   });
-  const shouldDisplayResponses = () => ready && questionnaire && questionnaire.length > 0;
+  const shouldDisplayResponses = () =>
+    ready && questionnaire && questionnaire.length > 0;
   const handleSelectorChange = (event) => {
     const selectedQuestionnaire = event.target.value;
     if (!selectedQuestionnaire) {
-      setSummary({ ...summary, responses: [], chartData: [], chartConfig: [] });
+      dispatch({ type: "reset" });
       setReady(true);
-      setChartReady(true);
+      setChartReady(false);
       return;
     }
     setReady(false);
     setChartReady(false);
     setQuestionnaire(selectedQuestionnaire);
-    //get formatted summary for the selected questionnaire
+    // get formatted summary for the selected questionnaire
     getCQLEvaluations(selectedQuestionnaire).then(
       (result) => {
-        setSummary((prevSummary) => {
-          return {
-            ...prevSummary,
-            ...{
-              responses: result && result.length? result: [],
-            },
-          };
+        // set formatted responses
+        dispatch({
+          type: "responses",
+          payload: result && result.length ? result : [],
+        });
+        // set chart config
+        dispatch({
+          type: "chartConfig",
+          payload: getChartConfig(selectedQuestionnaire),
         });
         // get chart data for the selected questionnaire
         getChartData().then(
           (chartData) => {
             const hasChartData = chartData && chartData.length;
-            setSummary((prevSummary) => {
-              return {
-                ...prevSummary,
-                ...{
-                  chartData: hasChartData ? chartData: [],
-                  chartConfig: getChartConfig(selectedQuestionnaire),
-                },
-              };
+            dispatch({
+              type: "chartData",
+              payload: hasChartData ? chartData : [],
             });
             setChartReady(hasChartData ? true : false);
             setReady(true);
@@ -186,6 +204,7 @@ export default function Summary() {
               <Responses data={summary.responses}></Responses>
               {chartReady && (
                 <Chart
+                  type={summary.chartConfig.type}
                   data={{ ...summary.chartConfig, data: summary.chartData }}
                 ></Chart>
               )}
