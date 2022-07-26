@@ -39,7 +39,7 @@ export default function BarChart(props) {
     svg = d3
       .select("#barGraph")
       .append("svg")
-      .attr("width", "100%")
+      .attr("width", chartWidth)
       .attr("height", chartHeight);
   };
   const initChart = () => {

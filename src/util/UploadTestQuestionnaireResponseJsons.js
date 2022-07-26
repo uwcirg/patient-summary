@@ -24,7 +24,15 @@ function upload(baseURL, dirPath) {
       console.log("Skipping non-JSON file:", file);
       continue;
     }
-    const json = JSON.parse(fs.readFileSync(file, "utf8"));
+    let json = JSON.parse(fs.readFileSync(file, "utf8"));
+    const args = process.argv.slice(2);
+    
+    if (args[0]) {
+      console.log("patient id argument ", args[0]);
+      json.subject = {};
+      json.subject.reference = "Patient/"+args[0];
+    }
+
     const ptOptions = {
       method: "POST",
       body: JSON.stringify(json),

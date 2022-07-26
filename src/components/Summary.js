@@ -197,8 +197,8 @@ export default function Summary() {
           ></QuestionnaireSelector>
           {shouldDisplayResponses() && (
             <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={{ xs: 2, sm: 4, md: 6 }}
+              direction={{ xs: "column", md: "row" }}
+              spacing={{ xs: 2, md: 6 }}
               alignItems="flex-start"
               sx={{
                 borderTop: 1,
