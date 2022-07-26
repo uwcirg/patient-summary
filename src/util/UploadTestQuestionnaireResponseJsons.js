@@ -5,6 +5,10 @@ const fetch = require("node-fetch");
 /*
  * FOR TESTING AGAINST SMART HEALTH IT server
  * this will upload test questionnaire response JSON(s) in test_questionnaire_responses directory to Smart Health IT server
+ * run the following command: npm run upload-test-responses
+ * if you wish to associate the questionnaire responses with a specific patient id:
+ * simply add the patient id at the end of the command, example:
+ * npm run upload-test-responses 5ee05359-57bf-4cee-8e89-91382c07e162
  */
 
 upload(
@@ -26,7 +30,7 @@ function upload(baseURL, dirPath) {
     }
     let json = JSON.parse(fs.readFileSync(file, "utf8"));
     const args = process.argv.slice(2);
-    
+
     if (args[0]) {
       console.log("patient id argument ", args[0]);
       json.subject = {};
