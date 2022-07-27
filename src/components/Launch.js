@@ -40,7 +40,7 @@ export default function Launch() {
             }
 	    //allow auth scopes to be updated via environment variable
 	    //see https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html
-	    const envAuthScopes = getEnv("REACT_APP_AUTH_SCOPES");
+	    const envAuthScopes = process.env.REACT_APP_AUTH_SCOPES;
 	    if (envAuthScopes) json.scope = envAuthScopes;
 	    
             console.log("launch context json ", json);
