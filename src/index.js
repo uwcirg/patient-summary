@@ -4,8 +4,10 @@ import App from './components/App';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  // turn strict mode off as it causes useEffect to be called twice,
+  // see issue https://github.com/facebook/react/issues/24455
+  // <React.StrictMode>
+  <App />
+  // </React.StrictMode>
 );
 
