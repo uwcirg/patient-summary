@@ -1,13 +1,19 @@
 $container-background-color: #f4f6f6;
+$muted-text-color: #777;
 body {
   padding: 0;
   margin: 0;
   font-family: "Roboto", sans-serif;
   font-size: 16px;
 }
-#summary {
-  margin-top: 64px;
+.summaries {
+  margin-top: 80px;
   padding: 16px 24px;
+}
+@media(min-width: 640px) {
+  .summaries {
+    margin-top: 64px;
+  }
 }
 p {
   line-height: 1.5;
@@ -40,4 +46,16 @@ p {
   height: 0;
   padding: 0;
   margin: 0;
+}
+.hide {
+  display: none !important;
+}
+.show {
+  display: block !important;
+}
+.flex {
+  display: flex !important;
+}
+.muted-text {
+  color: $muted-text-color;
 }

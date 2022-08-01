@@ -1,0 +1,109 @@
+{
+  "hookInstance": "13df76a4-e71d-48ba-8756-d74c71fc1b20",
+  "hook": "patient-view",
+  "user": "Practitioner/example",
+  "context": {
+    "patientId": "9471d61f-a76f-45ff-8670-1a1747a2f4c2"
+  },
+  "prefetch": {
+    "Patient": {
+      "resourceType": "Patient",
+      "id": "9471d61f-a76f-45ff-8670-1a1747a2f4c2",
+      "name": [
+        {
+          "given": [
+            "Luke"
+          ],
+          "family": "Skywalker"
+        }
+      ],
+      "gender": "male",
+      "birthDate": "1978-07-16"
+    },
+    "Questionnaire": {
+      "resourceType": "Bundle",
+      "type": "searchset",
+      "entry": [
+        {
+          "resource": {
+            "resourceType": "Questionnaire",
+            "id": "0323fca6-3d95-426f-93ad-d0ab62aa3e77",
+            "status": "active",
+            "url": "http://www.cdc.gov/ncbddd/fasd/minicog",
+            "identifier": [
+              {
+                "system": "http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids",
+                "value": "minicog"
+              }
+            ],
+            "name": "minicog",
+            "item": [
+              {
+                "linkId": "minicog-question1",
+                "type": "decimal",
+                "text": "Word Recall"
+              },
+              {
+                "linkId": "minicog-question2",
+                "type": "decimal",
+                "text": "Clock Draw"
+              },
+              {
+                "linkId": "minicog-total-score",
+                "type": "decimal",
+                "text": "Total Score"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "QuestionnaireResponse": {
+      "resourceType": "Bundle",
+      "type": "searchset",
+      "entry": [
+        {
+          "resource": {
+            "resourceType": "QuestionnaireResponse",
+            "id": "2e920d89-7f9a-4e13-93b9-1b2be6ad68d7",
+            "subject": {
+              "reference": "Patient/9471d61f-a76f-45ff-8670-1a1747a2f4c2"
+            },
+            "status": "completed",
+            "identifier": {
+              "system": "http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids",
+              "value": "minicog"
+            },
+            "authored": "2030-04-18T00:00:00.000Z",
+            "item": [
+              {
+                "linkId": "minicog-question1",
+                "answer": [
+                  {
+                    "valueDecimal": 3
+                  }
+                ]
+              },
+              {
+                "linkId": "minicog-question2",
+                "answer": [
+                  {
+                    "valueDecimal": 1
+                  }
+                ]
+              },
+              {
+                "linkId": "minicog-total-score",
+                "answer": [
+                  {
+                    "valueDecimal": 4
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

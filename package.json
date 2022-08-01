@@ -15,7 +15,6 @@
     "cql-exec-fhir": "^2.0.2",
     "cql-exec-vsac": "^1.2.2",
     "cql-worker": "^1.1.4",
-    "d3": "^7.6.1",
     "dompurify": "^2.3.10",
     "fhirclient": "^2.4.0",
     "fs": "0.0.1-security",
@@ -24,12 +23,14 @@
     "react-error-boundary": "^3.1.4",
     "react-router-dom": "^6.3.0",
     "react-scripts": "4.0.3",
+    "recharts": "^2.1.13",
     "sass": "^1.53.0"
   },
   "scripts": {
     "start": "rescripts start",
     "build": "rescripts build",
     "test": "rescripts test",
+    "cql-test": "./node_modules/.bin/mocha ./src/__tests__/cql/*.js --recursive",
     "eject": "rescripts eject",
     "upload-test-responses": "node ./src/util/UploadTestQuestionnaireResponseJsons"
   },
@@ -55,6 +56,8 @@
     "@rescripts/cli": "0.0.16",
     "@rescripts/utilities": "0.0.8",
     "cql-execution": "^2.4.1",
+    "cql-testing": "^2.5.2",
+    "mocha": "^10.0.0",
     "node-fetch": "^2.6.7",
     "worker-loader": "^3.0.8"
   }

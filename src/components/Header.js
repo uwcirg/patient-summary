@@ -39,7 +39,7 @@ export default function Header() {
             Patient Summary
           </Typography>
           {hasPatientName() && (
-            <Stack spacing={0.5}>
+            <Stack spacing={0.5} sx={{paddingLeft: 1}}>
               <Typography component="div">
                 {getPatientName()}
               </Typography>

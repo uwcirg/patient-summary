@@ -1,0 +1,442 @@
+{
+  "patientResults": {
+    "9471d61f-a76f-45ff-8670-1a1747a2f4c2": {
+      "Patient": {
+        "name": [
+          {
+            "family": {
+              "value": "Skywalker"
+            },
+            "given": [
+              {
+                "value": "Luke"
+              }
+            ]
+          }
+        ],
+        "gender": {
+          "value": "male"
+        },
+        "birthDate": {
+          "value": "1978-07-16"
+        },
+        "id": {
+          "value": "9471d61f-a76f-45ff-8670-1a1747a2f4c2"
+        }
+      },
+      "CurrentQuestionnaire": {
+        "url": {
+          "value": "http://www.cdc.gov/ncbddd/fasd/minicog"
+        },
+        "identifier": [
+          {
+            "system": {
+              "value": "http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids"
+            },
+            "value": {
+              "value": "minicog"
+            }
+          }
+        ],
+        "name": {
+          "value": "minicog"
+        },
+        "status": {
+          "value": "active"
+        },
+        "item": [
+          {
+            "linkId": {
+              "value": "minicog-question1"
+            },
+            "text": {
+              "value": "Word Recall"
+            },
+            "type": {
+              "value": "decimal"
+            }
+          },
+          {
+            "linkId": {
+              "value": "minicog-question2"
+            },
+            "text": {
+              "value": "Clock Draw"
+            },
+            "type": {
+              "value": "decimal"
+            }
+          },
+          {
+            "linkId": {
+              "value": "minicog-total-score"
+            },
+            "text": {
+              "value": "Total Score"
+            },
+            "type": {
+              "value": "decimal"
+            }
+          }
+        ],
+        "id": {
+          "value": "0323fca6-3d95-426f-93ad-d0ab62aa3e77"
+        }
+      },
+      "QuestionnaireItems": [
+        {
+          "linkId": {
+            "value": "minicog-question1"
+          },
+          "text": {
+            "value": "Word Recall"
+          },
+          "type": {
+            "value": "decimal"
+          }
+        },
+        {
+          "linkId": {
+            "value": "minicog-question2"
+          },
+          "text": {
+            "value": "Clock Draw"
+          },
+          "type": {
+            "value": "decimal"
+          }
+        },
+        {
+          "linkId": {
+            "value": "minicog-total-score"
+          },
+          "text": {
+            "value": "Total Score"
+          },
+          "type": {
+            "value": "decimal"
+          }
+        }
+      ],
+      "QuestionnaireResponses": [
+        {
+          "identifier": {
+            "system": {
+              "value": "http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids"
+            },
+            "value": {
+              "value": "minicog"
+            }
+          },
+          "status": {
+            "value": "completed"
+          },
+          "subject": {
+            "reference": {
+              "value": "Patient/9471d61f-a76f-45ff-8670-1a1747a2f4c2"
+            }
+          },
+          "authored": {
+            "value": "2030-04-18T00:00:00.000+00:00"
+          },
+          "item": [
+            {
+              "linkId": {
+                "value": "minicog-question1"
+              },
+              "answer": [
+                {
+                  "value": {
+                    "value": 3
+                  }
+                }
+              ]
+            },
+            {
+              "linkId": {
+                "value": "minicog-question2"
+              },
+              "answer": [
+                {
+                  "value": {
+                    "value": 1
+                  }
+                }
+              ]
+            },
+            {
+              "linkId": {
+                "value": "minicog-total-score"
+              },
+              "answer": [
+                {
+                  "value": {
+                    "value": 4
+                  }
+                }
+              ]
+            }
+          ],
+          "id": {
+            "value": "2e920d89-7f9a-4e13-93b9-1b2be6ad68d7"
+          }
+        }
+      ],
+      "ResponsesSummary": [
+        {
+          "date": "2030-04-18T00:00:00.000+00:00",
+          "questionnaire": {
+            "url": {
+              "value": "http://www.cdc.gov/ncbddd/fasd/minicog"
+            },
+            "identifier": [
+              {
+                "system": {
+                  "value": "http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids"
+                },
+                "value": {
+                  "value": "minicog"
+                }
+              }
+            ],
+            "name": {
+              "value": "minicog"
+            },
+            "status": {
+              "value": "active"
+            },
+            "item": [
+              {
+                "linkId": {
+                  "value": "minicog-question1"
+                },
+                "text": {
+                  "value": "Word Recall"
+                },
+                "type": {
+                  "value": "decimal"
+                }
+              },
+              {
+                "linkId": {
+                  "value": "minicog-question2"
+                },
+                "text": {
+                  "value": "Clock Draw"
+                },
+                "type": {
+                  "value": "decimal"
+                }
+              },
+              {
+                "linkId": {
+                  "value": "minicog-total-score"
+                },
+                "text": {
+                  "value": "Total Score"
+                },
+                "type": {
+                  "value": "decimal"
+                }
+              }
+            ],
+            "id": {
+              "value": "0323fca6-3d95-426f-93ad-d0ab62aa3e77"
+            }
+          },
+          "responses": [
+            {
+              "id": "minicog-question1",
+              "answer": 3,
+              "question": "Word Recall"
+            },
+            {
+              "id": "minicog-question2",
+              "answer": 1,
+              "question": "Clock Draw"
+            },
+            {
+              "id": "minicog-total-score",
+              "answer": 4,
+              "question": "Total Score"
+            }
+          ]
+        }
+      ],
+      "ResponsesOnly": [
+        [
+          {
+            "id": "minicog-question1",
+            "answer": 3,
+            "question": "Word Recall"
+          },
+          {
+            "id": "minicog-question2",
+            "answer": 1,
+            "question": "Clock Draw"
+          },
+          {
+            "id": "minicog-total-score",
+            "answer": 4,
+            "question": "Total Score"
+          }
+        ]
+      ]
+    }
+  },
+  "unfilteredResults": {},
+  "localIdPatientResultsMap": {
+    "9471d61f-a76f-45ff-8670-1a1747a2f4c2": {
+      "InterventionLogicLibrary": {},
+      "FHIRHelpers": {}
+    }
+  },
+  "patientEvaluatedRecords": {
+    "9471d61f-a76f-45ff-8670-1a1747a2f4c2": [
+      {
+        "name": [
+          {
+            "family": {
+              "value": "Skywalker"
+            },
+            "given": [
+              {
+                "value": "Luke"
+              }
+            ]
+          }
+        ],
+        "gender": {
+          "value": "male"
+        },
+        "birthDate": {
+          "value": "1978-07-16"
+        },
+        "id": {
+          "value": "9471d61f-a76f-45ff-8670-1a1747a2f4c2"
+        }
+      },
+      {
+        "url": {
+          "value": "http://www.cdc.gov/ncbddd/fasd/minicog"
+        },
+        "identifier": [
+          {
+            "system": {
+              "value": "http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids"
+            },
+            "value": {
+              "value": "minicog"
+            }
+          }
+        ],
+        "name": {
+          "value": "minicog"
+        },
+        "status": {
+          "value": "active"
+        },
+        "item": [
+          {
+            "linkId": {
+              "value": "minicog-question1"
+            },
+            "text": {
+              "value": "Word Recall"
+            },
+            "type": {
+              "value": "decimal"
+            }
+          },
+          {
+            "linkId": {
+              "value": "minicog-question2"
+            },
+            "text": {
+              "value": "Clock Draw"
+            },
+            "type": {
+              "value": "decimal"
+            }
+          },
+          {
+            "linkId": {
+              "value": "minicog-total-score"
+            },
+            "text": {
+              "value": "Total Score"
+            },
+            "type": {
+              "value": "decimal"
+            }
+          }
+        ],
+        "id": {
+          "value": "0323fca6-3d95-426f-93ad-d0ab62aa3e77"
+        }
+      },
+      {
+        "identifier": {
+          "system": {
+            "value": "http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids"
+          },
+          "value": {
+            "value": "minicog"
+          }
+        },
+        "status": {
+          "value": "completed"
+        },
+        "subject": {
+          "reference": {
+            "value": "Patient/9471d61f-a76f-45ff-8670-1a1747a2f4c2"
+          }
+        },
+        "authored": {
+          "value": "2030-04-18T00:00:00.000+00:00"
+        },
+        "item": [
+          {
+            "linkId": {
+              "value": "minicog-question1"
+            },
+            "answer": [
+              {
+                "value": {
+                  "value": 3
+                }
+              }
+            ]
+          },
+          {
+            "linkId": {
+              "value": "minicog-question2"
+            },
+            "answer": [
+              {
+                "value": {
+                  "value": 1
+                }
+              }
+            ]
+          },
+          {
+            "linkId": {
+              "value": "minicog-total-score"
+            },
+            "answer": [
+              {
+                "value": {
+                  "value": 4
+                }
+              }
+            ]
+          }
+        ],
+        "id": {
+          "value": "2e920d89-7f9a-4e13-93b9-1b2be6ad68d7"
+        }
+      }
+    ]
+  }
+}

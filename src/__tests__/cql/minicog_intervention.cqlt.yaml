@@ -1,0 +1,8 @@
+library:
+  name: MINICOG_InterventionLogicLibrary
+  paths: ../../cql
+tests:
+  path: cases/minicog
+options:
+  dumpFiles:
+    enabled: true

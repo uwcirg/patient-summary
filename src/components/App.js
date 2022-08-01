@@ -6,7 +6,7 @@ import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 import FhirClientProvider from "../FhirClientProvider";
 import Header from "./Header";
-import Summary from "./Summary";
+import Summaries from "./Summaries";
 import {injectFaviconByProject} from "../util/util";
 import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
@@ -31,7 +31,7 @@ export default function App() {
         <FhirClientProvider>
           <CssBaseline />
           <Header />
-          <Summary />
+          <Summaries />
           {/* add other components as needed */}
         </FhirClientProvider>
       </ThemeProvider>

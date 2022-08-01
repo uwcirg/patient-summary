@@ -14,7 +14,7 @@ export async function getInterventionLogicLib(interventionId) {
     throw new Error("Error loading Cql ELM library " + e);
   }
   return [elmJson, valueSetJson];
-};
+}
 
 export function getFHIRResourcePaths(patientId) {
   if (!patientId) return [];
@@ -42,10 +42,23 @@ export function getFHIRResourcePaths(patientId) {
     }
     return path;
   });
+}
+export function isValidDate(date) {
+  return (
+    date &&
+    Object.prototype.toString.call(date) === "[object Date]" &&
+    !isNaN(date)
+  );
+}
+export const getChartConfig = (questionnaire) => {
+  const qChartConfig = ChartConfig[questionnaire.toLowerCase()] || {};
+  return { ...ChartConfig["default"], ...qChartConfig };
 };
-export const getChartConfig = (questionnaire) =>
-  ChartConfig[questionnaire.toLowerCase()] || ChartConfig["default"];
-
+export const getQuestionnaireList = () => {
+  const configList = getEnv("REACT_APP_QUESTIONNAIRES");
+  if (configList) return configList.split(",");
+  return [];
+};
 export const queryPatientIdKey = "launch_queryPatientId";
 
 export const getEnv = (key) => {
@@ -67,7 +80,7 @@ export function imageOK(img) {
     return false;
   }
   return true;
-};
+}
 
 export function injectFaviconByProject() {
   let faviconEl = document.querySelector("link[rel*='icon']");
@@ -75,4 +88,18 @@ export function injectFaviconByProject() {
   const projectId = getEnv("REACT_APP_PROJECT_ID");
   if (!projectId) return;
   faviconEl.href = `/assets/${projectId}/favicon.ico`;
-};
+}
+
+export function isInViewport(element) {
+  if (!element) return false;
+  const rect = element.getBoundingClientRect();
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <=
+      (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
+}
+
+export const QUESTIONNAIRE_ANCHOR_ID_PREFIX = "questionnaireAnchor";

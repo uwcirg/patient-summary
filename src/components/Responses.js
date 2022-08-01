@@ -70,6 +70,7 @@ export default function Responses(props) {
     [theme.breakpoints.up("md")]: {
       width: "45%",
     },
+    paddingTop: "16px"
   }));
 
   return (

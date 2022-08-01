@@ -1,0 +1,408 @@
+{
+  "patientResults": {
+    "a9d81c16-3984-4162-b68c-fda510b6e077": {
+      "Patient": {
+        "name": [
+          {
+            "family": {
+              "value": "Skywalker"
+            },
+            "given": [
+              {
+                "value": "Luke"
+              }
+            ]
+          }
+        ],
+        "gender": {
+          "value": "male"
+        },
+        "birthDate": {
+          "value": "1978-07-16"
+        },
+        "id": {
+          "value": "a9d81c16-3984-4162-b68c-fda510b6e077"
+        }
+      },
+      "question1Id": "minicog-question1",
+      "question2Id": "minicog-question2",
+      "scoringQuestionId": "minicog-total-score",
+      "CurrentQuestionnaire": {
+        "url": {
+          "value": "http://www.cdc.gov/ncbddd/fasd/minicog"
+        },
+        "identifier": [
+          {
+            "system": {
+              "value": "http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids"
+            },
+            "value": {
+              "value": "MINICOG"
+            }
+          }
+        ],
+        "name": {
+          "value": "minicog"
+        },
+        "status": {
+          "value": "active"
+        },
+        "item": [
+          {
+            "linkId": {
+              "value": "minicog-question1"
+            },
+            "text": {
+              "value": "Word Recall"
+            },
+            "type": {
+              "value": "decimal"
+            }
+          },
+          {
+            "linkId": {
+              "value": "minicog-question2"
+            },
+            "text": {
+              "value": "Clock Draw"
+            },
+            "type": {
+              "value": "decimal"
+            }
+          },
+          {
+            "linkId": {
+              "value": "minicog-total-score"
+            },
+            "text": {
+              "value": "Total Score"
+            },
+            "type": {
+              "value": "decimal"
+            }
+          }
+        ],
+        "id": {
+          "value": "d567165b-7dd1-42fe-8672-f630887c5e4d"
+        }
+      },
+      "QuestionnaireItems": [
+        {
+          "linkId": {
+            "value": "minicog-question1"
+          },
+          "text": {
+            "value": "Word Recall"
+          },
+          "type": {
+            "value": "decimal"
+          }
+        },
+        {
+          "linkId": {
+            "value": "minicog-question2"
+          },
+          "text": {
+            "value": "Clock Draw"
+          },
+          "type": {
+            "value": "decimal"
+          }
+        },
+        {
+          "linkId": {
+            "value": "minicog-total-score"
+          },
+          "text": {
+            "value": "Total Score"
+          },
+          "type": {
+            "value": "decimal"
+          }
+        }
+      ],
+      "QuestionnaireResponses": [
+        {
+          "questionnaire": {
+            "value": "http://www.cdc.gov/ncbddd/fasd/minicog"
+          },
+          "status": {
+            "value": "completed"
+          },
+          "subject": {
+            "reference": {
+              "value": "Patient/a9d81c16-3984-4162-b68c-fda510b6e077"
+            }
+          },
+          "authored": {
+            "value": "2030-04-18T00:00:00.000+00:00"
+          },
+          "item": [
+            {
+              "linkId": {
+                "value": "minicog-question1"
+              },
+              "answer": [
+                {
+                  "value": {
+                    "value": 3
+                  }
+                }
+              ]
+            },
+            {
+              "linkId": {
+                "value": "minicog-question2"
+              },
+              "answer": [
+                {
+                  "value": {
+                    "value": 1
+                  }
+                }
+              ]
+            },
+            {
+              "linkId": {
+                "value": "minicog-total-score"
+              },
+              "answer": [
+                {
+                  "value": {
+                    "value": 4
+                  }
+                }
+              ]
+            }
+          ],
+          "id": {
+            "value": "fb9e3fd5-292d-4d46-a65f-4a7754d47312"
+          }
+        }
+      ],
+      "ResponsesSummary": [
+        {
+          "date": "2030-04-18T00:00:00.000+00:00",
+          "responses": [
+            {
+              "id": "minicog-question1",
+              "answer": 3,
+              "value": {
+                "value": 3
+              },
+              "question": null,
+              "text": null
+            },
+            {
+              "id": "minicog-question2",
+              "answer": 1,
+              "value": {
+                "value": 1
+              },
+              "question": null,
+              "text": null
+            },
+            {
+              "id": "minicog-total-score",
+              "answer": 4,
+              "value": {
+                "value": 4
+              },
+              "question": null,
+              "text": null
+            }
+          ]
+        }
+      ],
+      "ResponsesOnly": [
+        [
+          {
+            "id": "minicog-question1",
+            "answer": 3,
+            "value": {
+              "value": 3
+            },
+            "question": null,
+            "text": null
+          },
+          {
+            "id": "minicog-question2",
+            "answer": 1,
+            "value": {
+              "value": 1
+            },
+            "question": null,
+            "text": null
+          },
+          {
+            "id": "minicog-total-score",
+            "answer": 4,
+            "value": {
+              "value": 4
+            },
+            "question": null,
+            "text": null
+          }
+        ]
+      ],
+      "ChartData": [
+        {
+          "date": "2030-04-18T00:00:00.000+00:00",
+          "word_recall": 3,
+          "clock_draw": 1,
+          "total": 4
+        }
+      ]
+    }
+  },
+  "unfilteredResults": {},
+  "localIdPatientResultsMap": {
+    "a9d81c16-3984-4162-b68c-fda510b6e077": {
+      "MINICOG_InterventionLogicLibrary": {},
+      "FHIRHelpers": {}
+    }
+  },
+  "patientEvaluatedRecords": {
+    "a9d81c16-3984-4162-b68c-fda510b6e077": [
+      {
+        "name": [
+          {
+            "family": {
+              "value": "Skywalker"
+            },
+            "given": [
+              {
+                "value": "Luke"
+              }
+            ]
+          }
+        ],
+        "gender": {
+          "value": "male"
+        },
+        "birthDate": {
+          "value": "1978-07-16"
+        },
+        "id": {
+          "value": "a9d81c16-3984-4162-b68c-fda510b6e077"
+        }
+      },
+      {
+        "url": {
+          "value": "http://www.cdc.gov/ncbddd/fasd/minicog"
+        },
+        "identifier": [
+          {
+            "system": {
+              "value": "http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids"
+            },
+            "value": {
+              "value": "MINICOG"
+            }
+          }
+        ],
+        "name": {
+          "value": "minicog"
+        },
+        "status": {
+          "value": "active"
+        },
+        "item": [
+          {
+            "linkId": {
+              "value": "minicog-question1"
+            },
+            "text": {
+              "value": "Word Recall"
+            },
+            "type": {
+              "value": "decimal"
+            }
+          },
+          {
+            "linkId": {
+              "value": "minicog-question2"
+            },
+            "text": {
+              "value": "Clock Draw"
+            },
+            "type": {
+              "value": "decimal"
+            }
+          },
+          {
+            "linkId": {
+              "value": "minicog-total-score"
+            },
+            "text": {
+              "value": "Total Score"
+            },
+            "type": {
+              "value": "decimal"
+            }
+          }
+        ],
+        "id": {
+          "value": "d567165b-7dd1-42fe-8672-f630887c5e4d"
+        }
+      },
+      {
+        "questionnaire": {
+          "value": "http://www.cdc.gov/ncbddd/fasd/minicog"
+        },
+        "status": {
+          "value": "completed"
+        },
+        "subject": {
+          "reference": {
+            "value": "Patient/a9d81c16-3984-4162-b68c-fda510b6e077"
+          }
+        },
+        "authored": {
+          "value": "2030-04-18T00:00:00.000+00:00"
+        },
+        "item": [
+          {
+            "linkId": {
+              "value": "minicog-question1"
+            },
+            "answer": [
+              {
+                "value": {
+                  "value": 3
+                }
+              }
+            ]
+          },
+          {
+            "linkId": {
+              "value": "minicog-question2"
+            },
+            "answer": [
+              {
+                "value": {
+                  "value": 1
+                }
+              }
+            ]
+          },
+          {
+            "linkId": {
+              "value": "minicog-total-score"
+            },
+            "answer": [
+              {
+                "value": {
+                  "value": 4
+                }
+              }
+            ]
+          }
+        ],
+        "id": {
+          "value": "fb9e3fd5-292d-4d46-a65f-4a7754d47312"
+        }
+      }
+    ]
+  }
+}

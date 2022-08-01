@@ -3,16 +3,32 @@ import Alert from "@mui/material/Alert";
 import FormControl from "@mui/material/FormControl";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
+import Stack from "@mui/material/Stack";
 import { Typography } from "@mui/material";
+import {QUESTIONNAIRE_ANCHOR_ID_PREFIX} from "../util/util";
+
 export default function QuestionnaireSelector(props) {
-  const { title, list, selected, handleSelectorChange } = props;
+  const { title, list, handleSelectorChange } = props;
   const defaultMenuItem = () => (
     <MenuItem disabled value="">
       <em>Please Select One</em>
     </MenuItem>
   );
+  const onChange = (event) => {
+    if (handleSelectorChange) {
+      handleSelectorChange();
+      return;
+    }
+    setTimeout(
+      () =>
+        document
+          .querySelector(`#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${event.target.value}`)
+          .scrollIntoView(),
+      50
+    );
+  }
   return (
-    <>
+    <Stack direction="column" id="questionnaireSelector">
       <Typography variant="h6" component="h2" color="secondary">
         {title || "Questionnaire List"}
       </Typography>
@@ -29,23 +45,27 @@ export default function QuestionnaireSelector(props) {
         >
           <Select
             id="qSelector"
-            value={selected}
             renderValue={(value) => {
               if (!value) return defaultMenuItem();
               else
                 return (
-                  <Typography color="primary" variant="subtitle1" sx={{fontSize: '1.1rem'}}>
+                  <Typography
+                    color="primary"
+                    variant="subtitle1"
+                    sx={{ fontSize: "1.1rem" }}
+                  >
                     {value}
                   </Typography>
                 );
             }}
-            onChange={handleSelectorChange}
+            onChange={onChange}
             label="Questionnaire"
             displayEmpty
             sx={{
               marginTop: 0,
               marginBottom: 0,
             }}
+            defaultValue={""}
           >
             {list.map((item, index) => {
               return (
@@ -57,11 +77,10 @@ export default function QuestionnaireSelector(props) {
           </Select>
         </FormControl>
       )}
-    </>
+    </Stack>
   );
 }
 QuestionnaireSelector.propTypes = {
-  selected: PropTypes.string,
   handleSelectorChange: PropTypes.func,
   list: PropTypes.array,
   title: PropTypes.string,

@@ -1,0 +1,106 @@
+{
+  "hookInstance": "280df05b-3b7d-4e20-bd8a-4aa92ae8c759",
+  "hook": "patient-view",
+  "user": "Practitioner/example",
+  "context": {
+    "patientId": "a9d81c16-3984-4162-b68c-fda510b6e077"
+  },
+  "prefetch": {
+    "Patient": {
+      "resourceType": "Patient",
+      "id": "a9d81c16-3984-4162-b68c-fda510b6e077",
+      "name": [
+        {
+          "family": "Skywalker",
+          "given": [
+            "Luke"
+          ]
+        }
+      ],
+      "gender": "male",
+      "birthDate": "1978-07-16"
+    },
+    "Questionnaire": {
+      "resourceType": "Bundle",
+      "type": "searchset",
+      "entry": [
+        {
+          "resource": {
+            "resourceType": "Questionnaire",
+            "id": "d567165b-7dd1-42fe-8672-f630887c5e4d",
+            "status": "active",
+            "url": "http://www.cdc.gov/ncbddd/fasd/minicog",
+            "identifier": [
+              {
+                "system": "http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids",
+                "value": "MINICOG"
+              }
+            ],
+            "name": "minicog",
+            "item": [
+              {
+                "linkId": "minicog-question1",
+                "type": "decimal",
+                "text": "Word Recall"
+              },
+              {
+                "linkId": "minicog-question2",
+                "type": "decimal",
+                "text": "Clock Draw"
+              },
+              {
+                "linkId": "minicog-total-score",
+                "type": "decimal",
+                "text": "Total Score"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "QuestionnaireResponse": {
+      "resourceType": "Bundle",
+      "type": "searchset",
+      "entry": [
+        {
+          "resource": {
+            "resourceType": "QuestionnaireResponse",
+            "id": "fb9e3fd5-292d-4d46-a65f-4a7754d47312",
+            "subject": {
+              "reference": "Patient/a9d81c16-3984-4162-b68c-fda510b6e077"
+            },
+            "status": "completed",
+            "questionnaire": "http://www.cdc.gov/ncbddd/fasd/minicog",
+            "authored": "2030-04-18T00:00:00.000Z",
+            "item": [
+              {
+                "linkId": "minicog-question1",
+                "answer": [
+                  {
+                    "valueDecimal": 3
+                  }
+                ]
+              },
+              {
+                "linkId": "minicog-question2",
+                "answer": [
+                  {
+                    "valueDecimal": 1
+                  }
+                ]
+              },
+              {
+                "linkId": "minicog-total-score",
+                "answer": [
+                  {
+                    "valueDecimal": 4
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
