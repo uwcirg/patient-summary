@@ -1,5 +1,10 @@
 import ChartConfig from "../config/chart_config.js";
 
+export function getEnv(key) {
+  if (!process || !process.env) return "";
+  return process.env[key];
+};
+
 export async function getInterventionLogicLib(interventionId) {
   if (!interventionId) throw new Error("No intervention id specified");
   let elmJson, valueSetJson;
@@ -14,7 +19,7 @@ export async function getInterventionLogicLib(interventionId) {
     throw new Error("Error loading Cql ELM library " + e);
   }
   return [elmJson, valueSetJson];
-}
+};
 
 export function getFHIRResourcePaths(patientId) {
   if (!patientId) return [];
@@ -42,28 +47,25 @@ export function getFHIRResourcePaths(patientId) {
     }
     return path;
   });
-}
+};
+
 export function isValidDate(date) {
   return (
     date &&
     Object.prototype.toString.call(date) === "[object Date]" &&
     !isNaN(date)
   );
-}
-export const getChartConfig = (questionnaire) => {
+};
+
+export function getChartConfig (questionnaire) {
   const qChartConfig = ChartConfig[questionnaire.toLowerCase()] || {};
   return { ...ChartConfig["default"], ...qChartConfig };
 };
-export const getQuestionnaireList = () => {
+
+export function getQuestionnaireList () {
   const configList = getEnv("REACT_APP_QUESTIONNAIRES");
   if (configList) return configList.split(",");
   return [];
-};
-export const queryPatientIdKey = "launch_queryPatientId";
-
-export const getEnv = (key) => {
-  if (!process || !process.env) return "";
-  return process.env[key];
 };
 
 export function imageOK(img) {
@@ -80,7 +82,7 @@ export function imageOK(img) {
     return false;
   }
   return true;
-}
+};
 
 export function injectFaviconByProject() {
   let faviconEl = document.querySelector("link[rel*='icon']");
@@ -88,7 +90,7 @@ export function injectFaviconByProject() {
   const projectId = getEnv("REACT_APP_PROJECT_ID");
   if (!projectId) return;
   faviconEl.href = `/assets/${projectId}/favicon.ico`;
-}
+};
 
 export function isInViewport(element) {
   if (!element) return false;
@@ -100,6 +102,15 @@ export function isInViewport(element) {
       (window.innerHeight || document.documentElement.clientHeight) &&
     rect.right <= (window.innerWidth || document.documentElement.clientWidth)
   );
-}
+};
+
+export function hasData(arrObj) {
+  return arrObj && arrObj.length > 0;
+};
+
+export function getTomorrow() {
+  return new Date(Date.now() + 24 * 60 * 60 * 1000);
+};
 
 export const QUESTIONNAIRE_ANCHOR_ID_PREFIX = "questionnaireAnchor";
+export const queryPatientIdKey = "launch_queryPatientId";

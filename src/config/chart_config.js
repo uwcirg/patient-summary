@@ -1,3 +1,21 @@
+import { getTomorrow } from "../util/util";
+
+const Rect =  (props) => {
+          const { cx, cy, color, value } = props;
+          if (!cx && !(parseInt(cx) === 0)) return null;
+          if (!cy && !(parseInt(cy) === 0)) return null;
+          return (
+            <rect
+              x={cx - 3}
+              y={cy - 3}
+              width={6}
+              height={6}
+              stroke={color}
+              strokeWidth={1}
+              key={`${value}_${parseInt(cx)}_${parseInt(cy)}`}
+            ></rect>
+          )
+};
 const CHART_CONFIG = {
   default: {
     type: "barchart",
@@ -32,7 +50,7 @@ const CHART_CONFIG = {
         word_recall: null,
         clock_draw: null,
         total: null,
-        date: new Date().valueOf(),
+        date: getTomorrow().valueOf(),
       });
       return data.map((item) => {
         item = item.valueOf();
@@ -46,16 +64,21 @@ const CHART_CONFIG = {
         color: "#7e57c2",
         strokeWidth: 1,
         strokeDasharray: "4 2",
+        legendType: "square",
+        dot: Rect,
       },
       {
         key: "clock_draw",
         color: "#5c6bc0",
         strokeWidth: 1,
         strokeDasharray: "4 2",
+        legendType: "square",
+        dot: Rect,
       },
       {
         key: "total",
         color: "#004d40",
+        strokeWidth: 2,
       },
     ],
   },
@@ -82,7 +105,7 @@ const CHART_CONFIG = {
       });
       data.push({
         total: null,
-        date: new Date().valueOf(),
+        date: getTomorrow().valueOf(),
       });
       return data.map((item) => {
         item = item.valueOf();

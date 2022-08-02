@@ -17,6 +17,7 @@ import {
   getFHIRResourcePaths,
   getInterventionLogicLib,
   getChartConfig,
+  hasData,
   QUESTIONNAIRE_ANCHOR_ID_PREFIX,
 } from "../util/util";
 import Responses from "./Responses";
@@ -57,7 +58,7 @@ export default function Summary(props) {
     entry: [{ resource: patient }],
   });
   const shouldDisplayResponses = () =>
-    ready && questionnaire && questionnaire.length > 0;
+    ready && hasData(questionnaire);
   const getFhirResources = useCallback(async () => {
     if (!client || !patient || !patient.id)
       throw new Error("Patient id is missing");
@@ -99,8 +100,15 @@ export default function Summary(props) {
     );
   }, [patientBundle]);
 
+  const callback = useCallback(
+    (obj) => {
+      if (callbackFunc) callbackFunc(obj);
+    },
+    [callbackFunc]
+  );
+
   useEffect(() => {
-    if (fhirData && fhirData.length) return;
+    if (hasData(fhirData)) return;
     const gatherPatientData = async () => {
       if (patientBundleLoaded()) return;
       /* get FHIR resources */
@@ -116,16 +124,12 @@ export default function Summary(props) {
     gatherPatientData();
   }, [getFhirResources, patientBundleLoaded, fhirData]);
 
-  const callback = useCallback((obj) => {
-    if (callbackFunc) callbackFunc(obj);
-  }, [callbackFunc]);
-
   useEffect(() => {
     if (error) {
       callback({ status: "error" });
       setReady(true);
     }
-    if (!fhirData || !fhirData.length) {
+    if (!hasData(fhirData)) {
       return;
     }
     // Define a web worker for evaluating CQL expressions
@@ -133,6 +137,7 @@ export default function Summary(props) {
     // Initialize the cql-worker
     const [setupExecution, sendPatientBundle, evaluateExpression] =
       initialzieCqlWorker(cqlWorker);
+
     const gatherSummaryData = async () => {
       const chartConfig = getChartConfig(questionnaire);
       /* get CQL expressions */
@@ -153,8 +158,8 @@ export default function Summary(props) {
       );
       const returnResult = {
         chartConfig: chartConfig,
-        chartData: chartData || [],
-        responses: cqlData || [],
+        chartData: chartData,
+        responses: cqlData,
       };
       console.log("return result ", returnResult);
       return returnResult;
@@ -163,18 +168,12 @@ export default function Summary(props) {
       .then((data) => {
         dispatch({ type: "update", payload: data });
         setReady(true);
-        setChartReady(data.chartData ? true : false);
+        setChartReady(hasData(data.chartData));
         callback({ status: "ok" });
       })
       .catch((e) => setError(e));
     return () => cqlWorker.terminate();
-  }, [
-    error,
-    questionnaire,
-    patientBundle,
-    fhirData,
-    callback,
-  ]);
+  }, [error, questionnaire, patientBundle, fhirData, callback]);
 
   return (
     <>

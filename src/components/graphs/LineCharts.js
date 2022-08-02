@@ -83,6 +83,8 @@ export default function LineCharts(props) {
           <Tooltip
             itemStyle={{ fontSize: "12px" }}
             labelStyle={{ fontSize: "12px" }}
+            animationBegin={500}
+            animationDuration={500}
           />
           <Legend
             formatter={(value) => (
@@ -90,6 +92,7 @@ export default function LineCharts(props) {
                 {value.replace(/_/g, " ")}
               </span>
             )}
+            iconSize={12}
           />
           {hasYFields() &&
             yFields.map((item, index) => (
@@ -103,7 +106,10 @@ export default function LineCharts(props) {
                 strokeDasharray={
                   item.strokeDasharray ? item.strokeDasharray : 0
                 }
-                dot={{ strokeDasharray: 0 }}
+                legendType={item.legendType ? item.legendType : "line"}
+                dot={
+                  item.dot ? item.dot : { strokeDasharray: "", strokeWidth: 2 }
+                }
               />
             ))}
           {!hasYFields() && (

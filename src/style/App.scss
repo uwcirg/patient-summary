@@ -8,7 +8,7 @@ body {
 }
 .summaries {
   margin-top: 80px;
-  padding: 16px 24px;
+  padding: 24px;
 }
 @media(min-width: 640px) {
   .summaries {
@@ -30,16 +30,7 @@ p {
     max-width: 50%;
   }
 }
-#barGraph .chart__container {
-  padding: 16px 0 16px;
-}
-#barGraph .tick text {
-  font-size: 14px;
-}
-#barGraph .label {
-  font-size: 1.05em;
-  font-weight: 500;
-}
+
 .invisible {
   display: none;
   width: 0;

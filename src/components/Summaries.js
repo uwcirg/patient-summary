@@ -2,7 +2,6 @@ import { createRef, forwardRef, useEffect, useCallback, useState } from "react";
 import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
-import Tooltip from "@mui/material/Tooltip";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import { getQuestionnaireList, isInViewport } from "../util/util";
 import QuestionnaireSelector from "./QuestionnaireSelector";
@@ -47,8 +46,8 @@ export default function Summaries() {
     if (isReady()) return;
     if (obj && obj.status === "error") setError(true);
     if (obj && obj.status === "ok") {
-      setUpdated(prev => prev+1);
-      console.log("updated? ", updated)
+      setUpdated((prev) => prev + 1);
+      console.log("updated? ", updated);
     }
   };
 
@@ -64,28 +63,35 @@ export default function Summaries() {
 
   return (
     <>
-      <BoxRef
-        ref={anchorRef}
-        sx={{
-          position: "relative",
-          top: "-64px",
-          height: "2px",
-          width: "2px",
-        }}
-      ></BoxRef>
-      <FabRef
-        className={"hide"}
-        ref={fabRef}
-        color="primary"
-        aria-label="add"
-        size="small"
-        sx={{ position: "fixed", bottom: "24px", right: "24px" }}
-        onClick={() => anchorRef.current.scrollIntoView()}
-      >
-        <Tooltip title="Back to top" placement="bottom">
+      {isReady() && (
+        <BoxRef
+          ref={anchorRef}
+          sx={{
+            position: "relative",
+            top: "-64px",
+            height: "2px",
+            width: "2px",
+          }}
+        ></BoxRef>
+      )}
+      {isReady() && (
+        <FabRef
+          className={"hide"}
+          ref={fabRef}
+          color="primary"
+          aria-label="add"
+          size="small"
+          sx={{ position: "fixed", bottom: "24px", right: "24px" }}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!anchorRef.current) return;
+            anchorRef.current.scrollIntoView();
+          }}
+          title="Back to Top"
+        >
           <ArrowUpwardIcon aria-label="Back to Top" />
-        </Tooltip>
-      </FabRef>
+        </FabRef>
+      )}
       <Stack className="summaries">
         <BoxRef ref={selectorRef} style={{ opacity: isReady() ? 1 : 0.4 }}>
           <QuestionnaireSelector
