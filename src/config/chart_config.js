@@ -4,13 +4,14 @@ const Rect =  (props) => {
           const { cx, cy, color, value } = props;
           if (!cx && !(parseInt(cx) === 0)) return null;
           if (!cy && !(parseInt(cy) === 0)) return null;
+          console.log("color? ", color)
           return (
             <rect
               x={cx - 3}
               y={cy - 3}
               width={6}
               height={6}
-              stroke={color}
+              fill={color}
               strokeWidth={1}
               key={`${value}_${parseInt(cx)}_${parseInt(cy)}`}
             ></rect>
@@ -65,7 +66,7 @@ const CHART_CONFIG = {
         strokeWidth: 1,
         strokeDasharray: "4 2",
         legendType: "square",
-        dot: Rect,
+        dot: (props) => <Rect {...props} color="#7e57c2"></Rect>,
       },
       {
         key: "clock_draw",
@@ -73,7 +74,7 @@ const CHART_CONFIG = {
         strokeWidth: 1,
         strokeDasharray: "4 2",
         legendType: "square",
-        dot: Rect,
+        dot: (props) => <Rect {...props} color="#5c6bc0"></Rect>,
       },
       {
         key: "total",

@@ -58,7 +58,7 @@ export default function Responses(props) {
       (parseInt(response.value.value) === 0 ||
         response.value.value)
       ? response.value.value
-      : response.answer;
+      : (response.answer ? response.answer : "---");
   };
   const getQuestion = (item) => {
     return item.question || item.text || item.id;

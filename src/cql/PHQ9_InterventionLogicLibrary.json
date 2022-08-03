@@ -231,6 +231,210 @@
                }
             }
          }, {
+            "name" : "GetResponseAnswerByLinkId",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "type" : "FunctionDef",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "I",
+                  "expression" : {
+                     "type" : "Query",
+                     "source" : [ {
+                        "alias" : "r",
+                        "expression" : {
+                           "name" : "responses",
+                           "type" : "OperandRef"
+                        }
+                     } ],
+                     "relationship" : [ ],
+                     "where" : {
+                        "type" : "Equal",
+                        "operand" : [ {
+                           "path" : "value",
+                           "type" : "Property",
+                           "source" : {
+                              "path" : "linkId",
+                              "scope" : "r",
+                              "type" : "Property"
+                           }
+                        }, {
+                           "name" : "linkId",
+                           "type" : "OperandRef"
+                        } ]
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "return" : {
+                  "expression" : {
+                     "type" : "Case",
+                     "caseItem" : [ {
+                        "when" : {
+                           "type" : "Is",
+                           "operand" : {
+                              "path" : "value",
+                              "type" : "Property",
+                              "source" : {
+                                 "type" : "Indexer",
+                                 "operand" : [ {
+                                    "path" : "answer",
+                                    "scope" : "I",
+                                    "type" : "Property"
+                                 }, {
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                    "value" : "0",
+                                    "type" : "Literal"
+                                 } ]
+                              }
+                           },
+                           "isTypeSpecifier" : {
+                              "name" : "{http://hl7.org/fhir}Coding",
+                              "type" : "NamedTypeSpecifier"
+                           }
+                        },
+                        "then" : {
+                           "path" : "value",
+                           "type" : "Property",
+                           "source" : {
+                              "path" : "display",
+                              "type" : "Property",
+                              "source" : {
+                                 "path" : "value",
+                                 "type" : "Property",
+                                 "source" : {
+                                    "type" : "Indexer",
+                                    "operand" : [ {
+                                       "path" : "answer",
+                                       "scope" : "I",
+                                       "type" : "Property"
+                                    }, {
+                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                       "value" : "0",
+                                       "type" : "Literal"
+                                    } ]
+                                 }
+                              }
+                           }
+                        }
+                     } ],
+                     "else" : {
+                        "asType" : "{urn:hl7-org:elm-types:r1}String",
+                        "type" : "As",
+                        "operand" : {
+                           "path" : "value",
+                           "type" : "Property",
+                           "source" : {
+                              "path" : "value",
+                              "type" : "Property",
+                              "source" : {
+                                 "type" : "Indexer",
+                                 "operand" : [ {
+                                    "path" : "answer",
+                                    "scope" : "I",
+                                    "type" : "Property"
+                                 }, {
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                    "value" : "0",
+                                    "type" : "Literal"
+                                 } ]
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            },
+            "operand" : [ {
+               "name" : "linkId",
+               "operandTypeSpecifier" : {
+                  "name" : "{urn:hl7-org:elm-types:r1}String",
+                  "type" : "NamedTypeSpecifier"
+               }
+            }, {
+               "name" : "responses",
+               "operandTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}QuestionnaireResponse.Item",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               }
+            } ]
+         }, {
+            "name" : "GetResponseValueByLinkId",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "type" : "FunctionDef",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "I",
+                  "expression" : {
+                     "type" : "Query",
+                     "source" : [ {
+                        "alias" : "r",
+                        "expression" : {
+                           "name" : "responses",
+                           "type" : "OperandRef"
+                        }
+                     } ],
+                     "relationship" : [ ],
+                     "where" : {
+                        "type" : "Equal",
+                        "operand" : [ {
+                           "path" : "value",
+                           "type" : "Property",
+                           "source" : {
+                              "path" : "linkId",
+                              "scope" : "r",
+                              "type" : "Property"
+                           }
+                        }, {
+                           "name" : "linkId",
+                           "type" : "OperandRef"
+                        } ]
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "return" : {
+                  "expression" : {
+                     "path" : "value",
+                     "type" : "Property",
+                     "source" : {
+                        "type" : "Indexer",
+                        "operand" : [ {
+                           "path" : "answer",
+                           "scope" : "I",
+                           "type" : "Property"
+                        }, {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        } ]
+                     }
+                  }
+               }
+            },
+            "operand" : [ {
+               "name" : "linkId",
+               "operandTypeSpecifier" : {
+                  "name" : "{urn:hl7-org:elm-types:r1}String",
+                  "type" : "NamedTypeSpecifier"
+               }
+            }, {
+               "name" : "responses",
+               "operandTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}QuestionnaireResponse.Item",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               }
+            } ]
+         }, {
             "name" : "FormattedResponses",
             "context" : "Patient",
             "accessLevel" : "Public",
@@ -238,10 +442,10 @@
             "expression" : {
                "type" : "Query",
                "source" : [ {
-                  "alias" : "R",
+                  "alias" : "Q",
                   "expression" : {
-                     "name" : "responses",
-                     "type" : "OperandRef"
+                     "name" : "QuestionnaireItems",
+                     "type" : "ExpressionRef"
                   }
                } ],
                "relationship" : [ ],
@@ -255,103 +459,49 @@
                            "type" : "Property",
                            "source" : {
                               "path" : "linkId",
-                              "scope" : "R",
+                              "scope" : "Q",
                               "type" : "Property"
                            }
                         }
                      }, {
                         "name" : "answer",
                         "value" : {
-                           "type" : "Case",
-                           "caseItem" : [ {
-                              "when" : {
-                                 "type" : "Is",
-                                 "operand" : {
-                                    "path" : "value",
-                                    "type" : "Property",
-                                    "source" : {
-                                       "type" : "Indexer",
-                                       "operand" : [ {
-                                          "path" : "answer",
-                                          "scope" : "R",
-                                          "type" : "Property"
-                                       }, {
-                                          "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                          "value" : "0",
-                                          "type" : "Literal"
-                                       } ]
-                                    }
-                                 },
-                                 "isTypeSpecifier" : {
-                                    "name" : "{http://hl7.org/fhir}Coding",
-                                    "type" : "NamedTypeSpecifier"
-                                 }
-                              },
-                              "then" : {
+                           "type" : "SingletonFrom",
+                           "operand" : {
+                              "name" : "GetResponseAnswerByLinkId",
+                              "type" : "FunctionRef",
+                              "operand" : [ {
                                  "path" : "value",
                                  "type" : "Property",
                                  "source" : {
-                                    "path" : "display",
-                                    "type" : "Property",
-                                    "source" : {
-                                       "path" : "value",
-                                       "type" : "Property",
-                                       "source" : {
-                                          "type" : "Indexer",
-                                          "operand" : [ {
-                                             "path" : "answer",
-                                             "scope" : "R",
-                                             "type" : "Property"
-                                          }, {
-                                             "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                             "value" : "0",
-                                             "type" : "Literal"
-                                          } ]
-                                       }
-                                    }
+                                    "path" : "linkId",
+                                    "scope" : "Q",
+                                    "type" : "Property"
                                  }
-                              }
-                           } ],
-                           "else" : {
-                              "asType" : "{urn:hl7-org:elm-types:r1}String",
-                              "type" : "As",
-                              "operand" : {
-                                 "path" : "value",
-                                 "type" : "Property",
-                                 "source" : {
-                                    "path" : "value",
-                                    "type" : "Property",
-                                    "source" : {
-                                       "type" : "Indexer",
-                                       "operand" : [ {
-                                          "path" : "answer",
-                                          "scope" : "R",
-                                          "type" : "Property"
-                                       }, {
-                                          "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                          "value" : "0",
-                                          "type" : "Literal"
-                                       } ]
-                                    }
-                                 }
-                              }
+                              }, {
+                                 "name" : "responses",
+                                 "type" : "OperandRef"
+                              } ]
                            }
                         }
                      }, {
                         "name" : "value",
                         "value" : {
-                           "path" : "value",
-                           "type" : "Property",
-                           "source" : {
-                              "type" : "Indexer",
+                           "type" : "SingletonFrom",
+                           "operand" : {
+                              "name" : "GetResponseValueByLinkId",
+                              "type" : "FunctionRef",
                               "operand" : [ {
-                                 "path" : "answer",
-                                 "scope" : "R",
-                                 "type" : "Property"
+                                 "path" : "value",
+                                 "type" : "Property",
+                                 "source" : {
+                                    "path" : "linkId",
+                                    "scope" : "Q",
+                                    "type" : "Property"
+                                 }
                               }, {
-                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                 "value" : "0",
-                                 "type" : "Literal"
+                                 "name" : "responses",
+                                 "type" : "OperandRef"
                               } ]
                            }
                         }
@@ -366,7 +516,7 @@
                                  "type" : "Property",
                                  "source" : {
                                     "path" : "linkId",
-                                    "scope" : "R",
+                                    "scope" : "Q",
                                     "type" : "Property"
                                  }
                               }, {
@@ -387,7 +537,7 @@
                                     "type" : "Property",
                                     "source" : {
                                        "path" : "text",
-                                       "scope" : "R",
+                                       "scope" : "Q",
                                        "type" : "Property"
                                     }
                                  } ]
@@ -402,7 +552,7 @@
                               "type" : "Property",
                               "source" : {
                                  "path" : "text",
-                                 "scope" : "R",
+                                 "scope" : "Q",
                                  "type" : "Property"
                               }
                            }
@@ -414,7 +564,7 @@
                            "type" : "Property",
                            "source" : {
                               "path" : "text",
-                              "scope" : "R",
+                              "scope" : "Q",
                               "type" : "Property"
                            }
                         }

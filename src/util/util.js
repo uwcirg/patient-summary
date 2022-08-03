@@ -26,7 +26,7 @@ export function getFHIRResourcePaths(patientId) {
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
   let resources = resourcesToLoad
     ? resourcesToLoad.split(",")
-    : ["QuestionnaireResponse"];
+    : ["QuestionnaireResponse","Questionnaire"];
   return resources.map((resource) => {
     let path = `/${resource}`;
     const observationCategories = getEnv(
