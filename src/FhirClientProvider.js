@@ -3,7 +3,7 @@ import FHIR from "fhirclient";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import { FhirClientContext } from "./FhirClientContext";
-import { fetchEnvData, getEnvs, queryPatientIdKey } from "./util/util";
+import { queryPatientIdKey } from "./util/util";
 import ErrorComponent from "./components/ErrorComponent";
 
 export default function FhirClientProvider(props) {
@@ -27,10 +27,6 @@ export default function FhirClientProvider(props) {
     });
   }, [client]);
 
-  useEffect(() => {
-    fetchEnvData();
-    console.log("environment variables ", getEnvs());
-  }, []);
   useEffect(() => {
     FHIR.oauth2.ready().then(
       (client) => {
