@@ -2,7 +2,7 @@ import React from "react";
 import FHIR from "fhirclient";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
-import Error from "./Error";
+import ErrorComponent from "./ErrorComponent";
 import { getEnv, queryPatientIdKey } from "../util/util.js";
 import "../style/App.scss";
 
@@ -27,7 +27,7 @@ export default function Launch() {
     })
       .then((result) => {
         if (!result.ok) {
-          throw Error(result.status);
+          throw new Error(result.status.toString());
         }
         return result.json();
       })
@@ -56,7 +56,7 @@ export default function Launch() {
 
   return (
     <React.Fragment>
-      {error && <Error message={error.message}></Error>}
+      {error && <ErrorComponent message={error.message}></ErrorComponent>}
       {!error && (
         <Stack
           spacing={2}

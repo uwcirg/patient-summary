@@ -4,7 +4,7 @@ import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import { FhirClientContext } from "./FhirClientContext";
 import { queryPatientIdKey } from "./util/util";
-import Error from "./components/Error";
+import ErrorComponent from "./components/ErrorComponent";
 
 export default function FhirClientProvider(props) {
   const [client, setClient] = useState(null);
@@ -61,7 +61,7 @@ export default function FhirClientProvider(props) {
         {({ client, error }) => {
           // any auth error that may have been rejected with
           if (error) {
-            return <Error message={error.message}></Error>;
+            return <ErrorComponent message={error.message}></ErrorComponent>;
           }
 
           // if client and patient are available render the children component(s)

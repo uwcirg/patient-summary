@@ -2,7 +2,7 @@ import React from "react";
 import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
 import { initialzieCqlWorker } from "cql-worker";
 import { FhirClientContext } from "../FhirClientContext";
-import Error from "./Error";
+import ErrorComponent from "./ErrorComponent";
 import {
   getFHIRResourcePaths,
   getExpressionLogicLib,
@@ -118,7 +118,7 @@ export default function Summary() {
 
   return (
     <React.Fragment>
-      {error && <Error messge={error}></Error>}
+      {error && <ErrorComponent messge={error}></ErrorComponent>}
       {/* write out patient info */}
       {patient && (
         <div>
