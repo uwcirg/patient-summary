@@ -5,7 +5,6 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import { Typography } from "@mui/material";
-import {QUESTIONNAIRE_ANCHOR_ID_PREFIX} from "../util/util";
 
 export default function QuestionnaireSelector(props) {
   const { title, list, handleSelectorChange } = props;
@@ -15,17 +14,9 @@ export default function QuestionnaireSelector(props) {
     </MenuItem>
   );
   const onChange = (event) => {
-    if (handleSelectorChange) {
-      handleSelectorChange();
-      return;
+    if (handleSelectorChange && typeof handleSelectorChange === "function") {
+      handleSelectorChange(event);
     }
-    setTimeout(
-      () =>
-        document
-          .querySelector(`#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${event.target.value}`)
-          .scrollIntoView(),
-      50
-    );
   }
   return (
     <Stack direction="column" id="questionnaireSelector">

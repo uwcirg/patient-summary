@@ -4,7 +4,7 @@ import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import { FhirClientContext } from "./FhirClientContext";
 import { queryPatientIdKey } from "./util/util";
-import Error from "./components/Error";
+import Error from "./components/ErrorComponent";
 
 export default function FhirClientProvider(props) {
   const [client, setClient] = useState(null);

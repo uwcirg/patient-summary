@@ -3,7 +3,11 @@ import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import { getQuestionnaireList, isInViewport } from "../util/util";
+import {
+  getQuestionnaireList,
+  isInViewport,
+  QUESTIONNAIRE_ANCHOR_ID_PREFIX,
+} from "../util/util";
 import QuestionnaireSelector from "./QuestionnaireSelector";
 import Summary from "./Summary";
 let scrollIntervalId = 0;
@@ -47,7 +51,6 @@ export default function Summaries() {
     if (obj && obj.status === "error") setError(true);
     if (obj && obj.status === "ok") {
       setUpdated((prev) => prev + 1);
-      console.log("updated? ", updated);
     }
   };
 
@@ -97,6 +100,17 @@ export default function Summaries() {
           <QuestionnaireSelector
             title="Go to Questionnaire"
             list={questionnaireList}
+            handleSelectorChange={(event) => {
+              setTimeout(
+                () =>
+                  document
+                    .querySelector(
+                      `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${event.target.value}`
+                    )
+                    .scrollIntoView(),
+                50
+              );
+            }}
           ></QuestionnaireSelector>
         </BoxRef>
         {questionnaireList.map((questionnaire, index) => {
@@ -105,6 +119,7 @@ export default function Summaries() {
               questionnaire={questionnaire}
               key={`questionnaire_${index}`}
               callbackFunc={handleCallback}
+              sectionAnchorPrefix={QUESTIONNAIRE_ANCHOR_ID_PREFIX}
             ></Summary>
           );
         })}

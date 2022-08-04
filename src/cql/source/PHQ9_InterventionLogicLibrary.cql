@@ -44,21 +44,30 @@ define QuestionnaireItems:
 define QuestionnaireResponses:
   ([QuestionnaireResponse] QR
     where (QR.questionnaire.value = QuestionnaireURL or
-    Lower(QR.identifier.value) ~ Lower(QuestionnaireName)) and QR.status.value = 'completed'
+    Lower(QR.identifier.value) ~ Lower(QuestionnaireName) or
+    PositionOf(CurrentQuestionnaire.id, QR.questionnaire.value) != -1) and QR.status.value = 'completed'
   )
+  
+define function GetResponseAnswerByLinkId(linkId String, responses List<FHIR.QuestionnaireResponse.Item>):
+  (responses r where r.linkId.value = linkId) I
+  return case
+      //answer in FHIR coding format 
+      when I.answer[0].value is FHIR.Coding then I.answer[0].value.display.value
+      else I.answer[0].value.value
+    end
+
+define function GetResponseValueByLinkId(linkId String, responses List<FHIR.QuestionnaireResponse.Item>):
+  (responses r where r.linkId.value = linkId) I
+  return I.answer[0].value
 
 define function FormattedResponses(responses List<FHIR.QuestionnaireResponse.Item>):
-  responses R 
+  QuestionnaireItems Q
   return {
-    id: R.linkId.value,
-   answer: case
-      //answer in FHIR coding format 
-      when R.answer[0].value is FHIR.Coding then R.answer[0].value.display.value
-      else R.answer[0].value.value
-    end,
-    value: R.answer[0].value,
-    question: if R.linkId.value = scoringQuestionId then '<b>' + R.text.value + '</b>' else R.text.value,
-    text: R.text.value
+    id: Q.linkId.value,
+    answer: singleton from (GetResponseAnswerByLinkId(Q.linkId.value, responses)),
+    value: singleton from (GetResponseValueByLinkId(Q.linkId.value, responses)),
+    question: if Q.linkId.value= scoringQuestionId then '<b>' + Q.text.value + '</b>' else Q.text.value,
+    text: Q.text.value
   }
 
 

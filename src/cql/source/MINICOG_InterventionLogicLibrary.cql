@@ -46,7 +46,8 @@ define QuestionnaireItems:
 define QuestionnaireResponses:
   ([QuestionnaireResponse] QR
     where (QR.questionnaire.value = QuestionnaireURL or
-    Lower(QR.identifier.value) ~ Lower(QuestionnaireName)) and QR.status.value = 'completed'
+    Lower(QR.identifier.value) ~ Lower(QuestionnaireName) or 
+    PositionOf(CurrentQuestionnaire.id, QR.questionnaire.value) != -1) and QR.status.value = 'completed'
   )
 
 define function FormattedResponses(responses List<FHIR.QuestionnaireResponse.Item>):

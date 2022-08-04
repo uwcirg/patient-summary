@@ -4,7 +4,6 @@ const Rect =  (props) => {
           const { cx, cy, color, value } = props;
           if (!cx && !(parseInt(cx) === 0)) return null;
           if (!cy && !(parseInt(cy) === 0)) return null;
-          console.log("color? ", color)
           return (
             <rect
               x={cx - 3}
@@ -34,7 +33,6 @@ const CHART_CONFIG = {
   minicog: {
     id: "minicog",
     title: "Scores by Date",
-    maxYValue: 5,
     type: "linechart",
     yDomain: [0, 5],
     yTicks: [0, 1, 2, 3, 4, 5],
@@ -59,14 +57,15 @@ const CHART_CONFIG = {
       });
     },
     xTickFormatter: (item) => new Date(item).toISOString().substring(0, 10),
-    yFields: [
+    // applicable only to line graph
+    yLineFields: [
       {
         key: "word_recall",
-        color: "#7e57c2",
+        color: "#6d4c41",
         strokeWidth: 1,
         strokeDasharray: "4 2",
         legendType: "square",
-        dot: (props) => <Rect {...props} color="#7e57c2"></Rect>,
+        dot: (props) => <Rect {...props} color="#6d4c41"></Rect>,
       },
       {
         key: "clock_draw",
@@ -78,14 +77,13 @@ const CHART_CONFIG = {
       },
       {
         key: "total",
-        color: "#004d40",
+        color: "#00897b",
         strokeWidth: 2,
       },
     ],
   },
   phq9: {
     id: "phq9",
-    maxYValue: 27,
     type: "linechart",
     legendType: "none",
     yDomain: [0, 27],

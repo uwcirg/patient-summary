@@ -63,7 +63,8 @@ export default function Responses(props) {
   const getQuestion = (item) => {
     return item.question || item.text || item.id;
   };
-  const hasResponses = () => data && data.length > 0;
+  const hasData = () => data && data.length > 0;
+  const hasResponses = (responses) => responses && Array.isArray(responses) && responses.length > 0;
 
   const Root = styled("div")(({ theme }) => ({
     width: "100%",
@@ -75,10 +76,10 @@ export default function Responses(props) {
 
   return (
     <>
-      {!hasResponses() && (
+      {!hasData() && (
         <Alert severity="warning">No recorded response</Alert>
       )}
-      {hasResponses() && (
+      {hasData() && (
         <Root>
           <Typography
             variant="subtitle1"
@@ -111,7 +112,8 @@ export default function Responses(props) {
                 component={Paper}
                 sx={{ marginTop: theme.spacing(2) }}
               >
-                <Table aria-label="responses table" size="small" role="table">
+                {!hasResponses(item.responses) && <Alert severity="warning">No responses.</Alert>}
+                {hasResponses(item.responses) && <Table aria-label="responses table" size="small" role="table">
                   <TableHead
                     sx={{
                       backgroundColor:
@@ -152,7 +154,7 @@ export default function Responses(props) {
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
+                </Table>}
               </TableContainer>
             </TabPanel>
           ))}
@@ -162,5 +164,8 @@ export default function Responses(props) {
   );
 }
 Responses.propTypes = {
-  data: PropTypes.array.isRequired,
+  data: PropTypes.arrayOf(PropTypes.shape({
+    date: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+    responses: PropTypes.array,
+  })),
 };

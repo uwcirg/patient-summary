@@ -31,7 +31,7 @@ export default function Header() {
     e.target.classList.remove("invisible");
   };
   return (
-    <AppBar position="fixed" elevation={1} role="heading">
+    <AppBar position="fixed" elevation={1}>
       <Toolbar>
         <Stack direction={"row"} spacing={2} alignItems="center">
           <img style={{width:"180px"}} src={`/assets/${getEnv("REACT_APP_PROJECT_ID")}/logo.png`} alt={"project logo"} onLoad={handleImageLoaded} onError={handleImageLoaded}></img>

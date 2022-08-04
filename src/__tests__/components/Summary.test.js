@@ -10,6 +10,26 @@ test("Renders summary - empty data set", () => {
   render(<Responses data={[]}/>);
 });
 
+test("Render summary - null data", () => {
+  render(<Responses data={null} />);
+});
+
+test("Render summary - no responses data set", () => {
+  const badData = {
+    date : "2022-07-01",
+    responses: null
+  };
+  render(<Responses data={badData}></Responses>)
+});
+
+test("Render summary - malformed responses data set", () => {
+  const badData = [{
+    date: "2022-07-01",
+    responses: {"test": "test"},
+  }];
+  render(<Responses data={badData}></Responses>);
+});
+
 test("Render summary - non-empty data set", () => {
   const dummyData = [
     {

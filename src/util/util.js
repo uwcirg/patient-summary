@@ -3,7 +3,7 @@ import ChartConfig from "../config/chart_config.js";
 export function getEnv(key) {
   if (!process || !process.env) return "";
   return process.env[key];
-};
+}
 
 export async function getInterventionLogicLib(interventionId) {
   if (!interventionId) throw new Error("No intervention id specified");
@@ -19,14 +19,14 @@ export async function getInterventionLogicLib(interventionId) {
     throw new Error("Error loading Cql ELM library " + e);
   }
   return [elmJson, valueSetJson];
-};
+}
 
 export function getFHIRResourcePaths(patientId) {
   if (!patientId) return [];
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
   let resources = resourcesToLoad
     ? resourcesToLoad.split(",")
-    : ["QuestionnaireResponse","Questionnaire"];
+    : ["QuestionnaireResponse", "Questionnaire"];
   return resources.map((resource) => {
     let path = `/${resource}`;
     const observationCategories = getEnv(
@@ -47,7 +47,7 @@ export function getFHIRResourcePaths(patientId) {
     }
     return path;
   });
-};
+}
 
 export function isValidDate(date) {
   return (
@@ -55,18 +55,18 @@ export function isValidDate(date) {
     Object.prototype.toString.call(date) === "[object Date]" &&
     !isNaN(date)
   );
-};
+}
 
-export function getChartConfig (questionnaire) {
+export function getChartConfig(questionnaire) {
   const qChartConfig = ChartConfig[questionnaire.toLowerCase()] || {};
   return { ...ChartConfig["default"], ...qChartConfig };
-};
+}
 
-export function getQuestionnaireList () {
+export function getQuestionnaireList() {
   const configList = getEnv("REACT_APP_QUESTIONNAIRES");
   if (configList) return configList.split(",");
   return [];
-};
+}
 
 export function imageOK(img) {
   if (!img) {
@@ -82,7 +82,7 @@ export function imageOK(img) {
     return false;
   }
   return true;
-};
+}
 
 export function injectFaviconByProject() {
   let faviconEl = document.querySelector("link[rel*='icon']");
@@ -90,7 +90,7 @@ export function injectFaviconByProject() {
   const projectId = getEnv("REACT_APP_PROJECT_ID");
   if (!projectId) return;
   faviconEl.href = `/assets/${projectId}/favicon.ico`;
-};
+}
 
 export function isInViewport(element) {
   if (!element) return false;
@@ -102,15 +102,33 @@ export function isInViewport(element) {
       (window.innerHeight || document.documentElement.clientHeight) &&
     rect.right <= (window.innerWidth || document.documentElement.clientWidth)
   );
-};
+}
 
 export function hasData(arrObj) {
   return arrObj && arrObj.length > 0;
-};
+}
 
 export function getTomorrow() {
   return new Date(Date.now() + 24 * 60 * 60 * 1000);
-};
+}
+
+export function hasMatchedQuestionnaireFhirResource(sources, questionnaireId) {
+  if (!sources || !sources.length) return false;
+  if (!questionnaireId) return false;
+  const match = sources.filter(
+    (item) =>
+      item.resource &&
+      String(item.resource.resourceType).toLowerCase() === "questionnaire" &&
+      String(item.resource.name).toLowerCase() ===
+        String(questionnaireId).toLowerCase()
+  );
+  return match.length > 0;
+}
+
+export function callback(callbackFunc, params) {
+  if (!callbackFunc || typeof callbackFunc !== "function") return;
+  callbackFunc(params);
+}
 
 export const QUESTIONNAIRE_ANCHOR_ID_PREFIX = "questionnaireAnchor";
 export const queryPatientIdKey = "launch_queryPatientId";

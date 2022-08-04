@@ -12,12 +12,14 @@ import Stack from "@mui/material/Stack";
 import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
 import { initialzieCqlWorker } from "cql-worker";
 import { FhirClientContext } from "../FhirClientContext";
-import Error from "./Error";
+import Error from "./ErrorComponent";
 import {
+  callback,
   getFHIRResourcePaths,
   getInterventionLogicLib,
   getChartConfig,
   hasData,
+  hasMatchedQuestionnaireFhirResource,
   QUESTIONNAIRE_ANCHOR_ID_PREFIX,
 } from "../util/util";
 import Responses from "./Responses";
@@ -25,7 +27,7 @@ import Chart from "./Chart";
 
 export default function Summary(props) {
   const { client, patient } = useContext(FhirClientContext);
-  const { questionnaire, callbackFunc } = props;
+  const { questionnaire, callbackFunc, sectionAnchorPrefix } = props;
   const summaryReducer = (summary, action) => {
     if (action.type === "reset") {
       return {
@@ -57,8 +59,7 @@ export default function Summary(props) {
     type: "collection",
     entry: [{ resource: patient }],
   });
-  const shouldDisplayResponses = () =>
-    ready && hasData(questionnaire);
+  const shouldDisplayResponses = () => ready && hasData(questionnaire);
   const getFhirResources = useCallback(async () => {
     if (!client || !patient || !patient.id)
       throw new Error("Patient id is missing");
@@ -100,13 +101,6 @@ export default function Summary(props) {
     );
   }, [patientBundle]);
 
-  const callback = useCallback(
-    (obj) => {
-      if (callbackFunc) callbackFunc(obj);
-    },
-    [callbackFunc]
-  );
-
   useEffect(() => {
     if (hasData(fhirData)) return;
     const gatherPatientData = async () => {
@@ -126,10 +120,17 @@ export default function Summary(props) {
 
   useEffect(() => {
     if (error) {
-      callback({ status: "error" });
+      callback(callbackFunc, { status: "error" });
       setReady(true);
+      return;
     }
-    if (!hasData(fhirData)) {
+    if (ready || !hasData(fhirData)) {
+      return;
+    }
+    if (!hasMatchedQuestionnaireFhirResource(fhirData, questionnaire)) {
+      setError(
+        "No matching questionnaire found in FHIR server.  Unable to proceed."
+      );
       return;
     }
     // Define a web worker for evaluating CQL expressions
@@ -169,16 +170,16 @@ export default function Summary(props) {
         dispatch({ type: "update", payload: data });
         setReady(true);
         setChartReady(hasData(data.chartData));
-        callback({ status: "ok" });
+        callback(callbackFunc, { status: "ok" });
       })
       .catch((e) => setError(e));
     return () => cqlWorker.terminate();
-  }, [error, questionnaire, patientBundle, fhirData, callback]);
+  }, [error, ready, questionnaire, patientBundle, fhirData, callbackFunc]);
 
   return (
     <>
       <div
-        id={`${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${questionnaire}`}
+        id={`${sectionAnchorPrefix || QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${questionnaire}`}
         style={{ position: "relative", top: -64, height: 2, width: 2 }}
       ></div>
       <Stack
@@ -239,4 +240,5 @@ export default function Summary(props) {
 Summary.propTypes = {
   questionnaire: PropTypes.string.isRequired,
   callbackFunc: PropTypes.func,
+  sectionAnchorPrefix: PropTypes.string
 };

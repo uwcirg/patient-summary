@@ -3,7 +3,7 @@ import FHIR from "fhirclient";
 import { ThemeProvider } from "@mui/material/styles";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
-import Error from "./Error";
+import Error from "./ErrorComponent";
 import { getEnv, queryPatientIdKey } from "../util/util.js";
 import "../style/App.scss";
 import { getTheme } from "../config/theme_config";
@@ -29,7 +29,7 @@ export default function Launch() {
     })
       .then((result) => {
         if (!result.ok) {
-          throw Error(result.status);
+          throw new Error(result.status.toString());
         }
         return result.json();
       })

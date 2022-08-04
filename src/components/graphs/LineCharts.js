@@ -24,13 +24,13 @@ export default function LineCharts(props) {
     xLabel,
     yDomain,
     yFieldKey,
-    yFields,
+    yLineFields,
     yLabel,
     yTicks,
     data,
   } = props;
   const theme = useTheme();
-  const hasYFields = () => yFields && yFields.length > 0;
+  const hasYFields = () => yLineFields && yLineFields.length > 0;
   const defaultOptions = {
     activeDot: { r: 6 },
     dot: { strokeWidth: 2 },
@@ -88,14 +88,14 @@ export default function LineCharts(props) {
           />
           <Legend
             formatter={(value) => (
-              <span style={{ marginRight: "8px" }}>
+              <span style={{ marginRight: "8px", fontSize: "14px" }}>
                 {value.replace(/_/g, " ")}
               </span>
             )}
             iconSize={12}
           />
           {hasYFields() &&
-            yFields.map((item, index) => (
+            yLineFields.map((item, index) => (
               <Line
                 {...defaultOptions}
                 key={`line_${id}_${index}`}

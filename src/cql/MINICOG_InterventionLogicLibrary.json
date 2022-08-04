@@ -191,44 +191,84 @@
                   "operand" : [ {
                      "type" : "Or",
                      "operand" : [ {
-                        "type" : "Equal",
+                        "type" : "Or",
                         "operand" : [ {
-                           "path" : "value",
-                           "type" : "Property",
-                           "source" : {
-                              "path" : "questionnaire",
-                              "scope" : "QR",
-                              "type" : "Property"
-                           }
+                           "type" : "Equal",
+                           "operand" : [ {
+                              "path" : "value",
+                              "type" : "Property",
+                              "source" : {
+                                 "path" : "questionnaire",
+                                 "scope" : "QR",
+                                 "type" : "Property"
+                              }
+                           }, {
+                              "name" : "QuestionnaireURL",
+                              "type" : "ParameterRef"
+                           } ]
                         }, {
-                           "name" : "QuestionnaireURL",
-                           "type" : "ParameterRef"
+                           "type" : "Equivalent",
+                           "operand" : [ {
+                              "type" : "Lower",
+                              "operand" : {
+                                 "name" : "ToString",
+                                 "libraryName" : "FHIRHelpers",
+                                 "type" : "FunctionRef",
+                                 "operand" : [ {
+                                    "path" : "value",
+                                    "type" : "Property",
+                                    "source" : {
+                                       "path" : "identifier",
+                                       "scope" : "QR",
+                                       "type" : "Property"
+                                    }
+                                 } ]
+                              }
+                           }, {
+                              "type" : "Lower",
+                              "operand" : {
+                                 "name" : "QuestionnaireName",
+                                 "type" : "ParameterRef"
+                              }
+                           } ]
                         } ]
                      }, {
-                        "type" : "Equivalent",
-                        "operand" : [ {
-                           "type" : "Lower",
-                           "operand" : {
-                              "name" : "ToString",
-                              "libraryName" : "FHIRHelpers",
-                              "type" : "FunctionRef",
-                              "operand" : [ {
+                        "type" : "Not",
+                        "operand" : {
+                           "type" : "Equal",
+                           "operand" : [ {
+                              "type" : "PositionOf",
+                              "pattern" : {
+                                 "name" : "ToString",
+                                 "libraryName" : "FHIRHelpers",
+                                 "type" : "FunctionRef",
+                                 "operand" : [ {
+                                    "path" : "id",
+                                    "type" : "Property",
+                                    "source" : {
+                                       "name" : "CurrentQuestionnaire",
+                                       "type" : "ExpressionRef"
+                                    }
+                                 } ]
+                              },
+                              "string" : {
                                  "path" : "value",
                                  "type" : "Property",
                                  "source" : {
-                                    "path" : "identifier",
+                                    "path" : "questionnaire",
                                     "scope" : "QR",
                                     "type" : "Property"
                                  }
-                              } ]
-                           }
-                        }, {
-                           "type" : "Lower",
-                           "operand" : {
-                              "name" : "QuestionnaireName",
-                              "type" : "ParameterRef"
-                           }
-                        } ]
+                              }
+                           }, {
+                              "type" : "Negate",
+                              "operand" : {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                 "value" : "1",
+                                 "type" : "Literal"
+                              }
+                           } ]
+                        }
                      } ]
                   }, {
                      "type" : "Equal",
