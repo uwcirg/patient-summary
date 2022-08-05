@@ -27,6 +27,8 @@ export default function LineCharts(props) {
     yLineFields,
     yLabel,
     yTicks,
+    yTickFormatter,
+    tooltipLabelFormatter,
     data,
   } = props;
   const theme = useTheme();
@@ -77,6 +79,7 @@ export default function LineCharts(props) {
             label={{ value: yLabel, angle: -90, position: "insideLeft" }}
             interval="preserveStartEnd"
             tick={{ style: { fontSize: "12px" } }}
+            tickFormatter={yTickFormatter}
             ticks={yTicks}
             tickMargin={8}
           />
@@ -84,7 +87,8 @@ export default function LineCharts(props) {
             itemStyle={{ fontSize: "12px" }}
             labelStyle={{ fontSize: "12px" }}
             animationBegin={500}
-            animationDuration={500}
+            animationDuration={550}
+            labelFormatter={tooltipLabelFormatter}
           />
           <Legend
             formatter={(value) => (

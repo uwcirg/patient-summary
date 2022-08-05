@@ -4,12 +4,14 @@ import { ThemeProvider } from "@mui/material/styles";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import Error from "./ErrorComponent";
-import { getEnv, queryPatientIdKey } from "../util/util.js";
+import { getEnv, fetchEnvData, queryPatientIdKey } from "../util/util.js";
 import "../style/App.scss";
 import { getTheme } from "../config/theme_config";
 
 export default function Launch() {
   const [error, setError] = React.useState("");
+
+  React.useEffect(() => fetchEnvData(), []);
 
   React.useEffect(() => {
     let authURL = "launch-context.json";
