@@ -3,24 +3,23 @@ import FHIR from "fhirclient";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import ErrorComponent from "./ErrorComponent";
-import { getEnv, queryPatientIdKey } from "../util/util.js";
+import { fetchEnvData, getEnv, queryPatientIdKey } from "../util/util.js";
 import "../style/App.scss";
 
 export default function Launch() {
   const [error, setError] = React.useState("");
 
+  React.useEffect(() => fetchEnvData(), []);
   React.useEffect(() => {
-    let authURL = "launch-context.json";
     const backendURL = getEnv("REACT_APP_BACKEND_URL");
-    if (backendURL) {
-      authURL = `${backendURL}/auth/auth-info`;
-    }
+    const authURL = backendURL
+      ? `${backendURL}/auth/auth-info`
+      : "launch-context.json";
     const urlParams = new URLSearchParams(window.location.search);
     //retrieve patient id from URL querystring if any
-    let patientId = urlParams.get("patient");
+    const patientId = urlParams.get("patient");
     console.log("patient id from url query string: ", patientId);
     console.log("Auth url ", authURL);
-
     fetch(authURL, {
       // include cookies in request
       credentials: "include",
@@ -42,7 +41,6 @@ export default function Launch() {
         //see https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html
         const envAuthScopes = getEnv("REACT_APP_AUTH_SCOPES");
         if (envAuthScopes) json.scope = envAuthScopes;
-
         console.log("launch context json ", json);
         FHIR.oauth2.authorize(json).catch((e) => {
           setError(e);
