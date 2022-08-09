@@ -1,5 +1,5 @@
 # TODO update to newer version: Active LTS or Current
-FROM node:14
+FROM node:14 as dev
 
 # cache hack (very fragile): initially only copy list of project dependencies
 COPY --chown=node:node package.json package-lock.json /opt/node/
@@ -18,3 +18,17 @@ WORKDIR /opt/node/app
 
 EXPOSE 3000
 CMD ["npm", "start"]
+
+
+FROM dev as node-prod
+ENV NODE_ENV=production
+RUN npm run build
+
+
+FROM nginx as prod
+COPY docker-entrypoint-override.sh /usr/bin/docker-entrypoint-override.sh
+# write environment variables to config file and start
+ENTRYPOINT ["/usr/bin/docker-entrypoint-override.sh", "/docker-entrypoint.sh"]
+CMD ["nginx","-g","daemon off;"]
+
+COPY --from=node-prod /opt/node/app/build /usr/share/nginx/html
