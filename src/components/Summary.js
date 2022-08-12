@@ -1,8 +1,6 @@
 import {
-  useCallback,
   useState,
   useEffect,
-  useContext,
   useReducer,
 } from "react";
 import PropTypes from "prop-types";
@@ -11,11 +9,9 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
 import { initialzieCqlWorker } from "cql-worker";
-import { FhirClientContext } from "../FhirClientContext";
 import Error from "./ErrorComponent";
 import {
   callback,
-  getFHIRResourcePaths,
   getInterventionLogicLib,
   getChartConfig,
   hasData,
@@ -26,8 +22,7 @@ import Responses from "./Responses";
 import Chart from "./Chart";
 
 export default function Summary(props) {
-  const { client, patient } = useContext(FhirClientContext);
-  const { questionnaire, callbackFunc, sectionAnchorPrefix } = props;
+  const { questionnaire, patientBundle, callbackFunc, sectionAnchorPrefix } = props;
   const summaryReducer = (summary, action) => {
     if (action.type === "reset") {
       return {
@@ -52,87 +47,23 @@ export default function Summary(props) {
   const [ready, setReady] = useState(false);
   const [chartReady, setChartReady] = useState(false);
   const [error, setError] = useState("");
-  const [fhirData, setFhirData] = useState(null);
-  const [patientBundle, setPatientBundle] = useState({
-    resourceType: "Bundle",
-    id: "resource-bundle",
-    type: "collection",
-    entry: [{ resource: patient }],
-  });
   const shouldDisplayResponses = () => ready && hasData(questionnaire);
-  const getFhirResources = useCallback(async () => {
-    if (!client || !patient || !patient.id)
-      throw new Error("Patient id is missing");
-    const resources = getFHIRResourcePaths(patient.id);
-    const requests = resources.map((resource) => client.request(resource));
-    return Promise.allSettled(requests).then((results) => {
-      let bundle = [];
-      results.forEach((item) => {
-        if (item.status === "rejected") {
-          console.log("Fhir resource retrieval error ", item.reason);
-          return true;
-        }
-        const result = item.value;
-        if (result.resourceType === "Bundle" && result.entry) {
-          result.entry.forEach((o) => {
-            if (o && o.resource) bundle.push({ resource: o.resource });
-          });
-        } else if (Array.isArray(result)) {
-          result.forEach((o) => {
-            if (o.resourceType) bundle.push({ resource: o });
-          });
-        } else {
-          bundle.push({ resource: result });
-        }
-      });
-      return bundle;
-    });
-  }, [client, patient]);
-
+  
   const formatChartData = (data) => {
     if (summary.chartConfig && summary.chartConfig.dataFormatter)
       return summary.chartConfig.dataFormatter(data);
     return data;
   };
 
-  const patientBundleLoaded = useCallback(() => {
-    return (
-      patientBundle && patientBundle.entry && patientBundle.entry.length > 1
-    );
-  }, [patientBundle]);
-
   useEffect(() => {
-    if (hasData(fhirData)) return;
-    const gatherPatientData = async () => {
-      if (patientBundleLoaded()) return;
-      /* get FHIR resources */
-      const dataResult = await getFhirResources().catch((e) => setError(e));
-      setPatientBundle((prevPatientBundle) => {
-        return {
-          ...prevPatientBundle,
-          entry: [...prevPatientBundle.entry, ...dataResult],
-        };
-      });
-      setFhirData(dataResult);
-    };
-    gatherPatientData();
-  }, [getFhirResources, patientBundleLoaded, fhirData]);
-
-  useEffect(() => {
-    if (error) {
-      callback(callbackFunc, { status: "error" });
-      setReady(true);
-      return;
-    }
-    if (ready || !hasData(fhirData)) {
-      return;
-    }
-    if (!hasMatchedQuestionnaireFhirResource(fhirData, questionnaire)) {
+  
+    if (!hasMatchedQuestionnaireFhirResource(patientBundle, questionnaire)) {
       setError(
         "No matching questionnaire found in FHIR server.  Unable to proceed."
       );
       return;
     }
+    if (ready) return;
     // Define a web worker for evaluating CQL expressions
     const cqlWorker = new Worker();
     // Initialize the cql-worker
@@ -144,19 +75,22 @@ export default function Summary(props) {
       /* get CQL expressions */
       const [elmJson, valueSetJson] = await getInterventionLogicLib(
         questionnaire
-      ).catch((e) => setError(e));
+      ).catch((e) => {
+        throw new Error(e);
+      });
       // Send the cqlWorker an initial message containing the ELM JSON representation of the CQL expressions
       setupExecution(elmJson, valueSetJson);
       // Send patient info to CQL worker to process
       sendPatientBundle(patientBundle);
       // get formatted questionnaire responses
-      const cqlData = await evaluateExpression("ResponsesSummary").catch((e) =>
-        setError(e)
+      const cqlData = await evaluateExpression("ResponsesSummary").catch(
+        (e) => {
+          throw new Error(e);
+        }
       );
-      let chartData = null;
-      chartData = await evaluateExpression("ChartData").catch((e) =>
-        setError(e)
-      );
+      const chartData = await evaluateExpression("ChartData").catch((e) => {
+        throw new Error(e);
+      });
       const returnResult = {
         chartConfig: chartConfig,
         chartData: chartData,
@@ -172,9 +106,13 @@ export default function Summary(props) {
         setChartReady(hasData(data.chartData));
         callback(callbackFunc, { status: "ok" });
       })
-      .catch((e) => setError(e));
+      .catch((e) => {
+        setError(e);
+        setReady(true);
+        callback(callbackFunc, { status: "error" });
+      });
     return () => cqlWorker.terminate();
-  }, [error, ready, questionnaire, patientBundle, fhirData, callbackFunc]);
+  }, [questionnaire, patientBundle, ready, callbackFunc]);
 
   return (
     <>
@@ -239,6 +177,12 @@ export default function Summary(props) {
 }
 Summary.propTypes = {
   questionnaire: PropTypes.string.isRequired,
+  patientBundle: PropTypes.shape({
+    resourceType: PropTypes.string,
+    id: PropTypes.string,
+    type: PropTypes.string,
+    entry: PropTypes.array.isRequired,
+  }),
   callbackFunc: PropTypes.func,
-  sectionAnchorPrefix: PropTypes.string
+  sectionAnchorPrefix: PropTypes.string,
 };

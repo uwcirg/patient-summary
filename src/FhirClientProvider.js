@@ -1,18 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useState } from "react";
 import FHIR from "fhirclient";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import { FhirClientContext } from "./FhirClientContext";
-import { fetchEnvData, queryPatientIdKey } from "./util/util";
-import Error from "./components/ErrorComponent";
+import { queryPatientIdKey } from "./util/util";
+import ErrorComponent from "./components/ErrorComponent";
 
 export default function FhirClientProvider(props) {
   const [client, setClient] = useState(null);
-  const [error, setError] = useState("");
   const [patient, setPatient] = useState(null);
-  const [ready, setReady] = useState(false);
+  const [error, setError] = useState(null);
 
-  const getPatient = useCallback(async () => {
+  const getPatient = async (client) => {
     if (!client) return;
 
     //this is a workaround for when patient id is NOT embedded within the JWT token
@@ -22,36 +21,30 @@ export default function FhirClientProvider(props) {
       return client.request("/Patient/" + queryPatientId);
     }
     // Get the Patient resource
-    return await client.patient.read().then((pt) => {
-      return pt;
-    });
-  }, [client]);
-
-  useEffect(() => fetchEnvData(), []);
+    return await client.patient.read();
+  };
 
   useEffect(() => {
     FHIR.oauth2.ready().then(
       (client) => {
+        console.log("Auth complete, client ready.");
         setClient(client);
+        getPatient(client)
+          .then((result) => {
+            console.log("Patient loaded.");
+            setPatient(result);
+            setError(null);
+          })
+          .catch((e) => {
+            setError(e);
+          });
       },
       (error) => {
+        console.log("Auth error: ", error);
         setError(error);
       }
     );
   }, []);
-
-  useEffect(() => {
-    if (!client) return;
-    getPatient()
-      .then((result) => {
-        setPatient(result);
-        setReady(true);
-        setError("");
-      })
-      .catch((e) => {
-        setError(e);
-      });
-  }, [client, getPatient]);
 
   return (
     <FhirClientContext.Provider
@@ -61,17 +54,17 @@ export default function FhirClientProvider(props) {
         {({ client, error }) => {
           // any auth error that may have been rejected with
           if (error) {
-            return <Error message={error.message}></Error>;
+            return <ErrorComponent message={error.message}></ErrorComponent>;
           }
 
           // if client and patient are available render the children component(s)
-          if (!error && ready) {
+          if (client && patient) {
             return props.children;
           }
 
           // client is undefined until auth.ready() is fulfilled
           return (
-            <Stack spacing={2} direction="row" style={{padding: "24px"}}>
+            <Stack spacing={2} direction="row" style={{ padding: "24px" }}>
               <CircularProgress></CircularProgress>
               <div>Authorizing...</div>
             </Stack>

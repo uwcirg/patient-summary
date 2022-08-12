@@ -108,9 +108,9 @@ export function getTomorrow() {
 }
 
 export function hasMatchedQuestionnaireFhirResource(sources, questionnaireId) {
-  if (!sources || !sources.length) return false;
+  if (!sources || !sources.entry || !sources.entry.length) return false;
   if (!questionnaireId) return false;
-  const match = sources.filter(
+  const match = sources.entry.filter(
     (item) =>
       item.resource &&
       String(item.resource.resourceType).toLowerCase() === "questionnaire" &&

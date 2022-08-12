@@ -1,9 +1,18 @@
-import { createRef, forwardRef, useEffect, useCallback, useState } from "react";
+import {
+  createRef,
+  forwardRef,
+  useContext,
+  useEffect,
+  useCallback,
+  useState,
+} from "react";
 import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import { FhirClientContext } from "../FhirClientContext";
 import {
+  getFHIRResourcePaths,
   getQuestionnaireList,
   isInViewport,
   QUESTIONNAIRE_ANCHOR_ID_PREFIX,
@@ -13,12 +22,19 @@ import Summary from "./Summary";
 let scrollIntervalId = 0;
 
 export default function Summaries() {
+  const { client, patient } = useContext(FhirClientContext);
   const fabRef = createRef();
   const anchorRef = createRef();
   const selectorRef = createRef();
   const questionnaireList = getQuestionnaireList();
+  const [patientBundle, setPatientBundle] = useState({
+    resourceType: "Bundle",
+    id: "resource-bundle",
+    type: "collection",
+    entry: [],
+  });
   const [updated, setUpdated] = useState(0);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState(null);
 
   const BoxRef = forwardRef((props, ref) => (
     <Box {...props} ref={ref}>
@@ -53,8 +69,55 @@ export default function Summaries() {
       setUpdated((prev) => prev + 1);
     }
   };
-
   const isReady = () => updated === questionnaireList.length || error;
+
+  const getFhirResources = useCallback(async () => {
+    if (!client || !patient || !patient.id)
+      throw new Error("Client or patient missing.");
+    const resources = getFHIRResourcePaths(patient.id);
+    const requests = resources.map((resource) => client.request(resource));
+    let bundle = [];
+    bundle.push({ resource: patient });
+    return Promise.allSettled(requests).then((results) => {
+      results.forEach((item) => {
+        if (item.status === "rejected") {
+          console.log("Fhir resource retrieval error ", item.reason);
+          return true;
+        }
+        const result = item.value;
+        if (result.resourceType === "Bundle" && result.entry) {
+          result.entry.forEach((o) => {
+            if (o && o.resource) bundle.push({ resource: o.resource });
+          });
+        } else if (Array.isArray(result)) {
+          result.forEach((o) => {
+            if (o.resourceType) bundle.push({ resource: o });
+          });
+        } else {
+          bundle.push({ resource: result });
+        }
+      });
+      return bundle;
+    });
+  }, [client, patient]);
+
+  const hasFhirResources = () => patientBundle.entry.length > 0;
+
+  useEffect(() => {
+    /* get FHIR resources */
+    getFhirResources().then(
+      (dataResult) => {
+        console.log("data ", dataResult)
+        setPatientBundle((prevPatientBundle) => {
+          return {
+            ...prevPatientBundle,
+            entry: [...prevPatientBundle.entry, ...dataResult],
+          };
+        });
+      },
+      (e) => setError(e)
+    );
+  }, [getFhirResources]);
 
   useEffect(() => {
     window.addEventListener("scroll", handleFab);
@@ -113,10 +176,11 @@ export default function Summaries() {
             }}
           ></QuestionnaireSelector>
         </BoxRef>
-        {questionnaireList.map((questionnaire, index) => {
+        {hasFhirResources() && questionnaireList.map((questionnaire, index) => {
           return (
             <Summary
               questionnaire={questionnaire}
+              patientBundle={patientBundle}
               key={`questionnaire_${index}`}
               callbackFunc={handleCallback}
               sectionAnchorPrefix={QUESTIONNAIRE_ANCHOR_ID_PREFIX}
