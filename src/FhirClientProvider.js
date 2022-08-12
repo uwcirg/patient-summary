@@ -45,7 +45,7 @@ export default function FhirClientProvider(props) {
       }
     );
   }, []);
-
+  
   return (
     <FhirClientContext.Provider
       value={{ client: client, patient: patient, error: error } || {}}

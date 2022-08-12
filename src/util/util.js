@@ -189,6 +189,5 @@ export function getEnvs() {
     ...processEnvs,
   };
 }
-
 export const QUESTIONNAIRE_ANCHOR_ID_PREFIX = "questionnaireAnchor";
 export const queryPatientIdKey = "launch_queryPatientId";

@@ -1,8 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useReducer,
-} from "react";
+import { useState, useEffect, useReducer } from "react";
 import PropTypes from "prop-types";
 import Typography from "@mui/material/Typography";
 import LinearProgress from "@mui/material/LinearProgress";
@@ -22,7 +18,8 @@ import Responses from "./Responses";
 import Chart from "./Chart";
 
 export default function Summary(props) {
-  const { questionnaire, patientBundle, callbackFunc, sectionAnchorPrefix } = props;
+  const { questionnaire, patientBundle, callbackFunc, sectionAnchorPrefix } =
+    props;
   const summaryReducer = (summary, action) => {
     if (action.type === "reset") {
       return {
@@ -48,7 +45,7 @@ export default function Summary(props) {
   const [chartReady, setChartReady] = useState(false);
   const [error, setError] = useState("");
   const shouldDisplayResponses = () => ready && hasData(questionnaire);
-  
+
   const formatChartData = (data) => {
     if (summary.chartConfig && summary.chartConfig.dataFormatter)
       return summary.chartConfig.dataFormatter(data);
@@ -56,7 +53,6 @@ export default function Summary(props) {
   };
 
   useEffect(() => {
-  
     if (!hasMatchedQuestionnaireFhirResource(patientBundle, questionnaire)) {
       setError(
         "No matching questionnaire found in FHIR server.  Unable to proceed."
@@ -117,7 +113,9 @@ export default function Summary(props) {
   return (
     <>
       <div
-        id={`${sectionAnchorPrefix || QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${questionnaire}`}
+        id={`${
+          sectionAnchorPrefix || QUESTIONNAIRE_ANCHOR_ID_PREFIX
+        }_${questionnaire}`}
         style={{ position: "relative", top: -64, height: 2, width: 2 }}
       ></div>
       <Stack

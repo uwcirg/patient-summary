@@ -3,6 +3,9 @@
 version: "3.4"
 services:
   frontend:
+    build:
+      # stop building Dockerfile after dev stage
+      target: dev
     volumes:
       # mount code directory into container to allow hot-reloading
       - ./:/opt/node/app
