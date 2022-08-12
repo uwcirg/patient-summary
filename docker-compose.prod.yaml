@@ -1,0 +1,12 @@
+# docker-compose production overrides
+---
+version: "3.4"
+services:
+  frontend:
+    build:
+      target: prod
+    environment:
+      NODE_ENV: production
+    ports:
+      # map container port 80 to $FRONTEND_EXTERNAL_PORT (port 3000 by default) on localhost (127.0.0.1)
+      - 127.0.0.1:${FRONTEND_EXTERNAL_PORT:-3000}:80
