@@ -26,6 +26,8 @@ RUN npm run build
 
 
 FROM nginx as prod
+ARG REACT_APP_VERSION_STRING
+ENV REACT_APP_VERSION_STRING=$REACT_APP_VERSION_STRING
 COPY docker-entrypoint-override.sh /usr/bin/docker-entrypoint-override.sh
 # write environment variables to config file and start
 ENTRYPOINT ["/usr/bin/docker-entrypoint-override.sh", "/docker-entrypoint.sh"]
