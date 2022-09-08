@@ -4,5 +4,9 @@ services:
   frontend:
     build:
       context: .
+      args:
+        # set build arg from environment variable with same name
+        # add default to squelch warnings
+        REACT_APP_VERSION_STRING: ${REACT_APP_VERSION_STRING:-local}
     env_file:
       - frontend.env
