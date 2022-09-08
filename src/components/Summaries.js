@@ -20,6 +20,7 @@ import {
 import QuestionnaireSelector from "./QuestionnaireSelector";
 import Summary from "./Summary";
 let scrollIntervalId = 0;
+let scrollToTimeoutId = 0;
 
 export default function Summaries() {
   const { client, patient } = useContext(FhirClientContext);
@@ -27,6 +28,7 @@ export default function Summaries() {
   const anchorRef = createRef();
   const selectorRef = createRef();
   const questionnaireList = getQuestionnaireList();
+  const [selectedQuestionnaire, setSelectedQuestionnaire] = useState("");
   const [patientBundle, setPatientBundle] = useState({
     resourceType: "Bundle",
     id: "resource-bundle",
@@ -98,6 +100,8 @@ export default function Summaries() {
         }
       });
       return bundle;
+    }, e => {
+      throw new Error(e);
     });
   }, [client, patient]);
 
@@ -115,7 +119,7 @@ export default function Summaries() {
           };
         });
       },
-      (e) => setError(e)
+      (e) => setError(e.message?e.message:e)
     );
   }, [getFhirResources]);
 
@@ -152,6 +156,7 @@ export default function Summaries() {
             e.stopPropagation();
             if (!anchorRef.current) return;
             anchorRef.current.scrollIntoView();
+            setSelectedQuestionnaire("");
           }}
           title="Back to Top"
         >
@@ -163,8 +168,11 @@ export default function Summaries() {
           <QuestionnaireSelector
             title="Go to Questionnaire"
             list={questionnaireList}
+            value={selectedQuestionnaire}
             handleSelectorChange={(event) => {
-              setTimeout(
+              setSelectedQuestionnaire(event.target.value);
+              clearTimeout(scrollToTimeoutId);
+              scrollToTimeoutId = setTimeout(
                 () =>
                   document
                     .querySelector(

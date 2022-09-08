@@ -36,6 +36,7 @@ export default function QuestionnaireSelector(props) {
         >
           <Select
             id="qSelector"
+            value={props.value}
             renderValue={(value) => {
               if (!value) return defaultMenuItem();
               else

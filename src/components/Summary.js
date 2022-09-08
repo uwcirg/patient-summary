@@ -103,7 +103,7 @@ export default function Summary(props) {
         callback(callbackFunc, { status: "ok" });
       })
       .catch((e) => {
-        setError(e);
+        setError(e.message ? e.message: e);
         setReady(true);
         callback(callbackFunc, { status: "error" });
       });

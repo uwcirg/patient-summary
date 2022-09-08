@@ -6,7 +6,7 @@ const Chart = (props) => {
   return (
     <div className="chart__container">
       {props.type === "linechart" && <LineChart {...props.data}></LineChart>}
-      {eligibleCharts.indexOf(props.type) === -1 && <Error message="invalid graph type specified"></Error>}
+      {eligibleCharts.indexOf(props.type) === -1 && <Error message="Graph type specified is not available."></Error>}
       {/* other types of graph go here */}
     </div>
   );
