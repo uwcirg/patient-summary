@@ -84,7 +84,7 @@ export function injectFaviconByProject() {
   if (!faviconEl) return;
   const projectId = getEnv("REACT_APP_PROJECT_ID");
   if (!projectId) return;
-  faviconEl.href = `/assets/${projectId}/favicon.ico`;
+  faviconEl.href = `/assets/${projectId}/img/favicon.ico`;
 }
 
 export function isInViewport(element) {

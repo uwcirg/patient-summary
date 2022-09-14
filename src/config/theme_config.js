@@ -1,9 +1,12 @@
 import { createTheme } from "@mui/material/styles";
-import { teal } from "@mui/material/colors";
+import { teal, grey } from "@mui/material/colors";
 import { getEnv } from "../util/util";
 export const themes = {
   default: createTheme({
     palette: {
+      lighter: {
+        main: teal[100]
+      },
       light: {
         main: teal[300],
       },
@@ -14,7 +17,7 @@ export const themes = {
         main: teal[800],
       },
       secondary: {
-        main: "#4f3606",
+        main: grey[800],
       },
     },
     typography: {

@@ -1,4 +1,5 @@
 import { useContext } from "react";
+import { useTheme } from "@mui/material/styles";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
@@ -7,6 +8,7 @@ import { FhirClientContext } from "../FhirClientContext";
 import {getEnv, imageOK} from "../util/util";
 
 export default function Header() {
+  const theme = useTheme();
   const { patient } = useContext(FhirClientContext);
   const hasPatientName = () => {
     return patient && patient.name && patient.name.length;
@@ -32,9 +34,12 @@ export default function Header() {
   };
   return (
     <AppBar position="fixed" elevation={1}>
-      <Toolbar>
+      <Toolbar sx={{
+        backgroundColor: theme.palette.lighter.main,
+        color: theme.palette.secondary.main
+      }}>
         <Stack direction={"row"} spacing={2} alignItems="center">
-          <img style={{width:"180px"}} src={`/assets/${getEnv("REACT_APP_PROJECT_ID")}/logo.png`} alt={"project logo"} onLoad={handleImageLoaded} onError={handleImageLoaded}></img>
+          <img style={{width:"180px"}} src={`/assets/${getEnv("REACT_APP_PROJECT_ID")}/img/logo.png`} alt={"project logo"} onLoad={handleImageLoaded} onError={handleImageLoaded}></img>
           <Typography variant="h4" component="h1" sx={{fontSize: {xs: '1.1rem', md: '1.8rem'}}}>
             Patient Summary
           </Typography>
