@@ -4,7 +4,7 @@ import Alert from '@mui/material/Alert';
 
 export default function Error(props) {
   return (
-    <div><Alert severity="error" variant="filled">Error launching <span>{props.message}</span></Alert></div>
+    <div><Alert severity="error" variant="filled">{props.message}</Alert></div>
     );
 }
 

@@ -6,6 +6,7 @@ import {
   useCallback,
   useState,
 } from "react";
+import Alert from "@mui/material/Alert";
 import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
@@ -105,7 +106,13 @@ export default function Summaries() {
     });
   }, [client, patient]);
 
-  const hasFhirResources = () => patientBundle.entry.length > 0;
+  const hasQuestionnaireResponses = () => {
+     return patientBundle.entry && patientBundle.entry.filter(
+       (item) =>
+         item.resource &&
+         String(item.resource.resourceType).toLowerCase() === "questionnaireresponse"
+     ).length > 0;
+  };
 
   useEffect(() => {
     /* get FHIR resources */
@@ -163,39 +170,46 @@ export default function Summaries() {
           <ArrowUpwardIcon aria-label="Back to Top" />
         </FabRef>
       )}
-      <Stack className="summaries">
-        <BoxRef ref={selectorRef} style={{ opacity: isReady() ? 1 : 0.4 }}>
-          <QuestionnaireSelector
-            title="Go to Questionnaire"
-            list={questionnaireList}
-            value={selectedQuestionnaire}
-            handleSelectorChange={(event) => {
-              setSelectedQuestionnaire(event.target.value);
-              clearTimeout(scrollToTimeoutId);
-              scrollToTimeoutId = setTimeout(
-                () =>
-                  document
-                    .querySelector(
-                      `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${event.target.value}`
-                    )
-                    .scrollIntoView(),
-                50
-              );
-            }}
-          ></QuestionnaireSelector>
-        </BoxRef>
-        {hasFhirResources() && questionnaireList.map((questionnaire, index) => {
-          return (
-            <Summary
-              questionnaire={questionnaire}
-              patientBundle={patientBundle}
-              key={`questionnaire_${index}`}
-              callbackFunc={handleCallback}
-              sectionAnchorPrefix={QUESTIONNAIRE_ANCHOR_ID_PREFIX}
-            ></Summary>
-          );
-        })}
-      </Stack>
+      {isReady() && !hasQuestionnaireResponses() && (
+        <Stack className="summaries">
+          <Alert severity="warning">No recorded response</Alert>
+        </Stack>
+      )}
+      {hasQuestionnaireResponses() && (
+        <Stack className="summaries">
+          <BoxRef ref={selectorRef} style={{ opacity: isReady() ? 1 : 0.4 }}>
+            <QuestionnaireSelector
+              title="Go to Questionnaire"
+              list={questionnaireList}
+              value={selectedQuestionnaire}
+              handleSelectorChange={(event) => {
+                setSelectedQuestionnaire(event.target.value);
+                clearTimeout(scrollToTimeoutId);
+                scrollToTimeoutId = setTimeout(
+                  () =>
+                    document
+                      .querySelector(
+                        `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${event.target.value}`
+                      )
+                      .scrollIntoView(),
+                  50
+                );
+              }}
+            ></QuestionnaireSelector>
+          </BoxRef>
+          {questionnaireList.map((questionnaire, index) => {
+            return (
+              <Summary
+                questionnaire={questionnaire}
+                patientBundle={patientBundle}
+                key={`questionnaire_${index}`}
+                callbackFunc={handleCallback}
+                sectionAnchorPrefix={QUESTIONNAIRE_ANCHOR_ID_PREFIX}
+              ></Summary>
+            );
+          })}
+        </Stack>
+      )}
     </>
   );
 }
