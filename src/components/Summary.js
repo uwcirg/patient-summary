@@ -122,11 +122,8 @@ export default function Summary(props) {
         className="summary"
         id={`summary_${questionnaire}`}
         sx={{
-          borderTop: 1,
-          borderColor: "divider",
           paddingTop: 2,
           paddingBottom: 2,
-          marginTop: 3,
         }}
         direction="column"
       >

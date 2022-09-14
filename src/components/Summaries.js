@@ -81,44 +81,51 @@ export default function Summaries() {
     const requests = resources.map((resource) => client.request(resource));
     let bundle = [];
     bundle.push({ resource: patient });
-    return Promise.allSettled(requests).then((results) => {
-      results.forEach((item) => {
-        if (item.status === "rejected") {
-          console.log("Fhir resource retrieval error ", item.reason);
-          return true;
-        }
-        const result = item.value;
-        if (result.resourceType === "Bundle" && result.entry) {
-          result.entry.forEach((o) => {
-            if (o && o.resource) bundle.push({ resource: o.resource });
-          });
-        } else if (Array.isArray(result)) {
-          result.forEach((o) => {
-            if (o.resourceType) bundle.push({ resource: o });
-          });
-        } else {
-          bundle.push({ resource: result });
-        }
-      });
-      return bundle;
-    }, e => {
-      throw new Error(e);
-    });
+    return Promise.allSettled(requests).then(
+      (results) => {
+        results.forEach((item) => {
+          if (item.status === "rejected") {
+            console.log("Fhir resource retrieval error ", item.reason);
+            return true;
+          }
+          const result = item.value;
+          if (result.resourceType === "Bundle" && result.entry) {
+            result.entry.forEach((o) => {
+              if (o && o.resource) bundle.push({ resource: o.resource });
+            });
+          } else if (Array.isArray(result)) {
+            result.forEach((o) => {
+              if (o.resourceType) bundle.push({ resource: o });
+            });
+          } else {
+            bundle.push({ resource: result });
+          }
+        });
+        return bundle;
+      },
+      (e) => {
+        throw new Error(e);
+      }
+    );
   }, [client, patient]);
 
   const hasQuestionnaireResponses = () => {
-     return patientBundle.entry && patientBundle.entry.filter(
-       (item) =>
-         item.resource &&
-         String(item.resource.resourceType).toLowerCase() === "questionnaireresponse"
-     ).length > 0;
+    return (
+      patientBundle.entry &&
+      patientBundle.entry.filter(
+        (item) =>
+          item.resource &&
+          String(item.resource.resourceType).toLowerCase() ===
+            "questionnaireresponse"
+      ).length > 0
+    );
   };
 
   useEffect(() => {
     /* get FHIR resources */
     getFhirResources().then(
       (dataResult) => {
-        console.log("data ", dataResult)
+        console.log("data ", dataResult);
         setPatientBundle((prevPatientBundle) => {
           return {
             ...prevPatientBundle,
@@ -126,7 +133,7 @@ export default function Summaries() {
           };
         });
       },
-      (e) => setError(e.message?e.message:e)
+      (e) => setError(e.message ? e.message : e)
     );
   }, [getFhirResources]);
 
@@ -177,26 +184,38 @@ export default function Summaries() {
       )}
       {hasQuestionnaireResponses() && (
         <Stack className="summaries">
-          <BoxRef ref={selectorRef} style={{ opacity: isReady() ? 1 : 0.4 }}>
-            <QuestionnaireSelector
-              title="Go to Questionnaire"
-              list={questionnaireList}
-              value={selectedQuestionnaire}
-              handleSelectorChange={(event) => {
-                setSelectedQuestionnaire(event.target.value);
-                clearTimeout(scrollToTimeoutId);
-                scrollToTimeoutId = setTimeout(
-                  () =>
-                    document
-                      .querySelector(
-                        `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${event.target.value}`
-                      )
-                      .scrollIntoView(),
-                  50
-                );
+          {questionnaireList.length > 1 && (
+            <BoxRef
+              ref={selectorRef}
+              style={{
+                opacity: isReady() ? 1 : 0.4,
+                borderBottom: 1,
+                borderColor: "#777",
+                borderBottomStyle: "solid",
+                paddingBottom: "32px",
+                marginBottom: "8px",
               }}
-            ></QuestionnaireSelector>
-          </BoxRef>
+            >
+              <QuestionnaireSelector
+                title="Go to Questionnaire"
+                list={questionnaireList}
+                value={selectedQuestionnaire}
+                handleSelectorChange={(event) => {
+                  setSelectedQuestionnaire(event.target.value);
+                  clearTimeout(scrollToTimeoutId);
+                  scrollToTimeoutId = setTimeout(
+                    () =>
+                      document
+                        .querySelector(
+                          `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${event.target.value}`
+                        )
+                        .scrollIntoView(),
+                    50
+                  );
+                }}
+              ></QuestionnaireSelector>
+            </BoxRef>
+          )}
           {questionnaireList.map((questionnaire, index) => {
             return (
               <Summary
