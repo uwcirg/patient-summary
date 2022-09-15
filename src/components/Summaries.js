@@ -36,6 +36,7 @@ export default function Summaries() {
     type: "collection",
     entry: [],
   });
+  const [resourcesLoaded, setResourcesLoaded] = useState(false);
   const [updated, setUpdated] = useState(0);
   const [error, setError] = useState(null);
 
@@ -73,7 +74,6 @@ export default function Summaries() {
     }
   };
   const isReady = () =>
-    !hasQuestionnaireResponses() ||
     updated === questionnaireList.length ||
     error;
 
@@ -134,7 +134,8 @@ export default function Summaries() {
             ...prevPatientBundle,
             entry: [...prevPatientBundle.entry, ...dataResult],
           };
-        })
+        });
+        setResourcesLoaded(true);
       },
       (e) => setError(e.message ? e.message : e)
     );
@@ -151,87 +152,87 @@ export default function Summaries() {
   return (
     <>
       {isReady() && (
-        <BoxRef
-          ref={anchorRef}
-          sx={{
-            position: "relative",
-            top: "-64px",
-            height: "2px",
-            width: "2px",
-          }}
-        ></BoxRef>
+        <>
+          <BoxRef
+            ref={anchorRef}
+            sx={{
+              position: "relative",
+              top: "-64px",
+              height: "2px",
+              width: "2px",
+            }}
+          ></BoxRef>
+          <FabRef
+            className={"hide"}
+            ref={fabRef}
+            color="primary"
+            aria-label="add"
+            size="small"
+            sx={{ position: "fixed", bottom: "24px", right: "24px" }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!anchorRef.current) return;
+              anchorRef.current.scrollIntoView();
+              setSelectedQuestionnaire("");
+            }}
+            title="Back to Top"
+          >
+            <ArrowUpwardIcon aria-label="Back to Top" />
+          </FabRef>
+        </>
       )}
-      {isReady() && (
-        <FabRef
-          className={"hide"}
-          ref={fabRef}
-          color="primary"
-          aria-label="add"
-          size="small"
-          sx={{ position: "fixed", bottom: "24px", right: "24px" }}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!anchorRef.current) return;
-            anchorRef.current.scrollIntoView();
-            setSelectedQuestionnaire("");
-          }}
-          title="Back to Top"
-        >
-          <ArrowUpwardIcon aria-label="Back to Top" />
-        </FabRef>
-      )}
-      {isReady() && !hasQuestionnaireResponses() && (
-        <Stack className="summaries">
+      <Stack className="summaries">
+        {resourcesLoaded && !hasQuestionnaireResponses() && (
           <Alert severity="warning">No recorded response</Alert>
-        </Stack>
-      )}
-      {hasQuestionnaireResponses() && (
-        <Stack className="summaries">
-          {questionnaireList.length > 1 && (
-            <BoxRef
-              ref={selectorRef}
-              style={{
-                opacity: isReady() ? 1 : 0.4,
-                borderBottom: 1,
-                borderColor: "#777",
-                borderBottomStyle: "solid",
-                paddingBottom: "32px",
-                marginBottom: "8px",
-              }}
-            >
-              <QuestionnaireSelector
-                title="Go to Questionnaire"
-                list={questionnaireList}
-                value={selectedQuestionnaire}
-                handleSelectorChange={(event) => {
-                  setSelectedQuestionnaire(event.target.value);
-                  clearTimeout(scrollToTimeoutId);
-                  scrollToTimeoutId = setTimeout(
-                    () =>
-                      document
-                        .querySelector(
-                          `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${event.target.value}`
-                        )
-                        .scrollIntoView(),
-                    50
-                  );
+        )}
+        {resourcesLoaded && hasQuestionnaireResponses() && (
+          <section>
+            {questionnaireList.length > 1 && (
+              <BoxRef
+                ref={selectorRef}
+                style={{
+                  opacity: isReady() ? 1 : 0.4,
+                  borderBottom: 1,
+                  borderColor: "#ececec",
+                  borderBottomStyle: "solid",
+                  paddingBottom: "32px",
+                  marginBottom: "8px",
                 }}
-              ></QuestionnaireSelector>
-            </BoxRef>
-          )}
-          {questionnaireList.map((questionnaire, index) => {
-            return (
-              <Summary
-                questionnaire={questionnaire}
-                patientBundle={patientBundle}
-                key={`questionnaire_${index}`}
-                callbackFunc={handleCallback}
-                sectionAnchorPrefix={QUESTIONNAIRE_ANCHOR_ID_PREFIX}
-              ></Summary>
-            );
-          })}
-        </Stack>
-      )}
+              >
+                <QuestionnaireSelector
+                  title="Go to Questionnaire"
+                  list={questionnaireList}
+                  value={selectedQuestionnaire}
+                  handleSelectorChange={(event) => {
+                    setSelectedQuestionnaire(event.target.value);
+                    clearTimeout(scrollToTimeoutId);
+                    scrollToTimeoutId = setTimeout(
+                      () =>
+                        document
+                          .querySelector(
+                            `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${event.target.value}`
+                          )
+                          .scrollIntoView(),
+                      50
+                    );
+                  }}
+                ></QuestionnaireSelector>
+              </BoxRef>
+            )}
+            {questionnaireList.map((questionnaire, index) => {
+              return (
+                <Summary
+                  questionnaire={questionnaire}
+                  patientBundle={patientBundle}
+                  key={`questionnaire_${index}`}
+                  callbackFunc={handleCallback}
+                  sectionAnchorPrefix={QUESTIONNAIRE_ANCHOR_ID_PREFIX}
+                ></Summary>
+              );
+            })}
+          </section>
+        )}
+      </Stack>
     </>
   );
 }
