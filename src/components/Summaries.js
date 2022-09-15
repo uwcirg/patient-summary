@@ -72,7 +72,10 @@ export default function Summaries() {
       setUpdated((prev) => prev + 1);
     }
   };
-  const isReady = () => updated === questionnaireList.length || error;
+  const isReady = () =>
+    !hasQuestionnaireResponses() ||
+    updated === questionnaireList.length ||
+    error;
 
   const getFhirResources = useCallback(async () => {
     if (!client || !patient || !patient.id)
@@ -131,7 +134,7 @@ export default function Summaries() {
             ...prevPatientBundle,
             entry: [...prevPatientBundle.entry, ...dataResult],
           };
-        });
+        })
       },
       (e) => setError(e.message ? e.message : e)
     );

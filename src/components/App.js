@@ -7,7 +7,7 @@ import AlertTitle from "@mui/material/AlertTitle";
 import FhirClientProvider from "../FhirClientProvider";
 import Header from "./Header";
 import Summaries from "./Summaries";
-import {injectFaviconByProject, fetchEnvData, getEnvs} from "../util/util";
+import {injectFaviconByProject, fetchEnvData} from "../util/util";
 import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
 
@@ -20,11 +20,10 @@ function ErrorFallBack({ error }) {
     </Alert>
   );
 }
-
 export default function App() {
+  fetchEnvData();
+  // console.log("environment variables ", getEnvs());
   useEffect(() => {
-    fetchEnvData();
-    console.log("environment variables ", getEnvs());
     injectFaviconByProject();
   }, []);
   return (
