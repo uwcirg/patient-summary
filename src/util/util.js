@@ -36,7 +36,12 @@ export function fetchEnvData() {
       console.log("Request failed! ");
       return;
     }
-    var envObj = JSON.parse(xhr.responseText);
+    var envObj;
+    try {
+      envObj = JSON.parse(xhr.responseText);
+    } catch(e) {
+      console.log("Error parsing response text into json ", e);
+    }
     window["appConfig"] = {};
     //assign window process env variables for access by app
     //won't be overridden when Node initializing env variables
