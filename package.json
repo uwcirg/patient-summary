@@ -29,7 +29,7 @@
   "scripts": {
     "start": "rescripts start",
     "build": "rescripts build",
-    "test": "rescripts test",
+    "test": "rescripts test --testPathIgnorePatterns=./src/__tests__/cql",
     "cql-test": "./node_modules/.bin/mocha ./src/__tests__/cql/*.js --recursive",
     "eject": "rescripts eject",
     "upload-test-responses": "node ./src/util/UploadTestQuestionnaireResponseJsons"
