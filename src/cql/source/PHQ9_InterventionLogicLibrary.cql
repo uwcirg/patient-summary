@@ -31,6 +31,19 @@ define function DateTimeText(d FHIR.dateTime):
 
 define scoringQuestionId: '/44261-6'
 
+
+define function MatchedQuestionnaireByReponses(responses FHIR.QuestionnaireResponse):
+  ([Questionnaire] Q
+    where 
+    (Q.id = QuestionnaireName or Q.url.value = QuestionnaireURL) 
+    and (
+      (
+        PositionOf(Q.name, responses.questionnaire.value) != -1 or
+        PositionOf(Q.id, responses.questionnaire.value) != -1
+      ) and 
+      responses.status.value = 'completed')
+  )
+
 // Load Questionnaire
 define CurrentQuestionnaire:
   First([Questionnaire] Q
@@ -43,9 +56,7 @@ define QuestionnaireItems:
 // Load Questionnaire responses
 define QuestionnaireResponses:
   ([QuestionnaireResponse] QR
-    where (QR.questionnaire.value = QuestionnaireURL or
-    Lower(QR.identifier.value) ~ Lower(QuestionnaireName) or
-    PositionOf(CurrentQuestionnaire.id, QR.questionnaire.value) != -1) and QR.status.value = 'completed'
+    where Length(MatchedQuestionnaireByReponses(QR)) > 0
   )
   
 define function GetResponseAnswerByLinkId(linkId String, responses List<FHIR.QuestionnaireResponse.Item>):
@@ -62,13 +73,17 @@ define function GetResponseValueByLinkId(linkId String, responses List<FHIR.Ques
 
 define function FormattedResponses(responses List<FHIR.QuestionnaireResponse.Item>):
   QuestionnaireItems Q
-  return {
-    id: Q.linkId.value,
-    answer: singleton from (GetResponseAnswerByLinkId(Q.linkId.value, responses)),
-    value: singleton from (GetResponseValueByLinkId(Q.linkId.value, responses)),
-    question: if Q.linkId.value= scoringQuestionId then '<b>' + Q.text.value + '</b>' else Q.text.value,
-    text: Q.text.value
-  }
+    let
+      answerText: GetResponseAnswerByLinkId(Q.linkId.value, responses),
+      answerValue: GetResponseValueByLinkId(Q.linkId.value, responses)
+
+    return {
+      id: Q.linkId.value,
+      answer: if answerText is not null then First(answerText) else null,
+      value: if answerValue is not null then First(answerValue) else null,
+      question: if Q.linkId.value= scoringQuestionId then '<b>' + Q.text.value + '</b>' else Q.text.value,
+      text: Q.text.value
+    }
 
 
 define ResponsesSummary:

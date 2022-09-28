@@ -15,19 +15,12 @@ test("Render summary - null data", () => {
 });
 
 test("Render summary - no responses data set", () => {
-  const badData = {
+  const badData = [
+    {
     date : "2022-07-01",
     responses: null
-  };
-  render(<Responses data={badData}></Responses>)
-});
-
-test("Render summary - malformed responses data set", () => {
-  const badData = [{
-    date: "2022-07-01",
-    responses: {"test": "test"},
   }];
-  render(<Responses data={badData}></Responses>);
+  render(<Responses data={badData}></Responses>)
 });
 
 test("Render summary - non-empty data set", () => {

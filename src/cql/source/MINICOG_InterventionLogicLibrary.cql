@@ -33,6 +33,19 @@ define question1Id: 'minicog-question1'
 define question2Id: 'minicog-question2'
 define scoringQuestionId: 'minicog-total-score'
 
+
+define function MatchedQuestionnaireByReponses(responses FHIR.QuestionnaireResponse):
+  ([Questionnaire] Q
+    where 
+    (Q.id = QuestionnaireName or Q.url.value = QuestionnaireURL) 
+    and (
+      (
+        PositionOf(Q.name, responses.questionnaire.value) != -1 or
+        PositionOf(Q.id, responses.questionnaire.value) != -1
+      ) and 
+      responses.status.value = 'completed')
+  )
+
 // Load Questionnaire
 define CurrentQuestionnaire:
   First([Questionnaire] Q
@@ -45,9 +58,7 @@ define QuestionnaireItems:
 // Load Questionnaire responses
 define QuestionnaireResponses:
   ([QuestionnaireResponse] QR
-    where (QR.questionnaire.value = QuestionnaireURL or
-    Lower(QR.identifier.value) ~ Lower(QuestionnaireName) or 
-    PositionOf(CurrentQuestionnaire.id, QR.questionnaire.value) != -1) and QR.status.value = 'completed'
+    where Length(MatchedQuestionnaireByReponses(QR)) > 0
   )
 
 define function FormattedResponses(responses List<FHIR.QuestionnaireResponse.Item>):

@@ -34,26 +34,36 @@ export default function Header() {
   };
   return (
     <AppBar position="fixed" elevation={1}>
-      <Toolbar sx={{
-        backgroundColor: theme.palette.lighter.main,
-        color: theme.palette.secondary.main
-      }}>
+      <Toolbar
+        sx={{
+          backgroundColor: theme.palette.lighter
+            ? theme.palette.lighter.main
+            : "#FFF",
+          color: theme.palette.secondary ? theme.palette.secondary.main : "#444",
+        }}
+      >
         <Stack direction={"row"} spacing={2} alignItems="center">
-          <img style={{width:"180px"}} src={`/assets/${getEnv("REACT_APP_PROJECT_ID")}/img/logo.png`} alt={"project logo"} onLoad={handleImageLoaded} onError={handleImageLoaded}></img>
-          <Typography variant="h4" component="h1" sx={{fontSize: {xs: '1.1rem', md: '1.8rem'}}}>
+          <img
+            style={{ width: "180px" }}
+            src={`/assets/${getEnv("REACT_APP_PROJECT_ID")}/img/logo.png`}
+            alt={"project logo"}
+            onLoad={handleImageLoaded}
+            onError={handleImageLoaded}
+          ></img>
+          <Typography
+            variant="h4"
+            component="h1"
+            sx={{ fontSize: { xs: "1.1rem", md: "1.8rem" } }}
+          >
             Patient Summary
           </Typography>
           {hasPatientName() && (
-            <Stack spacing={0.5} sx={{paddingLeft: 1}}>
-              <Typography component="div">
-                {getPatientName()}
-              </Typography>
-              <Typography component="div">
-                {getPatientDob()}
-              </Typography>
+            <Stack spacing={0.5} sx={{ paddingLeft: 1 }}>
+              <Typography component="div">{getPatientName()}</Typography>
+              <Typography component="div">{getPatientDob()}</Typography>
             </Stack>
           )}
-          </Stack>
+        </Stack>
       </Toolbar>
     </AppBar>
   );

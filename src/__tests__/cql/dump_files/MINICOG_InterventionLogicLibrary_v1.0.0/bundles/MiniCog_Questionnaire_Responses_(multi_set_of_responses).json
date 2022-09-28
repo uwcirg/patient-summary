@@ -6,7 +6,7 @@
     {
       "resource": {
         "resourceType": "Patient",
-        "id": "2a6cf386-1bc4-42d3-826f-49fc5ab4855c",
+        "id": "7daf4864-2d60-4a7e-89a9-d5905b7cba54",
         "name": [
           {
             "family": "Skywalker",
@@ -22,15 +22,9 @@
     {
       "resource": {
         "resourceType": "Questionnaire",
-        "id": "9dab5ec3-548b-4968-b88e-f8b199d6b2f1",
+        "id": "minicog",
         "status": "active",
         "url": "http://www.cdc.gov/ncbddd/fasd/minicog",
-        "identifier": [
-          {
-            "system": "http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids",
-            "value": "MINICOG"
-          }
-        ],
         "name": "minicog",
         "item": [
           {
@@ -54,9 +48,9 @@
     {
       "resource": {
         "resourceType": "QuestionnaireResponse",
-        "id": "e8d6931c-c8ef-4ef6-bc4d-ec76a8f566bf",
+        "id": "b86c3264-418f-4785-bb56-6339e3177f26",
         "subject": {
-          "reference": "Patient/2a6cf386-1bc4-42d3-826f-49fc5ab4855c"
+          "reference": "Patient/7daf4864-2d60-4a7e-89a9-d5905b7cba54"
         },
         "status": "completed",
         "questionnaire": "http://www.cdc.gov/ncbddd/fasd/minicog",
@@ -92,9 +86,9 @@
     {
       "resource": {
         "resourceType": "QuestionnaireResponse",
-        "id": "53b32739-1f11-4042-b762-ca63f3fec95a",
+        "id": "94e4e65a-3353-44ff-8dce-5887c323432b",
         "subject": {
-          "reference": "Patient/2a6cf386-1bc4-42d3-826f-49fc5ab4855c"
+          "reference": "Patient/7daf4864-2d60-4a7e-89a9-d5905b7cba54"
         },
         "status": "completed",
         "questionnaire": "http://www.cdc.gov/ncbddd/fasd/minicog",

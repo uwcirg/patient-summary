@@ -1,6 +1,6 @@
 {
   "patientResults": {
-    "2a6cf386-1bc4-42d3-826f-49fc5ab4855c": {
+    "7daf4864-2d60-4a7e-89a9-d5905b7cba54": {
       "Patient": {
         "name": [
           {
@@ -21,7 +21,7 @@
           "value": "1978-07-16"
         },
         "id": {
-          "value": "2a6cf386-1bc4-42d3-826f-49fc5ab4855c"
+          "value": "7daf4864-2d60-4a7e-89a9-d5905b7cba54"
         }
       },
       "question1Id": "minicog-question1",
@@ -31,16 +31,6 @@
         "url": {
           "value": "http://www.cdc.gov/ncbddd/fasd/minicog"
         },
-        "identifier": [
-          {
-            "system": {
-              "value": "http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids"
-            },
-            "value": {
-              "value": "MINICOG"
-            }
-          }
-        ],
         "name": {
           "value": "minicog"
         },
@@ -83,7 +73,7 @@
           }
         ],
         "id": {
-          "value": "9dab5ec3-548b-4968-b88e-f8b199d6b2f1"
+          "value": "minicog"
         }
       },
       "QuestionnaireItems": [
@@ -131,7 +121,7 @@
           },
           "subject": {
             "reference": {
-              "value": "Patient/2a6cf386-1bc4-42d3-826f-49fc5ab4855c"
+              "value": "Patient/7daf4864-2d60-4a7e-89a9-d5905b7cba54"
             }
           },
           "authored": {
@@ -176,7 +166,7 @@
             }
           ],
           "id": {
-            "value": "e8d6931c-c8ef-4ef6-bc4d-ec76a8f566bf"
+            "value": "b86c3264-418f-4785-bb56-6339e3177f26"
           }
         },
         {
@@ -188,7 +178,7 @@
           },
           "subject": {
             "reference": {
-              "value": "Patient/2a6cf386-1bc4-42d3-826f-49fc5ab4855c"
+              "value": "Patient/7daf4864-2d60-4a7e-89a9-d5905b7cba54"
             }
           },
           "authored": {
@@ -233,7 +223,7 @@
             }
           ],
           "id": {
-            "value": "53b32739-1f11-4042-b762-ca63f3fec95a"
+            "value": "94e4e65a-3353-44ff-8dce-5887c323432b"
           }
         }
       ],
@@ -381,13 +371,13 @@
   },
   "unfilteredResults": {},
   "localIdPatientResultsMap": {
-    "2a6cf386-1bc4-42d3-826f-49fc5ab4855c": {
+    "7daf4864-2d60-4a7e-89a9-d5905b7cba54": {
       "MINICOG_InterventionLogicLibrary": {},
       "FHIRHelpers": {}
     }
   },
   "patientEvaluatedRecords": {
-    "2a6cf386-1bc4-42d3-826f-49fc5ab4855c": [
+    "7daf4864-2d60-4a7e-89a9-d5905b7cba54": [
       {
         "name": [
           {
@@ -408,23 +398,13 @@
           "value": "1978-07-16"
         },
         "id": {
-          "value": "2a6cf386-1bc4-42d3-826f-49fc5ab4855c"
+          "value": "7daf4864-2d60-4a7e-89a9-d5905b7cba54"
         }
       },
       {
         "url": {
           "value": "http://www.cdc.gov/ncbddd/fasd/minicog"
         },
-        "identifier": [
-          {
-            "system": {
-              "value": "http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids"
-            },
-            "value": {
-              "value": "MINICOG"
-            }
-          }
-        ],
         "name": {
           "value": "minicog"
         },
@@ -467,7 +447,7 @@
           }
         ],
         "id": {
-          "value": "9dab5ec3-548b-4968-b88e-f8b199d6b2f1"
+          "value": "minicog"
         }
       },
       {
@@ -479,7 +459,7 @@
         },
         "subject": {
           "reference": {
-            "value": "Patient/2a6cf386-1bc4-42d3-826f-49fc5ab4855c"
+            "value": "Patient/7daf4864-2d60-4a7e-89a9-d5905b7cba54"
           }
         },
         "authored": {
@@ -524,7 +504,7 @@
           }
         ],
         "id": {
-          "value": "e8d6931c-c8ef-4ef6-bc4d-ec76a8f566bf"
+          "value": "b86c3264-418f-4785-bb56-6339e3177f26"
         }
       },
       {
@@ -536,7 +516,7 @@
         },
         "subject": {
           "reference": {
-            "value": "Patient/2a6cf386-1bc4-42d3-826f-49fc5ab4855c"
+            "value": "Patient/7daf4864-2d60-4a7e-89a9-d5905b7cba54"
           }
         },
         "authored": {
@@ -581,7 +561,7 @@
           }
         ],
         "id": {
-          "value": "53b32739-1f11-4042-b762-ca63f3fec95a"
+          "value": "94e4e65a-3353-44ff-8dce-5887c323432b"
         }
       }
     ]

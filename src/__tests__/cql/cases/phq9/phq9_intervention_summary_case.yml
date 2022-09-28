@@ -77,6 +77,6 @@ data:
       valueDecimal: 10
   
 results:
-  QuestionnaireResponses: $should have length 1
+  ResponsesOnly: $should exist
   # make sure questionnaire responses are returned
 

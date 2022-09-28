@@ -15,9 +15,7 @@ minicog_reusable_resources:
 - &questionnaireResource # skeleton
   resourceType: Questionnaire
   url: http://www.cdc.gov/ncbddd/fasd/minicog
-  identifier:
-    system: http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids
-    value: MINICOG
+  id: minicog
   name: minicog
 
 # questionnaire responses

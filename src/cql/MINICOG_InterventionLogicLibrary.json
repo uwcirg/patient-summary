@@ -116,6 +116,164 @@
                "type" : "Literal"
             }
          }, {
+            "name" : "MatchedQuestionnaireByReponses",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "type" : "FunctionDef",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "Q",
+                  "expression" : {
+                     "dataType" : "{http://hl7.org/fhir}Questionnaire",
+                     "templateId" : "http://hl7.org/fhir/StructureDefinition/Questionnaire",
+                     "type" : "Retrieve"
+                  }
+               } ],
+               "relationship" : [ ],
+               "where" : {
+                  "type" : "And",
+                  "operand" : [ {
+                     "type" : "Or",
+                     "operand" : [ {
+                        "type" : "Equal",
+                        "operand" : [ {
+                           "name" : "ToString",
+                           "libraryName" : "FHIRHelpers",
+                           "type" : "FunctionRef",
+                           "operand" : [ {
+                              "path" : "id",
+                              "scope" : "Q",
+                              "type" : "Property"
+                           } ]
+                        }, {
+                           "name" : "QuestionnaireName",
+                           "type" : "ParameterRef"
+                        } ]
+                     }, {
+                        "type" : "Equal",
+                        "operand" : [ {
+                           "path" : "value",
+                           "type" : "Property",
+                           "source" : {
+                              "path" : "url",
+                              "scope" : "Q",
+                              "type" : "Property"
+                           }
+                        }, {
+                           "name" : "QuestionnaireURL",
+                           "type" : "ParameterRef"
+                        } ]
+                     } ]
+                  }, {
+                     "type" : "And",
+                     "operand" : [ {
+                        "type" : "Or",
+                        "operand" : [ {
+                           "type" : "Not",
+                           "operand" : {
+                              "type" : "Equal",
+                              "operand" : [ {
+                                 "type" : "PositionOf",
+                                 "pattern" : {
+                                    "name" : "ToString",
+                                    "libraryName" : "FHIRHelpers",
+                                    "type" : "FunctionRef",
+                                    "operand" : [ {
+                                       "path" : "name",
+                                       "scope" : "Q",
+                                       "type" : "Property"
+                                    } ]
+                                 },
+                                 "string" : {
+                                    "path" : "value",
+                                    "type" : "Property",
+                                    "source" : {
+                                       "path" : "questionnaire",
+                                       "type" : "Property",
+                                       "source" : {
+                                          "name" : "responses",
+                                          "type" : "OperandRef"
+                                       }
+                                    }
+                                 }
+                              }, {
+                                 "type" : "Negate",
+                                 "operand" : {
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                    "value" : "1",
+                                    "type" : "Literal"
+                                 }
+                              } ]
+                           }
+                        }, {
+                           "type" : "Not",
+                           "operand" : {
+                              "type" : "Equal",
+                              "operand" : [ {
+                                 "type" : "PositionOf",
+                                 "pattern" : {
+                                    "name" : "ToString",
+                                    "libraryName" : "FHIRHelpers",
+                                    "type" : "FunctionRef",
+                                    "operand" : [ {
+                                       "path" : "id",
+                                       "scope" : "Q",
+                                       "type" : "Property"
+                                    } ]
+                                 },
+                                 "string" : {
+                                    "path" : "value",
+                                    "type" : "Property",
+                                    "source" : {
+                                       "path" : "questionnaire",
+                                       "type" : "Property",
+                                       "source" : {
+                                          "name" : "responses",
+                                          "type" : "OperandRef"
+                                       }
+                                    }
+                                 }
+                              }, {
+                                 "type" : "Negate",
+                                 "operand" : {
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                    "value" : "1",
+                                    "type" : "Literal"
+                                 }
+                              } ]
+                           }
+                        } ]
+                     }, {
+                        "type" : "Equal",
+                        "operand" : [ {
+                           "path" : "value",
+                           "type" : "Property",
+                           "source" : {
+                              "path" : "status",
+                              "type" : "Property",
+                              "source" : {
+                                 "name" : "responses",
+                                 "type" : "OperandRef"
+                              }
+                           }
+                        }, {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                           "value" : "completed",
+                           "type" : "Literal"
+                        } ]
+                     } ]
+                  } ]
+               }
+            },
+            "operand" : [ {
+               "name" : "responses",
+               "operandTypeSpecifier" : {
+                  "name" : "{http://hl7.org/fhir}QuestionnaireResponse",
+                  "type" : "NamedTypeSpecifier"
+               }
+            } ]
+         }, {
             "name" : "CurrentQuestionnaire",
             "context" : "Patient",
             "accessLevel" : "Public",
@@ -187,104 +345,21 @@
                } ],
                "relationship" : [ ],
                "where" : {
-                  "type" : "And",
+                  "type" : "Greater",
                   "operand" : [ {
-                     "type" : "Or",
-                     "operand" : [ {
-                        "type" : "Or",
+                     "type" : "Length",
+                     "operand" : {
+                        "name" : "MatchedQuestionnaireByReponses",
+                        "type" : "FunctionRef",
                         "operand" : [ {
-                           "type" : "Equal",
-                           "operand" : [ {
-                              "path" : "value",
-                              "type" : "Property",
-                              "source" : {
-                                 "path" : "questionnaire",
-                                 "scope" : "QR",
-                                 "type" : "Property"
-                              }
-                           }, {
-                              "name" : "QuestionnaireURL",
-                              "type" : "ParameterRef"
-                           } ]
-                        }, {
-                           "type" : "Equivalent",
-                           "operand" : [ {
-                              "type" : "Lower",
-                              "operand" : {
-                                 "name" : "ToString",
-                                 "libraryName" : "FHIRHelpers",
-                                 "type" : "FunctionRef",
-                                 "operand" : [ {
-                                    "path" : "value",
-                                    "type" : "Property",
-                                    "source" : {
-                                       "path" : "identifier",
-                                       "scope" : "QR",
-                                       "type" : "Property"
-                                    }
-                                 } ]
-                              }
-                           }, {
-                              "type" : "Lower",
-                              "operand" : {
-                                 "name" : "QuestionnaireName",
-                                 "type" : "ParameterRef"
-                              }
-                           } ]
+                           "name" : "QR",
+                           "type" : "AliasRef"
                         } ]
-                     }, {
-                        "type" : "Not",
-                        "operand" : {
-                           "type" : "Equal",
-                           "operand" : [ {
-                              "type" : "PositionOf",
-                              "pattern" : {
-                                 "name" : "ToString",
-                                 "libraryName" : "FHIRHelpers",
-                                 "type" : "FunctionRef",
-                                 "operand" : [ {
-                                    "path" : "id",
-                                    "type" : "Property",
-                                    "source" : {
-                                       "name" : "CurrentQuestionnaire",
-                                       "type" : "ExpressionRef"
-                                    }
-                                 } ]
-                              },
-                              "string" : {
-                                 "path" : "value",
-                                 "type" : "Property",
-                                 "source" : {
-                                    "path" : "questionnaire",
-                                    "scope" : "QR",
-                                    "type" : "Property"
-                                 }
-                              }
-                           }, {
-                              "type" : "Negate",
-                              "operand" : {
-                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                 "value" : "1",
-                                 "type" : "Literal"
-                              }
-                           } ]
-                        }
-                     } ]
+                     }
                   }, {
-                     "type" : "Equal",
-                     "operand" : [ {
-                        "path" : "value",
-                        "type" : "Property",
-                        "source" : {
-                           "path" : "status",
-                           "scope" : "QR",
-                           "type" : "Property"
-                        }
-                     }, {
-                        "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                        "value" : "completed",
-                        "type" : "Literal"
-                     } ]
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
                   } ]
                }
             }

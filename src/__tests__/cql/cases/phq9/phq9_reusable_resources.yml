@@ -15,9 +15,7 @@ phq9_reusable_resources:
 - &questionnaireResource # skeleton
   resourceType: Questionnaire
   url: http://www.cdc.gov/ncbddd/fasd/phq9
-  identifier:
-    system: http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids
-    value: phq9
+  id: phq9
   name: phq9
 
 # questionnaire responses

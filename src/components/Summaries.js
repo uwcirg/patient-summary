@@ -9,6 +9,7 @@ import {
 import Alert from "@mui/material/Alert";
 import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import { FhirClientContext } from "../FhirClientContext";
@@ -181,7 +182,12 @@ export default function Summaries() {
           </FabRef>
         </>
       )}
-      <Stack className="summaries">
+      <Stack className="summaries" sx={{ position: "relative" }}>
+        {!isReady() && (
+          <Box sx={{ position: "absolute", top: 16, left: 16 }}>
+            <CircularProgress></CircularProgress>
+          </Box>
+        )}
         {resourcesLoaded && !hasQuestionnaireResponses() && (
           <Alert severity="warning">No recorded response</Alert>
         )}

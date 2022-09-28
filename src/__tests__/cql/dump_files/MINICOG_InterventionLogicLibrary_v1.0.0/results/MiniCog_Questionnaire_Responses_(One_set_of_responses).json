@@ -1,6 +1,6 @@
 {
   "patientResults": {
-    "a9d81c16-3984-4162-b68c-fda510b6e077": {
+    "4adc947a-360b-4d7a-b66e-5b2ce53910b1": {
       "Patient": {
         "name": [
           {
@@ -21,7 +21,7 @@
           "value": "1978-07-16"
         },
         "id": {
-          "value": "a9d81c16-3984-4162-b68c-fda510b6e077"
+          "value": "4adc947a-360b-4d7a-b66e-5b2ce53910b1"
         }
       },
       "question1Id": "minicog-question1",
@@ -31,16 +31,6 @@
         "url": {
           "value": "http://www.cdc.gov/ncbddd/fasd/minicog"
         },
-        "identifier": [
-          {
-            "system": {
-              "value": "http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids"
-            },
-            "value": {
-              "value": "MINICOG"
-            }
-          }
-        ],
         "name": {
           "value": "minicog"
         },
@@ -83,7 +73,7 @@
           }
         ],
         "id": {
-          "value": "d567165b-7dd1-42fe-8672-f630887c5e4d"
+          "value": "minicog"
         }
       },
       "QuestionnaireItems": [
@@ -131,7 +121,7 @@
           },
           "subject": {
             "reference": {
-              "value": "Patient/a9d81c16-3984-4162-b68c-fda510b6e077"
+              "value": "Patient/4adc947a-360b-4d7a-b66e-5b2ce53910b1"
             }
           },
           "authored": {
@@ -176,7 +166,7 @@
             }
           ],
           "id": {
-            "value": "fb9e3fd5-292d-4d46-a65f-4a7754d47312"
+            "value": "17d27d7b-0983-43cf-b9a0-3f47222cb564"
           }
         }
       ],
@@ -257,13 +247,13 @@
   },
   "unfilteredResults": {},
   "localIdPatientResultsMap": {
-    "a9d81c16-3984-4162-b68c-fda510b6e077": {
+    "4adc947a-360b-4d7a-b66e-5b2ce53910b1": {
       "MINICOG_InterventionLogicLibrary": {},
       "FHIRHelpers": {}
     }
   },
   "patientEvaluatedRecords": {
-    "a9d81c16-3984-4162-b68c-fda510b6e077": [
+    "4adc947a-360b-4d7a-b66e-5b2ce53910b1": [
       {
         "name": [
           {
@@ -284,23 +274,13 @@
           "value": "1978-07-16"
         },
         "id": {
-          "value": "a9d81c16-3984-4162-b68c-fda510b6e077"
+          "value": "4adc947a-360b-4d7a-b66e-5b2ce53910b1"
         }
       },
       {
         "url": {
           "value": "http://www.cdc.gov/ncbddd/fasd/minicog"
         },
-        "identifier": [
-          {
-            "system": {
-              "value": "http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids"
-            },
-            "value": {
-              "value": "MINICOG"
-            }
-          }
-        ],
         "name": {
           "value": "minicog"
         },
@@ -343,7 +323,7 @@
           }
         ],
         "id": {
-          "value": "d567165b-7dd1-42fe-8672-f630887c5e4d"
+          "value": "minicog"
         }
       },
       {
@@ -355,7 +335,7 @@
         },
         "subject": {
           "reference": {
-            "value": "Patient/a9d81c16-3984-4162-b68c-fda510b6e077"
+            "value": "Patient/4adc947a-360b-4d7a-b66e-5b2ce53910b1"
           }
         },
         "authored": {
@@ -400,7 +380,7 @@
           }
         ],
         "id": {
-          "value": "fb9e3fd5-292d-4d46-a65f-4a7754d47312"
+          "value": "17d27d7b-0983-43cf-b9a0-3f47222cb564"
         }
       }
     ]

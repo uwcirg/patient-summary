@@ -164,8 +164,10 @@ export default function Responses(props) {
   );
 }
 Responses.propTypes = {
-  data: PropTypes.arrayOf(PropTypes.shape({
-    date: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
-    responses: PropTypes.array,
-  })),
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      date: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+      responses: PropTypes.array,
+    })
+  ),
 };
