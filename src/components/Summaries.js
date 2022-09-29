@@ -29,7 +29,7 @@ export default function Summaries() {
   const fabRef = createRef();
   const anchorRef = createRef();
   const selectorRef = createRef();
-  const questionnaireList = getQuestionnaireList();
+  const [questionnaireList, setQuestionnaireList] = useState(getQuestionnaireList());
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState("");
   const [patientBundle, setPatientBundle] = useState({
     resourceType: "Bundle",
@@ -125,11 +125,37 @@ export default function Summaries() {
     );
   };
 
+  const getQuestionnairesByCarePlan = (carePlans) => {
+    if (!carePlans) return [];
+    let activities = [];
+    carePlans.forEach((item) => {
+      if (item.resource.activity) {
+        activities = [...activities, ...item.resource.activity];
+      }
+    });
+    let qList = [];
+    activities.forEach((a) => {
+      if (
+        a.detail &&
+        a.detail.instantiatesCanonical &&
+        a.detail.instantiatesCanonical.length
+      ) {
+        const qId = a.detail.instantiatesCanonical[0].split("/")[1];
+        if (qId && qList.indexOf(qId) === -1) qList.push(qId);
+      }
+    });
+    return qList;
+  }
+
   useEffect(() => {
     /* get FHIR resources */
     getFhirResources().then(
       (dataResult) => {
-        console.log("data ", dataResult);
+        if (dataResult) {
+          const carePlans = dataResult.filter(item => item.resource.resourceType === "CarePlan");
+          const qList = getQuestionnairesByCarePlan(carePlans);
+          if (qList.length) setQuestionnaireList(qList)
+        }
         setPatientBundle((prevPatientBundle) => {
           return {
             ...prevPatientBundle,

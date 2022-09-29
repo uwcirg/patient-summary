@@ -18,20 +18,31 @@ export async function getInterventionLogicLib(interventionId) {
 
 export function getFHIRResourcePaths(patientId) {
   if (!patientId) return [];
+  const defaultList = ["QuestionnaireResponse", "Questionnaire", "CarePlan"];
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
-  let resources = resourcesToLoad
-    ? resourcesToLoad.split(",")
-    : ["QuestionnaireResponse", "Questionnaire"];
+  let resources = resourcesToLoad ? resourcesToLoad.split(",") : defaultList;
+  defaultList.forEach((item) => {
+    let inList =
+      resources.filter((r) => r.toLowerCase() === item.toLowerCase()).length >
+      0;
+    if (!inList) {
+      resources.push(item);
+    }
+  });
   return resources.map((resource) => {
     let path = `/${resource}`;
     const observationCategories = getEnv(
       "REACT_APP_FHIR_OBSERVATION_CATEGORIES"
     );
-    path =
-      path +
-      (resource.toLowerCase() !== "questionnaire"
-        ? `?patient=${patientId}`
-        : "");
+    if (resource.toLowerCase() === "careplan") {
+      path = path + `?subject=Patient/${patientId}&_sort=-_lastUpdated`;
+    } else {
+      path =
+        path +
+        (resource.toLowerCase() !== "questionnaire"
+          ? `?patient=${patientId}`
+          : "");
+    }
     if (resource.toLowerCase() === "observation" && observationCategories) {
       let categories = observationCategories.split(",");
       path +=

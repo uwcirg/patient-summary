@@ -1,8 +1,9 @@
 import { useState, useEffect, useReducer } from "react";
 import PropTypes from "prop-types";
-import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
 import { initialzieCqlWorker } from "cql-worker";
 import Error from "./ErrorComponent";
@@ -41,10 +42,10 @@ export default function Summary(props) {
     chartData: [],
     chartConfig: [],
   });
-  const [ready, setReady] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [chartReady, setChartReady] = useState(false);
   const [error, setError] = useState("");
-  const shouldDisplayResponses = () => ready && hasData(questionnaire);
+  const shouldDisplayResponses = () => !loading && hasData(questionnaire);
 
   const formatChartData = (data) => {
     if (summary.chartConfig && summary.chartConfig.dataFormatter)
@@ -53,13 +54,15 @@ export default function Summary(props) {
   };
 
   useEffect(() => {
+    if (!loading) return;
     if (!hasMatchedQuestionnaireFhirResource(patientBundle, questionnaire)) {
       setError(
-        "No matching questionnaire found in FHIR server.  Unable to proceed."
+        "No matching questionnaire found in FHIR server."
       );
+      callback(callbackFunc, { status: "error" });
+      setLoading(false);
       return;
     }
-    if (ready) return;
     // Define a web worker for evaluating CQL expressions
     const cqlWorker = new Worker();
     // Initialize the cql-worker
@@ -78,6 +81,7 @@ export default function Summary(props) {
       setupExecution(elmJson, valueSetJson);
       // Send patient info to CQL worker to process
       sendPatientBundle(patientBundle);
+
       // get formatted questionnaire responses
       const cqlData = await evaluateExpression("ResponsesSummary").catch(
         (e) => {
@@ -98,17 +102,17 @@ export default function Summary(props) {
     gatherSummaryData()
       .then((data) => {
         dispatch({ type: "update", payload: data });
-        setReady(true);
+        setLoading(false);
         setChartReady(hasData(data.chartData));
         callback(callbackFunc, { status: "ok" });
       })
       .catch((e) => {
         setError(e.message ? e.message: e);
-        setReady(true);
+        setLoading(true);
         callback(callbackFunc, { status: "error" });
       });
     return () => cqlWorker.terminate();
-  }, [questionnaire, patientBundle, ready, callbackFunc]);
+  }, [questionnaire, patientBundle, loading, callbackFunc]);
 
   return (
     <>
@@ -135,8 +139,12 @@ export default function Summary(props) {
         >
           {questionnaire}
         </Typography>
-        {error && <Error message={error}></Error>}
-        {!error && !ready && (
+        {error && (
+          <Box sx={{ marginBottom: 1 }}>
+            <Error message={error}></Error>
+          </Box>
+        )}
+        {loading && (
           <Stack
             alignItems={"center"}
             direction="row"
@@ -148,7 +156,7 @@ export default function Summary(props) {
             ></LinearProgress>
           </Stack>
         )}
-        {!error && shouldDisplayResponses() && (
+        {shouldDisplayResponses() && (
           <Stack
             direction={{ xs: "column", md: "row" }}
             spacing={{ xs: 2, md: 6 }}
