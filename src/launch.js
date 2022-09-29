@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import Launch from './components/Launch';
+import Launch from './components/LaunchComponent';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

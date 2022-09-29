@@ -29,16 +29,17 @@ export default function Summaries() {
   const fabRef = createRef();
   const anchorRef = createRef();
   const selectorRef = createRef();
-  const [questionnaireList, setQuestionnaireList] = useState(getQuestionnaireList());
+  const [questionnaireList, setQuestionnaireList] = useState(
+    getQuestionnaireList()
+  );
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState("");
   const [patientBundle, setPatientBundle] = useState({
     resourceType: "Bundle",
     id: "resource-bundle",
     type: "collection",
     entry: [],
+    loadComplete: false,
   });
-  const [resourcesLoaded, setResourcesLoaded] = useState(false);
-  const [updated, setUpdated] = useState(0);
   const [error, setError] = useState(null);
 
   const BoxRef = forwardRef((props, ref) => (
@@ -70,19 +71,18 @@ export default function Summaries() {
   const handleCallback = (obj) => {
     if (isReady()) return;
     if (obj && obj.status === "error") setError(true);
-    if (obj && obj.status === "ok") {
-      setUpdated((prev) => prev + 1);
-    }
   };
-  const isReady = () =>
-    updated === questionnaireList.length ||
-    error;
+  const isReady = () => patientBundle.loadComplete || error;
 
   const getFhirResources = useCallback(async () => {
     if (!client || !patient || !patient.id)
       throw new Error("Client or patient missing.");
     const resources = getFHIRResourcePaths(patient.id);
     const requests = resources.map((resource) => client.request(resource));
+    if (!requests) {
+      console.log("No FHIR resource(s) specified.");
+      return [];
+    }
     let bundle = [];
     bundle.push({ resource: patient });
     return Promise.allSettled(requests).then(
@@ -145,24 +145,26 @@ export default function Summaries() {
       }
     });
     return qList;
-  }
+  };
 
   useEffect(() => {
     /* get FHIR resources */
     getFhirResources().then(
       (dataResult) => {
         if (dataResult) {
-          const carePlans = dataResult.filter(item => item.resource.resourceType === "CarePlan");
+          const carePlans = dataResult.filter(
+            (item) => item.resource.resourceType === "CarePlan"
+          );
           const qList = getQuestionnairesByCarePlan(carePlans);
-          if (qList.length) setQuestionnaireList(qList)
+          if (qList.length) setQuestionnaireList(qList);
         }
         setPatientBundle((prevPatientBundle) => {
           return {
             ...prevPatientBundle,
             entry: [...prevPatientBundle.entry, ...dataResult],
+            loadComplete: true,
           };
         });
-        setResourcesLoaded(true);
       },
       (e) => setError(e.message ? e.message : e)
     );
@@ -214,55 +216,59 @@ export default function Summaries() {
             <CircularProgress></CircularProgress>
           </Box>
         )}
-        {resourcesLoaded && !hasQuestionnaireResponses() && (
-          <Alert severity="warning">No recorded response</Alert>
-        )}
-        {resourcesLoaded && hasQuestionnaireResponses() && (
-          <section>
-            {questionnaireList.length > 1 && (
-              <BoxRef
-                ref={selectorRef}
-                style={{
-                  opacity: isReady() ? 1 : 0.4,
-                  borderBottom: 1,
-                  borderColor: "#ececec",
-                  borderBottomStyle: "solid",
-                  paddingBottom: "32px",
-                  marginBottom: "8px",
-                }}
-              >
-                <QuestionnaireSelector
-                  title="Go to Questionnaire"
-                  list={questionnaireList}
-                  value={selectedQuestionnaire}
-                  handleSelectorChange={(event) => {
-                    setSelectedQuestionnaire(event.target.value);
-                    clearTimeout(scrollToTimeoutId);
-                    scrollToTimeoutId = setTimeout(
-                      () =>
-                        document
-                          .querySelector(
-                            `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${event.target.value}`
-                          )
-                          .scrollIntoView(),
-                      50
-                    );
-                  }}
-                ></QuestionnaireSelector>
-              </BoxRef>
+        {patientBundle.loadComplete && (
+          <>
+            {!hasQuestionnaireResponses() && (
+              <Alert severity="warning">No recorded response</Alert>
             )}
-            {questionnaireList.map((questionnaire, index) => {
-              return (
-                <Summary
-                  questionnaire={questionnaire}
-                  patientBundle={patientBundle}
-                  key={`questionnaire_${index}`}
-                  callbackFunc={handleCallback}
-                  sectionAnchorPrefix={QUESTIONNAIRE_ANCHOR_ID_PREFIX}
-                ></Summary>
-              );
-            })}
-          </section>
+            {hasQuestionnaireResponses() && (
+              <section>
+                {questionnaireList.length > 1 && (
+                  <BoxRef
+                    ref={selectorRef}
+                    style={{
+                      opacity: isReady() ? 1 : 0.4,
+                      borderBottom: 1,
+                      borderColor: "#ececec",
+                      borderBottomStyle: "solid",
+                      paddingBottom: "32px",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    <QuestionnaireSelector
+                      title="Go to Questionnaire"
+                      list={questionnaireList}
+                      value={selectedQuestionnaire}
+                      handleSelectorChange={(event) => {
+                        setSelectedQuestionnaire(event.target.value);
+                        clearTimeout(scrollToTimeoutId);
+                        scrollToTimeoutId = setTimeout(
+                          () =>
+                            document
+                              .querySelector(
+                                `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${event.target.value}`
+                              )
+                              .scrollIntoView(),
+                          50
+                        );
+                      }}
+                    ></QuestionnaireSelector>
+                  </BoxRef>
+                )}
+                {questionnaireList.map((questionnaire, index) => {
+                  return (
+                    <Summary
+                      questionnaire={questionnaire}
+                      patientBundle={patientBundle}
+                      key={`questionnaire_${index}`}
+                      callbackFunc={handleCallback}
+                      sectionAnchorPrefix={QUESTIONNAIRE_ANCHOR_ID_PREFIX}
+                    ></Summary>
+                  );
+                })}
+              </section>
+            )}
+          </>
         )}
       </Stack>
     </>

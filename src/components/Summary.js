@@ -43,9 +43,9 @@ export default function Summary(props) {
     chartConfig: [],
   });
   const [loading, setLoading] = useState(true);
-  const [chartReady, setChartReady] = useState(false);
+  const [hasChart, setHasChart] = useState(false);
   const [error, setError] = useState("");
-  const shouldDisplayResponses = () => !loading && hasData(questionnaire);
+  const shouldDisplayResponses = () => !loading && !error && hasData(questionnaire);
 
   const formatChartData = (data) => {
     if (summary.chartConfig && summary.chartConfig.dataFormatter)
@@ -103,7 +103,7 @@ export default function Summary(props) {
       .then((data) => {
         dispatch({ type: "update", payload: data });
         setLoading(false);
-        setChartReady(hasData(data.chartData));
+        setHasChart(hasData(data.chartData));
         callback(callbackFunc, { status: "ok" });
       })
       .catch((e) => {
@@ -128,6 +128,7 @@ export default function Summary(props) {
         sx={{
           paddingTop: 2,
           paddingBottom: 2,
+          borderBottom: "1px solid #ececec"
         }}
         direction="column"
       >
@@ -162,7 +163,7 @@ export default function Summary(props) {
             spacing={{ xs: 2, md: 6 }}
             alignItems="flex-start"
           >
-            {chartReady && (
+            {hasChart && (
               <Chart
                 type={summary.chartConfig.type}
                 data={{
