@@ -89,7 +89,7 @@ export default function Responses(props) {
           >
             Questionnaire Responses
           </Typography>
-          <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+          <Box>
             <Tabs
               value={tab}
               onChange={handleTabChange}

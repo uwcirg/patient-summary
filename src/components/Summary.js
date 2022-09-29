@@ -128,7 +128,6 @@ export default function Summary(props) {
         sx={{
           paddingTop: 2,
           paddingBottom: 2,
-          borderBottom: "1px solid #ececec"
         }}
         direction="column"
       >

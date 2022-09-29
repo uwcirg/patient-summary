@@ -10,6 +10,7 @@ import Alert from "@mui/material/Alert";
 import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
+import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import { FhirClientContext } from "../FhirClientContext";
@@ -156,6 +157,7 @@ export default function Summaries() {
             (item) => item.resource.resourceType === "CarePlan"
           );
           const qList = getQuestionnairesByCarePlan(carePlans);
+          // extract any questionnaire(s) referenced in the care plan
           if (qList.length) setQuestionnaireList(qList);
         }
         setPatientBundle((prevPatientBundle) => {
@@ -257,6 +259,7 @@ export default function Summaries() {
                 )}
                 {questionnaireList.map((questionnaire, index) => {
                   return (
+                    <>
                     <Summary
                       questionnaire={questionnaire}
                       patientBundle={patientBundle}
@@ -264,6 +267,8 @@ export default function Summaries() {
                       callbackFunc={handleCallback}
                       sectionAnchorPrefix={QUESTIONNAIRE_ANCHOR_ID_PREFIX}
                     ></Summary>
+                    {index !== questionnaireList.length -1 && <Divider light></Divider>}
+                    </>
                   );
                 })}
               </section>
