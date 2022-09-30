@@ -13,7 +13,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import { FhirClientContext } from "../FhirClientContext";
+import { FhirClientContext } from "../context/FhirClientContext";
 import {
   getFHIRResourcePaths,
   getQuestionnaireList,
@@ -153,6 +153,7 @@ export default function Summaries() {
     getFhirResources().then(
       (dataResult) => {
         if (dataResult) {
+          console.log("data result ", dataResult)
           const carePlans = dataResult.filter(
             (item) => item.resource.resourceType === "CarePlan"
           );
@@ -259,16 +260,21 @@ export default function Summaries() {
                 )}
                 {questionnaireList.map((questionnaire, index) => {
                   return (
-                    <>
-                    <Summary
-                      questionnaire={questionnaire}
-                      patientBundle={patientBundle}
-                      key={`questionnaire_${index}`}
-                      callbackFunc={handleCallback}
-                      sectionAnchorPrefix={QUESTIONNAIRE_ANCHOR_ID_PREFIX}
-                    ></Summary>
-                    {index !== questionnaireList.length -1 && <Divider light></Divider>}
-                    </>
+                    <Box key={`summary_container_${index}`}>
+                      <Summary
+                        questionnaire={questionnaire}
+                        patientBundle={patientBundle}
+                        key={`questionnaire_summary_${index}`}
+                        callbackFunc={handleCallback}
+                        sectionAnchorPrefix={QUESTIONNAIRE_ANCHOR_ID_PREFIX}
+                      ></Summary>
+                      {index !== questionnaireList.length - 1 && (
+                        <Divider
+                          key={`questionnaire_divider_${index}`}
+                          light
+                        ></Divider>
+                      )}
+                    </Box>
                   );
                 })}
               </section>

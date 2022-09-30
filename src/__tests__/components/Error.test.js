@@ -12,5 +12,7 @@ test("Renders error - with string message", () => {
 });
 test("Renders error - with object", () => {
   render(<Error message={{"test": "test element"}} />);
-  expect(screen.getByText("Error occurred see console for detail")).toBeInTheDocument();
+  expect(
+    screen.getByText("Error occurred. See console for detail.")
+  ).toBeInTheDocument();
 });

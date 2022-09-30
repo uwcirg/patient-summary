@@ -2,8 +2,10 @@ import React from "react";
 import FHIR from "fhirclient";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
+import { ThemeProvider } from "@mui/material/styles";
 import ErrorComponent from "./ErrorComponent";
 import { fetchEnvData, getEnv, queryPatientIdKey } from "../util/util.js";
+import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
 
 const fetchContextJson = async (authURL) => {
@@ -79,7 +81,7 @@ export default function Launch() {
   }, []);
 
   return (
-    <React.Fragment>
+    <ThemeProvider theme={getTheme()}>
       {error && <ErrorComponent message={error}></ErrorComponent>}
       {!error && (
         <Stack
@@ -92,6 +94,6 @@ export default function Launch() {
           <div>Launching ...</div>
         </Stack>
       )}
-    </React.Fragment>
+    </ThemeProvider>
   );
 }

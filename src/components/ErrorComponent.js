@@ -8,7 +8,7 @@ export default function Error(props) {
     if (!message) return "";
     if (typeof message !== "string") {
       console.log("Error ", message);
-      return "Error occurred see console for detail";
+      return "Error occurred. See console for detail.";
     }
     return message;
   }

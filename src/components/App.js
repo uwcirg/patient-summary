@@ -4,7 +4,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
-import FhirClientProvider from "../FhirClientProvider";
+import FhirClientProvider from "../context/FhirClientProvider";
 import Header from "./Header";
 import Summaries from "./Summaries";
 import {injectFaviconByProject, fetchEnvData} from "../util/util";

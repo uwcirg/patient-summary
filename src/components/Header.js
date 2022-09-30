@@ -4,8 +4,8 @@ import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
-import { FhirClientContext } from "../FhirClientContext";
-import {getEnv, imageOK} from "../util/util";
+import { FhirClientContext } from "../context/FhirClientContext";
+import { getEnv, imageOK } from "../util/util";
 
 export default function Header() {
   const theme = useTheme();
@@ -15,7 +15,12 @@ export default function Header() {
   };
   const getPatientName = () => {
     if (!hasPatientName()) return "";
-    return [patient.name[0].family, patient.name[0].given[0]].join(", ");
+    const familyName = patient.name[0].family ? patient.name[0].family : "";
+    const givenName =
+      patient.name[0].given && patient.name[0].given.length
+        ? patient.name[0].given[0]
+        : "";
+    return [familyName, givenName].join(", ");
   };
   const getPatientDob = () => {
     if (!patient || !patient.birthDate) return "";
@@ -39,7 +44,9 @@ export default function Header() {
           backgroundColor: theme.palette.lighter
             ? theme.palette.lighter.main
             : "#FFF",
-          color: theme.palette.secondary ? theme.palette.secondary.main : "#444",
+          color: theme.palette.secondary
+            ? theme.palette.secondary.main
+            : "#444",
         }}
       >
         <Stack direction={"row"} spacing={2} alignItems="center">
