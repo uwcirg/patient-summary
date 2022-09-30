@@ -67,8 +67,12 @@ Parameters for the app are stored in [environmental variables](http://man7.org/l
 | `REACT_APP_FHIR_RESOURCES` | Define the FHIR resource(s) to load for the patient | `Condition,Procedure,Observation,Questionnaire,QuestionnaireResponse` |
 | `REACT_APP_FHIR_OBSERVATION_CATEGORIES` | Define what categor(ies) of FHIR observations to load for the patient | `social-history,vital-signs,imaging,laboratory,procedure,survey,exam,therapy,activity` |
 | `REACT_APP_AUTH_SCOPES` | For allowing the app to specify the delegation of a specific set of access rights via launch context. see [App Launch: Scopes and Launch Context](https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html) | `profile roles email patient/*.read openid fhirUser patient/QuestionnaireResponse.write` |
+<<<<<<< HEAD
 | `REACT_APP_QUESTIONNAIRES` | Define the questionnaire(s) for which responses and graph should be rendered | example: `minicog,phq9` |
 | `REACT_APP_PROJECT_ID` | Definition of which will allow project-specific theme, logo, etc. | example: `DCW`|
+=======
+| `REACT_APP_DASHBOARD_URL` | Define the (f)EMR URL to which the app can return to | example: https://dashboard.acc.dev.cosri.cirg.washington.edu
+>>>>>>> 95e659bc3a5142d259ead4727c93a63a25d2d13b
 
 ### Using with Public SMART Sandbox
 A public [SMART<sup>&reg;</sup> App Launcher](https://launch.smarthealthit.org/index.html) is available for sandbox tesing of SMART on FHIR apps with synthetic data.
