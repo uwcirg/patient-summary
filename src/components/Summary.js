@@ -1,12 +1,15 @@
 import React from "react";
 import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
 import { initialzieCqlWorker } from "cql-worker";
+import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
 import { FhirClientContext } from "../FhirClientContext";
 import ErrorComponent from "./ErrorComponent";
 import {
   getFHIRResourcePaths,
   getExpressionLogicLib,
   queryPatientIdKey,
+  getEnv
 } from "../util/util";
 
 let patientBundle = {
@@ -51,6 +54,7 @@ export default function Summary() {
   const contextContent = React.useContext(FhirClientContext);
   const [patient, setPatient] = React.useState(null);
   const [error, setError] = React.useState(null);
+  const returnURL = getEnv("REACT_APP_DASHBOARD_URL");
 
   const getPatient = React.useCallback(async () => {
     const client = contextContent.client;
@@ -121,13 +125,19 @@ export default function Summary() {
       {error && <ErrorComponent messge={error}></ErrorComponent>}
       {/* write out patient info */}
       {patient && (
-        <div>
+        <Stack spacing={2}>
           <h2>Hello World SoF App</h2>
           <div>
             Name: {patient.name[0].given.join(" ") + patient.name[0].family}
           </div>
           <div>DOB: {patient.birthDate}</div>
-        </div>
+        </Stack>
+      )}
+      {/* example of an UI button, on clicking of which will go to the (f)EMR URL defined by an environment variable */}
+      {returnURL && (
+        <Button variant="contained" href={`${returnURL}/clear_session`}>
+          Return to Patient List
+        </Button>
       )}
     </React.Fragment>
   );

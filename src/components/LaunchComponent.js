@@ -39,9 +39,8 @@ const fetchContextJson = async (authURL) => {
 
 export default function Launch() {
   const [error, setError] = React.useState("");
-
-  React.useEffect(() => fetchEnvData(), []);
   React.useEffect(() => {
+    fetchEnvData();
     const backendURL = getEnv("REACT_APP_BACKEND_URL");
     const authURL = backendURL
       ? `${backendURL}/auth/auth-info`
@@ -73,7 +72,8 @@ export default function Launch() {
 
         console.log("launch context json ", json);
         FHIR.oauth2.authorize(json).catch((e) => {
-          setError(e);
+          console.log("FHIR auth error ", e);
+          setError("Fhir auth error. see console for detail.");
         });
       },
       (error) => setError(error.message)
