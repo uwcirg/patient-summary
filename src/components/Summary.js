@@ -45,6 +45,12 @@ export default function Summary(props) {
   const [loading, setLoading] = useState(true);
   const [hasChart, setHasChart] = useState(false);
   const [error, setError] = useState("");
+  const anchorElementStyle = {
+    position: "relative",
+    top: -64,
+    height: 2,
+    width: 2,
+  };
   const shouldDisplayResponses = () => !loading && !error && hasData(questionnaire);
 
   const formatChartData = (data) => {
@@ -52,6 +58,9 @@ export default function Summary(props) {
       return summary.chartConfig.dataFormatter(data);
     return data;
   };
+
+  const getAnchorElementId = () =>
+    sectionAnchorPrefix || QUESTIONNAIRE_ANCHOR_ID_PREFIX;
 
   useEffect(() => {
     if (!loading) return;
@@ -116,11 +125,10 @@ export default function Summary(props) {
 
   return (
     <>
+      {/* anchor element */}
       <div
-        id={`${
-          sectionAnchorPrefix || QUESTIONNAIRE_ANCHOR_ID_PREFIX
-        }_${questionnaire}`}
-        style={{ position: "relative", top: -64, height: 2, width: 2 }}
+        id={`${getAnchorElementId()}_${questionnaire}`}
+        style={anchorElementStyle}
       ></div>
       <Stack
         className="summary"
@@ -131,6 +139,7 @@ export default function Summary(props) {
         }}
         direction="column"
       >
+        {/* questionnaire title */}
         <Typography
           variant="h6"
           component="h3"
@@ -139,11 +148,13 @@ export default function Summary(props) {
         >
           {questionnaire}
         </Typography>
+        {/* error message */}
         {error && (
           <Box sx={{ marginBottom: 1 }}>
             <Error message={error}></Error>
           </Box>
         )}
+        {/* loading indicator */}
         {loading && (
           <Stack
             alignItems={"center"}
@@ -156,6 +167,7 @@ export default function Summary(props) {
             ></LinearProgress>
           </Stack>
         )}
+        {/* chart & responses */}
         {shouldDisplayResponses() && (
           <Stack
             direction={{ xs: "column", md: "row" }}
