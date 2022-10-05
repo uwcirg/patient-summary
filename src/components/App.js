@@ -1,4 +1,5 @@
 import { ErrorBoundary } from "react-error-boundary";
+import { QueryClient, QueryClientProvider } from "react-query";
 import {useEffect} from "react";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
@@ -20,6 +21,8 @@ function ErrorFallBack({ error }) {
     </Alert>
   );
 }
+const queryClient = new QueryClient();
+
 export default function App() {
   fetchEnvData();
   // console.log("environment variables ", getEnvs());
@@ -29,12 +32,14 @@ export default function App() {
   return (
     <ErrorBoundary FallbackComponent={ErrorFallBack}>
       <ThemeProvider theme={getTheme()}>
-        <FhirClientProvider>
-          <CssBaseline />
-          <Header />
-          <Summaries />
-          {/* add other components as needed */}
-        </FhirClientProvider>
+        <QueryClientProvider client={queryClient}>
+          <FhirClientProvider>
+            <CssBaseline />
+            <Header />
+            <Summaries />
+            {/* add other components as needed */}
+          </FhirClientProvider>
+        </QueryClientProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

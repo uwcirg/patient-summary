@@ -6,6 +6,7 @@ import {
   useCallback,
   useState,
 } from "react";
+import { useQuery } from "react-query";
 import Alert from "@mui/material/Alert";
 import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
@@ -73,9 +74,9 @@ export default function Summaries() {
     if (isReady()) return;
     if (obj && obj.status === "error") setError(true);
   };
-  const isReady = () => patientBundle.loadComplete || error;
+  const isReady = useCallback(() => patientBundle.loadComplete || error, [patientBundle.loadComplete, error]);
 
-  const getFhirResources = useCallback(async () => {
+  const getFhirResources = async () => {
     if (!client || !patient || !patient.id)
       throw new Error("Client or patient missing.");
     const resources = getFHIRResourcePaths(patient.id);
@@ -112,7 +113,7 @@ export default function Summaries() {
         throw new Error(e);
       }
     );
-  }, [client, patient]);
+  };
 
   const hasQuestionnaireResponses = () => {
     return (
@@ -148,30 +149,32 @@ export default function Summaries() {
     return qList;
   };
 
+  const fhirQueryResults = useQuery("fhirResources", getFhirResources);
+
   useEffect(() => {
-    /* get FHIR resources */
-    getFhirResources().then(
-      (dataResult) => {
-        if (dataResult) {
-          console.log("data result ", dataResult)
-          const carePlans = dataResult.filter(
-            (item) => item.resource.resourceType === "CarePlan"
-          );
-          const qList = getQuestionnairesByCarePlan(carePlans);
-          // extract any questionnaire(s) referenced in the care plan
-          if (qList.length) setQuestionnaireList(qList);
-        }
-        setPatientBundle((prevPatientBundle) => {
-          return {
-            ...prevPatientBundle,
-            entry: [...prevPatientBundle.entry, ...dataResult],
-            loadComplete: true,
-          };
-        });
-      },
-      (e) => setError(e.message ? e.message : e)
-    );
-  }, [getFhirResources]);
+    if (isReady()) return;
+    const status = fhirQueryResults.status;
+    const data = fhirQueryResults.data;
+    if (status === "error") setError("Error fetching FHIR resources");
+    if (status === "success") {
+      if (data && data.length) {
+        // check if there is a care plan
+        const carePlans = data.filter(
+          (item) => item.resource.resourceType === "CarePlan"
+        );
+        const qList = getQuestionnairesByCarePlan(carePlans);
+        // extract any questionnaire(s) referenced in the care plan
+        if (qList.length) setQuestionnaireList(qList);
+      }
+      setPatientBundle((prevPatientBundle) => {
+        return {
+          ...prevPatientBundle,
+          entry: [...prevPatientBundle.entry, ...data],
+          loadComplete: true,
+        };
+      });
+    }
+  }, [isReady, fhirQueryResults]);
 
   useEffect(() => {
     window.addEventListener("scroll", handleFab);
