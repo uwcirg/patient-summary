@@ -35,13 +35,13 @@ define function MatchedQuestionnaireByReponses(responses FHIR.QuestionnaireRespo
   ([Questionnaire] Q
     where 
     (
-      PositionOf(QuestionnaireName, Q.id) != -1 or
-      Q.name = QuestionnaireName or
+      PositionOf(Lower(QuestionnaireName), Lower(Q.id)) != -1 or
+      Lower(Q.name) = Lower(QuestionnaireName) or
       Q.url.value = QuestionnaireURL) 
     and (
       (
-        PositionOf(Q.name, responses.questionnaire.value) != -1 or
-        PositionOf(Q.id, responses.questionnaire.value) != -1
+        PositionOf(Lower(Q.name), Lower(responses.questionnaire.value)) != -1 or
+        PositionOf(Lower(Q.id), Lower(responses.questionnaire.value)) != -1
       ) and 
       responses.status.value = 'completed')
   )
@@ -49,8 +49,9 @@ define function MatchedQuestionnaireByReponses(responses FHIR.QuestionnaireRespo
 // Load Questionnaire
 define CurrentQuestionnaire:
   First([Questionnaire] Q
-    where Q.url.value = QuestionnaireURL or 
-    Q.name = QuestionnaireName or
+    where 
+    Q.url.value = QuestionnaireURL or 
+    Lower(Q.name) = Lower(QuestionnaireName) or
     PositionOf(QuestionnaireName, Q.id) != -1)
 
 define QuestionnaireItems:

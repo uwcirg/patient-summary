@@ -125,18 +125,24 @@
                               "operand" : [ {
                                  "type" : "PositionOf",
                                  "pattern" : {
-                                    "name" : "QuestionnaireName",
-                                    "type" : "ParameterRef"
+                                    "type" : "Lower",
+                                    "operand" : {
+                                       "name" : "QuestionnaireName",
+                                       "type" : "ParameterRef"
+                                    }
                                  },
                                  "string" : {
-                                    "name" : "ToString",
-                                    "libraryName" : "FHIRHelpers",
-                                    "type" : "FunctionRef",
-                                    "operand" : [ {
-                                       "path" : "id",
-                                       "scope" : "Q",
-                                       "type" : "Property"
-                                    } ]
+                                    "type" : "Lower",
+                                    "operand" : {
+                                       "name" : "ToString",
+                                       "libraryName" : "FHIRHelpers",
+                                       "type" : "FunctionRef",
+                                       "operand" : [ {
+                                          "path" : "id",
+                                          "scope" : "Q",
+                                          "type" : "Property"
+                                       } ]
+                                    }
                                  }
                               }, {
                                  "type" : "Negate",
@@ -150,17 +156,23 @@
                         }, {
                            "type" : "Equal",
                            "operand" : [ {
-                              "name" : "ToString",
-                              "libraryName" : "FHIRHelpers",
-                              "type" : "FunctionRef",
-                              "operand" : [ {
-                                 "path" : "name",
-                                 "scope" : "Q",
-                                 "type" : "Property"
-                              } ]
+                              "type" : "Lower",
+                              "operand" : {
+                                 "name" : "ToString",
+                                 "libraryName" : "FHIRHelpers",
+                                 "type" : "FunctionRef",
+                                 "operand" : [ {
+                                    "path" : "name",
+                                    "scope" : "Q",
+                                    "type" : "Property"
+                                 } ]
+                              }
                            }, {
-                              "name" : "QuestionnaireName",
-                              "type" : "ParameterRef"
+                              "type" : "Lower",
+                              "operand" : {
+                                 "name" : "QuestionnaireName",
+                                 "type" : "ParameterRef"
+                              }
                            } ]
                         } ]
                      }, {
@@ -189,24 +201,30 @@
                               "operand" : [ {
                                  "type" : "PositionOf",
                                  "pattern" : {
-                                    "name" : "ToString",
-                                    "libraryName" : "FHIRHelpers",
-                                    "type" : "FunctionRef",
-                                    "operand" : [ {
-                                       "path" : "name",
-                                       "scope" : "Q",
-                                       "type" : "Property"
-                                    } ]
+                                    "type" : "Lower",
+                                    "operand" : {
+                                       "name" : "ToString",
+                                       "libraryName" : "FHIRHelpers",
+                                       "type" : "FunctionRef",
+                                       "operand" : [ {
+                                          "path" : "name",
+                                          "scope" : "Q",
+                                          "type" : "Property"
+                                       } ]
+                                    }
                                  },
                                  "string" : {
-                                    "path" : "value",
-                                    "type" : "Property",
-                                    "source" : {
-                                       "path" : "questionnaire",
+                                    "type" : "Lower",
+                                    "operand" : {
+                                       "path" : "value",
                                        "type" : "Property",
                                        "source" : {
-                                          "name" : "responses",
-                                          "type" : "OperandRef"
+                                          "path" : "questionnaire",
+                                          "type" : "Property",
+                                          "source" : {
+                                             "name" : "responses",
+                                             "type" : "OperandRef"
+                                          }
                                        }
                                     }
                                  }
@@ -226,24 +244,30 @@
                               "operand" : [ {
                                  "type" : "PositionOf",
                                  "pattern" : {
-                                    "name" : "ToString",
-                                    "libraryName" : "FHIRHelpers",
-                                    "type" : "FunctionRef",
-                                    "operand" : [ {
-                                       "path" : "id",
-                                       "scope" : "Q",
-                                       "type" : "Property"
-                                    } ]
+                                    "type" : "Lower",
+                                    "operand" : {
+                                       "name" : "ToString",
+                                       "libraryName" : "FHIRHelpers",
+                                       "type" : "FunctionRef",
+                                       "operand" : [ {
+                                          "path" : "id",
+                                          "scope" : "Q",
+                                          "type" : "Property"
+                                       } ]
+                                    }
                                  },
                                  "string" : {
-                                    "path" : "value",
-                                    "type" : "Property",
-                                    "source" : {
-                                       "path" : "questionnaire",
+                                    "type" : "Lower",
+                                    "operand" : {
+                                       "path" : "value",
                                        "type" : "Property",
                                        "source" : {
-                                          "name" : "responses",
-                                          "type" : "OperandRef"
+                                          "path" : "questionnaire",
+                                          "type" : "Property",
+                                          "source" : {
+                                             "name" : "responses",
+                                             "type" : "OperandRef"
+                                          }
                                        }
                                     }
                                  }
@@ -324,17 +348,23 @@
                         }, {
                            "type" : "Equal",
                            "operand" : [ {
-                              "name" : "ToString",
-                              "libraryName" : "FHIRHelpers",
-                              "type" : "FunctionRef",
-                              "operand" : [ {
-                                 "path" : "name",
-                                 "scope" : "Q",
-                                 "type" : "Property"
-                              } ]
+                              "type" : "Lower",
+                              "operand" : {
+                                 "name" : "ToString",
+                                 "libraryName" : "FHIRHelpers",
+                                 "type" : "FunctionRef",
+                                 "operand" : [ {
+                                    "path" : "name",
+                                    "scope" : "Q",
+                                    "type" : "Property"
+                                 } ]
+                              }
                            }, {
-                              "name" : "QuestionnaireName",
-                              "type" : "ParameterRef"
+                              "type" : "Lower",
+                              "operand" : {
+                                 "name" : "QuestionnaireName",
+                                 "type" : "ParameterRef"
+                              }
                            } ]
                         } ]
                      }, {
