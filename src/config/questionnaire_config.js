@@ -8,5 +8,8 @@ const qConfig = {
   gad7: {
     scoringQuestionId: "/70274-6",
   },
+  gds: {
+    scoringQuestionId: "/48545-8",
+  },
 };
 export default qConfig;
