@@ -163,7 +163,7 @@ export default function Summary(props) {
           color="secondary"
           sx={{ marginBottom: 1 }}
         >
-          {questionnaire}
+          {questionnaire.toUpperCase()}
         </Typography>
         {/* error message */}
         {error && (

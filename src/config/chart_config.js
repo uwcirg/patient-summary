@@ -18,7 +18,7 @@ const Rect = (props) => {
 };
 const CHART_CONFIG = {
   default: {
-    type: "barchart",
+    type: "linechart",
     title: "Total Score by Date",
     chartWidth: 500,
     chartHeight: 540,
@@ -28,6 +28,37 @@ const CHART_CONFIG = {
     yFieldKey: "total",
     yLabel: "score",
     xLabel: "date",
+    yDomain: [0, 30],
+    yTicks: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30
+    ],
+    dataFormatter: (data) => {
+      data = data.map((item) => {
+        item.date = new Date(item.date);
+        return item;
+      });
+      let startDate = new Date();
+      startDate.setFullYear(startDate.getFullYear() - 2);
+      data.unshift({
+        total: null,
+        date: startDate.valueOf(),
+      });
+      data.push({
+        total: null,
+        date: getTomorrow().valueOf(),
+      });
+      return data.map((item) => {
+        item.date = item.date.valueOf();
+        return item;
+      });
+    },
+    xTickFormatter: (item) => new Date(item).toISOString().substring(0, 10),
+    tooltipLabelFormatter: (value, data) => {
+      if (data && data.length && value > 0)
+        return new Date(value).toISOString().substring(0, 10);
+      return "";
+    },
   },
   //specific graph config for each questionnaire here
   minicog: {
@@ -98,7 +129,17 @@ const CHART_CONFIG = {
     yDomain: [0, 27],
     yTicks: [
       0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27,
+      21, 22, 23, 24, 25, 26, 27, 28,
+    ],
+  },
+  gad7: {
+    id: "gad7",
+    type: "linechart",
+    legendType: "none",
+    yDomain: [0, 22],
+    yTicks: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22,
     ],
     dataFormatter: (data) => {
       data = data.map((item) => {
