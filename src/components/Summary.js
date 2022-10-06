@@ -11,12 +11,14 @@ import {
   callback,
   getInterventionLogicLib,
   getChartConfig,
+  getMatchedQuestionnaireByFhirResource,
   hasData,
   hasMatchedQuestionnaireFhirResource,
   QUESTIONNAIRE_ANCHOR_ID_PREFIX,
 } from "../util/util";
 import Responses from "./Responses";
 import Chart from "./Chart";
+import config from "../config/questionnaire_config";
 
 export default function Summary(props) {
   const { questionnaire, patientBundle, callbackFunc, sectionAnchorPrefix } =
@@ -65,31 +67,46 @@ export default function Summary(props) {
   useEffect(() => {
     if (!loading) return;
     if (!hasMatchedQuestionnaireFhirResource(patientBundle, questionnaire)) {
-      setError(
-        "No matching questionnaire found in FHIR server."
-      );
+      setError("No matching questionnaire found in FHIR server.");
       callback(callbackFunc, { status: "error" });
       setLoading(false);
       return;
     }
+
     // Define a web worker for evaluating CQL expressions
     const cqlWorker = new Worker();
-    // Initialize the cql-worker
-    const [setupExecution, sendPatientBundle, evaluateExpression] =
-      initialzieCqlWorker(cqlWorker);
 
     const gatherSummaryData = async () => {
+      // Initialize the cql-worker
+      const [setupExecution, sendPatientBundle, evaluateExpression] =
+        initialzieCqlWorker(cqlWorker);
       const chartConfig = getChartConfig(questionnaire);
+      const objQuestionnaire =
+        getMatchedQuestionnaireByFhirResource(patientBundle, questionnaire) ||
+        {};
+      const questionnaireConfig = config[questionnaire] || {};
       /* get CQL expressions */
       const [elmJson, valueSetJson] = await getInterventionLogicLib(
-        questionnaire
+        questionnaireConfig.customCQL ? questionnaire : ""
       ).catch((e) => {
         throw new Error(e);
       });
       // Send the cqlWorker an initial message containing the ELM JSON representation of the CQL expressions
-      setupExecution(elmJson, valueSetJson);
+      try {
+        setupExecution(elmJson, valueSetJson, {
+          QuestionnaireName: objQuestionnaire.name,
+          QuestionnaireURL: objQuestionnaire.url,
+          ScoringQuestionId: questionnaireConfig.scoringQuestionId
+        });
+      } catch (e) {
+        throw new Error(e);
+      }
       // Send patient info to CQL worker to process
-      sendPatientBundle(patientBundle);
+      try {
+        sendPatientBundle(patientBundle);
+      } catch(e) {
+        throw new Error(e);
+      }
 
       // get formatted questionnaire responses
       const cqlData = await evaluateExpression("ResponsesSummary").catch(
@@ -116,8 +133,8 @@ export default function Summary(props) {
         callback(callbackFunc, { status: "ok" });
       })
       .catch((e) => {
-        setError(e.message ? e.message: e);
-        setLoading(true);
+        setError(e.message ? e.message : e);
+        setLoading(false);
         callback(callbackFunc, { status: "error" });
       });
     return () => cqlWorker.terminate();

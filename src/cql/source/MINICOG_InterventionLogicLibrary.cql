@@ -37,7 +37,11 @@ define scoringQuestionId: 'minicog-total-score'
 define function MatchedQuestionnaireByReponses(responses FHIR.QuestionnaireResponse):
   ([Questionnaire] Q
     where 
-    (Q.id = QuestionnaireName or Q.url.value = QuestionnaireURL) 
+    (
+      PositionOf(QuestionnaireName, Q.id) != -1 or
+      Q.name = QuestionnaireName or
+      Q.url.value = QuestionnaireURL
+    ) 
     and (
       (
         PositionOf(Q.name, responses.questionnaire.value) != -1 or
@@ -45,11 +49,13 @@ define function MatchedQuestionnaireByReponses(responses FHIR.QuestionnaireRespo
       ) and 
       responses.status.value = 'completed')
   )
-
+  
 // Load Questionnaire
 define CurrentQuestionnaire:
   First([Questionnaire] Q
-    where Q.url.value = QuestionnaireURL)
+    where Q.url.value = QuestionnaireURL or 
+    Q.name = QuestionnaireName or
+    PositionOf(QuestionnaireName, Q.id) != -1)
 
 define QuestionnaireItems:
   CurrentQuestionnaire Q

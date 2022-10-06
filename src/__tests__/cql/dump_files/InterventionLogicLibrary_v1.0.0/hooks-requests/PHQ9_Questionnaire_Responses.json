@@ -1,14 +1,14 @@
 {
-  "hookInstance": "a7917232-4dd6-47f7-a3a6-0f3993f5ea57",
+  "hookInstance": "6a7f42ac-2051-4b12-8fd6-dbae4c600314",
   "hook": "patient-view",
   "user": "Practitioner/example",
   "context": {
-    "patientId": "d228286a-c759-4fc8-9ebf-fde69398cbb9"
+    "patientId": "cd53ad62-d031-4b91-b59b-ef4b5ad21f87"
   },
   "prefetch": {
     "Patient": {
       "resourceType": "Patient",
-      "id": "d228286a-c759-4fc8-9ebf-fde69398cbb9",
+      "id": "cd53ad62-d031-4b91-b59b-ef4b5ad21f87",
       "name": [
         {
           "family": "Skywalker",
@@ -27,15 +27,9 @@
         {
           "resource": {
             "resourceType": "Questionnaire",
-            "id": "b38e050d-45d6-4f4a-9a9b-9d5a57a2dc0a",
+            "id": "phq9",
             "status": "active",
             "url": "http://www.cdc.gov/ncbddd/fasd/phq9",
-            "identifier": [
-              {
-                "system": "http://hl7.org/fhir/uv/sdc/NamingSystem/questionnaire-ids",
-                "value": "phq9"
-              }
-            ],
             "name": "phq9",
             "item": [
               {
@@ -600,9 +594,9 @@
         {
           "resource": {
             "resourceType": "QuestionnaireResponse",
-            "id": "74ddd5df-77f5-474c-83f4-271418154df2",
+            "id": "86fdbd8d-4806-4f93-922b-5287c4d131ff",
             "subject": {
-              "reference": "Patient/d228286a-c759-4fc8-9ebf-fde69398cbb9"
+              "reference": "Patient/cd53ad62-d031-4b91-b59b-ef4b5ad21f87"
             },
             "status": "completed",
             "questionnaire": "http://www.cdc.gov/ncbddd/fasd/phq9",

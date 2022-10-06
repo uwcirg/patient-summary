@@ -17,7 +17,7 @@ export default function FhirClientProvider(props) {
       console.log("auth result ", result);
       setClient(result);
       return getPatient(result);
-    })
+    }).catch(e => setError(e))
   );
 
   const getPatient = async (client) => {

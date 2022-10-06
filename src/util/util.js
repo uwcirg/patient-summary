@@ -1,11 +1,16 @@
 import ChartConfig from "../config/chart_config.js";
 
 export async function getInterventionLogicLib(interventionId) {
-  if (!interventionId) throw new Error("No intervention id specified");
+  let fileName = "InterventionLogicLibrary.json";
+  if (interventionId) {
+    // load questionnaire specific CQL
+    fileName = `${interventionId.toUpperCase()}_InterventionLogicLibrary.json`;
+  }
+  console.log("CQL FILE NAME ", fileName)
   let elmJson, valueSetJson;
   try {
     elmJson = await import(
-      `../cql/${interventionId.toUpperCase()}_InterventionLogicLibrary.json`
+      `../cql/${fileName}`
     ).then((module) => module.default);
     valueSetJson = await import(`../cql/valueset-db.json`).then(
       (module) => module.default
@@ -118,7 +123,7 @@ export function getTomorrow() {
   return new Date(Date.now() + 24 * 60 * 60 * 1000);
 }
 
-export function hasMatchedQuestionnaireFhirResource(sources, questionnaireId) {
+export function getMatchedQuestionnaireByFhirResource(sources, questionnaireId) {
   if (!sources || !sources.entry || !sources.entry.length) return false;
   if (!questionnaireId) return false;
   const match = sources.entry.filter(
@@ -127,8 +132,13 @@ export function hasMatchedQuestionnaireFhirResource(sources, questionnaireId) {
       String(item.resource.resourceType).toLowerCase() === "questionnaire" &&
       String(item.resource.name).toLowerCase() ===
         String(questionnaireId).toLowerCase()
-  );
-  return match.length > 0;
+  ).map(item => item.resource);
+  if (match.length) return match[0];
+  return false;
+}
+
+export function hasMatchedQuestionnaireFhirResource(sources, questionnaireId) {
+  return getMatchedQuestionnaireByFhirResource(sources, questionnaireId);
 }
 
 export function callback(callbackFunc, params) {

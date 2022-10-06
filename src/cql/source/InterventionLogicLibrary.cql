@@ -1,4 +1,4 @@
-library PHQ9_InterventionLogicLibrary version '1.0.0'
+library InterventionLogicLibrary version '1.0.0'
 
 using FHIR version '4.0.1'
 
@@ -7,8 +7,9 @@ include "FHIRHelpers" version '4.0.1' called FHIRHelpers
 // -----------------------------------------------------------------------------
 // PARAMETERS
 // -----------------------------------------------------------------------------
-parameter QuestionnaireName default 'PHQ9'
-parameter QuestionnaireURL default 'http://www.cdc.gov/ncbddd/fasd/phq9'
+parameter QuestionnaireName default ''
+parameter QuestionnaireURL default ''
+parameter ScoringQuestionId default ''
 
 // -----------------------------------------------------------------------------
 // PATIENT INFORMATION
@@ -29,13 +30,14 @@ define function DateTimeText(d FHIR.dateTime):
 // QUESTIONNAIRE & QUESTIONNAIRERESPONSE LOGIC
 //------------------------------------------------------------------------------
 
-define scoringQuestionId: '/44261-6'
-
 
 define function MatchedQuestionnaireByReponses(responses FHIR.QuestionnaireResponse):
   ([Questionnaire] Q
     where 
-    (Q.id = QuestionnaireName or Q.url.value = QuestionnaireURL) 
+    (
+      PositionOf(QuestionnaireName, Q.id) != -1 or
+      Q.name = QuestionnaireName or
+      Q.url.value = QuestionnaireURL) 
     and (
       (
         PositionOf(Q.name, responses.questionnaire.value) != -1 or
@@ -47,7 +49,9 @@ define function MatchedQuestionnaireByReponses(responses FHIR.QuestionnaireRespo
 // Load Questionnaire
 define CurrentQuestionnaire:
   First([Questionnaire] Q
-    where Q.url.value = QuestionnaireURL)
+    where Q.url.value = QuestionnaireURL or 
+    Q.name = QuestionnaireName or
+    PositionOf(QuestionnaireName, Q.id) != -1)
 
 define QuestionnaireItems:
   CurrentQuestionnaire Q
@@ -81,7 +85,7 @@ define function FormattedResponses(responses List<FHIR.QuestionnaireResponse.Ite
       id: Q.linkId.value,
       answer: if answerText is not null then First(answerText) else null,
       value: if answerValue is not null then First(answerValue) else null,
-      question: if Q.linkId.value= scoringQuestionId then '<b>' + Q.text.value + '</b>' else Q.text.value,
+      question: if Q.linkId.value = ScoringQuestionId then '<b>' + Q.text.value + '</b>' else Q.text.value,
       text: Q.text.value
     }
 
@@ -99,9 +103,12 @@ define ResponsesOnly:
   return FormattedResponses(I.item)
 
 define ChartData:
-  ResponsesSummary R 
-  return {
-    date: R.date,
-    total: First((R.responses) I where I.id = scoringQuestionId return I.value.value)
-  }
-  sort by date
+  if ScoringQuestionId is null or ScoringQuestionId = '' then null
+  else (
+    ResponsesSummary R 
+    return {
+      date: R.date,
+      total: First((R.responses) I where I.id = ScoringQuestionId return I.value.value)
+    }
+    sort by date
+  )

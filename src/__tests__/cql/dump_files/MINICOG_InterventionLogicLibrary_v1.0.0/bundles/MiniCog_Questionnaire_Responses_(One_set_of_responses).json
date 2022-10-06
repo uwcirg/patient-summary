@@ -6,7 +6,7 @@
     {
       "resource": {
         "resourceType": "Patient",
-        "id": "4adc947a-360b-4d7a-b66e-5b2ce53910b1",
+        "id": "829c95a0-bfd9-428d-9844-833f0734e9b4",
         "name": [
           {
             "family": "Skywalker",
@@ -48,9 +48,9 @@
     {
       "resource": {
         "resourceType": "QuestionnaireResponse",
-        "id": "17d27d7b-0983-43cf-b9a0-3f47222cb564",
+        "id": "034801ab-7411-40d6-95cc-a7016d1f0b95",
         "subject": {
-          "reference": "Patient/4adc947a-360b-4d7a-b66e-5b2ce53910b1"
+          "reference": "Patient/829c95a0-bfd9-428d-9844-833f0734e9b4"
         },
         "status": "completed",
         "questionnaire": "http://www.cdc.gov/ncbddd/fasd/minicog",
