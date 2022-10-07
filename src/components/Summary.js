@@ -108,6 +108,11 @@ export default function Summary(props) {
         throw new Error(e);
       }
 
+      // const currentQ = await evaluateExpression("Questionnaires");
+      // console.log(questionnaire, currentQ);
+      // const currentQR = await evaluateExpression("QuestionnaireResponses");
+      // console.log(questionnaire, currentQR)
+
       // get formatted questionnaire responses
       const cqlData = await evaluateExpression("ResponsesSummary").catch(
         (e) => {

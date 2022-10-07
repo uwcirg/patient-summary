@@ -32,13 +32,9 @@ define function DateTimeText(d FHIR.dateTime):
 
 
 define function MatchedQuestionnaireByReponses(responses FHIR.QuestionnaireResponse):
-  ([Questionnaire] Q
+  (Questionnaires Q
     where 
     (
-      PositionOf(Lower(QuestionnaireName), Lower(Q.id)) != -1 or
-      Lower(Q.name) = Lower(QuestionnaireName) or
-      Q.url.value = QuestionnaireURL) 
-    and (
       (
         PositionOf(Lower(Q.name), Lower(responses.questionnaire.value)) != -1 or
         PositionOf(Lower(Q.id), Lower(responses.questionnaire.value)) != -1
@@ -46,13 +42,18 @@ define function MatchedQuestionnaireByReponses(responses FHIR.QuestionnaireRespo
       responses.status.value = 'completed')
   )
 
-// Load Questionnaire
-define CurrentQuestionnaire:
-  First([Questionnaire] Q
+define Questionnaires:
+  ([Questionnaire] Q
     where 
     Q.url.value = QuestionnaireURL or 
     Lower(Q.name) = Lower(QuestionnaireName) or
-    PositionOf(QuestionnaireName, Q.id) != -1)
+    PositionOf(Lower(QuestionnaireName), Lower(Q.id)) != -1 or
+    PositionOf(Lower(QuestionnaireName), Lower(Q.name)) != -1
+  )
+
+// Load Questionnaire
+define CurrentQuestionnaire:
+  First(Questionnaires)
 
 define QuestionnaireItems:
   CurrentQuestionnaire Q

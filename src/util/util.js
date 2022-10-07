@@ -6,7 +6,6 @@ export async function getInterventionLogicLib(interventionId) {
     // load questionnaire specific CQL
     fileName = `${interventionId.toUpperCase()}_InterventionLogicLibrary.json`;
   }
-  console.log("CQL FILE NAME ", fileName)
   let elmJson, valueSetJson;
   try {
     elmJson = await import(
@@ -129,9 +128,9 @@ export function getMatchedQuestionnaireByFhirResource(sources, questionnaireId) 
   const match = sources.entry.filter(
     (item) =>
       item.resource &&
-      String(item.resource.resourceType).toLowerCase() === "questionnaire" &&
-      String(item.resource.name).toLowerCase() ===
-        String(questionnaireId).toLowerCase()
+      (String(item.resource.resourceType).toLowerCase() === "questionnaire") &&
+      (((item.resource.id.toLowerCase()).indexOf(questionnaireId) !== -1) ||
+       ((item.resource.name.toLowerCase()).indexOf(questionnaireId) !== -1))
   ).map(item => item.resource);
   if (match.length) return match[0];
   return false;

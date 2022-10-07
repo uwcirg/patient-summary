@@ -15,8 +15,8 @@ upload(
   "https://r4.smarthealthit.org",
   path.join(__dirname, "test_questionnaire_responses")
 ).then((results) => {
-  console.log(results)
-});
+   console.log(results)
+})
 
 
 function upload(baseURL, dirPath) {
