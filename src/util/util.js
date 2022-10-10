@@ -123,14 +123,15 @@ export function getTomorrow() {
 }
 
 export function getMatchedQuestionnaireByFhirResource(sources, questionnaireId) {
+  console.log("sources ", sources)
   if (!sources || !sources.entry || !sources.entry.length) return false;
   if (!questionnaireId) return false;
   const match = sources.entry.filter(
     (item) =>
       item.resource &&
       (String(item.resource.resourceType).toLowerCase() === "questionnaire") &&
-      (((item.resource.id.toLowerCase()).indexOf(questionnaireId) !== -1) ||
-       ((item.resource.name.toLowerCase()).indexOf(questionnaireId) !== -1))
+      (((String(item.resource.id).toLowerCase()).indexOf(questionnaireId) !== -1) ||
+       ((String(item.resource.name).toLowerCase()).indexOf(questionnaireId) !== -1))
   ).map(item => item.resource);
   if (match.length) return match[0];
   return false;

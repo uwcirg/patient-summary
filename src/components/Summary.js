@@ -67,7 +67,7 @@ export default function Summary(props) {
   useEffect(() => {
     if (!loading) return;
     if (!hasMatchedQuestionnaireFhirResource(patientBundle, questionnaire)) {
-      setError("No matching questionnaire found in FHIR server.");
+      setError("No matching questionnaire found on the server.");
       callback(callbackFunc, { status: "error" });
       setLoading(false);
       return;
