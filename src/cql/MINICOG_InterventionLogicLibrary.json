@@ -351,40 +351,86 @@
                      "operand" : [ {
                         "type" : "Or",
                         "operand" : [ {
-                           "type" : "Equal",
+                           "type" : "Or",
                            "operand" : [ {
-                              "path" : "value",
-                              "type" : "Property",
-                              "source" : {
-                                 "path" : "url",
-                                 "scope" : "Q",
-                                 "type" : "Property"
-                              }
-                           }, {
-                              "name" : "QuestionnaireURL",
-                              "type" : "ParameterRef"
-                           } ]
-                        }, {
-                           "type" : "Equal",
-                           "operand" : [ {
-                              "type" : "Lower",
-                              "operand" : {
-                                 "name" : "ToString",
-                                 "libraryName" : "FHIRHelpers",
-                                 "type" : "FunctionRef",
-                                 "operand" : [ {
-                                    "path" : "name",
+                              "type" : "Equal",
+                              "operand" : [ {
+                                 "path" : "value",
+                                 "type" : "Property",
+                                 "source" : {
+                                    "path" : "url",
                                     "scope" : "Q",
                                     "type" : "Property"
+                                 }
+                              }, {
+                                 "name" : "QuestionnaireURL",
+                                 "type" : "ParameterRef"
+                              } ]
+                           }, {
+                              "type" : "Not",
+                              "operand" : {
+                                 "type" : "Equal",
+                                 "operand" : [ {
+                                    "type" : "PositionOf",
+                                    "pattern" : {
+                                       "name" : "QuestionnaireName",
+                                       "type" : "ParameterRef"
+                                    },
+                                    "string" : {
+                                       "name" : "ToString",
+                                       "libraryName" : "FHIRHelpers",
+                                       "type" : "FunctionRef",
+                                       "operand" : [ {
+                                          "path" : "id",
+                                          "scope" : "Q",
+                                          "type" : "Property"
+                                       } ]
+                                    }
+                                 }, {
+                                    "type" : "Negate",
+                                    "operand" : {
+                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                       "value" : "1",
+                                       "type" : "Literal"
+                                    }
                                  } ]
                               }
-                           }, {
-                              "type" : "Lower",
-                              "operand" : {
-                                 "name" : "QuestionnaireName",
-                                 "type" : "ParameterRef"
-                              }
                            } ]
+                        }, {
+                           "type" : "Not",
+                           "operand" : {
+                              "type" : "Equal",
+                              "operand" : [ {
+                                 "type" : "PositionOf",
+                                 "pattern" : {
+                                    "type" : "Lower",
+                                    "operand" : {
+                                       "name" : "QuestionnaireName",
+                                       "type" : "ParameterRef"
+                                    }
+                                 },
+                                 "string" : {
+                                    "type" : "Lower",
+                                    "operand" : {
+                                       "name" : "ToString",
+                                       "libraryName" : "FHIRHelpers",
+                                       "type" : "FunctionRef",
+                                       "operand" : [ {
+                                          "path" : "name",
+                                          "scope" : "Q",
+                                          "type" : "Property"
+                                       } ]
+                                    }
+                                 }
+                              }, {
+                                 "type" : "Negate",
+                                 "operand" : {
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                    "value" : "1",
+                                    "type" : "Literal"
+                                 }
+                              } ]
+                           }
                         } ]
                      }, {
                         "type" : "Not",
@@ -393,18 +439,24 @@
                            "operand" : [ {
                               "type" : "PositionOf",
                               "pattern" : {
-                                 "name" : "QuestionnaireName",
-                                 "type" : "ParameterRef"
+                                 "type" : "Lower",
+                                 "operand" : {
+                                    "name" : "ToString",
+                                    "libraryName" : "FHIRHelpers",
+                                    "type" : "FunctionRef",
+                                    "operand" : [ {
+                                       "path" : "name",
+                                       "scope" : "Q",
+                                       "type" : "Property"
+                                    } ]
+                                 }
                               },
                               "string" : {
-                                 "name" : "ToString",
-                                 "libraryName" : "FHIRHelpers",
-                                 "type" : "FunctionRef",
-                                 "operand" : [ {
-                                    "path" : "id",
-                                    "scope" : "Q",
-                                    "type" : "Property"
-                                 } ]
+                                 "type" : "Lower",
+                                 "operand" : {
+                                    "name" : "QuestionnaireName",
+                                    "type" : "ParameterRef"
+                                 }
                               }
                            }, {
                               "type" : "Negate",
@@ -667,6 +719,21 @@
                               "type" : "Property"
                            } ]
                         }
+                     }, {
+                        "name" : "lastUpdated",
+                        "value" : {
+                           "path" : "value",
+                           "type" : "Property",
+                           "source" : {
+                              "path" : "lastUpdated",
+                              "type" : "Property",
+                              "source" : {
+                                 "path" : "meta",
+                                 "scope" : "I",
+                                 "type" : "Property"
+                              }
+                           }
+                        }
                      } ]
                   }
                },
@@ -674,6 +741,10 @@
                   "by" : [ {
                      "direction" : "desc",
                      "path" : "date",
+                     "type" : "ByColumn"
+                  }, {
+                     "direction" : "desc",
+                     "path" : "lastUpdated",
                      "type" : "ByColumn"
                   } ]
                }
@@ -847,13 +918,6 @@
                         }
                      } ]
                   }
-               },
-               "sort" : {
-                  "by" : [ {
-                     "direction" : "asc",
-                     "path" : "date",
-                     "type" : "ByColumn"
-                  } ]
                }
             }
          } ]

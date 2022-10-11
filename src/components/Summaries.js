@@ -74,7 +74,10 @@ export default function Summaries() {
     if (isReady()) return;
     if (obj && obj.status === "error") setError(true);
   };
-  const isReady = useCallback(() => patientBundle.loadComplete || error, [patientBundle.loadComplete, error]);
+  const isReady = useCallback(
+    () => patientBundle.loadComplete || error,
+    [patientBundle.loadComplete, error]
+  );
 
   const getFhirResources = async () => {
     if (!client || !patient || !patient.id)
@@ -261,11 +264,11 @@ export default function Summaries() {
                     ></QuestionnaireSelector>
                   </BoxRef>
                 )}
-                {questionnaireList.map((questionnaire, index) => {
+                {questionnaireList.map((questionnaireId, index) => {
                   return (
                     <Box key={`summary_container_${index}`}>
                       <Summary
-                        questionnaire={questionnaire}
+                        questionnaireId={questionnaireId}
                         patientBundle={patientBundle}
                         key={`questionnaire_summary_${index}`}
                         callbackFunc={handleCallback}

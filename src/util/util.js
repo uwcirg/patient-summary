@@ -22,7 +22,7 @@ export async function getInterventionLogicLib(interventionId) {
 
 export function getFHIRResourcePaths(patientId) {
   if (!patientId) return [];
-  const defaultList = ["QuestionnaireResponse", "Questionnaire", "CarePlan"];
+  const defaultList = ["CarePlan", "QuestionnaireResponse"];
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
   let resources = resourcesToLoad ? resourcesToLoad.split(",") : defaultList;
   defaultList.forEach((item) => {
@@ -39,7 +39,9 @@ export function getFHIRResourcePaths(patientId) {
       "REACT_APP_FHIR_OBSERVATION_CATEGORIES"
     );
     if (resource.toLowerCase() === "careplan") {
-      path = path + `?subject=Patient/${patientId}&_sort=-_lastUpdated`;
+      path =
+        path +
+        `?subject=Patient/${patientId}&_sort=-_lastUpdated&category:text=Questionnaire`;
     } else {
       path =
         path +
@@ -57,6 +59,11 @@ export function getFHIRResourcePaths(patientId) {
     }
     return path;
   });
+}
+
+export function getDisplayQTitle(questionnaireId) {
+  if (!questionnaireId) return "";
+  return (questionnaireId.replace(/cirg-/gi,'')).toUpperCase();
 }
 
 export function isValidDate(date) {
@@ -120,25 +127,6 @@ export function hasData(arrObj) {
 
 export function getTomorrow() {
   return new Date(Date.now() + 24 * 60 * 60 * 1000);
-}
-
-export function getMatchedQuestionnaireByFhirResource(sources, questionnaireId) {
-  console.log("sources ", sources)
-  if (!sources || !sources.entry || !sources.entry.length) return false;
-  if (!questionnaireId) return false;
-  const match = sources.entry.filter(
-    (item) =>
-      item.resource &&
-      (String(item.resource.resourceType).toLowerCase() === "questionnaire") &&
-      (((String(item.resource.id).toLowerCase()).indexOf(questionnaireId) !== -1) ||
-       ((String(item.resource.name).toLowerCase()).indexOf(questionnaireId) !== -1))
-  ).map(item => item.resource);
-  if (match.length) return match[0];
-  return false;
-}
-
-export function hasMatchedQuestionnaireFhirResource(sources, questionnaireId) {
-  return getMatchedQuestionnaireByFhirResource(sources, questionnaireId);
 }
 
 export function callback(callbackFunc, params) {

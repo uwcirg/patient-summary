@@ -53,9 +53,11 @@ define function MatchedQuestionnaireByReponses(responses FHIR.QuestionnaireRespo
 define CurrentQuestionnaire:
   First([Questionnaire] Q
     where 
-    Q.url.value = QuestionnaireURL or 
-    Lower(Q.name) = Lower(QuestionnaireName) or
-    PositionOf(QuestionnaireName, Q.id) != -1)
+    Q.url.value = QuestionnaireURL or
+    PositionOf(QuestionnaireName, Q.id) != -1 or
+    PositionOf(Lower(QuestionnaireName), Lower(Q.name)) != -1 or
+    PositionOf(Lower(Q.name), Lower(QuestionnaireName)) != -1
+  )
 
 define QuestionnaireItems:
   CurrentQuestionnaire Q
@@ -83,9 +85,10 @@ define ResponsesSummary:
   (QuestionnaireResponses) I
   return {
     date: DateTimeText(I.authored),
-    responses: FormattedResponses(I.item)
+    responses: FormattedResponses(I.item),
+    lastUpdated: I.meta.lastUpdated.value
   }
-  sort by date desc
+  sort by date desc, lastUpdated desc
 
 define ResponsesOnly:
   (QuestionnaireResponses) I
@@ -99,4 +102,4 @@ define ChartData:
     clock_draw: First((R.responses) I where I.id = question2Id return I.value.value),
     total: First((R.responses) I where I.id = scoringQuestionId return I.value.value)
   }
-  sort by date
+

@@ -1,4 +1,4 @@
-import { useState, useEffect, useReducer } from "react";
+import { useState, useEffect, useRef, useReducer, useContext } from "react";
 import PropTypes from "prop-types";
 import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
@@ -11,18 +11,25 @@ import {
   callback,
   getInterventionLogicLib,
   getChartConfig,
-  getMatchedQuestionnaireByFhirResource,
+  getDisplayQTitle,
   hasData,
-  hasMatchedQuestionnaireFhirResource,
   QUESTIONNAIRE_ANCHOR_ID_PREFIX,
 } from "../util/util";
 import Responses from "./Responses";
 import Chart from "./Chart";
 import config from "../config/questionnaire_config";
+import { FhirClientContext } from "../context/FhirClientContext";
 
 export default function Summary(props) {
-  const { questionnaire, patientBundle, callbackFunc, sectionAnchorPrefix } =
-    props;
+  const { client } = useContext(FhirClientContext);
+  const patientBundle = useRef({
+    resourceType: "Bundle",
+    id: "resource-bundle",
+    type: "collection",
+    entry: [...props.patientBundle.entry],
+    questionnaire: null,
+  });
+  const { questionnaireId, callbackFunc, sectionAnchorPrefix } = props;
   const summaryReducer = (summary, action) => {
     if (action.type === "reset") {
       return {
@@ -53,7 +60,8 @@ export default function Summary(props) {
     height: 2,
     width: 2,
   };
-  const shouldDisplayResponses = () => !loading && !error && hasData(questionnaire);
+  const shouldDisplayResponses = () =>
+    !loading && !error && hasData(questionnaireId);
 
   const formatChartData = (data) => {
     if (summary.chartConfig && summary.chartConfig.dataFormatter)
@@ -66,52 +74,43 @@ export default function Summary(props) {
 
   useEffect(() => {
     if (!loading) return;
-    if (!hasMatchedQuestionnaireFhirResource(patientBundle, questionnaire)) {
-      setError("No matching questionnaire found on the server.");
-      callback(callbackFunc, { status: "error" });
-      setLoading(false);
-      return;
-    }
 
     // Define a web worker for evaluating CQL expressions
     const cqlWorker = new Worker();
 
-    const gatherSummaryData = async () => {
+    // search for matching questionnaire
+    const searchMatchingQuestionnaire = async () => {
+      const nameSearchString = questionnaireId.split("-").join(",");
+      return Promise.all([
+        // look up the questionnaire based on whether the id or the name attribute matches the specified instrument id?
+        client.request("/Questionnaire/?_id=" + questionnaireId),
+        client.request("/Questionnaire?name:contains=" + nameSearchString),
+      ]);
+    };
+
+    const gatherSummaryData = async (questionnaireJson) => {
       // Initialize the cql-worker
       const [setupExecution, sendPatientBundle, evaluateExpression] =
         initialzieCqlWorker(cqlWorker);
-      const chartConfig = getChartConfig(questionnaire);
-      const objQuestionnaire =
-        getMatchedQuestionnaireByFhirResource(patientBundle, questionnaire) ||
-        {};
-      const questionnaireConfig = config[questionnaire] || {};
+      const questionaireKey = getDisplayQTitle(questionnaireId).toLowerCase();
+      const chartConfig = getChartConfig(questionaireKey);
+      const questionnaireConfig = config[questionaireKey] || {};
+
       /* get CQL expressions */
       const [elmJson, valueSetJson] = await getInterventionLogicLib(
-        questionnaireConfig.customCQL ? questionnaire : ""
+        questionnaireConfig.customCQL ? questionnaireId : ""
       ).catch((e) => {
         throw new Error(e);
       });
-      // Send the cqlWorker an initial message containing the ELM JSON representation of the CQL expressions
-      try {
-        setupExecution(elmJson, valueSetJson, {
-          QuestionnaireName: objQuestionnaire.name,
-          QuestionnaireURL: objQuestionnaire.url,
-          ScoringQuestionId: questionnaireConfig.scoringQuestionId
-        });
-      } catch (e) {
-        throw new Error(e);
-      }
-      // Send patient info to CQL worker to process
-      try {
-        sendPatientBundle(patientBundle);
-      } catch(e) {
-        throw new Error(e);
-      }
 
-      // const currentQ = await evaluateExpression("Questionnaires");
-      // console.log(questionnaire, currentQ);
-      // const currentQR = await evaluateExpression("QuestionnaireResponses");
-      // console.log(questionnaire, currentQR)
+      setupExecution(elmJson, valueSetJson, {
+        QuestionnaireName: questionnaireJson.name,
+        QuestionnaireURL: questionnaireJson.url,
+        ScoringQuestionId: questionnaireConfig.scoringQuestionId,
+      });
+
+      // Send patient info to CQL worker to process
+      sendPatientBundle(patientBundle.current);
 
       // get formatted questionnaire responses
       const cqlData = await evaluateExpression("ResponsesSummary").catch(
@@ -127,34 +126,60 @@ export default function Summary(props) {
         chartData: chartData,
         responses: cqlData,
       };
-      console.log("return result ", returnResult);
+      console.log("return result from CQL execution ", returnResult);
       return returnResult;
     };
-    gatherSummaryData()
-      .then((data) => {
-        dispatch({ type: "update", payload: data });
-        setLoading(false);
-        setHasChart(hasData(data.chartData));
-        callback(callbackFunc, { status: "ok" });
-      })
-      .catch((e) => {
-        setError(e.message ? e.message : e);
-        setLoading(false);
+    searchMatchingQuestionnaire().then((results) => {
+      let questionnaireJson;
+      const qResults =
+        results && results.length
+          ? results.filter((q) => q.entry && q.entry.length > 0)
+          : [];
+      if (qResults.length) {
+        questionnaireJson = qResults[0].entry[0].resource;
+      }
+      if (!questionnaireJson) {
         callback(callbackFunc, { status: "error" });
-      });
+        setLoading(false);
+        setError("No matching questionnaire found");
+        return;
+      }
+      patientBundle.current = {
+        ...patientBundle.current,
+        entry: [
+          ...patientBundle.current.entry,
+          {
+            resource: questionnaireJson,
+          },
+        ],
+      };
+      gatherSummaryData(questionnaireJson)
+        .then((data) => {
+          dispatch({ type: "update", payload: data });
+          setLoading(false);
+          setHasChart(hasData(data.chartData));
+          callback(callbackFunc, { status: "ok" });
+        })
+        .catch((e) => {
+          setError(e.message ? e.message : e);
+          setLoading(false);
+          callback(callbackFunc, { status: "error" });
+        });
+    });
+
     return () => cqlWorker.terminate();
-  }, [questionnaire, patientBundle, loading, callbackFunc]);
+  }, [client, questionnaireId, loading, callbackFunc]);
 
   return (
     <>
       {/* anchor element */}
       <div
-        id={`${getAnchorElementId()}_${questionnaire}`}
+        id={`${getAnchorElementId()}_${questionnaireId}`}
         style={anchorElementStyle}
       ></div>
       <Stack
         className="summary"
-        id={`summary_${questionnaire}`}
+        id={`summary_${questionnaireId}`}
         sx={{
           paddingTop: 2,
           paddingBottom: 2,
@@ -168,7 +193,7 @@ export default function Summary(props) {
           color="secondary"
           sx={{ marginBottom: 1 }}
         >
-          {questionnaire.toUpperCase()}
+          {getDisplayQTitle(questionnaireId)}
         </Typography>
         {/* error message */}
         {error && (
@@ -213,7 +238,7 @@ export default function Summary(props) {
   );
 }
 Summary.propTypes = {
-  questionnaire: PropTypes.string.isRequired,
+  questionnaireId: PropTypes.string.isRequired,
   patientBundle: PropTypes.shape({
     resourceType: PropTypes.string,
     id: PropTypes.string,

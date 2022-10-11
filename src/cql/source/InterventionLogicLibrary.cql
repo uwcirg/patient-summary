@@ -48,7 +48,8 @@ define Questionnaires:
     Q.url.value = QuestionnaireURL or 
     Lower(Q.name) = Lower(QuestionnaireName) or
     PositionOf(Lower(QuestionnaireName), Lower(Q.id)) != -1 or
-    PositionOf(Lower(QuestionnaireName), Lower(Q.name)) != -1
+    PositionOf(Lower(QuestionnaireName), Lower(Q.name)) != -1 or
+    PositionOf(Lower(Q.name), Lower(QuestionnaireName)) != -1
   )
 
 // Load Questionnaire
@@ -96,9 +97,10 @@ define ResponsesSummary:
   (QuestionnaireResponses) I
   return {
     date: DateTimeText(I.authored),
-    responses: FormattedResponses(I.item)
+    responses: FormattedResponses(I.item),
+    lastUpdated: I.meta.lastUpdated.value
   }
-  sort by date desc
+  sort by date desc, lastUpdated desc
 
 define ResponsesOnly:
   (QuestionnaireResponses) I
@@ -112,5 +114,4 @@ define ChartData:
       date: R.date,
       total: First((R.responses) I where I.id = ScoringQuestionId return I.value.value)
     }
-    sort by date
   )

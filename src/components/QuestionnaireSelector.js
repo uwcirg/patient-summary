@@ -5,6 +5,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import { Typography } from "@mui/material";
+import {getDisplayQTitle} from "../util/util";
 
 export default function QuestionnaireSelector(props) {
   const { title, list, handleSelectorChange } = props;
@@ -62,7 +63,7 @@ export default function QuestionnaireSelector(props) {
             {list.map((item, index) => {
               return (
                 <MenuItem value={item} key={`select_q_${index}`}>
-                  {item}
+                  {getDisplayQTitle(item)}
                 </MenuItem>
               );
             })}
