@@ -29,6 +29,6 @@ export const themes = {
   //project dependent theme here
 };
 export const getTheme = () => {
-  const projectId = getEnv("PROJECT_ID");
+  const projectId = getEnv("REACT_APP_PROJECT_ID");
   return themes[projectId] || themes["default"];
 };

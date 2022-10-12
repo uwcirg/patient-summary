@@ -16,6 +16,7 @@ import Stack from "@mui/material/Stack";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import { FhirClientContext } from "../context/FhirClientContext";
 import {
+  getQuestionnairesByCarePlan,
   getFHIRResourcePaths,
   getQuestionnaireList,
   isInViewport,
@@ -130,49 +131,119 @@ export default function Summaries() {
     );
   };
 
-  const getQuestionnairesByCarePlan = (carePlans) => {
-    if (!carePlans) return [];
-    let activities = [];
-    carePlans.forEach((item) => {
-      if (item.resource.activity) {
-        activities = [...activities, ...item.resource.activity];
-      }
+  const renderNavButton = () => (
+    <FabRef
+      className={"hide"}
+      ref={fabRef}
+      color="primary"
+      aria-label="add"
+      size="small"
+      sx={{ position: "fixed", bottom: "24px", right: "24px" }}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!anchorRef.current) return;
+        anchorRef.current.scrollIntoView();
+        setSelectedQuestionnaire("");
+      }}
+      title="Back to Top"
+    >
+      <ArrowUpwardIcon aria-label="Back to Top" />
+    </FabRef>
+  );
+
+  const renderAncor = () => (
+    <BoxRef
+      ref={anchorRef}
+      sx={{
+        position: "relative",
+        top: "-64px",
+        height: "2px",
+        width: "2px",
+      }}
+    ></BoxRef>
+  );
+
+  const renderSummaries = () => {
+    return questionnaireList.map((questionnaireId, index) => {
+      return (
+        <Box key={`summary_container_${index}`}>
+          <Summary
+            questionnaireId={questionnaireId}
+            patientBundle={patientBundle}
+            key={`questionnaire_summary_${index}`}
+            callbackFunc={handleCallback}
+            sectionAnchorPrefix={QUESTIONNAIRE_ANCHOR_ID_PREFIX}
+          ></Summary>
+          {index !== questionnaireList.length - 1 && (
+            <Divider key={`questionnaire_divider_${index}`} light></Divider>
+          )}
+        </Box>
+      );
     });
-    let qList = [];
-    activities.forEach((a) => {
-      if (
-        a.detail &&
-        a.detail.instantiatesCanonical &&
-        a.detail.instantiatesCanonical.length
-      ) {
-        const qId = a.detail.instantiatesCanonical[0].split("/")[1];
-        if (qId && qList.indexOf(qId) === -1) qList.push(qId);
-      }
-    });
-    return qList;
+  };
+
+  const renderQuestionnaireSelector = () => {
+    if (questionnaireList.length <= 1) return <div></div>;
+    return (
+      <BoxRef
+        ref={selectorRef}
+        style={{
+          opacity: isReady() ? 1 : 0.4,
+          borderBottom: 1,
+          borderColor: "#ececec",
+          borderBottomStyle: "solid",
+          paddingBottom: "32px",
+          marginBottom: "8px",
+        }}
+      >
+        <QuestionnaireSelector
+          title="Go to Questionnaire"
+          list={questionnaireList}
+          value={selectedQuestionnaire}
+          handleSelectorChange={(event) => {
+            setSelectedQuestionnaire(event.target.value);
+            clearTimeout(scrollToTimeoutId);
+            scrollToTimeoutId = setTimeout(
+              () =>
+                document
+                  .querySelector(
+                    `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${event.target.value}`
+                  )
+                  .scrollIntoView(),
+              50
+            );
+          }}
+        ></QuestionnaireSelector>
+      </BoxRef>
+    );
   };
 
   const fhirQueryResults = useQuery("fhirResources", getFhirResources);
 
   useEffect(() => {
+    
     if (isReady()) return;
+    
+    const setQuestionnaireListByCarePlan = (data) => {
+      if (!data || !data.length) return;
+      // check if there is a care plan
+      const carePlans = data.filter(
+        (item) => item.resource.resourceType === "CarePlan"
+      );
+      const qList = getQuestionnairesByCarePlan(carePlans);
+      // extract any questionnaire(s) referenced in the care plan
+      if (qList.length) setQuestionnaireList(qList);
+    };
     const status = fhirQueryResults.status;
-    const data = fhirQueryResults.data;
+    const fhirData = fhirQueryResults.data;
+
     if (status === "error") setError("Error fetching FHIR resources");
     if (status === "success") {
-      if (data && data.length) {
-        // check if there is a care plan
-        const carePlans = data.filter(
-          (item) => item.resource.resourceType === "CarePlan"
-        );
-        const qList = getQuestionnairesByCarePlan(carePlans);
-        // extract any questionnaire(s) referenced in the care plan
-        if (qList.length) setQuestionnaireList(qList);
-      }
+      setQuestionnaireListByCarePlan(fhirData);
       setPatientBundle((prevPatientBundle) => {
         return {
           ...prevPatientBundle,
-          entry: [...prevPatientBundle.entry, ...data],
+          entry: [...prevPatientBundle.entry, ...fhirData],
           loadComplete: true,
         };
       });
@@ -191,32 +262,8 @@ export default function Summaries() {
     <>
       {isReady() && (
         <>
-          <BoxRef
-            ref={anchorRef}
-            sx={{
-              position: "relative",
-              top: "-64px",
-              height: "2px",
-              width: "2px",
-            }}
-          ></BoxRef>
-          <FabRef
-            className={"hide"}
-            ref={fabRef}
-            color="primary"
-            aria-label="add"
-            size="small"
-            sx={{ position: "fixed", bottom: "24px", right: "24px" }}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!anchorRef.current) return;
-              anchorRef.current.scrollIntoView();
-              setSelectedQuestionnaire("");
-            }}
-            title="Back to Top"
-          >
-            <ArrowUpwardIcon aria-label="Back to Top" />
-          </FabRef>
+          {renderAncor()}
+          {renderNavButton()}
         </>
       )}
       <Stack className="summaries" sx={{ position: "relative" }}>
@@ -232,57 +279,8 @@ export default function Summaries() {
             )}
             {hasQuestionnaireResponses() && (
               <section>
-                {questionnaireList.length > 1 && (
-                  <BoxRef
-                    ref={selectorRef}
-                    style={{
-                      opacity: isReady() ? 1 : 0.4,
-                      borderBottom: 1,
-                      borderColor: "#ececec",
-                      borderBottomStyle: "solid",
-                      paddingBottom: "32px",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    <QuestionnaireSelector
-                      title="Go to Questionnaire"
-                      list={questionnaireList}
-                      value={selectedQuestionnaire}
-                      handleSelectorChange={(event) => {
-                        setSelectedQuestionnaire(event.target.value);
-                        clearTimeout(scrollToTimeoutId);
-                        scrollToTimeoutId = setTimeout(
-                          () =>
-                            document
-                              .querySelector(
-                                `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${event.target.value}`
-                              )
-                              .scrollIntoView(),
-                          50
-                        );
-                      }}
-                    ></QuestionnaireSelector>
-                  </BoxRef>
-                )}
-                {questionnaireList.map((questionnaireId, index) => {
-                  return (
-                    <Box key={`summary_container_${index}`}>
-                      <Summary
-                        questionnaireId={questionnaireId}
-                        patientBundle={patientBundle}
-                        key={`questionnaire_summary_${index}`}
-                        callbackFunc={handleCallback}
-                        sectionAnchorPrefix={QUESTIONNAIRE_ANCHOR_ID_PREFIX}
-                      ></Summary>
-                      {index !== questionnaireList.length - 1 && (
-                        <Divider
-                          key={`questionnaire_divider_${index}`}
-                          light
-                        ></Divider>
-                      )}
-                    </Box>
-                  );
-                })}
+                {renderQuestionnaireSelector()}
+                {renderSummaries()}
               </section>
             )}
           </>

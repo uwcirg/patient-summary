@@ -72,6 +72,59 @@ export default function Summary(props) {
   const getAnchorElementId = () =>
     sectionAnchorPrefix || QUESTIONNAIRE_ANCHOR_ID_PREFIX;
 
+  const renderLoader = () =>
+    loading && (
+      <Stack
+        alignItems={"center"}
+        direction="row"
+        justifyContent={"flex-start"}
+        spacing={2}
+      >
+        <LinearProgress sx={{ width: "300px", marginTop: 6 }}></LinearProgress>
+      </Stack>
+    );
+  const renderError = () =>
+    error && (
+      <Box sx={{ marginBottom: 1 }}>
+        <Error message={error}></Error>
+      </Box>
+    );
+  const renderAnchor = () => (
+    <div
+      id={`${getAnchorElementId()}_${questionnaireId}`}
+      style={anchorElementStyle}
+    ></div>
+  );
+  const renderTitle = () => (
+    <Typography
+      variant="h6"
+      component="h3"
+      color="secondary"
+      sx={{ marginBottom: 1 }}
+    >
+      {getDisplayQTitle(questionnaireId)}
+    </Typography>
+  );
+  const renderSummary = () =>
+    shouldDisplayResponses() && (
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        spacing={{ xs: 2, md: 6 }}
+        alignItems="flex-start"
+      >
+        {hasChart && (
+          <Chart
+            type={summary.chartConfig.type}
+            data={{
+              ...summary.chartConfig,
+              data: formatChartData(summary.chartData),
+            }}
+          ></Chart>
+        )}
+        <Responses data={summary.responses}></Responses>
+      </Stack>
+    );
+
   useEffect(() => {
     if (!loading) return;
 
@@ -118,6 +171,7 @@ export default function Summary(props) {
           throw new Error(e);
         }
       );
+      // get formatted chart data
       const chartData = await evaluateExpression("ChartData").catch((e) => {
         throw new Error(e);
       });
@@ -129,6 +183,7 @@ export default function Summary(props) {
       console.log("return result from CQL execution ", returnResult);
       return returnResult;
     };
+    // find matching questionnaire
     searchMatchingQuestionnaire().then((results) => {
       let questionnaireJson;
       const qResults =
@@ -173,66 +228,20 @@ export default function Summary(props) {
   return (
     <>
       {/* anchor element */}
-      <div
-        id={`${getAnchorElementId()}_${questionnaireId}`}
-        style={anchorElementStyle}
-      ></div>
+      {renderAnchor()}
       <Stack
         className="summary"
         id={`summary_${questionnaireId}`}
-        sx={{
-          paddingTop: 2,
-          paddingBottom: 2,
-        }}
         direction="column"
       >
         {/* questionnaire title */}
-        <Typography
-          variant="h6"
-          component="h3"
-          color="secondary"
-          sx={{ marginBottom: 1 }}
-        >
-          {getDisplayQTitle(questionnaireId)}
-        </Typography>
+        {renderTitle()}
         {/* error message */}
-        {error && (
-          <Box sx={{ marginBottom: 1 }}>
-            <Error message={error}></Error>
-          </Box>
-        )}
+        {renderError()}
         {/* loading indicator */}
-        {loading && (
-          <Stack
-            alignItems={"center"}
-            direction="row"
-            justifyContent={"flex-start"}
-            spacing={2}
-          >
-            <LinearProgress
-              sx={{ width: "300px", marginTop: 6 }}
-            ></LinearProgress>
-          </Stack>
-        )}
+        {renderLoader()}
         {/* chart & responses */}
-        {shouldDisplayResponses() && (
-          <Stack
-            direction={{ xs: "column", md: "row" }}
-            spacing={{ xs: 2, md: 6 }}
-            alignItems="flex-start"
-          >
-            {hasChart && (
-              <Chart
-                type={summary.chartConfig.type}
-                data={{
-                  ...summary.chartConfig,
-                  data: formatChartData(summary.chartData),
-                }}
-              ></Chart>
-            )}
-            <Responses data={summary.responses}></Responses>
-          </Stack>
-        )}
+        {renderSummary()}
       </Stack>
     </>
   );

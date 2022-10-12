@@ -61,6 +61,29 @@ export function getFHIRResourcePaths(patientId) {
   });
 }
 
+export function getQuestionnairesByCarePlan (arrCarePlans) {
+  if (!arrCarePlans) return [];
+  let activities = [];
+  arrCarePlans.forEach((item) => {
+    if (item.resource.activity) {
+      activities = [...activities, ...item.resource.activity];
+    }
+  });
+  let qList = [];
+  activities.forEach((a) => {
+    if (
+      a.detail &&
+      a.detail.instantiatesCanonical &&
+      a.detail.instantiatesCanonical.length
+    ) {
+      const qId = a.detail.instantiatesCanonical[0].split("/")[1];
+      if (qId && qList.indexOf(qId) === -1) qList.push(qId);
+    }
+  });
+  return qList;
+}
+
+
 export function getDisplayQTitle(questionnaireId) {
   if (!questionnaireId) return "";
   return (questionnaireId.replace(/cirg-/gi,'')).toUpperCase();

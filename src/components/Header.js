@@ -37,6 +37,31 @@ export default function Header() {
     }
     e.target.classList.remove("invisible");
   };
+  const renderTitle = () => (
+    <Typography
+      variant="h4"
+      component="h1"
+      sx={{ fontSize: { xs: "1.1rem", md: "1.8rem" } }}
+    >
+      Patient Summary
+    </Typography>
+  );
+  const renderPatientName = () => {
+    if (!hasPatientName()) return <div></div>;
+    return <Stack spacing={0.5} sx={{ paddingLeft: 1 }}>
+      <Typography component="div">{getPatientName()}</Typography>
+      <Typography component="div">{getPatientDob()}</Typography>
+    </Stack>
+  };
+  const renderLogo = () => (
+    <img
+      style={{ width: "180px" }}
+      src={`/assets/${getEnv("REACT_APP_PROJECT_ID")}/img/logo.png`}
+      alt={"project logo"}
+      onLoad={handleImageLoaded}
+      onError={handleImageLoaded}
+    ></img>
+  );
   return (
     <AppBar position="fixed" elevation={1}>
       <Toolbar
@@ -50,26 +75,9 @@ export default function Header() {
         }}
       >
         <Stack direction={"row"} spacing={2} alignItems="center">
-          <img
-            style={{ width: "180px" }}
-            src={`/assets/${getEnv("REACT_APP_PROJECT_ID")}/img/logo.png`}
-            alt={"project logo"}
-            onLoad={handleImageLoaded}
-            onError={handleImageLoaded}
-          ></img>
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{ fontSize: { xs: "1.1rem", md: "1.8rem" } }}
-          >
-            Patient Summary
-          </Typography>
-          {hasPatientName() && (
-            <Stack spacing={0.5} sx={{ paddingLeft: 1 }}>
-              <Typography component="div">{getPatientName()}</Typography>
-              <Typography component="div">{getPatientDob()}</Typography>
-            </Stack>
-          )}
+          {renderLogo()}
+          {renderTitle()}
+          {renderPatientName()}
         </Stack>
       </Toolbar>
     </AppBar>
