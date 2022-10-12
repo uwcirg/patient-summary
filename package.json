@@ -33,8 +33,7 @@
     "test": "rescripts test --testPathIgnorePatterns=./src/__tests__/cql --watchAll=false",
     "test:watch": "rescripts test --testPathIgnorePatterns=./src/__tests__/cql",
     "cql-test": "./node_modules/.bin/mocha ./src/__tests__/cql/*.js --recursive",
-    "eject": "rescripts eject",
-    "upload-test-responses": "node ./src/util/UploadTestQuestionnaireResponseJsons"
+    "eject": "rescripts eject"
   },
   "eslintConfig": {
     "extends": [
