@@ -16,7 +16,6 @@ import Stack from "@mui/material/Stack";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import { FhirClientContext } from "../context/FhirClientContext";
 import {
-  getQuestionnairesByCarePlan,
   getFHIRResourcePaths,
   getQuestionnaireList,
   isInViewport,
@@ -32,9 +31,7 @@ export default function Summaries() {
   const fabRef = createRef();
   const anchorRef = createRef();
   const selectorRef = createRef();
-  const [questionnaireList, setQuestionnaireList] = useState(
-    getQuestionnaireList()
-  );
+  const questionnaireList = getQuestionnaireList();
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState("");
   const [patientBundle, setPatientBundle] = useState({
     resourceType: "Bundle",
@@ -224,22 +221,11 @@ export default function Summaries() {
     
     if (isReady()) return;
     
-    const setQuestionnaireListByCarePlan = (data) => {
-      if (!data || !data.length) return;
-      // check if there is a care plan
-      const carePlans = data.filter(
-        (item) => item.resource.resourceType === "CarePlan"
-      );
-      const qList = getQuestionnairesByCarePlan(carePlans);
-      // extract any questionnaire(s) referenced in the care plan
-      if (qList.length) setQuestionnaireList(qList);
-    };
     const status = fhirQueryResults.status;
     const fhirData = fhirQueryResults.data;
 
     if (status === "error") setError("Error fetching FHIR resources");
     if (status === "success") {
-      setQuestionnaireListByCarePlan(fhirData);
       setPatientBundle((prevPatientBundle) => {
         return {
           ...prevPatientBundle,
