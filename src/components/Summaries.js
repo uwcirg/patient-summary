@@ -23,6 +23,7 @@ import {
 } from "../util/util";
 import QuestionnaireSelector from "./QuestionnaireSelector";
 import Summary from "./Summary";
+import Version from "./Version";
 let scrollIntervalId = 0;
 let scrollToTimeoutId = 0;
 
@@ -215,6 +216,12 @@ export default function Summaries() {
     );
   };
 
+  const renderLoadingIndicator = () => (
+    <Box sx={{ position: "absolute", top: 16, left: 16 }}>
+      <CircularProgress></CircularProgress>
+    </Box>
+  );
+
   const fhirQueryResults = useQuery("fhirResources", getFhirResources);
 
   useEffect(() => {
@@ -253,11 +260,7 @@ export default function Summaries() {
         </>
       )}
       <Stack className="summaries" sx={{ position: "relative" }}>
-        {!isReady() && (
-          <Box sx={{ position: "absolute", top: 16, left: 16 }}>
-            <CircularProgress></CircularProgress>
-          </Box>
-        )}
+        {!isReady() && renderLoadingIndicator()}
         {patientBundle.loadComplete && (
           <>
             {!hasQuestionnaireResponses() && (
@@ -271,6 +274,7 @@ export default function Summaries() {
             )}
           </>
         )}
+        {isReady() && <Version></Version>}
       </Stack>
     </>
   );

@@ -74,87 +74,97 @@ export default function Responses(props) {
     paddingTop: "16px"
   }));
 
+  const renderTitle = () => (
+    <Typography
+      variant="subtitle1"
+      gutterBottom
+      component="h2"
+      color="secondary"
+    >
+      Questionnaire Responses
+    </Typography>
+  );
+
+  const renderTabs = () => (
+    <Box>
+      <Tabs
+        value={tab}
+        onChange={handleTabChange}
+        variant="scrollable"
+        scrollButtons="auto"
+        aria-label="responses tabs"
+      >
+        {data.map((item, index) => (
+          <Tab
+            label={item.date}
+            {...a11yProps(index)}
+            key={`tabLabel_${index}`}
+          />
+        ))}
+      </Tabs>
+    </Box>
+  );
+
+  const renderResponseTable = (responses) => (
+    <Table aria-label="responses table" size="small" role="table">
+      <TableHead
+        sx={{
+          backgroundColor:
+            theme && theme.palette.dark ? theme.palette.dark.main : "#444",
+        }}
+      >
+        <TableRow>
+          {["Question", "Answer"].map((item, index) => (
+            <TableCell
+              key={`header_${index}`}
+              sx={{ color: "#FFF", width: "50%" }}
+            >
+              {item}
+            </TableCell>
+          ))}
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {responses.map((row, index) => (
+          <TableRow
+            key={`row_content_${index}`}
+            sx={{
+              "&:last-child td, &:last-child th": { border: 0 },
+            }}
+          >
+            <TableCell
+              dangerouslySetInnerHTML={{
+                __html: getQuestion(row),
+              }}
+            ></TableCell>
+            <TableCell
+              dangerouslySetInnerHTML={{
+                __html: getAnswer(row),
+              }}
+            ></TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+
   return (
     <>
-      {!hasData() && (
-        <Alert severity="warning">No recorded response</Alert>
-      )}
+      {!hasData() && <Alert severity="warning">No recorded response</Alert>}
       {hasData() && (
         <Root>
-          <Typography
-            variant="subtitle1"
-            gutterBottom
-            component="h2"
-            color="secondary"
-          >
-            Questionnaire Responses
-          </Typography>
-          <Box>
-            <Tabs
-              value={tab}
-              onChange={handleTabChange}
-              variant="scrollable"
-              scrollButtons="auto"
-              aria-label="responses tabs"
-            >
-              {data.map((item, index) => (
-                <Tab
-                  label={item.date}
-                  {...a11yProps(index)}
-                  key={`tabLabel_${index}`}
-                />
-              ))}
-            </Tabs>
-          </Box>
+          {renderTitle()}
+          {renderTabs()}
           {data.map((item, index) => (
             <TabPanel value={tab} index={index} key={`tabPanel_${index}`}>
               <TableContainer
                 component={Paper}
                 sx={{ marginTop: theme.spacing(2) }}
               >
-                {!hasResponses(item.responses) && <Alert severity="warning">No responses.</Alert>}
-                {hasResponses(item.responses) && <Table aria-label="responses table" size="small" role="table">
-                  <TableHead
-                    sx={{
-                      backgroundColor:
-                        theme && theme.palette.dark
-                          ? theme.palette.dark.main
-                          : "#444",
-                    }}
-                  >
-                    <TableRow>
-                      {["Question", "Answer"].map((item, index) => (
-                        <TableCell
-                          key={`header_${index}`}
-                          sx={{ color: "#FFF", width: "50%" }}
-                        >
-                          {item}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {item.responses.map((row, index) => (
-                      <TableRow
-                        key={`row_content_${index}`}
-                        sx={{
-                          "&:last-child td, &:last-child th": { border: 0 },
-                        }}
-                      >
-                        <TableCell
-                          dangerouslySetInnerHTML={{
-                            __html: getQuestion(row),
-                          }}
-                        ></TableCell>
-                        <TableCell
-                          dangerouslySetInnerHTML={{
-                            __html: getAnswer(row),
-                          }}
-                        ></TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>}
+                {!hasResponses(item.responses) && (
+                  <Alert severity="warning">No responses.</Alert>
+                )}
+                {hasResponses(item.responses) && renderResponseTable(item.responses)}
               </TableContainer>
             </TabPanel>
           ))}
