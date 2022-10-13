@@ -1,6 +1,8 @@
 import { useContext } from "react";
 import { useTheme } from "@mui/material/styles";
 import AppBar from "@mui/material/AppBar";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
@@ -48,10 +50,12 @@ export default function Header() {
   );
   const renderPatientName = () => {
     if (!hasPatientName()) return <div></div>;
-    return <Stack spacing={0.5} sx={{ paddingLeft: 1 }}>
-      <Typography component="div">{getPatientName()}</Typography>
-      <Typography component="div">{getPatientDob()}</Typography>
-    </Stack>
+    return (
+      <Stack spacing={0.5} sx={{ paddingLeft: 1 }}>
+        <Typography component="div">{getPatientName()}</Typography>
+        <Typography component="div">{getPatientDob()}</Typography>
+      </Stack>
+    );
   };
   const renderLogo = () => (
     <img
@@ -62,6 +66,17 @@ export default function Header() {
       onError={handleImageLoaded}
     ></img>
   );
+  const renderReturnButton = () => {
+    const returnURL = getEnv("REACT_APP_DASHBOARD_URL");
+    if (!returnURL) return null;
+    return (
+      <Box sx={{ flex: 1, textAlign: "right", marginTop: 1, marginBotton: 1 }}>
+        <Button color="primary" href={returnURL} variant="contained">
+          Patient List
+        </Button>
+      </Box>
+    );
+  };
   return (
     <AppBar position="fixed" elevation={1}>
       <Toolbar
@@ -74,10 +89,16 @@ export default function Header() {
             : "#444",
         }}
       >
-        <Stack direction={"row"} spacing={2} alignItems="center">
+        <Stack
+          direction={"row"}
+          spacing={2}
+          alignItems="center"
+          sx={{ width: "100%" }}
+        >
           {renderLogo()}
           {renderTitle()}
           {renderPatientName()}
+          {renderReturnButton()}
         </Stack>
       </Toolbar>
     </AppBar>

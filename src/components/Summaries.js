@@ -181,7 +181,7 @@ export default function Summaries() {
   };
 
   const renderQuestionnaireSelector = () => {
-    if (questionnaireList.length <= 1) return <div></div>;
+    if (questionnaireList.length === 1) return <div></div>;
     return (
       <BoxRef
         ref={selectorRef}
@@ -261,7 +261,7 @@ export default function Summaries() {
       )}
       <Stack className="summaries" sx={{ position: "relative" }}>
         {!isReady() && renderLoadingIndicator()}
-        {patientBundle.loadComplete && (
+        {isReady() && (
           <>
             {!hasQuestionnaireResponses() && (
               <Alert severity="warning">No recorded response</Alert>

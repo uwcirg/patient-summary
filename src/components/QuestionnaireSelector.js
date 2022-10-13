@@ -72,9 +72,8 @@ export default function QuestionnaireSelector(props) {
   );
   return (
     <Stack direction="column" id="questionnaireSelector">
-      {renderTitle()}
       {!list.length && renderWarning()}
-      {list.length > 0 && renderSelector()}
+      {list.length > 0 && renderTitle() && renderSelector()}
     </Stack>
   );
 }
