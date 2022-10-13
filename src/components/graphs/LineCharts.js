@@ -40,16 +40,84 @@ export default function LineCharts(props) {
     animationBegin: 350,
     legendType: legendType || "line",
   };
+  const renderTitle = () => (
+    <Typography
+      variant="subtitle1"
+      component="h3"
+      color="secondary"
+      sx={{ textAlign: "center", marginTop: 2 }}
+    >
+      {title}
+    </Typography>
+  );
+  const renderXAxis = () => (
+    <XAxis
+      dataKey={xFieldKey}
+      height={64}
+      domain={xDomain}
+      tick={{ style: { fontSize: "12px" } }}
+      tickFormatter={xTickFormatter}
+      tickMargin={8}
+    >
+      <Label value={xLabel} offset={12} position="insideBottom" />
+    </XAxis>
+  );
+  const renderYAxis = () => (
+    <YAxis
+      domain={yDomain || [0, "auto"]}
+      label={{ value: yLabel, angle: -90, position: "insideLeft" }}
+      interval="preserveStartEnd"
+      tick={{ style: { fontSize: "12px" } }}
+      tickFormatter={yTickFormatter}
+      ticks={yTicks}
+      tickMargin={8}
+    />
+  );
+  const renderToolTip = () => (
+    <Tooltip
+      itemStyle={{ fontSize: "12px" }}
+      labelStyle={{ fontSize: "12px" }}
+      animationBegin={500}
+      animationDuration={550}
+      labelFormatter={tooltipLabelFormatter}
+    />
+  );
+  const renderLegend = () => (
+    <Legend
+      formatter={(value) => (
+        <span style={{ marginRight: "8px", fontSize: "14px" }}>
+          {value.replace(/_/g, " ")}
+        </span>
+      )}
+      iconSize={12}
+    />
+  );
+  const renderMultipleLines = () =>
+    yLineFields.map((item, index) => (
+      <Line
+        {...defaultOptions}
+        key={`line_${id}_${index}`}
+        type="monotone"
+        dataKey={item.key}
+        stroke={item.color}
+        strokeWidth={item.strokeWidth ? item.strokeWidth : 2}
+        strokeDasharray={item.strokeDasharray ? item.strokeDasharray : 0}
+        legendType={item.legendType ? item.legendType : "line"}
+        dot={item.dot ? item.dot : { strokeDasharray: "", strokeWidth: 2 }}
+      />
+    ));
+  const renderSingleLine = () => (
+    <Line
+      {...defaultOptions}
+      type="monotone"
+      dataKey={yFieldKey}
+      stroke={theme.palette.primary.main}
+      strokeWidth={strokeWidth ? strokeWidth : 2}
+    />
+  );
   return (
     <>
-      <Typography
-        variant="subtitle1"
-        component="h3"
-        color="secondary"
-        sx={{ textAlign: "center", marginTop: 2 }}
-      >
-        {title}
-      </Typography>
+      {renderTitle()}
       <Box width={chartWidth} height={chartHeight}>
         <LineChart
           width={chartWidth}
@@ -64,67 +132,12 @@ export default function LineCharts(props) {
           id={`lineChart_${id}`}
         >
           <CartesianGrid strokeDasharray="2 2" />
-          <XAxis
-            dataKey={xFieldKey}
-            height={64}
-            domain={xDomain}
-            tick={{ style: { fontSize: "12px" } }}
-            tickFormatter={xTickFormatter}
-            tickMargin={8}
-          >
-            <Label value={xLabel} offset={12} position="insideBottom" />
-          </XAxis>
-          <YAxis
-            domain={yDomain || [0, "auto"]}
-            label={{ value: yLabel, angle: -90, position: "insideLeft" }}
-            interval="preserveStartEnd"
-            tick={{ style: { fontSize: "12px" } }}
-            tickFormatter={yTickFormatter}
-            ticks={yTicks}
-            tickMargin={8}
-          />
-          <Tooltip
-            itemStyle={{ fontSize: "12px" }}
-            labelStyle={{ fontSize: "12px" }}
-            animationBegin={500}
-            animationDuration={550}
-            labelFormatter={tooltipLabelFormatter}
-          />
-          <Legend
-            formatter={(value) => (
-              <span style={{ marginRight: "8px", fontSize: "14px" }}>
-                {value.replace(/_/g, " ")}
-              </span>
-            )}
-            iconSize={12}
-          />
-          {hasYFields() &&
-            yLineFields.map((item, index) => (
-              <Line
-                {...defaultOptions}
-                key={`line_${id}_${index}`}
-                type="monotone"
-                dataKey={item.key}
-                stroke={item.color}
-                strokeWidth={item.strokeWidth ? item.strokeWidth : 2}
-                strokeDasharray={
-                  item.strokeDasharray ? item.strokeDasharray : 0
-                }
-                legendType={item.legendType ? item.legendType : "line"}
-                dot={
-                  item.dot ? item.dot : { strokeDasharray: "", strokeWidth: 2 }
-                }
-              />
-            ))}
-          {!hasYFields() && (
-            <Line
-              {...defaultOptions}
-              type="monotone"
-              dataKey={yFieldKey}
-              stroke={theme.palette.primary.main}
-              strokeWidth={strokeWidth ? strokeWidth : 2}
-            />
-          )}
+          {renderXAxis()}
+          {renderYAxis()}
+          {renderToolTip()}
+          {renderLegend()}
+          {hasYFields() && renderMultipleLines()}
+          {!hasYFields() && renderSingleLine()}
         </LineChart>
       </Box>
     </>
