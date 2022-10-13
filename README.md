@@ -70,8 +70,8 @@ Parameters for the app are stored in [environmental variables](http://man7.org/l
 | `REACT_APP_QUESTIONNAIRES` | Define the questionnaire(s) for which responses and graph should be rendered | example: `minicog` or `minicog,phq9` |
 | `REACT_APP_DASHBOARD_URL`| Define the (f)EMR URL to which the app can return to | example: https://dashboard.acc.dev.cosri.cirg.washington.edu | 
 | `REACT_APP_PROJECT_ID` | Definition of which will allow project-specific theme, logo, etc. | example: `DCW`|
-| `REACT_APP_CLIENT_ID` | Define unique client id for this application | example: `summary_openid_client`
-| `REACT_APP_BACKEND_URL` | Define the backend auth URL for launching as confidential backend | 
+| `REACT_APP_CLIENT_ID` | Define unique client id for when launching as a confidential client | example: `summary_openid_client`
+| `REACT_APP_BACKEND_URL` | Define the backend auth URL for launching as a confidential client | 
 
 ### Using with Public SMART Sandbox
 A public [SMART<sup>&reg;</sup> App Launcher](https://launch.smarthealthit.org/index.html) is available for sandbox tesing of SMART on FHIR apps with synthetic data.
