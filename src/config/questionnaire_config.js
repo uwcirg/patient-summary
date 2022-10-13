@@ -1,3 +1,5 @@
+/* config for CQL */
+// scoringQuestionId is passed as parameter to CQL
 const qConfig = {
   minicog: {
     customCQL: true,

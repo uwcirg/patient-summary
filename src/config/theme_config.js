@@ -5,7 +5,7 @@ export const themes = {
   default: createTheme({
     palette: {
       lighter: {
-        main: teal[100],
+        main: teal[50],
       },
       light: {
         main: teal[300],
