@@ -19,57 +19,62 @@ export default function QuestionnaireSelector(props) {
       handleSelectorChange(event);
     }
   }
+  const renderTitle = () => (
+    <Typography variant="h6" component="h2" color="secondary">
+      {title || "Questionnaire List"}
+    </Typography>
+  );
+  const renderWarning = () => (
+    <Alert severity="warning" sx={{ mt: 2 }}>
+      No questionnaire(s) specified. Is it configured?
+    </Alert>
+  );
+  const renderSelector = () => (
+    <FormControl
+      variant="standard"
+      sx={{ minWidth: 120, width: 300 }}
+      margin="dense"
+    >
+      <Select
+        id="qSelector"
+        value={props.value}
+        renderValue={(value) => {
+          if (!value) return defaultMenuItem();
+          else
+            return (
+              <Typography
+                color="primary"
+                variant="subtitle1"
+                sx={{ fontSize: "1.1rem" }}
+              >
+                {value}
+              </Typography>
+            );
+        }}
+        onChange={onChange}
+        label="Questionnaire"
+        displayEmpty
+        sx={{
+          marginTop: 0,
+          marginBottom: 0,
+        }}
+        defaultValue={""}
+      >
+        {list.map((item, index) => {
+          return (
+            <MenuItem value={item} key={`select_q_${index}`}>
+              {getDisplayQTitle(item)}
+            </MenuItem>
+          );
+        })}
+      </Select>
+    </FormControl>
+  );
   return (
     <Stack direction="column" id="questionnaireSelector">
-      <Typography variant="h6" component="h2" color="secondary">
-        {title || "Questionnaire List"}
-      </Typography>
-      {!list.length && (
-        <Alert severity="warning" sx={{ mt: 2 }}>
-          No questionnaire(s) specified. Is it configured?
-        </Alert>
-      )}
-      {list.length > 0 && (
-        <FormControl
-          variant="standard"
-          sx={{ minWidth: 120, width: 300 }}
-          margin="dense"
-        >
-          <Select
-            id="qSelector"
-            value={props.value}
-            renderValue={(value) => {
-              if (!value) return defaultMenuItem();
-              else
-                return (
-                  <Typography
-                    color="primary"
-                    variant="subtitle1"
-                    sx={{ fontSize: "1.1rem" }}
-                  >
-                    {value}
-                  </Typography>
-                );
-            }}
-            onChange={onChange}
-            label="Questionnaire"
-            displayEmpty
-            sx={{
-              marginTop: 0,
-              marginBottom: 0,
-            }}
-            defaultValue={""}
-          >
-            {list.map((item, index) => {
-              return (
-                <MenuItem value={item} key={`select_q_${index}`}>
-                  {getDisplayQTitle(item)}
-                </MenuItem>
-              );
-            })}
-          </Select>
-        </FormControl>
-      )}
+      {renderTitle()}
+      {!list.length && renderWarning()}
+      {list.length > 0 && renderSelector()}
     </Stack>
   );
 }
