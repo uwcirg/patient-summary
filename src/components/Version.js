@@ -6,7 +6,7 @@ export default function Version() {
   else
     return (
       <Box
-        sx={{ marginTop: 2, textAlign: "right", color: "#777" }}
+        sx={{ marginTop: 2, color: "#777" }}
       >{`Version: ${versionString}`}</Box>
     );
 }
