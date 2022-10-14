@@ -71,7 +71,7 @@ export default function Header() {
     if (!returnURL) return null;
     return (
       <Box sx={{ flex: 1, textAlign: "right", marginTop: 1, marginBotton: 1 }}>
-        <Button color="primary" href={returnURL} variant="contained">
+        <Button color="primary" href={returnURL+"/clear_session"} variant="contained">
           Patient List
         </Button>
       </Box>
