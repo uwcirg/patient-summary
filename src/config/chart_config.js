@@ -38,9 +38,11 @@ const CHART_CONFIG = {
         item.date = new Date(item.date);
         return item;
       });
-      let startDate = new Date();
+      data = data.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+      let startDate = data.length ? new Date(data[0].date.valueOf()): new Date();
         startDate.setMonth(0);
-        startDate.setDate(1);
+        startDate.setDate(0);
         startDate.setFullYear(startDate.getFullYear() - 1);
       data.unshift({
         total: null,
