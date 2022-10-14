@@ -39,7 +39,9 @@ const CHART_CONFIG = {
         return item;
       });
       let startDate = new Date();
-      startDate.setFullYear(startDate.getFullYear() - 2);
+        startDate.setMonth(0);
+        startDate.setDate(1);
+        startDate.setFullYear(startDate.getFullYear() - 1);
       data.unshift({
         total: null,
         date: startDate.valueOf(),
@@ -67,31 +69,6 @@ const CHART_CONFIG = {
     type: "linechart",
     yDomain: [0, 5],
     yTicks: [0, 1, 2, 3, 4, 5],
-    dataFormatter: (data) => {
-      data = data.map((item) => {
-        item.date = new Date(item.date);
-        return item;
-      });
-      let startDate = new Date();
-      startDate.setFullYear(startDate.getFullYear() - 2);
-      data.unshift({
-        word_recall: null,
-        clock_draw: null,
-        total: null,
-        date: startDate.valueOf(),
-      });
-      data.push({
-        word_recall: null,
-        clock_draw: null,
-        total: null,
-        date: getTomorrow().valueOf(),
-      });
-      return data.map((item) => {
-        item.date = item.date.valueOf();
-        return item;
-      });
-    },
-    xTickFormatter: (item) => new Date(item).toISOString().substring(0, 10),
     // applicable only to line graph
     yLineFields: [
       {
