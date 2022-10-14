@@ -104,7 +104,7 @@ export function getChartConfig(questionnaire) {
 
 export function getQuestionnaireList() {
   const configList = getEnv("REACT_APP_QUESTIONNAIRES");
-  if (configList) return configList.split(",");
+  if (configList) return (configList.split(",")).map(item => item.trim());
   return [];
 }
 
