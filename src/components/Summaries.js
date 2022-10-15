@@ -82,7 +82,7 @@ export default function Summaries() {
     if (!client || !patient || !patient.id)
       throw new Error("Client or patient missing.");
     const paths = getFHIRResourcePaths(patient.id);
-    const requests = paths.map((path) => client.request(path, {pageLimit: 0}));
+    const requests = paths.map((path) => client.request(path));
     if (!requests.length) {
       console.log("No FHIR resource(s) specified.");
       return [];
