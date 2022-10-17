@@ -16,7 +16,7 @@ import {
   hasData,
 } from "../util/util";
 import {
-  NO_CACHE_HEADER,
+ // NO_CACHE_HEADER,
   QUESTIONNAIRE_ANCHOR_ID_PREFIX,
 } from "../consts/consts";
 import Responses from "./Responses";
@@ -152,13 +152,13 @@ export default function Summary(props) {
       ].map((uri) =>
         client.request(
           {
-            url: uri,
-            ...NO_CACHE_HEADER,
+            url: uri
+           // ...NO_CACHE_HEADER,
           },
           fhirSearchOptions
         )
       );
-      return Promise.all(requests);
+      return Promise.all(requests).catch(e => setError(e));
     };
 
     const gatherSummaryData = async (questionnaireJson) => {
