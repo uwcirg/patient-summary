@@ -148,7 +148,7 @@ export default function Summary(props) {
       const fhirSearchOptions = { pageLimit: 0, flat: true };
       const requests = [
         "Questionnaire?name:contains=" + questionnaireId,
-        "QuestionnaireResponse/?questionnaire:contains=" + questionnaireId,
+        "QuestionnaireResponse?questionnaire:contains=" + questionnaireId,
       ].map((uri) =>
         client.request(
           {
@@ -207,51 +207,54 @@ export default function Summary(props) {
       return returnResult;
     };
     // find matching questionnaire & questionnaire response(s)
-    searchMatchingResources().then((results) => {
-      let bundles = [];
-      results.forEach((entry) => {
-        entry.forEach((item) =>
-          bundles.push({
-            resource: item,
-          })
-        );
-      });
-      const arrQuestionnaires = bundles.filter(
-        (entry) =>
-          String(entry.resource.resourceType).toLowerCase() === "questionnaire"
-      );
-      const questionnaireJson = arrQuestionnaires.length
-        ? arrQuestionnaires[0].resource
-        : null;
-      if (!questionnaireJson) {
-        callback(callbackFunc, { status: "error" });
-        setLoading(false);
-        setError("No matching questionnaire found");
-        return;
-      }
-      setQuestionnaireTitle(questionnaireJson.title);
-      patientBundle.current = {
-        ...patientBundle.current,
-        entry: [...patientBundle.current.entry, ...bundles],
-        questionnaire: questionnaireJson,
-      };
-      gatherSummaryData(questionnaireJson)
-        .then((data) => {
-          dispatch({ type: "update", payload: data });
-          setLoading(false);
-          setHasChart(hasData(data.chartData));
-          callback(callbackFunc, { status: "ok" });
-        })
-        .catch((e) => {
-          setError(e.message ? e.message : e);
-          setLoading(false);
-          callback(callbackFunc, { status: "error" });
+    searchMatchingResources()
+      .then((results) => {
+        let bundles = [];
+        results.forEach((entry) => {
+          entry.forEach((item) =>
+            bundles.push({
+              resource: item,
+            })
+          );
         });
-    }, (e) => {
-      setError(e.message ? e.message: e);
-      setLoading(false);
-      callback(callbackFunc, { status: "error" });
-    });
+        const arrQuestionnaires = bundles.filter(
+          (entry) =>
+            String(entry.resource.resourceType).toLowerCase() ===
+            "questionnaire"
+        );
+        const questionnaireJson = arrQuestionnaires.length
+          ? arrQuestionnaires[0].resource
+          : null;
+        if (!questionnaireJson) {
+          callback(callbackFunc, { status: "error" });
+          setLoading(false);
+          setError("No matching questionnaire found");
+          return;
+        }
+        setQuestionnaireTitle(questionnaireJson.title);
+        patientBundle.current = {
+          ...patientBundle.current,
+          entry: [...patientBundle.current.entry, ...bundles],
+          questionnaire: questionnaireJson,
+        };
+        gatherSummaryData(questionnaireJson)
+          .then((data) => {
+            dispatch({ type: "update", payload: data });
+            setLoading(false);
+            setHasChart(hasData(data.chartData));
+            callback(callbackFunc, { status: "ok" });
+          })
+          .catch((e) => {
+            setError(e.message ? e.message : e);
+            setLoading(false);
+            callback(callbackFunc, { status: "error" });
+          });
+      })
+      .catch((e) => {
+        setError(e.message ? e.message : e);
+        setLoading(false);
+        callback(callbackFunc, { status: "error" });
+      });
 
     return () => cqlWorker.terminate();
   }, [client, questionnaireId, loading, callbackFunc]);
