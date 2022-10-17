@@ -22,7 +22,8 @@ export async function getInterventionLogicLib(interventionId) {
 
 export function getFHIRResourcePaths(patientId) {
   if (!patientId) return [];
-  const defaultList = ["CarePlan", "QuestionnaireResponse"];
+  // const defaultList = ["CarePlan", "QuestionnaireResponse"];
+  const defaultList = [];
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
   let resources = resourcesToLoad ? resourcesToLoad.split(",") : defaultList;
   defaultList.forEach((item) => {
@@ -226,5 +227,4 @@ export function getEnvs() {
     ...processEnvs,
   };
 }
-export const QUESTIONNAIRE_ANCHOR_ID_PREFIX = "questionnaireAnchor";
-export const queryPatientIdKey = "launch_queryPatientId";
+

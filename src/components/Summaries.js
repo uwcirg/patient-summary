@@ -7,7 +7,6 @@ import {
   useState,
 } from "react";
 import { useQuery } from "react-query";
-import Alert from "@mui/material/Alert";
 import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -19,13 +18,11 @@ import {
   getFHIRResourcePaths,
   getQuestionnaireList,
   isInViewport,
-  QUESTIONNAIRE_ANCHOR_ID_PREFIX,
 } from "../util/util";
 import QuestionnaireSelector from "./QuestionnaireSelector";
 import Summary from "./Summary";
 import Version from "./Version";
 let scrollIntervalId = 0;
-let scrollToTimeoutId = 0;
 
 export default function Summaries() {
   const { client, patient } = useContext(FhirClientContext);
@@ -33,7 +30,6 @@ export default function Summaries() {
   const anchorRef = createRef();
   const selectorRef = createRef();
   const questionnaireList = getQuestionnaireList();
-  const [selectedQuestionnaire, setSelectedQuestionnaire] = useState("");
   const [patientBundle, setPatientBundle] = useState({
     resourceType: "Bundle",
     id: "resource-bundle",
@@ -117,18 +113,6 @@ export default function Summaries() {
     );
   };
 
-  const hasQuestionnaireResponses = () => {
-    return (
-      patientBundle.entry &&
-      patientBundle.entry.filter(
-        (item) =>
-          item.resource &&
-          String(item.resource.resourceType).toLowerCase() ===
-            "questionnaireresponse"
-      ).length > 0
-    );
-  };
-
   const renderNavButton = () => (
     <FabRef
       className={"hide"}
@@ -141,7 +125,6 @@ export default function Summaries() {
         e.stopPropagation();
         if (!anchorRef.current) return;
         anchorRef.current.scrollIntoView();
-        setSelectedQuestionnaire("");
       }}
       title="Back to Top"
     >
@@ -170,7 +153,6 @@ export default function Summaries() {
             patientBundle={patientBundle}
             key={`questionnaire_summary_${index}`}
             callbackFunc={handleCallback}
-            sectionAnchorPrefix={QUESTIONNAIRE_ANCHOR_ID_PREFIX}
           ></Summary>
           {index !== questionnaireList.length - 1 && (
             <Divider key={`questionnaire_divider_${index}`} light></Divider>
@@ -197,20 +179,6 @@ export default function Summaries() {
         <QuestionnaireSelector
           title="Go to Questionnaire"
           list={questionnaireList}
-          value={selectedQuestionnaire}
-          handleSelectorChange={(event) => {
-            setSelectedQuestionnaire(event.target.value);
-            clearTimeout(scrollToTimeoutId);
-            scrollToTimeoutId = setTimeout(
-              () =>
-                document
-                  .querySelector(
-                    `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${event.target.value}`
-                  )
-                  .scrollIntoView(),
-              50
-            );
-          }}
         ></QuestionnaireSelector>
       </BoxRef>
     );
@@ -262,17 +230,10 @@ export default function Summaries() {
       <Stack className="summaries" sx={{ position: "relative" }}>
         {!isReady() && renderLoadingIndicator()}
         {isReady() && (
-          <>
-            {!hasQuestionnaireResponses() && (
-              <Alert severity="warning">No recorded response</Alert>
-            )}
-            {hasQuestionnaireResponses() && (
-              <section>
-                {renderQuestionnaireSelector()}
-                {renderSummaries()}
-              </section>
-            )}
-          </>
+          <section>
+            {renderQuestionnaireSelector()}
+            {renderSummaries()}
+          </section>
         )}
         {isReady() && <Version></Version>}
       </Stack>

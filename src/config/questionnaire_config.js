@@ -13,5 +13,8 @@ const qConfig = {
   gds: {
     scoringQuestionId: "/48545-8",
   },
+  slums: {
+    scoringQuestionId: "/71492-3",
+  },
 };
 export default qConfig;

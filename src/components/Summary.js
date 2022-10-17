@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useReducer, useContext } from "react";
 import PropTypes from "prop-types";
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
@@ -13,8 +14,11 @@ import {
   getChartConfig,
   getDisplayQTitle,
   hasData,
-  QUESTIONNAIRE_ANCHOR_ID_PREFIX,
 } from "../util/util";
+import {
+  NO_CACHE_HEADER,
+  QUESTIONNAIRE_ANCHOR_ID_PREFIX,
+} from "../consts/consts";
 import Responses from "./Responses";
 import Chart from "./Chart";
 import config from "../config/questionnaire_config";
@@ -29,7 +33,7 @@ export default function Summary(props) {
     entry: [...props.patientBundle.entry],
     questionnaire: null,
   });
-  const { questionnaireId, callbackFunc, sectionAnchorPrefix } = props;
+  const { questionnaireId, callbackFunc } = props;
   const summaryReducer = (summary, action) => {
     if (action.type === "reset") {
       return {
@@ -51,6 +55,7 @@ export default function Summary(props) {
     chartData: [],
     chartConfig: [],
   });
+  const [questionnaireTitle, setQuestionnaireTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [hasChart, setHasChart] = useState(false);
   const [error, setError] = useState("");
@@ -60,8 +65,7 @@ export default function Summary(props) {
     height: 2,
     width: 2,
   };
-  const shouldDisplayResponses = () =>
-    !loading && !error && hasData(questionnaireId);
+  const shouldDisplayResponses = () => !loading && !error;
 
   const formatChartData = (data) => {
     if (summary.chartConfig && summary.chartConfig.dataFormatter)
@@ -69,8 +73,8 @@ export default function Summary(props) {
     return data;
   };
 
-  const getAnchorElementId = () =>
-    sectionAnchorPrefix || QUESTIONNAIRE_ANCHOR_ID_PREFIX;
+  const getAnchorElementId = () => QUESTIONNAIRE_ANCHOR_ID_PREFIX;
+  const hasResponses = () => summary.responses && summary.responses.length > 0;
 
   const renderLoader = () =>
     loading && (
@@ -91,18 +95,22 @@ export default function Summary(props) {
     );
   const renderAnchor = () => (
     <div
-      id={`${getAnchorElementId()}_${questionnaireId}`}
+      id={`${getAnchorElementId()}_${questionnaireId.toLowerCase()}`}
       style={anchorElementStyle}
     ></div>
   );
+  const getQuestionnaireTitle = () => {
+    if (questionnaireTitle) return questionnaireTitle;;
+    return getDisplayQTitle(questionnaireId);
+  };
   const renderTitle = () => (
     <Typography
       variant="h6"
       component="h3"
       color="secondary"
-      sx={{ marginBottom: 1 }}
+      sx={{ marginBottom: 2 }}
     >
-      {getDisplayQTitle(questionnaireId)}
+      {getQuestionnaireTitle()}
     </Typography>
   );
   const renderSummary = () =>
@@ -121,7 +129,11 @@ export default function Summary(props) {
             }}
           ></Chart>
         )}
-        <Responses data={summary.responses}></Responses>
+
+        {!hasResponses() && (
+          <Alert severity="warning">No recorded responses</Alert>
+        )}
+        {hasResponses() && <Responses data={summary.responses}></Responses>}
       </Stack>
     );
 
@@ -132,13 +144,21 @@ export default function Summary(props) {
     const cqlWorker = new Worker();
 
     // search for matching questionnaire
-    const searchMatchingQuestionnaire = async () => {
-      const nameSearchString = questionnaireId.split("-").join(",");
-      return Promise.all([
-        // look up the questionnaire based on whether the id or the name attribute matches the specified instrument id?
-        client.request("/Questionnaire/?_id=" + questionnaireId),
-        client.request("/Questionnaire?name:contains=" + nameSearchString),
-      ]);
+    const searchMatchingResources = async () => {
+      const fhirSearchOptions = { pageLimit: 0, flat: true };
+      const requests = [
+        "Questionnaire?name:contains=" + questionnaireId,
+        "QuestionnaireResponse/?questionnaire:contains=" + questionnaireId,
+      ].map((uri) =>
+        client.request(
+          {
+            url: uri,
+            ...NO_CACHE_HEADER,
+          },
+          fhirSearchOptions
+        )
+      );
+      return Promise.all(requests);
     };
 
     const gatherSummaryData = async (questionnaireJson) => {
@@ -183,30 +203,34 @@ export default function Summary(props) {
       console.log("return result from CQL execution ", returnResult);
       return returnResult;
     };
-    // find matching questionnaire
-    searchMatchingQuestionnaire().then((results) => {
-      let questionnaireJson;
-      const qResults =
-        results && results.length
-          ? results.filter((q) => q.entry && q.entry.length > 0)
-          : [];
-      if (qResults.length) {
-        questionnaireJson = qResults[0].entry[0].resource;
-      }
+    // find matching questionnaire & questionnaire response(s)
+    searchMatchingResources().then((results) => {
+      let bundles = [];
+      results.forEach((entry) => {
+        entry.forEach((item) =>
+          bundles.push({
+            resource: item,
+          })
+        );
+      });
+      const arrQuestionnaires = bundles.filter(
+        (entry) =>
+          String(entry.resource.resourceType).toLowerCase() === "questionnaire"
+      );
+      const questionnaireJson = arrQuestionnaires.length
+        ? arrQuestionnaires[0].resource
+        : null;
       if (!questionnaireJson) {
         callback(callbackFunc, { status: "error" });
         setLoading(false);
         setError("No matching questionnaire found");
         return;
       }
+      setQuestionnaireTitle(questionnaireJson.title);
       patientBundle.current = {
         ...patientBundle.current,
-        entry: [
-          ...patientBundle.current.entry,
-          {
-            resource: questionnaireJson,
-          },
-        ],
+        entry: [...patientBundle.current.entry, ...bundles],
+        questionnaire: questionnaireJson,
       };
       gatherSummaryData(questionnaireJson)
         .then((data) => {
@@ -233,6 +257,10 @@ export default function Summary(props) {
         className="summary"
         id={`summary_${questionnaireId}`}
         direction="column"
+        sx= {{
+          paddingTop: 2,
+          paddingBottom: 4
+        }}
       >
         {/* questionnaire title */}
         {renderTitle()}
@@ -255,5 +283,4 @@ Summary.propTypes = {
     entry: PropTypes.array.isRequired,
   }),
   callbackFunc: PropTypes.func,
-  sectionAnchorPrefix: PropTypes.string,
 };

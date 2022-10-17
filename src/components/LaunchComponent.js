@@ -4,7 +4,8 @@ import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import { ThemeProvider } from "@mui/material/styles";
 import ErrorComponent from "./ErrorComponent";
-import { fetchEnvData, getEnv, queryPatientIdKey } from "../util/util.js";
+import { queryPatientIdKey } from "../consts/consts";
+import { fetchEnvData, getEnv } from "../util/util";
 import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
 
