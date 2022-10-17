@@ -158,7 +158,9 @@ export default function Summary(props) {
           fhirSearchOptions
         )
       );
-      return Promise.all(requests).catch(e => setError(e));
+      return Promise.all(requests).catch(e => {
+        throw new Error(e);
+      });
     };
 
     const gatherSummaryData = async (questionnaireJson) => {
@@ -173,7 +175,8 @@ export default function Summary(props) {
       const [elmJson, valueSetJson] = await getInterventionLogicLib(
         questionnaireConfig.customCQL ? questionnaireId : ""
       ).catch((e) => {
-        throw new Error(e);
+        setError(e);
+        setLoading(false);
       });
 
       setupExecution(elmJson, valueSetJson, {
@@ -244,6 +247,10 @@ export default function Summary(props) {
           setLoading(false);
           callback(callbackFunc, { status: "error" });
         });
+    }, (e) => {
+      setError(e.message ? e.message: e);
+      setLoading(false);
+      callback(callbackFunc, { status: "error" });
     });
 
     return () => cqlWorker.terminate();
