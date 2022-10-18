@@ -23,7 +23,7 @@ export async function getInterventionLogicLib(interventionId) {
 export function getFHIRResourcePaths(patientId) {
   if (!patientId) return [];
   // const defaultList = ["CarePlan", "QuestionnaireResponse"];
-  const defaultList = [];
+  const defaultList = ["QuestionnaireResponse"];
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
   let resources = resourcesToLoad ? resourcesToLoad.split(",") : defaultList;
   defaultList.forEach((item) => {

@@ -148,7 +148,7 @@ export default function Summary(props) {
       const fhirSearchOptions = { pageLimit: 0 };
       const requests = [
         "Questionnaire?name:contains=" + questionnaireId,
-        "QuestionnaireResponse?questionnaire:contains=" + questionnaireId,
+     //   "QuestionnaireResponse?questionnaire:contains=" + questionnaireId,
       ].map((uri) =>
         client.request(
           {
@@ -215,7 +215,7 @@ export default function Summary(props) {
           entry.forEach((item) => {
             if (!item.entry || !item.entry.length) return true;
             item.entry.forEach((o) => {
-              if (!o.resource) return true;
+              if (!o && !o.resource) return true;
               bundles.push({
                 resource: o.resource,
               })
