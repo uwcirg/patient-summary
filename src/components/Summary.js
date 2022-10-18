@@ -145,7 +145,7 @@ export default function Summary(props) {
 
     // search for matching questionnaire
     const searchMatchingResources = async () => {
-      const fhirSearchOptions = { pageLimit: 0, flat: true };
+      const fhirSearchOptions = { pageLimit: 0 };
       const requests = [
         "Questionnaire?name:contains=" + questionnaireId,
         "QuestionnaireResponse?questionnaire:contains=" + questionnaireId,
@@ -210,16 +210,21 @@ export default function Summary(props) {
     searchMatchingResources()
       .then((results) => {
         let bundles = [];
+        console.log(`${questionnaireId} search results `, results);
         results.forEach((entry) => {
-          entry.forEach((item) =>
-            bundles.push({
-              resource: item,
-            })
-          );
+          entry.forEach((item) => {
+            if (!item.entry || !item.entry.length) return true;
+            item.entry.forEach((o) => {
+              if (!o.resource) return true;
+              bundles.push({
+                resource: o.resource,
+              })
+            });
+          });
         });
         const arrQuestionnaires = bundles.filter(
           (entry) =>
-            String(entry.resource.resourceType).toLowerCase() ===
+            entry.resource && String(entry.resource.resourceType).toLowerCase() ===
             "questionnaire"
         );
         const questionnaireJson = arrQuestionnaires.length
