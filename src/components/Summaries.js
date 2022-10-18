@@ -1,6 +1,7 @@
 import {
   createRef,
   forwardRef,
+  memo,
   useContext,
   useEffect,
   useCallback,
@@ -39,14 +40,6 @@ export default function Summaries() {
     entry: [],
     loadComplete: false,
   });
-  const [initializing, setInitializing] = useState(false);
-  // const [patientBundle, setPatientBundle] = useState({
-  //   resourceType: "Bundle",
-  //   id: "resource-bundle",
-  //   type: "collection",
-  //   entry: [],
-  //   loadComplete: false,
-  // });
   const [error, setError] = useState(null);
 
   const BoxRef = forwardRef((props, ref) => (
@@ -174,12 +167,13 @@ export default function Summaries() {
         }}
       >
         <QuestionnaireSelector
-          title="Go to Questionnaire"
           list={questionnaireList}
         ></QuestionnaireSelector>
       </BoxRef>
     );
   };
+
+  const MemoizedQuestionnaireSelector = memo(renderQuestionnaireSelector);
 
   const renderLoadingIndicator = () => (
     <Box sx={{ position: "absolute", top: 16, left: 16 }}>
@@ -194,7 +188,7 @@ export default function Summaries() {
       return results;
     },
     {
-      disabled: !initializing,
+      disabled: error,
       staleTime: 30000,
       refetchInterval: 0,
       refetchOnWindowFocus: false,
@@ -220,11 +214,6 @@ export default function Summaries() {
     };
   }, [handleFab]);
 
-  useEffect(() => {
-    if (initializing) return;
-    setInitializing(true);
-  }, [initializing])
-
   return (
     <>
       {isReady() && (
@@ -237,7 +226,7 @@ export default function Summaries() {
         {!isReady() && renderLoadingIndicator()}
         {isReady() && (
           <section>
-            {renderQuestionnaireSelector()}
+            {<MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>}
             {renderSummaries()}
           </section>
         )}

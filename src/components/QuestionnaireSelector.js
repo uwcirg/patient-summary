@@ -38,8 +38,8 @@ export default function QuestionnaireSelector(props) {
   };
   const getDisplayName = (value) => {
     const arrMatch = selectList.filter(item => item.id === value);
-    if (arrMatch.length) return arrMatch[0].title;
-    return value;
+    if (arrMatch.length) return arrMatch[0].title || (arrMatch[0].id).toUpperCase();
+    return value.toUpperCase();
   }
   const renderTitle = () => (
     <Typography variant="h6" component="h2" color="secondary">
@@ -99,12 +99,19 @@ export default function QuestionnaireSelector(props) {
         flat: true,
       })
       .then((data) => {
-        setSelectList(
-          data.map((item) => {
+        const transformedList = [
+          ...(list.filter(item => {
+            const inList = data.filter(o => (String(o.id).toLowerCase()).includes(item)).length > 0;
+            return !inList;
+          }).map(item => ({
+            id: item
+          }))),
+          ...data.map((item) => {
             item.id = getDisplayQTitle(item.id);
             return item;
-          })
-        );
+          }),
+        ];
+        setSelectList(transformedList);
       });
   }, [client, list]);
   return (

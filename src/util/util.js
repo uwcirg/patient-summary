@@ -39,6 +39,11 @@ export function getFHIRResourcePaths(patientId) {
     const observationCategories = getEnv(
       "REACT_APP_FHIR_OBSERVATION_CATEGORIES"
     );
+    if (resource.toLowerCase() === "questionnaire") {
+      const params = getQuestionnaireList().join(",");
+      if (params)
+      path = path + `?contains:${params}`;
+    }
     if (resource.toLowerCase() === "careplan") {
       path =
         path +
@@ -104,7 +109,7 @@ export function getFhirResourcesFromQueryResult(result) {
 
 export function getDisplayQTitle(questionnaireId) {
   if (!questionnaireId) return "";
-  return (questionnaireId.replace(/cirg-/gi,'')).toUpperCase();
+  return String(questionnaireId.replace(/cirg-/gi,'')).toUpperCase();
 }
 
 export function isValidDate(date) {
