@@ -23,7 +23,7 @@ export async function getInterventionLogicLib(interventionId) {
 export function getFHIRResourcePaths(patientId) {
   if (!patientId) return [];
   // const defaultList = ["CarePlan", "QuestionnaireResponse"];
-  const defaultList = ["QuestionnaireResponse"];
+  const defaultList = [];
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
   let resources = resourcesToLoad ? resourcesToLoad.split(",") : defaultList;
   defaultList.forEach((item) => {
@@ -82,6 +82,23 @@ export function getQuestionnairesByCarePlan (arrCarePlans) {
     }
   });
   return qList;
+}
+
+export function getFhirResourcesFromQueryResult(result) {
+  let bundle = [];
+  if (!result) return [];
+  if (result.resourceType === "Bundle" && result.entry) {
+    result.entry.forEach((o) => {
+      if (o && o.resource) bundle.push({ resource: o.resource });
+    });
+  } else if (Array.isArray(result)) {
+    result.forEach((o) => {
+      if (o.resourceType) bundle.push({ resource: o });
+    });
+  } else {
+    bundle.push({ resource: result });
+  }
+  return bundle;
 }
 
 export function getDisplayQTitle(questionnaireId) {
@@ -226,4 +243,6 @@ export function getEnvs() {
     ...processEnvs,
   };
 }
+
+
 

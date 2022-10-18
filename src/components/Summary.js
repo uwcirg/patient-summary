@@ -13,6 +13,7 @@ import {
   getInterventionLogicLib,
   getChartConfig,
   getDisplayQTitle,
+  getFhirResourcesFromQueryResult,
   hasData,
 } from "../util/util";
 import {
@@ -148,7 +149,7 @@ export default function Summary(props) {
       const fhirSearchOptions = { pageLimit: 0 };
       const requests = [
         "Questionnaire?name:contains=" + questionnaireId,
-     //   "QuestionnaireResponse?questionnaire:contains=" + questionnaireId,
+        "QuestionnaireResponse?questionnaire.name:contains=" + questionnaireId,
       ].map((uri) =>
         client.request(
           {
@@ -213,13 +214,7 @@ export default function Summary(props) {
         console.log(`${questionnaireId} search results `, results);
         results.forEach((entry) => {
           entry.forEach((item) => {
-            if (!item.entry || !item.entry.length) return true;
-            item.entry.forEach((o) => {
-              if (!o && !o.resource) return true;
-              bundles.push({
-                resource: o.resource,
-              })
-            });
+            bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];
           });
         });
         const arrQuestionnaires = bundles.filter(

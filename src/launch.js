@@ -4,8 +4,8 @@ import LaunchComponent from "./components/LaunchComponent";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>
+  // <React.StrictMode>
     <LaunchComponent />
-  </React.StrictMode>
+  // </React.StrictMode>
 );
 

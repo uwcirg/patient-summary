@@ -5,6 +5,7 @@ import {
   useEffect,
   useCallback,
   useState,
+  useRef
 } from "react";
 import { useQuery } from "react-query";
 import Fab from "@mui/material/Fab";
@@ -15,6 +16,7 @@ import Stack from "@mui/material/Stack";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import { FhirClientContext } from "../context/FhirClientContext";
 import {
+  getFhirResourcesFromQueryResult,
   getFHIRResourcePaths,
   getQuestionnaireList,
   isInViewport,
@@ -30,13 +32,20 @@ export default function Summaries() {
   const anchorRef = createRef();
   const selectorRef = createRef();
   const questionnaireList = getQuestionnaireList();
-  const [patientBundle, setPatientBundle] = useState({
+  const patientBundle = useRef({
     resourceType: "Bundle",
     id: "resource-bundle",
     type: "collection",
     entry: [],
     loadComplete: false,
   });
+  // const [patientBundle, setPatientBundle] = useState({
+  //   resourceType: "Bundle",
+  //   id: "resource-bundle",
+  //   type: "collection",
+  //   entry: [],
+  //   loadComplete: false,
+  // });
   const [error, setError] = useState(null);
 
   const BoxRef = forwardRef((props, ref) => (
@@ -69,10 +78,7 @@ export default function Summaries() {
     if (isReady()) return;
     if (obj && obj.status === "error") setError(true);
   };
-  const isReady = useCallback(
-    () => patientBundle.loadComplete || error,
-    [patientBundle.loadComplete, error]
-  );
+  const isReady = () => patientBundle.current.loadComplete || error;
 
   const getFhirResources = async () => {
     if (!client || !patient || !patient.id)
@@ -93,17 +99,7 @@ export default function Summaries() {
             return true;
           }
           const result = item.value;
-          if (result.resourceType === "Bundle" && result.entry) {
-            result.entry.forEach((o) => {
-              if (o && o.resource) bundle.push({ resource: o.resource });
-            });
-          } else if (Array.isArray(result)) {
-            result.forEach((o) => {
-              if (o.resourceType) bundle.push({ resource: o });
-            });
-          } else {
-            bundle.push({ resource: result });
-          }
+          bundle = [...bundle, ...getFhirResourcesFromQueryResult(result)];
         });
         return bundle;
       },
@@ -150,7 +146,7 @@ export default function Summaries() {
         <Box key={`summary_container_${index}`}>
           <Summary
             questionnaireId={questionnaireId}
-            patientBundle={patientBundle}
+            patientBundle={patientBundle.current}
             key={`questionnaire_summary_${index}`}
             callbackFunc={handleCallback}
           ></Summary>
@@ -190,26 +186,26 @@ export default function Summaries() {
     </Box>
   );
 
-  const fhirQueryResults = useQuery("fhirResources", getFhirResources);
-
-  useEffect(() => {
-    
-    if (isReady()) return;
-    
-    const status = fhirQueryResults.status;
-    const fhirData = fhirQueryResults.data;
-
-    if (status === "error") setError("Error fetching FHIR resources");
-    if (status === "success") {
-      setPatientBundle((prevPatientBundle) => {
-        return {
-          ...prevPatientBundle,
-          entry: [...prevPatientBundle.entry, ...fhirData],
-          loadComplete: true,
-        };
-      });
-    }
-  }, [isReady, fhirQueryResults]);
+  useQuery("fhirResources", async() => {
+    const results = await getFhirResources();
+    return results;
+  }, {
+    disabled: error || patientBundle.current.loadComplete,
+    staleTime: 5000,
+    refetchInterval: 0,
+    refetchOnWindowFocus: false,
+    onSettled: (fhirData) => {
+      patientBundle.current = {
+        ...patientBundle.current,
+        entry: [...patientBundle.current.entry, ...fhirData],
+        loadComplete: true,
+      };
+    },
+    onError: (e) => {
+      setError("Error fetching FHIR resources. See console for detail.");
+      console.log("FHIR resources fetching error: ", e);
+    },
+  });
 
   useEffect(() => {
     window.addEventListener("scroll", handleFab);

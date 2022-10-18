@@ -42,7 +42,7 @@ const fetchContextJson = async (authURL) => {
 
 export default function Launch() {
   const [error, setError] = React.useState("");
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     fetchEnvData();
     const backendURL = getEnv("REACT_APP_BACKEND_URL");
     const authURL = backendURL ? `${backendURL}/auth/auth-info` : "";
