@@ -84,7 +84,6 @@ export function getQuestionnairesByCarePlan (arrCarePlans) {
   return qList;
 }
 
-
 export function getDisplayQTitle(questionnaireId) {
   if (!questionnaireId) return "";
   return (questionnaireId.replace(/cirg-/gi,'')).toUpperCase();
