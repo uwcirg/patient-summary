@@ -95,9 +95,10 @@ export function getFhirResourcesFromQueryResult(result) {
     result.forEach((o) => {
       if (o.resourceType) bundle.push({ resource: o });
     });
-  } else {
-    bundle.push({ resource: result });
-  }
+  } 
+  // else {
+  //   bundle.push({ resource: result });
+  // }
   return bundle;
 }
 

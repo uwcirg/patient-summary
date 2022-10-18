@@ -39,6 +39,7 @@ export default function Summaries() {
     entry: [],
     loadComplete: false,
   });
+  const [initializing, setInitializing] = useState(false);
   // const [patientBundle, setPatientBundle] = useState({
   //   resourceType: "Bundle",
   //   id: "resource-bundle",
@@ -186,26 +187,30 @@ export default function Summaries() {
     </Box>
   );
 
-  useQuery("fhirResources", async() => {
-    const results = await getFhirResources();
-    return results;
-  }, {
-    disabled: error || patientBundle.current.loadComplete,
-    staleTime: 5000,
-    refetchInterval: 0,
-    refetchOnWindowFocus: false,
-    onSettled: (fhirData) => {
-      patientBundle.current = {
-        ...patientBundle.current,
-        entry: [...patientBundle.current.entry, ...fhirData],
-        loadComplete: true,
-      };
+  useQuery(
+    "fhirResources",
+    async () => {
+      const results = await getFhirResources();
+      return results;
     },
-    onError: (e) => {
-      setError("Error fetching FHIR resources. See console for detail.");
-      console.log("FHIR resources fetching error: ", e);
-    },
-  });
+    {
+      disabled: !initializing,
+      staleTime: 30000,
+      refetchInterval: 0,
+      refetchOnWindowFocus: false,
+      onSettled: (fhirData) => {
+        patientBundle.current = {
+          ...patientBundle.current,
+          entry: [...patientBundle.current.entry, ...fhirData],
+          loadComplete: true,
+        };
+      },
+      onError: (e) => {
+        setError("Error fetching FHIR resources. See console for detail.");
+        console.log("FHIR resources fetching error: ", e);
+      },
+    }
+  );
 
   useEffect(() => {
     window.addEventListener("scroll", handleFab);
@@ -214,6 +219,11 @@ export default function Summaries() {
       window.removeEventListener("scroll", handleFab, false);
     };
   }, [handleFab]);
+
+  useEffect(() => {
+    if (initializing) return;
+    setInitializing(true);
+  }, [initializing])
 
   return (
     <>
