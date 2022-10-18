@@ -149,7 +149,7 @@ export default function Summary(props) {
       const fhirSearchOptions = { pageLimit: 0 };
       const requests = [
         "Questionnaire?name:contains=" + questionnaireId,
-        "QuestionnaireResponse?questionnaire.name:contains=" + questionnaireId,
+        //"QuestionnaireResponse?questionnaire.name:contains=" + questionnaireId,
       ].map((uri) =>
         client.request(
           {
