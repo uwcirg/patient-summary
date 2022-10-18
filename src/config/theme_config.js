@@ -43,6 +43,9 @@ export const themes = {
       secondary: {
         main: grey[800],
       },
+      accent: {
+        main: deepPurple[800]
+      }
     },
     typography: {
       subtitle1: {

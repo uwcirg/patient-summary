@@ -108,7 +108,7 @@ export default function Summary(props) {
     <Typography
       variant="h6"
       component="h3"
-      color="secondary"
+      color="accent"
       sx={{ marginBottom: 2 }}
     >
       {getQuestionnaireTitle()}
