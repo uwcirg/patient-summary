@@ -16,5 +16,8 @@ const qConfig = {
   slums: {
     scoringQuestionId: "/71492-3",
   },
+  behav5: {
+    scoringQuestionId: "behav-8",
+  },
 };
 export default qConfig;

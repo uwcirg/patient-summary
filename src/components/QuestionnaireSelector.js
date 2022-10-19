@@ -94,18 +94,22 @@ export default function QuestionnaireSelector(props) {
   );
   useLayoutEffect(() => {
     client
-      .request(`Questionnaire?name:contains=${list.join(",")}`, {
+      .request(`Questionnaire?name:contains=${list.join(",")}&_elements=id,name`, {
         pageLimit: 0,
         flat: true,
       })
       .then((data) => {
         const transformedList = [
-          ...(list.filter(item => {
-            const inList = data.filter(o => (String(o.id).toLowerCase()).includes(item)).length > 0;
-            return !inList;
-          }).map(item => ({
-            id: item
-          }))),
+          ...list
+            .filter((item) => {
+              const inList =
+                data.filter((o) => String(o.id).toLowerCase().includes(item))
+                  .length > 0;
+              return !inList;
+            })
+            .map((item) => ({
+              id: item,
+            })),
           ...data.map((item) => {
             item.id = getDisplayQTitle(item.id);
             return item;

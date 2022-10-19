@@ -680,8 +680,34 @@
                "source" : [ {
                   "alias" : "Q",
                   "expression" : {
-                     "name" : "QuestionnaireItems",
-                     "type" : "ExpressionRef"
+                     "type" : "Query",
+                     "source" : [ {
+                        "alias" : "O",
+                        "expression" : {
+                           "name" : "QuestionnaireItems",
+                           "type" : "ExpressionRef"
+                        }
+                     } ],
+                     "relationship" : [ ],
+                     "where" : {
+                        "type" : "Not",
+                        "operand" : {
+                           "type" : "Equal",
+                           "operand" : [ {
+                              "path" : "value",
+                              "type" : "Property",
+                              "source" : {
+                                 "path" : "linkId",
+                                 "scope" : "O",
+                                 "type" : "Property"
+                              }
+                           }, {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                              "value" : "introduction",
+                              "type" : "Literal"
+                           } ]
+                        }
+                     }
                   }
                } ],
                "let" : [ {

@@ -42,6 +42,31 @@ export default function Summaries() {
   });
   const [error, setError] = useState(null);
 
+  const { isSuccess, isError } = useQuery(
+    "fhirResources",
+    async () => {
+      const results = await getFhirResources();
+      return results;
+    },
+    {
+      disabled: error,
+      refetchOnWindowFocus: false,
+      staleTime: 30000,
+      onSettled: (fhirData) => {
+        patientBundle.current = {
+          ...patientBundle.current,
+          entry: [...patientBundle.current.entry, ...fhirData],
+          loadComplete: true,
+        };
+      },
+      onError: (e) => {
+        setError("Error fetching FHIR resources. See console for detail.");
+        console.log("FHIR resources fetching error: ", e);
+      },
+    }
+  );
+
+
   const BoxRef = forwardRef((props, ref) => (
     <Box {...props} ref={ref}>
       {props.children}
@@ -72,7 +97,7 @@ export default function Summaries() {
     if (isReady()) return;
     if (obj && obj.status === "error") setError(true);
   };
-  const isReady = () => patientBundle.current.loadComplete || error;
+  const isReady = () => (isSuccess || isError);
 
   const getFhirResources = async () => {
     if (!client || !patient || !patient.id)
@@ -179,31 +204,6 @@ export default function Summaries() {
     <Box sx={{ position: "absolute", top: 16, left: 16 }}>
       <CircularProgress></CircularProgress>
     </Box>
-  );
-
-  useQuery(
-    "fhirResources",
-    async () => {
-      const results = await getFhirResources();
-      return results;
-    },
-    {
-      disabled: error,
-      staleTime: 30000,
-      refetchInterval: 0,
-      refetchOnWindowFocus: false,
-      onSettled: (fhirData) => {
-        patientBundle.current = {
-          ...patientBundle.current,
-          entry: [...patientBundle.current.entry, ...fhirData],
-          loadComplete: true,
-        };
-      },
-      onError: (e) => {
-        setError("Error fetching FHIR resources. See console for detail.");
-        console.log("FHIR resources fetching error: ", e);
-      },
-    }
   );
 
   useEffect(() => {

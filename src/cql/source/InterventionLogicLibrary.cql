@@ -79,7 +79,7 @@ define function GetResponseValueByLinkId(linkId String, responses List<FHIR.Ques
   return I.answer[0].value
 
 define function FormattedResponses(responses List<FHIR.QuestionnaireResponse.Item>):
-  QuestionnaireItems Q
+  ((QuestionnaireItems) O where O.linkId.value != 'introduction') Q
     let
       answerText: GetResponseAnswerByLinkId(Q.linkId.value, responses),
       answerValue: GetResponseValueByLinkId(Q.linkId.value, responses)
