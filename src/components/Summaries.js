@@ -6,7 +6,7 @@ import {
   useEffect,
   useCallback,
   useState,
-  useRef
+  useRef,
 } from "react";
 import { useQuery } from "react-query";
 import Fab from "@mui/material/Fab";
@@ -23,6 +23,7 @@ import {
   isInViewport,
 } from "../util/util";
 import QuestionnaireSelector from "./QuestionnaireSelector";
+import ScoringSummary from "./ScoringSummary";
 import Summary from "./Summary";
 import Version from "./Version";
 let scrollIntervalId = 0;
@@ -51,13 +52,14 @@ export default function Summaries() {
     {
       disabled: error,
       refetchOnWindowFocus: false,
-      staleTime: 30000,
+      staleTime: 0,
       onSettled: (fhirData) => {
         patientBundle.current = {
           ...patientBundle.current,
           entry: [...patientBundle.current.entry, ...fhirData],
           loadComplete: true,
         };
+        console.log("patient bundle ", patientBundle.current.entry)
       },
       onError: (e) => {
         setError("Error fetching FHIR resources. See console for detail.");
@@ -65,7 +67,6 @@ export default function Summaries() {
       },
     }
   );
-
 
   const BoxRef = forwardRef((props, ref) => (
     <Box {...props} ref={ref}>
@@ -97,7 +98,7 @@ export default function Summaries() {
     if (isReady()) return;
     if (obj && obj.status === "error") setError(true);
   };
-  const isReady = () => (isSuccess || isError);
+  const isReady = () => isSuccess || isError;
 
   const getFhirResources = async () => {
     if (!client || !patient || !patient.id)
@@ -184,14 +185,12 @@ export default function Summaries() {
         ref={selectorRef}
         style={{
           opacity: isReady() ? 1 : 0.4,
-          borderBottom: 1,
-          borderColor: "#ececec",
-          borderBottomStyle: "solid",
-          paddingBottom: "32px",
-          marginBottom: "8px",
+          width: "100%",
+          alignSelf: "stretch",
+          border: "2px solid #ececec"
         }}
       >
-        <QuestionnaireSelector
+       <QuestionnaireSelector
           list={questionnaireList}
         ></QuestionnaireSelector>
       </BoxRef>
@@ -226,7 +225,22 @@ export default function Summaries() {
         {!isReady() && renderLoadingIndicator()}
         {isReady() && (
           <section>
-            {<MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>}
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={4}
+              sx={{ marginTop: 2, marginBottom: 4 }}
+            >
+              {<MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>}
+              {
+                <ScoringSummary
+                  list={getQuestionnaireList()}
+                  responses={patientBundle.current.entry.filter(
+                    (entry) =>
+                      entry.resource.resourceType === "QuestionnaireResponse"
+                  )}
+                ></ScoringSummary>
+              }
+            </Stack>
             {renderSummaries()}
           </section>
         )}

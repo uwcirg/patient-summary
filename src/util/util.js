@@ -52,7 +52,7 @@ export function getFHIRResourcePaths(patientId) {
       path =
         path +
         (resource.toLowerCase() !== "questionnaire"
-          ? `?patient=${patientId}`
+          ? `?patient=${patientId}&_sort=-_lastUpdated`
           : "");
     }
     if (resource.toLowerCase() === "observation" && observationCategories) {

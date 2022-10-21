@@ -3,6 +3,7 @@
 const qConfig = {
   minicog: {
     customCQL: true,
+    scoringQuestionId: "minicog-total-score",
   },
   phq9: {
     scoringQuestionId: "/44261-6",

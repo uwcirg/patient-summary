@@ -119,7 +119,7 @@ export default function QuestionnaireSelector(props) {
       });
   }, [client, list]);
   return (
-    <Stack direction="column" id="questionnaireSelector">
+    <Stack direction="column" id="questionnaireSelector" sx={{padding: 2}}>
       {!list.length && renderWarning()}
       {list.length > 0 && renderTitle()}
       {list.length > 0 && renderSelector()}
