@@ -69,13 +69,18 @@ export default function ScoringSummary(props) {
   const getDisplayIcon = (id) => {
     const currentScore = parseInt(getCurrentScoreByInstrument(id));
     const prevScore = parseInt(getPrevScoreByInstrument(id));
-    if (isNaN(prevScore)) return null; 
-    if (currentScore > prevScore) return <NorthIcon color="error"></NorthIcon>;
-    if (currentScore < prevScore)
-      return <SouthIcon color="success"></SouthIcon>;
-    if (!prevScore && !isNaN(currentScore))
-      return <HorizontalRuleIcon color="info"></HorizontalRuleIcon>;
-    return null;
+    if (isNaN(prevScore) || isNaN(currentScore)) return null;
+    if (!isNaN(prevScore)) {
+       if (currentScore > prevScore)
+           return <NorthIcon color="error"></NorthIcon>;
+       if (currentScore < prevScore)
+          return <SouthIcon color="success"></SouthIcon>;
+       return <HorizontalRuleIcon></HorizontalRuleIcon>;
+    } else {
+       if (!isNaN(currentScore))
+          return <HorizontalRuleIcon color="info"></HorizontalRuleIcon>;
+       return null;
+    }
   };
   const renderTitle = () => (
     <Typography
