@@ -101,7 +101,7 @@ define ResponsesSummary:
     authoredDate: I.authored,
     lastUpdated: I.meta.lastUpdated.value
   }
-  sort by authoredDate desc, lastUpdated desc
+  sort by date desc, lastUpdated desc
 
 define ResponsesOnly:
   (QuestionnaireResponses) I
