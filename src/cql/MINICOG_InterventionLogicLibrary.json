@@ -747,7 +747,7 @@
                "sort" : {
                   "by" : [ {
                      "direction" : "desc",
-                     "path" : "authoredDate",
+                     "path" : "date",
                      "type" : "ByColumn"
                   }, {
                      "direction" : "desc",
