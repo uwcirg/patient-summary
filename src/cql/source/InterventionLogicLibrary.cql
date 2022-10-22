@@ -98,9 +98,10 @@ define ResponsesSummary:
   return {
     date: DateTimeText(I.authored),
     responses: FormattedResponses(I.item),
+    authoredDate: I.authored,
     lastUpdated: I.meta.lastUpdated.value
   }
-  sort by date desc, lastUpdated desc
+  sort by authoredDate desc, lastUpdated desc
 
 define ResponsesOnly:
   (QuestionnaireResponses) I

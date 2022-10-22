@@ -14,7 +14,8 @@ import { instrumentNameMaps } from "../consts/consts";
 
 export default function ScoringSummary(props) {
   const { list, responses } = props;
-  const hasList = () => list && list.length;
+  const hasList = () =>
+    list && list.length && list.filter((id) => getScoringQuestionId(id)).length;
   const getMatchResponsesById = (id) => {
     if (!responses) return [];
     const matchedResponses = responses
@@ -25,9 +26,10 @@ export default function ScoringSummary(props) {
       )
       .map((item) => item.resource);
     return matchedResponses
-      .sort((a, b) => {
-        return new Date(a.authored).getTime() - new Date(b.authored).getTime();
-      })
+      .sort(
+        (a, b) =>
+          new Date(a.authored).getTime() - new Date(b.authored).getTime()
+      )
       .sort(
         (a, b) =>
           new Date(a.meta.lastUpdated).getTime() -
@@ -68,19 +70,28 @@ export default function ScoringSummary(props) {
     return matchedItem.length ? matchedItem[0] : null;
   };
   const getDisplayIcon = (id) => {
+    const comparisonToAlert = qConfig[id].comparisonToAlert;
     const currentScore = parseInt(getCurrentScoreByInstrument(id));
     const prevScore = parseInt(getPrevScoreByInstrument(id));
     if (isNaN(prevScore) || isNaN(currentScore)) return null;
     if (!isNaN(prevScore)) {
-       if (currentScore > prevScore)
-           return <NorthIcon color="error"></NorthIcon>;
-       if (currentScore < prevScore)
+      if (comparisonToAlert === "low") {
+        if (currentScore < prevScore)
+          return <SouthIcon color="error"></SouthIcon>;
+        if (currentScore > prevScore)
+          return <NorthIcon color="success"></NorthIcon>;
+        return <HorizontalRuleIcon></HorizontalRuleIcon>;
+      } else {
+        if (currentScore > prevScore)
+          return <NorthIcon color="error"></NorthIcon>;
+        if (currentScore < prevScore)
           return <SouthIcon color="success"></SouthIcon>;
-       return <HorizontalRuleIcon></HorizontalRuleIcon>;
+        return <HorizontalRuleIcon></HorizontalRuleIcon>;
+      }
     } else {
-       if (!isNaN(currentScore))
-          return <HorizontalRuleIcon color="info"></HorizontalRuleIcon>;
-       return null;
+      if (!isNaN(currentScore))
+        return <HorizontalRuleIcon color="info"></HorizontalRuleIcon>;
+      return null;
     }
   };
   const renderTitle = () => (
@@ -95,9 +106,9 @@ export default function ScoringSummary(props) {
   );
   const renderSummary = () =>
     hasList() && (
-      <TableContainer sx={{padding: 2, paddingTop: 0}}>
+      <TableContainer sx={{ padding: 2, paddingTop: 0, marginBottom: 1 }}>
         <Table
-          sx={{ minWidth: 650 }}
+          sx={{ border: "1px solid #ececec" }}
           size="small"
           aria-label="scoring summary table"
         >
@@ -107,7 +118,7 @@ export default function ScoringSummary(props) {
                 <TableCell sx={{ fontWeight: 500 }}>
                   {getInstrumentName(item)}
                 </TableCell>
-                <TableCell>
+                <TableCell align="left" sx={{width: "35%"}}>
                   {getCurrentScoreByInstrument(item) || "--"}
                 </TableCell>
                 <TableCell>{getDisplayIcon(item)}</TableCell>
@@ -118,7 +129,7 @@ export default function ScoringSummary(props) {
       </TableContainer>
     );
   return (
-    <Paper>
+    <Paper sx={{ minWidth: "50%" }}>
       {renderTitle()}
       {renderSummary()}
     </Paper>

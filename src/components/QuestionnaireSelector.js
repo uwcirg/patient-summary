@@ -54,7 +54,7 @@ export default function QuestionnaireSelector(props) {
   const renderSelector = () => (
     <FormControl
       variant="standard"
-      sx={{ minWidth: 300 }}
+      sx={{ minWidth: 300, paddingLeft: 1, paddingRight: 1}}
       margin="dense"
     >
       <Select

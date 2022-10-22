@@ -86,9 +86,10 @@ define ResponsesSummary:
   return {
     date: DateTimeText(I.authored),
     responses: FormattedResponses(I.item),
+    authoredDate: I.authored,
     lastUpdated: I.meta.lastUpdated.value
   }
-  sort by date desc, lastUpdated desc
+  sort by authoredDate desc, lastUpdated desc
 
 define ResponsesOnly:
   (QuestionnaireResponses) I
@@ -102,4 +103,3 @@ define ChartData:
     clock_draw: First((R.responses) I where I.id = question2Id return I.value.value),
     total: First((R.responses) I where I.id = scoringQuestionId return I.value.value)
   }
-

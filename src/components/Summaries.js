@@ -179,7 +179,6 @@ export default function Summaries() {
   };
 
   const renderQuestionnaireSelector = () => {
-    if (questionnaireList.length === 1) return <div></div>;
     return (
       <BoxRef
         ref={selectorRef}
@@ -199,6 +198,15 @@ export default function Summaries() {
   };
 
   const MemoizedQuestionnaireSelector = memo(renderQuestionnaireSelector);
+
+  const renderScoringSummary = () => (
+    <ScoringSummary
+      list={getQuestionnaireList()}
+      responses={patientBundle.current.entry.filter(
+        (entry) => entry.resource.resourceType === "QuestionnaireResponse"
+      )}
+    ></ScoringSummary>
+  );
 
   const renderLoadingIndicator = () => (
     <Box sx={{ position: "absolute", top: 16, left: 16 }}>
@@ -227,20 +235,17 @@ export default function Summaries() {
         {isReady() && (
           <section>
             <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={4}
-              sx={{ marginTop: 2, marginBottom: 4, backgroundColor: "#f3f3f4", padding: 2 }}
+              direction={{ xs: "column", sm: "column", md: "row" }}
+              spacing={2}
+              sx={{
+                marginTop: 2,
+                marginBottom: 4,
+                backgroundColor: "#f3f3f4",
+                padding: 2,
+              }}
             >
               {<MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>}
-              {
-                <ScoringSummary
-                  list={getQuestionnaireList()}
-                  responses={patientBundle.current.entry.filter(
-                    (entry) =>
-                      entry.resource.resourceType === "QuestionnaireResponse"
-                  )}
-                ></ScoringSummary>
-              }
+              {renderScoringSummary()}
             </Stack>
             <Divider></Divider>
             {renderSummaries()}
