@@ -187,7 +187,8 @@ export default function Summaries() {
           opacity: isReady() ? 1 : 0.4,
           width: "100%",
           alignSelf: "stretch",
-          border: "2px solid #ececec"
+          border: "2px solid #ececec",
+          backgroundColor: "#FFF"
         }}
       >
        <QuestionnaireSelector
@@ -228,7 +229,7 @@ export default function Summaries() {
             <Stack
               direction={{ xs: "column", sm: "row" }}
               spacing={4}
-              sx={{ marginTop: 2, marginBottom: 4 }}
+              sx={{ marginTop: 2, marginBottom: 4, backgroundColor: "#f3f3f4", padding: 2 }}
             >
               {<MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>}
               {
@@ -241,6 +242,7 @@ export default function Summaries() {
                 ></ScoringSummary>
               }
             </Stack>
+            <Divider></Divider>
             {renderSummaries()}
           </section>
         )}

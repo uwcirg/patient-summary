@@ -1,5 +1,4 @@
 import PropTypes from "prop-types";
-import Box from "@mui/material/Box";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -10,7 +9,6 @@ import Typography from "@mui/material/Typography";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
-
 import qConfig from "../config/questionnaire_config";
 import { instrumentNameMaps } from "../consts/consts";
 
@@ -83,14 +81,14 @@ export default function ScoringSummary(props) {
       variant="h6"
       component="h3"
       color="accent"
-      sx={{ marginBottom: 1, padding: 1 }}
+      sx={{ padding: 1, marginLeft: 1, marginTop: 1 }}
     >
       Scoring Summary
     </Typography>
   );
   const renderSummary = () =>
     hasList() && (
-      <TableContainer component={Paper}>
+      <TableContainer sx={{padding: 2, paddingTop: 0}}>
         <Table
           sx={{ minWidth: 650 }}
           size="small"
@@ -113,10 +111,10 @@ export default function ScoringSummary(props) {
       </TableContainer>
     );
   return (
-    <Box>
+    <Paper>
       {renderTitle()}
       {renderSummary()}
-    </Box>
+    </Paper>
   );
 }
 
