@@ -4,6 +4,7 @@ const qConfig = {
   minicog: {
     customCQL: true,
     scoringQuestionId: "minicog-total-score",
+    comparisonToAlert: "low" // display alert if score is lower than previous
   },
   phq9: {
     scoringQuestionId: "/44261-6",
