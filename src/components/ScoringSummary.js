@@ -28,12 +28,7 @@ export default function ScoringSummary(props) {
     return matchedResponses
       .sort(
         (a, b) =>
-          new Date(a.authored).getTime() - new Date(b.authored).getTime()
-      )
-      .sort(
-        (a, b) =>
-          new Date(a.meta.lastUpdated).getTime() -
-          new Date(b.meta.lastUpdated).getTime()
+          new Date(b.authored).getTime() - new Date(a.authored).getTime()
       );
   };
   const getScoringQuestionId = (instrumentId) => {
