@@ -1,4 +1,4 @@
-import {useState, useLayoutEffect, useContext} from "react";
+import {useState, useEffect, useContext} from "react";
 import PropTypes from "prop-types";
 import Alert from "@mui/material/Alert";
 import FormControl from "@mui/material/FormControl";
@@ -92,7 +92,7 @@ export default function QuestionnaireSelector(props) {
       </Select>
     </FormControl>
   );
-  useLayoutEffect(() => {
+  useEffect(() => {
     client
       .request(`Questionnaire?name:contains=${list.join(",")}&_elements=id,name`, {
         pageLimit: 0,
