@@ -46,7 +46,7 @@ export default function ScoringSummary(props) {
     if (!matchedResponses.length || matchedResponses.length === 1) return null;
     const scoringQuestionId = getScoringQuestionId(id);
     if (!scoringQuestionId) return null;
-    const responseItems = matchedResponses[matchedResponses.length - 1].item;
+    const responseItems = matchedResponses[1].item;
     if (!responseItems || !responseItems.length) return null;
     const matchedItem = responseItems
       .filter((item) => item.linkId === scoringQuestionId)
@@ -69,6 +69,7 @@ export default function ScoringSummary(props) {
   const getDisplayIcon = (id) => {
     const currentScore = parseInt(getCurrentScoreByInstrument(id));
     const prevScore = parseInt(getPrevScoreByInstrument(id));
+    if (isNaN(prevScore)) return null; 
     if (currentScore > prevScore) return <NorthIcon color="error"></NorthIcon>;
     if (currentScore < prevScore)
       return <SouthIcon color="success"></SouthIcon>;
