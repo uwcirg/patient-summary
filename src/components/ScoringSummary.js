@@ -16,6 +16,7 @@ export default function ScoringSummary(props) {
   const { list, responses } = props;
   const hasList = () => list && list.length;
   const getMatchResponsesById = (id) => {
+    if (!responses) return [];
     const matchedResponses = responses
       .filter(
         (item) =>
