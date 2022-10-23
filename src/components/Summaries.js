@@ -199,14 +199,16 @@ export default function Summaries() {
 
   const MemoizedQuestionnaireSelector = memo(renderQuestionnaireSelector);
 
-  const renderScoringSummary = () => (
-    <ScoringSummary
-      list={getQuestionnaireList()}
-      responses={patientBundle.current.entry.filter(
+  const renderScoringSummary = () => {
+    const responses = patientBundle.current.entry.filter(
         (entry) => entry.resource.resourceType === "QuestionnaireResponse"
-      )}
-    ></ScoringSummary>
-  );
+      );
+    if (!responses.length) return null;
+    return (<ScoringSummary
+      list={getQuestionnaireList()}
+      responses={responses}
+    ></ScoringSummary>);
+  };
 
   const renderLoadingIndicator = () => (
     <Box sx={{ position: "absolute", top: 16, left: 16 }}>
