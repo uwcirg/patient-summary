@@ -112,7 +112,7 @@ export default function ScoringSummary(props) {
           <TableRow>
             <TableCell></TableCell>
             <TableCell variant="body">Score</TableCell>
-            <TableCell variant="body" align="right">Compared to Last</TableCell>
+            <TableCell variant="body">Compared to Last</TableCell>
           </TableRow>
           </TableHead>
           <TableBody>
