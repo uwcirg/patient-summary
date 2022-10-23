@@ -94,7 +94,7 @@ export default function ScoringSummary(props) {
       variant="h6"
       component="h3"
       color="accent"
-      sx={{ padding: 1, marginLeft: 1, marginTop: 1 }}
+      sx={{ padding: 1, marginLeft: 1, marginTop: 1, marginBottom: 1}}
     >
       Scoring Summary
     </Typography>
