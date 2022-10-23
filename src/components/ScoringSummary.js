@@ -124,7 +124,7 @@ export default function ScoringSummary(props) {
                 <TableCell align="left" sx={{width: "32%"}}>
                   {getCurrentScoreByInstrument(item) || "--"}
                 </TableCell>
-                <TableCell>{getDisplayIcon(item)}</TableCell>
+                <TableCell align="right">{getDisplayIcon(item)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
