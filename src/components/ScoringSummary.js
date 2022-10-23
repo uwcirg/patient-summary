@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
+import TableHead from '@mui/material/TableHead';
 import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
@@ -107,6 +108,13 @@ export default function ScoringSummary(props) {
           size="small"
           aria-label="scoring summary table"
         >
+          <TableHead>
+          <TableRow>
+            <TableCell></TableCell>
+            <TableCell>Score</TableCell>
+            <TableCell align="right">Compared to Last</TableCell>
+          </TableRow>
+          </TableHead>
           <TableBody>
             {list.map((item, index) => (
               <TableRow key={`{summary_${index}}`}>
