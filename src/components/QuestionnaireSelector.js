@@ -38,7 +38,7 @@ export default function QuestionnaireSelector(props) {
   };
   const getDisplayName = (value) => {
     const arrMatch = selectList.filter(item => item.id === value);
-    if (arrMatch.length) return arrMatch[0].title || (arrMatch[0].id).toUpperCase();
+    if (arrMatch.length) return arrMatch[0].title ? arrMatch[0].title : (arrMatch[0].id).toUpperCase();
     return value.toUpperCase();
   }
   const renderTitle = () => (
