@@ -16,7 +16,7 @@ import { instrumentNameMaps } from "../consts/consts";
 export default function ScoringSummary(props) {
   const { list, responses } = props;
   const hasList = () =>
-    list && list.length && list.filter((id) => getScoringQuestionId(id)).length;
+    list && list.length && list.filter((id) => getScoringQuestionId(id)).length > 0;
   const getMatchResponsesById = (id) => {
     if (!responses) return [];
     const matchedResponses = responses
