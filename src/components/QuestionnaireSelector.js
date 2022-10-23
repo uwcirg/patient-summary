@@ -94,7 +94,7 @@ export default function QuestionnaireSelector(props) {
   );
   useEffect(() => {
     client
-      .request(`Questionnaire?name:contains=${list.join(",")}&_elements=id,name`, {
+      .request(`Questionnaire?name:contains=${list.join(",")}&_elements=id,name,title`, {
         pageLimit: 0,
         flat: true,
       })
