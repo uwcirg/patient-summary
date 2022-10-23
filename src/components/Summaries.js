@@ -1,6 +1,7 @@
 import {
   createRef,
   forwardRef,
+  memo,
   useContext,
   useEffect,
   useCallback,
@@ -196,7 +197,7 @@ export default function Summaries() {
     );
   };
 
- // const MemoizedQuestionnaireSelector = memo(renderQuestionnaireSelector);
+  const MemoizedQuestionnaireSelector = memo(renderQuestionnaireSelector);
 
   const renderScoringSummary = () => (
     <ScoringSummary
@@ -243,7 +244,7 @@ export default function Summaries() {
                 padding: 2,
               }}
             >
-              {renderQuestionnaireSelector()}
+              <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
               {renderScoringSummary()}
             </Stack>
             <Divider></Divider>
