@@ -112,7 +112,7 @@ export default function ScoringSummary(props) {
           <TableRow>
             <TableCell></TableCell>
             <TableCell variant="body">Score</TableCell>
-            <TableCell variant="body">Compared to Last</TableCell>
+            <TableCell variant="body" align="right">Compared to Last</TableCell>
           </TableRow>
           </TableHead>
           <TableBody>
@@ -121,7 +121,7 @@ export default function ScoringSummary(props) {
                 <TableCell sx={{ fontWeight: 500 }}>
                   {getInstrumentName(item)}
                 </TableCell>
-                <TableCell align="left" sx={{width: "35%"}}>
+                <TableCell align="left" sx={{width: "32%"}}>
                   {getCurrentScoreByInstrument(item) || "--"}
                 </TableCell>
                 <TableCell>{getDisplayIcon(item)}</TableCell>
