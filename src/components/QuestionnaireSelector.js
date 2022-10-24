@@ -14,9 +14,10 @@ export default function QuestionnaireSelector(props) {
   let scrollToTimeoutId = 0;
   const { client } = useContext(FhirClientContext);
   const { title, list, handleSelectorChange } = props;
-  const [selectList, setSelectList] = useState(
-    list.map((item) => ({ id: item }))
-  );
+  const [selectList, setSelectList] = useState({
+    list: list.map((item) => ({ id: item })),
+    ready: false
+});
   const defaultMenuItem = () => (
     <MenuItem disabled value="">
       <em>Please Select One</em>
@@ -41,7 +42,7 @@ export default function QuestionnaireSelector(props) {
     );
   };
   const getDisplayName = (value) => {
-    const arrMatch = selectList.filter((item) => item.id === value);
+    const arrMatch = selectList.list.filter((item) => item.id === value);
     if (arrMatch.length)
       return arrMatch[0].title
         ? arrMatch[0].title
@@ -89,7 +90,7 @@ export default function QuestionnaireSelector(props) {
         }}
         defaultValue={""}
       >
-        {selectList.map((item, index) => {
+        {selectList.list.map((item, index) => {
           return (
             <MenuItem value={item.id} key={`select_q_${index}`}>
               {item.title ? item.title : getDisplayQTitle(item.id)}
@@ -100,6 +101,7 @@ export default function QuestionnaireSelector(props) {
     </FormControl>
   );
   useEffect(() => {
+    if (selectList.ready) return;
     client
       .request(
         `Questionnaire?name:contains=${list.join(",")}&_elements=id,name,title`,
@@ -125,9 +127,11 @@ export default function QuestionnaireSelector(props) {
             return item;
           }),
         ];
-        setSelectList(transformedList);
+        setSelectList({
+          ready: true,
+          list : transformedList});
       });
-  }, [client, list]);
+  }, [client, list, selectList.ready]);
   return (
     <Stack direction="column" id="questionnaireSelector" sx={{ padding: 2 }}>
       {!list.length && renderWarning()}

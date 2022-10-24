@@ -43,16 +43,16 @@ export default function Summaries() {
   });
   const [error, setError] = useState(null);
 
-  const { isSuccess, isError } = useQuery(
+  useQuery(
     "fhirResources",
     async () => {
       const results = await getFhirResources();
       return results;
     },
     {
-      disabled: error,
+      disabled: patientBundle.current.loadComplete || error,
       refetchOnWindowFocus: false,
-      staleTime: 0,
+      staleTime: 30000,
       onSettled: (fhirData) => {
         patientBundle.current = {
           ...patientBundle.current,
@@ -98,7 +98,7 @@ export default function Summaries() {
     if (isReady()) return;
     if (obj && obj.status === "error") setError(true);
   };
-  const isReady = () => isSuccess || isError;
+  const isReady = () => patientBundle.current.loadComplete || error;
 
   const getFhirResources = async () => {
     if (!client || !patient || !patient.id)

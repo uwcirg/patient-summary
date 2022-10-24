@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "react-query";
 import FHIR from "fhirclient";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
@@ -13,14 +12,6 @@ export default function FhirClientProvider(props) {
   const [client, setClient] = useState(null);
   const [patient, setPatient] = useState(null);
   const [error, setError] = useState(null);
-  const authResult = useQuery("fhirAuth", async () =>
-    FHIR.oauth2.ready().then((result) => {
-      console.log("Auth complete, client ready.");
-      console.log("auth result ", result);
-      setClient(result);
-      return getPatient(result);
-    }).catch(e => setError(e))
-  );
 
   const getPatient = async (client) => {
     if (!client) return;
@@ -55,14 +46,26 @@ export default function FhirClientProvider(props) {
   };
 
   useEffect(() => {
-    if (authResult.status === "error") {
-      console.log(authResult.error);
-      setError("FHIR auth error.  See console for detail.");
-    }
-    if (authResult.status === "success") {
-      setPatient(authResult.data);
-    }
-  }, [authResult]);
+    FHIR.oauth2.ready().then(
+      (client) => {
+        console.log("Auth complete, client ready.");
+        setClient(client);
+        getPatient(client)
+          .then((result) => {
+            console.log("Patient loaded.");
+            setPatient(result);
+            setError(null);
+          })
+          .catch((e) => {
+            setError(e);
+          });
+      },
+      (error) => {
+        console.log("Auth error: ", error);
+        setError(error);
+      }
+    );
+  }, []);
 
   return (
     <FhirClientContext.Provider
