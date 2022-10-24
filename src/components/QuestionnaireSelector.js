@@ -1,4 +1,4 @@
-import {useState, useEffect, useContext} from "react";
+import { useState, useEffect, useContext } from "react";
 import PropTypes from "prop-types";
 import Alert from "@mui/material/Alert";
 import FormControl from "@mui/material/FormControl";
@@ -14,7 +14,9 @@ export default function QuestionnaireSelector(props) {
   let scrollToTimeoutId = 0;
   const { client } = useContext(FhirClientContext);
   const { title, list, handleSelectorChange } = props;
-  const [selectList, setSelectList] = useState(list.map(item => ({id: item})));
+  const [selectList, setSelectList] = useState(
+    list.map((item) => ({ id: item }))
+  );
   const defaultMenuItem = () => (
     <MenuItem disabled value="">
       <em>Please Select One</em>
@@ -30,17 +32,22 @@ export default function QuestionnaireSelector(props) {
       () =>
         document
           .querySelector(
-            `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${String(event.target.value).toLowerCase()}`
+            `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${String(
+              event.target.value
+            ).toLowerCase()}`
           )
           .scrollIntoView(),
       50
     );
   };
   const getDisplayName = (value) => {
-    const arrMatch = selectList.filter(item => item.id === value);
-    if (arrMatch.length) return arrMatch[0].title ? arrMatch[0].title : (arrMatch[0].id).toUpperCase();
+    const arrMatch = selectList.filter((item) => item.id === value);
+    if (arrMatch.length)
+      return arrMatch[0].title
+        ? arrMatch[0].title
+        : arrMatch[0].id.toUpperCase();
     return value.toUpperCase();
-  }
+  };
   const renderTitle = () => (
     <Typography variant="h6" component="h2" color="secondary">
       {title || "Questionnaire List"}
@@ -54,7 +61,7 @@ export default function QuestionnaireSelector(props) {
   const renderSelector = () => (
     <FormControl
       variant="standard"
-      sx={{ minWidth: 300, paddingLeft: 1, paddingRight: 1}}
+      sx={{ minWidth: 300, paddingLeft: 1, paddingRight: 1 }}
       margin="dense"
     >
       <Select
@@ -94,10 +101,13 @@ export default function QuestionnaireSelector(props) {
   );
   useEffect(() => {
     client
-      .request(`Questionnaire?name:contains=${list.join(",")}&_elements=id,name,title`, {
-        pageLimit: 0,
-        flat: true,
-      })
+      .request(
+        `Questionnaire?name:contains=${list.join(",")}&_elements=id,name,title`,
+        {
+          pageLimit: 0,
+          flat: true,
+        }
+      )
       .then((data) => {
         const transformedList = [
           ...list
@@ -119,7 +129,7 @@ export default function QuestionnaireSelector(props) {
       });
   }, [client, list]);
   return (
-    <Stack direction="column" id="questionnaireSelector" sx={{padding: 2}}>
+    <Stack direction="column" id="questionnaireSelector" sx={{ padding: 2 }}>
       {!list.length && renderWarning()}
       {list.length > 0 && renderTitle()}
       {list.length > 0 && renderSelector()}

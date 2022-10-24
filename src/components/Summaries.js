@@ -59,7 +59,7 @@ export default function Summaries() {
           entry: [...patientBundle.current.entry, ...fhirData],
           loadComplete: true,
         };
-        console.log("patient bundle ", patientBundle.current.entry)
+        console.log("patient bundle ", patientBundle.current.entry);
       },
       onError: (e) => {
         setError("Error fetching FHIR resources. See console for detail.");
@@ -187,12 +187,10 @@ export default function Summaries() {
           width: "100%",
           alignSelf: "stretch",
           border: "2px solid #ececec",
-          backgroundColor: "#FFF"
+          backgroundColor: "#FFF",
         }}
       >
-       <QuestionnaireSelector
-          list={questionnaireList}
-        ></QuestionnaireSelector>
+        <QuestionnaireSelector list={questionnaireList}></QuestionnaireSelector>
       </BoxRef>
     );
   };
@@ -201,13 +199,15 @@ export default function Summaries() {
 
   const renderScoringSummary = () => {
     const responses = patientBundle.current.entry.filter(
-        (entry) => entry.resource.resourceType === "QuestionnaireResponse"
-      );
+      (entry) => entry.resource.resourceType === "QuestionnaireResponse"
+    );
     if (!responses.length) return null;
-    return (<ScoringSummary
-      list={getQuestionnaireList()}
-      responses={responses}
-    ></ScoringSummary>);
+    return (
+      <ScoringSummary
+        list={getQuestionnaireList()}
+        responses={responses}
+      ></ScoringSummary>
+    );
   };
 
   const renderLoadingIndicator = () => (

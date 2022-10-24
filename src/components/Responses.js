@@ -14,6 +14,8 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
+import Scoring from "./Scoring";
+import qConfig from "../config/questionnaire_config";
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -51,6 +53,19 @@ export default function Responses(props) {
     setTab(newValue);
   };
   const data = props.data || [];
+  const questionnaireId = props.questionnaireId;
+
+   const getScoringQuestionId = (instrumentId) => {
+     return qConfig[instrumentId].scoringQuestionId
+       ? qConfig[instrumentId].scoringQuestionId
+       : null;
+   };
+
+   const isScoringItem = (itemId, instrumentId) => {
+    const scoringQuestionId = getScoringQuestionId(instrumentId);
+    return itemId === scoringQuestionId;
+;
+   };
 
   const getAnswer = (response) => {
     if (!response) return "--";
@@ -138,10 +153,10 @@ export default function Responses(props) {
               }}
             ></TableCell>
             <TableCell
-              dangerouslySetInnerHTML={{
-                __html: getAnswer(row),
-              }}
-            ></TableCell>
+            >
+              {isScoringItem(row.id, questionnaireId) && <Scoring instrumentId={questionnaireId} score={getAnswer(row)}></Scoring>}
+              {!isScoringItem(row.id, questionnaireId) && getAnswer(row)}
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -174,6 +189,7 @@ export default function Responses(props) {
   );
 }
 Responses.propTypes = {
+  questionnaireId: PropTypes.string,
   data: PropTypes.arrayOf(
     PropTypes.shape({
       date: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),

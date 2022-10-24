@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
-import TableHead from '@mui/material/TableHead';
+import TableHead from "@mui/material/TableHead";
 import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
@@ -10,13 +10,16 @@ import Typography from "@mui/material/Typography";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
+import Scoring from "./Scoring";
 import qConfig from "../config/questionnaire_config";
 import { instrumentNameMaps } from "../consts/consts";
 
 export default function ScoringSummary(props) {
   const { list, responses } = props;
   const hasList = () =>
-    list && list.length && list.filter((id) => getScoringQuestionId(id)).length > 0;
+    list &&
+    list.length &&
+    list.filter((id) => getScoringQuestionId(id)).length > 0;
   const getMatchResponsesById = (id) => {
     if (!responses) return [];
     const matchedResponses = responses
@@ -26,11 +29,9 @@ export default function ScoringSummary(props) {
           String(item.resource.questionnaire).toLowerCase().indexOf(id) !== -1
       )
       .map((item) => item.resource);
-    return matchedResponses
-      .sort(
-        (a, b) =>
-          new Date(b.authored).getTime() - new Date(a.authored).getTime()
-      );
+    return matchedResponses.sort(
+      (a, b) => new Date(b.authored).getTime() - new Date(a.authored).getTime()
+    );
   };
   const getScoringQuestionId = (instrumentId) => {
     return qConfig[instrumentId].scoringQuestionId
@@ -95,7 +96,7 @@ export default function ScoringSummary(props) {
       variant="h6"
       component="h3"
       color="accent"
-      sx={{ padding: 1, marginLeft: 1, marginTop: 1, marginBottom: 1}}
+      sx={{ padding: 1, marginLeft: 1, marginTop: 1, marginBottom: 1 }}
     >
       Scoring Summary
     </Typography>
@@ -109,22 +110,31 @@ export default function ScoringSummary(props) {
           aria-label="scoring summary table"
         >
           <TableHead>
-          <TableRow>
-            <TableCell size="small"></TableCell>
-            <TableCell variant="body" size="small">Score</TableCell>
-            <TableCell variant="body" size="small">Compared to Last</TableCell>
-          </TableRow>
+            <TableRow>
+              <TableCell size="small"></TableCell>
+              <TableCell variant="body" size="small">
+                Score
+              </TableCell>
+              <TableCell variant="body" size="small">
+                Compared to Last
+              </TableCell>
+            </TableRow>
           </TableHead>
           <TableBody>
             {list.map((item, index) => (
               <TableRow key={`{summary_${index}}`}>
-                <TableCell sx={{ fontWeight: 500 }}>
+                <TableCell sx={{ fontWeight: 500 }} size="small">
                   {getInstrumentName(item)}
                 </TableCell>
-                <TableCell align="left">
-                  {getCurrentScoreByInstrument(item) || "--"}
+                <TableCell align="left" size="small">
+                  <Scoring
+                    instrumentId={item}
+                    score={getCurrentScoreByInstrument(item)}
+                  ></Scoring>
                 </TableCell>
-                <TableCell align="right">{getDisplayIcon(item)}</TableCell>
+                <TableCell align="center" size="small">
+                  {getDisplayIcon(item)}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

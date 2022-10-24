@@ -134,7 +134,12 @@ export default function Summary(props) {
         {!hasResponses() && (
           <Alert severity="warning">No recorded responses</Alert>
         )}
-        {hasResponses() && <Responses data={summary.responses}></Responses>}
+        {hasResponses() && (
+          <Responses
+            data={summary.responses}
+            questionnaireId={questionnaireId}
+          ></Responses>
+        )}
       </Stack>
     );
 
