@@ -1,6 +1,7 @@
 import { getEnv, fetchEnvData } from "./util";
 
-var Timeout = function (onAboutToExpire) {
+var Timeout = function (options) {
+  options = options || {};
   var timeoutIntervalId = 0;
   var waitForDOMIntervalId = 0;
   var timeoutGUID = 0;
@@ -98,6 +99,8 @@ var Timeout = function (onAboutToExpire) {
       return;
     }
     sessionLifetime = totalTime / 1000; //in seconds
+
+    sessionLifetime = 90;
     printDebugStatement("Session lifetime " + sessionLifetime);
   }
 
@@ -156,8 +159,8 @@ var Timeout = function (onAboutToExpire) {
     let timeElapsed = (Date.now() - getLastActiveTime()) / 1000;
     if (isAboutToExpire()) {
       //if session is about to expire, pop up modal to inform user as such and then redirect back to patient search
-      if (onAboutToExpire && typeof onAboutToExpire === "function") {
-        onAboutToExpire();
+      if (options.onAboutToExpire && typeof options.onAboutToExpire === "function") {
+        options.onAboutToExpire();
       }
       //back to patient search
       setTimeout(function () {
@@ -177,8 +180,7 @@ var Timeout = function (onAboutToExpire) {
 
   function isDOMReady() {
     //DOM root element, it could be an error element indicating null state
-    var targetNode =
-      document.querySelector("#root");
+    var targetNode = document.querySelector("#root");
     if (!targetNode) return false;
     clearInterval(waitForDOMIntervalId);
     return true;

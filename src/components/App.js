@@ -1,6 +1,6 @@
 import { ErrorBoundary } from "react-error-boundary";
 import { QueryClient, QueryClientProvider } from "react-query";
-import {useEffect} from "react";
+import {useLayoutEffect} from "react";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
@@ -8,6 +8,7 @@ import AlertTitle from "@mui/material/AlertTitle";
 import FhirClientProvider from "../context/FhirClientProvider";
 import Header from "./Header";
 import Summaries from "./Summaries";
+import TimeoutModal from "./TimeoutModal";
 import {injectFaviconByProject, fetchEnvData} from "../util/util";
 import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
@@ -25,8 +26,7 @@ const queryClient = new QueryClient();
 
 export default function App() {
   fetchEnvData();
-  // console.log("environment variables ", getEnvs());
-  useEffect(() => {
+  useLayoutEffect(() => {
     injectFaviconByProject();
   }, []);
   return (
@@ -37,6 +37,7 @@ export default function App() {
             <CssBaseline />
             <Header />
             <Summaries />
+            <TimeoutModal />
             {/* add other components as needed */}
           </FhirClientProvider>
         </QueryClientProvider>
