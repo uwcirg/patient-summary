@@ -165,7 +165,7 @@ var Timeout = function (options) {
       //back to patient search
       setTimeout(function () {
         window.location = getEnv("REACT_APP_DASHBOARD_URL") + "/clear_session";
-      }, 5000);
+      }, 3000);
       printDebugStatement(
         "Session about to expire. Time elapsed since first visiting " +
           timeElapsed
