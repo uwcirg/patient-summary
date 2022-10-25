@@ -100,7 +100,7 @@ var Timeout = function (options) {
     }
     sessionLifetime = totalTime / 1000; //in seconds
 
-    sessionLifetime = 90;
+  //  sessionLifetime = 90; //debugging, change this to test
     printDebugStatement("Session lifetime " + sessionLifetime);
   }
 
