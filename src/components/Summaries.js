@@ -52,7 +52,6 @@ export default function Summaries() {
     {
       disabled: patientBundle.current.loadComplete || error,
       refetchOnWindowFocus: false,
-      staleTime: 30000,
       onSettled: (fhirData) => {
         patientBundle.current = {
           ...patientBundle.current,
