@@ -75,7 +75,7 @@ export default function PatientInfo() {
       <Stack spacing={1} direction="row" alignItems="center">
         {renderDOB()}
         {renderAge()}
-        {renderGender()}
+        {/* {renderGender()} */}
       </Stack>
     </Stack>
   );
