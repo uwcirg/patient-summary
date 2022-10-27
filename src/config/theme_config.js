@@ -1,5 +1,5 @@
 import { createTheme } from "@mui/material/styles";
-import { teal, grey, deepPurple} from "@mui/material/colors";
+import { teal, grey, deepPurple, purple, indigo} from "@mui/material/colors";
 import { getEnv } from "../util/util";
 export const themes = {
   default: createTheme({
@@ -18,6 +18,12 @@ export const themes = {
       },
       secondary: {
         main: grey[800],
+      },
+      link: {
+        main: purple[700],
+      },
+      muted: {
+        main: grey[500],
       },
     },
     typography: {
@@ -44,8 +50,14 @@ export const themes = {
         main: grey[800],
       },
       accent: {
-        main: deepPurple[800]
-      }
+        main: deepPurple[800],
+      },
+      muted: {
+        main: grey[700],
+      },
+      link: {
+        main: indigo["A700"],
+      },
     },
     typography: {
       subtitle1: {

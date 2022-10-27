@@ -22,6 +22,7 @@ import {
   getQuestionnaireList,
   isInViewport,
 } from "../util/util";
+import PatientInfo from "./PatientInfo";
 import QuestionnaireSelector from "./QuestionnaireSelector";
 import ScoringSummary from "./ScoringSummary";
 import Summary from "./Summary";
@@ -235,6 +236,7 @@ export default function Summaries() {
         {!isReady() && renderLoadingIndicator()}
         {isReady() && (
           <section>
+            <PatientInfo></PatientInfo>
             <Stack
               direction={{ xs: "column", sm: "column", md: "row" }}
               spacing={2}

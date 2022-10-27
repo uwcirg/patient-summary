@@ -15,6 +15,7 @@
     "cql-exec-fhir": "^2.0.2",
     "cql-exec-vsac": "^1.2.2",
     "cql-worker": "^1.1.4",
+    "dayjs": "^1.11.6",
     "dompurify": "^2.3.10",
     "fhirclient": "^2.4.0",
     "fs": "0.0.1-security",

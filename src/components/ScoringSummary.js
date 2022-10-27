@@ -1,4 +1,6 @@
 import PropTypes from "prop-types";
+import { useTheme } from "@mui/material/styles";
+import Link from "@mui/material/Link";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -15,6 +17,7 @@ import qConfig from "../config/questionnaire_config";
 import { instrumentNameMaps } from "../consts/consts";
 
 export default function ScoringSummary(props) {
+  const theme = useTheme();
   const { list, responses } = props;
   const hasList = () =>
     list &&
@@ -124,7 +127,9 @@ export default function ScoringSummary(props) {
             {list.map((item, index) => (
               <TableRow key={`{summary_${index}}`}>
                 <TableCell sx={{ fontWeight: 500 }} size="small">
-                  {getInstrumentName(item)}
+                  <Link href={`#summary_${item}`} underline="none" sx={{color: theme.palette.link.main}}>
+                    {getInstrumentName(item)}
+                  </Link>
                 </TableCell>
                 <TableCell align="left" size="small">
                   <Scoring

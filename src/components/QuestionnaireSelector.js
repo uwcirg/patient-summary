@@ -16,7 +16,7 @@ export default function QuestionnaireSelector(props) {
   const { title, list, handleSelectorChange } = props;
   const [selectList, setSelectList] = useState({
     list: list.map((item) => ({ id: item })),
-    ready: false
+    loaded: false
 });
   const defaultMenuItem = () => (
     <MenuItem disabled value="">
@@ -101,7 +101,7 @@ export default function QuestionnaireSelector(props) {
     </FormControl>
   );
   useEffect(() => {
-    if (selectList.ready) return;
+    if (selectList.loaded) return;
     client
       .request(
         `Questionnaire?name:contains=${list.join(",")}&_elements=id,name,title`,
@@ -128,10 +128,10 @@ export default function QuestionnaireSelector(props) {
           }),
         ];
         setSelectList({
-          ready: true,
+          loaded: true,
           list : transformedList});
       });
-  }, [client, list, selectList.ready]);
+  }, [client, list, selectList.loaded]);
   return (
     <Stack direction="column" id="questionnaireSelector" sx={{ padding: 2 }}>
       {!list.length && renderWarning()}
