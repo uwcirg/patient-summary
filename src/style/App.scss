@@ -1,26 +1,25 @@
-$container-background-color: #f4f6f6;
+$chart-background-color: #f4f6f6;
 $muted-text-color: #777;
+$body-background-color: #f0eff0;
+$summary-container-background-color: #FFF;
 body {
   padding: 0;
   margin: 0;
   font-family: "Roboto", sans-serif;
   font-size: 16px;
+  background-color: $body-background-color !important;
 }
 .summaries {
-  margin-top: 80px;
+  margin-top: 64px;
   padding: 24px;
+  background-color: $summary-container-background-color;
 }
 
-@media(min-width: 640px) {
-  .summaries {
-    margin-top: 64px;
-  }
-}
 p {
   line-height: 1.5;
 }
 .chart__container {
-  background-color: $container-background-color;
+  background-color: $chart-background-color;
 }
 .response-table {
   min-width: 45%;

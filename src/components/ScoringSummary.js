@@ -12,9 +12,10 @@ import Typography from "@mui/material/Typography";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
-import Scoring from "./Scoring";
+import Scoring from "./Score";
 import qConfig from "../config/questionnaire_config";
 import { instrumentNameMaps } from "../consts/consts";
+import { scrollToAnchor } from "../util/util";
 
 export default function ScoringSummary(props) {
   const theme = useTheme();
@@ -73,7 +74,7 @@ export default function ScoringSummary(props) {
     const comparisonToAlert = qConfig[id].comparisonToAlert;
     const currentScore = parseInt(getCurrentScoreByInstrument(id));
     const prevScore = parseInt(getPrevScoreByInstrument(id));
-    if (isNaN(prevScore) || isNaN(currentScore)) return null;
+    if (isNaN(prevScore) || isNaN(currentScore)) return "--";
     if (!isNaN(prevScore)) {
       if (comparisonToAlert === "low") {
         if (currentScore < prevScore)
@@ -94,6 +95,10 @@ export default function ScoringSummary(props) {
       return null;
     }
   };
+  const handleClick = (e, anchorElementId) => {
+    e.preventDefault();
+    scrollToAnchor(anchorElementId);
+  }
   const renderTitle = () => (
     <Typography
       variant="h6"
@@ -127,7 +132,7 @@ export default function ScoringSummary(props) {
             {list.map((item, index) => (
               <TableRow key={`{summary_${index}}`}>
                 <TableCell sx={{ fontWeight: 500 }} size="small">
-                  <Link href={`#summary_${item}`} underline="none" sx={{color: theme.palette.link.main}}>
+                  <Link onClick={(e) => handleClick(e, item)} underline="none" sx={{color: theme.palette.link.main, cursor: "pointer"}}>
                     {getInstrumentName(item)}
                   </Link>
                 </TableCell>
@@ -147,7 +152,7 @@ export default function ScoringSummary(props) {
       </TableContainer>
     );
   return (
-    <Paper sx={{ minWidth: "50%" }}>
+    <Paper sx={{ minWidth: "55%" }}>
       {renderTitle()}
       {renderSummary()}
     </Paper>

@@ -1,4 +1,5 @@
 import ChartConfig from "../config/chart_config.js";
+import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts/consts";
 
 export async function getInterventionLogicLib(interventionId) {
   let fileName = "InterventionLogicLibrary.json";
@@ -8,9 +9,9 @@ export async function getInterventionLogicLib(interventionId) {
   }
   let elmJson, valueSetJson;
   try {
-    elmJson = await import(
-      `../cql/${fileName}`
-    ).then((module) => module.default);
+    elmJson = await import(`../cql/${fileName}`).then(
+      (module) => module.default
+    );
     valueSetJson = await import(`../cql/valueset-db.json`).then(
       (module) => module.default
     );
@@ -41,8 +42,7 @@ export function getFHIRResourcePaths(patientId) {
     );
     if (resource.toLowerCase() === "questionnaire") {
       const params = getQuestionnaireList().join(",");
-      if (params)
-      path = path + `?contains:${params}`;
+      if (params) path = path + `?contains:${params}`;
     }
     if (resource.toLowerCase() === "careplan") {
       path =
@@ -67,7 +67,7 @@ export function getFHIRResourcePaths(patientId) {
   });
 }
 
-export function getQuestionnairesByCarePlan (arrCarePlans) {
+export function getQuestionnairesByCarePlan(arrCarePlans) {
   if (!arrCarePlans) return [];
   let activities = [];
   arrCarePlans.forEach((item) => {
@@ -100,7 +100,7 @@ export function getFhirResourcesFromQueryResult(result) {
     result.forEach((o) => {
       if (o.resourceType) bundle.push({ resource: o });
     });
-  } 
+  }
   // else {
   //   bundle.push({ resource: result });
   // }
@@ -109,7 +109,7 @@ export function getFhirResourcesFromQueryResult(result) {
 
 export function getDisplayQTitle(questionnaireId) {
   if (!questionnaireId) return "";
-  return String(questionnaireId.replace(/cirg-/gi,'')).toUpperCase();
+  return String(questionnaireId.replace(/cirg-/gi, "")).toUpperCase();
 }
 
 export function isValidDate(date) {
@@ -127,7 +127,7 @@ export function getChartConfig(questionnaire) {
 
 export function getQuestionnaireList() {
   const configList = getEnv("REACT_APP_QUESTIONNAIRES");
-  if (configList) return (configList.split(",")).map(item => item.trim());
+  if (configList) return configList.split(",").map((item) => item.trim());
   return [];
 }
 
@@ -196,7 +196,7 @@ export function fetchEnvData() {
     var envObj;
     try {
       envObj = JSON.parse(xhr.responseText);
-    } catch(e) {
+    } catch (e) {
       console.log("Error parsing response text into json ", e);
     }
     window["appConfig"] = {};
@@ -250,5 +250,10 @@ export function getEnvs() {
   };
 }
 
-
-
+export function scrollToAnchor(anchorElementId) {
+  const targetElement = document.querySelector(
+    `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${anchorElementId}`
+  );
+  if (!targetElement) return;
+  targetElement.scrollIntoView();
+}

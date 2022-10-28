@@ -7,8 +7,7 @@ import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import { Typography } from "@mui/material";
 import { FhirClientContext } from "../context/FhirClientContext";
-import { getDisplayQTitle } from "../util/util";
-import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts/consts";
+import { getDisplayQTitle, scrollToAnchor } from "../util/util";
 
 export default function QuestionnaireSelector(props) {
   let scrollToTimeoutId = 0;
@@ -30,14 +29,7 @@ export default function QuestionnaireSelector(props) {
     }
     clearTimeout(scrollToTimeoutId);
     scrollToTimeoutId = setTimeout(
-      () =>
-        document
-          .querySelector(
-            `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${String(
-              event.target.value
-            ).toLowerCase()}`
-          )
-          .scrollIntoView(),
+      () => scrollToAnchor(String(event.target.value).toLowerCase()),
       50
     );
   };

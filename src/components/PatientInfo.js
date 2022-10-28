@@ -29,15 +29,15 @@ export default function PatientInfo() {
   const getPatientAge = () => {
     const dob = getPatientDob();
     if (!dob) return "--";
-    const today = (new Date()).toLocaleDateString("en-us");
+    const today = new Date().toLocaleDateString("en-us");
     const date1 = dayjs(today);
     const date2 = dayjs(dob);
-    return date1.diff(date2, 'year');
+    return date1.diff(date2, "year");
   };
-  const getPatientGender = () => {
-    if (!patient.gender) return "--";
-    return patient.gender;
-  };
+  // const getPatientGender = () => {
+  //   if (!patient.gender) return "--";
+  //   return patient.gender;
+  // };
   const renderDOB = () => (
     <Box>
       <Typography component="span" sx={{ color: theme.palette.muted.main }}>
@@ -54,16 +54,16 @@ export default function PatientInfo() {
       <Typography component="span">{getPatientAge()}</Typography>
     </Box>
   );
-  const renderGender = () => (
-    <Box>
-      <Typography component="span" sx={{ color: theme.palette.muted.main }}>
-        gender:{" "}
-      </Typography>
-      <Typography component="span" sx={{ textTransform: "capitalize" }}>
-        {getPatientGender()}
-      </Typography>
-    </Box>
-  );
+  // const renderGender = () => (
+  //   <Box>
+  //     <Typography component="span" sx={{ color: theme.palette.muted.main }}>
+  //       gender:{" "}
+  //     </Typography>
+  //     <Typography component="span" sx={{ textTransform: "capitalize" }}>
+  //       {getPatientGender()}
+  //     </Typography>
+  //   </Box>
+  // );
   return (
     <Stack spacing={3} direction="row">
       <Stack spacing={0.5} direction="row" alignItems="center">

@@ -14,7 +14,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
-import Scoring from "./Scoring";
+import Score from "./Score";
 import qConfig from "../config/questionnaire_config";
 
 function TabPanel(props) {
@@ -154,7 +154,7 @@ export default function Responses(props) {
             ></TableCell>
             <TableCell
             >
-              {isScoringItem(row.id, questionnaireId) && <Scoring instrumentId={questionnaireId} score={getAnswer(row)}></Scoring>}
+              {isScoringItem(row.id, questionnaireId) && <Score instrumentId={questionnaireId} score={getAnswer(row)}></Score>}
               {!isScoringItem(row.id, questionnaireId) && getAnswer(row)}
             </TableCell>
           </TableRow>

@@ -232,7 +232,7 @@ export default function Summaries() {
           {renderNavButton()}
         </>
       )}
-      <Stack className="summaries" sx={{ position: "relative" }}>
+      <Stack className="summaries" sx={{ position: "relative", maxWidth: "1200px", marginLeft: "auto", marginRight: "auto" }}>
         {!isReady() && renderLoadingIndicator()}
         {isReady() && (
           <section>
