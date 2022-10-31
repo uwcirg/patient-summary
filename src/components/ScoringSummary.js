@@ -140,6 +140,7 @@ export default function ScoringSummary(props) {
                   <Scoring
                     instrumentId={item}
                     score={getCurrentScoreByInstrument(item)}
+                    justifyContent="space-between"
                   ></Scoring>
                 </TableCell>
                 <TableCell align="center" size="small">

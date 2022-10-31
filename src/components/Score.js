@@ -5,7 +5,7 @@ import ErrorIcon from "@mui/icons-material/Error";
 import qConfig from "../config/questionnaire_config";
 
 export default function Scoring(props) {
-  const { instrumentId, score } = props;
+  const { instrumentId, score, justifyContent, alignItems } = props;
   const getFailedScoringByInstrumentId = (instrumentId) => {
     return qConfig[instrumentId].failedScores
       ? qConfig[instrumentId].failedScores
@@ -15,11 +15,16 @@ export default function Scoring(props) {
 
   if (arrFailedScores.indexOf(parseInt(score)) !== -1)
     return (
-      <Stack direction="row" spacing={0.5}>
+      <Stack
+        direction="row"
+        spacing={0.5}
+        justifyContent={justifyContent || "flex-start"}
+        alignItems={alignItems || "center"}
+      >
         <Typography variant="body1" color="error">
           {score}
         </Typography>
-        <ErrorIcon color="error"></ErrorIcon>
+        <ErrorIcon color="error" fontSize="small"></ErrorIcon>
       </Stack>
     );
 
@@ -32,5 +37,7 @@ export default function Scoring(props) {
 
 Scoring.propTypes = {
   instrumentId: PropTypes.string,
-  score: PropTypes.number,
+  score: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  justifyContent: PropTypes.string,
+  alignItems: PropTypes.string
 };
