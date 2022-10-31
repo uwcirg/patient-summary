@@ -29,6 +29,7 @@ const CHART_CONFIG = {
     yLabel: "score",
     xLabel: "date",
     yDomain: [0, 30],
+    legendType: "none",
     yTicks: [
       0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
       21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
@@ -40,10 +41,12 @@ const CHART_CONFIG = {
       });
       data = data.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-      let startDate = data.length ? new Date(data[0].date.valueOf()): new Date();
-        startDate.setMonth(0);
-        startDate.setDate(0);
-        startDate.setFullYear(startDate.getFullYear() - 1);
+      let startDate = data.length
+        ? new Date(data[0].date.valueOf())
+        : new Date();
+      startDate.setMonth(0);
+      startDate.setDate(0);
+      startDate.setFullYear(startDate.getFullYear() - 1);
       data.unshift({
         total: null,
         date: startDate.valueOf(),
@@ -63,6 +66,61 @@ const CHART_CONFIG = {
         return new Date(value).toISOString().substring(0, 10);
       return "";
     },
+  },
+  "adl-iadl": {
+    id: "adl-iadl",
+    yDomain: [0, 50],
+    yTicks: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50
+    ],
+  },
+  behav5: {
+    id: "behav5",
+    yDomain: [0, 6],
+    yTicks: [0, 1, 2, 3, 4, 5, 6],
+  },
+  "c-idas": {
+    id: "c-idas",
+    yDomain: [0, 40],
+    yTicks: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+      39, 40,
+    ],
+  },
+  "cp-ecog": {
+    id: "cp-ecog",
+    yDomain: [0, 50],
+    yTicks: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+      39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
+    ],
+  },
+  ecog12: {
+    id: "ecog12",
+    yDomain: [0, 50],
+    yTicks: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+      39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
+    ],
+  },
+  gad7: {
+    id: "gad7",
+    yDomain: [0, 22],
+    yTicks: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22,
+    ],
+  },
+  gds: {
+    id: "gds",
+    yDomain: [0, 20],
+    yTicks: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    ],
   },
   //specific graph config for each questionnaire here
   minicog: {
@@ -103,28 +161,18 @@ const CHART_CONFIG = {
   },
   phq9: {
     id: "phq9",
-    legendType: "none",
-    yDomain: [0, 27],
+    yDomain: [0, 28],
     yTicks: [
       0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28
+      21, 22, 23, 24, 25, 26, 27, 28,
     ],
   },
-  gad7: {
-    id: "gad7",
-    legendType: "none",
-    yDomain: [0, 22],
+  slums: {
+    id: "slums",
+    yDomain: [0, 31],
     yTicks: [
       0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22
-    ],
-  },
-  gds: {
-    id: "gds",
-    legendType: "none",
-    yDomain: [0, 20],
-    yTicks: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
     ],
   },
 };

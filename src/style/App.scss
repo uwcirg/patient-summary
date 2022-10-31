@@ -1,18 +1,25 @@
 $chart-background-color: #f4f6f6;
 $muted-text-color: #777;
-$body-background-color: #f0eff0;
+$app-background-color: #dad7da;
 $summary-container-background-color: #FFF;
 body {
   padding: 0;
   margin: 0;
   font-family: "Roboto", sans-serif;
   font-size: 16px;
-  background-color: $body-background-color !important;
+}
+main {
+  background-color: $app-background-color;
 }
 .summaries {
-  margin-top: 64px;
+  margin-top: 48px;
   padding: 24px;
   background-color: $summary-container-background-color;
+}
+@media (min-width: 600px) {
+  .summaries {
+    margin-top: 64px;
+  }
 }
 
 p {

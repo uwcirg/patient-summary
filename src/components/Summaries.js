@@ -227,7 +227,7 @@ export default function Summaries() {
   }, [handleFab]);
 
   return (
-    <>
+    <main className="app">
       {!isReady() && renderLoadingIndicator()}
       {isReady() && (
         <>
@@ -240,7 +240,7 @@ export default function Summaries() {
           className="summaries"
           sx={{
             position: "relative",
-            maxWidth: "1200px",
+            maxWidth: "1120px",
             marginLeft: "auto",
             marginRight: "auto",
           }}
@@ -266,6 +266,6 @@ export default function Summaries() {
           <Version></Version>
         </Stack>
       )}
-    </>
+    </main>
   );
 }
