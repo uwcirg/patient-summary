@@ -211,8 +211,10 @@ export default function Summaries() {
   };
 
   const renderLoadingIndicator = () => (
-    <Box sx={{ position: "absolute", top: 16, left: 16 }}>
-      <CircularProgress></CircularProgress>
+    <Box sx={{position: "absolute", top: 0, left: 0, width: "100%", marginTop: 8}}>
+      <CircularProgress
+        sx={{ position: "absolute", top: 16, left: 16 }}
+      ></CircularProgress>
     </Box>
   );
 
@@ -226,15 +228,23 @@ export default function Summaries() {
 
   return (
     <>
+      {!isReady() && renderLoadingIndicator()}
       {isReady() && (
         <>
           {renderAncor()}
           {renderNavButton()}
         </>
       )}
-      <Stack className="summaries" sx={{ position: "relative", maxWidth: "1200px", marginLeft: "auto", marginRight: "auto" }}>
-        {!isReady() && renderLoadingIndicator()}
-        {isReady() && (
+      {isReady() && (
+        <Stack
+          className="summaries"
+          sx={{
+            position: "relative",
+            maxWidth: "1200px",
+            marginLeft: "auto",
+            marginRight: "auto",
+          }}
+        >
           <section>
             <PatientInfo></PatientInfo>
             <Stack
@@ -253,9 +263,9 @@ export default function Summaries() {
             <Divider></Divider>
             {renderSummaries()}
           </section>
-        )}
-        {isReady() && <Version></Version>}
-      </Stack>
+          <Version></Version>
+        </Stack>
+      )}
     </>
   );
 }

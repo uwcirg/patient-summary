@@ -67,8 +67,8 @@ export default function PatientInfo() {
   return (
     <Stack spacing={3} direction="row">
       <Stack spacing={0.5} direction="row" alignItems="center">
-        <PersonIcon fontSize="large"></PersonIcon>
-        <Typography component="span" variant="h6">
+        <PersonIcon fontSize="large" color="primary"></PersonIcon>
+        <Typography component="span" variant="h6" color="primary">
           {getPatientName()}
         </Typography>
       </Stack>
