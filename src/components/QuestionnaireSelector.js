@@ -42,7 +42,7 @@ export default function QuestionnaireSelector(props) {
     return value.toUpperCase();
   };
   const renderTitle = () => (
-    <Typography variant="h6" component="h2" color="secondary">
+    <Typography variant="h6" component="h2" color="secondary" noWrap={true}>
       {title || "Questionnaire List"}
     </Typography>
   );
@@ -54,7 +54,11 @@ export default function QuestionnaireSelector(props) {
   const renderSelector = () => (
     <FormControl
       variant="standard"
-      sx={{ minWidth: 300, paddingLeft: 1, paddingRight: 1 }}
+      sx={{
+        minWidth: 300,
+        paddingLeft: 1,
+        paddingRight: 1,
+      }}
       margin="dense"
     >
       <Select
@@ -67,7 +71,7 @@ export default function QuestionnaireSelector(props) {
               <Typography
                 color="primary"
                 variant="subtitle1"
-                sx={{ fontSize: "1.1rem" }}
+                sx={{ fontSize: "1.1rem", whiteSpace:"normal" }}
               >
                 {getDisplayName(value)}
               </Typography>

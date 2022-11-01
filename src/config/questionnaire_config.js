@@ -10,8 +10,9 @@ const qConfig = {
   },
   "c-idas": {
     scoringQuestionId: "c-idas-score",
+    // TODO, check education 21 if HS education, 20 if no HS education
     failedScores: [
-      19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+      22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
       37, 38,
     ],
   },
@@ -23,11 +24,12 @@ const qConfig = {
   },
   gad7: {
     scoringQuestionId: "/70274-6",
-    failedScores: [16, 17, 18, 19, 20, 21],
+    // TODO check education if HS education 21 failed, if less than HS failed scolre is 20
+    failedScores: [16, 17, 18, 19,],
   },
   gds: {
     scoringQuestionId: "/48545-8",
-    failedScores: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    failedScores: [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
   },
   minicog: {
     customCQL: true,
@@ -42,8 +44,9 @@ const qConfig = {
   slums: {
     scoringQuestionId: "/71492-3",
     comparisonToAlert: "low", // display alert if score is lower than previous
+    // TO DO check education, 19 failed scored for less than high school, 20 for high school
     failedScores: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
     ],
   },
 };
