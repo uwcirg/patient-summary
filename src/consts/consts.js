@@ -9,5 +9,9 @@ export const instrumentNameMaps = {
   phq9: "Depression (PHQ-9)",
   gad7: "Anxiety (GAD-7)",
   behav: "BEHAV+5",
-  minicog: "Mini Cognitive Assessment"
-}
+  minicog: "Mini Cognitive Assessment",
+  ecog12: "ECog-12",
+  "cp-ecog": "ECog-12 (for Care Partner)",
+  "c-idas": "Cornell Scale of Depression",
+  "adl-iadl": "Functional Impairments (ADL/IADLs)",
+};

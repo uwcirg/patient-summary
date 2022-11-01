@@ -153,7 +153,7 @@ export default function ScoringSummary(props) {
       </TableContainer>
     );
   return (
-    <Paper sx={{ minWidth: "50%" }}>
+    <Paper sx={{ minWidth: "55%" }}>
       {renderTitle()}
       {renderSummary()}
     </Paper>
