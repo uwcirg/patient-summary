@@ -71,7 +71,7 @@ export default function QuestionnaireSelector(props) {
               <Typography
                 color="primary"
                 variant="subtitle1"
-                sx={{ fontSize: "1.1rem", whiteSpace:"normal" }}
+                sx={{ whiteSpace:"normal" }}
               >
                 {getDisplayName(value)}
               </Typography>
