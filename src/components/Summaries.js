@@ -12,21 +12,25 @@ import { useQuery } from "react-query";
 import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
+import LinearProgress from "@mui/material/LinearProgress";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import { FhirClientContext } from "../context/FhirClientContext";
 import {
+  gatherSummaryDataByQuestionnaireId,
   getFhirResourcesFromQueryResult,
   getFHIRResourcePaths,
   getQuestionnaireList,
   isInViewport,
 } from "../util/util";
+import ErrorComponent from "./ErrorComponent";
 import PatientInfo from "./PatientInfo";
 import QuestionnaireSelector from "./QuestionnaireSelector";
 import ScoringSummary from "./ScoringSummary";
 import Summary from "./Summary";
 import Version from "./Version";
+import { Typography } from "@mui/material";
 let scrollIntervalId = 0;
 
 export default function Summaries() {
@@ -35,6 +39,10 @@ export default function Summaries() {
   const anchorRef = createRef();
   const selectorRef = createRef();
   const questionnaireList = getQuestionnaireList();
+  const [summaryData, setSummaryData] = useState({
+    data: null,
+    loadComplete: false,
+  });
   const patientBundle = useRef({
     resourceType: "Bundle",
     id: "resource-bundle",
@@ -59,7 +67,44 @@ export default function Summaries() {
           entry: [...patientBundle.current.entry, ...fhirData],
           loadComplete: true,
         };
+        if (!questionnaireList.length) {
+          setError("No configured questionnaire id(s) found.");
+        }
         console.log("patient bundle ", patientBundle.current.entry);
+        const requests = questionnaireList.map((qid) =>
+          (async () => {
+            let error = "";
+            let results = await gatherSummaryDataByQuestionnaireId(
+              client,
+              patientBundle.current,
+              qid
+            ).catch((e) => (error = e));
+            return {
+              [qid]: error
+                ? {
+                    error: error,
+                  }
+                : results,
+            };
+          })()
+        );
+        Promise.allSettled(requests).then((results) => {
+          console.log("all settled results ", results);
+          if (results && results.length > 0) {
+            let summaries = {};
+            results.forEach((result) => {
+              const o = Object.entries(result.value)[0];
+              const key = o[0];
+              if (summaryData[key]) return true;
+              summaries[key] = o[1];
+            });
+            setSummaryData({
+              data: summaries,
+              loadComplete: true,
+            });
+            console.log("summaries ", summaryData);
+          }
+        });
       },
       onError: (e) => {
         setError("Error fetching FHIR resources. See console for detail.");
@@ -162,11 +207,35 @@ export default function Summaries() {
 
   const renderSummaries = () => {
     return questionnaireList.map((questionnaireId, index) => {
+      if (!summaryData["data"] || !summaryData["data"][questionnaireId])
+        return (
+          <Stack
+            alignItems={"center"}
+            direction="row"
+            justifyContent={"space-between"}
+            spacing={2}
+            sx={{marginTop: 2}}
+            key={`summary_loader_${index}`}
+          >
+            <Typography
+              variant="h6"
+              component="h3"
+              color="accent"
+              sx={{ marginBottom: 2, minWidth: "120px" }}
+            >
+              {questionnaireId.toUpperCase()}
+            </Typography>
+            <LinearProgress
+              sx={{ width: "300px", marginTop: 6, flex: 1 }}
+            ></LinearProgress>
+          </Stack>
+        );
       return (
         <Box key={`summary_container_${index}`}>
           <Summary
             questionnaireId={questionnaireId}
             patientBundle={patientBundle.current}
+            data={summaryData["data"][questionnaireId]}
             key={`questionnaire_summary_${index}`}
             callbackFunc={handleCallback}
           ></Summary>
@@ -179,6 +248,7 @@ export default function Summaries() {
   };
 
   const renderQuestionnaireSelector = () => {
+    if (!summaryData.loadComplete) return null;
     return (
       <BoxRef
         ref={selectorRef}
@@ -198,20 +268,29 @@ export default function Summaries() {
   const MemoizedQuestionnaireSelector = memo(renderQuestionnaireSelector);
 
   const renderScoringSummary = () => {
-    const responses = patientBundle.current.entry.filter(
-      (entry) => entry.resource.resourceType === "QuestionnaireResponse"
-    );
-    if (!responses.length) return null;
+    // const responses = patientBundle.current.entry.filter(
+    //   (entry) => entry.resource.resourceType === "QuestionnaireResponse"
+    // );
+    if (!summaryData.loadComplete || !summaryData.data) return null;
     return (
       <ScoringSummary
         list={getQuestionnaireList()}
-        responses={responses}
+        summaryData={summaryData.data}
+        loadComplete={summaryData.loadComplete}
       ></ScoringSummary>
     );
   };
 
   const renderLoadingIndicator = () => (
-    <Box sx={{position: "absolute", top: 0, left: 0, width: "100%", marginTop: 8}}>
+    <Box
+      sx={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        marginTop: 8,
+      }}
+    >
       <CircularProgress
         sx={{ position: "absolute", top: 16, left: 16 }}
       ></CircularProgress>
@@ -225,6 +304,7 @@ export default function Summaries() {
       window.removeEventListener("scroll", handleFab, false);
     };
   }, [handleFab]);
+
 
   return (
     <main className="app">
@@ -247,19 +327,28 @@ export default function Summaries() {
         >
           <section>
             <PatientInfo></PatientInfo>
-            <Stack
-              direction={{ xs: "column", sm: "column", md: "row" }}
-              spacing={2}
-              sx={{
-                marginTop: 2,
-                marginBottom: 4,
-                backgroundColor: "#f3f3f4",
-                padding: 2,
-              }}
-            >
-              <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
-              {renderScoringSummary()}
-            </Stack>
+            {error && (
+              <Box sx={{ marginTop: 1 }}>
+                <ErrorComponent message={error}></ErrorComponent>
+              </Box>
+            )}
+            {summaryData.loadComplete && (
+              <>
+                <Stack
+                  direction={{ xs: "column", sm: "column", md: "row" }}
+                  spacing={2}
+                  sx={{
+                    marginTop: 2,
+                    marginBottom: 4,
+                    backgroundColor: "#f3f3f4",
+                    padding: 2,
+                  }}
+                >
+                  <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
+                  {renderScoringSummary()}
+                </Stack>
+              </>
+            )}
             <Divider></Divider>
             {renderSummaries()}
           </section>

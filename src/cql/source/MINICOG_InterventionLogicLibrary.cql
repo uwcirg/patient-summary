@@ -4,6 +4,8 @@ using FHIR version '4.0.1'
 
 include "FHIRHelpers" version '4.0.1' called FHIRHelpers
 
+include "InterventionLogic_Common" version '1.0.0' called LogicHelpers
+
 // -----------------------------------------------------------------------------
 // PARAMETERS
 // -----------------------------------------------------------------------------
@@ -15,16 +17,6 @@ parameter QuestionnaireURL default 'http://www.cdc.gov/ncbddd/fasd/minicog'
 // -----------------------------------------------------------------------------
 context Patient
 
-// -----------------------------------------------------------------------------
-// HELPER FUNCTIONS
-// -----------------------------------------------------------------------------
-// Returns a text representation of a dateTime using the CQL `ToString` function.
-// @param d - a FHIR dateTime to get text for
-// @returns {System.String} the text representation of the dateTime
-define function DateTimeText(d FHIR.dateTime):
-  ToString(d.value)
-
-
 //------------------------------------------------------------------------------
 // QUESTIONNAIRE & QUESTIONNAIRERESPONSE LOGIC
 //------------------------------------------------------------------------------
@@ -32,22 +24,6 @@ define function DateTimeText(d FHIR.dateTime):
 define question1Id: 'minicog-question1'
 define question2Id: 'minicog-question2'
 define scoringQuestionId: 'minicog-total-score'
-
-
-define function MatchedQuestionnaireByReponses(responses FHIR.QuestionnaireResponse):
-  ([Questionnaire] Q
-    where 
-    (
-      PositionOf(Lower(QuestionnaireName), Lower(Q.id)) != -1 or
-      Lower(Q.name) = Lower(QuestionnaireName) or
-      Q.url.value = QuestionnaireURL) 
-    and (
-      (
-        PositionOf(Lower(Q.name), Lower(responses.questionnaire.value)) != -1 or
-        PositionOf(Lower(Q.id), Lower(responses.questionnaire.value)) != -1
-      ) and 
-      responses.status.value = 'completed')
-  )
 
 // Load Questionnaire
 define CurrentQuestionnaire:
@@ -66,40 +42,39 @@ define QuestionnaireItems:
 // Load Questionnaire responses
 define QuestionnaireResponses:
   ([QuestionnaireResponse] QR
-    where Length(MatchedQuestionnaireByReponses(QR)) > 0
+    where Length(LogicHelpers.MatchedQuestionnaireByReponses(QR)) > 0
   )
-
-define function FormattedResponses(responses List<FHIR.QuestionnaireResponse.Item>):
-  responses R 
-  return {
-    id: R.linkId.value,
-    answer: R.answer[0].value.value,
-    value: R.answer[0].value,
-    question: if R.linkId.value = scoringQuestionId then '<b>' + R.text.value + '</b>' else R.text.value,
-    text: R.text.value
-  }
-  sort by id asc
-
 
 define ResponsesSummary:
   (QuestionnaireResponses) I
+  let
+    responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, scoringQuestionId),
+    word_recall_score: Coalesce(First((responses) I where I.id = question1Id return I.value.value), 0),
+    clock_draw_score: Coalesce(First((responses) I where I.id = question2Id return I.value.value), 0)
   return {
-    date: DateTimeText(I.authored),
-    responses: FormattedResponses(I.item),
+    date: LogicHelpers.DateTimeText(I.authored),
+    responses: (responses R where 
+    R.id != 'minicog-question1-instruction' and 
+    R.id != 'minicog-question2-instruction' and 
+    R.id != 'minicog-total-score-explanation' and
+    R.id != 'minicog-questionnaire-footnote'),
+    score: (word_recall_score as Integer) + (clock_draw_score as Integer),
+    word_recall_score: word_recall_score,
+    clock_draw_score: clock_draw_score,
     authoredDate: I.authored,
     lastUpdated: I.meta.lastUpdated.value
   }
-  sort by date desc, lastUpdated desc
+  sort by authoredDate desc, lastUpdated desc
 
 define ResponsesOnly:
   (QuestionnaireResponses) I
-  return FormattedResponses(I.item)
+  return LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, scoringQuestionId)
 
 define ChartData:
-  ResponsesSummary R 
+  ResponsesSummary R
   return {
     date: R.date,
-    word_recall: First((R.responses) I where I.id = question1Id return I.value.value),
-    clock_draw: First((R.responses) I where I.id = question2Id return I.value.value),
-    total: First((R.responses) I where I.id = scoringQuestionId return I.value.value)
+    word_recall: R.word_recall_score,
+    clock_draw: R.clock_draw_score,
+    total: R.score
   }

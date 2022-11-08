@@ -15,65 +15,40 @@ import SouthIcon from "@mui/icons-material/South";
 import Scoring from "./Score";
 import qConfig from "../config/questionnaire_config";
 import { instrumentNameMaps } from "../consts/consts";
-import { scrollToAnchor } from "../util/util";
+import {
+  scrollToAnchor
+} from "../util/util";
+
 
 export default function ScoringSummary(props) {
   const theme = useTheme();
-  const { list, responses } = props;
-  const hasList = () =>
-    list &&
-    list.length &&
-    list.filter((id) => getScoringQuestionId(id)).length > 0;
-  const getMatchResponsesById = (id) => {
-    if (!responses) return [];
-    const matchedResponses = responses
-      .filter(
-        (item) =>
-          item.resource &&
-          String(item.resource.questionnaire).toLowerCase().indexOf(id) !== -1
-      )
-      .map((item) => item.resource);
-    return matchedResponses.sort(
-      (a, b) => new Date(b.authored).getTime() - new Date(a.authored).getTime()
+  const { summaryData, loadComplete } = props;
+  const hasList = () => loadComplete && Object.keys(summaryData).length > 0;
+  const getSortedResponses = (rdata) => {
+    if (!rdata || rdata.length === 0) return [];
+    return rdata.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-  };
-  const getScoringQuestionId = (instrumentId) => {
-    return qConfig[instrumentId].scoringQuestionId
-      ? qConfig[instrumentId].scoringQuestionId
-      : null;
-  };
-  const getInstrumentName = (id) =>
+  }
+  const getInstrumentShortName = (id) =>
     instrumentNameMaps[id] ? instrumentNameMaps[id] : String(id).toUpperCase();
 
-  const getPrevScoreByInstrument = (id) => {
-    const matchedResponses = getMatchResponsesById(id);
-    if (!matchedResponses.length || matchedResponses.length === 1) return null;
-    const scoringQuestionId = getScoringQuestionId(id);
-    if (!scoringQuestionId) return null;
-    const responseItems = matchedResponses[1].item;
-    if (!responseItems || !responseItems.length) return null;
-    const matchedItem = responseItems
-      .filter((item) => item.linkId === scoringQuestionId)
-      .map((item) => item.answer[0].valueDecimal);
-    return matchedItem.length ? matchedItem[0] : null;
+  const getPrevScoreByInstrument = (rdata) => {
+    const responses = getSortedResponses(rdata);
+    if (!responses || !responses.length || responses.length === 1) return parseInt(null);
+    return parseInt(responses[1].score);
   };
 
-  const getCurrentScoreByInstrument = (id) => {
-    const matchedResponses = getMatchResponsesById(id);
-    if (!matchedResponses.length) return null;
-    const scoringQuestionId = getScoringQuestionId(id);
-    if (!scoringQuestionId) return null;
-    const responseItems = matchedResponses[0].item;
-    if (!responseItems || !responseItems.length) return null;
-    const matchedItem = responseItems
-      .filter((item) => item.linkId === scoringQuestionId)
-      .map((item) => item.answer[0].valueDecimal);
-    return matchedItem.length ? matchedItem[0] : null;
+  const getCurrentScoreByInstrument = (rdata) => {
+    const sortedResponses = getSortedResponses(rdata);
+    if (!sortedResponses || !sortedResponses.length) return parseInt(null);
+    return parseInt(sortedResponses[0].score);
   };
-  const getDisplayIcon = (id) => {
+  const getDisplayIcon = (id, rdata) => {
     const comparisonToAlert = qConfig[id].comparisonToAlert;
-    const currentScore = parseInt(getCurrentScoreByInstrument(id));
-    const prevScore = parseInt(getPrevScoreByInstrument(id));
+    const currentScore = getCurrentScoreByInstrument(rdata);
+    const prevScore = getPrevScoreByInstrument(rdata);
+    console.log("current score ", currentScore, " prev score ", prevScore)
     if (isNaN(prevScore) || isNaN(currentScore)) return "--";
     if (!isNaN(prevScore)) {
       if (comparisonToAlert === "low") {
@@ -98,7 +73,7 @@ export default function ScoringSummary(props) {
   const handleClick = (e, anchorElementId) => {
     e.preventDefault();
     scrollToAnchor(anchorElementId);
-  }
+  };
   const renderTitle = () => (
     <Typography
       variant="h6"
@@ -109,6 +84,7 @@ export default function ScoringSummary(props) {
       Scoring Summary
     </Typography>
   );
+
   const renderSummary = () =>
     hasList() && (
       <TableContainer sx={{ padding: 2, paddingTop: 0, marginBottom: 1 }}>
@@ -129,22 +105,28 @@ export default function ScoringSummary(props) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {list.map((item, index) => (
+            {Object.keys(summaryData).map((key, index) => (
               <TableRow key={`{summary_${index}}`}>
                 <TableCell sx={{ fontWeight: 500 }} size="small">
-                  <Link onClick={(e) => handleClick(e, item)} underline="none" sx={{color: theme.palette.link.main, cursor: "pointer"}}>
-                    {getInstrumentName(item)}
+                  <Link
+                    onClick={(e) => handleClick(e, key)}
+                    underline="none"
+                    sx={{ color: theme.palette.link.main, cursor: "pointer" }}
+                  >
+                    {getInstrumentShortName(key)}
                   </Link>
                 </TableCell>
                 <TableCell align="left" size="small">
                   <Scoring
-                    instrumentId={item}
-                    score={getCurrentScoreByInstrument(item)}
+                    instrumentId={key}
+                    score={getCurrentScoreByInstrument(
+                      summaryData[key].responses
+                    )}
                     justifyContent="space-between"
                   ></Scoring>
                 </TableCell>
                 <TableCell align="center" size="small">
-                  {getDisplayIcon(item)}
+                  {getDisplayIcon(key, summaryData[key].responses)}
                 </TableCell>
               </TableRow>
             ))}
@@ -161,6 +143,5 @@ export default function ScoringSummary(props) {
 }
 
 ScoringSummary.propTypes = {
-  list: PropTypes.array,
-  responses: PropTypes.array,
+  summaryData: PropTypes.object,
 };

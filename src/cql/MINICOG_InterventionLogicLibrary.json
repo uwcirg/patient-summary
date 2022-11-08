@@ -27,6 +27,10 @@
             "localIdentifier" : "FHIRHelpers",
             "path" : "FHIRHelpers",
             "version" : "4.0.1"
+         }, {
+            "localIdentifier" : "LogicHelpers",
+            "path" : "InterventionLogic_Common",
+            "version" : "1.0.0"
          } ]
       },
       "parameters" : {
@@ -66,29 +70,6 @@
                }
             }
          }, {
-            "name" : "DateTimeText",
-            "context" : "Patient",
-            "accessLevel" : "Public",
-            "type" : "FunctionDef",
-            "expression" : {
-               "type" : "ToString",
-               "operand" : {
-                  "path" : "value",
-                  "type" : "Property",
-                  "source" : {
-                     "name" : "d",
-                     "type" : "OperandRef"
-                  }
-               }
-            },
-            "operand" : [ {
-               "name" : "d",
-               "operandTypeSpecifier" : {
-                  "name" : "{http://hl7.org/fhir}dateTime",
-                  "type" : "NamedTypeSpecifier"
-               }
-            } ]
-         }, {
             "name" : "question1Id",
             "context" : "Patient",
             "accessLevel" : "Public",
@@ -115,220 +96,6 @@
                "value" : "minicog-total-score",
                "type" : "Literal"
             }
-         }, {
-            "name" : "MatchedQuestionnaireByReponses",
-            "context" : "Patient",
-            "accessLevel" : "Public",
-            "type" : "FunctionDef",
-            "expression" : {
-               "type" : "Query",
-               "source" : [ {
-                  "alias" : "Q",
-                  "expression" : {
-                     "dataType" : "{http://hl7.org/fhir}Questionnaire",
-                     "templateId" : "http://hl7.org/fhir/StructureDefinition/Questionnaire",
-                     "type" : "Retrieve"
-                  }
-               } ],
-               "relationship" : [ ],
-               "where" : {
-                  "type" : "And",
-                  "operand" : [ {
-                     "type" : "Or",
-                     "operand" : [ {
-                        "type" : "Or",
-                        "operand" : [ {
-                           "type" : "Not",
-                           "operand" : {
-                              "type" : "Equal",
-                              "operand" : [ {
-                                 "type" : "PositionOf",
-                                 "pattern" : {
-                                    "type" : "Lower",
-                                    "operand" : {
-                                       "name" : "QuestionnaireName",
-                                       "type" : "ParameterRef"
-                                    }
-                                 },
-                                 "string" : {
-                                    "type" : "Lower",
-                                    "operand" : {
-                                       "name" : "ToString",
-                                       "libraryName" : "FHIRHelpers",
-                                       "type" : "FunctionRef",
-                                       "operand" : [ {
-                                          "path" : "id",
-                                          "scope" : "Q",
-                                          "type" : "Property"
-                                       } ]
-                                    }
-                                 }
-                              }, {
-                                 "type" : "Negate",
-                                 "operand" : {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "1",
-                                    "type" : "Literal"
-                                 }
-                              } ]
-                           }
-                        }, {
-                           "type" : "Equal",
-                           "operand" : [ {
-                              "type" : "Lower",
-                              "operand" : {
-                                 "name" : "ToString",
-                                 "libraryName" : "FHIRHelpers",
-                                 "type" : "FunctionRef",
-                                 "operand" : [ {
-                                    "path" : "name",
-                                    "scope" : "Q",
-                                    "type" : "Property"
-                                 } ]
-                              }
-                           }, {
-                              "type" : "Lower",
-                              "operand" : {
-                                 "name" : "QuestionnaireName",
-                                 "type" : "ParameterRef"
-                              }
-                           } ]
-                        } ]
-                     }, {
-                        "type" : "Equal",
-                        "operand" : [ {
-                           "path" : "value",
-                           "type" : "Property",
-                           "source" : {
-                              "path" : "url",
-                              "scope" : "Q",
-                              "type" : "Property"
-                           }
-                        }, {
-                           "name" : "QuestionnaireURL",
-                           "type" : "ParameterRef"
-                        } ]
-                     } ]
-                  }, {
-                     "type" : "And",
-                     "operand" : [ {
-                        "type" : "Or",
-                        "operand" : [ {
-                           "type" : "Not",
-                           "operand" : {
-                              "type" : "Equal",
-                              "operand" : [ {
-                                 "type" : "PositionOf",
-                                 "pattern" : {
-                                    "type" : "Lower",
-                                    "operand" : {
-                                       "name" : "ToString",
-                                       "libraryName" : "FHIRHelpers",
-                                       "type" : "FunctionRef",
-                                       "operand" : [ {
-                                          "path" : "name",
-                                          "scope" : "Q",
-                                          "type" : "Property"
-                                       } ]
-                                    }
-                                 },
-                                 "string" : {
-                                    "type" : "Lower",
-                                    "operand" : {
-                                       "path" : "value",
-                                       "type" : "Property",
-                                       "source" : {
-                                          "path" : "questionnaire",
-                                          "type" : "Property",
-                                          "source" : {
-                                             "name" : "responses",
-                                             "type" : "OperandRef"
-                                          }
-                                       }
-                                    }
-                                 }
-                              }, {
-                                 "type" : "Negate",
-                                 "operand" : {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "1",
-                                    "type" : "Literal"
-                                 }
-                              } ]
-                           }
-                        }, {
-                           "type" : "Not",
-                           "operand" : {
-                              "type" : "Equal",
-                              "operand" : [ {
-                                 "type" : "PositionOf",
-                                 "pattern" : {
-                                    "type" : "Lower",
-                                    "operand" : {
-                                       "name" : "ToString",
-                                       "libraryName" : "FHIRHelpers",
-                                       "type" : "FunctionRef",
-                                       "operand" : [ {
-                                          "path" : "id",
-                                          "scope" : "Q",
-                                          "type" : "Property"
-                                       } ]
-                                    }
-                                 },
-                                 "string" : {
-                                    "type" : "Lower",
-                                    "operand" : {
-                                       "path" : "value",
-                                       "type" : "Property",
-                                       "source" : {
-                                          "path" : "questionnaire",
-                                          "type" : "Property",
-                                          "source" : {
-                                             "name" : "responses",
-                                             "type" : "OperandRef"
-                                          }
-                                       }
-                                    }
-                                 }
-                              }, {
-                                 "type" : "Negate",
-                                 "operand" : {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "1",
-                                    "type" : "Literal"
-                                 }
-                              } ]
-                           }
-                        } ]
-                     }, {
-                        "type" : "Equal",
-                        "operand" : [ {
-                           "path" : "value",
-                           "type" : "Property",
-                           "source" : {
-                              "path" : "status",
-                              "type" : "Property",
-                              "source" : {
-                                 "name" : "responses",
-                                 "type" : "OperandRef"
-                              }
-                           }
-                        }, {
-                           "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                           "value" : "completed",
-                           "type" : "Literal"
-                        } ]
-                     } ]
-                  } ]
-               }
-            },
-            "operand" : [ {
-               "name" : "responses",
-               "operandTypeSpecifier" : {
-                  "name" : "{http://hl7.org/fhir}QuestionnaireResponse",
-                  "type" : "NamedTypeSpecifier"
-               }
-            } ]
          }, {
             "name" : "CurrentQuestionnaire",
             "context" : "Patient",
@@ -514,6 +281,7 @@
                      "type" : "Length",
                      "operand" : {
                         "name" : "MatchedQuestionnaireByReponses",
+                        "libraryName" : "LogicHelpers",
                         "type" : "FunctionRef",
                         "operand" : [ {
                            "name" : "QR",
@@ -528,159 +296,6 @@
                }
             }
          }, {
-            "name" : "FormattedResponses",
-            "context" : "Patient",
-            "accessLevel" : "Public",
-            "type" : "FunctionDef",
-            "expression" : {
-               "type" : "Query",
-               "source" : [ {
-                  "alias" : "R",
-                  "expression" : {
-                     "name" : "responses",
-                     "type" : "OperandRef"
-                  }
-               } ],
-               "relationship" : [ ],
-               "return" : {
-                  "expression" : {
-                     "type" : "Tuple",
-                     "element" : [ {
-                        "name" : "id",
-                        "value" : {
-                           "path" : "value",
-                           "type" : "Property",
-                           "source" : {
-                              "path" : "linkId",
-                              "scope" : "R",
-                              "type" : "Property"
-                           }
-                        }
-                     }, {
-                        "name" : "answer",
-                        "value" : {
-                           "path" : "value",
-                           "type" : "Property",
-                           "source" : {
-                              "path" : "value",
-                              "type" : "Property",
-                              "source" : {
-                                 "type" : "Indexer",
-                                 "operand" : [ {
-                                    "path" : "answer",
-                                    "scope" : "R",
-                                    "type" : "Property"
-                                 }, {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "0",
-                                    "type" : "Literal"
-                                 } ]
-                              }
-                           }
-                        }
-                     }, {
-                        "name" : "value",
-                        "value" : {
-                           "path" : "value",
-                           "type" : "Property",
-                           "source" : {
-                              "type" : "Indexer",
-                              "operand" : [ {
-                                 "path" : "answer",
-                                 "scope" : "R",
-                                 "type" : "Property"
-                              }, {
-                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                 "value" : "0",
-                                 "type" : "Literal"
-                              } ]
-                           }
-                        }
-                     }, {
-                        "name" : "question",
-                        "value" : {
-                           "type" : "If",
-                           "condition" : {
-                              "type" : "Equal",
-                              "operand" : [ {
-                                 "path" : "value",
-                                 "type" : "Property",
-                                 "source" : {
-                                    "path" : "linkId",
-                                    "scope" : "R",
-                                    "type" : "Property"
-                                 }
-                              }, {
-                                 "name" : "scoringQuestionId",
-                                 "type" : "ExpressionRef"
-                              } ]
-                           },
-                           "then" : {
-                              "type" : "Concatenate",
-                              "operand" : [ {
-                                 "type" : "Concatenate",
-                                 "operand" : [ {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                    "value" : "<b>",
-                                    "type" : "Literal"
-                                 }, {
-                                    "path" : "value",
-                                    "type" : "Property",
-                                    "source" : {
-                                       "path" : "text",
-                                       "scope" : "R",
-                                       "type" : "Property"
-                                    }
-                                 } ]
-                              }, {
-                                 "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                 "value" : "</b>",
-                                 "type" : "Literal"
-                              } ]
-                           },
-                           "else" : {
-                              "path" : "value",
-                              "type" : "Property",
-                              "source" : {
-                                 "path" : "text",
-                                 "scope" : "R",
-                                 "type" : "Property"
-                              }
-                           }
-                        }
-                     }, {
-                        "name" : "text",
-                        "value" : {
-                           "path" : "value",
-                           "type" : "Property",
-                           "source" : {
-                              "path" : "text",
-                              "scope" : "R",
-                              "type" : "Property"
-                           }
-                        }
-                     } ]
-                  }
-               },
-               "sort" : {
-                  "by" : [ {
-                     "direction" : "asc",
-                     "path" : "id",
-                     "type" : "ByColumn"
-                  } ]
-               }
-            },
-            "operand" : [ {
-               "name" : "responses",
-               "operandTypeSpecifier" : {
-                  "type" : "ListTypeSpecifier",
-                  "elementType" : {
-                     "name" : "{http://hl7.org/fhir}QuestionnaireResponse.Item",
-                     "type" : "NamedTypeSpecifier"
-                  }
-               }
-            } ]
-         }, {
             "name" : "ResponsesSummary",
             "context" : "Patient",
             "accessLevel" : "Public",
@@ -693,6 +308,123 @@
                      "type" : "ExpressionRef"
                   }
                } ],
+               "let" : [ {
+                  "identifier" : "responses",
+                  "expression" : {
+                     "name" : "FormattedResponses",
+                     "libraryName" : "LogicHelpers",
+                     "type" : "FunctionRef",
+                     "operand" : [ {
+                        "name" : "QuestionnaireItems",
+                        "type" : "ExpressionRef"
+                     }, {
+                        "path" : "item",
+                        "scope" : "I",
+                        "type" : "Property"
+                     }, {
+                        "name" : "scoringQuestionId",
+                        "type" : "ExpressionRef"
+                     } ]
+                  }
+               }, {
+                  "identifier" : "word_recall_score",
+                  "expression" : {
+                     "type" : "Coalesce",
+                     "operand" : [ {
+                        "asType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "type" : "As",
+                        "operand" : {
+                           "type" : "First",
+                           "source" : {
+                              "type" : "Query",
+                              "source" : [ {
+                                 "alias" : "I",
+                                 "expression" : {
+                                    "name" : "responses",
+                                    "type" : "QueryLetRef"
+                                 }
+                              } ],
+                              "relationship" : [ ],
+                              "where" : {
+                                 "type" : "Equal",
+                                 "operand" : [ {
+                                    "path" : "id",
+                                    "scope" : "I",
+                                    "type" : "Property"
+                                 }, {
+                                    "name" : "question1Id",
+                                    "type" : "ExpressionRef"
+                                 } ]
+                              },
+                              "return" : {
+                                 "expression" : {
+                                    "path" : "value",
+                                    "type" : "Property",
+                                    "source" : {
+                                       "path" : "value",
+                                       "scope" : "I",
+                                       "type" : "Property"
+                                    }
+                                 }
+                              }
+                           }
+                        }
+                     }, {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "0",
+                        "type" : "Literal"
+                     } ]
+                  }
+               }, {
+                  "identifier" : "clock_draw_score",
+                  "expression" : {
+                     "type" : "Coalesce",
+                     "operand" : [ {
+                        "asType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "type" : "As",
+                        "operand" : {
+                           "type" : "First",
+                           "source" : {
+                              "type" : "Query",
+                              "source" : [ {
+                                 "alias" : "I",
+                                 "expression" : {
+                                    "name" : "responses",
+                                    "type" : "QueryLetRef"
+                                 }
+                              } ],
+                              "relationship" : [ ],
+                              "where" : {
+                                 "type" : "Equal",
+                                 "operand" : [ {
+                                    "path" : "id",
+                                    "scope" : "I",
+                                    "type" : "Property"
+                                 }, {
+                                    "name" : "question2Id",
+                                    "type" : "ExpressionRef"
+                                 } ]
+                              },
+                              "return" : {
+                                 "expression" : {
+                                    "path" : "value",
+                                    "type" : "Property",
+                                    "source" : {
+                                       "path" : "value",
+                                       "scope" : "I",
+                                       "type" : "Property"
+                                    }
+                                 }
+                              }
+                           }
+                        }
+                     }, {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "0",
+                        "type" : "Literal"
+                     } ]
+                  }
+               } ],
                "relationship" : [ ],
                "return" : {
                   "expression" : {
@@ -701,6 +433,7 @@
                         "name" : "date",
                         "value" : {
                            "name" : "DateTimeText",
+                           "libraryName" : "LogicHelpers",
                            "type" : "FunctionRef",
                            "operand" : [ {
                               "path" : "authored",
@@ -711,13 +444,121 @@
                      }, {
                         "name" : "responses",
                         "value" : {
-                           "name" : "FormattedResponses",
-                           "type" : "FunctionRef",
+                           "type" : "Query",
+                           "source" : [ {
+                              "alias" : "R",
+                              "expression" : {
+                                 "name" : "responses",
+                                 "type" : "QueryLetRef"
+                              }
+                           } ],
+                           "relationship" : [ ],
+                           "where" : {
+                              "type" : "And",
+                              "operand" : [ {
+                                 "type" : "And",
+                                 "operand" : [ {
+                                    "type" : "And",
+                                    "operand" : [ {
+                                       "type" : "Not",
+                                       "operand" : {
+                                          "type" : "Equal",
+                                          "operand" : [ {
+                                             "path" : "id",
+                                             "scope" : "R",
+                                             "type" : "Property"
+                                          }, {
+                                             "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                             "value" : "minicog-question1-instruction",
+                                             "type" : "Literal"
+                                          } ]
+                                       }
+                                    }, {
+                                       "type" : "Not",
+                                       "operand" : {
+                                          "type" : "Equal",
+                                          "operand" : [ {
+                                             "path" : "id",
+                                             "scope" : "R",
+                                             "type" : "Property"
+                                          }, {
+                                             "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                             "value" : "minicog-question2-instruction",
+                                             "type" : "Literal"
+                                          } ]
+                                       }
+                                    } ]
+                                 }, {
+                                    "type" : "Not",
+                                    "operand" : {
+                                       "type" : "Equal",
+                                       "operand" : [ {
+                                          "path" : "id",
+                                          "scope" : "R",
+                                          "type" : "Property"
+                                       }, {
+                                          "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                          "value" : "minicog-total-score-explanation",
+                                          "type" : "Literal"
+                                       } ]
+                                    }
+                                 } ]
+                              }, {
+                                 "type" : "Not",
+                                 "operand" : {
+                                    "type" : "Equal",
+                                    "operand" : [ {
+                                       "path" : "id",
+                                       "scope" : "R",
+                                       "type" : "Property"
+                                    }, {
+                                       "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                       "value" : "minicog-questionnaire-footnote",
+                                       "type" : "Literal"
+                                    } ]
+                                 }
+                              } ]
+                           }
+                        }
+                     }, {
+                        "name" : "score",
+                        "value" : {
+                           "type" : "Add",
                            "operand" : [ {
-                              "path" : "item",
-                              "scope" : "I",
-                              "type" : "Property"
+                              "strict" : false,
+                              "type" : "As",
+                              "operand" : {
+                                 "name" : "word_recall_score",
+                                 "type" : "QueryLetRef"
+                              },
+                              "asTypeSpecifier" : {
+                                 "name" : "{urn:hl7-org:elm-types:r1}Integer",
+                                 "type" : "NamedTypeSpecifier"
+                              }
+                           }, {
+                              "strict" : false,
+                              "type" : "As",
+                              "operand" : {
+                                 "name" : "clock_draw_score",
+                                 "type" : "QueryLetRef"
+                              },
+                              "asTypeSpecifier" : {
+                                 "name" : "{urn:hl7-org:elm-types:r1}Integer",
+                                 "type" : "NamedTypeSpecifier"
+                              }
                            } ]
+                        }
+                     }, {
+                        "name" : "word_recall_score",
+                        "value" : {
+                           "name" : "word_recall_score",
+                           "type" : "QueryLetRef"
+                        }
+                     }, {
+                        "name" : "clock_draw_score",
+                        "value" : {
+                           "name" : "clock_draw_score",
+                           "type" : "QueryLetRef"
                         }
                      }, {
                         "name" : "authoredDate",
@@ -747,7 +588,7 @@
                "sort" : {
                   "by" : [ {
                      "direction" : "desc",
-                     "path" : "date",
+                     "path" : "authoredDate",
                      "type" : "ByColumn"
                   }, {
                      "direction" : "desc",
@@ -773,11 +614,18 @@
                "return" : {
                   "expression" : {
                      "name" : "FormattedResponses",
+                     "libraryName" : "LogicHelpers",
                      "type" : "FunctionRef",
                      "operand" : [ {
+                        "name" : "QuestionnaireItems",
+                        "type" : "ExpressionRef"
+                     }, {
                         "path" : "item",
                         "scope" : "I",
                         "type" : "Property"
+                     }, {
+                        "name" : "scoringQuestionId",
+                        "type" : "ExpressionRef"
                      } ]
                   }
                }
@@ -809,119 +657,23 @@
                      }, {
                         "name" : "word_recall",
                         "value" : {
-                           "type" : "First",
-                           "source" : {
-                              "type" : "Query",
-                              "source" : [ {
-                                 "alias" : "I",
-                                 "expression" : {
-                                    "path" : "responses",
-                                    "scope" : "R",
-                                    "type" : "Property"
-                                 }
-                              } ],
-                              "relationship" : [ ],
-                              "where" : {
-                                 "type" : "Equal",
-                                 "operand" : [ {
-                                    "path" : "id",
-                                    "scope" : "I",
-                                    "type" : "Property"
-                                 }, {
-                                    "name" : "question1Id",
-                                    "type" : "ExpressionRef"
-                                 } ]
-                              },
-                              "return" : {
-                                 "expression" : {
-                                    "path" : "value",
-                                    "type" : "Property",
-                                    "source" : {
-                                       "path" : "value",
-                                       "scope" : "I",
-                                       "type" : "Property"
-                                    }
-                                 }
-                              }
-                           }
+                           "path" : "word_recall_score",
+                           "scope" : "R",
+                           "type" : "Property"
                         }
                      }, {
                         "name" : "clock_draw",
                         "value" : {
-                           "type" : "First",
-                           "source" : {
-                              "type" : "Query",
-                              "source" : [ {
-                                 "alias" : "I",
-                                 "expression" : {
-                                    "path" : "responses",
-                                    "scope" : "R",
-                                    "type" : "Property"
-                                 }
-                              } ],
-                              "relationship" : [ ],
-                              "where" : {
-                                 "type" : "Equal",
-                                 "operand" : [ {
-                                    "path" : "id",
-                                    "scope" : "I",
-                                    "type" : "Property"
-                                 }, {
-                                    "name" : "question2Id",
-                                    "type" : "ExpressionRef"
-                                 } ]
-                              },
-                              "return" : {
-                                 "expression" : {
-                                    "path" : "value",
-                                    "type" : "Property",
-                                    "source" : {
-                                       "path" : "value",
-                                       "scope" : "I",
-                                       "type" : "Property"
-                                    }
-                                 }
-                              }
-                           }
+                           "path" : "clock_draw_score",
+                           "scope" : "R",
+                           "type" : "Property"
                         }
                      }, {
                         "name" : "total",
                         "value" : {
-                           "type" : "First",
-                           "source" : {
-                              "type" : "Query",
-                              "source" : [ {
-                                 "alias" : "I",
-                                 "expression" : {
-                                    "path" : "responses",
-                                    "scope" : "R",
-                                    "type" : "Property"
-                                 }
-                              } ],
-                              "relationship" : [ ],
-                              "where" : {
-                                 "type" : "Equal",
-                                 "operand" : [ {
-                                    "path" : "id",
-                                    "scope" : "I",
-                                    "type" : "Property"
-                                 }, {
-                                    "name" : "scoringQuestionId",
-                                    "type" : "ExpressionRef"
-                                 } ]
-                              },
-                              "return" : {
-                                 "expression" : {
-                                    "path" : "value",
-                                    "type" : "Property",
-                                    "source" : {
-                                       "path" : "value",
-                                       "scope" : "I",
-                                       "type" : "Property"
-                                    }
-                                 }
-                              }
-                           }
+                           "path" : "score",
+                           "scope" : "R",
+                           "type" : "Property"
                         }
                      } ]
                   }

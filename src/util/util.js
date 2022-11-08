@@ -1,5 +1,10 @@
 import ChartConfig from "../config/chart_config.js";
+import QuestionnaireConfig from "../config/questionnaire_config";
 import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts/consts";
+import commonLibrary from "../cql/InterventionLogic_Common.json";
+import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
+import { initialzieCqlWorker } from "cql-worker";
+
 
 export async function getInterventionLogicLib(interventionId) {
   let fileName = "InterventionLogicLibrary.json";
@@ -257,3 +262,147 @@ export function scrollToAnchor(anchorElementId) {
   if (!targetElement) return;
   targetElement.scrollIntoView();
 }
+
+
+export function getElmDependencies() {
+   const elmJsonDependencyArray = [commonLibrary];
+  // Reformat ELM JSON value set references to match what is expected by the
+  // code service built into the cql execution engine
+  return elmJsonDependencyArray.reduce((acc, elm) => {
+    let refs = elm?.library?.valueSets?.def;
+    if (refs) {
+      refs = refs.map((r) => {
+        return {
+          ...r,
+          id: r.id.split("/").pop(),
+        };
+      });
+      elm.library.valueSets.def = refs;
+    }
+    return {
+      ...acc,
+      [elm.library.identifier.id]: elm,
+    };
+  }, {});
+}
+
+export function gatherSummaryDataByQuestionnaireId(client, patientBundle, questionnaireId) {
+  return new Promise((resolve, reject) => {
+    // search for matching questionnaire
+    const searchMatchingResources = async () => {
+      const fhirSearchOptions = { pageLimit: 0 };
+      const requests = ["Questionnaire?name:contains=" + questionnaireId].map(
+        (uri) =>
+          client.request(
+            {
+              url: uri,
+              // ...NO_CACHE_HEADER,
+            },
+            fhirSearchOptions
+          )
+      );
+      return Promise.all(requests).catch((e) => {
+        throw new Error(e);
+      });
+    };
+    const gatherSummaryData = async (questionnaireJson) => {
+      // Define a web worker for evaluating CQL expressions
+      const cqlWorker = new Worker();
+      // Initialize the cql-worker
+      const [setupExecution, sendPatientBundle, evaluateExpression] =
+        initialzieCqlWorker(cqlWorker);
+      const questionaireKey = String(questionnaireId).toLowerCase();
+      const chartConfig = getChartConfig(questionaireKey);
+      const questionnaireConfig = QuestionnaireConfig[questionaireKey] || {};
+
+      /* get CQL expressions */
+      const [elmJson, valueSetJson] = await getInterventionLogicLib(
+        questionnaireConfig.customCQL ? questionnaireId : ""
+      ).catch((e) => {
+        console.log("Error retrieving ELM lib son for " + questionnaireId, e);
+        throw new Error("Error retrieving ELM lib son for " + questionnaireId);
+      });
+
+      setupExecution(
+        elmJson,
+        valueSetJson,
+        {
+          QuestionnaireName: questionnaireJson.name,
+          QuestionnaireURL: questionnaireJson.url,
+        },
+        getElmDependencies()
+      );
+
+      // Send patient info to CQL worker to process
+      sendPatientBundle(patientBundle);
+
+      // get formatted questionnaire responses
+      const cqlData = await evaluateExpression("ResponsesSummary").catch(
+        (e) => {
+          console.log(e);
+          throw new Error("CQL evaluation expression, ResponsesSummary, error ");
+        }
+      );
+      // get formatted chart data
+      const chartData = await evaluateExpression("ChartData").catch((e) => {
+        console.log(e);
+        throw new Error("CQL evaluation expression, Chart data, error ");
+      });
+      const returnResult = {
+        chartConfig: chartConfig,
+        chartData: chartData,
+        responses: cqlData,
+        questionnaire: questionnaireJson,
+      };
+      console.log(
+        "return result from CQL execution for " + questionnaireId,
+        returnResult
+      );
+      cqlWorker.terminate();
+      return returnResult;
+    };
+
+    // find matching questionnaire & questionnaire response(s)
+    searchMatchingResources()
+      .then((results) => {
+        let bundles = [];
+        console.log(`${questionnaireId} search results `, results);
+        results.forEach((entry) => {
+          entry.forEach((item) => {
+            bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];
+          });
+        });
+        const arrQuestionnaires = bundles.filter(
+          (entry) =>
+            entry.resource &&
+            String(entry.resource.resourceType).toLowerCase() ===
+              "questionnaire"
+        );
+        const questionnaireJson = arrQuestionnaires.length
+          ? arrQuestionnaires[0].resource
+          : null;
+        if (!questionnaireJson) {
+          reject("No matching questionnaire found");
+          return;
+        }
+        patientBundle = {
+          ...patientBundle,
+          entry: [...patientBundle.entry, ...bundles],
+          questionnaire: questionnaireJson,
+        };
+        gatherSummaryData(questionnaireJson)
+          .then((data) => {
+            resolve(data);
+          })
+          .catch((e) => {
+            reject("Error occurred gathering summary data.  See console for detail.");
+            console.log("Error occurred gathering summary data: ", e)
+          });
+      })
+      .catch((e) => {
+        reject("Error occurred retrieving matching resources");
+        console.log("Error occurred retrieving matching resources: ", e);
+      });
+  });// end promise
+}
+  
