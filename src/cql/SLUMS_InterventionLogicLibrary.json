@@ -371,55 +371,23 @@
                      }, {
                         "name" : "score",
                         "value" : {
-                           "type" : "Coalesce",
-                           "operand" : [ {
-                              "strict" : false,
-                              "type" : "As",
-                              "operand" : {
-                                 "type" : "First",
-                                 "source" : {
-                                    "type" : "Query",
-                                    "source" : [ {
-                                       "alias" : "I",
-                                       "expression" : {
-                                          "name" : "responses",
-                                          "type" : "QueryLetRef"
-                                       }
-                                    } ],
-                                    "relationship" : [ ],
-                                    "where" : {
-                                       "type" : "Equal",
-                                       "operand" : [ {
-                                          "path" : "id",
-                                          "scope" : "I",
-                                          "type" : "Property"
-                                       }, {
-                                          "name" : "ScoringQuestionId",
-                                          "type" : "ParameterRef"
-                                       } ]
-                                    },
-                                    "return" : {
-                                       "expression" : {
-                                          "path" : "value",
-                                          "type" : "Property",
-                                          "source" : {
-                                             "path" : "value",
-                                             "scope" : "I",
-                                             "type" : "Property"
-                                          }
-                                       }
-                                    }
-                                 }
-                              },
-                              "asTypeSpecifier" : {
-                                 "name" : "{urn:hl7-org:elm-types:r1}Integer",
-                                 "type" : "NamedTypeSpecifier"
+                           "path" : "value",
+                           "type" : "Property",
+                           "source" : {
+                              "path" : "value",
+                              "type" : "Property",
+                              "source" : {
+                                 "type" : "Indexer",
+                                 "operand" : [ {
+                                    "name" : "responses",
+                                    "type" : "QueryLetRef"
+                                 }, {
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                    "value" : "0",
+                                    "type" : "Literal"
+                                 } ]
                               }
-                           }, {
-                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                              "value" : "0",
-                              "type" : "Literal"
-                           } ]
+                           }
                         }
                      }, {
                         "name" : "authoredDate",

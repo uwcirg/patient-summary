@@ -784,23 +784,43 @@
                      } ],
                      "relationship" : [ ],
                      "where" : {
-                        "type" : "Not",
-                        "operand" : {
-                           "type" : "Equal",
-                           "operand" : [ {
-                              "path" : "value",
-                              "type" : "Property",
-                              "source" : {
-                                 "path" : "linkId",
-                                 "scope" : "O",
-                                 "type" : "Property"
-                              }
-                           }, {
-                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                              "value" : "introduction",
-                              "type" : "Literal"
-                           } ]
-                        }
+                        "type" : "And",
+                        "operand" : [ {
+                           "type" : "Not",
+                           "operand" : {
+                              "type" : "Equal",
+                              "operand" : [ {
+                                 "path" : "value",
+                                 "type" : "Property",
+                                 "source" : {
+                                    "path" : "linkId",
+                                    "scope" : "O",
+                                    "type" : "Property"
+                                 }
+                              }, {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                 "value" : "introduction",
+                                 "type" : "Literal"
+                              } ]
+                           }
+                        }, {
+                           "type" : "Not",
+                           "operand" : {
+                              "type" : "Equal",
+                              "operand" : [ {
+                                 "path" : "value",
+                                 "type" : "Property",
+                                 "source" : {
+                                    "path" : "linkId",
+                                    "scope" : "O",
+                                    "type" : "Property"
+                                 }
+                              }, {
+                                 "name" : "scoringQuestionId",
+                                 "type" : "OperandRef"
+                              } ]
+                           }
+                        } ]
                      }
                   }
                } ],

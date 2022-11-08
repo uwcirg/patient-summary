@@ -7,9 +7,11 @@ import qConfig from "../config/questionnaire_config";
 export default function Scoring(props) {
   const { instrumentId, score, justifyContent, alignItems } = props;
   const getFailedScoringByInstrumentId = (instrumentId) => {
-    return qConfig[instrumentId].failedScores
-      ? qConfig[instrumentId].failedScores
-      : [];
+    // TODO pass in patient education level to accurately determine what the fail score is
+    return (qConfig[instrumentId] &&
+      qConfig[instrumentId].failedScores
+      ? qConfig[instrumentId].failedScores()
+      : []);
   };
   const arrFailedScores = getFailedScoringByInstrumentId(instrumentId);
 

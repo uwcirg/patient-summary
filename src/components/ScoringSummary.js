@@ -14,7 +14,6 @@ import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import Scoring from "./Score";
 import qConfig from "../config/questionnaire_config";
-import { instrumentNameMaps } from "../consts/consts";
 import {
   scrollToAnchor
 } from "../util/util";
@@ -23,7 +22,7 @@ import {
 export default function ScoringSummary(props) {
   const theme = useTheme();
   const { summaryData, loadComplete } = props;
-  const hasList = () => loadComplete && Object.keys(summaryData).length > 0;
+  const hasList = () => loadComplete && summaryData && Object.keys(summaryData).length > 0;
   const getSortedResponses = (rdata) => {
     if (!rdata || rdata.length === 0) return [];
     return rdata.sort(
@@ -31,7 +30,7 @@ export default function ScoringSummary(props) {
     );
   }
   const getInstrumentShortName = (id) =>
-    instrumentNameMaps[id] ? instrumentNameMaps[id] : String(id).toUpperCase();
+    qConfig[id] && qConfig[id].shortTitle ? qConfig[id].shortTitle : String(id).toUpperCase();
 
   const getPrevScoreByInstrument = (rdata) => {
     const responses = getSortedResponses(rdata);
@@ -45,7 +44,7 @@ export default function ScoringSummary(props) {
     return parseInt(sortedResponses[0].score);
   };
   const getDisplayIcon = (id, rdata) => {
-    const comparisonToAlert = qConfig[id].comparisonToAlert;
+    const comparisonToAlert = qConfig[id] && qConfig[id].comparisonToAlert;
     const currentScore = getCurrentScoreByInstrument(rdata);
     const prevScore = getPrevScoreByInstrument(rdata);
     console.log("current score ", currentScore, " prev score ", prevScore)

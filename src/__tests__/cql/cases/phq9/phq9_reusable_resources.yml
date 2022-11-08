@@ -21,7 +21,7 @@ phq9_reusable_resources:
 # questionnaire responses
 - &questionnaireResponses # skeleton
   resourceType: QuestionnaireResponse
-  questionnaire: http://www.cdc.gov/ncbddd/fasd/phq9
+  questionnaire: CIRG/phq9
   status: completed
   authored: 2030-04-18
 

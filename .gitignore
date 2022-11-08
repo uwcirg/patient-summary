@@ -7,6 +7,7 @@
 
 # testing
 /coverage
+/src/__tests__/cql/dump_files
 
 # production
 /build

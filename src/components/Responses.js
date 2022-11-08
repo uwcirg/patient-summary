@@ -15,7 +15,6 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import Score from "./Score";
-import qConfig from "../config/questionnaire_config";
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -54,19 +53,6 @@ export default function Responses(props) {
   };
   const data = props.data || [];
   const questionnaireId = props.questionnaireId;
-
-   const getScoringQuestionId = (instrumentId) => {
-     return qConfig[instrumentId].scoringQuestionId
-       ? qConfig[instrumentId].scoringQuestionId
-       : null;
-   };
-
-   const isScoringItem = (itemId, instrumentId) => {
-    const scoringQuestionId = getScoringQuestionId(instrumentId);
-    return itemId === scoringQuestionId;
-;
-   };
-
   const getAnswer = (response) => {
     if (!response) return "--";
     return response.value &&
@@ -120,7 +106,7 @@ export default function Responses(props) {
     </Box>
   );
 
-  const renderResponseTable = (responses) => (
+  const renderResponseTable = (responses, score) => (
     <Table aria-label="responses table" size="small" role="table">
       <TableHead
         sx={{
@@ -152,13 +138,17 @@ export default function Responses(props) {
                 __html: getQuestion(row),
               }}
             ></TableCell>
-            <TableCell
-            >
-              {isScoringItem(row.id, questionnaireId) && <Score instrumentId={questionnaireId} score={getAnswer(row)}></Score>}
-              {!isScoringItem(row.id, questionnaireId) && getAnswer(row)}
-            </TableCell>
+            <TableCell>{getAnswer(row)}</TableCell>
           </TableRow>
         ))}
+        {!isNaN(score) && (
+          <TableRow>
+            <TableCell><b>Score</b></TableCell>
+            <TableCell>
+              <Score instrumentId={questionnaireId} score={score}></Score>
+            </TableCell>
+          </TableRow>
+        )}
       </TableBody>
     </Table>
   );
@@ -179,7 +169,7 @@ export default function Responses(props) {
                 {!hasResponses(item.responses) && (
                   <Alert severity="warning">No responses.</Alert>
                 )}
-                {hasResponses(item.responses) && renderResponseTable(item.responses)}
+                {hasResponses(item.responses) && renderResponseTable(item.responses, item.score)}
               </TableContainer>
             </TabPanel>
           ))}

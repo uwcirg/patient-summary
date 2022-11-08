@@ -31,9 +31,8 @@
   "scripts": {
     "start": "rescripts start",
     "build": "rescripts build",
-    "test": "rescripts test --testPathIgnorePatterns=./src/__tests__/cql --watchAll=false",
     "test:watch": "rescripts test --testPathIgnorePatterns=./src/__tests__/cql",
-    "cql-test": "./node_modules/.bin/mocha ./src/__tests__/cql/*.js --recursive",
+    "test": "./node_modules/.bin/mocha ./src/__tests__/cql/*.js --recursive",
     "eject": "rescripts eject"
   },
   "eslintConfig": {

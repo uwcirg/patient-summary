@@ -1,4 +1,4 @@
-import { useState, useEffect, useReducer, useContext } from "react";
+import { useState, useEffect, useReducer } from "react";
 import PropTypes from "prop-types";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -6,22 +6,16 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Error from "./ErrorComponent";
+import { getDisplayQTitle, hasData } from "../util/util";
 import {
-  callback,
-  getDisplayQTitle,
-  hasData,
-} from "../util/util";
-import {
- // NO_CACHE_HEADER,
+  // NO_CACHE_HEADER,
   QUESTIONNAIRE_ANCHOR_ID_PREFIX,
 } from "../consts/consts";
 import Responses from "./Responses";
 import Chart from "./Chart";
-import { FhirClientContext } from "../context/FhirClientContext";
 
 export default function Summary(props) {
-  const { client } = useContext(FhirClientContext);
-  const { questionnaireId, data, callbackFunc } = props;
+  const { questionnaireId, data } = props;
   const summaryReducer = (summary, action) => {
     if (action.type === "reset") {
       return {
@@ -88,7 +82,7 @@ export default function Summary(props) {
     ></div>
   );
   const getQuestionnaireTitle = () => {
-    if (questionnaireTitle) return questionnaireTitle;;
+    if (questionnaireTitle) return questionnaireTitle;
     return getDisplayQTitle(questionnaireId);
   };
   const renderTitle = () => (
@@ -133,12 +127,17 @@ export default function Summary(props) {
   useEffect(() => {
     if (!loading) return;
     dispatch({ type: "update", payload: data });
-    setHasChart(hasData(data.chartData));
-    setQuestionnaireTitle(data.questionnaire && data.questionnaire.title ? data.questionnaire.title: "");
+    setHasChart(hasData(data ? data.chartData : null));
+    if (data) {
+      setQuestionnaireTitle(
+        data.questionnaire && data.questionnaire.title
+          ? data.questionnaire.title
+          : ""
+      );
+      if (data.error) setError(data.error);
+    }
     setLoading(false);
-    if (data.error) setError(data.error);
-    callback(callbackFunc, { status: data.error ? "error" : "ok" });
-  }, [client, data, questionnaireId, loading, callbackFunc]);
+  }, [data, loading]);
 
   return (
     <>
@@ -148,9 +147,9 @@ export default function Summary(props) {
         className="summary"
         id={`summary_${questionnaireId}`}
         direction="column"
-        sx= {{
+        sx={{
           paddingTop: 2,
-          paddingBottom: 4
+          paddingBottom: 4,
         }}
       >
         {/* questionnaire title */}
@@ -168,5 +167,4 @@ export default function Summary(props) {
 Summary.propTypes = {
   questionnaireId: PropTypes.string.isRequired,
   patientBundle: PropTypes.object,
-  callbackFunc: PropTypes.func
 };

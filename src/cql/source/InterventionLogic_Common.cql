@@ -93,7 +93,7 @@ define function getScoringByResponseItem(questionnaire FHIR.Questionnaire, respo
  * @param scoringQuestionId as String
  */
 define function FormattedResponses(questionnaireItems List<FHIR.Questionnaire.Item>, responses List<FHIR.QuestionnaireResponse.Item>, scoringQuestionId String):
-  ((questionnaireItems) O where O.linkId.value != 'introduction') Q
+  ((questionnaireItems) O where O.linkId.value != 'introduction' and O.linkId.value != scoringQuestionId) Q
     let
       answerText: GetResponseAnswerByLinkId(Q.linkId.value, responses),
       answerValue: GetResponseValueByLinkId(Q.linkId.value, responses)
