@@ -319,7 +319,6 @@ export default function Summaries() {
       <ScoringSummary
         list={getQuestionnaireList()}
         summaryData={summaryData.data}
-        loadComplete={summaryData.loadComplete}
       ></ScoringSummary>
     );
   };

@@ -14,27 +14,35 @@ import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import Scoring from "./Score";
 import qConfig from "../config/questionnaire_config";
-import {
-  scrollToAnchor
-} from "../util/util";
-
+import { scrollToAnchor } from "../util/util";
 
 export default function ScoringSummary(props) {
   const theme = useTheme();
-  const { summaryData, loadComplete } = props;
-  const hasList = () => loadComplete && summaryData && Object.keys(summaryData).length > 0;
+  const { summaryData } = props;
+  const hasList = () =>
+    summaryData &&
+    Object.keys(summaryData).length > 0 &&
+    Object.keys(summaryData).filter((key) => {
+      return (
+        summaryData[key].responses &&
+        summaryData[key].responses.filter((result) => result.score).length > 0
+      );
+    }).length > 0;
   const getSortedResponses = (rdata) => {
     if (!rdata || rdata.length === 0) return [];
     return rdata.sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-  }
+  };
   const getInstrumentShortName = (id) =>
-    qConfig[id] && qConfig[id].shortTitle ? qConfig[id].shortTitle : String(id).toUpperCase();
+    qConfig[id] && qConfig[id].shortTitle
+      ? qConfig[id].shortTitle
+      : String(id).toUpperCase();
 
   const getPrevScoreByInstrument = (rdata) => {
     const responses = getSortedResponses(rdata);
-    if (!responses || !responses.length || responses.length === 1) return parseInt(null);
+    if (!responses || !responses.length || responses.length === 1)
+      return parseInt(null);
     return parseInt(responses[1].score);
   };
 
@@ -47,7 +55,7 @@ export default function ScoringSummary(props) {
     const comparisonToAlert = qConfig[id] && qConfig[id].comparisonToAlert;
     const currentScore = getCurrentScoreByInstrument(rdata);
     const prevScore = getPrevScoreByInstrument(rdata);
-    console.log("current score ", currentScore, " prev score ", prevScore)
+    console.log("current score ", currentScore, " prev score ", prevScore);
     if (isNaN(prevScore) || isNaN(currentScore)) return "--";
     if (!isNaN(prevScore)) {
       if (comparisonToAlert === "low") {
@@ -84,6 +92,19 @@ export default function ScoringSummary(props) {
     </Typography>
   );
 
+  const getResponsesContainingScore = () => {
+    if (!hasList()) return [];
+    return Object.keys(summaryData).filter((key) => {
+      return (
+        summaryData[key] &&
+        summaryData[key].responses &&
+        summaryData[key].responses.filter((item) => item.score).length > 0
+      );
+    });
+  };
+
+  const scoreList = getResponsesContainingScore();
+
   const renderSummary = () =>
     hasList() && (
       <TableContainer sx={{ padding: 2, paddingTop: 0, marginBottom: 1 }}>
@@ -104,7 +125,7 @@ export default function ScoringSummary(props) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {Object.keys(summaryData).map((key, index) => (
+            {scoreList.map((key, index) => (
               <TableRow key={`{summary_${index}}`}>
                 <TableCell sx={{ fontWeight: 500 }} size="small">
                   <Link
@@ -133,6 +154,7 @@ export default function ScoringSummary(props) {
         </Table>
       </TableContainer>
     );
+
   return (
     <Paper sx={{ minWidth: "55%" }}>
       {renderTitle()}
