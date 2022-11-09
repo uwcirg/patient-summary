@@ -3,6 +3,7 @@ import QuestionnaireConfig from "../config/questionnaire_config";
 import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts/consts";
 import commonLibrary from "../cql/InterventionLogic_Common.json";
 import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
+import valueSetJson from "../cql/valueset-db.json";
 import { initialzieCqlWorker } from "cql-worker";
 
 export async function getInterventionLogicLib(interventionId) {
@@ -11,16 +12,17 @@ export async function getInterventionLogicLib(interventionId) {
     // load questionnaire specific CQL
     fileName = `${interventionId.toUpperCase()}_InterventionLogicLibrary.json`;
   }
-  let elmJson, valueSetJson;
-  try {
-    elmJson = await import(`../cql/${fileName}`).then(
-      (module) => module.default
-    );
-    valueSetJson = await import(`../cql/valueset-db.json`).then(
-      (module) => module.default
-    );
-  } catch (e) {
-    throw new Error("Error loading Cql ELM library " + e);
+  const storageLib = sessionStorage.getItem(`lib_${fileName}`);
+  let elmJson = storageLib ? JSON.parse(storageLib) : null;
+  if (!elmJson) {
+    try {
+      elmJson = await import(`../cql/${fileName}`).then(
+        (module) => module.default
+      );
+      if (elmJson) sessionStorage.setItem(`lib_${fileName}`, JSON.stringify(elmJson));
+    } catch (e) {
+      throw new Error("Error loading Cql ELM library " + e);
+    }
   }
   return [elmJson, valueSetJson];
 }
@@ -44,9 +46,10 @@ export function getFHIRResourcePaths(patientId) {
     const observationCategories = getEnv(
       "REACT_APP_FHIR_OBSERVATION_CATEGORIES"
     );
+    const qList = getQuestionnaireList().join(",");
     if (resource.toLowerCase() === "questionnaire") {
-      const params = getQuestionnaireList().join(",");
-      if (params) path = path + `?contains:${params}`;
+      const params = qList;
+      if (params) path = path + `?name:contains:${params}`;
     }
     if (resource.toLowerCase() === "careplan") {
       path =
