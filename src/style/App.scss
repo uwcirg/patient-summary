@@ -2,6 +2,13 @@ $chart-background-color: #f4f6f6;
 $muted-text-color: #777;
 $app-background-color: #dad7da;
 $summary-container-background-color: #FFF;
+
+html, body {
+  height: 100%;
+}
+#root {
+  height: 100%;
+}
 body {
   padding: 0;
   margin: 0;
@@ -10,6 +17,7 @@ body {
 }
 main {
   background-color: $app-background-color;
+  min-height: 100%;
 }
 .summaries {
   margin-top: 48px;

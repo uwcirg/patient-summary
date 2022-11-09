@@ -55,6 +55,13 @@ export default function Summaries() {
   const [error, setError] = useState(null);
   const [percentLoaded, setPercentLoaded] = useState(0);
 
+  const hasQuestionnaireResponses = () => {
+    return patientBundle.current.entry.filter(
+      (item) => {
+        return item.resource && item.resource.resourceType === "QuestionnaireResponse"
+      }).length > 0;
+  }
+
   useQuery(
     "fhirResources",
     async () => {
@@ -70,9 +77,13 @@ export default function Summaries() {
           entry: [...patientBundle.current.entry, ...fhirData],
           loadComplete: true,
         };
-        console.log("patient bundle: ", patientBundle.current.entry);
         if (!questionnaireList.length) {
           onErrorCallback("No configured questionnaire id(s) found.");
+          return;
+        }
+        if (!hasQuestionnaireResponses()) {
+          onErrorCallback("No recorded responses");
+          return;
         }
         if (summaryData.loadComplete) return;
         let count = 0;
@@ -224,7 +235,7 @@ export default function Summaries() {
 
   const renderSummaries = () => {
     return questionnaireList.map((questionnaireId, index) => {
-      const dataObject = summaryData.data[questionnaireId]
+      const dataObject = summaryData.data && summaryData.data[questionnaireId]
         ? summaryData.data[questionnaireId]
         : null;
       if (!dataObject)
@@ -363,26 +374,28 @@ export default function Summaries() {
                 <ErrorComponent message={error}></ErrorComponent>
               </Box>
             )}
-            {isReady() && (
+            {!error && (
               <>
                 {!summaryData.loadComplete && renderProgressIndicator()}
-                {summaryData.loadComplete && <Stack
-                  direction={{ xs: "column", sm: "column", md: "row" }}
-                  spacing={2}
-                  sx={{
-                    marginTop: 2,
-                    marginBottom: 4,
-                    backgroundColor: "#f3f3f4",
-                    padding: 2,
-                  }}
-                >
-                  <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
-                  {renderScoringSummary()}
-                </Stack>}
+                {summaryData.loadComplete && (
+                  <Stack
+                    direction={{ xs: "column", sm: "column", md: "row" }}
+                    spacing={2}
+                    sx={{
+                      marginTop: 2,
+                      marginBottom: 4,
+                      backgroundColor: "#f3f3f4",
+                      padding: 2,
+                    }}
+                  >
+                    <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
+                    {renderScoringSummary()}
+                  </Stack>
+                )}
+                <Divider></Divider>
+                {renderSummaries()}
               </>
             )}
-            <Divider></Divider>
-            {renderSummaries()}
           </section>
           <Version></Version>
         </Stack>
