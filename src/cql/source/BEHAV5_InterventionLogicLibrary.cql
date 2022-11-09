@@ -70,12 +70,3 @@ define ResponsesOnly:
   (QuestionnaireResponses) I
   return LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId)
 
-define ChartData:
-  if ScoringQuestionId is null or ScoringQuestionId = '' then null
-  else (
-    ResponsesSummary R 
-    return {
-      date: R.date,
-      total: R.score as Integer
-    }
-  )

@@ -5,7 +5,6 @@ import commonLibrary from "../cql/InterventionLogic_Common.json";
 import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
 import { initialzieCqlWorker } from "cql-worker";
 
-
 export async function getInterventionLogicLib(interventionId) {
   let fileName = "InterventionLogicLibrary.json";
   if (interventionId) {
@@ -105,8 +104,7 @@ export function getFhirResourcesFromQueryResult(result) {
     result.forEach((o) => {
       if (o.resourceType) bundle.push({ resource: o });
     });
-  }
-  else {
+  } else {
     bundle.push({ resource: result });
   }
   return bundle;
@@ -263,9 +261,8 @@ export function scrollToAnchor(anchorElementId) {
   targetElement.scrollIntoView();
 }
 
-
 export function getElmDependencies() {
-   const elmJsonDependencyArray = [commonLibrary];
+  const elmJsonDependencyArray = [commonLibrary];
   // Reformat ELM JSON value set references to match what is expected by the
   // code service built into the cql execution engine
   return elmJsonDependencyArray.reduce((acc, elm) => {
@@ -286,7 +283,11 @@ export function getElmDependencies() {
   }, {});
 }
 
-export function gatherSummaryDataByQuestionnaireId(client, patientBundle, questionnaireId) {
+export function gatherSummaryDataByQuestionnaireId(
+  client,
+  patientBundle,
+  questionnaireId
+) {
   return new Promise((resolve, reject) => {
     // search for matching questionnaire
     const searchMatchingResources = async () => {
@@ -333,14 +334,27 @@ export function gatherSummaryDataByQuestionnaireId(client, patientBundle, questi
       const cqlData = await evaluateExpression("ResponsesSummary").catch(
         (e) => {
           console.log(e);
-          throw new Error("CQL evaluation expression, ResponsesSummary, error ");
+          throw new Error(
+            "CQL evaluation expression, ResponsesSummary, error "
+          );
         }
       );
-      // get formatted chart data
-      const chartData = await evaluateExpression("ChartData").catch((e) => {
-        console.log(e);
-        throw new Error("CQL evaluation expression, Chart data, error ");
-      });
+      const scoringData =
+        cqlData && cqlData.length
+          ? cqlData.filter((item) => {
+              return (
+                item.responses &&
+                item.responses.filter((o) => o.score).length > 0
+              );
+            }).length > 0
+          : null;
+      const chartData = scoringData
+        ? scoringData.map((item) => ({
+            date: item.date,
+            total: item.score,
+          }))
+        : null;
+
       const returnResult = {
         chartConfig: chartConfig,
         chartData: chartData,
@@ -360,7 +374,7 @@ export function gatherSummaryDataByQuestionnaireId(client, patientBundle, questi
       .then((result) => {
         let bundles = [];
         result.forEach((item) => {
-           bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];
+          bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];
         });
         const arrQuestionnaires = bundles.filter(
           (entry) =>
@@ -385,14 +399,15 @@ export function gatherSummaryDataByQuestionnaireId(client, patientBundle, questi
             resolve(data);
           })
           .catch((e) => {
-            reject("Error occurred gathering summary data.  See console for detail.");
-            console.log("Error occurred gathering summary data: ", e)
+            reject(
+              "Error occurred gathering summary data.  See console for detail."
+            );
+            console.log("Error occurred gathering summary data: ", e);
           });
       })
       .catch((e) => {
         reject("Error occurred retrieving matching resources");
         console.log("Error occurred retrieving matching resources: ", e);
       });
-  });// end promise
+  }); // end promise
 }
-  
