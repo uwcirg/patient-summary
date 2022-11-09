@@ -287,9 +287,13 @@ export default function Summaries() {
   const renderProgressIndicator = () => {
     return (
       <Stack
-        sx={{ minWidth: "50%" }}
+        sx={{
+          marginTop: 2,
+          marginBottom: 4,
+          padding: 2,
+        }}
         alignItems="center"
-        justifyContent="center"
+        justifyContent="flex-start"
         direction="row"
         spacing={2}
       >
@@ -361,7 +365,8 @@ export default function Summaries() {
             )}
             {isReady() && (
               <>
-                <Stack
+                {!summaryData.loadComplete && renderProgressIndicator()}
+                {summaryData.loadComplete && <Stack
                   direction={{ xs: "column", sm: "column", md: "row" }}
                   spacing={2}
                   sx={{
@@ -372,9 +377,8 @@ export default function Summaries() {
                   }}
                 >
                   <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
-                  {!summaryData.loadComplete && renderProgressIndicator()}
-                  {summaryData.loadComplete && renderScoringSummary()}
-                </Stack>
+                  {renderScoringSummary()}
+                </Stack>}
               </>
             )}
             <Divider></Divider>

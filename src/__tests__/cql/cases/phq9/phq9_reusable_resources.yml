@@ -15,13 +15,12 @@ phq9_reusable_resources:
 - &questionnaireResource # skeleton
   resourceType: Questionnaire
   url: http://www.cdc.gov/ncbddd/fasd/phq9
-  id: phq9
-  name: phq9
+  code: LOINC#44249-1 PHQ-9 quick depression assessment panel
 
 # questionnaire responses
 - &questionnaireResponses # skeleton
   resourceType: QuestionnaireResponse
-  questionnaire: CIRG/phq9
+  questionnaire: http://www.cdc.gov/ncbddd/fasd/phq9
   status: completed
   authored: 2030-04-18
 

@@ -55,7 +55,7 @@
             "accessLevel" : "Public",
             "default" : {
                "valueType" : "{urn:hl7-org:elm-types:r1}String",
-               "value" : "c-idas-score",
+               "value" : "c-ids-score",
                "type" : "Literal"
             }
          } ]

@@ -366,7 +366,6 @@ export function gatherSummaryDataByQuestionnaireId(client, patientBundle, questi
     searchMatchingResources()
       .then((results) => {
         let bundles = [];
-        console.log(`${questionnaireId} search results `, results);
         results.forEach((entry) => {
           entry.forEach((item) => {
             bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];

@@ -1,5 +1,5 @@
 library:
-  name: InterventionLogicLibrary
+  name: PHQ9_InterventionLogicLibrary
   paths: ../../cql
 tests:
   path: cases/phq9

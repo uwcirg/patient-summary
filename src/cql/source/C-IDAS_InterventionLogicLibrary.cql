@@ -11,7 +11,7 @@ include "InterventionLogic_Common" version '1.0.0' called LogicHelpers
 // -----------------------------------------------------------------------------
 parameter QuestionnaireName default 'c-idas'
 parameter QuestionnaireURL default 'http://www.cdc.gov/ncbddd/fasd/c-idas'
-parameter ScoringQuestionId default 'c-idas-score'
+parameter ScoringQuestionId default 'c-ids-score'
 
 // -----------------------------------------------------------------------------
 // PATIENT INFORMATION

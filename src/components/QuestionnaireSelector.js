@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useRef, useEffect, useContext } from "react";
 import PropTypes from "prop-types";
 import Alert from "@mui/material/Alert";
 import FormControl from "@mui/material/FormControl";
@@ -13,10 +13,10 @@ export default function QuestionnaireSelector(props) {
   let scrollToTimeoutId = 0;
   const { client } = useContext(FhirClientContext);
   const { title, list, handleSelectorChange } = props;
-  const [selectList, setSelectList] = useState({
+  const selectList = useRef({
     list: list.map((item) => ({ id: item })),
     loaded: false
-});
+  });
   const defaultMenuItem = () => (
     <MenuItem disabled value="">
       <em>Please Select One</em>
@@ -86,7 +86,7 @@ export default function QuestionnaireSelector(props) {
         }}
         defaultValue={""}
       >
-        {selectList.list.map((item, index) => {
+        {selectList.current.list.map((item, index) => {
           return (
             <MenuItem value={item.id} key={`select_q_${index}`}>
               {item.title ? item.title : getDisplayQTitle(item.id)}
@@ -97,7 +97,7 @@ export default function QuestionnaireSelector(props) {
     </FormControl>
   );
   useEffect(() => {
-    if (selectList.loaded) return;
+    if (selectList.current.loaded) return;
     client
       .request(
         `Questionnaire?name:contains=${list.join(",")}&_elements=id,name,title`,
@@ -123,9 +123,9 @@ export default function QuestionnaireSelector(props) {
             return item;
           }),
         ];
-        setSelectList({
+        selectList.current = {
           loaded: true,
-          list : transformedList});
+          list : transformedList}
       });
   }, [client, list, selectList.loaded]);
   return (
