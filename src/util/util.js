@@ -294,13 +294,20 @@ export function gatherSummaryDataByQuestionnaireId(
   return new Promise((resolve, reject) => {
     // search for matching questionnaire
     const searchMatchingResources = async () => {
+      const storageKey = `questionnaire_${questionnaireId}`;
+      const storageQuestionnaire = sessionStorage.getItem(storageKey);
+      if (storageQuestionnaire) return JSON.parse(storageQuestionnaire);
       const fhirSearchOptions = { pageLimit: 0 };
-      return client.request(
+      const qResult = await client.request(
         {
           url: "Questionnaire?name:contains=" + questionnaireId,
         },
         fhirSearchOptions
-      );
+      ).catch(e => {
+        throw new Error(e)
+      });
+      if (qResult) sessionStorage.setItem(storageKey, JSON.stringify(qResult));
+      return qResult;
     };
     const gatherSummaryData = async (questionnaireJson) => {
       // Define a web worker for evaluating CQL expressions
