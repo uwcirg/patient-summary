@@ -34,7 +34,7 @@ export default function QuestionnaireSelector(props) {
     );
   };
   const getDisplayName = (value) => {
-    const arrMatch = selectList.list.filter((item) => item.id === value);
+    const arrMatch = selectList.current.list.filter((item) => item.id === value);
     if (arrMatch.length)
       return arrMatch[0].title
         ? arrMatch[0].title
