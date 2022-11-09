@@ -354,11 +354,11 @@ export function gatherSummaryDataByQuestionnaireId(
           ? cqlData.filter((item) => {
               return (
                 item.responses &&
-                item.responses.filter((o) => o.score).length > 0
+                item.score
               );
-            }).length > 0
+            })
           : null;
-      const chartData = scoringData
+      const chartData = scoringData && scoringData.length
         ? scoringData.map((item) => ({
             date: item.date,
             total: item.score,
