@@ -106,9 +106,9 @@ export function getFhirResourcesFromQueryResult(result) {
       if (o.resourceType) bundle.push({ resource: o });
     });
   }
-  // else {
-  //   bundle.push({ resource: result });
-  // }
+  else {
+    bundle.push({ resource: result });
+  }
   return bundle;
 }
 
@@ -291,19 +291,12 @@ export function gatherSummaryDataByQuestionnaireId(client, patientBundle, questi
     // search for matching questionnaire
     const searchMatchingResources = async () => {
       const fhirSearchOptions = { pageLimit: 0 };
-      const requests = ["Questionnaire?name:contains=" + questionnaireId].map(
-        (uri) =>
-          client.request(
-            {
-              url: uri,
-              // ...NO_CACHE_HEADER,
-            },
-            fhirSearchOptions
-          )
+      return client.request(
+        {
+          url: "Questionnaire?name:contains=" + questionnaireId,
+        },
+        fhirSearchOptions
       );
-      return Promise.all(requests).catch((e) => {
-        throw new Error(e);
-      });
     };
     const gatherSummaryData = async (questionnaireJson) => {
       // Define a web worker for evaluating CQL expressions
@@ -364,12 +357,10 @@ export function gatherSummaryDataByQuestionnaireId(client, patientBundle, questi
 
     // find matching questionnaire & questionnaire response(s)
     searchMatchingResources()
-      .then((results) => {
+      .then((result) => {
         let bundles = [];
-        results.forEach((entry) => {
-          entry.forEach((item) => {
-            bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];
-          });
+        result.forEach((item) => {
+           bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];
         });
         const arrQuestionnaires = bundles.filter(
           (entry) =>
