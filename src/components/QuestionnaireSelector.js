@@ -43,7 +43,6 @@ export default function QuestionnaireSelector(props) {
         String(item.id).toLowerCase().indexOf(String(value).toLowerCase()) !==
           -1
     );
-    console.log("Match ", arrMatch[0])
     if (arrMatch.length)
       return arrMatch[0].title
         ? arrMatch[0].title
