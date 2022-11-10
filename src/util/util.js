@@ -9,8 +9,9 @@ import { initialzieCqlWorker } from "cql-worker";
 export async function getInterventionLogicLib(interventionId) {
   let fileName = "InterventionLogicLibrary.json";
   if (interventionId) {
+    const libId = interventionId.replace(/_/g, "-");
     // load questionnaire specific CQL
-    fileName = `${interventionId.toUpperCase()}_InterventionLogicLibrary.json`;
+    fileName = `${libId.toUpperCase()}_InterventionLogicLibrary.json`;
   }
   const storageLib = sessionStorage.getItem(`lib_${fileName}`);
   let elmJson = storageLib ? JSON.parse(storageLib) : null;

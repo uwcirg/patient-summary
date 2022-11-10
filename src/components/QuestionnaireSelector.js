@@ -34,7 +34,7 @@ export default function QuestionnaireSelector(props) {
     );
   };
   const getDisplayName = (value) => {
-    const arrMatch = selectList.current.list.filter((item) => item.id === value);
+    const arrMatch = selectList.current.list.filter((item) => String(item.name).toLowerCase().indexOf(value) !== -1);
     if (arrMatch.length)
       return arrMatch[0].title
         ? arrMatch[0].title
@@ -123,6 +123,7 @@ export default function QuestionnaireSelector(props) {
             return item;
           }),
         ];
+        console.log("transform list ", transformedList)
         selectList.current = {
           loaded: true,
           list : transformedList}
