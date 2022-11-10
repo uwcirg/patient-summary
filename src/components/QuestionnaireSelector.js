@@ -1,6 +1,8 @@
-import { useRef, useEffect, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import PropTypes from "prop-types";
 import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
 import FormControl from "@mui/material/FormControl";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
@@ -13,9 +15,9 @@ export default function QuestionnaireSelector(props) {
   let scrollToTimeoutId = 0;
   const { client } = useContext(FhirClientContext);
   const { title, list, handleSelectorChange } = props;
-  const selectList = useRef({
+  const [selectList, setSelectList] = useState({
     list: list.map((item) => ({ id: item })),
-    loaded: false
+    loaded: false,
   });
   const defaultMenuItem = () => (
     <MenuItem disabled value="">
@@ -34,7 +36,14 @@ export default function QuestionnaireSelector(props) {
     );
   };
   const getDisplayName = (value) => {
-    const arrMatch = selectList.current.list.filter((item) => String(item.name).toLowerCase().indexOf(value) !== -1);
+    const arrMatch = selectList.list.filter(
+      (item) =>
+        String(item.name).toLowerCase().indexOf(String(value).toLowerCase()) !==
+          -1 ||
+        String(item.id).toLowerCase().indexOf(String(value).toLowerCase()) !==
+          -1
+    );
+    console.log("Match ", arrMatch[0])
     if (arrMatch.length)
       return arrMatch[0].title
         ? arrMatch[0].title
@@ -71,7 +80,7 @@ export default function QuestionnaireSelector(props) {
               <Typography
                 color="primary"
                 variant="subtitle1"
-                sx={{ whiteSpace:"normal" }}
+                sx={{ whiteSpace: "normal" }}
               >
                 {getDisplayName(value)}
               </Typography>
@@ -86,7 +95,7 @@ export default function QuestionnaireSelector(props) {
         }}
         defaultValue={""}
       >
-        {selectList.current.list.map((item, index) => {
+        {selectList.list.map((item, index) => {
           return (
             <MenuItem value={item.id} key={`select_q_${index}`}>
               {item.title ? item.title : getDisplayQTitle(item.id)}
@@ -97,7 +106,7 @@ export default function QuestionnaireSelector(props) {
     </FormControl>
   );
   useEffect(() => {
-    if (selectList.current.loaded) return;
+    if (selectList.loaded) return;
     client
       .request(
         `Questionnaire?name:contains=${list.join(",")}&_elements=id,name,title`,
@@ -123,17 +132,27 @@ export default function QuestionnaireSelector(props) {
             return item;
           }),
         ];
-        console.log("transform list ", transformedList)
-        selectList.current = {
+        setSelectList({
           loaded: true,
-          list : transformedList}
+          list: transformedList,
+        });
       });
   }, [client, list, selectList.loaded]);
+  if (!selectList.loaded)
+    return (
+      <Box sx={{ padding: 2 }}>
+        <CircularProgress></CircularProgress>
+      </Box>
+    );
   return (
     <Stack direction="column" id="questionnaireSelector" sx={{ padding: 2 }}>
       {!list.length && renderWarning()}
-      {list.length > 0 && renderTitle()}
-      {list.length > 0 && renderSelector()}
+      {list.length > 0 && (
+        <>
+          {renderTitle()}
+          {renderSelector()}
+        </>
+      )}
     </Stack>
   );
 }

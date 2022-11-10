@@ -9,9 +9,8 @@ import { initialzieCqlWorker } from "cql-worker";
 export async function getInterventionLogicLib(interventionId) {
   let fileName = "InterventionLogicLibrary.json";
   if (interventionId) {
-    const libId = interventionId.replace(/_/g, "-");
     // load questionnaire specific CQL
-    fileName = `${libId.toUpperCase()}_InterventionLogicLibrary.json`;
+    fileName = `${interventionId.toUpperCase()}_InterventionLogicLibrary.json`;
   }
   const storageLib = sessionStorage.getItem(`lib_${fileName}`);
   let elmJson = storageLib ? JSON.parse(storageLib) : null;
@@ -134,7 +133,7 @@ export function getChartConfig(questionnaire) {
 
 export function getQuestionnaireList() {
   const configList = getEnv("REACT_APP_QUESTIONNAIRES");
-  if (configList) return configList.split(",").map((item) => item.trim());
+  if (configList) return configList.split(",").map((item) => item.replace(/_/g, "-").trim());
   return [];
 }
 
