@@ -16,9 +16,11 @@ export default function QuestionnaireSelector(props) {
   const { client } = useContext(FhirClientContext);
   const { title, list, handleSelectorChange } = props;
   const [selectList, setSelectList] = useState({
-    list: list.map((item) => ({ id: item })),
+    list: list ? list.map((item) => ({ id: item })) : [],
     loaded: false,
   });
+
+  const hasList = () => list && list.length > 0;
   const defaultMenuItem = () => (
     <MenuItem disabled value="">
       <em>Please Select One</em>
@@ -56,56 +58,66 @@ export default function QuestionnaireSelector(props) {
   );
   const renderWarning = () => (
     <Alert severity="warning" sx={{ mt: 2 }}>
-      No questionnaire(s) specified. Is it configured?
+      No matching questionnaire(s) found. Is it configured correctly?
     </Alert>
   );
-  const renderSelector = () => (
-    <FormControl
-      variant="standard"
-      sx={{
-        minWidth: 300,
-        paddingLeft: 1,
-        paddingRight: 1,
-      }}
-      margin="dense"
-    >
-      <Select
-        id="qSelector"
-        value={props.value}
-        renderValue={(value) => {
-          if (!value) return defaultMenuItem();
-          else
-            return (
-              <Typography
-                color="primary"
-                variant="subtitle1"
-                sx={{ whiteSpace: "normal" }}
-              >
-                {getDisplayName(value)}
-              </Typography>
-            );
-        }}
-        onChange={(event) => onChange(event)}
-        label="Questionnaire"
-        displayEmpty
+  const renderSelector = () => {
+    if (!selectList.list || !selectList.list.length) return renderWarning();
+    return (
+      <FormControl
+        variant="standard"
         sx={{
-          marginTop: 0,
-          marginBottom: 0,
+          minWidth: 300,
+          paddingLeft: 1,
+          paddingRight: 1,
         }}
-        defaultValue={""}
+        margin="dense"
       >
-        {selectList.list.map((item, index) => {
-          return (
-            <MenuItem value={item.id} key={`select_q_${index}`}>
-              {item.title ? item.title : getDisplayQTitle(item.id)}
-            </MenuItem>
-          );
-        })}
-      </Select>
-    </FormControl>
-  );
+        <Select
+          id="qSelector"
+          value={props.value}
+          renderValue={(value) => {
+            if (!value) return defaultMenuItem();
+            else
+              return (
+                <Typography
+                  color="primary"
+                  variant="subtitle1"
+                  sx={{ whiteSpace: "normal" }}
+                >
+                  {getDisplayName(value)}
+                </Typography>
+              );
+          }}
+          onChange={(event) => onChange(event)}
+          label="Questionnaire"
+          displayEmpty
+          sx={{
+            marginTop: 0,
+            marginBottom: 0,
+          }}
+          defaultValue={""}
+        >
+          {selectList.list.map((item, index) => {
+            return (
+              <MenuItem value={item.id} key={`select_q_${index}`}>
+                {item.title ? item.title : getDisplayQTitle(item.id)}
+              </MenuItem>
+            );
+          })}
+        </Select>
+      </FormControl>
+    );
+  };
   useEffect(() => {
     if (selectList.loaded) return;
+    if (!client) {
+      setSelectList({
+        loaded: true,
+        list: [],
+      });
+      return;
+    }
     client
       .request(
         `Questionnaire?name:contains=${list.join(",")}&_elements=id,name,title`,
@@ -135,8 +147,15 @@ export default function QuestionnaireSelector(props) {
           loaded: true,
           list: transformedList,
         });
+      })
+      .catch((e) => {
+        setSelectList({
+          loaded: true,
+          list: [],
+        });
       });
   }, [client, list, selectList.loaded]);
+
   if (!selectList.loaded)
     return (
       <Box sx={{ padding: 2 }}>
@@ -145,8 +164,8 @@ export default function QuestionnaireSelector(props) {
     );
   return (
     <Stack direction="column" id="questionnaireSelector" sx={{ padding: 2 }}>
-      {!list.length && renderWarning()}
-      {list.length > 0 && (
+      {!hasList() && renderWarning()}
+      {hasList() && (
         <>
           {renderTitle()}
           {renderSelector()}
