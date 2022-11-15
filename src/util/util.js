@@ -31,7 +31,7 @@ export async function getInterventionLogicLib(interventionId) {
 export function getFHIRResourcePaths(patientId) {
   if (!patientId) return [];
   // const defaultList = ["CarePlan", "QuestionnaireResponse"];
-  const defaultList = ["QuestionnaireResponse", "Questionnaire"];
+  const defaultList = ["QuestionnaireResponse"];
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
   let resources = resourcesToLoad ? resourcesToLoad.split(",") : defaultList;
   defaultList.forEach((item) => {
@@ -293,44 +293,25 @@ export function gatherSummaryDataByQuestionnaireId(
   patientBundle,
   questionnaireId
 ) {
-  const questionnaires = patientBundle.entry
-    .filter((item) => {
-      return item.resource && item.resource.resourceType === "Questionnaire";
-    })
-    .map((item) => item.resource);
-  console.log("questionnaires ", questionnaires);
   return new Promise((resolve, reject) => {
     // search for matching questionnaire
-    const searchMatchingResources = () => {
+    const searchMatchingResources = async () => {
       const storageKey = `questionnaire_${questionnaireId}`;
       const storageQuestionnaire = sessionStorage.getItem(storageKey);
       if (storageQuestionnaire) return JSON.parse(storageQuestionnaire);
-      const matchedQuestionnaire = questionnaires.filter(
-        (q) =>
-          String(q.id).toLowerCase().indexOf(questionnaireId) !== -1 ||
-          String(q.name).toLowerCase().indexOf(questionnaireId) !== -1
-      );
-      if (matchedQuestionnaire)
-        sessionStorage.setItem(
-          storageKey,
-          JSON.stringify(matchedQuestionnaire)
-        );
-      return matchedQuestionnaire;
-
-      // const fhirSearchOptions = { pageLimit: 0 };
-      // const qResult = await client.request(
-      //   {
-      //     url: "Questionnaire?name:contains=" + questionnaireId,
-      //   },
-      //   fhirSearchOptions
-      // ).catch(e => {
-      //   throw new Error(e)
-      // });
-      // if (qResult) sessionStorage.setItem(storageKey, JSON.stringify(qResult));
-      // return qResult;
+      const fhirSearchOptions = { pageLimit: 0 };
+      const qResult = await client.request(
+        {
+          url: "Questionnaire?name:contains=" + questionnaireId,
+        },
+        fhirSearchOptions
+      ).catch(e => {
+        throw new Error(e)
+      });
+      if (qResult) sessionStorage.setItem(storageKey, JSON.stringify(qResult));
+      return qResult;
     };
     const gatherSummaryData = async (questionnaireJson) => {
-      //console.log("return JSON? ", questionnaireJson)
       // Define a web worker for evaluating CQL expressions
       const cqlWorker = new Worker();
       // Initialize the cql-worker
@@ -361,9 +342,6 @@ export function gatherSummaryDataByQuestionnaireId(
       // Send patient info to CQL worker to process
       sendPatientBundle(patientBundle);
 
-      // const responses = await evaluateExpression("QuestionnaireResponses");
-      // console.log("responses ", responses);
-
       // get formatted questionnaire responses
       const cqlData = await evaluateExpression("ResponsesSummary").catch(
         (e) => {
@@ -376,16 +354,20 @@ export function gatherSummaryDataByQuestionnaireId(
       const scoringData =
         cqlData && cqlData.length
           ? cqlData.filter((item) => {
-              return item && item.responses && item.date && item.score;
+              return (
+                item &&
+                item.responses &&
+                item.score &&
+                item.date
+              );
             })
           : null;
-      const chartData =
-        scoringData && scoringData.length
-          ? scoringData.map((item) => ({
-              date: item.date,
-              total: item.score,
-            }))
-          : null;
+      const chartData = scoringData && scoringData.length
+        ? scoringData.map((item) => ({
+            date: item.date,
+            total: item.score,
+          }))
+        : null;
 
       const returnResult = {
         chartConfig: chartConfig,
@@ -402,38 +384,45 @@ export function gatherSummaryDataByQuestionnaireId(
     };
 
     // find matching questionnaire & questionnaire response(s)
-    const result = searchMatchingResources();
-
-    let bundles = [];
-    result.forEach((item) => {
-      bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];
-    });
-    const arrQuestionnaires = bundles.filter(
-      (entry) =>
-        entry.resource &&
-        String(entry.resource.resourceType).toLowerCase() === "questionnaire"
-    );
-    const questionnaireJson = arrQuestionnaires.length
-      ? arrQuestionnaires[0].resource
-      : null;
-    if (!questionnaireJson) {
-      reject("No matching questionnaire found");
-      return;
-    }
-    patientBundle = {
-      ...patientBundle,
-      entry: [...patientBundle.entry, ...bundles],
-      questionnaire: questionnaireJson,
-    };
-    gatherSummaryData(questionnaireJson)
-      .then((data) => {
-        resolve(data);
+    searchMatchingResources()
+      .then((result) => {
+        let bundles = [];
+        result.forEach((item) => {
+          bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];
+        });
+        const arrQuestionnaires = bundles.filter(
+          (entry) =>
+            entry.resource &&
+            String(entry.resource.resourceType).toLowerCase() ===
+              "questionnaire"
+        );
+        const questionnaireJson = arrQuestionnaires.length
+          ? arrQuestionnaires[0].resource
+          : null;
+        if (!questionnaireJson) {
+          reject("No matching questionnaire found");
+          return;
+        }
+        patientBundle = {
+          ...patientBundle,
+          entry: [...patientBundle.entry, ...bundles],
+          questionnaire: questionnaireJson,
+        };
+        gatherSummaryData(questionnaireJson)
+          .then((data) => {
+            resolve(data);
+          })
+          .catch((e) => {
+            reject(
+              "Error occurred gathering summary data.  See console for detail."
+            );
+            console.log("Error occurred gathering summary data: ", e);
+          });
       })
       .catch((e) => {
-        reject(
-          "Error occurred gathering summary data.  See console for detail."
-        );
-        console.log("Error occurred gathering summary data: ", e);
+        reject("Error occurred retrieving matching resources");
+        console.log("Error occurred retrieving matching resources: ", e);
       });
   }); // end promise
+
 }
