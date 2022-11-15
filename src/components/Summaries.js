@@ -367,7 +367,7 @@ export default function Summaries() {
           }}
         >
           <section>
-            <PatientInfo></PatientInfo> 
+            <PatientInfo patient={patient}></PatientInfo> 
             {error && (
               <Box sx={{ marginTop: 1 }}>
                 <ErrorComponent message={error}></ErrorComponent>

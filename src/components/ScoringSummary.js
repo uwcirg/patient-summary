@@ -1,5 +1,6 @@
 import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
+import Alert from "@mui/material/Alert";
 import Link from "@mui/material/Link";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -18,6 +19,10 @@ import { scrollToAnchor } from "../util/util";
 
 export default function ScoringSummary(props) {
   const theme = useTheme();
+  const linkColor =
+    theme && theme.palette && theme.palette.link && theme.palette.link.main
+      ? theme.palette.link.main
+      : "blue";
   const { summaryData } = props;
   const hasList = () =>
     summaryData &&
@@ -105,13 +110,20 @@ export default function ScoringSummary(props) {
 
   const scoreList = getResponsesContainingScore();
 
-  const renderSummary = () =>
-    hasList() && (
+  const renderSummary = () => {
+    if (!hasList())
+      return (
+        <Alert severity="warning" sx={{ marginTop: 1, marginBottom: 1 }}>
+          No summary available
+        </Alert>
+      );
+    return (
       <TableContainer sx={{ padding: 2, paddingTop: 0, marginBottom: 1 }}>
         <Table
           sx={{ border: "1px solid #ececec" }}
           size="small"
           aria-label="scoring summary table"
+          className="scoring-summary-table"
         >
           <TableHead>
             <TableRow>
@@ -131,7 +143,7 @@ export default function ScoringSummary(props) {
                   <Link
                     onClick={(e) => handleClick(e, key)}
                     underline="none"
-                    sx={{ color: theme.palette.link.main, cursor: "pointer" }}
+                    sx={{ color: linkColor, cursor: "pointer" }}
                   >
                     {getInstrumentShortName(key)}
                   </Link>
@@ -154,6 +166,7 @@ export default function ScoringSummary(props) {
         </Table>
       </TableContainer>
     );
+  };
 
   return (
     <Paper sx={{ minWidth: "55%" }}>

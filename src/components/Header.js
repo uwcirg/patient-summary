@@ -1,4 +1,4 @@
-//import { useContext } from "react";
+import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
@@ -8,8 +8,9 @@ import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import { getEnv, imageOK } from "../util/util";
 
-export default function Header() {
+export default function Header(props) {
   const theme = useTheme();
+  const {returnURL} = props;
   const handleImageLoaded = (e) => {
     if (!e.target) {
       return false;
@@ -40,7 +41,7 @@ export default function Header() {
     ></img>
   );
   const renderReturnButton = () => {
-    const returnURL = getEnv("REACT_APP_DASHBOARD_URL");
+    // const returnURL = getEnv("REACT_APP_DASHBOARD_URL");
     if (!returnURL) return null;
     return (
       <Box sx={{ flex: 1, textAlign: "right", marginTop: 1, marginBotton: 1 }}>
@@ -48,6 +49,7 @@ export default function Header() {
           color="primary"
           href={returnURL + "/clear_session"}
           variant="contained"
+          className="btn-return-url"
         >
           Patient List
         </Button>
@@ -80,3 +82,7 @@ export default function Header() {
     </AppBar>
   );
 }
+
+Header.propTypes = {
+  returnURL: PropTypes.string,
+};

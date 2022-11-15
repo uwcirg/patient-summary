@@ -9,7 +9,7 @@ import FhirClientProvider from "../context/FhirClientProvider";
 import Header from "./Header";
 import Summaries from "./Summaries";
 import TimeoutModal from "./TimeoutModal";
-import {injectFaviconByProject, fetchEnvData} from "../util/util";
+import {injectFaviconByProject, fetchEnvData, getEnv} from "../util/util";
 import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
 
@@ -35,7 +35,7 @@ export default function App() {
         <QueryClientProvider client={queryClient}>
           <FhirClientProvider>
             <CssBaseline />
-            <Header />
+            <Header returnURL={getEnv("REACT_APP_DASHBOARD_URL")} />
             <Summaries />
             <TimeoutModal />
             {/* add other components as needed */}

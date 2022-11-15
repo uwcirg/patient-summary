@@ -31,8 +31,9 @@
   "scripts": {
     "start": "rescripts start",
     "build": "rescripts build",
+    "test": "rescripts test --testPathIgnorePatterns=./src/__tests__/cql --watchAll=false",
     "test:watch": "rescripts test --testPathIgnorePatterns=./src/__tests__/cql",
-    "test": "./node_modules/.bin/mocha ./src/__tests__/cql/*.js --recursive",
+    "cql-test": "./node_modules/.bin/mocha ./src/__tests__/cql/*.js --recursive",
     "eject": "rescripts eject"
   },
   "eslintConfig": {
@@ -54,6 +55,7 @@
     ]
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.20.2",
     "@rescripts/cli": "0.0.16",
     "@rescripts/utilities": "0.0.8",
     "cql-execution": "^2.4.1",
@@ -61,5 +63,19 @@
     "mocha": "^10.0.0",
     "node-fetch": "^2.6.7",
     "worker-loader": "^3.0.8"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.[t|j]sx?$": "babel-jest"
+    },
+    "transformIgnorePatterns": [
+      "cql-worker/"
+    ],
+    "moduleNameMapper": {
+      "^cql*": "<rootDir>/src/__tests__/mockfiles/Worker.js"
+    },
+    "testMatch": [
+      "<rootDir>/src/__tests__/components/*.js"
+    ]
   }
 }

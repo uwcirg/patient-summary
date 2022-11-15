@@ -1,20 +1,23 @@
 import dayjs from "dayjs";
+import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
-import { useContext } from "react";
 import PersonIcon from "@mui/icons-material/Person";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
-import { FhirClientContext } from "../context/FhirClientContext";
 
-export default function PatientInfo() {
+export default function PatientInfo(props) {
   const theme = useTheme();
-  const { patient } = useContext(FhirClientContext);
+  const mutecColor =
+    theme && theme.palette.muted && theme.palette.muted.main
+      ? theme.palette.muted.main
+      : "#777";
+  const { patient } = props;
   const hasPatientName = () => {
     return patient && patient.name && patient.name.length;
   };
   const getPatientName = () => {
-    if (!hasPatientName()) return "";
+    if (!hasPatientName()) return "Patient name unknown";
     const familyName = patient.name[0].family ? patient.name[0].family : "";
     const givenName =
       patient.name[0].given && patient.name[0].given.length
@@ -40,7 +43,7 @@ export default function PatientInfo() {
   // };
   const renderDOB = () => (
     <Box>
-      <Typography component="span" sx={{ color: theme.palette.muted.main }}>
+      <Typography component="span" sx={{ color: mutecColor }}>
         dob:{" "}
       </Typography>
       <Typography component="span">{getPatientDob()}</Typography>
@@ -48,10 +51,15 @@ export default function PatientInfo() {
   );
   const renderAge = () => (
     <Box>
-      <Typography component="span" sx={{ color: theme.palette.muted.main }}>
+      <Typography
+        component="span"
+        sx={{
+          color: mutecColor,
+        }}
+      >
         age:{" "}
       </Typography>
-      <Typography component="span">{getPatientAge()}</Typography>
+      <Typography component="span" className="patient-age">{getPatientAge()}</Typography>
     </Box>
   );
   // const renderGender = () => (
@@ -64,15 +72,16 @@ export default function PatientInfo() {
   //     </Typography>
   //   </Box>
   // );
+  if (!patient) return null;
   return (
-    <Stack spacing={3} direction="row">
+    <Stack spacing={3} direction="row" className="patientinfo-container">
       <Stack spacing={0.5} direction="row" alignItems="center">
         <PersonIcon fontSize="large" color="primary"></PersonIcon>
-        <Typography component="span" variant="h6" color="primary">
+        <Typography component="span" variant="h6" color="primary" className="patient-name">
           {getPatientName()}
         </Typography>
       </Stack>
-      <Stack spacing={1} direction="row" alignItems="center">
+      <Stack spacing={1} direction="row" alignItems="center" className="patient-dob-container">
         {renderDOB()}
         {renderAge()}
         {/* {renderGender()} */}
@@ -80,3 +89,7 @@ export default function PatientInfo() {
     </Stack>
   );
 }
+
+PatientInfo.propTypes = {
+  patient: PropTypes.object,
+};
