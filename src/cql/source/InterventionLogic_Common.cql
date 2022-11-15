@@ -17,16 +17,18 @@ define function DateTimeText(d FHIR.dateTime):
 /*
  * retrieve questionnaire responses matched to the target questionnaire
  * @param responses as FHIR.QuestionnaireResponse
+ * @param questionnaire as FHIR.Questionnaire to match against
  */
-define function MatchedQuestionnaireByReponses(responses FHIR.QuestionnaireResponse):
-  ([Questionnaire] Q
+//TODO this returns an undefine object within the return array, e.g. [undefined, Array(1)], not sure why yet, need to diagnose
+define function MatchedReponsesByQuestionnaire(responses List<FHIR.QuestionnaireResponse>, currentQuestionnaire FHIR.Questionnaire):
+  ((responses) Q
     where 
     (
       (
-        PositionOf(Lower(Q.name), Lower(responses.questionnaire.value)) != -1 or
-        PositionOf(Lower(Q.id), Lower(responses.questionnaire.value)) != -1
+        PositionOf(Lower(currentQuestionnaire.name), Lower(Q.questionnaire.value)) != -1 or
+        PositionOf(Lower(currentQuestionnaire.id), Lower(Q.questionnaire.value)) != -1
       ) and 
-      responses.status.value = 'completed')
+      Q.status.value = 'completed')
   )
 
 

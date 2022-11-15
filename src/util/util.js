@@ -19,7 +19,8 @@ export async function getInterventionLogicLib(interventionId) {
       elmJson = await import(`../cql/${fileName}`).then(
         (module) => module.default
       );
-      if (elmJson) sessionStorage.setItem(`lib_${fileName}`, JSON.stringify(elmJson));
+      if (elmJson)
+        sessionStorage.setItem(`lib_${fileName}`, JSON.stringify(elmJson));
     } catch (e) {
       throw new Error("Error loading Cql ELM library " + e);
     }
@@ -30,7 +31,7 @@ export async function getInterventionLogicLib(interventionId) {
 export function getFHIRResourcePaths(patientId) {
   if (!patientId) return [];
   // const defaultList = ["CarePlan", "QuestionnaireResponse"];
-  const defaultList = ["QuestionnaireResponse"];
+  const defaultList = ["QuestionnaireResponse", "Questionnaire"];
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
   let resources = resourcesToLoad ? resourcesToLoad.split(",") : defaultList;
   defaultList.forEach((item) => {
@@ -133,7 +134,8 @@ export function getChartConfig(questionnaire) {
 
 export function getQuestionnaireList() {
   const configList = getEnv("REACT_APP_QUESTIONNAIRES");
-  if (configList) return configList.split(",").map((item) => item.replace(/_/g, "-").trim());
+  if (configList)
+    return configList.split(",").map((item) => item.replace(/_/g, "-").trim());
   return [];
 }
 
@@ -291,25 +293,44 @@ export function gatherSummaryDataByQuestionnaireId(
   patientBundle,
   questionnaireId
 ) {
+  const questionnaires = patientBundle.entry
+    .filter((item) => {
+      return item.resource && item.resource.resourceType === "Questionnaire";
+    })
+    .map((item) => item.resource);
+  console.log("questionnaires ", questionnaires);
   return new Promise((resolve, reject) => {
     // search for matching questionnaire
-    const searchMatchingResources = async () => {
+    const searchMatchingResources = () => {
       const storageKey = `questionnaire_${questionnaireId}`;
       const storageQuestionnaire = sessionStorage.getItem(storageKey);
       if (storageQuestionnaire) return JSON.parse(storageQuestionnaire);
-      const fhirSearchOptions = { pageLimit: 0 };
-      const qResult = await client.request(
-        {
-          url: "Questionnaire?name:contains=" + questionnaireId,
-        },
-        fhirSearchOptions
-      ).catch(e => {
-        throw new Error(e)
-      });
-      if (qResult) sessionStorage.setItem(storageKey, JSON.stringify(qResult));
-      return qResult;
+      const matchedQuestionnaire = questionnaires.filter(
+        (q) =>
+          String(q.id).toLowerCase().indexOf(questionnaireId) !== -1 ||
+          String(q.name).toLowerCase().indexOf(questionnaireId) !== -1
+      );
+      if (matchedQuestionnaire)
+        sessionStorage.setItem(
+          storageKey,
+          JSON.stringify(matchedQuestionnaire)
+        );
+      return matchedQuestionnaire;
+
+      // const fhirSearchOptions = { pageLimit: 0 };
+      // const qResult = await client.request(
+      //   {
+      //     url: "Questionnaire?name:contains=" + questionnaireId,
+      //   },
+      //   fhirSearchOptions
+      // ).catch(e => {
+      //   throw new Error(e)
+      // });
+      // if (qResult) sessionStorage.setItem(storageKey, JSON.stringify(qResult));
+      // return qResult;
     };
     const gatherSummaryData = async (questionnaireJson) => {
+      //console.log("return JSON? ", questionnaireJson)
       // Define a web worker for evaluating CQL expressions
       const cqlWorker = new Worker();
       // Initialize the cql-worker
@@ -340,6 +361,9 @@ export function gatherSummaryDataByQuestionnaireId(
       // Send patient info to CQL worker to process
       sendPatientBundle(patientBundle);
 
+      // const responses = await evaluateExpression("QuestionnaireResponses");
+      // console.log("responses ", responses);
+
       // get formatted questionnaire responses
       const cqlData = await evaluateExpression("ResponsesSummary").catch(
         (e) => {
@@ -352,18 +376,16 @@ export function gatherSummaryDataByQuestionnaireId(
       const scoringData =
         cqlData && cqlData.length
           ? cqlData.filter((item) => {
-              return (
-                item.responses &&
-                item.score
-              );
+              return item && item.responses && item.date && item.score;
             })
           : null;
-      const chartData = scoringData && scoringData.length
-        ? scoringData.map((item) => ({
-            date: item.date,
-            total: item.score,
-          }))
-        : null;
+      const chartData =
+        scoringData && scoringData.length
+          ? scoringData.map((item) => ({
+              date: item.date,
+              total: item.score,
+            }))
+          : null;
 
       const returnResult = {
         chartConfig: chartConfig,
@@ -380,44 +402,38 @@ export function gatherSummaryDataByQuestionnaireId(
     };
 
     // find matching questionnaire & questionnaire response(s)
-    searchMatchingResources()
-      .then((result) => {
-        let bundles = [];
-        result.forEach((item) => {
-          bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];
-        });
-        const arrQuestionnaires = bundles.filter(
-          (entry) =>
-            entry.resource &&
-            String(entry.resource.resourceType).toLowerCase() ===
-              "questionnaire"
-        );
-        const questionnaireJson = arrQuestionnaires.length
-          ? arrQuestionnaires[0].resource
-          : null;
-        if (!questionnaireJson) {
-          reject("No matching questionnaire found");
-          return;
-        }
-        patientBundle = {
-          ...patientBundle,
-          entry: [...patientBundle.entry, ...bundles],
-          questionnaire: questionnaireJson,
-        };
-        gatherSummaryData(questionnaireJson)
-          .then((data) => {
-            resolve(data);
-          })
-          .catch((e) => {
-            reject(
-              "Error occurred gathering summary data.  See console for detail."
-            );
-            console.log("Error occurred gathering summary data: ", e);
-          });
+    const result = searchMatchingResources();
+
+    let bundles = [];
+    result.forEach((item) => {
+      bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];
+    });
+    const arrQuestionnaires = bundles.filter(
+      (entry) =>
+        entry.resource &&
+        String(entry.resource.resourceType).toLowerCase() === "questionnaire"
+    );
+    const questionnaireJson = arrQuestionnaires.length
+      ? arrQuestionnaires[0].resource
+      : null;
+    if (!questionnaireJson) {
+      reject("No matching questionnaire found");
+      return;
+    }
+    patientBundle = {
+      ...patientBundle,
+      entry: [...patientBundle.entry, ...bundles],
+      questionnaire: questionnaireJson,
+    };
+    gatherSummaryData(questionnaireJson)
+      .then((data) => {
+        resolve(data);
       })
       .catch((e) => {
-        reject("Error occurred retrieving matching resources");
-        console.log("Error occurred retrieving matching resources: ", e);
+        reject(
+          "Error occurred gathering summary data.  See console for detail."
+        );
+        console.log("Error occurred gathering summary data: ", e);
       });
   }); // end promise
 }

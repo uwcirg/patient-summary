@@ -265,35 +265,17 @@
             "context" : "Patient",
             "accessLevel" : "Public",
             "expression" : {
-               "type" : "Query",
-               "source" : [ {
-                  "alias" : "QR",
-                  "expression" : {
-                     "dataType" : "{http://hl7.org/fhir}QuestionnaireResponse",
-                     "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
-                     "type" : "Retrieve"
-                  }
-               } ],
-               "relationship" : [ ],
-               "where" : {
-                  "type" : "Greater",
-                  "operand" : [ {
-                     "type" : "Length",
-                     "operand" : {
-                        "name" : "MatchedQuestionnaireByReponses",
-                        "libraryName" : "LogicHelpers",
-                        "type" : "FunctionRef",
-                        "operand" : [ {
-                           "name" : "QR",
-                           "type" : "AliasRef"
-                        } ]
-                     }
-                  }, {
-                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                     "value" : "0",
-                     "type" : "Literal"
-                  } ]
-               }
+               "name" : "MatchedReponsesByQuestionnaire",
+               "libraryName" : "LogicHelpers",
+               "type" : "FunctionRef",
+               "operand" : [ {
+                  "dataType" : "{http://hl7.org/fhir}QuestionnaireResponse",
+                  "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
+                  "type" : "Retrieve"
+               }, {
+                  "name" : "CurrentQuestionnaire",
+                  "type" : "ExpressionRef"
+               } ]
             }
          }, {
             "name" : "ResponsesSummary",

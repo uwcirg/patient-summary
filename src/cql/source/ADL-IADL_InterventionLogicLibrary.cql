@@ -50,9 +50,7 @@ define QuestionnaireItems:
 
 // Load Questionnaire responses
 define QuestionnaireResponses:
-  ([QuestionnaireResponse] QR
-    where Length(LogicHelpers.MatchedQuestionnaireByReponses(QR)) > 0
-  )
+  LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], CurrentQuestionnaire)
 
 define ResponsesSummary:
   (QuestionnaireResponses) I

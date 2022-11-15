@@ -87,6 +87,7 @@ export default function Summaries() {
         }
         if (summaryData.loadComplete) return;
         let count = 0;
+        console.log('patient bundle ', patientBundle.current)
         const requests = questionnaireList.map((qid) =>
           (async () => {
             let error = "";

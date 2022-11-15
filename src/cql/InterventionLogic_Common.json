@@ -54,7 +54,7 @@
                }
             } ]
          }, {
-            "name" : "MatchedQuestionnaireByReponses",
+            "name" : "MatchedReponsesByQuestionnaire",
             "context" : "Patient",
             "accessLevel" : "Public",
             "type" : "FunctionDef",
@@ -63,9 +63,8 @@
                "source" : [ {
                   "alias" : "Q",
                   "expression" : {
-                     "dataType" : "{http://hl7.org/fhir}Questionnaire",
-                     "templateId" : "http://hl7.org/fhir/StructureDefinition/Questionnaire",
-                     "type" : "Retrieve"
+                     "name" : "responses",
+                     "type" : "OperandRef"
                   }
                } ],
                "relationship" : [ ],
@@ -87,8 +86,11 @@
                                     "type" : "FunctionRef",
                                     "operand" : [ {
                                        "path" : "name",
-                                       "scope" : "Q",
-                                       "type" : "Property"
+                                       "type" : "Property",
+                                       "source" : {
+                                          "name" : "currentQuestionnaire",
+                                          "type" : "OperandRef"
+                                       }
                                     } ]
                                  }
                               },
@@ -99,11 +101,8 @@
                                     "type" : "Property",
                                     "source" : {
                                        "path" : "questionnaire",
-                                       "type" : "Property",
-                                       "source" : {
-                                          "name" : "responses",
-                                          "type" : "OperandRef"
-                                       }
+                                       "scope" : "Q",
+                                       "type" : "Property"
                                     }
                                  }
                               }
@@ -130,8 +129,11 @@
                                     "type" : "FunctionRef",
                                     "operand" : [ {
                                        "path" : "id",
-                                       "scope" : "Q",
-                                       "type" : "Property"
+                                       "type" : "Property",
+                                       "source" : {
+                                          "name" : "currentQuestionnaire",
+                                          "type" : "OperandRef"
+                                       }
                                     } ]
                                  }
                               },
@@ -142,11 +144,8 @@
                                     "type" : "Property",
                                     "source" : {
                                        "path" : "questionnaire",
-                                       "type" : "Property",
-                                       "source" : {
-                                          "name" : "responses",
-                                          "type" : "OperandRef"
-                                       }
+                                       "scope" : "Q",
+                                       "type" : "Property"
                                     }
                                  }
                               }
@@ -167,11 +166,8 @@
                         "type" : "Property",
                         "source" : {
                            "path" : "status",
-                           "type" : "Property",
-                           "source" : {
-                              "name" : "responses",
-                              "type" : "OperandRef"
-                           }
+                           "scope" : "Q",
+                           "type" : "Property"
                         }
                      }, {
                         "valueType" : "{urn:hl7-org:elm-types:r1}String",
@@ -184,7 +180,16 @@
             "operand" : [ {
                "name" : "responses",
                "operandTypeSpecifier" : {
-                  "name" : "{http://hl7.org/fhir}QuestionnaireResponse",
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}QuestionnaireResponse",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               }
+            }, {
+               "name" : "currentQuestionnaire",
+               "operandTypeSpecifier" : {
+                  "name" : "{http://hl7.org/fhir}Questionnaire",
                   "type" : "NamedTypeSpecifier"
                }
             } ]

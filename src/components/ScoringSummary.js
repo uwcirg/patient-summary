@@ -48,12 +48,14 @@ export default function ScoringSummary(props) {
     const responses = getSortedResponses(rdata);
     if (!responses || !responses.length || responses.length === 1)
       return parseInt(null);
+    if (!responses[1].date) return parseInt(null);
     return parseInt(responses[1].score);
   };
 
   const getCurrentScoreByInstrument = (rdata) => {
     const sortedResponses = getSortedResponses(rdata);
     if (!sortedResponses || !sortedResponses.length) return parseInt(null);
+    if (!sortedResponses[0].date) return parseInt(null);
     return parseInt(sortedResponses[0].score);
   };
   const getDisplayIcon = (id, rdata) => {
