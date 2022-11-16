@@ -1,10 +1,19 @@
 import * as React from "react";
 import PropTypes from "prop-types";
+import { useTheme } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
 import MaterialTable from "@material-table/core";
 import { getCorrectedISODate } from "../util/util";
 
 export default function MedicalHistory(props) {
+  const theme = useTheme();
+  const bgColor =
+    theme &&
+    theme.palette &&
+    theme.palette.lightest &&
+    theme.palette.lightest.main
+      ? theme.palette.lightest.main
+      : "#FFF";
   const { data } = props;
   const getData = (data) => {
     if (!data) return null;
@@ -54,6 +63,9 @@ export default function MedicalHistory(props) {
         showTitle: false,
         toolbar: false,
         padding: "dense",
+        headerStyle: {
+          backgroundColor: bgColor
+        }
       }}
     ></MaterialTable>
   );

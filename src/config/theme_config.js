@@ -4,6 +4,9 @@ import { getEnv } from "../util/util";
 export const themes = {
   default: createTheme({
     palette: {
+      lightest: {
+        main: "#FFF"
+      },
       lighter: {
         main: teal[50],
       },
@@ -34,6 +37,9 @@ export const themes = {
   }),
   dcw: createTheme({
     palette: {
+      lightest: {
+        main: "#f4f1f9"
+      },
       lighter: {
         main: deepPurple[50],
       },

@@ -19,6 +19,13 @@ import { scrollToAnchor } from "../util/util";
 
 export default function ScoringSummary(props) {
   const theme = useTheme();
+  const bgColor =
+    theme &&
+    theme.palette &&
+    theme.palette.lightest &&
+    theme.palette.lightest.main
+      ? theme.palette.lightest.main
+      : "#FFF";
   const linkColor =
     theme && theme.palette && theme.palette.link && theme.palette.link.main
       ? theme.palette.link.main
@@ -128,12 +135,12 @@ export default function ScoringSummary(props) {
           className="scoring-summary-table"
         >
           <TableHead>
-            <TableRow>
+            <TableRow sx={{ backgroundColor: bgColor }}>
               <TableCell size="small"></TableCell>
-              <TableCell variant="body" size="small">
+              <TableCell variant="head" size="small">
                 Score
               </TableCell>
-              <TableCell variant="body" size="small">
+              <TableCell variant="head" size="small">
                 Compared to Last
               </TableCell>
             </TableRow>
