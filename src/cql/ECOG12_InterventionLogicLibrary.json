@@ -1,0 +1,711 @@
+{
+   "library" : {
+      "annotation" : [ {
+         "translatorOptions" : "",
+         "type" : "CqlToElmInfo"
+      } ],
+      "identifier" : {
+         "id" : "ECOG12_InterventionLogicLibrary",
+         "version" : "1.0.0"
+      },
+      "schemaIdentifier" : {
+         "id" : "urn:hl7-org:elm",
+         "version" : "r1"
+      },
+      "usings" : {
+         "def" : [ {
+            "localIdentifier" : "System",
+            "uri" : "urn:hl7-org:elm-types:r1"
+         }, {
+            "localIdentifier" : "FHIR",
+            "uri" : "http://hl7.org/fhir",
+            "version" : "4.0.1"
+         } ]
+      },
+      "includes" : {
+         "def" : [ {
+            "localIdentifier" : "FHIRHelpers",
+            "path" : "FHIRHelpers",
+            "version" : "4.0.1"
+         }, {
+            "localIdentifier" : "LogicHelpers",
+            "path" : "InterventionLogic_Common",
+            "version" : "1.0.0"
+         } ]
+      },
+      "parameters" : {
+         "def" : [ {
+            "name" : "QuestionnaireName",
+            "accessLevel" : "Public",
+            "default" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "ecog12",
+               "type" : "Literal"
+            }
+         }, {
+            "name" : "QuestionnaireURL",
+            "accessLevel" : "Public",
+            "default" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "http://www.cdc.gov/ncbddd/fasd/ecog12",
+               "type" : "Literal"
+            }
+         }, {
+            "name" : "ScoringQuestionId",
+            "accessLevel" : "Public",
+            "default" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "ecog12-total-score",
+               "type" : "Literal"
+            }
+         } ]
+      },
+      "contexts" : {
+         "def" : [ {
+            "name" : "Patient"
+         } ]
+      },
+      "statements" : {
+         "def" : [ {
+            "name" : "Patient",
+            "context" : "Patient",
+            "expression" : {
+               "type" : "SingletonFrom",
+               "operand" : {
+                  "dataType" : "{http://hl7.org/fhir}Patient",
+                  "templateId" : "http://hl7.org/fhir/StructureDefinition/Patient",
+                  "type" : "Retrieve"
+               }
+            }
+         }, {
+            "name" : "question1LinkId",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "/89286-9/89146-5",
+               "type" : "Literal"
+            }
+         }, {
+            "name" : "question2LinkId",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "/89286-9/89149-9",
+               "type" : "Literal"
+            }
+         }, {
+            "name" : "question3LinkId",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "/89287-7/89172-1",
+               "type" : "Literal"
+            }
+         }, {
+            "name" : "question4LinkId",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "/89287-7/89138-2",
+               "type" : "Literal"
+            }
+         }, {
+            "name" : "question5LinkId",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "/89288-5/89154-9",
+               "type" : "Literal"
+            }
+         }, {
+            "name" : "question6LinkId",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "/89288-5/89165-5",
+               "type" : "Literal"
+            }
+         }, {
+            "name" : "question7LinkId",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "/89289-3/89143-2",
+               "type" : "Literal"
+            }
+         }, {
+            "name" : "question8LinkId",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "/89289-3/89140-8",
+               "type" : "Literal"
+            }
+         }, {
+            "name" : "question9LinkId",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "/89290-1/89158-0",
+               "type" : "Literal"
+            }
+         }, {
+            "name" : "question10LinkId",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "/89290-1/89173-9",
+               "type" : "Literal"
+            }
+         }, {
+            "name" : "question11LinkId",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "/89285-1/89141-6",
+               "type" : "Literal"
+            }
+         }, {
+            "name" : "question12LinkId",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "/89285-1/89171-3",
+               "type" : "Literal"
+            }
+         }, {
+            "name" : "Questionnaires",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "name" : "GetMatchQuestionnaire",
+               "libraryName" : "LogicHelpers",
+               "type" : "FunctionRef",
+               "operand" : [ {
+                  "name" : "QuestionnaireName",
+                  "type" : "ParameterRef"
+               }, {
+                  "name" : "QuestionnaireURL",
+                  "type" : "ParameterRef"
+               } ]
+            }
+         }, {
+            "name" : "CurrentQuestionnaire",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "First",
+               "source" : {
+                  "name" : "Questionnaires",
+                  "type" : "ExpressionRef"
+               }
+            }
+         }, {
+            "name" : "QuestionnaireItems",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "Q",
+                  "expression" : {
+                     "name" : "CurrentQuestionnaire",
+                     "type" : "ExpressionRef"
+                  }
+               } ],
+               "relationship" : [ ],
+               "return" : {
+                  "expression" : {
+                     "path" : "item",
+                     "scope" : "Q",
+                     "type" : "Property"
+                  }
+               }
+            }
+         }, {
+            "name" : "QuestionnaireResponses",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "name" : "MatchedReponsesByQuestionnaire",
+               "libraryName" : "LogicHelpers",
+               "type" : "FunctionRef",
+               "operand" : [ {
+                  "dataType" : "{http://hl7.org/fhir}QuestionnaireResponse",
+                  "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
+                  "type" : "Retrieve"
+               }, {
+                  "name" : "CurrentQuestionnaire",
+                  "type" : "ExpressionRef"
+               } ]
+            }
+         }, {
+            "name" : "ResponsesSummary",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "I",
+                  "expression" : {
+                     "name" : "QuestionnaireResponses",
+                     "type" : "ExpressionRef"
+                  }
+               } ],
+               "relationship" : [ ],
+               "return" : {
+                  "expression" : {
+                     "type" : "Tuple",
+                     "element" : [ {
+                        "name" : "date",
+                        "value" : {
+                           "name" : "DateTimeText",
+                           "libraryName" : "LogicHelpers",
+                           "type" : "FunctionRef",
+                           "operand" : [ {
+                              "path" : "authored",
+                              "scope" : "I",
+                              "type" : "Property"
+                           } ]
+                        }
+                     }, {
+                        "name" : "responses",
+                        "value" : {
+                           "name" : "FormattedResponses",
+                           "libraryName" : "LogicHelpers",
+                           "type" : "FunctionRef",
+                           "operand" : [ {
+                              "name" : "QuestionnaireItems",
+                              "type" : "ExpressionRef"
+                           }, {
+                              "path" : "item",
+                              "scope" : "I",
+                              "type" : "Property"
+                           }, {
+                              "name" : "ScoringQuestionId",
+                              "type" : "ParameterRef"
+                           } ]
+                        }
+                     }, {
+                        "name" : "score",
+                        "value" : {
+                           "type" : "Add",
+                           "operand" : [ {
+                              "type" : "Add",
+                              "operand" : [ {
+                                 "type" : "Add",
+                                 "operand" : [ {
+                                    "type" : "Add",
+                                    "operand" : [ {
+                                       "type" : "Add",
+                                       "operand" : [ {
+                                          "type" : "Add",
+                                          "operand" : [ {
+                                             "type" : "Add",
+                                             "operand" : [ {
+                                                "type" : "Add",
+                                                "operand" : [ {
+                                                   "type" : "Add",
+                                                   "operand" : [ {
+                                                      "type" : "Add",
+                                                      "operand" : [ {
+                                                         "type" : "Add",
+                                                         "operand" : [ {
+                                                            "type" : "Coalesce",
+                                                            "operand" : [ {
+                                                               "type" : "First",
+                                                               "source" : {
+                                                                  "name" : "getScoringByResponseItem",
+                                                                  "libraryName" : "LogicHelpers",
+                                                                  "type" : "FunctionRef",
+                                                                  "operand" : [ {
+                                                                     "name" : "CurrentQuestionnaire",
+                                                                     "type" : "ExpressionRef"
+                                                                  }, {
+                                                                     "path" : "item",
+                                                                     "scope" : "I",
+                                                                     "type" : "Property"
+                                                                  }, {
+                                                                     "name" : "question1LinkId",
+                                                                     "type" : "ExpressionRef"
+                                                                  } ]
+                                                               }
+                                                            }, {
+                                                               "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                               "value" : "0",
+                                                               "type" : "Literal"
+                                                            } ]
+                                                         }, {
+                                                            "type" : "Coalesce",
+                                                            "operand" : [ {
+                                                               "type" : "First",
+                                                               "source" : {
+                                                                  "name" : "getScoringByResponseItem",
+                                                                  "libraryName" : "LogicHelpers",
+                                                                  "type" : "FunctionRef",
+                                                                  "operand" : [ {
+                                                                     "name" : "CurrentQuestionnaire",
+                                                                     "type" : "ExpressionRef"
+                                                                  }, {
+                                                                     "path" : "item",
+                                                                     "scope" : "I",
+                                                                     "type" : "Property"
+                                                                  }, {
+                                                                     "name" : "question2LinkId",
+                                                                     "type" : "ExpressionRef"
+                                                                  } ]
+                                                               }
+                                                            }, {
+                                                               "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                               "value" : "0",
+                                                               "type" : "Literal"
+                                                            } ]
+                                                         } ]
+                                                      }, {
+                                                         "type" : "Coalesce",
+                                                         "operand" : [ {
+                                                            "type" : "First",
+                                                            "source" : {
+                                                               "name" : "getScoringByResponseItem",
+                                                               "libraryName" : "LogicHelpers",
+                                                               "type" : "FunctionRef",
+                                                               "operand" : [ {
+                                                                  "name" : "CurrentQuestionnaire",
+                                                                  "type" : "ExpressionRef"
+                                                               }, {
+                                                                  "path" : "item",
+                                                                  "scope" : "I",
+                                                                  "type" : "Property"
+                                                               }, {
+                                                                  "name" : "question3LinkId",
+                                                                  "type" : "ExpressionRef"
+                                                               } ]
+                                                            }
+                                                         }, {
+                                                            "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                            "value" : "0",
+                                                            "type" : "Literal"
+                                                         } ]
+                                                      } ]
+                                                   }, {
+                                                      "type" : "Coalesce",
+                                                      "operand" : [ {
+                                                         "type" : "First",
+                                                         "source" : {
+                                                            "name" : "getScoringByResponseItem",
+                                                            "libraryName" : "LogicHelpers",
+                                                            "type" : "FunctionRef",
+                                                            "operand" : [ {
+                                                               "name" : "CurrentQuestionnaire",
+                                                               "type" : "ExpressionRef"
+                                                            }, {
+                                                               "path" : "item",
+                                                               "scope" : "I",
+                                                               "type" : "Property"
+                                                            }, {
+                                                               "name" : "question4LinkId",
+                                                               "type" : "ExpressionRef"
+                                                            } ]
+                                                         }
+                                                      }, {
+                                                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                         "value" : "0",
+                                                         "type" : "Literal"
+                                                      } ]
+                                                   } ]
+                                                }, {
+                                                   "type" : "Coalesce",
+                                                   "operand" : [ {
+                                                      "type" : "First",
+                                                      "source" : {
+                                                         "name" : "getScoringByResponseItem",
+                                                         "libraryName" : "LogicHelpers",
+                                                         "type" : "FunctionRef",
+                                                         "operand" : [ {
+                                                            "name" : "CurrentQuestionnaire",
+                                                            "type" : "ExpressionRef"
+                                                         }, {
+                                                            "path" : "item",
+                                                            "scope" : "I",
+                                                            "type" : "Property"
+                                                         }, {
+                                                            "name" : "question5LinkId",
+                                                            "type" : "ExpressionRef"
+                                                         } ]
+                                                      }
+                                                   }, {
+                                                      "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                      "value" : "0",
+                                                      "type" : "Literal"
+                                                   } ]
+                                                } ]
+                                             }, {
+                                                "type" : "Coalesce",
+                                                "operand" : [ {
+                                                   "type" : "First",
+                                                   "source" : {
+                                                      "name" : "getScoringByResponseItem",
+                                                      "libraryName" : "LogicHelpers",
+                                                      "type" : "FunctionRef",
+                                                      "operand" : [ {
+                                                         "name" : "CurrentQuestionnaire",
+                                                         "type" : "ExpressionRef"
+                                                      }, {
+                                                         "path" : "item",
+                                                         "scope" : "I",
+                                                         "type" : "Property"
+                                                      }, {
+                                                         "name" : "question6LinkId",
+                                                         "type" : "ExpressionRef"
+                                                      } ]
+                                                   }
+                                                }, {
+                                                   "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                   "value" : "0",
+                                                   "type" : "Literal"
+                                                } ]
+                                             } ]
+                                          }, {
+                                             "type" : "Coalesce",
+                                             "operand" : [ {
+                                                "type" : "First",
+                                                "source" : {
+                                                   "name" : "getScoringByResponseItem",
+                                                   "libraryName" : "LogicHelpers",
+                                                   "type" : "FunctionRef",
+                                                   "operand" : [ {
+                                                      "name" : "CurrentQuestionnaire",
+                                                      "type" : "ExpressionRef"
+                                                   }, {
+                                                      "path" : "item",
+                                                      "scope" : "I",
+                                                      "type" : "Property"
+                                                   }, {
+                                                      "name" : "question7LinkId",
+                                                      "type" : "ExpressionRef"
+                                                   } ]
+                                                }
+                                             }, {
+                                                "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                "value" : "0",
+                                                "type" : "Literal"
+                                             } ]
+                                          } ]
+                                       }, {
+                                          "type" : "Coalesce",
+                                          "operand" : [ {
+                                             "type" : "First",
+                                             "source" : {
+                                                "name" : "getScoringByResponseItem",
+                                                "libraryName" : "LogicHelpers",
+                                                "type" : "FunctionRef",
+                                                "operand" : [ {
+                                                   "name" : "CurrentQuestionnaire",
+                                                   "type" : "ExpressionRef"
+                                                }, {
+                                                   "path" : "item",
+                                                   "scope" : "I",
+                                                   "type" : "Property"
+                                                }, {
+                                                   "name" : "question8LinkId",
+                                                   "type" : "ExpressionRef"
+                                                } ]
+                                             }
+                                          }, {
+                                             "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                             "value" : "0",
+                                             "type" : "Literal"
+                                          } ]
+                                       } ]
+                                    }, {
+                                       "type" : "Coalesce",
+                                       "operand" : [ {
+                                          "type" : "First",
+                                          "source" : {
+                                             "name" : "getScoringByResponseItem",
+                                             "libraryName" : "LogicHelpers",
+                                             "type" : "FunctionRef",
+                                             "operand" : [ {
+                                                "name" : "CurrentQuestionnaire",
+                                                "type" : "ExpressionRef"
+                                             }, {
+                                                "path" : "item",
+                                                "scope" : "I",
+                                                "type" : "Property"
+                                             }, {
+                                                "name" : "question9LinkId",
+                                                "type" : "ExpressionRef"
+                                             } ]
+                                          }
+                                       }, {
+                                          "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                          "value" : "0",
+                                          "type" : "Literal"
+                                       } ]
+                                    } ]
+                                 }, {
+                                    "type" : "Coalesce",
+                                    "operand" : [ {
+                                       "type" : "First",
+                                       "source" : {
+                                          "name" : "getScoringByResponseItem",
+                                          "libraryName" : "LogicHelpers",
+                                          "type" : "FunctionRef",
+                                          "operand" : [ {
+                                             "name" : "CurrentQuestionnaire",
+                                             "type" : "ExpressionRef"
+                                          }, {
+                                             "path" : "item",
+                                             "scope" : "I",
+                                             "type" : "Property"
+                                          }, {
+                                             "name" : "question10LinkId",
+                                             "type" : "ExpressionRef"
+                                          } ]
+                                       }
+                                    }, {
+                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                       "value" : "0",
+                                       "type" : "Literal"
+                                    } ]
+                                 } ]
+                              }, {
+                                 "type" : "Coalesce",
+                                 "operand" : [ {
+                                    "type" : "First",
+                                    "source" : {
+                                       "name" : "getScoringByResponseItem",
+                                       "libraryName" : "LogicHelpers",
+                                       "type" : "FunctionRef",
+                                       "operand" : [ {
+                                          "name" : "CurrentQuestionnaire",
+                                          "type" : "ExpressionRef"
+                                       }, {
+                                          "path" : "item",
+                                          "scope" : "I",
+                                          "type" : "Property"
+                                       }, {
+                                          "name" : "question11LinkId",
+                                          "type" : "ExpressionRef"
+                                       } ]
+                                    }
+                                 }, {
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                    "value" : "0",
+                                    "type" : "Literal"
+                                 } ]
+                              } ]
+                           }, {
+                              "type" : "Coalesce",
+                              "operand" : [ {
+                                 "type" : "First",
+                                 "source" : {
+                                    "name" : "getScoringByResponseItem",
+                                    "libraryName" : "LogicHelpers",
+                                    "type" : "FunctionRef",
+                                    "operand" : [ {
+                                       "name" : "CurrentQuestionnaire",
+                                       "type" : "ExpressionRef"
+                                    }, {
+                                       "path" : "item",
+                                       "scope" : "I",
+                                       "type" : "Property"
+                                    }, {
+                                       "name" : "question12LinkId",
+                                       "type" : "ExpressionRef"
+                                    } ]
+                                 }
+                              }, {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                 "value" : "0",
+                                 "type" : "Literal"
+                              } ]
+                           } ]
+                        }
+                     }, {
+                        "name" : "authoredDate",
+                        "value" : {
+                           "path" : "authored",
+                           "scope" : "I",
+                           "type" : "Property"
+                        }
+                     }, {
+                        "name" : "lastUpdated",
+                        "value" : {
+                           "path" : "value",
+                           "type" : "Property",
+                           "source" : {
+                              "path" : "lastUpdated",
+                              "type" : "Property",
+                              "source" : {
+                                 "path" : "meta",
+                                 "scope" : "I",
+                                 "type" : "Property"
+                              }
+                           }
+                        }
+                     } ]
+                  }
+               },
+               "sort" : {
+                  "by" : [ {
+                     "direction" : "desc",
+                     "path" : "authoredDate",
+                     "type" : "ByColumn"
+                  }, {
+                     "direction" : "desc",
+                     "path" : "lastUpdated",
+                     "type" : "ByColumn"
+                  } ]
+               }
+            }
+         }, {
+            "name" : "ResponsesOnly",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "I",
+                  "expression" : {
+                     "name" : "QuestionnaireResponses",
+                     "type" : "ExpressionRef"
+                  }
+               } ],
+               "relationship" : [ ],
+               "return" : {
+                  "expression" : {
+                     "name" : "FormattedResponses",
+                     "libraryName" : "LogicHelpers",
+                     "type" : "FunctionRef",
+                     "operand" : [ {
+                        "name" : "QuestionnaireItems",
+                        "type" : "ExpressionRef"
+                     }, {
+                        "path" : "item",
+                        "scope" : "I",
+                        "type" : "Property"
+                     }, {
+                        "name" : "ScoringQuestionId",
+                        "type" : "ParameterRef"
+                     } ]
+                  }
+               }
+            }
+         } ]
+      }
+   }
+}
+

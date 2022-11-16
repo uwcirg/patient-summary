@@ -1,0 +1,8 @@
+library:
+  name: GAD7_InterventionLogicLibrary
+  paths: ../../cql
+tests:
+  path: cases/gad7
+options:
+  dumpFiles:
+    enabled: true

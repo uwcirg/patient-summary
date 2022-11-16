@@ -1,15 +1,47 @@
-import FhirClientProvider from "../FhirClientProvider";
-import Summary from "./Summary";
+import { ErrorBoundary } from "react-error-boundary";
+import { QueryClient, QueryClientProvider } from "react-query";
+import {useLayoutEffect} from "react";
+import CssBaseline from "@mui/material/CssBaseline";
+import { ThemeProvider } from "@mui/material/styles";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
+import FhirClientProvider from "../context/FhirClientProvider";
+import Header from "./Header";
+import Summaries from "./Summaries";
+import TimeoutModal from "./TimeoutModal";
+import {injectFaviconByProject, fetchEnvData, getEnv} from "../util/util";
+import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
-import {fetchEnvData, getEnvs} from "../util/util";
+
+function ErrorFallBack({ error }) {
+  return (
+    <Alert severity="error">
+      <AlertTitle>Something went wrong:</AlertTitle>
+      <pre>{error.message}</pre>
+      <p>Refresh page and try again</p>
+    </Alert>
+  );
+}
+const queryClient = new QueryClient();
 
 export default function App() {
-  fetchEnvData(); // call this to load environment variables
-  console.log("environment variables ", getEnvs());
+  fetchEnvData();
+  useLayoutEffect(() => {
+    injectFaviconByProject();
+  }, []);
   return (
-    <FhirClientProvider>
-      <Summary />
-      {/* add other components as needed */}
-    </FhirClientProvider>
+    <ErrorBoundary FallbackComponent={ErrorFallBack}>
+      <ThemeProvider theme={getTheme()}>
+        <QueryClientProvider client={queryClient}>
+          <FhirClientProvider>
+            <CssBaseline />
+            <Header returnURL={getEnv("REACT_APP_DASHBOARD_URL")} />
+            <Summaries />
+            <TimeoutModal />
+            {/* add other components as needed */}
+          </FhirClientProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }

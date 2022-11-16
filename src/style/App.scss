@@ -1,8 +1,75 @@
-body {
-  padding: 0;
-  margin : 0;
-  font-family: 'Roboto', sans-serif;
+$chart-background-color: #f4f6f6;
+$muted-text-color: #777;
+$app-background-color: #dad7da;
+$summary-container-background-color: #FFF;
+
+html, body {
+  height: 100%;
 }
 #root {
-  padding: 1em;
+  height: 100%;
+}
+body {
+  padding: 0;
+  margin: 0;
+  font-family: "Roboto", sans-serif;
+  font-size: 16px;
+}
+main {
+  background-color: $app-background-color;
+  min-height: 100%;
+}
+.summaries {
+  margin-top: 48px;
+  padding: 24px;
+  background-color: $summary-container-background-color;
+}
+@media (min-width: 600px) {
+  .summaries {
+    margin-top: 64px;
+  }
+}
+
+p {
+  line-height: 1.5;
+}
+.chart__container {
+  background-color: $chart-background-color;
+}
+.response-table {
+  min-width: 45%;
+  max-width: 100%;
+}
+@media (min-width: 600px) {
+  .response-table {
+    max-width: 50%;
+  }
+}
+
+.invisible {
+  display: none;
+  width: 0;
+  height: 0;
+  padding: 0;
+  margin: 0;
+}
+.hide {
+  display: none !important;
+}
+.show {
+  display: block !important;
+}
+.flex {
+  display: flex !important;
+}
+.muted-text {
+  color: $muted-text-color;
+}
+.header-logo {
+  width: 120px;
+}
+@media (min-width: 600px) {
+  .header-logo {
+    width: 180px;
+  }
 }

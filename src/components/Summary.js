@@ -1,144 +1,169 @@
-import React from "react";
-import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
-import { initialzieCqlWorker } from "cql-worker";
-import Button from "@mui/material/Button";
+import { useState, useEffect, useReducer } from "react";
+import PropTypes from "prop-types";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
-import { FhirClientContext } from "../FhirClientContext";
-import ErrorComponent from "./ErrorComponent";
+import Typography from "@mui/material/Typography";
+import Error from "./ErrorComponent";
+import { getDisplayQTitle, hasData } from "../util/util";
 import {
-  getFHIRResourcePaths,
-  getExpressionLogicLib,
-  queryPatientIdKey,
-  getEnv
-} from "../util/util";
+  QUESTIONNAIRE_ANCHOR_ID_PREFIX,
+} from "../consts/consts";
+import Responses from "./Responses";
+import Chart from "./Chart";
 
-let patientBundle = {
-  resourceType: "Bundle",
-  id: "resource-bundle",
-  type: "collection",
-  entry: [],
-};
-// Define a web worker for evaluating CQL expressions
-const cqlWorker = new Worker();
-// Initialize the cql-worker
-let [setupExecution, sendPatientBundle, evaluateExpression] =
-  initialzieCqlWorker(cqlWorker);
-
-const getCQLEvaluations = () => {
-  //get CQL expression lib
-  getExpressionLogicLib("Summary").then((data) => {
-    // Load CQL ELM JSON, and value set cache which contains evaluated expressions for use by app
-    const [elmJson, valueSetJson, namedExpression] = data;
-
-    // Send the cqlWorker an initial message containing the ELM JSON representation of the CQL expressions
-    setupExecution(elmJson, valueSetJson);
-    // Send patient info to CQL worker to process
-    sendPatientBundle(patientBundle);
-
-    //named expression here is Summary, look in /src/cql/source/ExpressionLogicLibrary.cql and see how that is defined
-    //can use the result(s) from evaluated expressions if desire
-    evaluateExpression(namedExpression)
-      .then((result) => {
-        if (result) {
-          console.log("CQL Results ", result);
-        }
-      })
-      .catch((e) => {
-        console.log("CQL Expression evaluation error ", e);
-        throw new Error(e);
-      });
-  });
-};
-
-export default function Summary() {
-  const contextContent = React.useContext(FhirClientContext);
-  const [patient, setPatient] = React.useState(null);
-  const [error, setError] = React.useState(null);
-  const returnURL = getEnv("REACT_APP_DASHBOARD_URL");
-
-  const getPatient = React.useCallback(async () => {
-    const client = contextContent.client;
-    if (!client) return;
-    //this is a workaround for when patient id is not embedded within the JWT token
-    let queryPatientId = sessionStorage.getItem(queryPatientIdKey);
-    if (queryPatientId) {
-      console.log("Using stored patient id ", queryPatientId);
-      return client.request("/Patient/" + queryPatientId);
+export default function Summary(props) {
+  const { questionnaireId, data } = props;
+  const summaryReducer = (summary, action) => {
+    if (action.type === "reset") {
+      return {
+        responses: [],
+        chartConfig: [],
+        chartData: [],
+      };
     }
-    // Get the Patient resource
-    return await client.patient.read().then((pt) => {
-      return pt;
-    });
-  }, [contextContent.client]);
+    if (action.type === "update") {
+      return action.payload;
+    }
+    return {
+      ...summary,
+      [action.type]: action.payload,
+    };
+  };
+  const [summary, dispatch] = useReducer(summaryReducer, {
+    responses: [],
+    chartData: [],
+    chartConfig: [],
+  });
+  const [questionnaireTitle, setQuestionnaireTitle] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [hasChart, setHasChart] = useState(false);
+  const [error, setError] = useState("");
+  const anchorElementStyle = {
+    position: "relative",
+    top: -64,
+    height: 2,
+    width: 2,
+  };
+  const shouldDisplayResponses = () => !loading && !error;
 
-  const getFhirResources = React.useCallback(
-    async (id) => {
-      if (!contextContent.client) return;
-      const resources = getFHIRResourcePaths(id);
-      const requests = resources.map((resource) =>
-        contextContent.client.request(resource)
-      );
-      return Promise.all(requests).then((results) => {
-        results.forEach((result) => {
-          if (!result) return true;
-          if (result.resourceType === "Bundle" && result.entry) {
-            result.entry.forEach((o) => {
-              if (o && o.resource)
-                patientBundle.entry.push({ resource: o.resource });
-            });
-          } else if (Array.isArray(result)) {
-            result.forEach((o) => {
-              if (o.resourceType) patientBundle.entry.push({ resource: o });
-            });
-          } else {
-            patientBundle.entry.push({ resource: result });
-          }
-        });
-        //FHIR resources should be available now via patientBundle.entry
-        console.log("FHIR resource bundles ", patientBundle.entry);
-      });
-    },
-    [contextContent.client]
+  const formatChartData = (data) => {
+    if (summary.chartConfig && summary.chartConfig.dataFormatter)
+      return summary.chartConfig.dataFormatter(data);
+    return data;
+  };
+
+  const getAnchorElementId = () => QUESTIONNAIRE_ANCHOR_ID_PREFIX;
+  const hasResponses = () => summary.responses && summary.responses.length > 0;
+
+  const renderLoader = () =>
+    loading && (
+      <Stack
+        alignItems={"center"}
+        direction="row"
+        justifyContent={"flex-start"}
+        spacing={2}
+      >
+        <LinearProgress sx={{ width: "300px", marginTop: 6 }}></LinearProgress>
+      </Stack>
+    );
+  const renderError = () =>
+    error && (
+      <Box sx={{ marginBottom: 1 }}>
+        <Error message={error}></Error>
+      </Box>
+    );
+  const renderAnchor = () => (
+    <div
+      id={`${getAnchorElementId()}_${questionnaireId.toLowerCase()}`}
+      style={anchorElementStyle}
+    ></div>
   );
+  const getQuestionnaireTitle = () => {
+    if (questionnaireTitle) return questionnaireTitle;
+    return getDisplayQTitle(questionnaireId);
+  };
+  const renderTitle = () => (
+    <Typography
+      variant="h6"
+      component="h3"
+      color="accent"
+      sx={{ marginBottom: 2 }}
+    >
+      {getQuestionnaireTitle()}
+    </Typography>
+  );
+  const renderSummary = () =>
+    shouldDisplayResponses() && (
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        spacing={{ xs: 2, md: 6 }}
+        alignItems="flex-start"
+        className="response-summary"
+      >
+        {hasChart && (
+          <Chart
+            type={summary.chartConfig.type}
+            data={{
+              ...summary.chartConfig,
+              data: formatChartData(summary.chartData),
+            }}
+          ></Chart>
+        )}
 
-  React.useEffect(() => {
-    getPatient()
-      .then((result) => {
-        setPatient(result);
-        console.log("patient fhir resource result ", result);
-        if (!patientBundle.entry.length) {
-          patientBundle.entry.unshift({ resource: result });
-        }
-        if (result) {
-          getFhirResources(result.id);
-          getCQLEvaluations();
-        }
-      })
-      .catch((e) => {
-        console.log("Error ", e);
-        setError(e);
-      });
-  }, [getPatient, getFhirResources]);
+        {!hasResponses() && (
+          <Alert severity="warning">No recorded responses</Alert>
+        )}
+        {hasResponses() && (
+          <Responses
+            data={summary.responses}
+            questionnaireId={questionnaireId}
+          ></Responses>
+        )}
+      </Stack>
+    );
+
+  useEffect(() => {
+    if (!loading) return;
+    dispatch({ type: "update", payload: data });
+    setHasChart(hasData(data ? data.chartData : null));
+    if (data) {
+      setQuestionnaireTitle(
+        data.questionnaire && data.questionnaire.title
+          ? data.questionnaire.title
+          : ""
+      );
+      if (data.error) setError(data.error);
+    }
+    setLoading(false);
+  }, [data, loading]);
 
   return (
-    <React.Fragment>
-      {error && <ErrorComponent messge={error}></ErrorComponent>}
-      {/* write out patient info */}
-      {patient && (
-        <Stack spacing={2}>
-          <h2>Hello World SoF App</h2>
-          <div>
-            Name: {patient.name[0].given.join(" ") + patient.name[0].family}
-          </div>
-          <div>DOB: {patient.birthDate}</div>
-        </Stack>
-      )}
-      {/* example of an UI button, on clicking of which will go to the (f)EMR URL defined by an environment variable */}
-      {returnURL && (
-        <Button variant="contained" href={`${returnURL}/clear_session`}>
-          Return to Patient List
-        </Button>
-      )}
-    </React.Fragment>
+    <>
+      {/* anchor element */}
+      {renderAnchor()}
+      <Stack
+        className="summary"
+        id={`summary_${questionnaireId}`}
+        direction="column"
+        sx={{
+          paddingBottom: 4,
+        }}
+      >
+        {/* questionnaire title */}
+        {renderTitle()}
+        {/* error message */}
+        {renderError()}
+        {/* loading indicator */}
+        {renderLoader()}
+        {/* chart & responses */}
+        {renderSummary()}
+      </Stack>
+    </>
   );
 }
+Summary.propTypes = {
+  questionnaireId: PropTypes.string.isRequired,
+  patientBundle: PropTypes.object,
+};

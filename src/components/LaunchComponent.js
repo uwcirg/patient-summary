@@ -2,8 +2,11 @@ import React from "react";
 import FHIR from "fhirclient";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
+import { ThemeProvider } from "@mui/material/styles";
 import ErrorComponent from "./ErrorComponent";
-import { fetchEnvData, getEnv, queryPatientIdKey } from "../util/util.js";
+import { queryPatientIdKey } from "../consts/consts";
+import { fetchEnvData, getEnv } from "../util/util";
+import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
 
 const fetchContextJson = async (authURL) => {
@@ -19,7 +22,9 @@ const fetchContextJson = async (authURL) => {
     credentials: "include",
   }).catch((e) => {
     console.log(e);
-    throw new Error("Error retrieving context json via auth url. See console for detail.");
+    throw new Error(
+      "Error retrieving context json via auth url. See console for detail."
+    );
   });
 
   if (!response.ok) {
@@ -27,24 +32,20 @@ const fetchContextJson = async (authURL) => {
     throw new Error(response.status.toString());
   }
 
-  const contextJson = await response
-    .json()
-    .catch((e) => {
-      console.log(e);
-      throw new Error("Context json parsing error. See console for detail.");
-    });
+  const contextJson = await response.json().catch((e) => {
+    console.log(e);
+    throw new Error("Context json parsing error. See console for detail.");
+  });
 
   return contextJson;
 };
 
 export default function Launch() {
   const [error, setError] = React.useState("");
-  React.useEffect(() => {
-    fetchEnvData();
+  fetchEnvData();
+  React.useLayoutEffect(() => {
     const backendURL = getEnv("REACT_APP_BACKEND_URL");
-    const authURL = backendURL
-      ? `${backendURL}/auth/auth-info`
-      : "";
+    const authURL = backendURL ? `${backendURL}/auth/auth-info` : "";
     const urlParams = new URLSearchParams(window.location.search);
     //retrieve patient id from URL querystring if any
     const patientId = urlParams.get("patient");
@@ -81,7 +82,7 @@ export default function Launch() {
   }, []);
 
   return (
-    <React.Fragment>
+    <ThemeProvider theme={getTheme()}>
       {error && <ErrorComponent message={error}></ErrorComponent>}
       {!error && (
         <Stack
@@ -94,6 +95,6 @@ export default function Launch() {
           <div>Launching ...</div>
         </Stack>
       )}
-    </React.Fragment>
+    </ThemeProvider>
   );
 }

@@ -7,12 +7,14 @@
 
 # testing
 /coverage
+/src/__tests__/cql/dump_files
 
 # production
 /build
 
 # misc
 .DS_Store
+frontend.env
 .env
 .env.local
 .env.development.local
