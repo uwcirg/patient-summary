@@ -101,6 +101,7 @@ export default function Summary(props) {
         direction={{ xs: "column", md: "row" }}
         spacing={{ xs: 2, md: 6 }}
         alignItems="flex-start"
+        className="response-summary"
       >
         {hasChart && (
           <Chart
@@ -148,7 +149,6 @@ export default function Summary(props) {
         id={`summary_${questionnaireId}`}
         direction="column"
         sx={{
-          paddingTop: 2,
           paddingBottom: 4,
         }}
       >

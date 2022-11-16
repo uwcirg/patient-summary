@@ -9,6 +9,11 @@ import {
   useRef,
 } from "react";
 import { useQuery } from "react-query";
+import { useTheme } from "@mui/material/styles";
+import Alert from "@mui/material/Alert";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
 import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -16,15 +21,18 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { FhirClientContext } from "../context/FhirClientContext";
 import {
   gatherSummaryDataByQuestionnaireId,
   getFhirResourcesFromQueryResult,
   getFHIRResourcePaths,
   getQuestionnaireList,
+  getSectionsToShow,
   isInViewport,
 } from "../util/util";
 import ErrorComponent from "./ErrorComponent";
+import MedicalHistory from "./MedicalHistory";
 import PatientInfo from "./PatientInfo";
 import QuestionnaireSelector from "./QuestionnaireSelector";
 import ScoringSummary from "./ScoringSummary";
@@ -34,11 +42,13 @@ import { Typography } from "@mui/material";
 let scrollIntervalId = 0;
 
 export default function Summaries() {
+  const theme = useTheme();
   const { client, patient } = useContext(FhirClientContext);
   const fabRef = createRef();
   const anchorRef = createRef();
   const selectorRef = createRef();
   const questionnaireList = getQuestionnaireList();
+  const sectionsToShow = getSectionsToShow();
   const [summaryData, setSummaryData] = useState({
     data: questionnaireList.map((qid) => {
       return { [qid]: null };
@@ -54,13 +64,6 @@ export default function Summaries() {
   });
   const [error, setError] = useState(null);
   const [percentLoaded, setPercentLoaded] = useState(0);
-
-  const hasQuestionnaireResponses = () => {
-    return patientBundle.current.entry.filter(
-      (item) => {
-        return item.resource && item.resource.resourceType === "QuestionnaireResponse"
-      }).length > 0;
-  }
 
   useQuery(
     "fhirResources",
@@ -81,13 +84,9 @@ export default function Summaries() {
           onErrorCallback("No configured questionnaire id(s) found.");
           return;
         }
-        if (!hasQuestionnaireResponses()) {
-          onErrorCallback("No recorded responses");
-          return;
-        }
         if (summaryData.loadComplete) return;
         let count = 0;
-        console.log('patient bundle ', patientBundle.current)
+        console.log("patient bundle ", patientBundle.current);
         const requests = questionnaireList.map((qid) =>
           (async () => {
             let error = "";
@@ -142,8 +141,8 @@ export default function Summaries() {
     if (message) setError(message);
     setSummaryData({
       data: null,
-      loadComplete: true
-    })
+      loadComplete: true,
+    });
   };
 
   const BoxRef = forwardRef((props, ref) => (
@@ -222,7 +221,42 @@ export default function Summaries() {
     </FabRef>
   );
 
-  const renderAncor = () => (
+  const renderSections = () => {
+    if (!sectionsToShow)
+      return <Alert severity="warning">No section to show</Alert>;
+    return sectionsToShow.map((section) => {
+      return (
+        <Accordion
+          key={`section_${section.id}`}
+          disableGutters={true}
+          defaultExpanded={
+            section.hasOwnProperty("expanded") ? section.expanded : true
+          }
+        >
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon sx={{ color: "#FFF" }} />}
+            aria-controls="panel1a-content"
+            id={`accordion_${section.id}`}
+            sx={{
+              backgroundColor: theme.palette.primary.main,
+              color: "#FFF",
+              borderBottom: "1px solid #FFF",
+            }}
+          >
+            <Typography variant="h6" component="h2">
+              {section.title}
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails sx={{padding: 2}}>
+            {section.id === "medicalHistory" && renderMedicalHistory()}
+            {section.id === "summary" && renderSummaries()}
+          </AccordionDetails>
+        </Accordion>
+      );
+    });
+  };
+
+  const renderAnchorTop = () => (
     <BoxRef
       ref={anchorRef}
       sx={{
@@ -236,9 +270,10 @@ export default function Summaries() {
 
   const renderSummaries = () => {
     return questionnaireList.map((questionnaireId, index) => {
-      const dataObject = summaryData.data && summaryData.data[questionnaireId]
-        ? summaryData.data[questionnaireId]
-        : null;
+      const dataObject =
+        summaryData.data && summaryData.data[questionnaireId]
+          ? summaryData.data[questionnaireId]
+          : null;
       if (!dataObject)
         return (
           <Stack
@@ -294,6 +329,17 @@ export default function Summaries() {
     );
   };
 
+  const renderMedicalHistory = () => {
+    const conditions = patientBundle.current.entry.filter((item) => {
+        return (
+          item.resource &&
+          item.resource.resourceType === "Condition"
+        );
+      }).map(item => item.resource);
+    if (!conditions.length) return <Alert severity="warning">No recorded condition.</Alert>;
+    return <MedicalHistory data={conditions}></MedicalHistory>;
+  }
+
   const MemoizedQuestionnaireSelector = memo(renderQuestionnaireSelector);
 
   const renderProgressIndicator = () => {
@@ -309,7 +355,9 @@ export default function Summaries() {
         direction="row"
         spacing={2}
       >
-        <Box>Loading Data... {percentLoaded + " %"}</Box>
+        <Box>
+          Loading Data. This may take a while... <b>{percentLoaded + " %"}</b>
+        </Box>
         <CircularProgress></CircularProgress>
       </Stack>
     );
@@ -353,52 +401,51 @@ export default function Summaries() {
       {!isReady() && renderLoadingIndicator()}
       {isReady() && (
         <>
-          {renderAncor()}
+          {renderAnchorTop()}
           {renderNavButton()}
+          <Stack
+            className="summaries"
+            sx={{
+              position: "relative",
+              maxWidth: "1120px",
+              marginLeft: "auto",
+              marginRight: "auto",
+            }}
+          >
+            <section>
+              <PatientInfo patient={patient}></PatientInfo>
+              {error && (
+                <Box sx={{ marginTop: 1 }}>
+                  <ErrorComponent message={error}></ErrorComponent>
+                </Box>
+              )}
+              {!error && (
+                <>
+                  {!summaryData.loadComplete && renderProgressIndicator()}
+                  {summaryData.loadComplete && (
+                    <>
+                      <Stack
+                        direction={{ xs: "column", sm: "column", md: "row" }}
+                        spacing={2}
+                        sx={{
+                          marginTop: 2,
+                          marginBottom: 3,
+                          backgroundColor: "#f3f3f4",
+                          padding: 2,
+                        }}
+                      >
+                        <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
+                        {renderScoringSummary()}
+                      </Stack>
+                      {renderSections()}
+                    </>
+                  )}
+                </>
+              )}
+            </section>
+            <Version></Version>
+          </Stack>
         </>
-      )}
-      {isReady() && (
-        <Stack
-          className="summaries"
-          sx={{
-            position: "relative",
-            maxWidth: "1120px",
-            marginLeft: "auto",
-            marginRight: "auto",
-          }}
-        >
-          <section>
-            <PatientInfo patient={patient}></PatientInfo> 
-            {error && (
-              <Box sx={{ marginTop: 1 }}>
-                <ErrorComponent message={error}></ErrorComponent>
-              </Box>
-            )}
-            {!error && (
-              <>
-                {!summaryData.loadComplete && renderProgressIndicator()}
-                {summaryData.loadComplete && (
-                  <Stack
-                    direction={{ xs: "column", sm: "column", md: "row" }}
-                    spacing={2}
-                    sx={{
-                      marginTop: 2,
-                      marginBottom: 4,
-                      backgroundColor: "#f3f3f4",
-                      padding: 2,
-                    }}
-                  >
-                    <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
-                    {renderScoringSummary()}
-                  </Stack>
-                )}
-                <Divider></Divider>
-                {renderSummaries()}
-              </>
-            )}
-          </section>
-          <Version></Version>
-        </Stack>
       )}
     </main>
   );

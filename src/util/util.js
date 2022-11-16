@@ -5,6 +5,15 @@ import commonLibrary from "../cql/InterventionLogic_Common.json";
 import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
 import valueSetJson from "../cql/valueset-db.json";
 import { initialzieCqlWorker } from "cql-worker";
+import defaultSections from "../config/sections_config.js";
+
+export function getCorrectedISODate(dateString) {
+  if (!dateString || dateString instanceof Date) return dateString;
+  let dateObj = new Date(dateString); // Date.now() returns [millisecods]
+  let timeZoneCorrection = dateObj.getTimezoneOffset() * 60 * 1000; // [minutes] * [seconds/minutes] * [milliseconds/second]
+  let correctedDate = new Date(dateObj.getTime() - timeZoneCorrection);
+  return correctedDate.toISOString().split("T")[0]; // just the date portion
+}
 
 export async function getInterventionLogicLib(interventionId) {
   let fileName = "InterventionLogicLibrary.json";
@@ -31,7 +40,7 @@ export async function getInterventionLogicLib(interventionId) {
 export function getFHIRResourcePaths(patientId) {
   if (!patientId) return [];
   // const defaultList = ["CarePlan", "QuestionnaireResponse"];
-  const defaultList = ["QuestionnaireResponse"];
+  const defaultList = ["QuestionnaireResponse", "Condition"];
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
   let resources = resourcesToLoad ? resourcesToLoad.split(",") : defaultList;
   defaultList.forEach((item) => {
@@ -139,6 +148,22 @@ export function getQuestionnaireList() {
   return [];
 }
 
+export function getSectionsToShow() {
+  const configSections = getEnv("REACT_APP_SECTIONS");
+  if (!configSections) return defaultSections;
+  let sectionsToShow = [];
+  const targetSections = configSections.split(",").map((item) => {
+    item = item.toLowerCase();
+    return item;
+  });
+  console.log("default sections ", defaultSections)
+  defaultSections.forEach((section) => {
+    console.log("section ", section)
+    if (targetSections.indexOf(section.id.toLowerCase()) !== -1)
+      sectionsToShow.push(section);
+  });
+  return sectionsToShow;
+}
 export function imageOK(img) {
   if (!img) {
     return false;
@@ -300,14 +325,16 @@ export function gatherSummaryDataByQuestionnaireId(
       const storageQuestionnaire = sessionStorage.getItem(storageKey);
       if (storageQuestionnaire) return JSON.parse(storageQuestionnaire);
       const fhirSearchOptions = { pageLimit: 0 };
-      const qResult = await client.request(
-        {
-          url: "Questionnaire?name:contains=" + questionnaireId,
-        },
-        fhirSearchOptions
-      ).catch(e => {
-        throw new Error(e)
-      });
+      const qResult = await client
+        .request(
+          {
+            url: "Questionnaire?name:contains=" + questionnaireId,
+          },
+          fhirSearchOptions
+        )
+        .catch((e) => {
+          throw new Error(e);
+        });
       if (qResult) sessionStorage.setItem(storageKey, JSON.stringify(qResult));
       return qResult;
     };
@@ -354,20 +381,16 @@ export function gatherSummaryDataByQuestionnaireId(
       const scoringData =
         cqlData && cqlData.length
           ? cqlData.filter((item) => {
-              return (
-                item &&
-                item.responses &&
-                item.score &&
-                item.date
-              );
+              return item && item.responses && item.score && item.date;
             })
           : null;
-      const chartData = scoringData && scoringData.length
-        ? scoringData.map((item) => ({
-            date: item.date,
-            total: item.score,
-          }))
-        : null;
+      const chartData =
+        scoringData && scoringData.length
+          ? scoringData.map((item) => ({
+              date: item.date,
+              total: item.score,
+            }))
+          : null;
 
       const returnResult = {
         chartConfig: chartConfig,
@@ -424,5 +447,4 @@ export function gatherSummaryDataByQuestionnaireId(
         console.log("Error occurred retrieving matching resources: ", e);
       });
   }); // end promise
-
 }
