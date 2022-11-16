@@ -41,7 +41,6 @@ export default function Header(props) {
     ></img>
   );
   const renderReturnButton = () => {
-    // const returnURL = getEnv("REACT_APP_DASHBOARD_URL");
     if (!returnURL) return null;
     return (
       <Box sx={{ flex: 1, textAlign: "right", marginTop: 1, marginBotton: 1 }}>
