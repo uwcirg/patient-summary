@@ -8,7 +8,6 @@ import Typography from "@mui/material/Typography";
 import Error from "./ErrorComponent";
 import { getDisplayQTitle, hasData } from "../util/util";
 import {
-  // NO_CACHE_HEADER,
   QUESTIONNAIRE_ANCHOR_ID_PREFIX,
 } from "../consts/consts";
 import Responses from "./Responses";
