@@ -225,6 +225,7 @@ export default function Summaries() {
     if (!sectionsToShow)
       return <Alert severity="warning">No section to show</Alert>;
     return sectionsToShow.map((section) => {
+      const sectionId = section.id.toLowerCase();
       return (
         <Accordion
           key={`section_${section.id}`}
@@ -247,9 +248,9 @@ export default function Summaries() {
               {section.title}
             </Typography>
           </AccordionSummary>
-          <AccordionDetails sx={{padding: 2}}>
-            {section.id === "medicalHistory" && renderMedicalHistory()}
-            {section.id === "summary" && renderSummaries()}
+          <AccordionDetails sx={{ padding: 2 }}>
+            {sectionId === "medicalhistory" && renderMedicalHistory()}
+            {sectionId === "responses" && renderSummaries()}
           </AccordionDetails>
         </Accordion>
       );

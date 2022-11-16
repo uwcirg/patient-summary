@@ -71,6 +71,7 @@ Parameters for the app are stored in [environmental variables](http://man7.org/l
 | `REACT_APP_DASHBOARD_URL`| Define the (f)EMR URL to which the app can return to | example: https://dashboard.acc.dev.cosri.cirg.washington.edu | 
 | `REACT_APP_PROJECT_ID` | Definition of which will allow project-specific theme, logo, etc. | example: `DCW`|
 | `REACT_APP_CLIENT_ID` | Define unique client id for when launching as a confidential client | example: `summary_openid_client`
+| `REACT_APP_SECTIONS` | Definition of which sections in app. | example: `MedicalHistory,Responses`|
 | `REACT_APP_BACKEND_URL` | Define the backend auth URL for launching as a confidential client | 
 
 ### Using with Public SMART Sandbox

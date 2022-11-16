@@ -4,7 +4,7 @@ const DEFAULT_SECTIONS = [
     title: "Pertinent Medical History",
   },
   {
-    id: "summary",
+    id: "responses",
     title: "Questionnaire Responses",
   },
 ];
