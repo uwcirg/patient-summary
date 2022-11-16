@@ -39,14 +39,7 @@ define question17LinkId: 'cs-idas-17'
 define question18LinkId: 'cs-idas-18'
 
 define Questionnaires:
-  ([Questionnaire] Q
-    where 
-    Q.url.value = QuestionnaireURL or 
-    Lower(Q.name) = Lower(QuestionnaireName) or
-    PositionOf(Lower(QuestionnaireName), Lower(Q.id)) != -1 or
-    PositionOf(Lower(QuestionnaireName), Lower(Q.name)) != -1 or
-    PositionOf(Lower(Q.name), Lower(QuestionnaireName)) != -1
-  )
+  LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
 
 // Load Questionnaire
 define CurrentQuestionnaire:

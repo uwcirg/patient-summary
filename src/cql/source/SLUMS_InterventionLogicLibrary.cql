@@ -18,17 +18,10 @@ parameter ScoringQuestionId default '71492-3'
 // -----------------------------------------------------------------------------
 context Patient
 
-define Questionnaires:
-  ([Questionnaire] Q
-    where 
-    Q.url.value = QuestionnaireURL or 
-    Lower(Q.name) = Lower(QuestionnaireName) or
-    PositionOf(Lower(QuestionnaireName), Lower(Q.id)) != -1 or
-    PositionOf(Lower(QuestionnaireName), Lower(Q.name)) != -1 or
-    PositionOf(Lower(Q.name), Lower(QuestionnaireName)) != -1
-  )
-
 // Load Questionnaire
+define Questionnaires:
+  LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
+
 define CurrentQuestionnaire:
   First(Questionnaires)
 

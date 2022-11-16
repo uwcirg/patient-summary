@@ -31,14 +31,7 @@ define question9LinkId: '/44260-8'
 define question10LinkId: '/69722-7'
 
 define Questionnaires:
-  ([Questionnaire] Q
-    where 
-    Q.url.value = QuestionnaireURL or 
-    Lower(Q.name) = Lower(QuestionnaireName) or
-    PositionOf(Lower(QuestionnaireName), Lower(Q.id)) != -1 or
-    PositionOf(Lower(QuestionnaireName), Lower(Q.name)) != -1 or
-    PositionOf(Lower(Q.name), Lower(QuestionnaireName)) != -1
-  )
+  LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
 
 // Load Questionnaire
 define CurrentQuestionnaire:
@@ -76,13 +69,3 @@ define ResponsesSummary:
 define ResponsesOnly:
   (QuestionnaireResponses) I
   return LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId)
-
-define ChartData:
-  if ScoringQuestionId is null or ScoringQuestionId = '' then null
-  else (
-    ResponsesSummary R 
-    return {
-      date: R.date,
-      total: R.score as Integer
-    }
-  )

@@ -14,12 +14,22 @@ define function DateTimeText(d FHIR.dateTime):
   ToString(d.value)
 
 
+
+define function GetMatchQuestionnaire(QuestionnaireName String, QuestionnaireURL String):
+  ([Questionnaire] Q
+    where 
+    Q.url.value = QuestionnaireURL or 
+    Lower(Q.name) = Lower(QuestionnaireName) or
+    PositionOf(Lower(QuestionnaireName), Lower(Q.id)) != -1 or
+    PositionOf(Lower(QuestionnaireName), Lower(Q.name)) != -1 or
+    PositionOf(Lower(Q.name), Lower(QuestionnaireName)) != -1
+  )
+
 /*
  * retrieve questionnaire responses matched to the target questionnaire
  * @param responses as FHIR.QuestionnaireResponse
  * @param questionnaire as FHIR.Questionnaire to match against
  */
-//TODO this returns an undefine object within the return array, e.g. [undefined, Array(1)], not sure why yet, need to diagnose
 define function MatchedReponsesByQuestionnaire(responses List<FHIR.QuestionnaireResponse>, currentQuestionnaire FHIR.Questionnaire):
   ((responses) Q
     where 

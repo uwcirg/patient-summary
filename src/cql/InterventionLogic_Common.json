@@ -54,6 +54,189 @@
                }
             } ]
          }, {
+            "name" : "GetMatchQuestionnaire",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "type" : "FunctionDef",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "Q",
+                  "expression" : {
+                     "dataType" : "{http://hl7.org/fhir}Questionnaire",
+                     "templateId" : "http://hl7.org/fhir/StructureDefinition/Questionnaire",
+                     "type" : "Retrieve"
+                  }
+               } ],
+               "relationship" : [ ],
+               "where" : {
+                  "type" : "Or",
+                  "operand" : [ {
+                     "type" : "Or",
+                     "operand" : [ {
+                        "type" : "Or",
+                        "operand" : [ {
+                           "type" : "Or",
+                           "operand" : [ {
+                              "type" : "Equal",
+                              "operand" : [ {
+                                 "path" : "value",
+                                 "type" : "Property",
+                                 "source" : {
+                                    "path" : "url",
+                                    "scope" : "Q",
+                                    "type" : "Property"
+                                 }
+                              }, {
+                                 "name" : "QuestionnaireURL",
+                                 "type" : "OperandRef"
+                              } ]
+                           }, {
+                              "type" : "Equal",
+                              "operand" : [ {
+                                 "type" : "Lower",
+                                 "operand" : {
+                                    "name" : "ToString",
+                                    "libraryName" : "FHIRHelpers",
+                                    "type" : "FunctionRef",
+                                    "operand" : [ {
+                                       "path" : "name",
+                                       "scope" : "Q",
+                                       "type" : "Property"
+                                    } ]
+                                 }
+                              }, {
+                                 "type" : "Lower",
+                                 "operand" : {
+                                    "name" : "QuestionnaireName",
+                                    "type" : "OperandRef"
+                                 }
+                              } ]
+                           } ]
+                        }, {
+                           "type" : "Not",
+                           "operand" : {
+                              "type" : "Equal",
+                              "operand" : [ {
+                                 "type" : "PositionOf",
+                                 "pattern" : {
+                                    "type" : "Lower",
+                                    "operand" : {
+                                       "name" : "QuestionnaireName",
+                                       "type" : "OperandRef"
+                                    }
+                                 },
+                                 "string" : {
+                                    "type" : "Lower",
+                                    "operand" : {
+                                       "name" : "ToString",
+                                       "libraryName" : "FHIRHelpers",
+                                       "type" : "FunctionRef",
+                                       "operand" : [ {
+                                          "path" : "id",
+                                          "scope" : "Q",
+                                          "type" : "Property"
+                                       } ]
+                                    }
+                                 }
+                              }, {
+                                 "type" : "Negate",
+                                 "operand" : {
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                    "value" : "1",
+                                    "type" : "Literal"
+                                 }
+                              } ]
+                           }
+                        } ]
+                     }, {
+                        "type" : "Not",
+                        "operand" : {
+                           "type" : "Equal",
+                           "operand" : [ {
+                              "type" : "PositionOf",
+                              "pattern" : {
+                                 "type" : "Lower",
+                                 "operand" : {
+                                    "name" : "QuestionnaireName",
+                                    "type" : "OperandRef"
+                                 }
+                              },
+                              "string" : {
+                                 "type" : "Lower",
+                                 "operand" : {
+                                    "name" : "ToString",
+                                    "libraryName" : "FHIRHelpers",
+                                    "type" : "FunctionRef",
+                                    "operand" : [ {
+                                       "path" : "name",
+                                       "scope" : "Q",
+                                       "type" : "Property"
+                                    } ]
+                                 }
+                              }
+                           }, {
+                              "type" : "Negate",
+                              "operand" : {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                 "value" : "1",
+                                 "type" : "Literal"
+                              }
+                           } ]
+                        }
+                     } ]
+                  }, {
+                     "type" : "Not",
+                     "operand" : {
+                        "type" : "Equal",
+                        "operand" : [ {
+                           "type" : "PositionOf",
+                           "pattern" : {
+                              "type" : "Lower",
+                              "operand" : {
+                                 "name" : "ToString",
+                                 "libraryName" : "FHIRHelpers",
+                                 "type" : "FunctionRef",
+                                 "operand" : [ {
+                                    "path" : "name",
+                                    "scope" : "Q",
+                                    "type" : "Property"
+                                 } ]
+                              }
+                           },
+                           "string" : {
+                              "type" : "Lower",
+                              "operand" : {
+                                 "name" : "QuestionnaireName",
+                                 "type" : "OperandRef"
+                              }
+                           }
+                        }, {
+                           "type" : "Negate",
+                           "operand" : {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "value" : "1",
+                              "type" : "Literal"
+                           }
+                        } ]
+                     }
+                  } ]
+               }
+            },
+            "operand" : [ {
+               "name" : "QuestionnaireName",
+               "operandTypeSpecifier" : {
+                  "name" : "{urn:hl7-org:elm-types:r1}String",
+                  "type" : "NamedTypeSpecifier"
+               }
+            }, {
+               "name" : "QuestionnaireURL",
+               "operandTypeSpecifier" : {
+                  "name" : "{urn:hl7-org:elm-types:r1}String",
+                  "type" : "NamedTypeSpecifier"
+               }
+            } ]
+         }, {
             "name" : "MatchedReponsesByQuestionnaire",
             "context" : "Patient",
             "accessLevel" : "Public",

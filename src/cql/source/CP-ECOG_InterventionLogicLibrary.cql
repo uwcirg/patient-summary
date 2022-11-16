@@ -32,14 +32,7 @@ define question11LinkId: '/89285-1/89141-6'
 define question12LinkId: '/89285-1/89171-3'
 
 define Questionnaires:
-  ([Questionnaire] Q
-    where 
-    Q.url.value = QuestionnaireURL or 
-    Lower(Q.name) = Lower(QuestionnaireName) or
-    PositionOf(Lower(QuestionnaireName), Lower(Q.id)) != -1 or
-    PositionOf(Lower(QuestionnaireName), Lower(Q.name)) != -1 or
-    PositionOf(Lower(Q.name), Lower(QuestionnaireName)) != -1
-  )
+  LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
 
 // Load Questionnaire
 define CurrentQuestionnaire:

@@ -26,14 +26,12 @@ define question2Id: 'minicog-question2'
 define scoringQuestionId: 'minicog-total-score'
 
 // Load Questionnaire
+define Questionnaires:
+  LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
+
+// Load Questionnaire
 define CurrentQuestionnaire:
-  First([Questionnaire] Q
-    where 
-    Q.url.value = QuestionnaireURL or
-    PositionOf(QuestionnaireName, Q.id) != -1 or
-    PositionOf(Lower(QuestionnaireName), Lower(Q.name)) != -1 or
-    PositionOf(Lower(Q.name), Lower(QuestionnaireName)) != -1
-  )
+  First(Questionnaires)
 
 define QuestionnaireItems:
   CurrentQuestionnaire Q
