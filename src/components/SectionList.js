@@ -20,7 +20,7 @@ export default function SectionList(props) {
             }}
           >
             {section.icon && (
-              <ListItemIcon title={section.title}>{section.icon}</ListItemIcon>
+              <ListItemIcon title={section.title}>{section.icon()}</ListItemIcon>
             )}
 
             {expanded &&<ListItemText

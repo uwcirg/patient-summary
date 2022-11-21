@@ -4,12 +4,12 @@ const DEFAULT_SECTIONS = [
   {
     id: "medicalHistory",
     title: "Pertinent Medical History",
-    icon: <MedicalInformationIcon fontSize="large" color="primary"></MedicalInformationIcon>,
+    icon: (props) => <MedicalInformationIcon fontSize="large" color="primary" {...props}></MedicalInformationIcon>,
   },
   {
     id: "responses",
     title: "Questionnaire Responses",
-    icon: <BallotIcon fontSize="large" color="primary"></BallotIcon>,
+    icon: (props) => <BallotIcon fontSize="large" color="primary" {...props}></BallotIcon>,
   },
 ];
 export default DEFAULT_SECTIONS;

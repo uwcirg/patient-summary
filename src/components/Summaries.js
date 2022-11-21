@@ -262,7 +262,7 @@ export default function Summaries() {
                 gap: 1,
               }}
             >
-              {section.icon}
+              {section.icon({color: "#FFF"})}
               <Typography variant="h6" component="h2" id={section.id}>
                 {section.title}
               </Typography>
@@ -421,8 +421,8 @@ export default function Summaries() {
     <Box className="app" sx={{ minHeight: `calc(100vh - 64px)` }}>
       {!isReady() && renderLoadingIndicator()}
       {isReady() && (
-        <Box sx={{ display: "flex" }}>
-          {/* {summaryData.loadComplete &&<SideNav></SideNav>} */}
+        
+         
           <>
             {renderAnchorTop()}
             {renderNavButton()}
@@ -468,7 +468,6 @@ export default function Summaries() {
               <Version></Version>
             </Stack>
           </>
-        </Box>
       )}
     </Box>
   );
