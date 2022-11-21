@@ -97,8 +97,8 @@ export default function Summary(props) {
   const renderSummary = () =>
     shouldDisplayResponses() && (
       <Stack
-        direction={{ xs: "column", md: "row" }}
-        spacing={{ xs: 2, md: 6 }}
+        direction={{ xs: "column", md: "column", lg: "row" }}
+        spacing={{ xs: 2, md: 2, lg: 4 }}
         alignItems="flex-start"
         className="response-summary"
       >

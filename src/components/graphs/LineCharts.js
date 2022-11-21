@@ -125,8 +125,6 @@ export default function LineCharts(props) {
           width: {
             xs: MIN_CHART_WIDTH,
             sm: chartWidth,
-            md: chartWidth - 60,
-            lg: chartWidth,
           },
           height: chartHeight,
         }}

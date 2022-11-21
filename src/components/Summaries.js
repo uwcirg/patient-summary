@@ -326,7 +326,7 @@ export default function Summaries() {
             key={`questionnaire_summary_${index}`}
           ></Summary>
           {index !== questionnaireList.length - 1 && (
-            <Divider key={`questionnaire_divider_${index}`} light></Divider>
+            <Divider key={`questionnaire_divider_${index}`} sx={{borderWidth: "2px", marginBottom: 2}} light></Divider>
           )}
         </Box>
       );
