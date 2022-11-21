@@ -209,7 +209,12 @@ export default function Summaries() {
       color="primary"
       aria-label="add"
       size="small"
-      sx={{ position: "fixed", bottom: "24px", right: "24px" }}
+      sx={{
+        position: "fixed",
+        bottom: "8px",
+        right: "24px",
+        zIndex: (theme) => theme.zIndex.drawer - 1,
+      }}
       onClick={(e) => {
         e.stopPropagation();
         if (!anchorRef.current) return;
@@ -229,11 +234,16 @@ export default function Summaries() {
       return (
         <Accordion
           key={`section_${section.id}`}
+          id={`section_${section.id}`}
           disableGutters={true}
           defaultExpanded={
             section.hasOwnProperty("expanded") ? section.expanded : true
           }
         >
+          <Box
+            id={`anchor_${section.id}`}
+            sx={{ position: "relative", top: -64, height: "1px", width: "1px" }}
+          ></Box>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon sx={{ color: "#FFF" }} />}
             aria-controls="panel1a-content"
@@ -244,9 +254,19 @@ export default function Summaries() {
               borderBottom: "1px solid #FFF",
             }}
           >
-            <Typography variant="h6" component="h2">
-              {section.title}
-            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+              }}
+            >
+              {section.icon}
+              <Typography variant="h6" component="h2" id={section.id}>
+                {section.title}
+              </Typography>
+            </Box>
           </AccordionSummary>
           <AccordionDetails sx={{ padding: 2 }}>
             {sectionId === "medicalhistory" && renderMedicalHistory()}
@@ -331,15 +351,15 @@ export default function Summaries() {
   };
 
   const renderMedicalHistory = () => {
-    const conditions = patientBundle.current.entry.filter((item) => {
-        return (
-          item.resource &&
-          item.resource.resourceType === "Condition"
-        );
-      }).map(item => item.resource);
-    if (!conditions.length) return <Alert severity="warning">No recorded condition.</Alert>;
+    const conditions = patientBundle.current.entry
+      .filter((item) => {
+        return item.resource && item.resource.resourceType === "Condition";
+      })
+      .map((item) => item.resource);
+    if (!conditions.length)
+      return <Alert severity="warning">No recorded condition.</Alert>;
     return <MedicalHistory data={conditions}></MedicalHistory>;
-  }
+  };
 
   const MemoizedQuestionnaireSelector = memo(renderQuestionnaireSelector);
 
@@ -398,56 +418,58 @@ export default function Summaries() {
   }, [handleFab]);
 
   return (
-    <main className="app">
+    <Box className="app" sx={{ minHeight: `calc(100vh - 64px)` }}>
       {!isReady() && renderLoadingIndicator()}
       {isReady() && (
-        <>
-          {renderAnchorTop()}
-          {renderNavButton()}
-          <Stack
-            className="summaries"
-            sx={{
-              position: "relative",
-              maxWidth: "1120px",
-              marginLeft: "auto",
-              marginRight: "auto",
-            }}
-          >
-            <section>
-              <PatientInfo patient={patient}></PatientInfo>
-              {error && (
-                <Box sx={{ marginTop: 1 }}>
-                  <ErrorComponent message={error}></ErrorComponent>
-                </Box>
-              )}
-              {!error && (
-                <>
-                  {!summaryData.loadComplete && renderProgressIndicator()}
-                  {summaryData.loadComplete && (
-                    <>
-                      <Stack
-                        direction={{ xs: "column", sm: "column", md: "row" }}
-                        spacing={2}
-                        sx={{
-                          marginTop: 2,
-                          marginBottom: 3,
-                          backgroundColor: "#f3f3f4",
-                          padding: 2,
-                        }}
-                      >
-                        <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
-                        {renderScoringSummary()}
-                      </Stack>
-                      {renderSections()}
-                    </>
-                  )}
-                </>
-              )}
-            </section>
-            <Version></Version>
-          </Stack>
-        </>
+        <Box sx={{ display: "flex" }}>
+          {/* {summaryData.loadComplete &&<SideNav></SideNav>} */}
+          <>
+            {renderAnchorTop()}
+            {renderNavButton()}
+            <Stack
+              className="summaries"
+              sx={{
+                position: "relative",
+                maxWidth: "1120px",
+                margin: "auto",
+              }}
+            >
+              <section>
+                <PatientInfo patient={patient}></PatientInfo>
+                {error && (
+                  <Box sx={{ marginTop: 1 }}>
+                    <ErrorComponent message={error}></ErrorComponent>
+                  </Box>
+                )}
+                {!error && (
+                  <>
+                    {!summaryData.loadComplete && renderProgressIndicator()}
+                    {summaryData.loadComplete && (
+                      <>
+                        <Stack
+                          direction={{ xs: "column", sm: "column", md: "row" }}
+                          spacing={2}
+                          sx={{
+                            marginTop: 2,
+                            marginBottom: 3,
+                            backgroundColor: "#f3f3f4",
+                            padding: 2,
+                          }}
+                        >
+                          <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
+                          {renderScoringSummary()}
+                        </Stack>
+                        {renderSections()}
+                      </>
+                    )}
+                  </>
+                )}
+              </section>
+              <Version></Version>
+            </Stack>
+          </>
+        </Box>
       )}
-    </main>
+    </Box>
   );
 }
