@@ -262,7 +262,7 @@ export default function Summaries() {
                 gap: 1,
               }}
             >
-              {section.icon({color: "#FFF"})}
+              {section.icon({ color: "#FFF" })}
               <Typography variant="h6" component="h2" id={section.id}>
                 {section.title}
               </Typography>
@@ -326,7 +326,11 @@ export default function Summaries() {
             key={`questionnaire_summary_${index}`}
           ></Summary>
           {index !== questionnaireList.length - 1 && (
-            <Divider key={`questionnaire_divider_${index}`} sx={{borderWidth: "2px", marginBottom: 2}} light></Divider>
+            <Divider
+              key={`questionnaire_divider_${index}`}
+              sx={{ borderWidth: "2px", marginBottom: 2 }}
+              light
+            ></Divider>
           )}
         </Box>
       );
@@ -421,53 +425,51 @@ export default function Summaries() {
     <Box className="app" sx={{ minHeight: `calc(100vh - 64px)` }}>
       {!isReady() && renderLoadingIndicator()}
       {isReady() && (
-        
-         
-          <>
-            {renderAnchorTop()}
-            {renderNavButton()}
-            <Stack
-              className="summaries"
-              sx={{
-                position: "relative",
-                maxWidth: "1120px",
-                margin: "auto",
-              }}
-            >
-              <section>
-                <PatientInfo patient={patient}></PatientInfo>
-                {error && (
-                  <Box sx={{ marginTop: 1 }}>
-                    <ErrorComponent message={error}></ErrorComponent>
-                  </Box>
-                )}
-                {!error && (
-                  <>
-                    {!summaryData.loadComplete && renderProgressIndicator()}
-                    {summaryData.loadComplete && (
-                      <>
-                        <Stack
-                          direction={{ xs: "column", sm: "column", md: "row" }}
-                          spacing={2}
-                          sx={{
-                            marginTop: 2,
-                            marginBottom: 3,
-                            backgroundColor: "#f3f3f4",
-                            padding: 2,
-                          }}
-                        >
-                          <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
-                          {renderScoringSummary()}
-                        </Stack>
-                        {renderSections()}
-                      </>
-                    )}
-                  </>
-                )}
-              </section>
-              <Version></Version>
-            </Stack>
-          </>
+        <>
+          {renderAnchorTop()}
+          {renderNavButton()}
+          <Stack
+            className="summaries"
+            sx={{
+              position: "relative",
+              maxWidth: "1120px",
+              margin: "auto",
+            }}
+          >
+            <section>
+              <PatientInfo patient={patient}></PatientInfo>
+              {error && (
+                <Box sx={{ marginTop: 1 }}>
+                  <ErrorComponent message={error}></ErrorComponent>
+                </Box>
+              )}
+              {!error && (
+                <>
+                  {!summaryData.loadComplete && renderProgressIndicator()}
+                  {summaryData.loadComplete && (
+                    <>
+                      <Stack
+                        direction={{ xs: "column", sm: "column", md: "row" }}
+                        spacing={2}
+                        sx={{
+                          marginTop: 2,
+                          marginBottom: 3,
+                          backgroundColor: "#f3f3f4",
+                          padding: 2,
+                        }}
+                      >
+                        <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
+                        {renderScoringSummary()}
+                      </Stack>
+                      {renderSections()}
+                    </>
+                  )}
+                </>
+              )}
+            </section>
+            <Version></Version>
+          </Stack>
+        </>
       )}
     </Box>
   );
