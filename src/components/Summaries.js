@@ -39,6 +39,12 @@ import ScoringSummary from "./ScoringSummary";
 import Summary from "./Summary";
 import Version from "./Version";
 import { Typography } from "@mui/material";
+import {
+  DEFAULT_DRAWER_WIDTH,
+  MOBILE_DRAWER_WIDTH,
+  DEFAULT_TOOLBAR_HEIGHT,
+  MOBILE_TOOLBAR_HEIGHT,
+} from "../consts/consts";
 let scrollIntervalId = 0;
 
 export default function Summaries() {
@@ -171,7 +177,7 @@ export default function Summaries() {
     }, 150);
   }, [fabRef, selectorRef]);
 
-  const isReady = () => patientBundle.current.loadComplete || error;
+  const isReady = () => summaryData.loadComplete || error;
 
   const getFhirResources = async () => {
     if (!client || !patient || !patient.id)
@@ -242,7 +248,12 @@ export default function Summaries() {
         >
           <Box
             id={`anchor_${section.id}`}
-            sx={{ position: "relative", top: -64, height: "1px", width: "1px" }}
+            sx={{
+              position: "relative",
+              top: -1 * parseInt(DEFAULT_TOOLBAR_HEIGHT),
+              height: "1px",
+              width: "1px",
+            }}
           ></Box>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon sx={{ color: "#FFF" }} />}
@@ -282,7 +293,7 @@ export default function Summaries() {
       ref={anchorRef}
       sx={{
         position: "relative",
-        top: "-64px",
+        top: -1 * parseInt(DEFAULT_TOOLBAR_HEIGHT) + "px",
         height: "2px",
         width: "2px",
       }}
@@ -369,22 +380,41 @@ export default function Summaries() {
 
   const renderProgressIndicator = () => {
     return (
-      <Stack
+      <Box
         sx={{
-          marginTop: 2,
-          marginBottom: 4,
+          position: "fixed",
+          top: MOBILE_TOOLBAR_HEIGHT,
+          [theme.breakpoints.up("sm")]: {
+            top: DEFAULT_TOOLBAR_HEIGHT,
+          },
+          width: "100%",
+          height: "100%",
+          backgroundColor: "#FFF",
+          marginLeft: {
+            md: -1 * parseInt(MOBILE_DRAWER_WIDTH) + "px",
+            lg: -1 * parseInt(DEFAULT_DRAWER_WIDTH) + "px",
+          },
+          zIndex: (theme) => theme.zIndex.drawer + 1,
           padding: 2,
         }}
-        alignItems="center"
-        justifyContent="flex-start"
-        direction="row"
-        spacing={2}
       >
-        <Box>
-          Loading Data. This may take a while... <b>{percentLoaded + " %"}</b>
-        </Box>
-        <CircularProgress></CircularProgress>
-      </Stack>
+        <Stack
+          sx={{
+            marginTop: 2,
+            marginBottom: 4,
+            padding: 2,
+          }}
+          alignItems="center"
+          justifyContent="flex-start"
+          direction="row"
+          spacing={2}
+        >
+          <Box>
+            Loading Data. This may take a while... <b>{percentLoaded + " %"}</b>
+          </Box>
+          <CircularProgress></CircularProgress>
+        </Stack>
+      </Box>
     );
   };
 
@@ -397,22 +427,6 @@ export default function Summaries() {
     );
   };
 
-  const renderLoadingIndicator = () => (
-    <Box
-      sx={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
-        marginTop: 8,
-      }}
-    >
-      <CircularProgress
-        sx={{ position: "absolute", top: 16, left: 16 }}
-      ></CircularProgress>
-    </Box>
-  );
-
   useEffect(() => {
     window.addEventListener("scroll", handleFab);
     return () => {
@@ -422,8 +436,8 @@ export default function Summaries() {
   }, [handleFab]);
 
   return (
-    <Box className="app" sx={{ minHeight: `calc(100vh - 64px)` }}>
-      {!isReady() && renderLoadingIndicator()}
+    <Box className="app" sx={{ minHeight: `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT}px)` }}>
+      {!isReady() && renderProgressIndicator()}
       {isReady() && (
         <>
           {renderAnchorTop()}
@@ -432,7 +446,7 @@ export default function Summaries() {
             className="summaries"
             sx={{
               position: "relative",
-              maxWidth: "1120px",
+              maxWidth: "1100px",
               margin: "auto",
             }}
           >
@@ -445,25 +459,22 @@ export default function Summaries() {
               )}
               {!error && (
                 <>
-                  {!summaryData.loadComplete && renderProgressIndicator()}
-                  {summaryData.loadComplete && (
-                    <>
-                      <Stack
-                        direction={{ xs: "column", sm: "column", md: "row" }}
-                        spacing={2}
-                        sx={{
-                          marginTop: 2,
-                          marginBottom: 3,
-                          backgroundColor: "#f3f3f4",
-                          padding: 2,
-                        }}
-                      >
-                        <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
-                        {renderScoringSummary()}
-                      </Stack>
-                      {renderSections()}
-                    </>
-                  )}
+                  <>
+                    <Stack
+                      direction={{ xs: "column", sm: "column", md: "row" }}
+                      spacing={2}
+                      sx={{
+                        marginTop: 2,
+                        marginBottom: 3,
+                        backgroundColor: (theme) => theme.palette.background.main,
+                        padding: 2,
+                      }}
+                    >
+                      <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
+                      {renderScoringSummary()}
+                    </Stack>
+                    {renderSections()}
+                  </>
                 </>
               )}
             </section>

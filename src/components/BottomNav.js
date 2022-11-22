@@ -13,6 +13,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { getSectionsToShow } from "../util/util";
 import SectionList from "./SectionList";
+import {DEFAULT_DRAWER_WIDTH} from "../consts/consts";
 
 export default function BottomNav() {
   const sections = getSectionsToShow();
@@ -25,7 +26,6 @@ export default function BottomNav() {
     md: "none",
     lg: "none",
   };
-  const DRAWER_WIDTH = 304;
   const renderDrawer = () => (
     <Drawer
       open={open}
@@ -33,7 +33,7 @@ export default function BottomNav() {
         display: mediaDisplays,
       }}
     >
-      <Box sx={{ width: DRAWER_WIDTH }}>
+      <Box sx={{ width: DEFAULT_DRAWER_WIDTH }}>
         <Toolbar sx={{ paddingRight: 0, paddingLeft: 0 }} />
         <DrawerHeader>
           <IconButton onClick={() => setOpen(false)} title="close">
@@ -72,6 +72,7 @@ export default function BottomNav() {
           left: 0,
           right: 0,
           display: mediaDisplays,
+          zIndex: (theme) => theme.zIndex.drawer
         }}
         elevation={5}
       >

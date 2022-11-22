@@ -25,9 +25,9 @@ import {
 } from "../util/util";
 import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
+import { MOBILE_DRAWER_WIDTH, DEFAULT_DRAWER_WIDTH } from "../consts/consts";
 import FhirClientProvider from "../context/FhirClientProvider";
 
-const drawerWidth = 240;
 
 function ErrorFallBack({ error }) {
   return (
@@ -41,15 +41,9 @@ function ErrorFallBack({ error }) {
 const queryClient = new QueryClient();
 
 const openedMixin = (theme) => ({
-  width: drawerWidth,
-  [theme.breakpoints.up("sm")]: {
-    width: drawerWidth,
-  },
-  [theme.breakpoints.up("md")]: {
-    width: drawerWidth,
-  },
+  width: MOBILE_DRAWER_WIDTH,
   [theme.breakpoints.up("lg")]: {
-    width: drawerWidth + 68,
+    width: DEFAULT_DRAWER_WIDTH,
   },
   transition: theme.transitions.create("width", {
     easing: theme.transitions.easing.sharp,
@@ -74,6 +68,7 @@ const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "flex-end",
+  backgroundColor: "#FFF",
   padding: theme.spacing(0, 1.5),
   // necessary for content to be below app bar
   ...theme.mixins.toolbar,
@@ -82,7 +77,7 @@ const DrawerHeader = styled("div")(({ theme }) => ({
 const Drawer = styled(MuiDrawer, {
   shouldForwardProp: (prop) => prop !== "open",
 })(({ theme, open }) => ({
-  width: { drawerWidth },
+  width: { MOBILE_DRAWER_WIDTH },
   flexShrink: 0,
   whiteSpace: "nowrap",
   boxSizing: "border-box",
@@ -125,7 +120,16 @@ export default function Base({ children }) {
         variant="permanent"
         open={open}
         sx={{
-          display: { xs: "none", sm: "none", md: "block" },
+          display: {
+            xs: "none",
+            sm: "none",
+            md: "block",
+          },
+        }}
+        PaperProps={{
+            sx: {
+                backgroundColor: (theme) => theme.palette.background.main
+            }
         }}
       >
         <Toolbar />

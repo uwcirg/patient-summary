@@ -29,7 +29,6 @@ export default function SectionList(props) {
                 variant: "body1",
                 component: "h3",
                 sx: {
-                  fontSize: "1.1rem",
                   fontWeight: 500,
                   whiteSpace: "normal",
                 },

@@ -15,8 +15,11 @@ export const themes = {
   default: createTheme({
     ...defaultOptions,
     palette: {
+      background: {
+        main: "#f7f6f9",
+      },
       lightest: {
-        main: "#FFF"
+        main: "#FFF",
       },
       lighter: {
         main: teal[50],
@@ -44,8 +47,11 @@ export const themes = {
   dcw: createTheme({
     ...defaultOptions,
     palette: {
+      background: {
+        main: "#f7f6f9",
+      },
       lightest: {
-        main: "#f4f1f9"
+        main: "#f4f1f9",
       },
       lighter: {
         main: deepPurple[50],
