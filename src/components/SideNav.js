@@ -85,7 +85,7 @@ export default function SideNav (props) {
         </IconButton>
       </DrawerHeader>
     );
-    if (!sections) return null;
+    if (!sections || !sections.length) return null;
     return (
       <Drawer
         variant="permanent"
