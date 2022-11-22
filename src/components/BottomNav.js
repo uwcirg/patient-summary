@@ -72,7 +72,10 @@ export default function BottomNav() {
           left: 0,
           right: 0,
           display: mediaDisplays,
-          zIndex: (theme) => theme.zIndex.drawer
+          zIndex: (theme) => theme.zIndex.drawer,
+          borderTop: `2px solid ${
+            theme.palette.lighter ? theme.palette.lighter.main : "#777"
+          }`,
         }}
         elevation={5}
       >
@@ -86,7 +89,11 @@ export default function BottomNav() {
         >
           <BottomNavigationAction
             label={
-              <Typography color="primary" variant="body2">
+              <Typography
+                color="primary"
+                variant="body2"
+                sx={{ fontWeight: 500 }}
+              >
                 Go to Section
               </Typography>
             }
