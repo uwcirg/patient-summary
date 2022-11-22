@@ -1,11 +1,25 @@
 import { createTheme } from "@mui/material/styles";
 import { teal, grey, deepPurple, purple, indigo} from "@mui/material/colors";
 import { getEnv } from "../util/util";
+const defaultOptions = {
+  zIndex: {
+    drawer: 100,
+  },
+  typography: {
+    subtitle1: {
+      fontWeight: 500,
+    },
+  },
+};
 export const themes = {
   default: createTheme({
+    ...defaultOptions,
     palette: {
+      background: {
+        main: "#f7f6f9",
+      },
       lightest: {
-        main: "#FFF"
+        main: "#FFF",
       },
       lighter: {
         main: teal[50],
@@ -29,16 +43,15 @@ export const themes = {
         main: grey[500],
       },
     },
-    typography: {
-      subtitle1: {
-        fontWeight: 500,
-      },
-    },
   }),
   dcw: createTheme({
+    ...defaultOptions,
     palette: {
+      background: {
+        main: "#f7f6f9",
+      },
       lightest: {
-        main: "#f4f1f9"
+        main: "#f4f1f9",
       },
       lighter: {
         main: deepPurple[50],
@@ -63,11 +76,6 @@ export const themes = {
       },
       link: {
         main: indigo["A700"],
-      },
-    },
-    typography: {
-      subtitle1: {
-        fontWeight: 500,
       },
     },
   }),

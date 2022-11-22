@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import LaunchComponent from "./components/LaunchComponent";
+import LaunchContainer from "./containers/LaunchContainer";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   // <React.StrictMode>
-    <LaunchComponent />
+  <LaunchContainer />
   // </React.StrictMode>
 );
 

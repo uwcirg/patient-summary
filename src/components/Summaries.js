@@ -39,6 +39,12 @@ import ScoringSummary from "./ScoringSummary";
 import Summary from "./Summary";
 import Version from "./Version";
 import { Typography } from "@mui/material";
+import {
+  DEFAULT_DRAWER_WIDTH,
+  MOBILE_DRAWER_WIDTH,
+  DEFAULT_TOOLBAR_HEIGHT,
+  MOBILE_TOOLBAR_HEIGHT,
+} from "../consts/consts";
 let scrollIntervalId = 0;
 
 export default function Summaries() {
@@ -171,7 +177,7 @@ export default function Summaries() {
     }, 150);
   }, [fabRef, selectorRef]);
 
-  const isReady = () => patientBundle.current.loadComplete || error;
+  const isReady = () => summaryData.loadComplete || error;
 
   const getFhirResources = async () => {
     if (!client || !patient || !patient.id)
@@ -209,7 +215,12 @@ export default function Summaries() {
       color="primary"
       aria-label="add"
       size="small"
-      sx={{ position: "fixed", bottom: "24px", right: "24px" }}
+      sx={{
+        position: "fixed",
+        bottom: "8px",
+        right: "24px",
+        zIndex: (theme) => theme.zIndex.drawer - 1,
+      }}
       onClick={(e) => {
         e.stopPropagation();
         if (!anchorRef.current) return;
@@ -229,11 +240,21 @@ export default function Summaries() {
       return (
         <Accordion
           key={`section_${section.id}`}
+          id={`section_${section.id}`}
           disableGutters={true}
           defaultExpanded={
             section.hasOwnProperty("expanded") ? section.expanded : true
           }
         >
+          <Box
+            id={`anchor_${section.id}`}
+            sx={{
+              position: "relative",
+              top: -1 * parseInt(DEFAULT_TOOLBAR_HEIGHT),
+              height: "1px",
+              width: "1px",
+            }}
+          ></Box>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon sx={{ color: "#FFF" }} />}
             aria-controls="panel1a-content"
@@ -244,9 +265,19 @@ export default function Summaries() {
               borderBottom: "1px solid #FFF",
             }}
           >
-            <Typography variant="h6" component="h2">
-              {section.title}
-            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+              }}
+            >
+              {section.icon({ color: "#FFF" })}
+              <Typography variant="h6" component="h2" id={section.id}>
+                {section.title}
+              </Typography>
+            </Box>
           </AccordionSummary>
           <AccordionDetails sx={{ padding: 2 }}>
             {sectionId === "medicalhistory" && renderMedicalHistory()}
@@ -262,7 +293,7 @@ export default function Summaries() {
       ref={anchorRef}
       sx={{
         position: "relative",
-        top: "-64px",
+        top: -1 * parseInt(DEFAULT_TOOLBAR_HEIGHT) + "px",
         height: "2px",
         width: "2px",
       }}
@@ -306,7 +337,11 @@ export default function Summaries() {
             key={`questionnaire_summary_${index}`}
           ></Summary>
           {index !== questionnaireList.length - 1 && (
-            <Divider key={`questionnaire_divider_${index}`} light></Divider>
+            <Divider
+              key={`questionnaire_divider_${index}`}
+              sx={{ borderWidth: "2px", marginBottom: 2 }}
+              light
+            ></Divider>
           )}
         </Box>
       );
@@ -331,36 +366,55 @@ export default function Summaries() {
   };
 
   const renderMedicalHistory = () => {
-    const conditions = patientBundle.current.entry.filter((item) => {
-        return (
-          item.resource &&
-          item.resource.resourceType === "Condition"
-        );
-      }).map(item => item.resource);
-    if (!conditions.length) return <Alert severity="warning">No recorded condition.</Alert>;
+    const conditions = patientBundle.current.entry
+      .filter((item) => {
+        return item.resource && item.resource.resourceType === "Condition";
+      })
+      .map((item) => item.resource);
+    if (!conditions.length)
+      return <Alert severity="warning">No recorded condition.</Alert>;
     return <MedicalHistory data={conditions}></MedicalHistory>;
-  }
+  };
 
   const MemoizedQuestionnaireSelector = memo(renderQuestionnaireSelector);
 
   const renderProgressIndicator = () => {
     return (
-      <Stack
+      <Box
         sx={{
-          marginTop: 2,
-          marginBottom: 4,
+          position: "fixed",
+          top: MOBILE_TOOLBAR_HEIGHT,
+          [theme.breakpoints.up("sm")]: {
+            top: DEFAULT_TOOLBAR_HEIGHT,
+          },
+          width: "100%",
+          height: "100%",
+          backgroundColor: "#FFF",
+          marginLeft: {
+            md: -1 * parseInt(MOBILE_DRAWER_WIDTH) + "px",
+            lg: -1 * parseInt(DEFAULT_DRAWER_WIDTH) + "px",
+          },
+          zIndex: (theme) => theme.zIndex.drawer + 1,
           padding: 2,
         }}
-        alignItems="center"
-        justifyContent="flex-start"
-        direction="row"
-        spacing={2}
       >
-        <Box>
-          Loading Data. This may take a while... <b>{percentLoaded + " %"}</b>
-        </Box>
-        <CircularProgress></CircularProgress>
-      </Stack>
+        <Stack
+          sx={{
+            marginTop: 2,
+            marginBottom: 4,
+            padding: 2,
+          }}
+          alignItems="center"
+          justifyContent="flex-start"
+          direction="row"
+          spacing={2}
+        >
+          <Box>
+            Loading Data. This may take a while... <b>{percentLoaded + " %"}</b>
+          </Box>
+          <CircularProgress></CircularProgress>
+        </Stack>
+      </Box>
     );
   };
 
@@ -373,22 +427,6 @@ export default function Summaries() {
     );
   };
 
-  const renderLoadingIndicator = () => (
-    <Box
-      sx={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
-        marginTop: 8,
-      }}
-    >
-      <CircularProgress
-        sx={{ position: "absolute", top: 16, left: 16 }}
-      ></CircularProgress>
-    </Box>
-  );
-
   useEffect(() => {
     window.addEventListener("scroll", handleFab);
     return () => {
@@ -398,8 +436,8 @@ export default function Summaries() {
   }, [handleFab]);
 
   return (
-    <main className="app">
-      {!isReady() && renderLoadingIndicator()}
+    <Box className="app" sx={{ minHeight: `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT}px)` }}>
+      {!isReady() && renderProgressIndicator()}
       {isReady() && (
         <>
           {renderAnchorTop()}
@@ -408,9 +446,8 @@ export default function Summaries() {
             className="summaries"
             sx={{
               position: "relative",
-              maxWidth: "1120px",
-              marginLeft: "auto",
-              marginRight: "auto",
+              maxWidth: "1100px",
+              margin: "auto",
             }}
           >
             <section>
@@ -422,25 +459,22 @@ export default function Summaries() {
               )}
               {!error && (
                 <>
-                  {!summaryData.loadComplete && renderProgressIndicator()}
-                  {summaryData.loadComplete && (
-                    <>
-                      <Stack
-                        direction={{ xs: "column", sm: "column", md: "row" }}
-                        spacing={2}
-                        sx={{
-                          marginTop: 2,
-                          marginBottom: 3,
-                          backgroundColor: "#f3f3f4",
-                          padding: 2,
-                        }}
-                      >
-                        <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
-                        {renderScoringSummary()}
-                      </Stack>
-                      {renderSections()}
-                    </>
-                  )}
+                  <>
+                    <Stack
+                      direction={{ xs: "column", sm: "column", md: "row" }}
+                      spacing={2}
+                      sx={{
+                        marginTop: 2,
+                        marginBottom: 3,
+                        backgroundColor: (theme) => theme.palette.background.main,
+                        padding: 2,
+                      }}
+                    >
+                      <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
+                      {renderScoringSummary()}
+                    </Stack>
+                    {renderSections()}
+                  </>
                 </>
               )}
             </section>
@@ -448,6 +482,6 @@ export default function Summaries() {
           </Stack>
         </>
       )}
-    </main>
+    </Box>
   );
 }

@@ -69,8 +69,8 @@ export default function Responses(props) {
 
   const Root = styled("div")(({ theme }) => ({
     width: "100%",
-    [theme.breakpoints.up("md")]: {
-      width: "45%",
+    [theme.breakpoints.up("lg")]: {
+      width: "50%",
     },
     paddingTop: "16px"
   }));

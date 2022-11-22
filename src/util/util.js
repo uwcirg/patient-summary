@@ -156,9 +156,7 @@ export function getSectionsToShow() {
     item = item.toLowerCase();
     return item;
   });
-  console.log("default sections ", defaultSections)
   defaultSections.forEach((section) => {
-    console.log("section ", section)
     if (targetSections.indexOf(section.id.toLowerCase()) !== -1)
       sectionsToShow.push(section);
   });
@@ -286,6 +284,14 @@ export function getEnvs() {
 export function scrollToAnchor(anchorElementId) {
   const targetElement = document.querySelector(
     `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${anchorElementId}`
+  );
+  if (!targetElement) return;
+  targetElement.scrollIntoView();
+}
+
+export function scrollToElement(elementId) {
+  const targetElement = document.querySelector(
+    `#${elementId}`
   );
   if (!targetElement) return;
   targetElement.scrollIntoView();

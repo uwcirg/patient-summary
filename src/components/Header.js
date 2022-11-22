@@ -56,7 +56,7 @@ export default function Header(props) {
     );
   };
   return (
-    <AppBar position="fixed" elevation={1}>
+    <AppBar position="fixed" elevation={1} sx={{paddingRight: "0 !important", paddingLeft: "0 !important"}}>
       <Toolbar
         sx={{
           backgroundColor: theme.palette.lighter
@@ -65,6 +65,7 @@ export default function Header(props) {
           color: theme.palette.secondary
             ? theme.palette.secondary.main
             : "#444",
+          zIndex: (theme) => theme.zIndex.drawer + 1,
         }}
       >
         <Stack

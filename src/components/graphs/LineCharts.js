@@ -9,6 +9,7 @@ import {
   Tooltip,
   Label,
   Legend,
+  ResponsiveContainer,
 } from "recharts";
 export default function LineCharts(props) {
   const {
@@ -115,30 +116,39 @@ export default function LineCharts(props) {
       strokeWidth={strokeWidth ? strokeWidth : 2}
     />
   );
+  const MIN_CHART_WIDTH=400;
   return (
     <>
       {renderTitle()}
-      <Box width={chartWidth} height={chartHeight}>
-        <LineChart
-          width={chartWidth}
-          height={chartHeight}
-          data={data}
-          margin={{
-            top: 30,
-            right: 60,
-            left: 20,
-            bottom: 20,
-          }}
-          id={`lineChart_${id}`}
-        >
-          <CartesianGrid strokeDasharray="2 2" />
-          {renderXAxis()}
-          {renderYAxis()}
-          {renderToolTip()}
-          {renderLegend()}
-          {hasYFields() && renderMultipleLines()}
-          {!hasYFields() && renderSingleLine()}
-        </LineChart>
+      <Box
+        sx={{
+          width: {
+            xs: MIN_CHART_WIDTH,
+            sm: chartWidth,
+          },
+          height: chartHeight,
+        }}
+      >
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={data}
+            margin={{
+              top: 30,
+              right: 60,
+              left: 20,
+              bottom: 20,
+            }}
+            id={`lineChart_${id}`}
+          >
+            <CartesianGrid strokeDasharray="2 2" />
+            {renderXAxis()}
+            {renderYAxis()}
+            {renderToolTip()}
+            {renderLegend()}
+            {hasYFields() && renderMultipleLines()}
+            {!hasYFields() && renderSingleLine()}
+          </LineChart>
+        </ResponsiveContainer>
       </Box>
     </>
   );

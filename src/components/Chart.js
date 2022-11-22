@@ -4,7 +4,8 @@ import LineChart from "./graphs/LineCharts";
 const Chart = (props) => {
   const eligibleCharts = ["linechart"];
   return (
-    <div className="chart__container">
+    <div className="chart__container" style={{width: {
+      sm: "100%", md: "50%"}}}>
       {props.type === "linechart" && <LineChart {...props.data}></LineChart>}
       {eligibleCharts.indexOf(props.type) === -1 && <Error message="Graph type specified is not available."></Error>}
       {/* other types of graph go here */}

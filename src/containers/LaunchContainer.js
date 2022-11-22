@@ -3,7 +3,7 @@ import FHIR from "fhirclient";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import { ThemeProvider } from "@mui/material/styles";
-import ErrorComponent from "./ErrorComponent";
+import ErrorComponent from "../components/ErrorComponent";
 import { queryPatientIdKey } from "../consts/consts";
 import { fetchEnvData, getEnv } from "../util/util";
 import { getTheme } from "../config/theme_config";
