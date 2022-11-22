@@ -34,9 +34,9 @@ function ErrorFallBack({ error }) {
 const queryClient = new QueryClient();
 
 export default function Base({ children }) {
+  fetchEnvData();
   const theme = getTheme();
   const sections = getSectionsToShow();
-  fetchEnvData();
   useLayoutEffect(() => {
     injectFaviconByProject();
   }, []);
