@@ -103,7 +103,7 @@ export default function Summaries() {
             ).catch((e) => (error = e));
             count = count + 1;
             setPercentLoaded(
-              parseInt((count / questionnaireList.length) * 100)
+              Math.ceil((count / questionnaireList.length) * 100)
             );
             return {
               [qid]: error
@@ -128,10 +128,14 @@ export default function Summaries() {
               summaries[key] = o[1];
             }
           });
-          setSummaryData({
-            data: summaries,
-            loadComplete: true,
-          });
+          setTimeout(
+            () =>
+              setSummaryData({
+                data: summaries,
+                loadComplete: true,
+              }),
+            150
+          );
         });
       },
       onError: (e) => {
@@ -436,7 +440,10 @@ export default function Summaries() {
   }, [handleFab]);
 
   return (
-    <Box className="app" sx={{ minHeight: `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT}px)` }}>
+    <Box
+      className="app"
+      sx={{ minHeight: `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT}px)` }}
+    >
       {!isReady() && renderProgressIndicator()}
       {isReady() && (
         <>
@@ -466,7 +473,8 @@ export default function Summaries() {
                       sx={{
                         marginTop: 2,
                         marginBottom: 3,
-                        backgroundColor: (theme) => theme.palette.background.main,
+                        backgroundColor: (theme) =>
+                          theme.palette.background.main,
                         padding: 2,
                       }}
                     >
