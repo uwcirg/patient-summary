@@ -37,9 +37,7 @@ export async function getInterventionLogicLib(interventionId) {
   return [elmJson, valueSetJson];
 }
 
-export function getFHIRResourcePaths(patientId) {
-  if (!patientId) return [];
-  // const defaultList = ["CarePlan", "QuestionnaireResponse"];
+export function getFHIRResourcesToLoad() {
   const defaultList = ["QuestionnaireResponse", "Condition"];
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
   let resources = resourcesToLoad ? resourcesToLoad.split(",") : defaultList;
@@ -51,6 +49,12 @@ export function getFHIRResourcePaths(patientId) {
       resources.push(item);
     }
   });
+  return resources;
+}
+
+export function getFHIRResourcePaths(patientId) {
+  if (!patientId) return [];
+  const resources = getFHIRResourcesToLoad();
   return resources.map((resource) => {
     let path = `/${resource}`;
     const observationCategories = getEnv(
@@ -80,7 +84,10 @@ export function getFHIRResourcePaths(patientId) {
           categories.map((cat) => "category=" + cat).join("&")
         );
     }
-    return path;
+    return {
+      resourceType: resource,
+      resourcePath: path
+    };
   });
 }
 

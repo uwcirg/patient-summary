@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useCallback,
+  useReducer,
   useState,
   useRef,
 } from "react";
@@ -17,15 +18,17 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import LinearProgress from "@mui/material/LinearProgress";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { FhirClientContext } from "../context/FhirClientContext";
 import {
   gatherSummaryDataByQuestionnaireId,
   getFhirResourcesFromQueryResult,
+  getFHIRResourcesToLoad,
   getFHIRResourcePaths,
   getQuestionnaireList,
   getSectionsToShow,
@@ -39,6 +42,7 @@ import ScoringSummary from "./ScoringSummary";
 import Summary from "./Summary";
 import Version from "./Version";
 import { Typography } from "@mui/material";
+import qConfig from "../config/questionnaire_config";
 import {
   DEFAULT_DRAWER_WIDTH,
   MOBILE_DRAWER_WIDTH,
@@ -69,7 +73,56 @@ export default function Summaries() {
     loadComplete: false,
   });
   const [error, setError] = useState(null);
-  const [percentLoaded, setPercentLoaded] = useState(0);
+  // all the resources that will be loaded
+  const initialResourcesToLoad = [
+    ...getFHIRResourcesToLoad().map((resource) => ({
+      id: resource,
+      complete: false,
+      error: false,
+    })),
+    ...questionnaireList.map((qid) => ({
+      id: qid,
+      title: qConfig[qid].shortTitle,
+      complete: false,
+      error: false,
+    })),
+  ];
+  // hook for tracking resource load state
+  const resourceReducer = (state, action) => {
+    switch (action.type) {
+      case "COMPLETE":
+        return state.map((resource) => {
+          if (resource.id === action.id) {
+            return { ...resource, complete: true };
+          } else {
+            return resource;
+          }
+        });
+      case "ERROR":
+        return state.map((resource) => {
+          if (resource.id === action.id) {
+            return { ...resource, complete: true, error: true };
+          } else {
+            return resource;
+          }
+        });
+      default:
+        return state;
+    }
+  };
+
+  const [loadedResources, dispatch] = useReducer(
+    resourceReducer,
+    initialResourcesToLoad
+  );
+
+  const handleResourceComplete = (resource) => {
+    dispatch({ type: "COMPLETE", id: resource });
+  };
+
+  const handleResourceError = (resource) => {
+    dispatch({ type: "ERROR", id: resource });
+  };
 
   useQuery(
     "fhirResources",
@@ -91,7 +144,6 @@ export default function Summaries() {
           return;
         }
         if (summaryData.loadComplete) return;
-        let count = 0;
         console.log("patient bundle ", patientBundle.current);
         const requests = questionnaireList.map((qid) =>
           (async () => {
@@ -101,10 +153,8 @@ export default function Summaries() {
               patientBundle.current,
               qid
             ).catch((e) => (error = e));
-            count = count + 1;
-            setPercentLoaded(
-              Math.ceil((count / questionnaireList.length) * 100)
-            );
+            if (error) handleResourceError(qid);
+            else handleResourceComplete(qid);
             return {
               [qid]: error
                 ? {
@@ -186,8 +236,19 @@ export default function Summaries() {
   const getFhirResources = async () => {
     if (!client || !patient || !patient.id)
       throw new Error("Client or patient missing.");
-    const paths = getFHIRResourcePaths(patient.id);
-    const requests = paths.map((path) => client.request(path));
+    const resources = getFHIRResourcePaths(patient.id);
+    const requests = resources.map((resource) =>
+      client
+        .request(resource.resourcePath)
+        .then((result) => {
+          handleResourceComplete(resource.resourceType);
+          return result;
+        })
+        .catch((e) => {
+          handleResourceError(resource.resourceType);
+          throw new Error(e);
+        })
+    );
     if (!requests.length) {
       console.log("No FHIR resource(s) specified.");
       return [];
@@ -311,28 +372,7 @@ export default function Summaries() {
           ? summaryData.data[questionnaireId]
           : null;
       if (!dataObject)
-        return (
-          <Stack
-            alignItems={"center"}
-            direction="row"
-            justifyContent={"flex-start"}
-            spacing={2}
-            sx={{ marginTop: 2 }}
-            key={`summary_loader_${index}`}
-          >
-            <Typography
-              variant="h6"
-              component="h3"
-              color="accent"
-              sx={{ marginBottom: 2, minWidth: "120px" }}
-            >
-              {questionnaireId.toUpperCase()}
-            </Typography>
-            <LinearProgress
-              sx={{ width: "300px", marginTop: 6 }}
-            ></LinearProgress>
-          </Stack>
-        );
+        return null;
       return (
         <Box key={`summary_container_${index}`}>
           <Summary
@@ -383,6 +423,10 @@ export default function Summaries() {
   const MemoizedQuestionnaireSelector = memo(renderQuestionnaireSelector);
 
   const renderProgressIndicator = () => {
+    const total = loadedResources.length;
+    const loaded = loadedResources.filter(
+      (resource) => resource.complete || resource.error
+    ).length;
     return (
       <Box
         sx={{
@@ -408,15 +452,37 @@ export default function Summaries() {
             marginBottom: 4,
             padding: 2,
           }}
-          alignItems="center"
-          justifyContent="flex-start"
-          direction="row"
+          alignItems="flex-start"
+          justifyContent="center"
+          direction="column"
           spacing={2}
         >
-          <Box>
-            Loading Data. This may take a while... <b>{percentLoaded + " %"}</b>
+          <Box sx={{ fontSize: "1.2rem" }}>
+            Loading Data. This may take a while...{" "}
+            <b>{Math.ceil((loaded / total) * 100)} %</b>
           </Box>
-          <CircularProgress></CircularProgress>
+          {loadedResources.map((resource, index) => {
+            const displayName = resource.title ? resource.title: resource.id;
+            return (
+              <Stack
+                direction="row"
+                spacing={2}
+                justifyContent="flex-start"
+                key={`resource_${resource}_${index}`}
+              >
+                <span>{String(displayName).toUpperCase()}</span>
+                {!resource.complete && (
+                  <CircularProgress size={20} color="info"></CircularProgress>
+                )}
+                {resource.complete && resource.error && (
+                  <CloseIcon color="error"></CloseIcon>
+                )}
+                {resource.complete && !resource.error && (
+                  <CheckIcon color="success"></CheckIcon>
+                )}
+              </Stack>
+            );
+          })}
         </Stack>
       </Box>
     );
