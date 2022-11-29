@@ -82,7 +82,7 @@ export default function Summaries() {
     })),
     ...questionnaireList.map((qid) => ({
       id: qid,
-      title:  qConfig[qid] ? qConfig[qid].shortTitle : "",
+      title: qConfig[qid] ? qConfig[qid].shortTitle : "",
       complete: false,
       error: false,
     })),
@@ -442,7 +442,7 @@ export default function Summaries() {
             lg: -1 * parseInt(DEFAULT_DRAWER_WIDTH) + "px",
           },
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          padding: 2,
+          padding: (theme) => theme.spacing(4, 2),
         }}
       >
         <Stack
@@ -451,7 +451,10 @@ export default function Summaries() {
             marginBottom: 4,
             padding: 2,
           }}
-          alignItems="flex-start"
+          alignItems={{
+            xs: "flex-start",
+            sm: "center",
+          }}
           justifyContent="center"
           direction="column"
           spacing={2}
@@ -460,43 +463,47 @@ export default function Summaries() {
             direction="row"
             spacing={2}
             alignItems="center"
-            sx={{ fontSize: "1.3rem", marginBottom: 1.5 }}
+            sx={{ fontSize: "1.3rem", marginBottom: 1.25 }}
           >
             <div>Loading Data ...</div>
-            <div><b>{Math.ceil((loaded / total) * 100)} %</b></div>
+            <div>
+              <b>{Math.ceil((loaded / total) * 100)} %</b>
+            </div>
             <CircularProgress color="info"></CircularProgress>
           </Stack>
-          {loadedResources.map((resource, index) => {
-            const displayName = resource.title ? resource.title : resource.id;
-            return (
-              <Stack
-                direction="row"
-                spacing={2}
-                justifyContent="flex-start"
-                key={`resource_${resource}_${index}`}
-              >
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: (theme) =>
-                      resource.error
-                        ? theme.palette.error.main
-                        : resource.complete
-                        ? theme.palette.success.main
-                        : theme.palette.warning.main,
-                  }}
+          <Stack direction="column" alignItems="flex-start" spacing={1}>
+            {loadedResources.map((resource, index) => {
+              const displayName = resource.title ? resource.title : resource.id;
+              return (
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  justifyContent="flex-start"
+                  key={`resource_${resource}_${index}`}
                 >
-                  {String(displayName).toUpperCase()}
-                </Typography>
-                {resource.complete && resource.error && (
-                  <CloseIcon color="error"></CloseIcon>
-                )}
-                {resource.complete && !resource.error && (
-                  <CheckIcon color="success"></CheckIcon>
-                )}
-              </Stack>
-            );
-          })}
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      color: (theme) =>
+                        resource.error
+                          ? theme.palette.error.main
+                          : resource.complete
+                          ? theme.palette.success.main
+                          : theme.palette.warning.main,
+                    }}
+                  >
+                    {String(displayName).toUpperCase()}
+                  </Typography>
+                  {resource.complete && resource.error && (
+                    <CloseIcon color="error"></CloseIcon>
+                  )}
+                  {resource.complete && !resource.error && (
+                    <CheckIcon color="success"></CheckIcon>
+                  )}
+                </Stack>
+              );
+            })}
+          </Stack>
         </Stack>
       </Box>
     );
