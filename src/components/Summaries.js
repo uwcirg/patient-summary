@@ -82,7 +82,7 @@ export default function Summaries() {
     })),
     ...questionnaireList.map((qid) => ({
       id: qid,
-      title: qConfig[qid].shortTitle,
+      title:  qConfig[qid] ? qConfig[qid].shortTitle : "",
       complete: false,
       error: false,
     })),
