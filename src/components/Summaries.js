@@ -488,9 +488,6 @@ export default function Summaries() {
                 >
                   {String(displayName).toUpperCase()}
                 </Typography>
-                {/* {!resource.complete && (
-                  <CircularProgress size={20} color="info"></CircularProgress>
-                )} */}
                 {resource.complete && resource.error && (
                   <CloseIcon color="error"></CloseIcon>
                 )}
