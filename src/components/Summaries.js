@@ -371,8 +371,7 @@ export default function Summaries() {
         summaryData.data && summaryData.data[questionnaireId]
           ? summaryData.data[questionnaireId]
           : null;
-      if (!dataObject)
-        return null;
+      if (!dataObject) return null;
       return (
         <Box key={`summary_container_${index}`}>
           <Summary
@@ -457,12 +456,18 @@ export default function Summaries() {
           direction="column"
           spacing={2}
         >
-          <Box sx={{ fontSize: "1.2rem" }}>
-            Loading Data. This may take a while...{" "}
-            <b>{Math.ceil((loaded / total) * 100)} %</b>
-          </Box>
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            sx={{ fontSize: "1.3rem", marginBottom: 1.5 }}
+          >
+            <div>Loading Data ...</div>
+            <div><b>{Math.ceil((loaded / total) * 100)} %</b></div>
+            <CircularProgress color="info"></CircularProgress>
+          </Stack>
           {loadedResources.map((resource, index) => {
-            const displayName = resource.title ? resource.title: resource.id;
+            const displayName = resource.title ? resource.title : resource.id;
             return (
               <Stack
                 direction="row"
@@ -470,10 +475,22 @@ export default function Summaries() {
                 justifyContent="flex-start"
                 key={`resource_${resource}_${index}`}
               >
-                <span>{String(displayName).toUpperCase()}</span>
-                {!resource.complete && (
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: (theme) =>
+                      resource.error
+                        ? theme.palette.error.main
+                        : resource.complete
+                        ? theme.palette.success.main
+                        : theme.palette.warning.main,
+                  }}
+                >
+                  {String(displayName).toUpperCase()}
+                </Typography>
+                {/* {!resource.complete && (
                   <CircularProgress size={20} color="info"></CircularProgress>
-                )}
+                )} */}
                 {resource.complete && resource.error && (
                   <CloseIcon color="error"></CloseIcon>
                 )}
