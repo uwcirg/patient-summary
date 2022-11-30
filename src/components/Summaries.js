@@ -303,16 +303,10 @@ export default function Summaries() {
     return sectionsToShow.map((section) => {
       const sectionId = section.id.toLowerCase();
       return (
-        <Accordion
-          key={`section_${section.id}`}
-          id={`section_${section.id}`}
-          disableGutters={true}
-          defaultExpanded={
-            section.hasOwnProperty("expanded") ? section.expanded : true
-          }
-        >
+        <>
           <Box
             id={`anchor_${section.id}`}
+            key={`anchor_${section.id}`}
             sx={{
               position: "relative",
               top: -1 * parseInt(DEFAULT_TOOLBAR_HEIGHT),
@@ -320,35 +314,43 @@ export default function Summaries() {
               width: "1px",
             }}
           ></Box>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon sx={{ color: "#FFF" }} />}
-            aria-controls="panel1a-content"
-            id={`accordion_${section.id}`}
-            sx={{
-              backgroundColor: theme.palette.primary.main,
-              color: "#FFF",
-              borderBottom: "1px solid #FFF",
-            }}
+          <Accordion
+            key={`section_${section.id}`}
+            disableGutters={true}
+            defaultExpanded={
+              section.hasOwnProperty("expanded") ? section.expanded : true
+            }
           >
-            <Box
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon sx={{ color: "#FFF" }} />}
+              aria-controls="panel1a-content"
+              id={`accordion_${section.id}`}
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 1,
+                backgroundColor: theme.palette.primary.main,
+                color: "#FFF",
+                borderBottom: "1px solid #FFF",
               }}
             >
-              {section.icon({ color: "#FFF" })}
-              <Typography variant="h6" component="h2" id={section.id}>
-                {section.title}
-              </Typography>
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails sx={{ padding: 2 }}>
-            {sectionId === "medicalhistory" && renderMedicalHistory()}
-            {sectionId === "responses" && renderSummaries()}
-          </AccordionDetails>
-        </Accordion>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 1,
+                }}
+              >
+                {section.icon({ color: "#FFF" })}
+                <Typography variant="h6" component="h2" id={section.id}>
+                  {section.title}
+                </Typography>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails sx={{ padding: 2 }}>
+              {sectionId === "medicalhistory" && renderMedicalHistory()}
+              {sectionId === "responses" && renderSummaries()}
+            </AccordionDetails>
+          </Accordion>
+        </>
       );
     });
   };
