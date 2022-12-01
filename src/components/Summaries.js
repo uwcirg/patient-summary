@@ -303,7 +303,7 @@ export default function Summaries() {
     return sectionsToShow.map((section) => {
       const sectionId = section.id.toLowerCase();
       return (
-        <>
+        <Box key={"accordion_wrapper_"+section.id}>
           <Box
             id={`anchor_${section.id}`}
             key={`anchor_${section.id}`}
@@ -350,7 +350,7 @@ export default function Summaries() {
               {sectionId === "responses" && renderSummaries()}
             </AccordionDetails>
           </Accordion>
-        </>
+        </Box>
       );
     });
   };
