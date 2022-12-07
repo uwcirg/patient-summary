@@ -487,6 +487,6 @@ export function getDefaultMessageObject (client, patient) {
   return {
     patientID: patient ? patient.id : null,
     projectID: getEnvProjectId(),
-    sessionID: getClientSessionKey(client),
+    authSessionID: getClientSessionKey(client),
   };
 }

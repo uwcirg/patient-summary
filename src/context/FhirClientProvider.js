@@ -58,7 +58,7 @@ export default function FhirClientProvider(props) {
             setError(null);
             writeToLog(
               "info",
-              ["sessionCreated"],
+              ["authSessionCreated"],
               getDefaultMessageObject(client, result)
             );
           })
