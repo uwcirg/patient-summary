@@ -16,7 +16,7 @@ function getDefaultLogObject() {
 export function writeToLog(level, tags, message) {
   const confidentialBackendURL = getEnv("REACT_APP_BACKEND_URL");
   if (!confidentialBackendURL) {
-    console.log("confidential backend URL is not set.");
+    console.log("audit log skipped; confidential backend URL is not set");
     return;
   }
   let postBody = getDefaultLogObject();
