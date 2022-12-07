@@ -11,8 +11,8 @@ function getDefaultLogObject() {
 }
 //write to audit log
 // @param level, expect string
-// @param tags, expect array, e.g. ['etc']
-// @param message, expect object, e.g. { "questionId": "123"}
+// @param tags, expect array, e.g. ['info']
+// @param message, expect object, e.g. { "projectID": "DCW"}
 export function writeToLog(level, tags, message) {
   const confidentialBackendURL = getEnv("REACT_APP_BACKEND_URL");
   if (!confidentialBackendURL) {
