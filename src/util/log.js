@@ -1,4 +1,4 @@
-import { getEnv } from "./util";
+import { getEnv, getEnvSystemType } from "./util";
 
 function getDefaultLogObject() {
   return {
@@ -6,6 +6,7 @@ function getDefaultLogObject() {
     tags: ["patient-summary-front-end"],
     message: {
       systemURL: window.location.href,
+      systemType: getEnvSystemType()
     },
   };
 }

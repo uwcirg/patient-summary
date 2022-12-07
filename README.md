@@ -73,7 +73,7 @@ Parameters for the app are stored in [environmental variables](http://man7.org/l
 | `REACT_APP_CLIENT_ID` | Define unique client id for when launching as a confidential client | example: `summary_openid_client`
 | `REACT_APP_SECTIONS` | Definition of which sections in app. | example: `MedicalHistory,Responses`|
 | `REACT_APP_BACKEND_URL` | Define the backend auth URL for launching as a confidential client | 
-
+| `REACT_APP_SYSTEM_TYPE` | Define the system type of the app | example: `development` | [`development`, `demo`, `production`]
 ### Using with Public SMART Sandbox
 A public [SMART<sup>&reg;</sup> App Launcher](https://launch.smarthealthit.org/index.html) is available for sandbox tesing of SMART on FHIR apps with synthetic data.
 

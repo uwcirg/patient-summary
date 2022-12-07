@@ -479,11 +479,14 @@ export function getEnvProjectId () {
   return getEnv("REACT_APP_PROJECT_ID");
 }
 
+export function getEnvSystemType () {
+  return getEnv("REACT_APP_SYSTEM_TYPE");
+}
+
 export function getDefaultMessageObject (client, patient) {
   return {
     patientID: patient ? patient.id : null,
     projectID: getEnvProjectId(),
     sessionID: getClientSessionKey(client),
-    systemURL: window.location.href,
   };
 }
