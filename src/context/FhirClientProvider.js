@@ -6,7 +6,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { FhirClientContext } from "./FhirClientContext";
 import { queryPatientIdKey } from "../consts/consts";
 import ErrorComponent from "../components/ErrorComponent";
-import {getEnv} from "../util/util";
+import {getEnv, getDefaultMessageObject} from "../util/util";
+import { writeToLog } from "../util/log";
 
 export default function FhirClientProvider(props) {
   const [client, setClient] = useState(null);
@@ -55,6 +56,11 @@ export default function FhirClientProvider(props) {
             console.log("Patient loaded.");
             setPatient(result);
             setError(null);
+            writeToLog(
+              "info",
+              ["sessionCreated"],
+              getDefaultMessageObject(client, result)
+            );
           })
           .catch((e) => {
             setError(e);

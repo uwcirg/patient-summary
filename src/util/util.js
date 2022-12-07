@@ -465,3 +465,25 @@ export function gatherSummaryDataByQuestionnaireId(
       });
   }); // end promise
 }
+
+/*
+ * @param client is a SoF frontend client
+ * return the state key property of the client
+ */
+export function getClientSessionKey (client) {
+  if (!client) return null;
+  return client.getState().key;
+}
+
+export function getEnvProjectId () {
+  return getEnv("REACT_APP_PROJECT_ID");
+}
+
+export function getDefaultMessageObject (client, patient) {
+  return {
+    patientID: patient ? patient.id : null,
+    projectID: getEnvProjectId(),
+    sessionID: getClientSessionKey(client),
+    systemURL: window.location.href,
+  };
+}

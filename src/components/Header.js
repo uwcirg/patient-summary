@@ -6,7 +6,7 @@ import Button from "@mui/material/Button";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
-import { getEnv, imageOK } from "../util/util";
+import { getEnvProjectId, imageOK } from "../util/util";
 
 export default function Header(props) {
   const theme = useTheme();
@@ -34,7 +34,7 @@ export default function Header(props) {
   const renderLogo = () => (
     <img
       className="header-logo"
-      src={`/assets/${getEnv("REACT_APP_PROJECT_ID")}/img/logo.png`}
+      src={`/assets/${getEnvProjectId()}/img/logo.png`}
       alt={"project logo"}
       onLoad={handleImageLoaded}
       onError={handleImageLoaded}
