@@ -28,6 +28,7 @@ export default function BottomNav() {
   };
   const renderDrawer = () => (
     <Drawer
+      className="print-hidden"
       open={open}
       sx={{
         display: mediaDisplays,
@@ -66,6 +67,7 @@ export default function BottomNav() {
     <>
       {renderDrawer()}
       <Paper
+        className="print-hidden"
         sx={{
           position: "fixed",
           bottom: 0,

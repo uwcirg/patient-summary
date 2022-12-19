@@ -41,7 +41,7 @@ import QuestionnaireSelector from "./QuestionnaireSelector";
 import ScoringSummary from "./ScoringSummary";
 import Summary from "./Summary";
 import Version from "./Version";
-import { Typography } from "@mui/material";
+import { Button, Typography } from "@mui/material";
 import qConfig from "../config/questionnaire_config";
 import {
   DEFAULT_DRAWER_WIDTH,
@@ -275,7 +275,7 @@ export default function Summaries() {
 
   const renderNavButton = () => (
     <FabRef
-      className={"hide"}
+      className={"hide print-hidden"}
       ref={fabRef}
       color="primary"
       aria-label="add"
@@ -303,7 +303,10 @@ export default function Summaries() {
     return sectionsToShow.map((section) => {
       const sectionId = section.id.toLowerCase();
       return (
-        <Box key={"accordion_wrapper_"+section.id}>
+        <Box
+          key={"accordion_wrapper_" + section.id}
+          className="accordion-wrapper"
+        >
           <Box
             id={`anchor_${section.id}`}
             key={`anchor_${section.id}`}
@@ -322,7 +325,12 @@ export default function Summaries() {
             }
           >
             <AccordionSummary
-              expandIcon={<ExpandMoreIcon sx={{ color: "#FFF" }} />}
+              expandIcon={
+                <ExpandMoreIcon
+                  sx={{ color: "#FFF" }}
+                  className="print-hidden"
+                />
+              }
               aria-controls="panel1a-content"
               id={`accordion_${section.id}`}
               sx={{
@@ -375,7 +383,7 @@ export default function Summaries() {
           : null;
       if (!dataObject) return null;
       return (
-        <Box key={`summary_container_${index}`}>
+        <Box className="summary-container" key={`summary_container_${index}`}>
           <Summary
             questionnaireId={questionnaireId}
             data={summaryData.data[questionnaireId]}
@@ -383,6 +391,7 @@ export default function Summaries() {
           ></Summary>
           {index !== questionnaireList.length - 1 && (
             <Divider
+              className="print-hidden"
               key={`questionnaire_divider_${index}`}
               sx={{ borderWidth: "2px", marginBottom: 2 }}
               light
@@ -396,6 +405,7 @@ export default function Summaries() {
   const renderQuestionnaireSelector = () => {
     return (
       <BoxRef
+        className="print-hidden"
         ref={selectorRef}
         style={{
           opacity: isReady() ? 1 : 0.4,
@@ -520,6 +530,18 @@ export default function Summaries() {
     );
   };
 
+  const renderPrintButton = () => {
+    return (
+      <Button
+        className="print-hidden"
+        variant="outlined"
+        onClick={() => window.print()}
+      >
+        Print
+      </Button>
+    );
+  };
+
   useEffect(() => {
     window.addEventListener("scroll", handleFab);
     return () => {
@@ -547,7 +569,10 @@ export default function Summaries() {
             }}
           >
             <section>
-              <PatientInfo patient={patient}></PatientInfo>
+              <Stack direction="row" justifyContent="space-between" spacing={2}>
+                <PatientInfo patient={patient}></PatientInfo>
+                {renderPrintButton()}
+              </Stack>
               {error && (
                 <Box sx={{ marginTop: 1 }}>
                   <ErrorComponent message={error}></ErrorComponent>
@@ -557,6 +582,7 @@ export default function Summaries() {
                 <>
                   <>
                     <Stack
+                      className="selector-stats-wrapper"
                       direction={{ xs: "column", sm: "column", md: "row" }}
                       spacing={2}
                       sx={{
