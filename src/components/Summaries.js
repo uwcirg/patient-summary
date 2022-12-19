@@ -531,6 +531,7 @@ export default function Summaries() {
   };
 
   const renderPrintButton = () => {
+    if (error) return null;
     return (
       <Button
         className="print-hidden"
