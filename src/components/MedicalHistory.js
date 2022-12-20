@@ -20,19 +20,22 @@ export default function MedicalHistory(props) {
     const goodData = data.filter(
       (item) => item.code && item.code.coding && item.code.coding.length > 0
     );
-    return goodData.map((item, index) => {
-      item.id = item.id + "_" + index;
-      item.condition = item.code.coding[0].display;
-      item.onsetDateTime = getCorrectedISODate(item.onsetDateTime);
-      item.recordedDate = getCorrectedISODate(item.recordedDate);
-      return item;
-    }).sort((a, b) => {
-      return (
-        new Date(b.onsetDateTime).getTime() -
-        new Date(a.onsetDateTime).getTime()
-      );
-    });
+    return goodData
+      .map((item, index) => {
+        item.id = item.id + "_" + index;
+        item.condition = item.code.coding[0].display;
+        item.onsetDateTime = getCorrectedISODate(item.onsetDateTime);
+        item.recordedDate = getCorrectedISODate(item.recordedDate);
+        return item;
+      })
+      .sort((a, b) => {
+        return (
+          new Date(b.onsetDateTime).getTime() -
+          new Date(a.onsetDateTime).getTime()
+        );
+      });
   };
+  const results = getData(data);
   const columns = [
     {
       title: "ID",
@@ -52,23 +55,48 @@ export default function MedicalHistory(props) {
       field: "recordedDate",
     },
   ];
-  const results = getData(data);
+  const renderPrintView = (data) => {
+    const displayColumns = columns.filter((column) => !column.hidden);
+    return (
+      <table>
+        <thead>
+          {displayColumns.map((column) => (
+            <th>{column.title}</th>
+          ))}
+        </thead>
+        <tbody>
+          {data.map((result) => {
+            return <tr>{displayColumns.map(column => <td>{result[column.field]}</td>)}</tr>;
+          })}
+        </tbody>
+      </table>
+    );
+  };
   if (!results || !results.length)
-    return <Alert severity="warning" className="condition-no-data">No recorded condition</Alert>;
+    return (
+      <Alert severity="warning" className="condition-no-data">
+        No recorded condition
+      </Alert>
+    );
   return (
-    <MaterialTable
-      columns={columns}
-      data={getData(data)}
-      options={{
-        search: false,
-        showTitle: false,
-        toolbar: false,
-        padding: "dense",
-        headerStyle: {
-          backgroundColor: bgColor
-        }
-      }}
-    ></MaterialTable>
+    <>
+      <div className="print-hidden">
+        <MaterialTable
+          columns={columns}
+          data={getData(data)}
+          options={{
+            search: false,
+            showTitle: false,
+            toolbar: false,
+            padding: "dense",
+            headerStyle: {
+              backgroundColor: bgColor,
+            },
+          }}
+        ></MaterialTable>
+      </div>
+      <div className="print-only">{renderPrintView(results)}</div>
+    </>
   );
 }
 

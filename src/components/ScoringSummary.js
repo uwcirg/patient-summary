@@ -178,7 +178,7 @@ export default function ScoringSummary(props) {
   };
 
   return (
-    <Paper sx={{ minWidth: "50%" }}>
+    <Paper className="scoring-summary-container" sx={{ minWidth: "50%" }}>
       {renderTitle()}
       {renderSummary()}
     </Paper>

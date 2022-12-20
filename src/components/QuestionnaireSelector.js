@@ -72,6 +72,7 @@ export default function QuestionnaireSelector(props) {
           paddingRight: 1,
         }}
         margin="dense"
+        className="print-hidden"
       >
         <Select
           id="qSelector"

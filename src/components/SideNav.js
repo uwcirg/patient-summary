@@ -89,6 +89,7 @@ export default function SideNav (props) {
     return (
       <Drawer
         variant="permanent"
+        className="print-hidden"
         open={open}
         sx={{
           display: {

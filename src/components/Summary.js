@@ -90,6 +90,7 @@ export default function Summary(props) {
       component="h3"
       color="accent"
       sx={{ marginBottom: 2 }}
+      className="questionnaire-title"
     >
       {getQuestionnaireTitle()}
     </Typography>
