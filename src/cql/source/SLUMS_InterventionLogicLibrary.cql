@@ -42,7 +42,8 @@ define ResponsesSummary:
     responses: responses,
     score: responses[0].value.value,
     authoredDate: I.authored,
-    lastUpdated: I.meta.lastUpdated.value
+    lastUpdated: I.meta.lastUpdated.value,
+    educationLevel: if HasLowerLevelEducation is true then 'low' else 'high'
   }
   sort by authoredDate desc, lastUpdated desc
 
@@ -59,3 +60,11 @@ define ChartData:
       total: R.score as Integer
     }
   )
+
+define LessThanHighSchoolCondition:
+  ["Condition"] C where (
+    C.code.coding[0].code.value = 'Z55.5'
+  )
+
+define HasLowerLevelEducation:
+  Length(LessThanHighSchoolCondition) > 0

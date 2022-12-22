@@ -144,6 +144,71 @@
                } ]
             }
          }, {
+            "name" : "LessThanHighSchoolCondition",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "C",
+                  "expression" : {
+                     "dataType" : "{http://hl7.org/fhir}Condition",
+                     "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
+                     "type" : "Retrieve"
+                  }
+               } ],
+               "relationship" : [ ],
+               "where" : {
+                  "type" : "Equal",
+                  "operand" : [ {
+                     "path" : "value",
+                     "type" : "Property",
+                     "source" : {
+                        "path" : "code",
+                        "type" : "Property",
+                        "source" : {
+                           "type" : "Indexer",
+                           "operand" : [ {
+                              "path" : "coding",
+                              "type" : "Property",
+                              "source" : {
+                                 "path" : "code",
+                                 "scope" : "C",
+                                 "type" : "Property"
+                              }
+                           }, {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "value" : "0",
+                              "type" : "Literal"
+                           } ]
+                        }
+                     }
+                  }, {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                     "value" : "Z55.5",
+                     "type" : "Literal"
+                  } ]
+               }
+            }
+         }, {
+            "name" : "HasLowerLevelEducation",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Greater",
+               "operand" : [ {
+                  "type" : "Length",
+                  "operand" : {
+                     "name" : "LessThanHighSchoolCondition",
+                     "type" : "ExpressionRef"
+                  }
+               }, {
+                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "value" : "0",
+                  "type" : "Literal"
+               } ]
+            }
+         }, {
             "name" : "ResponsesSummary",
             "context" : "Patient",
             "accessLevel" : "Public",
@@ -238,6 +303,28 @@
                                  "scope" : "I",
                                  "type" : "Property"
                               }
+                           }
+                        }
+                     }, {
+                        "name" : "educationLevel",
+                        "value" : {
+                           "type" : "If",
+                           "condition" : {
+                              "type" : "IsTrue",
+                              "operand" : {
+                                 "name" : "HasLowerLevelEducation",
+                                 "type" : "ExpressionRef"
+                              }
+                           },
+                           "then" : {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                              "value" : "low",
+                              "type" : "Literal"
+                           },
+                           "else" : {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                              "value" : "high",
+                              "type" : "Literal"
                            }
                         }
                      } ]
