@@ -163,6 +163,11 @@ export default function ScoringSummary(props) {
                     score={getCurrentScoreByInstrument(
                       summaryData[key].responses
                     )}
+                    scoreParams={{
+                      educationLevel: summaryData[key].responses[0]
+                        ? summaryData[key].responses[0].educationLevel
+                        : "high",
+                    }}
                     justifyContent="space-between"
                   ></Scoring>
                 </TableCell>

@@ -5,13 +5,13 @@ import ErrorIcon from "@mui/icons-material/Error";
 import qConfig from "../config/questionnaire_config";
 
 export default function Scoring(props) {
-  const { instrumentId, score, justifyContent, alignItems } = props;
+  const { instrumentId, score, justifyContent, alignItems, scoreParams } =
+    props;
   const getFailedScoringByInstrumentId = (instrumentId) => {
     // TODO pass in patient education level to accurately determine what the fail score is
-    return (qConfig[instrumentId] &&
-      qConfig[instrumentId].failedScores
-      ? qConfig[instrumentId].failedScores()
-      : []);
+    return qConfig[instrumentId] && qConfig[instrumentId].failedScores
+      ? qConfig[instrumentId].failedScores(scoreParams)
+      : [];
   };
   const arrFailedScores = getFailedScoringByInstrumentId(instrumentId);
 
@@ -40,6 +40,7 @@ export default function Scoring(props) {
 Scoring.propTypes = {
   instrumentId: PropTypes.string,
   score: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  scoreParams: PropTypes.object,
   justifyContent: PropTypes.string,
   alignItems: PropTypes.string
 };

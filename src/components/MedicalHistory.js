@@ -60,13 +60,21 @@ export default function MedicalHistory(props) {
     return (
       <table>
         <thead>
-          {displayColumns.map((column) => (
-            <th>{column.title}</th>
-          ))}
+          <tr>
+            {displayColumns.map((column, index) => (
+              <th key={`print_head_${index}`}>{column.title}</th>
+            ))}
+          </tr>
         </thead>
         <tbody>
-          {data.map((result) => {
-            return <tr>{displayColumns.map(column => <td>{result[column.field]}</td>)}</tr>;
+          {data.map((result, index) => {
+            return (
+              <tr key={`print_row_${index}`}>
+                {displayColumns.map((column, index) => (
+                  <td key={`print_cell_${index}`}>{result[column.field]}</td>
+                ))}
+              </tr>
+            );
           })}
         </tbody>
       </table>

@@ -53,8 +53,11 @@ const qConfig = {
   slums: {
     customCQL: true,
     comparisonToAlert: "low", // display alert if score is lower than previous
-    // TO DO check education, 19 failed scored for less than high school, 20 for high school
-    failedScores: (eduation) => {
+    // check education, 19 failed scored for less than high school, 20 for high school
+    failedScores: (params) => {
+      if (params && params.educationLevel) {
+        return range(0, params.educationLevel === "low" ? 19 : 20)
+      }
       return range(0, 18);
     },
   },
