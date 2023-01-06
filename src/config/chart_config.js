@@ -20,8 +20,10 @@ const CHART_CONFIG = {
   default: {
     type: "linechart",
     title: "Total Score by Date",
-    chartWidth: 500,
-    chartHeight: 540,
+    xsChartWidth: 400,
+    chartWidth: 520,
+    lgChartWidth: 600,
+    chartHeight: 480,
     xFieldKey: "date",
     xAxisTitle: "Date",
     yAxisTitle: "Score",

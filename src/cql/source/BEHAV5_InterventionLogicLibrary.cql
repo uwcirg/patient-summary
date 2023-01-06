@@ -43,6 +43,7 @@ define QuestionnaireResponses:
 define ResponsesSummary:
   (QuestionnaireResponses) I
   return {
+    id: I.id.value,
     date: LogicHelpers.DateTimeText(I.authored),
     responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
     score: 

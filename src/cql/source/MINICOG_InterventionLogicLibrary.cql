@@ -48,6 +48,7 @@ define ResponsesSummary:
     word_recall_score: Coalesce(First((responses) I where I.id = question1Id return I.value.value), 0),
     clock_draw_score: Coalesce(First((responses) I where I.id = question2Id return I.value.value), 0)
   return {
+    id: I.id.value,
     date: LogicHelpers.DateTimeText(I.authored),
     responses: (responses R where 
     R.id != 'minicog-question1-instruction' and 
