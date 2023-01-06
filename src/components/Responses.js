@@ -78,13 +78,15 @@ export default function Responses(props) {
         />
       ),
       render: (rowData) => {
-        if (rowData[item.id].score) {
-          return (
-            <Score
-              instrumentId={questionnaireId}
-              score={rowData[item.id].score}
-            ></Score>
-          );
+        if (rowData[item.id].hasOwnProperty("score")) {
+          if (!isNaN(rowData[item.id].score)) {
+            return (
+              <Score
+                instrumentId={questionnaireId}
+                score={rowData[item.id].score}
+              ></Score>
+            );
+          } else return "--";
         }
         return rowData[item.id];
       },
