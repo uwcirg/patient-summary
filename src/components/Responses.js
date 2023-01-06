@@ -65,7 +65,6 @@ export default function Responses(props) {
       filterComponent: ({ columnDef, onFilterChanged }) => (
         <Input
           className="print-hidden"
-          arialLabel="Filter"
           placeholder="Filter"
           startAdornment={
             <InputAdornment position="start">
@@ -211,7 +210,7 @@ export default function Responses(props) {
                   }}
                 ></TableCell>
                 {arrDates.map((item, index) => (
-                  <TableCell key={`score_cell_${index}`}>
+                  <TableCell key={`answer_cell_${index}`}>
                     {getMatchedAnswerByLinkIdDateId(row.id, item.date, item.id)}
                   </TableCell>
                 ))}
@@ -222,8 +221,8 @@ export default function Responses(props) {
                 <TableCell>
                   <b>Score</b>
                 </TableCell>
-                {arrData.map((item) => (
-                  <TableCell>
+                {arrData.map((item, index) => (
+                  <TableCell key={`score_cell_${index}`}>
                     {!isNaN(item.score) && (
                       <Score
                         instrumentId={questionnaireId}
