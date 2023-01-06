@@ -38,6 +38,7 @@ define ResponsesSummary:
   let
     responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId)
   return {
+    id: I.id.value,
     date: LogicHelpers.DateTimeText(I.authored),
     responses: responses,
     score: responses[0].value.value,

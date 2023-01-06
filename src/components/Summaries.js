@@ -565,7 +565,7 @@ export default function Summaries() {
             className="summaries"
             sx={{
               position: "relative",
-              maxWidth: "1100px",
+              maxWidth: {xs: "100%", sm: "100%", md: "1200px", lg: "1300"},
               margin: "auto",
             }}
           >

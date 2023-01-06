@@ -15,7 +15,9 @@ export default function LineCharts(props) {
   const {
     id,
     title,
+    xsChartWidth,
     chartWidth,
+    lgChartWidth,
     chartHeight,
     legendType,
     strokeWidth,
@@ -116,7 +118,7 @@ export default function LineCharts(props) {
       strokeWidth={strokeWidth ? strokeWidth : 2}
     />
   );
-  const MIN_CHART_WIDTH=400;
+  const MIN_CHART_WIDTH = xsChartWidth? xsChartWidth : 400;
   return (
     <>
       {renderTitle()}
@@ -125,6 +127,7 @@ export default function LineCharts(props) {
           width: {
             xs: MIN_CHART_WIDTH,
             sm: chartWidth,
+            lg: lgChartWidth ? lgChartWidth: chartWidth
           },
           height: chartHeight,
         }}
