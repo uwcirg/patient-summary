@@ -64,6 +64,7 @@ export default function Responses(props) {
       field: item.id,
       filterComponent: ({ columnDef, onFilterChanged }) => (
         <Input
+          className="print-hidden"
           arialLabel="Filter"
           placeholder="Filter"
           startAdornment={
@@ -268,6 +269,7 @@ export default function Responses(props) {
               startIcon={<ListAltIcon />}
               {...props}
               ref={ref}
+              className="print-hidden"
             >
               +/- Columns
             </Button>
