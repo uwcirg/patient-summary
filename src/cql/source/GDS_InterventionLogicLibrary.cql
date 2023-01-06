@@ -68,6 +68,7 @@ define ResponsesSummary:
     score14: First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question14LinkId)),
     score15: First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question15LinkId))
   return {
+    id: I.id.value,
     date: LogicHelpers.DateTimeText(I.authored),
     responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
     score: 

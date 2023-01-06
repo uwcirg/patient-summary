@@ -97,8 +97,8 @@ export default function Summary(props) {
   const renderSummary = () =>
     shouldDisplayResponses() && (
       <Stack
-        direction={{ xs: "column", md: "column", lg: "row" }}
-        spacing={{ xs: 2, md: 2, lg: 4 }}
+        direction="column"
+        spacing={2}
         alignItems="flex-start"
         className="response-summary"
       >
@@ -111,7 +111,6 @@ export default function Summary(props) {
             }}
           ></Chart>
         )}
-
         {!hasResponses() && (
           <Alert severity="warning">No recorded responses</Alert>
         )}
@@ -119,6 +118,7 @@ export default function Summary(props) {
           <Responses
             data={summary.responses}
             questionnaireId={questionnaireId}
+            questionnaireJson={summary.questionnaire}
           ></Responses>
         )}
       </Stack>

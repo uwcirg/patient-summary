@@ -96,6 +96,7 @@ define function FormattedResponses(responses List<FHIR.QuestionnaireResponse.Ite
 define ResponsesSummary:
   (QuestionnaireResponses) I
   return {
+    id: I.id.value,
     date: DateTimeText(I.authored),
     responses: FormattedResponses(I.item),
     authoredDate: I.authored,
