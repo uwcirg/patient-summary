@@ -34,7 +34,7 @@ export default function QuestionnaireInfo(props) {
   if (!introText) return null;
   return (
     <>
-      <IconButton onClick={() => handleDialogOpen()} size="small">
+      <IconButton onClick={() => handleDialogOpen()} size="small" className="info-button">
         <HelpIcon color="info"></HelpIcon>
       </IconButton>
       <Dialog open={open} onClose={handleClose}>
