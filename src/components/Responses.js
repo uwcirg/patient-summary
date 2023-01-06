@@ -247,7 +247,13 @@ export default function Responses(props) {
         marginLeft: "auto",
         marginRight: "auto",
         padding: theme.spacing(2),
-        width: "95%",
+        width: "100%",
+        [theme.breakpoints.up("md")]: {
+          width: "95%",
+        },
+        [theme.breakpoints.up("lg")]: {
+          width: "80%",
+        },
         overflowX: "auto",
       }}
     >
@@ -308,6 +314,10 @@ export default function Responses(props) {
       open={open}
       onClose={handleClose}
       TransitionComponent={Transition}
+      transitionDuration={{
+        enter: 500,
+        exit: 500
+      }}
     >
       <AppBar sx={{ position: "relative" }}>
         <Toolbar>
