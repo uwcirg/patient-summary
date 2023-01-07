@@ -86,7 +86,7 @@ export function getFHIRResourcePaths(patientId) {
     }
     return {
       resourceType: resource,
-      resourcePath: path
+      resourcePath: path,
     };
   });
 }
@@ -297,9 +297,7 @@ export function scrollToAnchor(anchorElementId) {
 }
 
 export function scrollToElement(elementId) {
-  const targetElement = document.querySelector(
-    `#${elementId}`
-  );
+  const targetElement = document.querySelector(`#${elementId}`);
   if (!targetElement) return;
   targetElement.scrollIntoView();
 }
@@ -464,4 +462,18 @@ export function gatherSummaryDataByQuestionnaireId(
         console.log("Error occurred retrieving matching resources: ", e);
       });
   }); // end promise
+}
+
+export function getIntroTextFromQuestionnaire(questionnaireJson) {
+  if (!questionnaireJson) return "";
+  const targetItem = questionnaireJson.item
+    ? questionnaireJson.item.filter(
+        (item) => String(item.linkId).toLowerCase() === "introduction"
+      )
+    : null;
+  if (!targetItem || !targetItem.length) return "";
+  const textElement = targetItem[0]._text;
+  if (!textElement || !textElement.extension || !textElement.extension[0])
+    return "";
+  return textElement.extension[0].valueString;
 }

@@ -6,10 +6,9 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Error from "./ErrorComponent";
+import QuestionnaireInfo from "./QuestionnaireInfo";
 import { getDisplayQTitle, hasData } from "../util/util";
-import {
-  QUESTIONNAIRE_ANCHOR_ID_PREFIX,
-} from "../consts/consts";
+import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts/consts";
 import Responses from "./Responses";
 import Chart from "./Chart";
 
@@ -152,8 +151,13 @@ export default function Summary(props) {
           paddingBottom: 4,
         }}
       >
-        {/* questionnaire title */}
-        {renderTitle()}
+        <Stack direction="row" spacing={1} alignItems="flex-start">
+          {/* questionnaire title */}
+          <div>{renderTitle()}</div>
+          <QuestionnaireInfo
+            questionnaireJson={data.questionnaire}
+          ></QuestionnaireInfo>
+        </Stack>
         {/* error message */}
         {renderError()}
         {/* loading indicator */}
