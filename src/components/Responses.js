@@ -84,6 +84,7 @@ export default function Responses(props) {
               <Score
                 instrumentId={questionnaireId}
                 score={rowData[item.id].score}
+                scoreParams={rowData[item.id]}
               ></Score>
             );
           } else return "--";
@@ -112,7 +113,7 @@ export default function Responses(props) {
       let scoringResult = {
         question: "Score",
       };
-      data.forEach((item) => (scoringResult[item.id] = { score: item.score }));
+      data.forEach((item) => (scoringResult[item.id] = { score: item.score, ...item }));
       result.push(scoringResult);
     }
     return result;
@@ -229,6 +230,7 @@ export default function Responses(props) {
                       <Score
                         instrumentId={questionnaireId}
                         score={item.score}
+                        scoreParams={item}
                       ></Score>
                     )}
                   </TableCell>
