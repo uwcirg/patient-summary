@@ -47,7 +47,7 @@ define ResponsesSummary:
       scoreSeverity:
         case
           when educationLevel = 'low' and score <= 19 then 'high'
-          when score > 19 and score <= 20 then 'high'
+          when score <= 20 then 'high'
           else 'low'
         end,
       authoredDate: I.authored,
