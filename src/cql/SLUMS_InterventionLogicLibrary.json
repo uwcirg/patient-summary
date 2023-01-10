@@ -239,6 +239,49 @@
                         "type" : "ParameterRef"
                      } ]
                   }
+               }, {
+                  "identifier" : "score",
+                  "expression" : {
+                     "path" : "value",
+                     "type" : "Property",
+                     "source" : {
+                        "path" : "value",
+                        "type" : "Property",
+                        "source" : {
+                           "type" : "Indexer",
+                           "operand" : [ {
+                              "name" : "responses",
+                              "type" : "QueryLetRef"
+                           }, {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "value" : "0",
+                              "type" : "Literal"
+                           } ]
+                        }
+                     }
+                  }
+               }, {
+                  "identifier" : "educationLevel",
+                  "expression" : {
+                     "type" : "If",
+                     "condition" : {
+                        "type" : "IsTrue",
+                        "operand" : {
+                           "name" : "HasLowerLevelEducation",
+                           "type" : "ExpressionRef"
+                        }
+                     },
+                     "then" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                        "value" : "low",
+                        "type" : "Literal"
+                     },
+                     "else" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                        "value" : "high",
+                        "type" : "Literal"
+                     }
+                  }
                } ],
                "relationship" : [ ],
                "return" : {
@@ -276,22 +319,73 @@
                      }, {
                         "name" : "score",
                         "value" : {
-                           "path" : "value",
-                           "type" : "Property",
-                           "source" : {
-                              "path" : "value",
-                              "type" : "Property",
-                              "source" : {
-                                 "type" : "Indexer",
+                           "name" : "score",
+                           "type" : "QueryLetRef"
+                        }
+                     }, {
+                        "name" : "scoreSeverity",
+                        "value" : {
+                           "type" : "Case",
+                           "caseItem" : [ {
+                              "when" : {
+                                 "type" : "And",
                                  "operand" : [ {
-                                    "name" : "responses",
-                                    "type" : "QueryLetRef"
+                                    "type" : "Equal",
+                                    "operand" : [ {
+                                       "name" : "educationLevel",
+                                       "type" : "QueryLetRef"
+                                    }, {
+                                       "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                       "value" : "low",
+                                       "type" : "Literal"
+                                    } ]
+                                 }, {
+                                    "type" : "LessOrEqual",
+                                    "operand" : [ {
+                                       "asType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                       "type" : "As",
+                                       "operand" : {
+                                          "name" : "score",
+                                          "type" : "QueryLetRef"
+                                       }
+                                    }, {
+                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                       "value" : "19",
+                                       "type" : "Literal"
+                                    } ]
+                                 } ]
+                              },
+                              "then" : {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                 "value" : "high",
+                                 "type" : "Literal"
+                              }
+                           }, {
+                              "when" : {
+                                 "type" : "LessOrEqual",
+                                 "operand" : [ {
+                                    "asType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                    "type" : "As",
+                                    "operand" : {
+                                       "name" : "score",
+                                       "type" : "QueryLetRef"
+                                    }
                                  }, {
                                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "0",
+                                    "value" : "20",
                                     "type" : "Literal"
                                  } ]
+                              },
+                              "then" : {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                 "value" : "high",
+                                 "type" : "Literal"
                               }
+                           } ],
+                           "else" : {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                              "value" : "low",
+                              "type" : "Literal"
                            }
                         }
                      }, {
@@ -319,24 +413,8 @@
                      }, {
                         "name" : "educationLevel",
                         "value" : {
-                           "type" : "If",
-                           "condition" : {
-                              "type" : "IsTrue",
-                              "operand" : {
-                                 "name" : "HasLowerLevelEducation",
-                                 "type" : "ExpressionRef"
-                              }
-                           },
-                           "then" : {
-                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                              "value" : "low",
-                              "type" : "Literal"
-                           },
-                           "else" : {
-                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                              "value" : "high",
-                              "type" : "Literal"
-                           }
+                           "name" : "educationLevel",
+                           "type" : "QueryLetRef"
                         }
                      } ]
                   }
@@ -383,97 +461,6 @@
                         "name" : "ScoringQuestionId",
                         "type" : "ParameterRef"
                      } ]
-                  }
-               }
-            }
-         }, {
-            "name" : "ChartData",
-            "context" : "Patient",
-            "accessLevel" : "Public",
-            "expression" : {
-               "type" : "If",
-               "condition" : {
-                  "type" : "Or",
-                  "operand" : [ {
-                     "type" : "IsNull",
-                     "operand" : {
-                        "name" : "ScoringQuestionId",
-                        "type" : "ParameterRef"
-                     }
-                  }, {
-                     "type" : "Equal",
-                     "operand" : [ {
-                        "name" : "ScoringQuestionId",
-                        "type" : "ParameterRef"
-                     }, {
-                        "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                        "value" : "",
-                        "type" : "Literal"
-                     } ]
-                  } ]
-               },
-               "then" : {
-                  "type" : "As",
-                  "operand" : {
-                     "type" : "Null"
-                  },
-                  "asTypeSpecifier" : {
-                     "type" : "ListTypeSpecifier",
-                     "elementType" : {
-                        "type" : "TupleTypeSpecifier",
-                        "element" : [ {
-                           "name" : "date",
-                           "elementType" : {
-                              "name" : "{urn:hl7-org:elm-types:r1}String",
-                              "type" : "NamedTypeSpecifier"
-                           }
-                        }, {
-                           "name" : "total",
-                           "elementType" : {
-                              "name" : "{urn:hl7-org:elm-types:r1}Integer",
-                              "type" : "NamedTypeSpecifier"
-                           }
-                        } ]
-                     }
-                  }
-               },
-               "else" : {
-                  "type" : "Query",
-                  "source" : [ {
-                     "alias" : "R",
-                     "expression" : {
-                        "name" : "ResponsesSummary",
-                        "type" : "ExpressionRef"
-                     }
-                  } ],
-                  "relationship" : [ ],
-                  "return" : {
-                     "expression" : {
-                        "type" : "Tuple",
-                        "element" : [ {
-                           "name" : "date",
-                           "value" : {
-                              "path" : "date",
-                              "scope" : "R",
-                              "type" : "Property"
-                           }
-                        }, {
-                           "name" : "total",
-                           "value" : {
-                              "strict" : false,
-                              "type" : "As",
-                              "operand" : {
-                                 "path" : "score",
-                                 "scope" : "R",
-                                 "type" : "Property"
-                              },
-                              "asTypeSpecifier" : {
-                                 "name" : "{urn:hl7-org:elm-types:r1}Integer",
-                                 "type" : "NamedTypeSpecifier"
-                              }
-                           }
-                        } ]
-                     }
                   }
                }
             }

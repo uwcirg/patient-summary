@@ -36,31 +36,30 @@ define QuestionnaireResponses:
 define ResponsesSummary:
   (QuestionnaireResponses) I
   let
-    responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId)
-  return {
-    id: I.id.value,
-    date: LogicHelpers.DateTimeText(I.authored),
-    responses: responses,
+    responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
     score: responses[0].value.value,
-    authoredDate: I.authored,
-    lastUpdated: I.meta.lastUpdated.value,
     educationLevel: if HasLowerLevelEducation is true then 'low' else 'high'
-  }
-  sort by authoredDate desc, lastUpdated desc
+    return {
+      id: I.id.value,
+      date: LogicHelpers.DateTimeText(I.authored),
+      responses: responses,
+      score: score,
+      scoreSeverity:
+        case
+          when educationLevel = 'low' and score <= 19 then 'high'
+          when score > 19 and score <= 20 then 'high'
+          else 'low'
+        end,
+      authoredDate: I.authored,
+      lastUpdated: I.meta.lastUpdated.value,
+      educationLevel: educationLevel
+    }
+    sort by authoredDate desc, lastUpdated desc
 
 define ResponsesOnly:
   (QuestionnaireResponses) I
   return LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId)
 
-define ChartData:
-  if ScoringQuestionId is null or ScoringQuestionId = '' then null
-  else (
-    ResponsesSummary R 
-    return {
-      date: R.date,
-      total: R.score as Integer
-    }
-  )
 
 define LessThanHighSchoolCondition:
   ["Condition"] C where (

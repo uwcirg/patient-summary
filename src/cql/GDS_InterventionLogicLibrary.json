@@ -606,6 +606,653 @@
                         } ]
                      }
                   }
+               }, {
+                  "identifier" : "score",
+                  "expression" : {
+                     "type" : "Add",
+                     "operand" : [ {
+                        "type" : "Add",
+                        "operand" : [ {
+                           "type" : "Add",
+                           "operand" : [ {
+                              "type" : "Add",
+                              "operand" : [ {
+                                 "type" : "Add",
+                                 "operand" : [ {
+                                    "type" : "Add",
+                                    "operand" : [ {
+                                       "type" : "Add",
+                                       "operand" : [ {
+                                          "type" : "Add",
+                                          "operand" : [ {
+                                             "type" : "Add",
+                                             "operand" : [ {
+                                                "type" : "Add",
+                                                "operand" : [ {
+                                                   "type" : "Add",
+                                                   "operand" : [ {
+                                                      "type" : "Add",
+                                                      "operand" : [ {
+                                                         "type" : "Add",
+                                                         "operand" : [ {
+                                                            "type" : "Add",
+                                                            "operand" : [ {
+                                                               "type" : "If",
+                                                               "condition" : {
+                                                                  "type" : "IsNull",
+                                                                  "operand" : {
+                                                                     "name" : "score1",
+                                                                     "type" : "QueryLetRef"
+                                                                  }
+                                                               },
+                                                               "then" : {
+                                                                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                                  "value" : "0",
+                                                                  "type" : "Literal"
+                                                               },
+                                                               "else" : {
+                                                                  "type" : "If",
+                                                                  "condition" : {
+                                                                     "type" : "Equal",
+                                                                     "operand" : [ {
+                                                                        "name" : "score1",
+                                                                        "type" : "QueryLetRef"
+                                                                     }, {
+                                                                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                                        "value" : "1",
+                                                                        "type" : "Literal"
+                                                                     } ]
+                                                                  },
+                                                                  "then" : {
+                                                                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                                     "value" : "0",
+                                                                     "type" : "Literal"
+                                                                  },
+                                                                  "else" : {
+                                                                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                                     "value" : "1",
+                                                                     "type" : "Literal"
+                                                                  }
+                                                               }
+                                                            }, {
+                                                               "type" : "If",
+                                                               "condition" : {
+                                                                  "type" : "IsNull",
+                                                                  "operand" : {
+                                                                     "name" : "score2",
+                                                                     "type" : "QueryLetRef"
+                                                                  }
+                                                               },
+                                                               "then" : {
+                                                                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                                  "value" : "0",
+                                                                  "type" : "Literal"
+                                                               },
+                                                               "else" : {
+                                                                  "type" : "If",
+                                                                  "condition" : {
+                                                                     "type" : "Equal",
+                                                                     "operand" : [ {
+                                                                        "name" : "score2",
+                                                                        "type" : "QueryLetRef"
+                                                                     }, {
+                                                                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                                        "value" : "1",
+                                                                        "type" : "Literal"
+                                                                     } ]
+                                                                  },
+                                                                  "then" : {
+                                                                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                                     "value" : "1",
+                                                                     "type" : "Literal"
+                                                                  },
+                                                                  "else" : {
+                                                                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                                     "value" : "0",
+                                                                     "type" : "Literal"
+                                                                  }
+                                                               }
+                                                            } ]
+                                                         }, {
+                                                            "type" : "If",
+                                                            "condition" : {
+                                                               "type" : "IsNull",
+                                                               "operand" : {
+                                                                  "name" : "score3",
+                                                                  "type" : "QueryLetRef"
+                                                               }
+                                                            },
+                                                            "then" : {
+                                                               "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                               "value" : "0",
+                                                               "type" : "Literal"
+                                                            },
+                                                            "else" : {
+                                                               "type" : "If",
+                                                               "condition" : {
+                                                                  "type" : "Equal",
+                                                                  "operand" : [ {
+                                                                     "name" : "score3",
+                                                                     "type" : "QueryLetRef"
+                                                                  }, {
+                                                                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                                     "value" : "1",
+                                                                     "type" : "Literal"
+                                                                  } ]
+                                                               },
+                                                               "then" : {
+                                                                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                                  "value" : "1",
+                                                                  "type" : "Literal"
+                                                               },
+                                                               "else" : {
+                                                                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                                  "value" : "0",
+                                                                  "type" : "Literal"
+                                                               }
+                                                            }
+                                                         } ]
+                                                      }, {
+                                                         "type" : "If",
+                                                         "condition" : {
+                                                            "type" : "IsNull",
+                                                            "operand" : {
+                                                               "name" : "score4",
+                                                               "type" : "QueryLetRef"
+                                                            }
+                                                         },
+                                                         "then" : {
+                                                            "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                            "value" : "0",
+                                                            "type" : "Literal"
+                                                         },
+                                                         "else" : {
+                                                            "type" : "If",
+                                                            "condition" : {
+                                                               "type" : "Equal",
+                                                               "operand" : [ {
+                                                                  "name" : "score4",
+                                                                  "type" : "QueryLetRef"
+                                                               }, {
+                                                                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                                  "value" : "1",
+                                                                  "type" : "Literal"
+                                                               } ]
+                                                            },
+                                                            "then" : {
+                                                               "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                               "value" : "1",
+                                                               "type" : "Literal"
+                                                            },
+                                                            "else" : {
+                                                               "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                               "value" : "0",
+                                                               "type" : "Literal"
+                                                            }
+                                                         }
+                                                      } ]
+                                                   }, {
+                                                      "type" : "If",
+                                                      "condition" : {
+                                                         "type" : "IsNull",
+                                                         "operand" : {
+                                                            "name" : "score5",
+                                                            "type" : "QueryLetRef"
+                                                         }
+                                                      },
+                                                      "then" : {
+                                                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                         "value" : "0",
+                                                         "type" : "Literal"
+                                                      },
+                                                      "else" : {
+                                                         "type" : "If",
+                                                         "condition" : {
+                                                            "type" : "Equal",
+                                                            "operand" : [ {
+                                                               "name" : "score5",
+                                                               "type" : "QueryLetRef"
+                                                            }, {
+                                                               "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                               "value" : "1",
+                                                               "type" : "Literal"
+                                                            } ]
+                                                         },
+                                                         "then" : {
+                                                            "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                            "value" : "0",
+                                                            "type" : "Literal"
+                                                         },
+                                                         "else" : {
+                                                            "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                            "value" : "1",
+                                                            "type" : "Literal"
+                                                         }
+                                                      }
+                                                   } ]
+                                                }, {
+                                                   "type" : "If",
+                                                   "condition" : {
+                                                      "type" : "IsNull",
+                                                      "operand" : {
+                                                         "name" : "score6",
+                                                         "type" : "QueryLetRef"
+                                                      }
+                                                   },
+                                                   "then" : {
+                                                      "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                      "value" : "0",
+                                                      "type" : "Literal"
+                                                   },
+                                                   "else" : {
+                                                      "type" : "If",
+                                                      "condition" : {
+                                                         "type" : "Equal",
+                                                         "operand" : [ {
+                                                            "name" : "score6",
+                                                            "type" : "QueryLetRef"
+                                                         }, {
+                                                            "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                            "value" : "1",
+                                                            "type" : "Literal"
+                                                         } ]
+                                                      },
+                                                      "then" : {
+                                                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                         "value" : "1",
+                                                         "type" : "Literal"
+                                                      },
+                                                      "else" : {
+                                                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                         "value" : "0",
+                                                         "type" : "Literal"
+                                                      }
+                                                   }
+                                                } ]
+                                             }, {
+                                                "type" : "If",
+                                                "condition" : {
+                                                   "type" : "IsNull",
+                                                   "operand" : {
+                                                      "name" : "score7",
+                                                      "type" : "QueryLetRef"
+                                                   }
+                                                },
+                                                "then" : {
+                                                   "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                   "value" : "0",
+                                                   "type" : "Literal"
+                                                },
+                                                "else" : {
+                                                   "type" : "If",
+                                                   "condition" : {
+                                                      "type" : "Equal",
+                                                      "operand" : [ {
+                                                         "name" : "score7",
+                                                         "type" : "QueryLetRef"
+                                                      }, {
+                                                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                         "value" : "1",
+                                                         "type" : "Literal"
+                                                      } ]
+                                                   },
+                                                   "then" : {
+                                                      "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                      "value" : "0",
+                                                      "type" : "Literal"
+                                                   },
+                                                   "else" : {
+                                                      "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                      "value" : "1",
+                                                      "type" : "Literal"
+                                                   }
+                                                }
+                                             } ]
+                                          }, {
+                                             "type" : "If",
+                                             "condition" : {
+                                                "type" : "IsNull",
+                                                "operand" : {
+                                                   "name" : "score8",
+                                                   "type" : "QueryLetRef"
+                                                }
+                                             },
+                                             "then" : {
+                                                "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                "value" : "0",
+                                                "type" : "Literal"
+                                             },
+                                             "else" : {
+                                                "type" : "If",
+                                                "condition" : {
+                                                   "type" : "Equal",
+                                                   "operand" : [ {
+                                                      "name" : "score8",
+                                                      "type" : "QueryLetRef"
+                                                   }, {
+                                                      "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                      "value" : "1",
+                                                      "type" : "Literal"
+                                                   } ]
+                                                },
+                                                "then" : {
+                                                   "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                   "value" : "1",
+                                                   "type" : "Literal"
+                                                },
+                                                "else" : {
+                                                   "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                   "value" : "0",
+                                                   "type" : "Literal"
+                                                }
+                                             }
+                                          } ]
+                                       }, {
+                                          "type" : "If",
+                                          "condition" : {
+                                             "type" : "IsNull",
+                                             "operand" : {
+                                                "name" : "score9",
+                                                "type" : "QueryLetRef"
+                                             }
+                                          },
+                                          "then" : {
+                                             "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                             "value" : "0",
+                                             "type" : "Literal"
+                                          },
+                                          "else" : {
+                                             "type" : "If",
+                                             "condition" : {
+                                                "type" : "Equal",
+                                                "operand" : [ {
+                                                   "name" : "score9",
+                                                   "type" : "QueryLetRef"
+                                                }, {
+                                                   "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                   "value" : "1",
+                                                   "type" : "Literal"
+                                                } ]
+                                             },
+                                             "then" : {
+                                                "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                "value" : "1",
+                                                "type" : "Literal"
+                                             },
+                                             "else" : {
+                                                "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                "value" : "0",
+                                                "type" : "Literal"
+                                             }
+                                          }
+                                       } ]
+                                    }, {
+                                       "type" : "If",
+                                       "condition" : {
+                                          "type" : "IsNull",
+                                          "operand" : {
+                                             "name" : "score10",
+                                             "type" : "QueryLetRef"
+                                          }
+                                       },
+                                       "then" : {
+                                          "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                          "value" : "0",
+                                          "type" : "Literal"
+                                       },
+                                       "else" : {
+                                          "type" : "If",
+                                          "condition" : {
+                                             "type" : "Equal",
+                                             "operand" : [ {
+                                                "name" : "score10",
+                                                "type" : "QueryLetRef"
+                                             }, {
+                                                "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                                "value" : "1",
+                                                "type" : "Literal"
+                                             } ]
+                                          },
+                                          "then" : {
+                                             "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                             "value" : "1",
+                                             "type" : "Literal"
+                                          },
+                                          "else" : {
+                                             "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                             "value" : "1",
+                                             "type" : "Literal"
+                                          }
+                                       }
+                                    } ]
+                                 }, {
+                                    "type" : "If",
+                                    "condition" : {
+                                       "type" : "IsNull",
+                                       "operand" : {
+                                          "name" : "score11",
+                                          "type" : "QueryLetRef"
+                                       }
+                                    },
+                                    "then" : {
+                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                       "value" : "0",
+                                       "type" : "Literal"
+                                    },
+                                    "else" : {
+                                       "type" : "If",
+                                       "condition" : {
+                                          "type" : "Equal",
+                                          "operand" : [ {
+                                             "name" : "score11",
+                                             "type" : "QueryLetRef"
+                                          }, {
+                                             "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                             "value" : "1",
+                                             "type" : "Literal"
+                                          } ]
+                                       },
+                                       "then" : {
+                                          "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                          "value" : "0",
+                                          "type" : "Literal"
+                                       },
+                                       "else" : {
+                                          "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                          "value" : "1",
+                                          "type" : "Literal"
+                                       }
+                                    }
+                                 } ]
+                              }, {
+                                 "type" : "If",
+                                 "condition" : {
+                                    "type" : "IsNull",
+                                    "operand" : {
+                                       "name" : "score12",
+                                       "type" : "QueryLetRef"
+                                    }
+                                 },
+                                 "then" : {
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                    "value" : "0",
+                                    "type" : "Literal"
+                                 },
+                                 "else" : {
+                                    "type" : "If",
+                                    "condition" : {
+                                       "type" : "Equal",
+                                       "operand" : [ {
+                                          "name" : "score12",
+                                          "type" : "QueryLetRef"
+                                       }, {
+                                          "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                          "value" : "1",
+                                          "type" : "Literal"
+                                       } ]
+                                    },
+                                    "then" : {
+                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                       "value" : "1",
+                                       "type" : "Literal"
+                                    },
+                                    "else" : {
+                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                       "value" : "0",
+                                       "type" : "Literal"
+                                    }
+                                 }
+                              } ]
+                           }, {
+                              "type" : "If",
+                              "condition" : {
+                                 "type" : "IsNull",
+                                 "operand" : {
+                                    "name" : "score13",
+                                    "type" : "QueryLetRef"
+                                 }
+                              },
+                              "then" : {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                 "value" : "0",
+                                 "type" : "Literal"
+                              },
+                              "else" : {
+                                 "type" : "If",
+                                 "condition" : {
+                                    "type" : "Equal",
+                                    "operand" : [ {
+                                       "name" : "score13",
+                                       "type" : "QueryLetRef"
+                                    }, {
+                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                       "value" : "1",
+                                       "type" : "Literal"
+                                    } ]
+                                 },
+                                 "then" : {
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                    "value" : "0",
+                                    "type" : "Literal"
+                                 },
+                                 "else" : {
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                    "value" : "1",
+                                    "type" : "Literal"
+                                 }
+                              }
+                           } ]
+                        }, {
+                           "type" : "If",
+                           "condition" : {
+                              "type" : "IsNull",
+                              "operand" : {
+                                 "name" : "score14",
+                                 "type" : "QueryLetRef"
+                              }
+                           },
+                           "then" : {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "value" : "0",
+                              "type" : "Literal"
+                           },
+                           "else" : {
+                              "type" : "If",
+                              "condition" : {
+                                 "type" : "Equal",
+                                 "operand" : [ {
+                                    "name" : "score14",
+                                    "type" : "QueryLetRef"
+                                 }, {
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                    "value" : "1",
+                                    "type" : "Literal"
+                                 } ]
+                              },
+                              "then" : {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                 "value" : "1",
+                                 "type" : "Literal"
+                              },
+                              "else" : {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                 "value" : "0",
+                                 "type" : "Literal"
+                              }
+                           }
+                        } ]
+                     }, {
+                        "type" : "If",
+                        "condition" : {
+                           "type" : "IsNull",
+                           "operand" : {
+                              "name" : "score15",
+                              "type" : "QueryLetRef"
+                           }
+                        },
+                        "then" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "else" : {
+                           "type" : "If",
+                           "condition" : {
+                              "type" : "Equal",
+                              "operand" : [ {
+                                 "name" : "score15",
+                                 "type" : "QueryLetRef"
+                              }, {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                 "value" : "1",
+                                 "type" : "Literal"
+                              } ]
+                           },
+                           "then" : {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "value" : "1",
+                              "type" : "Literal"
+                           },
+                           "else" : {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "value" : "0",
+                              "type" : "Literal"
+                           }
+                        }
+                     } ]
+                  }
+               }, {
+                  "identifier" : "scoredResponses",
+                  "expression" : {
+                     "type" : "Query",
+                     "source" : [ {
+                        "alias" : "R",
+                        "expression" : {
+                           "path" : "item",
+                           "scope" : "I",
+                           "type" : "Property"
+                        }
+                     } ],
+                     "relationship" : [ ],
+                     "where" : {
+                        "type" : "Not",
+                        "operand" : {
+                           "type" : "Equal",
+                           "operand" : [ {
+                              "path" : "value",
+                              "type" : "Property",
+                              "source" : {
+                                 "path" : "linkId",
+                                 "scope" : "R",
+                                 "type" : "Property"
+                              }
+                           }, {
+                              "name" : "ScoringQuestionId",
+                              "type" : "ParameterRef"
+                           } ]
+                        }
+                     }
+                  }
                } ],
                "relationship" : [ ],
                "return" : {
@@ -655,427 +1302,58 @@
                      }, {
                         "name" : "score",
                         "value" : {
-                           "type" : "Add",
-                           "operand" : [ {
-                              "type" : "Add",
+                           "type" : "If",
+                           "condition" : {
+                              "type" : "Greater",
                               "operand" : [ {
-                                 "type" : "Add",
-                                 "operand" : [ {
-                                    "type" : "Add",
-                                    "operand" : [ {
-                                       "type" : "Add",
-                                       "operand" : [ {
-                                          "type" : "Add",
-                                          "operand" : [ {
-                                             "type" : "Add",
-                                             "operand" : [ {
-                                                "type" : "Add",
-                                                "operand" : [ {
-                                                   "type" : "Add",
-                                                   "operand" : [ {
-                                                      "type" : "Add",
-                                                      "operand" : [ {
-                                                         "type" : "Add",
-                                                         "operand" : [ {
-                                                            "type" : "Add",
-                                                            "operand" : [ {
-                                                               "type" : "Add",
-                                                               "operand" : [ {
-                                                                  "type" : "Add",
-                                                                  "operand" : [ {
-                                                                     "type" : "If",
-                                                                     "condition" : {
-                                                                        "type" : "IsNull",
-                                                                        "operand" : {
-                                                                           "name" : "score1",
-                                                                           "type" : "QueryLetRef"
-                                                                        }
-                                                                     },
-                                                                     "then" : {
-                                                                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                                        "value" : "0",
-                                                                        "type" : "Literal"
-                                                                     },
-                                                                     "else" : {
-                                                                        "type" : "If",
-                                                                        "condition" : {
-                                                                           "type" : "Equal",
-                                                                           "operand" : [ {
-                                                                              "name" : "score1",
-                                                                              "type" : "QueryLetRef"
-                                                                           }, {
-                                                                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                                              "value" : "1",
-                                                                              "type" : "Literal"
-                                                                           } ]
-                                                                        },
-                                                                        "then" : {
-                                                                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                                           "value" : "0",
-                                                                           "type" : "Literal"
-                                                                        },
-                                                                        "else" : {
-                                                                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                                           "value" : "1",
-                                                                           "type" : "Literal"
-                                                                        }
-                                                                     }
-                                                                  }, {
-                                                                     "type" : "If",
-                                                                     "condition" : {
-                                                                        "type" : "IsNull",
-                                                                        "operand" : {
-                                                                           "name" : "score2",
-                                                                           "type" : "QueryLetRef"
-                                                                        }
-                                                                     },
-                                                                     "then" : {
-                                                                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                                        "value" : "0",
-                                                                        "type" : "Literal"
-                                                                     },
-                                                                     "else" : {
-                                                                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                                        "value" : "1",
-                                                                        "type" : "Literal"
-                                                                     }
-                                                                  } ]
-                                                               }, {
-                                                                  "type" : "If",
-                                                                  "condition" : {
-                                                                     "type" : "IsNull",
-                                                                     "operand" : {
-                                                                        "name" : "score3",
-                                                                        "type" : "QueryLetRef"
-                                                                     }
-                                                                  },
-                                                                  "then" : {
-                                                                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                                     "value" : "0",
-                                                                     "type" : "Literal"
-                                                                  },
-                                                                  "else" : {
-                                                                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                                     "value" : "1",
-                                                                     "type" : "Literal"
-                                                                  }
-                                                               } ]
-                                                            }, {
-                                                               "type" : "If",
-                                                               "condition" : {
-                                                                  "type" : "IsNull",
-                                                                  "operand" : {
-                                                                     "name" : "score4",
-                                                                     "type" : "QueryLetRef"
-                                                                  }
-                                                               },
-                                                               "then" : {
-                                                                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                                  "value" : "0",
-                                                                  "type" : "Literal"
-                                                               },
-                                                               "else" : {
-                                                                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                                  "value" : "1",
-                                                                  "type" : "Literal"
-                                                               }
-                                                            } ]
-                                                         }, {
-                                                            "type" : "If",
-                                                            "condition" : {
-                                                               "type" : "IsNull",
-                                                               "operand" : {
-                                                                  "name" : "score5",
-                                                                  "type" : "QueryLetRef"
-                                                               }
-                                                            },
-                                                            "then" : {
-                                                               "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                               "value" : "0",
-                                                               "type" : "Literal"
-                                                            },
-                                                            "else" : {
-                                                               "type" : "If",
-                                                               "condition" : {
-                                                                  "type" : "Equal",
-                                                                  "operand" : [ {
-                                                                     "name" : "score5",
-                                                                     "type" : "QueryLetRef"
-                                                                  }, {
-                                                                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                                     "value" : "1",
-                                                                     "type" : "Literal"
-                                                                  } ]
-                                                               },
-                                                               "then" : {
-                                                                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                                  "value" : "0",
-                                                                  "type" : "Literal"
-                                                               },
-                                                               "else" : {
-                                                                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                                  "value" : "1",
-                                                                  "type" : "Literal"
-                                                               }
-                                                            }
-                                                         } ]
-                                                      }, {
-                                                         "type" : "If",
-                                                         "condition" : {
-                                                            "type" : "IsNull",
-                                                            "operand" : {
-                                                               "name" : "score6",
-                                                               "type" : "QueryLetRef"
-                                                            }
-                                                         },
-                                                         "then" : {
-                                                            "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                            "value" : "0",
-                                                            "type" : "Literal"
-                                                         },
-                                                         "else" : {
-                                                            "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                            "value" : "1",
-                                                            "type" : "Literal"
-                                                         }
-                                                      } ]
-                                                   }, {
-                                                      "type" : "If",
-                                                      "condition" : {
-                                                         "type" : "IsNull",
-                                                         "operand" : {
-                                                            "name" : "score7",
-                                                            "type" : "QueryLetRef"
-                                                         }
-                                                      },
-                                                      "then" : {
-                                                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                         "value" : "0",
-                                                         "type" : "Literal"
-                                                      },
-                                                      "else" : {
-                                                         "type" : "If",
-                                                         "condition" : {
-                                                            "type" : "Equal",
-                                                            "operand" : [ {
-                                                               "name" : "score7",
-                                                               "type" : "QueryLetRef"
-                                                            }, {
-                                                               "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                               "value" : "1",
-                                                               "type" : "Literal"
-                                                            } ]
-                                                         },
-                                                         "then" : {
-                                                            "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                            "value" : "0",
-                                                            "type" : "Literal"
-                                                         },
-                                                         "else" : {
-                                                            "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                            "value" : "1",
-                                                            "type" : "Literal"
-                                                         }
-                                                      }
-                                                   } ]
-                                                }, {
-                                                   "type" : "If",
-                                                   "condition" : {
-                                                      "type" : "IsNull",
-                                                      "operand" : {
-                                                         "name" : "score8",
-                                                         "type" : "QueryLetRef"
-                                                      }
-                                                   },
-                                                   "then" : {
-                                                      "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                      "value" : "0",
-                                                      "type" : "Literal"
-                                                   },
-                                                   "else" : {
-                                                      "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                      "value" : "1",
-                                                      "type" : "Literal"
-                                                   }
-                                                } ]
-                                             }, {
-                                                "type" : "If",
-                                                "condition" : {
-                                                   "type" : "IsNull",
-                                                   "operand" : {
-                                                      "name" : "score9",
-                                                      "type" : "QueryLetRef"
-                                                   }
-                                                },
-                                                "then" : {
-                                                   "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                   "value" : "0",
-                                                   "type" : "Literal"
-                                                },
-                                                "else" : {
-                                                   "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                   "value" : "1",
-                                                   "type" : "Literal"
-                                                }
-                                             } ]
-                                          }, {
-                                             "type" : "If",
-                                             "condition" : {
-                                                "type" : "IsNull",
-                                                "operand" : {
-                                                   "name" : "score10",
-                                                   "type" : "QueryLetRef"
-                                                }
-                                             },
-                                             "then" : {
-                                                "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                "value" : "0",
-                                                "type" : "Literal"
-                                             },
-                                             "else" : {
-                                                "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                "value" : "1",
-                                                "type" : "Literal"
-                                             }
-                                          } ]
-                                       }, {
-                                          "type" : "If",
-                                          "condition" : {
-                                             "type" : "IsNull",
-                                             "operand" : {
-                                                "name" : "score11",
-                                                "type" : "QueryLetRef"
-                                             }
-                                          },
-                                          "then" : {
-                                             "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                             "value" : "0",
-                                             "type" : "Literal"
-                                          },
-                                          "else" : {
-                                             "type" : "If",
-                                             "condition" : {
-                                                "type" : "Equal",
-                                                "operand" : [ {
-                                                   "name" : "score11",
-                                                   "type" : "QueryLetRef"
-                                                }, {
-                                                   "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                   "value" : "1",
-                                                   "type" : "Literal"
-                                                } ]
-                                             },
-                                             "then" : {
-                                                "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                "value" : "0",
-                                                "type" : "Literal"
-                                             },
-                                             "else" : {
-                                                "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                                "value" : "1",
-                                                "type" : "Literal"
-                                             }
-                                          }
-                                       } ]
-                                    }, {
-                                       "type" : "If",
-                                       "condition" : {
-                                          "type" : "IsNull",
-                                          "operand" : {
-                                             "name" : "score12",
-                                             "type" : "QueryLetRef"
-                                          }
-                                       },
-                                       "then" : {
-                                          "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                          "value" : "0",
-                                          "type" : "Literal"
-                                       },
-                                       "else" : {
-                                          "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                          "value" : "1",
-                                          "type" : "Literal"
-                                       }
-                                    } ]
-                                 }, {
-                                    "type" : "If",
-                                    "condition" : {
-                                       "type" : "IsNull",
-                                       "operand" : {
-                                          "name" : "score13",
-                                          "type" : "QueryLetRef"
-                                       }
-                                    },
-                                    "then" : {
-                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                       "value" : "0",
-                                       "type" : "Literal"
-                                    },
-                                    "else" : {
-                                       "type" : "If",
-                                       "condition" : {
-                                          "type" : "Equal",
-                                          "operand" : [ {
-                                             "name" : "score13",
-                                             "type" : "QueryLetRef"
-                                          }, {
-                                             "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                             "value" : "1",
-                                             "type" : "Literal"
-                                          } ]
-                                       },
-                                       "then" : {
-                                          "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                          "value" : "0",
-                                          "type" : "Literal"
-                                       },
-                                       "else" : {
-                                          "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                          "value" : "1",
-                                          "type" : "Literal"
-                                       }
-                                    }
-                                 } ]
-                              }, {
-                                 "type" : "If",
-                                 "condition" : {
-                                    "type" : "IsNull",
-                                    "operand" : {
-                                       "name" : "score14",
-                                       "type" : "QueryLetRef"
-                                    }
-                                 },
-                                 "then" : {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "0",
-                                    "type" : "Literal"
-                                 },
-                                 "else" : {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "1",
-                                    "type" : "Literal"
-                                 }
-                              } ]
-                           }, {
-                              "type" : "If",
-                              "condition" : {
-                                 "type" : "IsNull",
+                                 "type" : "Length",
                                  "operand" : {
-                                    "name" : "score15",
+                                    "name" : "scoredResponses",
                                     "type" : "QueryLetRef"
                                  }
-                              },
-                              "then" : {
+                              }, {
                                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                                  "value" : "0",
                                  "type" : "Literal"
-                              },
-                              "else" : {
-                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                 "value" : "1",
-                                 "type" : "Literal"
+                              } ]
+                           },
+                           "then" : {
+                              "name" : "score",
+                              "type" : "QueryLetRef"
+                           },
+                           "else" : {
+                              "asType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "type" : "As",
+                              "operand" : {
+                                 "type" : "Null"
                               }
-                           } ]
+                           }
+                        }
+                     }, {
+                        "name" : "scoreSeverity",
+                        "value" : {
+                           "type" : "If",
+                           "condition" : {
+                              "type" : "Greater",
+                              "operand" : [ {
+                                 "name" : "score",
+                                 "type" : "QueryLetRef"
+                              }, {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                 "value" : "4",
+                                 "type" : "Literal"
+                              } ]
+                           },
+                           "then" : {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                              "value" : "high",
+                              "type" : "Literal"
+                           },
+                           "else" : {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                              "value" : "low",
+                              "type" : "Literal"
+                           }
                         }
                      }, {
                         "name" : "authoredDate",

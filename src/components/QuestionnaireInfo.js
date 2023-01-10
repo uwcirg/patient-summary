@@ -29,12 +29,19 @@ export default function QuestionnaireInfo(props) {
     return questionnaireJson.title
       ? questionnaireJson.title
       : questionnaireJson.name;
-  }
+  };
 
   if (!introText) return null;
   return (
     <>
-      <IconButton onClick={() => handleDialogOpen()} size="small" className="info-button">
+      <IconButton
+        onClick={() => handleDialogOpen()}
+        size="small"
+        className="info-button"
+        aria-label="information link"
+        title={`click to learn more about ${getQuestionnaireTitle()}`}
+        edge="end"
+      >
         <HelpIcon color="info"></HelpIcon>
       </IconButton>
       <Dialog open={open} onClose={handleClose}>
@@ -43,14 +50,14 @@ export default function QuestionnaireInfo(props) {
             backgroundColor: theme.palette.primary
               ? theme.palette.primary.main
               : "#444",
-            color: "#FFF"
+            color: "#FFF",
           }}
         >
           About {getQuestionnaireTitle()}
         </DialogTitle>
         <DialogContent>
           <DialogContentText
-            sx={{marginTop: theme.spacing(3)}}
+            sx={{ marginTop: theme.spacing(3) }}
             dangerouslySetInnerHTML={{
               __html: introText,
             }}
