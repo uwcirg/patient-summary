@@ -68,3 +68,11 @@ define LessThanHighSchoolCondition:
 
 define HasLowerLevelEducation:
   Length(LessThanHighSchoolCondition) > 0
+
+define FirstResponsesScore:
+  (First(ResponsesSummary)) R 
+  return R.score
+
+define FirstResponsesScoreSeverity:
+  (First(ResponsesSummary)) R 
+  return R.scoreSeverity

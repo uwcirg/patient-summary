@@ -1072,6 +1072,31 @@
                   }
                }
             }
+         }, {
+            "name" : "FirstResponsesScore",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "R",
+                  "expression" : {
+                     "type" : "First",
+                     "source" : {
+                        "name" : "ResponsesSummary",
+                        "type" : "ExpressionRef"
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "return" : {
+                  "expression" : {
+                     "path" : "score",
+                     "scope" : "R",
+                     "type" : "Property"
+                  }
+               }
+            }
          } ]
       }
    }

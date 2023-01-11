@@ -77,7 +77,7 @@ define ResponsesSummary:
       (if score7 is null then 0 else if score7 = 1 then 0 else 1) +
       (if score8 is null then 0 else if score8 = 1 then 1 else 0) +
       (if score9 is null then 0 else if score9 = 1 then 1 else 0) +
-      (if score10 is null then 0 else if score10 = 1 then 1 else 1) +
+      (if score10 is null then 0 else if score10 = 1 then 1 else 0) +
       (if score11 is null then 0 else if score11 = 1 then 0 else 1) +
       (if score12 is null then 0 else if score12 = 1 then 1 else 0) +
       (if score13 is null then 0 else if score13 = 1 then 0 else 1) +
@@ -98,3 +98,11 @@ define ResponsesSummary:
 define ResponsesOnly:
   (QuestionnaireResponses) I
   return LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId)
+
+define FirstResponsesScore:
+  (First(ResponsesSummary)) R 
+  return R.score
+
+define FirstResponsesScoreSeverity:
+  (First(ResponsesSummary)) R 
+  return R.scoreSeverity

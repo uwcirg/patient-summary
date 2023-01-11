@@ -20,6 +20,7 @@ export default function Scoring(props) {
   if (arrSeverityLevelToAlert.indexOf(scoreSeverity) !== -1) {
     const iconColor = scoreSeverity === "high" ? "error" : "inherit";
     const textColor = scoreSeverity === "high" ? "error.main" : "inherit";
+    const iconClass = scoreSeverity === "high" ? "alert-icon" : "";
     return (
       <Stack
         direction="row"
@@ -32,11 +33,19 @@ export default function Scoring(props) {
         </Typography>
         {alertNote && (
           <Tooltip title={alertNote} placement="top" arrow>
-            <ErrorIcon color={iconColor} fontSize="small"></ErrorIcon>
+            <ErrorIcon
+              color={iconColor}
+              fontSize="small"
+              className={iconClass}
+            ></ErrorIcon>
           </Tooltip>
         )}
         {!alertNote && (
-          <ErrorIcon color={iconColor} fontSize="small"></ErrorIcon>
+          <ErrorIcon
+            color={iconColor}
+            fontSize="small"
+            className={iconClass}
+          ></ErrorIcon>
         )}
       </Stack>
     );
