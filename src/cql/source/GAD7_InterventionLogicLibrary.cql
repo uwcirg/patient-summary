@@ -40,26 +40,46 @@ define QuestionnaireResponses:
 
 define ResponsesSummary:
   (QuestionnaireResponses) I
-  return {
-    id: I.id.value,
-    date: LogicHelpers.DateTimeText(I.authored),
-    responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
-    currentQ: CurrentQuestionnaire,
-    items: I.item,
+  let
+    scoredResponses: (I.item R where R.linkId.value != ScoringQuestionId),
     score: 
-          (
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question1LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question2LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question3LinkId)), 0) + 
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question4LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question5LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question6LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question7LinkId)), 0)),
-    authoredDate: I.authored,
-    lastUpdated: I.meta.lastUpdated.value
-  }
-  sort by authoredDate desc, lastUpdated desc
+          if Length(scoredResponses) > 0 then 
+            (
+            Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question1LinkId)), 0) +
+            Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question2LinkId)), 0) +
+            Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question3LinkId)), 0) + 
+            Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question4LinkId)), 0) +
+            Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question5LinkId)), 0) +
+            Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question6LinkId)), 0) +
+            Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question7LinkId)), 0))
+          else null
+    return {
+      id: I.id.value,
+      date: LogicHelpers.DateTimeText(I.authored),
+      responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
+      currentQ: CurrentQuestionnaire,
+      items: I.item,
+      score: score,
+      scoreSeverity: 
+        case
+          when score > 15 then 'high'
+          when score between 10 and 14 then 'moderate'
+          when score between 5 and 9 then 'mild'
+          else 'low'
+        end,
+      authoredDate: I.authored,
+      lastUpdated: I.meta.lastUpdated.value
+    }
+    sort by authoredDate desc, lastUpdated desc
 
 define ResponsesOnly:
   (QuestionnaireResponses) I
   return LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId)
+
+define FirstResponsesScore:
+  (First(ResponsesSummary)) R 
+  return R.score
+
+define FirstResponsesScoreSeverity:
+  (First(ResponsesSummary)) R 
+  return R.scoreSeverity

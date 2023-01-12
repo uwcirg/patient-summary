@@ -48,23 +48,40 @@ define QuestionnaireResponses:
 
 define ResponsesSummary:
   (QuestionnaireResponses) I
+  let
+    scoredResponses: (I.item R where R.linkId.value != ScoringQuestionId),
+    question1Score: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question1LinkId)), 0),
+    question2Score: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question2LinkId)), 0),
+    question3Score: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question3LinkId)), 0),
+    question4Score: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question4LinkId)), 0),
+    question5Score: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question5LinkId)), 0),
+    question6Score: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question6LinkId)), 0),
+    question7Score: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question7LinkId)), 0),
+    question8Score: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question8LinkId)), 0),
+    question9Score: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question9LinkId)), 0),
+    question10Score: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question10LinkId)), 0),
+    question11Score: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question11LinkId)), 0),
+    question12Score: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question12LinkId)), 0)
   return {
     id: I.id.value,
     date: LogicHelpers.DateTimeText(I.authored),
     responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
-    score: 
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question1LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question2LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question3LinkId)), 0) + 
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question4LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question5LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question6LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question7LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question8LinkId)), 0) + 
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question9LinkId)), 0) + 
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question10LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question11LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question12LinkId)), 0),
+    score: // a value of 9 is for the answer, I don't know
+          if (Length(scoredResponses) > 0) then
+            (if question1Score = 9 then 0 else question1Score) + 
+            (if question2Score = 9 then 0 else question2Score) +
+            (if question3Score = 9 then 0 else question3Score) +
+            (if question4Score = 9 then 0 else question4Score) +
+            (if question5Score = 9 then 0 else question5Score) +
+            (if question6Score = 9 then 0 else question6Score) +
+            (if question7Score = 9 then 0 else question7Score) +
+            (if question8Score = 9 then 0 else question8Score) +
+            (if question9Score = 9 then 0 else question9Score) +
+            (if question10Score = 9 then 0 else question10Score) +
+            (if question11Score = 9 then 0 else question11Score) +
+            (if question12Score = 9 then 0 else question12Score)
+          else null,
+
     authoredDate: I.authored,
     lastUpdated: I.meta.lastUpdated.value
   }
@@ -73,3 +90,7 @@ define ResponsesSummary:
 define ResponsesOnly:
   (QuestionnaireResponses) I
   return LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId)
+
+define FirstResponsesScore:
+  (First(ResponsesSummary)) R 
+  return R.score

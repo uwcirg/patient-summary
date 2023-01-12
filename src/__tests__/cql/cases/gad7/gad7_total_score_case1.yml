@@ -58,3 +58,7 @@ results:
   CurrentQuestionnaire: $should exist
   QuestionnaireItems: $should have length 7
   ResponsesOnly: $should exist
+  ResponsesSummary: $should have length 1
+  FirstResponsesScore: 0
+  FirstResponsesScoreSeverity: 'low'
+  

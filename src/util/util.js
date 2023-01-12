@@ -396,7 +396,12 @@ export function gatherSummaryDataByQuestionnaireId(
       const scoringData =
         cqlData && cqlData.length
           ? cqlData.filter((item) => {
-              return item && item.responses && item.score && item.date;
+              return (
+                item &&
+                item.responses &&
+                isNumber(item.score) &&
+                item.date
+              );
             })
           : null;
       const chartData =
@@ -476,4 +481,9 @@ export function getIntroTextFromQuestionnaire(questionnaireJson) {
   if (!textElement || !textElement.extension || !textElement.extension[0])
     return "";
   return textElement.extension[0].valueString;
+}
+
+export function isNumber(target) {
+  if (typeof target === "number") return true;
+  return target !== null && !isNaN(target);
 }

@@ -42,22 +42,36 @@ define QuestionnaireResponses:
 
 define ResponsesSummary:
   (QuestionnaireResponses) I
-  return {
-    id: I.id.value,
-    date: LogicHelpers.DateTimeText(I.authored),
-    responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
+  let
     score: 
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question1LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question2LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question3LinkId)), 0) + 
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question4LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question5LinkId)), 0) +
-          Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question6LinkId)), 0),
-    authoredDate: I.authored,
-    lastUpdated: I.meta.lastUpdated.value
-  }
-  sort by authoredDate desc, lastUpdated desc
+      Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question1LinkId)), 0) +
+      Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question2LinkId)), 0) +
+      Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question3LinkId)), 0) + 
+      Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question4LinkId)), 0) +
+      Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question5LinkId)), 0) +
+      Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question6LinkId)), 0),
+    responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
+    scoredResponses: (I.item R where R.linkId.value != ScoringQuestionId)
+    return {
+      id: I.id.value,
+      date: LogicHelpers.DateTimeText(I.authored),
+      responses: responses,
+      scoredResponses: scoredResponses,
+      score: if (Length(scoredResponses) > 0) then score else null,
+      scoreSeverity: if score > 0 then 'high' else 'low',
+      authoredDate: I.authored,
+      lastUpdated: I.meta.lastUpdated.value
+    }
+    sort by authoredDate desc, lastUpdated desc
 
 define ResponsesOnly:
   (QuestionnaireResponses) I
   return LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId)
+
+define FirstResponsesScore:
+  (First(ResponsesSummary)) R 
+  return R.score
+
+define FirstResponsesScoreSeverity:
+  (First(ResponsesSummary)) R 
+  return R.scoreSeverity

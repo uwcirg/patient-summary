@@ -14,13 +14,13 @@ gad7_reusable_resources:
 # questionnaire resource
 - &questionnaireResource # skeleton
   resourceType: Questionnaire
-  id: CIRG/GAD7
+  id: CIRG-GAD7
   code: LOINC#44249-1 Generalized anxiety disorder 7 item (GAD-7)
 
 # questionnaire responses
 - &questionnaireResponses # skeleton
   resourceType: QuestionnaireResponse
-  questionnaire: http://www.cdc.gov/ncbddd/fasd/gad7
+  questionnaire: Questionnaire/CIRG-GAD7
   status: completed
   authored: 2030-04-18
 

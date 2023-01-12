@@ -1,0 +1,8 @@
+library:
+  name: GDS_InterventionLogicLibrary
+  paths: ../../cql
+tests:
+  path: cases/gds
+options:
+  dumpFiles:
+    enabled: true
