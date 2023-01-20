@@ -62,7 +62,7 @@ define ResponsesSummary:
       score: score,
       scoreSeverity: 
         case
-          when score > 15 then 'high'
+          when score > 14 then 'high'
           when score between 10 and 14 then 'moderate'
           when score between 5 and 9 then 'mild'
           else 'low'
