@@ -66,31 +66,43 @@ define ResponsesSummary:
     score12: First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question12LinkId)),
     score13: First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question13LinkId)),
     score14: First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question14LinkId)),
-    score15: First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question15LinkId))
-  return {
-    date: LogicHelpers.DateTimeText(I.authored),
-    responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
+    score15: First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question15LinkId)),
     score: 
-    (if score1 is null then 0 else if score1 = 1 then 0 else 1) +
-    (if score2 is null then 0 else 1) +
-    (if score3 is null then 0 else 1) +
-    (if score4 is null then 0 else 1) +
-    (if score5 is null then 0 else if score5 = 1 then 0 else 1) +
-    (if score6 is null then 0 else 1) +
-    (if score7 is null then 0 else if score7 = 1 then 0 else 1) +
-    (if score8 is null then 0 else 1) +
-    (if score9 is null then 0 else 1) +
-    (if score10 is null then 0 else 1) +
-    (if score11 is null then 0 else if score11 = 1 then 0 else 1) +
-    (if score12 is null then 0 else 1) +
-    (if score13 is null then 0 else if score13 = 1 then 0 else 1) +
-    (if score14 is null then 0 else 1) +
-    (if score15 is null then 0 else 1),
-    authoredDate: I.authored,
-    lastUpdated: I.meta.lastUpdated.value
-  }
-  sort by authoredDate desc, lastUpdated desc
+      (if score1 is null then 0 else if score1 = 1 then 0 else 1) +
+      (if score2 is null then 0 else if score2 = 1 then 1 else 0) +
+      (if score3 is null then 0 else if score3 = 1 then 1 else 0) +
+      (if score4 is null then 0 else if score4 = 1 then 1 else 0) +
+      (if score5 is null then 0 else if score5 = 1 then 0 else 1) +
+      (if score6 is null then 0 else if score6 = 1 then 1 else 0) +
+      (if score7 is null then 0 else if score7 = 1 then 0 else 1) +
+      (if score8 is null then 0 else if score8 = 1 then 1 else 0) +
+      (if score9 is null then 0 else if score9 = 1 then 1 else 0) +
+      (if score10 is null then 0 else if score10 = 1 then 1 else 0) +
+      (if score11 is null then 0 else if score11 = 1 then 0 else 1) +
+      (if score12 is null then 0 else if score12 = 1 then 1 else 0) +
+      (if score13 is null then 0 else if score13 = 1 then 0 else 1) +
+      (if score14 is null then 0 else if score14 = 1 then 1 else 0) +
+      (if score15 is null then 0 else if score15 = 1 then 1 else 0),
+      scoredResponses: (I.item R where R.linkId.value != ScoringQuestionId)
+    return {
+      id: I.id.value,
+      date: LogicHelpers.DateTimeText(I.authored),
+      responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
+      score: if (Length(scoredResponses) > 0) then score else null,
+      scoreSeverity: if score > 4 then 'high' else 'low',
+      authoredDate: I.authored,
+      lastUpdated: I.meta.lastUpdated.value
+    }
+    sort by authoredDate desc, lastUpdated desc
 
 define ResponsesOnly:
   (QuestionnaireResponses) I
   return LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId)
+
+define FirstResponsesScore:
+  (First(ResponsesSummary)) R 
+  return R.score
+
+define FirstResponsesScoreSeverity:
+  (First(ResponsesSummary)) R 
+  return R.scoreSeverity

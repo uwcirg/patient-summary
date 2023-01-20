@@ -260,6 +260,17 @@
                   "expression" : {
                      "type" : "Tuple",
                      "element" : [ {
+                        "name" : "id",
+                        "value" : {
+                           "path" : "value",
+                           "type" : "Property",
+                           "source" : {
+                              "path" : "id",
+                              "scope" : "I",
+                              "type" : "Property"
+                           }
+                        }
+                     }, {
                         "name" : "date",
                         "value" : {
                            "name" : "DateTimeText",

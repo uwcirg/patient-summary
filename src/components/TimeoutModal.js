@@ -31,7 +31,6 @@ export default function TimeoutModal() {
   return (
     <>
       <Modal
-        hideBackdrop
         open={open}
         onClose={handleClose}
         aria-labelledby="child-modal-title"

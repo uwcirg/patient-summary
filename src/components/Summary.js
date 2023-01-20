@@ -6,10 +6,9 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Error from "./ErrorComponent";
+import QuestionnaireInfo from "./QuestionnaireInfo";
 import { getDisplayQTitle, hasData } from "../util/util";
-import {
-  QUESTIONNAIRE_ANCHOR_ID_PREFIX,
-} from "../consts/consts";
+import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts/consts";
 import Responses from "./Responses";
 import Chart from "./Chart";
 
@@ -90,6 +89,7 @@ export default function Summary(props) {
       component="h3"
       color="accent"
       sx={{ marginBottom: 2 }}
+      className="questionnaire-title"
     >
       {getQuestionnaireTitle()}
     </Typography>
@@ -97,8 +97,8 @@ export default function Summary(props) {
   const renderSummary = () =>
     shouldDisplayResponses() && (
       <Stack
-        direction={{ xs: "column", md: "column", lg: "row" }}
-        spacing={{ xs: 2, md: 2, lg: 4 }}
+        direction="column"
+        spacing={2}
         alignItems="flex-start"
         className="response-summary"
       >
@@ -111,7 +111,6 @@ export default function Summary(props) {
             }}
           ></Chart>
         )}
-
         {!hasResponses() && (
           <Alert severity="warning">No recorded responses</Alert>
         )}
@@ -119,6 +118,7 @@ export default function Summary(props) {
           <Responses
             data={summary.responses}
             questionnaireId={questionnaireId}
+            questionnaireJson={summary.questionnaire}
           ></Responses>
         )}
       </Stack>
@@ -151,8 +151,13 @@ export default function Summary(props) {
           paddingBottom: 4,
         }}
       >
-        {/* questionnaire title */}
-        {renderTitle()}
+        <Stack direction="row" spacing={1} alignItems="flex-start">
+          {/* questionnaire title */}
+          <div>{renderTitle()}</div>
+          <QuestionnaireInfo
+            questionnaireJson={data.questionnaire}
+          ></QuestionnaireInfo>
+        </Stack>
         {/* error message */}
         {renderError()}
         {/* loading indicator */}

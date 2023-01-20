@@ -15,7 +15,7 @@ import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import Scoring from "./Score";
 import qConfig from "../config/questionnaire_config";
-import { scrollToAnchor } from "../util/util";
+import { isNumber, scrollToAnchor } from "../util/util";
 
 export default function ScoringSummary(props) {
   const theme = useTheme();
@@ -31,20 +31,30 @@ export default function ScoringSummary(props) {
       ? theme.palette.link.main
       : "blue";
   const { summaryData } = props;
+  const responsesHasScore = (responses) => {
+    if (!responses || !responses.length) return false;
+    return (
+      responses.filter(
+        (result) => isNumber(result.score)
+      ).length > 0
+    );
+  };
   const hasList = () =>
     summaryData &&
     Object.keys(summaryData).length > 0 &&
     Object.keys(summaryData).filter((key) => {
-      return (
-        summaryData[key].responses &&
-        summaryData[key].responses.filter((result) => result.score).length > 0
-      );
+      return responsesHasScore(summaryData[key].responses);
     }).length > 0;
   const getSortedResponses = (rdata) => {
     if (!rdata || rdata.length === 0) return [];
     return rdata.sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
+  };
+  const getCurrentResponses = (rdata) => {
+    const sortedResponses = getSortedResponses(rdata);
+    if (!sortedResponses || !sortedResponses.length) return null;
+    return sortedResponses[0];
   };
   const getInstrumentShortName = (id) =>
     qConfig[id] && qConfig[id].shortTitle
@@ -69,10 +79,10 @@ export default function ScoringSummary(props) {
     const comparisonToAlert = qConfig[id] && qConfig[id].comparisonToAlert;
     const currentScore = getCurrentScoreByInstrument(rdata);
     const prevScore = getPrevScoreByInstrument(rdata);
-    console.log("current score ", currentScore, " prev score ", prevScore);
+    //console.log("current score ", currentScore, " prev score ", prevScore);
     if (isNaN(prevScore) || isNaN(currentScore)) return "--";
     if (!isNaN(prevScore)) {
-      if (comparisonToAlert === "low") {
+      if (comparisonToAlert === "lower") {
         if (currentScore < prevScore)
           return <SouthIcon color="error"></SouthIcon>;
         if (currentScore > prevScore)
@@ -109,11 +119,7 @@ export default function ScoringSummary(props) {
   const getResponsesContainingScore = () => {
     if (!hasList()) return [];
     return Object.keys(summaryData).filter((key) => {
-      return (
-        summaryData[key] &&
-        summaryData[key].responses &&
-        summaryData[key].responses.filter((item) => item.score).length > 0
-      );
+      return responsesHasScore(summaryData[key].responses);
     });
   };
 
@@ -159,8 +165,10 @@ export default function ScoringSummary(props) {
                 </TableCell>
                 <TableCell align="left" size="small">
                   <Scoring
-                    instrumentId={key}
                     score={getCurrentScoreByInstrument(
+                      summaryData[key].responses
+                    )}
+                    scoreParams={getCurrentResponses(
                       summaryData[key].responses
                     )}
                     justifyContent="space-between"
@@ -178,7 +186,7 @@ export default function ScoringSummary(props) {
   };
 
   return (
-    <Paper sx={{ minWidth: "50%" }}>
+    <Paper className="scoring-summary-container" sx={{ minWidth: "50%" }}>
       {renderTitle()}
       {renderSummary()}
     </Paper>

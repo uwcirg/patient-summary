@@ -45,22 +45,27 @@ define ResponsesSummary:
   (QuestionnaireResponses) I
   let
     responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, scoringQuestionId),
+    scoredResponses: (I.item R where 
+      R.linkId.value != 'minicog-question1-instruction' and 
+      R.linkId.value != 'minicog-question2-instruction' and 
+      R.linkId.value != 'minicog-total-score-explanation' and
+      R.linkId.value != 'minicog-questionnaire-footnote' and
+      R.linkId.value != scoringQuestionId),
     word_recall_score: Coalesce(First((responses) I where I.id = question1Id return I.value.value), 0),
-    clock_draw_score: Coalesce(First((responses) I where I.id = question2Id return I.value.value), 0)
-  return {
-    date: LogicHelpers.DateTimeText(I.authored),
-    responses: (responses R where 
-    R.id != 'minicog-question1-instruction' and 
-    R.id != 'minicog-question2-instruction' and 
-    R.id != 'minicog-total-score-explanation' and
-    R.id != 'minicog-questionnaire-footnote'),
-    score: (word_recall_score as Integer) + (clock_draw_score as Integer),
-    word_recall_score: word_recall_score,
-    clock_draw_score: clock_draw_score,
-    authoredDate: I.authored,
-    lastUpdated: I.meta.lastUpdated.value
-  }
-  sort by authoredDate desc, lastUpdated desc
+    clock_draw_score: Coalesce(First((responses) I where I.id = question2Id return I.value.value), 0),
+    score: (word_recall_score as Integer) + (clock_draw_score as Integer)
+    return {
+      id: I.id.value,
+      date: LogicHelpers.DateTimeText(I.authored),
+      responses: responses,
+      score: if Length(scoredResponses) > 0 then score else null,
+      scoreSeverity: if score between 0 and 3 then 'high' else 'low',
+      word_recall_score: word_recall_score,
+      clock_draw_score: clock_draw_score,
+      authoredDate: I.authored,
+      lastUpdated: I.meta.lastUpdated.value
+    }
+    sort by authoredDate desc, lastUpdated desc
 
 define ResponsesOnly:
   (QuestionnaireResponses) I

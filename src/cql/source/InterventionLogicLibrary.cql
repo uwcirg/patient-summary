@@ -96,12 +96,13 @@ define function FormattedResponses(responses List<FHIR.QuestionnaireResponse.Ite
 define ResponsesSummary:
   (QuestionnaireResponses) I
   return {
+    id: I.id.value,
     date: DateTimeText(I.authored),
     responses: FormattedResponses(I.item),
     authoredDate: I.authored,
     lastUpdated: I.meta.lastUpdated.value
   }
-  sort by authoredDate desc, lastUpdated desc
+  sort by date desc, lastUpdated desc
 
 define ResponsesOnly:
   (QuestionnaireResponses) I
