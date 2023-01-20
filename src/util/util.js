@@ -397,10 +397,7 @@ export function gatherSummaryDataByQuestionnaireId(
         cqlData && cqlData.length
           ? cqlData.filter((item) => {
               return (
-                item &&
-                item.responses &&
-                isNumber(item.score) &&
-                item.date
+                item && item.responses && isNumber(item.score) && item.date
               );
             })
           : null;
@@ -473,25 +470,17 @@ export function gatherSummaryDataByQuestionnaireId(
  * @param client is a SoF frontend client
  * return the state key property of the client
  */
-export function getClientSessionKey (client) {
+export function getClientSessionKey(client) {
   if (!client) return null;
   return client.getState().key;
 }
 
-export function getEnvProjectId () {
+export function getEnvProjectId() {
   return getEnv("REACT_APP_PROJECT_ID");
 }
 
-export function getEnvSystemType () {
+export function getEnvSystemType() {
   return getEnv("REACT_APP_SYSTEM_TYPE");
-}
-
-export function getDefaultMessageObject (client, patient) {
-  return {
-    patientID: patient ? patient.id : null,
-    projectID: getEnvProjectId(),
-    authSessionID: getClientSessionKey(client),
-  };
 }
 
 export function getIntroTextFromQuestionnaire(questionnaireJson) {
