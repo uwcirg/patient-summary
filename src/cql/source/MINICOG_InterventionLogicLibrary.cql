@@ -25,6 +25,10 @@ define question1Id: 'minicog-question1'
 define question2Id: 'minicog-question2'
 define scoringQuestionId: 'minicog-total-score'
 
+define scoringParams: {
+  maximumScore: 5
+}
+
 // Load Questionnaire
 define Questionnaires:
   LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
@@ -62,6 +66,7 @@ define ResponsesSummary:
       scoreSeverity: if score between 0 and 3 then 'high' else 'low',
       word_recall_score: word_recall_score,
       clock_draw_score: clock_draw_score,
+      scoringParams: scoringParams,
       authoredDate: I.authored,
       lastUpdated: I.meta.lastUpdated.value
     }

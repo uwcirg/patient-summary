@@ -30,6 +30,10 @@ define question9LinkId: '/57248-7'
 define question10LinkId: '/57249-5'
 define question11LinkId: '/46569-0'
 
+define scoringParams: {
+  maximumScore: 45
+}
+
 define Questionnaires:
   LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
 
@@ -63,6 +67,7 @@ define ResponsesSummary:
           Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question9LinkId)), 0) + 
           Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question10LinkId)), 0) +
           Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question11LinkId)), 0),
+    scoringParams: scoringParams,
     authoredDate: I.authored,
     lastUpdated: I.meta.lastUpdated.value
   }

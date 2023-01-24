@@ -39,6 +39,10 @@ define question17LinkId: 'cs-idas-17'
 define question18LinkId: 'cs-idas-18'
 define suicideQuestionLinkId: 'cs-idas-15'
 
+define scoringParams: {
+  maximumScore: 36
+}
+
 define Questionnaires:
   LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
 
@@ -87,6 +91,7 @@ define ResponsesSummary:
         score: score,
         scoreSeverity: if score > 18 or (suicideScore >= 1) then 'high' else 'low',
         alertNote: if (suicideScore >= 1) then 'endorsed suicide ideation' else null,
+        scoringParams: scoringParams,
         authoredDate: I.authored,
         lastUpdated: I.meta.lastUpdated.value
       }

@@ -23,6 +23,10 @@ define question5LinkId: '/69735-9'
 define question6LinkId: '/69689-8'
 define question7LinkId: '/69736-7'
 
+define scoringParams: {
+  maximumScore: 21
+}
+
 define Questionnaires:
   LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
 
@@ -67,6 +71,7 @@ define ResponsesSummary:
           when score between 5 and 9 then 'mild'
           else 'low'
         end,
+      scoringParams: scoringParams,
       authoredDate: I.authored,
       lastUpdated: I.meta.lastUpdated.value
     }

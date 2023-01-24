@@ -25,6 +25,10 @@ define question4LinkId: 'behav-4'
 define question5LinkId: 'behav-5'
 define question6LinkId: 'behav-6'
 
+define scoringParams: {
+  maximumScore: 6
+}
+
 define Questionnaires:
   LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
 
@@ -59,6 +63,7 @@ define ResponsesSummary:
       scoredResponses: scoredResponses,
       score: if (Length(scoredResponses) > 0) then score else null,
       scoreSeverity: if score > 0 then 'high' else 'low',
+      scoringParams: scoringParams,
       authoredDate: I.authored,
       lastUpdated: I.meta.lastUpdated.value
     }

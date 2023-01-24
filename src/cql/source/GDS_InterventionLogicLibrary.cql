@@ -34,6 +34,10 @@ define question13LinkId: '/48532-6'
 define question14LinkId: '/48533-4'
 define question15LinkId: '/48534-2'
 
+define scoringParams: {
+  maximumScore: 15
+}
+
 define Questionnaires:
   LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
 
@@ -90,6 +94,7 @@ define ResponsesSummary:
       responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
       score: if (Length(scoredResponses) > 0) then score else null,
       scoreSeverity: if score > 4 then 'high' else 'low',
+      scoringParams: scoringParams,
       authoredDate: I.authored,
       lastUpdated: I.meta.lastUpdated.value
     }

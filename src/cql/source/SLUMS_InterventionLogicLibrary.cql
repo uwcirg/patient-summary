@@ -18,6 +18,11 @@ parameter ScoringQuestionId default '71492-3'
 // -----------------------------------------------------------------------------
 context Patient
 
+
+define scoringParams: {
+  maximumScore: 30
+}
+
 // Load Questionnaire
 define Questionnaires:
   LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
@@ -50,6 +55,7 @@ define ResponsesSummary:
           when score <= 20 then 'high'
           else 'low'
         end,
+      scoringParams: scoringParams,
       authoredDate: I.authored,
       lastUpdated: I.meta.lastUpdated.value,
       educationLevel: educationLevel

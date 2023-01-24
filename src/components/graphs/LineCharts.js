@@ -11,6 +11,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import {range} from "../../util/util";
 export default function LineCharts(props) {
   const {
     id,
@@ -25,11 +26,12 @@ export default function LineCharts(props) {
     xTickFormatter,
     xFieldKey,
     xLabel,
-    yDomain,
+   // yDomain,
+    maximumScore,
     yFieldKey,
     yLineFields,
     yLabel,
-    yTicks,
+   // yTicks,
     yTickFormatter,
     tooltipLabelFormatter,
     data,
@@ -65,9 +67,12 @@ export default function LineCharts(props) {
       <Label value={xLabel} offset={12} position="insideBottom" />
     </XAxis>
   );
+  const yDomain = maximumScore ? [0, maximumScore]: [0, "auto"];
+  const yTicks = maximumScore ? range(0, maximumScore) : range(0, 50);
+  
   const renderYAxis = () => (
     <YAxis
-      domain={yDomain || [0, "auto"]}
+      domain={yDomain}
       label={{ value: yLabel, angle: -90, position: "insideLeft" }}
       interval="preserveStartEnd"
       tick={{ style: { fontSize: "12px" } }}
