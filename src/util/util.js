@@ -411,11 +411,9 @@ export function gatherSummaryDataByQuestionnaireId(
               total: item.score,
             }))
           : null;
-      console.log("CQL data ", cqlData)
       const scoringParams =
         cqlData && cqlData.length ? cqlData[0].scoringParams : {};
-      console.log("score paras ", questionnaireJson.id, scoringParams);
-
+    
       const returnResult = {
         chartConfig: { ...chartConfig, ...scoringParams },
         chartData: chartData,

@@ -26,12 +26,10 @@ export default function LineCharts(props) {
     xTickFormatter,
     xFieldKey,
     xLabel,
-   // yDomain,
     maximumScore,
     yFieldKey,
     yLineFields,
     yLabel,
-   // yTicks,
     yTickFormatter,
     tooltipLabelFormatter,
     data,
@@ -69,7 +67,7 @@ export default function LineCharts(props) {
   );
   const yDomain = maximumScore ? [0, maximumScore]: [0, "auto"];
   const yTicks = maximumScore ? range(0, maximumScore) : range(0, 50);
-  
+
   const renderYAxis = () => (
     <YAxis
       domain={yDomain}
