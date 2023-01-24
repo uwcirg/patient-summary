@@ -584,7 +584,7 @@ export default function Summaries() {
                   <>
                     <Stack
                       className="selector-stats-wrapper"
-                      direction={{ xs: "column", sm: "column", md: "row" }}
+                      direction={{ xs: "column", sm: "column", md: "column", lg: "row" }}
                       spacing={2}
                       sx={{
                         marginTop: 2,

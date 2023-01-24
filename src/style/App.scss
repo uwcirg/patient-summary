@@ -1,5 +1,5 @@
 $chart-background-color: #f4f6f6;
-$muted-text-color: #777;
+$muted-text-color: #4f4d4d;
 $border-color: #ececec;
 $app-background-color: #dad7da;
 $summary-container-background-color: #fff;
@@ -65,6 +65,9 @@ p {
 }
 .muted-text {
   color: $muted-text-color;
+}
+.no-wrap-text {
+  white-space: nowrap;
 }
 .header-logo {
   width: 120px;

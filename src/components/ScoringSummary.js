@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
 import Link from "@mui/material/Link";
+import Box from "@mui/material/Box";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -33,11 +34,7 @@ export default function ScoringSummary(props) {
   const { summaryData } = props;
   const responsesHasScore = (responses) => {
     if (!responses || !responses.length) return false;
-    return (
-      responses.filter(
-        (result) => isNumber(result.score)
-      ).length > 0
-    );
+    return responses.filter((result) => isNumber(result.score)).length > 0;
   };
   const hasList = () =>
     summaryData &&
@@ -123,6 +120,17 @@ export default function ScoringSummary(props) {
     });
   };
 
+  const displayScoreRange = (summaryData) => {
+    if (!summaryData.responses || !summaryData.responses.length) return null;
+    const scoringParams = summaryData.responses[0].scoringParams;
+    if (!scoringParams.maximumScore) return null;
+    const minScore = scoringParams.minimumScore
+      ? scoringParams.minimumScore
+      : 0;
+    const maxScore = scoringParams.maximumScore;
+    return `( ${minScore} - ${maxScore} )`;
+  };
+
   const scoreList = getResponsesContainingScore();
 
   const renderSummary = () => {
@@ -146,6 +154,7 @@ export default function ScoringSummary(props) {
               <TableCell variant="head" size="small">
                 Score
               </TableCell>
+              <TableCell></TableCell>
               <TableCell variant="head" size="small">
                 Compared to Last
               </TableCell>
@@ -174,6 +183,11 @@ export default function ScoringSummary(props) {
                     justifyContent="space-between"
                   ></Scoring>
                 </TableCell>
+                <TableCell align="left" size="small">
+                  <Box className="no-wrap-text muted-text">
+                    {displayScoreRange(summaryData[key])}
+                  </Box>
+                </TableCell>
                 <TableCell align="center" size="small">
                   {getDisplayIcon(key, summaryData[key].responses)}
                 </TableCell>
@@ -186,7 +200,14 @@ export default function ScoringSummary(props) {
   };
 
   return (
-    <Paper className="scoring-summary-container" sx={{ minWidth: "50%" }}>
+    <Paper
+      className="scoring-summary-container"
+      sx={{
+        minWidth: {
+          lg: "60%"
+        },
+      }}
+    >
       {renderTitle()}
       {renderSummary()}
     </Paper>
