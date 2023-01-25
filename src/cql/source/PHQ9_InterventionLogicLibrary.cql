@@ -64,12 +64,7 @@ define ResponsesSummary:
             Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question7LinkId)), 0) +
             Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question8LinkId)), 0) + 
             Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question9LinkId)), 0)
-          else null
-  return {
-    id: I.id.value,
-    date: LogicHelpers.DateTimeText(I.authored),
-    responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
-    score: score,
+          else null,
     scoreSeverity:
       case
         when score >= 20 then 'high'
@@ -77,6 +72,19 @@ define ResponsesSummary:
         when score between 10 and 14 then 'moderate'
         when score between 5 and 9 then 'mild'
         else 'low'
+      end
+  return {
+    id: I.id.value,
+    date: LogicHelpers.DateTimeText(I.authored),
+    responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
+    score: score,
+    scoreSeverity: scoreSeverity,
+    scoreMeaning: case
+        when scoreSeverity = 'high' then 'severe depression'
+        when scoreSeverity = 'moderately high' then 'moderately severe depression'
+        when scoreSeverity = 'moderate' then 'moderate depression'
+        when scoreSeverity = 'mild' then 'mild depression'
+        else null 
       end,
     scoringParams: scoringParams,
     totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),

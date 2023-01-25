@@ -83,13 +83,19 @@ define ResponsesSummary:
             Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question17LinkId)), 0) +
             Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question18LinkId)), 0)
           else null,
-      suicideScore: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, suicideQuestionLinkId)), 0)
+      suicideScore: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, suicideQuestionLinkId)), 0),
+      scoreSeverity: if score > 18 or (suicideScore >= 1) then 'high' else 'low'
       return {
         id: I.id.value,
         date: LogicHelpers.DateTimeText(I.authored),
         responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
         score: score,
-        scoreSeverity: if score > 18 or (suicideScore >= 1) then 'high' else 'low',
+        scoreSeverity: scoreSeverity,
+        scoreMeaning: case
+          when suicideScore >= 1 then 'endorsed suicide ideation'
+          when scoreSeverity = 'high' then 'major depressive episode'
+          else null
+        end,
         alertNote: if (suicideScore >= 1) then 'endorsed suicide ideation' else null,
         scoringParams: scoringParams,
         totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),

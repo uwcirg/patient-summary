@@ -87,13 +87,15 @@ define ResponsesSummary:
       (if score13 is null then 0 else if score13 = 1 then 0 else 1) +
       (if score14 is null then 0 else if score14 = 1 then 1 else 0) +
       (if score15 is null then 0 else if score15 = 1 then 1 else 0),
-      scoredResponses: (I.item R where R.linkId.value != ScoringQuestionId)
+      scoredResponses: (I.item R where R.linkId.value != ScoringQuestionId),
+      scoreSeverity: if score > 4 then 'high' else 'low'
     return {
       id: I.id.value,
       date: LogicHelpers.DateTimeText(I.authored),
       responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
       score: if (Length(scoredResponses) > 0) then score else null,
-      scoreSeverity: if score > 4 then 'high' else 'low',
+      scoreSeverity: scoreSeverity,
+      scoreMeaning: if scoreSeverity = 'high' then 'depression' else null,
       scoringParams: scoringParams,
       totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
       totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),

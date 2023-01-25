@@ -60,7 +60,14 @@ define ResponsesSummary:
             Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question5LinkId)), 0) +
             Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question6LinkId)), 0) +
             Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question7LinkId)), 0))
-          else null
+          else null,
+    scoreSeverity: 
+        case
+          when score > 14 then 'high'
+          when score between 10 and 14 then 'moderate'
+          when score between 5 and 9 then 'mild'
+          else 'low'
+        end
     return {
       id: I.id.value,
       date: LogicHelpers.DateTimeText(I.authored),
@@ -68,13 +75,13 @@ define ResponsesSummary:
       currentQ: CurrentQuestionnaire,
       items: I.item,
       score: score,
-      scoreSeverity: 
-        case
-          when score > 14 then 'high'
-          when score between 10 and 14 then 'moderate'
-          when score between 5 and 9 then 'mild'
-          else 'low'
-        end,
+      scoreSeverity: scoreSeverity,
+      scoreMeaning: case
+        when scoreSeverity = 'high' then 'severe anxiety'
+        when scoreSeverity = 'moderate' then 'moderate anxiety'
+        when scoreSeverity = 'mild' then 'mild severity'
+        else if score is not null then 'minimal anxiety' else '' 
+      end,
       scoringParams: scoringParams,
       totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
       totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),

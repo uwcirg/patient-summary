@@ -43,18 +43,20 @@ define ResponsesSummary:
   let
     responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
     score: responses[0].value.value,
-    educationLevel: if HasLowerLevelEducation is true then 'low' else 'high'
+    educationLevel: if HasLowerLevelEducation is true then 'low' else 'high',
+    scoreSeverity:
+        case
+          when educationLevel = 'low' and score <= 19 then 'high'
+          when score <= 20 then 'high'
+          else 'low'
+        end
     return {
       id: I.id.value,
       date: LogicHelpers.DateTimeText(I.authored),
       responses: responses,
       score: score,
-      scoreSeverity:
-        case
-          when educationLevel = 'low' and score <= 19 then 'high'
-          when score <= 20 then 'high'
-          else 'low'
-        end,
+      scoreSeverity: scoreSeverity,
+      scoreMeaning: if scoreSeverity = 'high' then 'cognitive impaired' else null,
       scoringParams: scoringParams,
       totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
       totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
