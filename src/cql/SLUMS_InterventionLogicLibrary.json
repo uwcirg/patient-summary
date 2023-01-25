@@ -297,6 +297,72 @@
                         "type" : "Literal"
                      }
                   }
+               }, {
+                  "identifier" : "scoreSeverity",
+                  "expression" : {
+                     "type" : "Case",
+                     "caseItem" : [ {
+                        "when" : {
+                           "type" : "And",
+                           "operand" : [ {
+                              "type" : "Equal",
+                              "operand" : [ {
+                                 "name" : "educationLevel",
+                                 "type" : "QueryLetRef"
+                              }, {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                 "value" : "low",
+                                 "type" : "Literal"
+                              } ]
+                           }, {
+                              "type" : "LessOrEqual",
+                              "operand" : [ {
+                                 "asType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                 "type" : "As",
+                                 "operand" : {
+                                    "name" : "score",
+                                    "type" : "QueryLetRef"
+                                 }
+                              }, {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                 "value" : "19",
+                                 "type" : "Literal"
+                              } ]
+                           } ]
+                        },
+                        "then" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                           "value" : "high",
+                           "type" : "Literal"
+                        }
+                     }, {
+                        "when" : {
+                           "type" : "LessOrEqual",
+                           "operand" : [ {
+                              "asType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "type" : "As",
+                              "operand" : {
+                                 "name" : "score",
+                                 "type" : "QueryLetRef"
+                              }
+                           }, {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "value" : "20",
+                              "type" : "Literal"
+                           } ]
+                        },
+                        "then" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                           "value" : "high",
+                           "type" : "Literal"
+                        }
+                     } ],
+                     "else" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                        "value" : "low",
+                        "type" : "Literal"
+                     }
+                  }
                } ],
                "relationship" : [ ],
                "return" : {
@@ -340,67 +406,35 @@
                      }, {
                         "name" : "scoreSeverity",
                         "value" : {
-                           "type" : "Case",
-                           "caseItem" : [ {
-                              "when" : {
-                                 "type" : "And",
-                                 "operand" : [ {
-                                    "type" : "Equal",
-                                    "operand" : [ {
-                                       "name" : "educationLevel",
-                                       "type" : "QueryLetRef"
-                                    }, {
-                                       "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                       "value" : "low",
-                                       "type" : "Literal"
-                                    } ]
-                                 }, {
-                                    "type" : "LessOrEqual",
-                                    "operand" : [ {
-                                       "asType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                       "type" : "As",
-                                       "operand" : {
-                                          "name" : "score",
-                                          "type" : "QueryLetRef"
-                                       }
-                                    }, {
-                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                       "value" : "19",
-                                       "type" : "Literal"
-                                    } ]
-                                 } ]
-                              },
-                              "then" : {
+                           "name" : "scoreSeverity",
+                           "type" : "QueryLetRef"
+                        }
+                     }, {
+                        "name" : "scoreMeaning",
+                        "value" : {
+                           "type" : "If",
+                           "condition" : {
+                              "type" : "Equal",
+                              "operand" : [ {
+                                 "name" : "scoreSeverity",
+                                 "type" : "QueryLetRef"
+                              }, {
                                  "valueType" : "{urn:hl7-org:elm-types:r1}String",
                                  "value" : "high",
                                  "type" : "Literal"
-                              }
-                           }, {
-                              "when" : {
-                                 "type" : "LessOrEqual",
-                                 "operand" : [ {
-                                    "asType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "type" : "As",
-                                    "operand" : {
-                                       "name" : "score",
-                                       "type" : "QueryLetRef"
-                                    }
-                                 }, {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "20",
-                                    "type" : "Literal"
-                                 } ]
-                              },
-                              "then" : {
-                                 "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                 "value" : "high",
-                                 "type" : "Literal"
-                              }
-                           } ],
-                           "else" : {
+                              } ]
+                           },
+                           "then" : {
                               "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                              "value" : "low",
+                              "value" : "cognitive impaired",
                               "type" : "Literal"
+                           },
+                           "else" : {
+                              "asType" : "{urn:hl7-org:elm-types:r1}String",
+                              "type" : "As",
+                              "operand" : {
+                                 "type" : "Null"
+                              }
                            }
                         }
                      }, {
@@ -408,6 +442,58 @@
                         "value" : {
                            "name" : "scoringParams",
                            "type" : "ExpressionRef"
+                        }
+                     }, {
+                        "name" : "totalAnsweredItems",
+                        "value" : {
+                           "type" : "Length",
+                           "operand" : {
+                              "type" : "Query",
+                              "source" : [ {
+                                 "alias" : "O",
+                                 "expression" : {
+                                    "path" : "item",
+                                    "scope" : "I",
+                                    "type" : "Property"
+                                 }
+                              } ],
+                              "relationship" : [ ],
+                              "where" : {
+                                 "type" : "Not",
+                                 "operand" : {
+                                    "type" : "Equal",
+                                    "operand" : [ {
+                                       "path" : "value",
+                                       "type" : "Property",
+                                       "source" : {
+                                          "path" : "linkId",
+                                          "scope" : "O",
+                                          "type" : "Property"
+                                       }
+                                    }, {
+                                       "name" : "ScoringQuestionId",
+                                       "type" : "ParameterRef"
+                                    } ]
+                                 }
+                              }
+                           }
+                        }
+                     }, {
+                        "name" : "totalItems",
+                        "value" : {
+                           "type" : "Length",
+                           "operand" : {
+                              "name" : "GetAnswerLinkIdsByQuestionnaire",
+                              "libraryName" : "LogicHelpers",
+                              "type" : "FunctionRef",
+                              "operand" : [ {
+                                 "name" : "CurrentQuestionnaire",
+                                 "type" : "ExpressionRef"
+                              }, {
+                                 "name" : "ScoringQuestionId",
+                                 "type" : "ParameterRef"
+                              } ]
+                           }
                         }
                      }, {
                         "name" : "authoredDate",

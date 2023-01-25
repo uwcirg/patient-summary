@@ -362,6 +362,7 @@ export function gatherSummaryDataByQuestionnaireId(
       const questionaireKey = String(questionnaireId).toLowerCase();
       const chartConfig = getChartConfig(questionaireKey);
       const questionnaireConfig = QuestionnaireConfig[questionaireKey] || {};
+      
 
       /* get CQL expressions */
       const [elmJson, valueSetJson] = await getInterventionLogicLib(
@@ -486,6 +487,7 @@ export function getIntroTextFromQuestionnaire(questionnaireJson) {
 }
 
 export function isNumber(target) {
+  if (isNaN(target)) return false;
   if (typeof target === "number") return true;
-  return target !== null && !isNaN(target);
+  return target !== null;
 }

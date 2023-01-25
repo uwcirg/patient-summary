@@ -38,9 +38,13 @@ define QuestionnaireItems:
   CurrentQuestionnaire Q
   return Q.item
 
+define sortedResponses:
+  [QuestionnaireResponse] QR 
+  return QR
+  sort by authored desc
 // Load Questionnaire responses
 define QuestionnaireResponses:
-  LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], CurrentQuestionnaire)
+  LogicHelpers.MatchedReponsesByQuestionnaire(sortedResponses, CurrentQuestionnaire)
 
 define ResponsesSummary:
   (QuestionnaireResponses) I
@@ -72,11 +76,12 @@ define ResponsesSummary:
           else 'low'
         end,
       scoringParams: scoringParams,
+      totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
+      totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
       authoredDate: I.authored,
       lastUpdated: I.meta.lastUpdated.value
     }
-    sort by authoredDate desc, lastUpdated desc
-
+    
 define ResponsesOnly:
   (QuestionnaireResponses) I
   return LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId)

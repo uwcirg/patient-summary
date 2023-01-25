@@ -66,6 +66,9 @@ p {
 .muted-text {
   color: $muted-text-color;
 }
+.capitalized-text {
+  text-transform: capitalize;
+}
 .no-wrap-text {
   white-space: nowrap;
 }

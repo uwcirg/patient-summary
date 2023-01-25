@@ -64,6 +64,8 @@ define ResponsesSummary:
       score: if (Length(scoredResponses) > 0) then score else null,
       scoreSeverity: if score > 0 then 'high' else 'low',
       scoringParams: scoringParams,
+      totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
+      totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
       authoredDate: I.authored,
       lastUpdated: I.meta.lastUpdated.value
     }

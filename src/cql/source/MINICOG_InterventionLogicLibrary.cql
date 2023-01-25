@@ -64,6 +64,8 @@ define ResponsesSummary:
       responses: responses,
       score: if Length(scoredResponses) > 0 then score else null,
       scoreSeverity: if score between 0 and 3 then 'high' else 'low',
+      totalAnsweredItems: Length((I.item) O where O.linkId.value != scoringQuestionId),
+      totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, scoringQuestionId)),
       word_recall_score: word_recall_score,
       clock_draw_score: clock_draw_score,
       scoringParams: scoringParams,

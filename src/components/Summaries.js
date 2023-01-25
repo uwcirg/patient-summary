@@ -1,7 +1,6 @@
 import {
   createRef,
   forwardRef,
-  memo,
   useContext,
   useEffect,
   useCallback,
@@ -37,7 +36,6 @@ import {
 import ErrorComponent from "./ErrorComponent";
 import MedicalHistory from "./MedicalHistory";
 import PatientInfo from "./PatientInfo";
-import QuestionnaireSelector from "./QuestionnaireSelector";
 import ScoringSummary from "./ScoringSummary";
 import Summary from "./Summary";
 import Version from "./Version";
@@ -402,24 +400,6 @@ export default function Summaries() {
     });
   };
 
-  const renderQuestionnaireSelector = () => {
-    return (
-      <BoxRef
-        className="print-hidden"
-        ref={selectorRef}
-        style={{
-          opacity: isReady() ? 1 : 0.4,
-          width: "100%",
-          alignSelf: "stretch",
-          border: "2px solid #ececec",
-          backgroundColor: "#FFF",
-        }}
-      >
-        <QuestionnaireSelector list={questionnaireList}></QuestionnaireSelector>
-      </BoxRef>
-    );
-  };
-
   const renderMedicalHistory = () => {
     const conditions = patientBundle.current.entry
       .filter((item) => {
@@ -430,8 +410,6 @@ export default function Summaries() {
       return <Alert severity="warning">No recorded condition.</Alert>;
     return <MedicalHistory data={conditions}></MedicalHistory>;
   };
-
-  const MemoizedQuestionnaireSelector = memo(renderQuestionnaireSelector);
 
   const renderProgressIndicator = () => {
     const total = loadedResources.length;
@@ -581,24 +559,15 @@ export default function Summaries() {
               )}
               {!error && (
                 <>
-                  <>
-                    <Stack
-                      className="selector-stats-wrapper"
-                      direction={{ xs: "column", sm: "column", md: "column", lg: "row" }}
-                      spacing={2}
-                      sx={{
-                        marginTop: 2,
-                        marginBottom: 3,
-                        backgroundColor: (theme) =>
-                          theme.palette.background.main,
-                        padding: 2,
-                      }}
-                    >
-                      <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
-                      {renderScoringSummary()}
-                    </Stack>
-                    {renderSections()}
-                  </>
+                  <Box
+                    sx={{
+                      marginTop: 2,
+                      marginBottom: 3,
+                    }}
+                  >
+                    {renderScoringSummary()}
+                  </Box>
+                  {renderSections()}
                 </>
               )}
             </section>

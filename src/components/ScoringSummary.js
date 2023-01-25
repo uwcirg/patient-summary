@@ -31,6 +31,10 @@ export default function ScoringSummary(props) {
     theme && theme.palette && theme.palette.link && theme.palette.link.main
       ? theme.palette.link.main
       : "blue";
+  const borderColor =
+    theme && theme.palette && theme.palette.border && theme.palette.border.main
+      ? theme.palette.border.main
+      : "#FFF";
   const { summaryData } = props;
   const responsesHasScore = (responses) => {
     if (!responses || !responses.length) return false;
@@ -70,7 +74,8 @@ export default function ScoringSummary(props) {
     const sortedResponses = getSortedResponses(rdata);
     if (!sortedResponses || !sortedResponses.length) return parseInt(null);
     if (!sortedResponses[0].date) return parseInt(null);
-    return parseInt(sortedResponses[0].score);
+    const score = sortedResponses[0].score;
+    return isNumber(score) ? score : "--";
   };
   const getDisplayIcon = (id, rdata) => {
     const comparisonToAlert = qConfig[id] && qConfig[id].comparisonToAlert;
@@ -107,22 +112,27 @@ export default function ScoringSummary(props) {
       variant="h6"
       component="h3"
       color="accent"
-      sx={{ padding: 1, marginLeft: 1, marginTop: 1, marginBottom: 1 }}
+      sx={{ padding: 1, marginLeft: 1, marginTop: 1 }}
     >
       Scoring Summary
     </Typography>
   );
 
-  const getResponsesContainingScore = () => {
+  const getScoreList = () => {
     if (!hasList()) return [];
-    return Object.keys(summaryData).filter((key) => {
-      return responsesHasScore(summaryData[key].responses);
-    });
+    return Object.keys(summaryData);
+  };
+
+  const getMostRecentEntry = (summaryData) => {
+    if (!summaryData.responses || !summaryData.responses.length) return null;
+    return summaryData.responses[0];
   };
 
   const displayScoreRange = (summaryData) => {
-    if (!summaryData.responses || !summaryData.responses.length) return null;
-    const scoringParams = summaryData.responses[0].scoringParams;
+    const mostRecentEntry = getMostRecentEntry(summaryData);
+    if (!mostRecentEntry) return null;
+    const scoringParams = mostRecentEntry.scoringParams;
+    if (!scoringParams) return null;
     if (!scoringParams.maximumScore) return null;
     const minScore = scoringParams.minimumScore
       ? scoringParams.minimumScore
@@ -131,7 +141,108 @@ export default function ScoringSummary(props) {
     return `( ${minScore} - ${maxScore} )`;
   };
 
-  const scoreList = getResponsesContainingScore();
+  const displayNumAnswered = (summaryData) => {
+    const mostRecentEntry = getMostRecentEntry(summaryData);
+    if (!mostRecentEntry) return null;
+    const totalItems = mostRecentEntry.totalItems;
+    const totalAnsweredItems = mostRecentEntry.totalAnsweredItems;
+    if (!totalItems || !totalAnsweredItems) return null;
+    return `${totalAnsweredItems} / ${totalItems}`;
+  };
+
+  const displayScoreMeaning = (summaryData) => {
+    const mostRecentEntry = getMostRecentEntry(summaryData);
+    if (!mostRecentEntry) return null;
+    return mostRecentEntry.scoreMeaning;
+  };
+
+  const scoreList = getScoreList();
+
+  const renderTableHeaderRow = () => (
+    <TableHead>
+      <TableRow sx={{ backgroundColor: bgColor }}>
+        <TableCell
+          size="small"
+          sx={{ borderRight: `1px solid ${borderColor}` }}
+        ></TableCell>
+        <TableCell variant="head" size="small">
+          Score
+        </TableCell>
+        <TableCell sx={{ borderRight: `1px solid ${borderColor}` }}>
+          {/* score range */}
+        </TableCell>
+        <TableCell
+          align="center"
+          sx={{ borderRight: `1px solid ${borderColor}` }}
+        >
+          # Answered
+        </TableCell>
+        <TableCell
+          align="center"
+          sx={{ borderRight: `1px solid ${borderColor}` }}
+        >
+          Meaning
+        </TableCell>
+        <TableCell variant="head" size="small">
+          Compared to Last
+        </TableCell>
+      </TableRow>
+    </TableHead>
+  );
+
+  const renderTableBody = () => {
+    return (
+      <TableBody>
+        {scoreList.map((key, index) => (
+          <TableRow key={`{summary_${index}}`}>
+            <TableCell
+              sx={{
+                fontWeight: 500,
+                borderRight: `1px solid ${borderColor}`,
+              }}
+              size="small"
+            >
+              <Link
+                onClick={(e) => handleClick(e, key)}
+                underline="none"
+                sx={{ color: linkColor, cursor: "pointer" }}
+              >
+                {getInstrumentShortName(key)}
+              </Link>
+            </TableCell>
+            <TableCell align="left" size="small">
+              <Scoring
+                score={getCurrentScoreByInstrument(summaryData[key].responses)}
+                scoreParams={getCurrentResponses(summaryData[key].responses)}
+              ></Scoring>
+            </TableCell>
+            <TableCell
+              align="left"
+              size="small"
+              sx={{ borderRight: `1px solid ${borderColor}` }}
+            >
+              <Box className="no-wrap-text muted-text">
+                {displayScoreRange(summaryData[key])}
+              </Box>
+            </TableCell>
+            <TableCell align="center" sx={{ borderRight: "1px solid #ececec" }}>
+              {displayNumAnswered(summaryData[key])}
+            </TableCell>
+            <TableCell
+              align="center"
+              className="capitalized-text"
+              sx={{ borderRight: `1px solid ${borderColor}` }}
+            >
+              {displayScoreMeaning(summaryData[key])}
+            </TableCell>
+            <TableCell align="center" size="small">
+              {getDisplayIcon(key, summaryData[key].responses)}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    );
+  }
 
   const renderSummary = () => {
     if (!hasList())
@@ -148,66 +259,15 @@ export default function ScoringSummary(props) {
           aria-label="scoring summary table"
           className="scoring-summary-table"
         >
-          <TableHead>
-            <TableRow sx={{ backgroundColor: bgColor }}>
-              <TableCell size="small"></TableCell>
-              <TableCell variant="head" size="small">
-                Score
-              </TableCell>
-              <TableCell></TableCell>
-              <TableCell variant="head" size="small">
-                Compared to Last
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {scoreList.map((key, index) => (
-              <TableRow key={`{summary_${index}}`}>
-                <TableCell sx={{ fontWeight: 500 }} size="small">
-                  <Link
-                    onClick={(e) => handleClick(e, key)}
-                    underline="none"
-                    sx={{ color: linkColor, cursor: "pointer" }}
-                  >
-                    {getInstrumentShortName(key)}
-                  </Link>
-                </TableCell>
-                <TableCell align="left" size="small">
-                  <Scoring
-                    score={getCurrentScoreByInstrument(
-                      summaryData[key].responses
-                    )}
-                    scoreParams={getCurrentResponses(
-                      summaryData[key].responses
-                    )}
-                    justifyContent="space-between"
-                  ></Scoring>
-                </TableCell>
-                <TableCell align="left" size="small">
-                  <Box className="no-wrap-text muted-text">
-                    {displayScoreRange(summaryData[key])}
-                  </Box>
-                </TableCell>
-                <TableCell align="center" size="small">
-                  {getDisplayIcon(key, summaryData[key].responses)}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
+          {renderTableHeaderRow()}
+          {renderTableBody()}
         </Table>
       </TableContainer>
     );
   };
 
   return (
-    <Paper
-      className="scoring-summary-container"
-      sx={{
-        minWidth: {
-          lg: "60%"
-        },
-      }}
-    >
+    <Paper className="scoring-summary-container">
       {renderTitle()}
       {renderSummary()}
     </Paper>

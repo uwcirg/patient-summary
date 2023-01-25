@@ -205,6 +205,35 @@
                }
             }
          }, {
+            "name" : "sortedResponses",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "QR",
+                  "expression" : {
+                     "dataType" : "{http://hl7.org/fhir}QuestionnaireResponse",
+                     "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
+                     "type" : "Retrieve"
+                  }
+               } ],
+               "relationship" : [ ],
+               "return" : {
+                  "expression" : {
+                     "name" : "QR",
+                     "type" : "AliasRef"
+                  }
+               },
+               "sort" : {
+                  "by" : [ {
+                     "direction" : "desc",
+                     "path" : "authored",
+                     "type" : "ByColumn"
+                  } ]
+               }
+            }
+         }, {
             "name" : "QuestionnaireResponses",
             "context" : "Patient",
             "accessLevel" : "Public",
@@ -213,9 +242,8 @@
                "libraryName" : "LogicHelpers",
                "type" : "FunctionRef",
                "operand" : [ {
-                  "dataType" : "{http://hl7.org/fhir}QuestionnaireResponse",
-                  "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
-                  "type" : "Retrieve"
+                  "name" : "sortedResponses",
+                  "type" : "ExpressionRef"
                }, {
                   "name" : "CurrentQuestionnaire",
                   "type" : "ExpressionRef"
@@ -486,6 +514,94 @@
                         }
                      }
                   }
+               }, {
+                  "identifier" : "scoreSeverity",
+                  "expression" : {
+                     "type" : "Case",
+                     "caseItem" : [ {
+                        "when" : {
+                           "type" : "Greater",
+                           "operand" : [ {
+                              "name" : "score",
+                              "type" : "QueryLetRef"
+                           }, {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "value" : "14",
+                              "type" : "Literal"
+                           } ]
+                        },
+                        "then" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                           "value" : "high",
+                           "type" : "Literal"
+                        }
+                     }, {
+                        "when" : {
+                           "type" : "And",
+                           "operand" : [ {
+                              "type" : "GreaterOrEqual",
+                              "operand" : [ {
+                                 "name" : "score",
+                                 "type" : "QueryLetRef"
+                              }, {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                 "value" : "10",
+                                 "type" : "Literal"
+                              } ]
+                           }, {
+                              "type" : "LessOrEqual",
+                              "operand" : [ {
+                                 "name" : "score",
+                                 "type" : "QueryLetRef"
+                              }, {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                 "value" : "14",
+                                 "type" : "Literal"
+                              } ]
+                           } ]
+                        },
+                        "then" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                           "value" : "moderate",
+                           "type" : "Literal"
+                        }
+                     }, {
+                        "when" : {
+                           "type" : "And",
+                           "operand" : [ {
+                              "type" : "GreaterOrEqual",
+                              "operand" : [ {
+                                 "name" : "score",
+                                 "type" : "QueryLetRef"
+                              }, {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                 "value" : "5",
+                                 "type" : "Literal"
+                              } ]
+                           }, {
+                              "type" : "LessOrEqual",
+                              "operand" : [ {
+                                 "name" : "score",
+                                 "type" : "QueryLetRef"
+                              }, {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                 "value" : "9",
+                                 "type" : "Literal"
+                              } ]
+                           } ]
+                        },
+                        "then" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                           "value" : "mild",
+                           "type" : "Literal"
+                        }
+                     } ],
+                     "else" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                        "value" : "low",
+                        "type" : "Literal"
+                     }
+                  }
                } ],
                "relationship" : [ ],
                "return" : {
@@ -554,89 +670,87 @@
                      }, {
                         "name" : "scoreSeverity",
                         "value" : {
+                           "name" : "scoreSeverity",
+                           "type" : "QueryLetRef"
+                        }
+                     }, {
+                        "name" : "scoreMeaning",
+                        "value" : {
                            "type" : "Case",
                            "caseItem" : [ {
                               "when" : {
-                                 "type" : "Greater",
+                                 "type" : "Equal",
                                  "operand" : [ {
-                                    "name" : "score",
+                                    "name" : "scoreSeverity",
                                     "type" : "QueryLetRef"
                                  }, {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "14",
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                    "value" : "high",
                                     "type" : "Literal"
                                  } ]
                               },
                               "then" : {
                                  "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                 "value" : "high",
+                                 "value" : "severe anxiety",
                                  "type" : "Literal"
                               }
                            }, {
                               "when" : {
-                                 "type" : "And",
+                                 "type" : "Equal",
                                  "operand" : [ {
-                                    "type" : "GreaterOrEqual",
-                                    "operand" : [ {
-                                       "name" : "score",
-                                       "type" : "QueryLetRef"
-                                    }, {
-                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                       "value" : "10",
-                                       "type" : "Literal"
-                                    } ]
+                                    "name" : "scoreSeverity",
+                                    "type" : "QueryLetRef"
                                  }, {
-                                    "type" : "LessOrEqual",
-                                    "operand" : [ {
-                                       "name" : "score",
-                                       "type" : "QueryLetRef"
-                                    }, {
-                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                       "value" : "14",
-                                       "type" : "Literal"
-                                    } ]
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                    "value" : "moderate",
+                                    "type" : "Literal"
                                  } ]
                               },
                               "then" : {
                                  "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                 "value" : "moderate",
+                                 "value" : "moderate anxiety",
                                  "type" : "Literal"
                               }
                            }, {
                               "when" : {
-                                 "type" : "And",
+                                 "type" : "Equal",
                                  "operand" : [ {
-                                    "type" : "GreaterOrEqual",
-                                    "operand" : [ {
-                                       "name" : "score",
-                                       "type" : "QueryLetRef"
-                                    }, {
-                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                       "value" : "5",
-                                       "type" : "Literal"
-                                    } ]
+                                    "name" : "scoreSeverity",
+                                    "type" : "QueryLetRef"
                                  }, {
-                                    "type" : "LessOrEqual",
-                                    "operand" : [ {
-                                       "name" : "score",
-                                       "type" : "QueryLetRef"
-                                    }, {
-                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                       "value" : "9",
-                                       "type" : "Literal"
-                                    } ]
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                    "value" : "mild",
+                                    "type" : "Literal"
                                  } ]
                               },
                               "then" : {
                                  "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                 "value" : "mild",
+                                 "value" : "mild severity",
                                  "type" : "Literal"
                               }
                            } ],
                            "else" : {
-                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                              "value" : "low",
-                              "type" : "Literal"
+                              "type" : "If",
+                              "condition" : {
+                                 "type" : "Not",
+                                 "operand" : {
+                                    "type" : "IsNull",
+                                    "operand" : {
+                                       "name" : "score",
+                                       "type" : "QueryLetRef"
+                                    }
+                                 }
+                              },
+                              "then" : {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                 "value" : "minimal anxiety",
+                                 "type" : "Literal"
+                              },
+                              "else" : {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                 "value" : "",
+                                 "type" : "Literal"
+                              }
                            }
                         }
                      }, {
@@ -644,6 +758,58 @@
                         "value" : {
                            "name" : "scoringParams",
                            "type" : "ExpressionRef"
+                        }
+                     }, {
+                        "name" : "totalAnsweredItems",
+                        "value" : {
+                           "type" : "Length",
+                           "operand" : {
+                              "type" : "Query",
+                              "source" : [ {
+                                 "alias" : "O",
+                                 "expression" : {
+                                    "path" : "item",
+                                    "scope" : "I",
+                                    "type" : "Property"
+                                 }
+                              } ],
+                              "relationship" : [ ],
+                              "where" : {
+                                 "type" : "Not",
+                                 "operand" : {
+                                    "type" : "Equal",
+                                    "operand" : [ {
+                                       "path" : "value",
+                                       "type" : "Property",
+                                       "source" : {
+                                          "path" : "linkId",
+                                          "scope" : "O",
+                                          "type" : "Property"
+                                       }
+                                    }, {
+                                       "name" : "ScoringQuestionId",
+                                       "type" : "ExpressionRef"
+                                    } ]
+                                 }
+                              }
+                           }
+                        }
+                     }, {
+                        "name" : "totalItems",
+                        "value" : {
+                           "type" : "Length",
+                           "operand" : {
+                              "name" : "GetAnswerLinkIdsByQuestionnaire",
+                              "libraryName" : "LogicHelpers",
+                              "type" : "FunctionRef",
+                              "operand" : [ {
+                                 "name" : "CurrentQuestionnaire",
+                                 "type" : "ExpressionRef"
+                              }, {
+                                 "name" : "ScoringQuestionId",
+                                 "type" : "ExpressionRef"
+                              } ]
+                           }
                         }
                      }, {
                         "name" : "authoredDate",
@@ -669,17 +835,6 @@
                         }
                      } ]
                   }
-               },
-               "sort" : {
-                  "by" : [ {
-                     "direction" : "desc",
-                     "path" : "authoredDate",
-                     "type" : "ByColumn"
-                  }, {
-                     "direction" : "desc",
-                     "path" : "lastUpdated",
-                     "type" : "ByColumn"
-                  } ]
                }
             }
          }, {

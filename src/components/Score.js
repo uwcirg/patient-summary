@@ -11,15 +11,26 @@ export default function Scoring(props) {
     scoreParams && scoreParams.scoreSeverity
       ? String(scoreParams.scoreSeverity).toLowerCase()
       : null;
-  const arrSeverityLevelToAlert = ["high"];
+  const arrSeverityLevelToAlert = ["high", "moderate", "moderately high"];
   const getScoreDisplay = () => (isNumber(score) ? score : "--");
   const alertNote =
     scoreParams && scoreParams.alertNote ? scoreParams.alertNote : null;
 
   // display alert icon for score that has high severity  
   if (arrSeverityLevelToAlert.indexOf(scoreSeverity) !== -1) {
-    const iconColor = scoreSeverity === "high" ? "error" : "inherit";
-    const textColor = scoreSeverity === "high" ? "error.main" : "inherit";
+    const iconColor =
+      scoreSeverity === "high"
+        ? "error"
+        : scoreSeverity === "moderate" || scoreSeverity === "moderately high"
+        ? "warning"
+        : "inherit";
+    const textColor =
+      scoreSeverity === "high"
+        ? "error.main"
+        : scoreSeverity === "moderate" || scoreSeverity === "moderately high"
+        ? "warning.main"
+        : "inherit";
+
     const iconClass = scoreSeverity === "high" ? "alert-icon" : "";
     return (
       <Stack

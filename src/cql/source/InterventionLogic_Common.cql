@@ -4,6 +4,20 @@ using FHIR version '4.0.1'
 
 include "FHIRHelpers" version '4.0.1' called FHIRHelpers
 
+
+define AnswerQuestionTypes: {
+    'boolean',
+    'decimal',
+    'integer',
+    'date',
+    'dateTime',
+    'time',
+    'string',
+    'text',
+    'choice',
+    'open-choice'
+}
+
 // -----------------------------------------------------------------------------
 // HELPER FUNCTIONS
 // -----------------------------------------------------------------------------
@@ -39,8 +53,15 @@ define function MatchedReponsesByQuestionnaire(responses List<FHIR.Questionnaire
         PositionOf(Lower(currentQuestionnaire.id), Lower(Q.questionnaire.value)) != -1
       ) and 
       Q.status.value = 'completed')
+      sort by authored desc, meta.lastUpdated desc
   )
+  
 
+define function GetAnswerLinkIdsByQuestionnaire(currentQuestionnaire FHIR.Questionnaire, scoringQuestionId String):
+  (currentQuestionnaire C) O
+  let
+    responseItems: ((O.item) I where IndexOf(AnswerQuestionTypes, I.type.value) != -1 and I.linkId.value != scoringQuestionId)
+    return responseItems.linkId.value
 
 /*
  * retrieve answer value by response item
@@ -117,3 +138,22 @@ define function FormattedResponses(questionnaireItems List<FHIR.Questionnaire.It
       question: if Q.linkId.value = scoringQuestionId then '<b>' + Q.text.value + '</b>' else Q.text.value,
       text: Q.text.value
     }
+
+
+define function ResponsesSummary (
+  currentQuestionnaire FHIR.Questionnaire,
+  questionnaireResponse FHIR.QuestionnaireResponse,
+  scoringQuestionId String
+):
+  (questionnaireResponse) I
+  return {
+    id: I.id.value,
+    date: DateTimeText(I.authored),
+    currentQ: currentQuestionnaire,
+    responses: FormattedResponses(currentQuestionnaire.item, I.item, scoringQuestionId),
+    items: I.item,
+    totalAnsweredItems: Length((I.item) O where O.linkId.value != scoringQuestionId),
+    totalItems: Length(GetAnswerLinkIdsByQuestionnaire(currentQuestionnaire, scoringQuestionId)),
+    authoredDate: I.authored,
+    lastUpdated: I.meta.lastUpdated.value
+  }
