@@ -426,7 +426,7 @@
                            },
                            "then" : {
                               "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                              "value" : "cognitive impaired",
+                              "value" : "cognitively impaired",
                               "type" : "Literal"
                            },
                            "else" : {
@@ -616,6 +616,31 @@
                "return" : {
                   "expression" : {
                      "path" : "scoreSeverity",
+                     "scope" : "R",
+                     "type" : "Property"
+                  }
+               }
+            }
+         }, {
+            "name" : "FirstResponsesScoreMeaning",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "R",
+                  "expression" : {
+                     "type" : "First",
+                     "source" : {
+                        "name" : "ResponsesSummary",
+                        "type" : "ExpressionRef"
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "return" : {
+                  "expression" : {
+                     "path" : "scoreMeaning",
                      "scope" : "R",
                      "type" : "Property"
                   }

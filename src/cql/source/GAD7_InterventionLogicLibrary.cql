@@ -79,8 +79,8 @@ define ResponsesSummary:
       scoreMeaning: case
         when scoreSeverity = 'high' then 'severe anxiety'
         when scoreSeverity = 'moderate' then 'moderate anxiety'
-        when scoreSeverity = 'mild' then 'mild severity'
-        else if score is not null then 'minimal anxiety' else '' 
+        when scoreSeverity = 'mild' then 'mild anxiety'
+        else if score > 0 then 'minimal anxiety' else '' 
       end,
       scoringParams: scoringParams,
       totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
@@ -100,3 +100,7 @@ define FirstResponsesScore:
 define FirstResponsesScoreSeverity:
   (First(ResponsesSummary)) R 
   return R.scoreSeverity
+
+define FirstResponsesScoreMeaning:
+  (First(ResponsesSummary)) R 
+  return R.scoreMeaning

@@ -107,3 +107,4 @@ results:
   ResponsesSummary: $should have length 1
   FirstResponsesScore: 15
   FirstResponsesScoreSeverity: 'high'
+  FirstResponsesScoreMeaning: 'depression'

@@ -56,7 +56,7 @@ define ResponsesSummary:
       responses: responses,
       score: score,
       scoreSeverity: scoreSeverity,
-      scoreMeaning: if scoreSeverity = 'high' then 'cognitive impaired' else null,
+      scoreMeaning: if scoreSeverity = 'high' then 'cognitively impaired' else null,
       scoringParams: scoringParams,
       totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
       totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
@@ -86,3 +86,7 @@ define FirstResponsesScore:
 define FirstResponsesScoreSeverity:
   (First(ResponsesSummary)) R 
   return R.scoreSeverity
+
+define FirstResponsesScoreMeaning:
+  (First(ResponsesSummary)) R 
+  return R.scoreMeaning

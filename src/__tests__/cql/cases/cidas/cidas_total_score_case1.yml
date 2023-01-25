@@ -1,27 +1,29 @@
-# test all answers question 1, 5, 7, 11, 13 should be 0, coz 1 point for answering NO for those questions
+# test all answers with option 1 (absent) to make sure all have a correct value of 0
 ---
-name: GDS Total Score (test 1 point for No answer)
+name: CIDAS Total Score (test all 0)
 externalData:
-- gds_reusable_resources
+- cidas_reusable_resources
 data:
 - *patientResource
 - <<: *questionnaireResource
   item:
-  - *GDSQuestion1
-  - *GDSQuestion2
-  - *GDSQuestion3
-  - *GDSQuestion4
-  - *GDSQuestion5
-  - *GDSQuestion6
-  - *GDSQuestion7
-  - *GDSQuestion8
-  - *GDSQuestion9
-  - *GDSQuestion10
-  - *GDSQuestion11
-  - *GDSQuestion12
-  - *GDSQuestion13
-  - *GDSQuestion14
-  - *GDSQuestion15
+  - *Question1
+  - *Question2
+  - *Question3
+  - *Question4
+  - *Question5
+  - *Question6
+  - *Question7
+  - *Question8
+  - *Question9
+  - *Question10
+  - *Question11
+  - *Question12
+  - *Question13
+  - *Question14
+  - *Question15
+  - *Question16
+  - *Question17
 - <<: *questionnaireResponses  # answers are randomly assigned to test; can change to test; the goal is to test that the sum total from the scores is correct
   item:
   - # question 1
@@ -29,6 +31,7 @@ data:
     answer:
     -
       valueCoding: *answerOption1ValueCode
+
   - # question 2
     linkId: *q2LinkId
     answer:
@@ -99,12 +102,26 @@ data:
     answer:
     -
       valueCoding: *answerOption1ValueCode
+  - # question 16
+    linkId: *q16LinkId
+    answer:
+    -
+      valueCoding: *answerOption1ValueCode
+  - # question 17
+    linkId: *q17LinkId
+    answer:
+    -
+      valueCoding: *answerOption1ValueCode
+  - # question 18
+    linkId: *q18LinkId
+    answer:
+    -
+      valueCoding: *answerOption1ValueCode
+
 results:
   QuestionnaireResponses: $should exist
   CurrentQuestionnaire: $should exist
-  QuestionnaireItems: $should have length 15
   ResponsesOnly: $should exist
-  ResponsesSummary: $should have length 1
-  FirstResponsesScore: 10
-  FirstResponsesScoreSeverity: 'high'
-  FirstResponsesScoreMeaning: 'depression'
+  FirstResponsesScore: 0
+  FirstResponsesScoreSeverity: 'low'
+  FirstResponsesScoreMeaning: null

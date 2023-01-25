@@ -115,3 +115,7 @@ define FirstResponsesScore:
 define FirstResponsesScoreSeverity:
   (First(ResponsesSummary)) R 
   return R.scoreSeverity
+
+define FirstResponsesScoreMeaning:
+  (First(ResponsesSummary)) R 
+  return R.scoreMeaning

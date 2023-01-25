@@ -61,4 +61,5 @@ results:
   ResponsesSummary: $should have length 1
   FirstResponsesScore: 0
   FirstResponsesScoreSeverity: 'low'
+  FirstResponsesScoreMeaning: ''
   

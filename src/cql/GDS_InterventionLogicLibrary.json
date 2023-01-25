@@ -1268,6 +1268,32 @@
                         }
                      }
                   }
+               }, {
+                  "identifier" : "scoreSeverity",
+                  "expression" : {
+                     "type" : "If",
+                     "condition" : {
+                        "type" : "Greater",
+                        "operand" : [ {
+                           "name" : "score",
+                           "type" : "QueryLetRef"
+                        }, {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "4",
+                           "type" : "Literal"
+                        } ]
+                     },
+                     "then" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                        "value" : "high",
+                        "type" : "Literal"
+                     },
+                     "else" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                        "value" : "low",
+                        "type" : "Literal"
+                     }
+                  }
                } ],
                "relationship" : [ ],
                "return" : {
@@ -1347,27 +1373,35 @@
                      }, {
                         "name" : "scoreSeverity",
                         "value" : {
+                           "name" : "scoreSeverity",
+                           "type" : "QueryLetRef"
+                        }
+                     }, {
+                        "name" : "scoreMeaning",
+                        "value" : {
                            "type" : "If",
                            "condition" : {
-                              "type" : "Greater",
+                              "type" : "Equal",
                               "operand" : [ {
-                                 "name" : "score",
+                                 "name" : "scoreSeverity",
                                  "type" : "QueryLetRef"
                               }, {
-                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                 "value" : "4",
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                 "value" : "high",
                                  "type" : "Literal"
                               } ]
                            },
                            "then" : {
                               "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                              "value" : "high",
+                              "value" : "depression",
                               "type" : "Literal"
                            },
                            "else" : {
-                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                              "value" : "low",
-                              "type" : "Literal"
+                              "asType" : "{urn:hl7-org:elm-types:r1}String",
+                              "type" : "As",
+                              "operand" : {
+                                 "type" : "Null"
+                              }
                            }
                         }
                      }, {
@@ -1543,6 +1577,31 @@
                "return" : {
                   "expression" : {
                      "path" : "scoreSeverity",
+                     "scope" : "R",
+                     "type" : "Property"
+                  }
+               }
+            }
+         }, {
+            "name" : "FirstResponsesScoreMeaning",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "R",
+                  "expression" : {
+                     "type" : "First",
+                     "source" : {
+                        "name" : "ResponsesSummary",
+                        "type" : "ExpressionRef"
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "return" : {
+                  "expression" : {
+                     "path" : "scoreMeaning",
                      "scope" : "R",
                      "type" : "Property"
                   }

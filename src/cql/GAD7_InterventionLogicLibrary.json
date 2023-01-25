@@ -725,21 +725,22 @@
                               },
                               "then" : {
                                  "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                 "value" : "mild severity",
+                                 "value" : "mild anxiety",
                                  "type" : "Literal"
                               }
                            } ],
                            "else" : {
                               "type" : "If",
                               "condition" : {
-                                 "type" : "Not",
-                                 "operand" : {
-                                    "type" : "IsNull",
-                                    "operand" : {
-                                       "name" : "score",
-                                       "type" : "QueryLetRef"
-                                    }
-                                 }
+                                 "type" : "Greater",
+                                 "operand" : [ {
+                                    "name" : "score",
+                                    "type" : "QueryLetRef"
+                                 }, {
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                    "value" : "0",
+                                    "type" : "Literal"
+                                 } ]
                               },
                               "then" : {
                                  "valueType" : "{urn:hl7-org:elm-types:r1}String",
@@ -915,6 +916,31 @@
                "return" : {
                   "expression" : {
                      "path" : "scoreSeverity",
+                     "scope" : "R",
+                     "type" : "Property"
+                  }
+               }
+            }
+         }, {
+            "name" : "FirstResponsesScoreMeaning",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "R",
+                  "expression" : {
+                     "type" : "First",
+                     "source" : {
+                        "name" : "ResponsesSummary",
+                        "type" : "ExpressionRef"
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "return" : {
+                  "expression" : {
+                     "path" : "scoreMeaning",
                      "scope" : "R",
                      "type" : "Property"
                   }

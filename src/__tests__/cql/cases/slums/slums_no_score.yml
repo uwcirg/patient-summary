@@ -12,3 +12,4 @@ results:
   ResponsesSummary: $should have length 0
   FirstResponsesScore: null
   FirstResponsesScoreSeverity: null
+  FirstResponsesScoreMeaning: null

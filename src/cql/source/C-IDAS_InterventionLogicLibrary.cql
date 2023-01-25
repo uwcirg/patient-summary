@@ -108,3 +108,15 @@ define ResponsesSummary:
 define ResponsesOnly:
   (QuestionnaireResponses) I
   return LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId)
+
+define FirstResponsesScore:
+  (First(ResponsesSummary)) R 
+  return R.score
+
+define FirstResponsesScoreSeverity:
+  (First(ResponsesSummary)) R 
+  return R.scoreSeverity
+
+define FirstResponsesScoreMeaning:
+  (First(ResponsesSummary)) R 
+  return R.scoreMeaning
