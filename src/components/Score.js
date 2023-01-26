@@ -12,7 +12,7 @@ export default function Scoring(props) {
       ? String(scoreParams.scoreSeverity).toLowerCase()
       : null;
   const arrSeverityLevelToAlert = ["high", "moderate", "moderately high"];
-  const getScoreDisplay = () => (isNumber(score) ? score : "--");
+  const getScoreDisplay = () => (<span data-testid="score">{isNumber(score) ? score : "--"}</span>);
   const alertNote =
     scoreParams && scoreParams.alertNote ? scoreParams.alertNote : null;
 

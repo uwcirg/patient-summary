@@ -157,30 +157,20 @@ export default function ScoringSummary(props) {
   };
 
   const scoreList = getScoreList();
+  const cellStyle = { borderRight: `1px solid ${borderColor}` };
 
   const renderTableHeaderRow = () => (
     <TableHead>
       <TableRow sx={{ backgroundColor: bgColor }}>
-        <TableCell
-          size="small"
-          sx={{ borderRight: `1px solid ${borderColor}` }}
-        ></TableCell>
+        <TableCell size="small" sx={cellStyle}></TableCell>
         <TableCell variant="head" size="small">
           Score
         </TableCell>
-        <TableCell sx={{ borderRight: `1px solid ${borderColor}` }}>
-          {/* score range */}
-        </TableCell>
-        <TableCell
-          align="center"
-          sx={{ borderRight: `1px solid ${borderColor}` }}
-        >
+        <TableCell sx={cellStyle}>{/* score range */}</TableCell>
+        <TableCell align="center" sx={cellStyle}>
           # Answered
         </TableCell>
-        <TableCell
-          align="center"
-          sx={{ borderRight: `1px solid ${borderColor}` }}
-        >
+        <TableCell align="center" sx={cellStyle}>
           Meaning
         </TableCell>
         <TableCell variant="head" size="small">
@@ -190,59 +180,77 @@ export default function ScoringSummary(props) {
     </TableHead>
   );
 
+  const renderInstrumentLinkCell = (key) => (
+    <TableCell
+      sx={{
+        ...cellStyle,
+        ...{
+          fontWeight: 500,
+        },
+      }}
+      size="small"
+    >
+      <Link
+        onClick={(e) => handleClick(e, key)}
+        underline="none"
+        sx={{ color: linkColor, cursor: "pointer" }}
+      >
+        {getInstrumentShortName(key)}
+      </Link>
+    </TableCell>
+  );
+
+  const renderScoreCell = (key) => (
+    <TableCell align="left" size="small" className="score-cell">
+      <Scoring
+        score={getCurrentScoreByInstrument(summaryData[key].responses)}
+        scoreParams={getCurrentResponses(summaryData[key].responses)}
+      ></Scoring>
+    </TableCell>
+  );
+
+  const renderScoreRangeCell = (key) => (
+    <TableCell align="left" size="small" sx={cellStyle}>
+      <Box className="no-wrap-text muted-text">
+        {displayScoreRange(summaryData[key])}
+      </Box>
+    </TableCell>
+  );
+
+  const renderNumAnsweredCell = (key) => (
+    <TableCell align="center" sx={{ borderRight: "1px solid #ececec" }}>
+      {displayNumAnswered(summaryData[key])}
+    </TableCell>
+  );
+
+  const renderScoreMeaningCell = (key) => (
+    <TableCell align="center" className="capitalized-text" sx={cellStyle}>
+      {displayScoreMeaning(summaryData[key])}
+    </TableCell>
+  );
+
+  const renderComparedToLastCell = (key) => (
+    <TableCell align="center" size="small">
+      {getDisplayIcon(key, summaryData[key].responses)}
+    </TableCell>
+  );
+
   const renderTableBody = () => {
     return (
       <TableBody>
         {scoreList.map((key, index) => (
           <TableRow key={`{summary_${index}}`}>
-            <TableCell
-              sx={{
-                fontWeight: 500,
-                borderRight: `1px solid ${borderColor}`,
-              }}
-              size="small"
-            >
-              <Link
-                onClick={(e) => handleClick(e, key)}
-                underline="none"
-                sx={{ color: linkColor, cursor: "pointer" }}
-              >
-                {getInstrumentShortName(key)}
-              </Link>
-            </TableCell>
-            <TableCell align="left" size="small">
-              <Scoring
-                score={getCurrentScoreByInstrument(summaryData[key].responses)}
-                scoreParams={getCurrentResponses(summaryData[key].responses)}
-              ></Scoring>
-            </TableCell>
-            <TableCell
-              align="left"
-              size="small"
-              sx={{ borderRight: `1px solid ${borderColor}` }}
-            >
-              <Box className="no-wrap-text muted-text">
-                {displayScoreRange(summaryData[key])}
-              </Box>
-            </TableCell>
-            <TableCell align="center" sx={{ borderRight: "1px solid #ececec" }}>
-              {displayNumAnswered(summaryData[key])}
-            </TableCell>
-            <TableCell
-              align="center"
-              className="capitalized-text"
-              sx={{ borderRight: `1px solid ${borderColor}` }}
-            >
-              {displayScoreMeaning(summaryData[key])}
-            </TableCell>
-            <TableCell align="center" size="small">
-              {getDisplayIcon(key, summaryData[key].responses)}
-            </TableCell>
+            {renderInstrumentLinkCell(key)}
+            {renderScoreCell(key)}
+            {renderScoreRangeCell(key)}
+            {renderNumAnsweredCell(key)}
+            {renderScoreMeaningCell(key)}
+            {renderComparedToLastCell(key)}
           </TableRow>
         ))}
       </TableBody>
     );
-  }
+  };
 
   const renderSummary = () => {
     if (!hasList())
@@ -252,7 +260,19 @@ export default function ScoringSummary(props) {
         </Alert>
       );
     return (
-      <TableContainer sx={{ padding: 2, paddingTop: 0, marginBottom: 1 }}>
+      <TableContainer
+        className="table-container"
+        sx={{
+          padding: 2,
+          paddingTop: 0,
+          marginBottom: 1,
+          maxWidth: {
+            xs: "460px",
+            sm: "100%",
+          },
+        }}
+        component={Paper}
+      >
         <Table
           sx={{ border: "1px solid #ececec" }}
           size="small"

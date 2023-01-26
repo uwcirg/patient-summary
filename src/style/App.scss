@@ -147,6 +147,10 @@ p {
   .MuiAccordionDetails-root {
     padding: 8px 0 !important;
   }
+  .table-container {
+    border: 0 !important;
+    box-shadow: none !important;
+  }
   .MuiTab-root.Mui-selected {
     color: #444 !important;
     padding-bottom: 0 !important;
