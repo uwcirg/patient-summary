@@ -36,7 +36,6 @@ import {
 } from "../util/util";
 import ErrorComponent from "./ErrorComponent";
 import MedicalHistory from "./MedicalHistory";
-import PatientInfo from "./PatientInfo";
 import QuestionnaireSelector from "./QuestionnaireSelector";
 import ScoringSummary from "./ScoringSummary";
 import Summary from "./Summary";
@@ -386,7 +385,7 @@ export default function Summaries() {
         <Box className="summary-container" key={`summary_container_${index}`}>
           <Summary
             questionnaireId={questionnaireId}
-            data={summaryData.data[questionnaireId]}
+            data={dataObject}
             key={`questionnaire_summary_${index}`}
           ></Summary>
           {index !== questionnaireList.length - 1 && (
@@ -459,7 +458,7 @@ export default function Summaries() {
       >
         <Stack
           sx={{
-            marginTop: 2,
+            marginTop: 1,
             marginBottom: 4,
             padding: 2,
           }}
@@ -536,6 +535,7 @@ export default function Summaries() {
       <Button
         className="print-hidden"
         variant="outlined"
+        size="small"
         onClick={() => window.print()}
       >
         Print
@@ -570,8 +570,7 @@ export default function Summaries() {
             }}
           >
             <section>
-              <Stack direction="row" justifyContent="space-between" spacing={2}>
-                <PatientInfo patient={patient}></PatientInfo>
+              <Stack direction="row" justifyContent="flex-end">
                 {renderPrintButton()}
               </Stack>
               {error && (
@@ -587,8 +586,8 @@ export default function Summaries() {
                       direction={{ xs: "column", sm: "column", md: "row" }}
                       spacing={2}
                       sx={{
-                        marginTop: 2,
-                        marginBottom: 3,
+                        marginTop: 1,
+                        marginBottom: 1,
                         backgroundColor: (theme) =>
                           theme.palette.background.main,
                         padding: 2,
