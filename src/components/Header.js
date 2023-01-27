@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import { useContext } from "react";
 import { useTheme } from "@mui/material/styles";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
@@ -6,11 +7,14 @@ import Button from "@mui/material/Button";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
+import PatientInfo from "./PatientInfo";
 import { getEnv, imageOK } from "../util/util";
+import { FhirClientContext } from "../context/FhirClientContext";
 
 export default function Header(props) {
   const theme = useTheme();
-  const {returnURL} = props;
+  const { patient } = useContext(FhirClientContext);
+  const { returnURL } = props;
   const handleImageLoaded = (e) => {
     if (!e.target) {
       return false;
@@ -26,24 +30,59 @@ export default function Header(props) {
     <Typography
       variant="h4"
       component="h1"
-      sx={{ fontSize: { xs: "1.1rem", md: "1.8rem" } }}
+      sx={{
+        fontSize: "1.85rem",
+        display: { xs: "none", sm: "none", md: "block" },
+      }}
     >
       Patient Summary
     </Typography>
   );
   const renderLogo = () => (
-    <img
-      className="header-logo"
-      src={`/assets/${getEnv("REACT_APP_PROJECT_ID")}/img/logo.png`}
-      alt={"project logo"}
-      onLoad={handleImageLoaded}
-      onError={handleImageLoaded}
-    ></img>
+    <>
+      <Box
+        sx={{
+          display: {
+            xs: "none",
+            sm: "none",
+            md: "block",
+          },
+        }}
+      >
+        <img
+          className="header-logo"
+          src={`/assets/${getEnv("REACT_APP_PROJECT_ID")}/img/logo.png`}
+          alt={"project logo"}
+          onLoad={handleImageLoaded}
+          onError={handleImageLoaded}
+        ></img>
+      </Box>
+      <Box
+        sx={{
+          display: {
+            xs: "block",
+            sm: "block",
+            md: "none",
+          },
+        }}
+      >
+        <img
+          src={`/assets/${getEnv("REACT_APP_PROJECT_ID")}/img/logo_mobile.png`}
+          alt={"project logo"}
+          onLoad={handleImageLoaded}
+          onError={handleImageLoaded}
+        ></img>
+      </Box>
+    </>
   );
+  const renderPatientInfo = () => <PatientInfo patient={patient}></PatientInfo>;
   const renderReturnButton = () => {
     if (!returnURL) return null;
     return (
-      <Box className="print-hidden" sx={{ flex: 1, textAlign: "right", marginTop: 1, marginBotton: 1 }}>
+      <Box
+        className="print-hidden"
+        sx={{ flex: 1, textAlign: "right", marginTop: 0.5, marginBotton: 0.5 }}
+      >
         <Button
           color="primary"
           href={returnURL + "/clear_session"}
@@ -56,7 +95,11 @@ export default function Header(props) {
     );
   };
   return (
-    <AppBar position="fixed" elevation={1} sx={{paddingRight: "0 !important", paddingLeft: "0 !important"}}>
+    <AppBar
+      position="fixed"
+      elevation={1}
+      sx={{ paddingRight: "0 !important", paddingLeft: "0 !important" }}
+    >
       <Toolbar
         sx={{
           backgroundColor: theme.palette.lighter
@@ -66,17 +109,23 @@ export default function Header(props) {
             ? theme.palette.secondary.main
             : "#444",
           zIndex: (theme) => theme.zIndex.drawer + 1,
+          paddingLeft: theme.spacing(2),
+          paddingRight: theme.spacing(2)
         }}
+        disableGutters={true}
       >
         <Stack
           direction={"row"}
-          spacing={2}
+          spacing={2.5}
           alignItems="center"
           sx={{ width: "100%" }}
         >
           {renderLogo()}
           {renderTitle()}
-          {renderReturnButton()}
+          <Stack direction={"row"} sx={{ flex: "1 1" }} alignItems="center">
+            {renderPatientInfo()}
+            {renderReturnButton()}
+          </Stack>
         </Stack>
       </Toolbar>
     </AppBar>

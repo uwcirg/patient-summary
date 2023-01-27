@@ -59,7 +59,9 @@ export default function PatientInfo(props) {
       >
         age:{" "}
       </Typography>
-      <Typography component="span" className="patient-age">{getPatientAge()}</Typography>
+      <Typography component="span" className="patient-age">
+        {getPatientAge()}
+      </Typography>
     </Box>
   );
   // const renderGender = () => (
@@ -74,18 +76,35 @@ export default function PatientInfo(props) {
   // );
   if (!patient) return null;
   return (
-    <Stack spacing={3} direction="row" className="patientinfo-container">
-      <Stack spacing={0.5} direction="row" alignItems="center">
-        <PersonIcon fontSize="large" color="primary"></PersonIcon>
-        <Typography component="span" variant="h6" color="primary" className="patient-name">
-          {getPatientName()}
-        </Typography>
-      </Stack>
-      <Stack spacing={1} direction="row" alignItems="center" className="patient-dob-container">
-        {renderDOB()}
-        {renderAge()}
-        {/* {renderGender()} */}
-      </Stack>
+    <Stack
+      direction="row"
+      className="patientinfo-container"
+      alignItems={"center"}
+      spacing={1}
+    >
+      <PersonIcon fontSize="large" color="primary"></PersonIcon>
+      <Box>
+        <Stack spacing={0.5} direction="row" alignItems="center">
+          <Typography
+            component="span"
+            variant="h6"
+            color="primary"
+            className="patient-name"
+          >
+            {getPatientName()}
+          </Typography>
+        </Stack>
+        <Stack
+          spacing={1}
+          direction="row"
+          alignItems="center"
+          className="patient-dob-container"
+        >
+          {renderDOB()}
+          {renderAge()}
+          {/* {renderGender()} */}
+        </Stack>
+      </Box>
     </Stack>
   );
 }
