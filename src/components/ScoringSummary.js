@@ -287,7 +287,10 @@ export default function ScoringSummary(props) {
   };
 
   return (
-    <Paper className="scoring-summary-container">
+    <Paper
+      className="scoring-summary-container"
+      sx={{ borderTop: "1px solid rgb(0 0 0 / 5%)" }}
+    >
       {renderTitle()}
       {renderSummary()}
     </Paper>

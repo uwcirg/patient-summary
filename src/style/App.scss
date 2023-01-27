@@ -27,7 +27,7 @@ main {
   display: none;
 }
 .summaries {
-  padding: 16px 24px;
+  padding: 8px 16px;
   background-color: $summary-container-background-color;
 }
 
@@ -106,6 +106,10 @@ p {
   .chart__container {
     width: 100% !important;
     background-color: $default-print-background-color !important;
+  }
+  .scoring-summary-table {
+    width: 100% !important;
+    min-width: 100% !important;
   }
   .summary-container:not(:first-of-type) {
     page-break-inside: avoid;
