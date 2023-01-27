@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import { useTheme } from "@mui/material/styles";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -7,6 +8,7 @@ import ListItemText from "@mui/material/ListItemText";
 import { scrollToElement } from "../util/util";
 
 export default function SectionList(props) {
+  const theme = useTheme();
   const { list, onClickEvent, expanded } = props;
   if (!list || !list.length) return null;
   return (
@@ -20,7 +22,7 @@ export default function SectionList(props) {
             }}
           >
             {section.icon && (
-              <ListItemIcon title={section.title}>{section.icon()}</ListItemIcon>
+              <ListItemIcon title={section.title} sx={{minWidth: theme.spacing(6)}}>{section.icon()}</ListItemIcon>
             )}
 
             {expanded &&<ListItemText
