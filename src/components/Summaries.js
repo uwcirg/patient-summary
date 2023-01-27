@@ -526,6 +526,7 @@ export default function Summaries() {
         variant="outlined"
         size="small"
         onClick={() => window.print()}
+        sx={{ minWidth: "120px" }}
       >
         Print
       </Button>
