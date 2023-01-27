@@ -303,6 +303,9 @@ export default function Summaries() {
         <Box
           key={"accordion_wrapper_" + section.id}
           className="accordion-wrapper"
+          sx={{
+            marginBottom: theme.spacing(1),
+          }}
         >
           <Box
             id={`anchor_${section.id}`}
@@ -320,6 +323,14 @@ export default function Summaries() {
             defaultExpanded={
               section.hasOwnProperty("expanded") ? section.expanded : true
             }
+            sx={{
+              "& .MuiAccordionSummary-content": {
+                margin: 0,
+              },
+              "& .MuiPaper-root": {
+                borderRadius: 0,
+              },
+            }}
           >
             <AccordionSummary
               expandIcon={

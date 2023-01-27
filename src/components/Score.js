@@ -3,6 +3,7 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import ErrorIcon from "@mui/icons-material/Error";
+import WarningIcon from "@mui/icons-material/ReportProblem";
 import { isNumber } from "../util/util";
 
 export default function Scoring(props) {
@@ -12,26 +13,47 @@ export default function Scoring(props) {
       ? String(scoreParams.scoreSeverity).toLowerCase()
       : null;
   const arrSeverityLevelToAlert = ["high", "moderate", "moderately high"];
-  const getScoreDisplay = () => (<span data-testid="score">{isNumber(score) ? score : "--"}</span>);
+  const getScoreDisplay = () => (
+    <span data-testid="score">{isNumber(score) ? score : "--"}</span>
+  );
   const alertNote =
     scoreParams && scoreParams.alertNote ? scoreParams.alertNote : null;
+  const isHighAlert = scoreSeverity === "high";
+  const isModerateAlert =
+    scoreSeverity === "moderate" || scoreSeverity === "moderately high";
 
-  // display alert icon for score that has high severity  
+  // display alert icon for score that has high severity
   if (arrSeverityLevelToAlert.indexOf(scoreSeverity) !== -1) {
-    const iconColor =
-      scoreSeverity === "high"
-        ? "error"
-        : scoreSeverity === "moderate" || scoreSeverity === "moderately high"
-        ? "warning"
-        : "inherit";
-    const textColor =
-      scoreSeverity === "high"
-        ? "error.main"
-        : scoreSeverity === "moderate" || scoreSeverity === "moderately high"
-        ? "warning.main"
-        : "inherit";
+    const iconColor = isHighAlert
+      ? "error"
+      : isModerateAlert
+      ? "warning"
+      : "inherit";
+    const textColor = isHighAlert
+      ? "error.main"
+      : isModerateAlert
+      ? "warning.main"
+      : "inherit";
 
-    const iconClass = scoreSeverity === "high" ? "alert-icon" : "";
+    const iconClass = isHighAlert ? "alert-icon" : "";
+
+    const renderIcon = () => {
+      if (isHighAlert)
+        return (
+          <ErrorIcon
+            color={iconColor}
+            fontSize="small"
+            className={iconClass}
+          ></ErrorIcon>
+        );
+      return (
+        <WarningIcon
+          color={iconColor}
+          fontSize="small"
+          className={iconClass}
+        ></WarningIcon>
+      );
+    };
     return (
       <Stack
         direction="row"
@@ -44,20 +66,10 @@ export default function Scoring(props) {
         </Typography>
         {alertNote && (
           <Tooltip title={alertNote} placement="top" arrow>
-            <ErrorIcon
-              color={iconColor}
-              fontSize="small"
-              className={iconClass}
-            ></ErrorIcon>
+            {renderIcon()}
           </Tooltip>
         )}
-        {!alertNote && (
-          <ErrorIcon
-            color={iconColor}
-            fontSize="small"
-            className={iconClass}
-          ></ErrorIcon>
-        )}
+        {!alertNote && renderIcon()}
       </Stack>
     );
   }
