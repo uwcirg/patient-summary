@@ -255,9 +255,9 @@ export default function ScoringSummary(props) {
   const renderSummary = () => {
     if (!hasList())
       return (
-        <Alert severity="warning" sx={{ margin: 1 }}>
-          No summary available
-        </Alert>
+        <Box sx={{ padding: theme.spacing(0, 2, 2, 2) }}>
+          <Alert severity="warning">No summary available</Alert>
+        </Box>
       );
     return (
       <TableContainer
