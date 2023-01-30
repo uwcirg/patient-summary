@@ -88,6 +88,7 @@ export default function Header(props) {
           href={returnURL + "/clear_session"}
           variant="contained"
           className="btn-return-url"
+          size="large"
         >
           Patient List
         </Button>
