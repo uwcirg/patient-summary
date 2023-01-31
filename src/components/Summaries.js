@@ -23,6 +23,7 @@ import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import PrintIcon from "@mui/icons-material/Print";
 import { FhirClientContext } from "../context/FhirClientContext";
 import {
   gatherSummaryDataByQuestionnaireId,
@@ -527,6 +528,7 @@ export default function Summaries() {
         size="small"
         onClick={() => window.print()}
         sx={{ minWidth: "120px" }}
+        startIcon={<PrintIcon></PrintIcon>}
       >
         Print
       </Button>

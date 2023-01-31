@@ -13,14 +13,14 @@ export default function Scoring(props) {
       ? String(scoreParams.scoreSeverity).toLowerCase()
       : null;
   const arrSeverityLevelToAlert = ["high", "moderate", "moderately high"];
-  const getScoreDisplay = () => (
-    <span data-testid="score">{isNumber(score) ? score : "--"}</span>
-  );
   const alertNote =
     scoreParams && scoreParams.alertNote ? scoreParams.alertNote : null;
   const isHighAlert = scoreSeverity === "high";
   const isModerateAlert =
     scoreSeverity === "moderate" || scoreSeverity === "moderately high";
+  const getScoreDisplay = () => (
+    <span data-testid="score">{isNumber(score) ? score : "--"}</span>
+  );
 
   // display alert icon for score that has high severity
   if (arrSeverityLevelToAlert.indexOf(scoreSeverity) !== -1) {
