@@ -92,11 +92,11 @@ define ResponsesSummary:
         score: score,
         scoreSeverity: scoreSeverity,
         scoreMeaning: case
-          when suicideScore >= 1 then 'endorsed suicide ideation'
+          when suicideScore >= 1 then 'suicide concern'
           when scoreSeverity = 'high' then 'major depressive episode'
           else null
         end,
-        alertNote: if (suicideScore >= 1) then 'endorsed suicide ideation' else null,
+        alertNote: if (suicideScore >= 1) then 'suicide concern' else null,
         scoringParams: scoringParams,
         totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
         totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),

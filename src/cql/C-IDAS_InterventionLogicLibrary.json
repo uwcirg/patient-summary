@@ -1045,7 +1045,7 @@
                               },
                               "then" : {
                                  "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                 "value" : "endorsed suicide ideation",
+                                 "value" : "suicide concern",
                                  "type" : "Literal"
                               }
                            }, {
@@ -1091,7 +1091,7 @@
                            },
                            "then" : {
                               "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                              "value" : "endorsed suicide ideation",
+                              "value" : "suicide concern",
                               "type" : "Literal"
                            },
                            "else" : {

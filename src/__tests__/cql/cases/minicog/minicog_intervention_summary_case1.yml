@@ -30,5 +30,5 @@ results:
   QuestionnaireResponses: $should exist  # make sure questionnaire responses are returned
   ResponsesOnly: $should have length 1
   FirstResponsesScoreSeverity: 'high'
-  FirstResponsesScoreMeaning: 'cognitively impaired'
+  #FirstResponsesScoreMeaning: 'cognitively impaired'
   

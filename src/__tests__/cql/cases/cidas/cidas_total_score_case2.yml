@@ -124,4 +124,4 @@ results:
   ResponsesOnly: $should exist
   FirstResponsesScore: 18
   FirstResponsesScoreSeverity: 'high'
-  FirstResponsesScoreMeaning: 'endorsed suicide ideation'
+  FirstResponsesScoreMeaning: 'suicide concern'

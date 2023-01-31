@@ -560,34 +560,6 @@
                            "type" : "QueryLetRef"
                         }
                      }, {
-                        "name" : "scoreMeaning",
-                        "value" : {
-                           "type" : "If",
-                           "condition" : {
-                              "type" : "Equal",
-                              "operand" : [ {
-                                 "name" : "scoreSeverity",
-                                 "type" : "QueryLetRef"
-                              }, {
-                                 "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                 "value" : "high",
-                                 "type" : "Literal"
-                              } ]
-                           },
-                           "then" : {
-                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                              "value" : "cognitively impaired",
-                              "type" : "Literal"
-                           },
-                           "else" : {
-                              "asType" : "{urn:hl7-org:elm-types:r1}String",
-                              "type" : "As",
-                              "operand" : {
-                                 "type" : "Null"
-                              }
-                           }
-                        }
-                     }, {
                         "name" : "totalAnsweredItems",
                         "value" : {
                            "type" : "Length",
@@ -821,31 +793,6 @@
                "return" : {
                   "expression" : {
                      "path" : "scoreSeverity",
-                     "scope" : "R",
-                     "type" : "Property"
-                  }
-               }
-            }
-         }, {
-            "name" : "FirstResponsesScoreMeaning",
-            "context" : "Patient",
-            "accessLevel" : "Public",
-            "expression" : {
-               "type" : "Query",
-               "source" : [ {
-                  "alias" : "R",
-                  "expression" : {
-                     "type" : "First",
-                     "source" : {
-                        "name" : "ResponsesSummary",
-                        "type" : "ExpressionRef"
-                     }
-                  }
-               } ],
-               "relationship" : [ ],
-               "return" : {
-                  "expression" : {
-                     "path" : "scoreMeaning",
                      "scope" : "R",
                      "type" : "Property"
                   }

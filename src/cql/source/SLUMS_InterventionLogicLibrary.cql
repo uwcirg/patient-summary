@@ -47,7 +47,9 @@ define ResponsesSummary:
     scoreSeverity:
         case
           when educationLevel = 'low' and score <= 19 then 'high'
-          when score <= 20 then 'high'
+          when educationLevel = 'low' and score between 20 and 24 then 'moderate'
+          when educationLevel = 'high' and score <= 20 then 'high'
+          when educationLevel = 'high' and score between 21 and 26 then 'moderate'
           else 'low'
         end
     return {
@@ -56,7 +58,7 @@ define ResponsesSummary:
       responses: responses,
       score: score,
       scoreSeverity: scoreSeverity,
-      scoreMeaning: if scoreSeverity = 'high' then 'cognitively impaired' else null,
+      scoreMeaning: if scoreSeverity = 'high' then 'dementia' else if scoreSeverity = 'moderate' then 'mild neurocognitive disorder' else null,
       scoringParams: scoringParams,
       totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
       totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),

@@ -29,5 +29,5 @@ data:
 results:
   QuestionnaireResponses: $should exist  # make sure questionnaire responses are returned
   FirstResponsesScoreSeverity: 'high'
-  FirstResponsesScoreMeaning: 'cognitively impaired'
+  #FirstResponsesScoreMeaning: 'cognitively impaired'
   

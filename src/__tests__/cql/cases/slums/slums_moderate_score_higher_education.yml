@@ -1,5 +1,5 @@
 ---
-name: DCW SLUMS high score (higher education) - with condition
+name: DCW SLUMS moderate score (higher education) - with condition
 externalData:
 - slums_reusable_resources
 data:
@@ -13,7 +13,7 @@ data:
     linkId: *q1LinkId
     answer:
     -
-      valueDecimal: 20
+      valueDecimal: 21
 -
   resourceType: Condition
   code:
@@ -25,7 +25,7 @@ results:
   CurrentQuestionnaire: $should exist
   ResponsesOnly: $should exist
   ResponsesSummary: $should have length 1
-  FirstResponsesScore: 20
-  FirstResponsesScoreSeverity: 'high'
-  FirstResponsesScoreMeaning: 'dementia'
+  FirstResponsesScore: 21
+  FirstResponsesScoreSeverity: 'moderate'
+  FirstResponsesScoreMeaning: 'mild neurocognitive disorder'
   
