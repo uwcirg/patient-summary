@@ -86,20 +86,25 @@ export default function ScoringSummary(props) {
     if (!isNaN(prevScore)) {
       if (comparisonToAlert === "lower") {
         if (currentScore < prevScore)
-          return <SouthIcon color="error"></SouthIcon>;
+          return <SouthIcon color="error" fontSize="small"></SouthIcon>;
         if (currentScore > prevScore)
-          return <NorthIcon color="success"></NorthIcon>;
-        return <HorizontalRuleIcon></HorizontalRuleIcon>;
+          return <NorthIcon color="success" fontSize="small"></NorthIcon>;
+        return <HorizontalRuleIcon fontSize="small"></HorizontalRuleIcon>;
       } else {
         if (currentScore > prevScore)
-          return <NorthIcon color="error"></NorthIcon>;
+          return <NorthIcon color="error" fontSize="small"></NorthIcon>;
         if (currentScore < prevScore)
-          return <SouthIcon color="success"></SouthIcon>;
-        return <HorizontalRuleIcon></HorizontalRuleIcon>;
+          return <SouthIcon color="success" fontSize="small"></SouthIcon>;
+        return <HorizontalRuleIcon fontSize="small"></HorizontalRuleIcon>;
       }
     } else {
       if (!isNaN(currentScore))
-        return <HorizontalRuleIcon color="info"></HorizontalRuleIcon>;
+        return (
+          <HorizontalRuleIcon
+            color="info"
+            fontSize="small"
+          ></HorizontalRuleIcon>
+        );
       return null;
     }
   };
@@ -113,7 +118,10 @@ export default function ScoringSummary(props) {
       component="h3"
       color="accent"
       sx={{
-        padding: theme.spacing(0.5, 1, 0.5),
+        padding: {
+          xs: theme.spacing(0, 1, 0),
+          sm: theme.spacing(0.5, 1, 0.5),
+        },
         marginLeft: 1,
         marginTop: 0.5,
       }}
@@ -168,6 +176,10 @@ export default function ScoringSummary(props) {
   };
   const cellStyle = {
     borderRight: `1px solid ${borderColor}`,
+    padding: {
+      xs: theme.spacing(0.5, 1),
+      sm: theme.spacing(0.5, 2),
+    },
     ...cellWhiteSpaceStyle,
   };
   const fixedCellStyle = {
@@ -182,7 +194,7 @@ export default function ScoringSummary(props) {
         sm: "auto",
       },
       minHeight: {
-        xs: theme.spacing(4.75),
+        xs: "34px",
         sm: "auto",
       },
       left: theme.spacing(1.75),
@@ -198,23 +210,27 @@ export default function ScoringSummary(props) {
             ...fixedCellStyle,
             ...{
               minHeight: {
-                xs: theme.spacing(4.75),
+                xs: theme.spacing(4),
                 sm: "auto",
               },
             },
           }}
         ></TableCell>
-        <TableCell variant="head" size="small">
+        <TableCell variant="head" size="small" sx={cellStyle}>
           Score
         </TableCell>
         <TableCell sx={cellStyle}>{/* score range */}</TableCell>
-        <TableCell align="center" sx={cellStyle}>
+        <TableCell align="center" size="small" sx={cellStyle}>
           # Answered
         </TableCell>
-        <TableCell align="center" sx={cellStyle}>
+        <TableCell align="center" size="small" sx={cellStyle}>
           Meaning
         </TableCell>
-        <TableCell variant="head" size="small" sx={cellWhiteSpaceStyle}>
+        <TableCell
+          variant="head"
+          size="small"
+          sx={{ ...cellStyle, borderRightWidth: 0 }}
+        >
           Compared to Last
         </TableCell>
       </TableRow>
@@ -242,7 +258,7 @@ export default function ScoringSummary(props) {
   );
 
   const renderScoreCell = (key) => (
-    <TableCell align="left" size="small" className="score-cell">
+    <TableCell align="left" size="small" className="score-cell" sx={cellStyle}>
       <Scoring
         score={getCurrentScoreByInstrument(summaryData[key].responses)}
         scoreParams={getCurrentResponses(summaryData[key].responses)}
@@ -259,19 +275,28 @@ export default function ScoringSummary(props) {
   );
 
   const renderNumAnsweredCell = (key) => (
-    <TableCell align="center" sx={{ borderRight: "1px solid #ececec" }}>
+    <TableCell align="center" size="small" sx={cellStyle}>
       {displayNumAnswered(summaryData[key])}
     </TableCell>
   );
 
   const renderScoreMeaningCell = (key) => (
-    <TableCell align="center" className="capitalized-text" sx={cellStyle}>
+    <TableCell
+      align="center"
+      size="small"
+      className="capitalized-text"
+      sx={cellStyle}
+    >
       {displayScoreMeaning(summaryData[key])}
     </TableCell>
   );
 
   const renderComparedToLastCell = (key) => (
-    <TableCell align="center" size="small">
+    <TableCell
+      align="center"
+      size="small"
+      sx={{ ...cellStyle, borderRightWidth: 0 }}
+    >
       {getDisplayIcon(key, summaryData[key].responses)}
     </TableCell>
   );
