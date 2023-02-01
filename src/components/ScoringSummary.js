@@ -157,12 +157,48 @@ export default function ScoringSummary(props) {
   };
 
   const scoreList = getScoreList();
-  const cellStyle = { borderRight: `1px solid ${borderColor}` };
-
+  const cellStyle = {
+    borderRight: `1px solid ${borderColor}`,
+    whiteSpace: "nowrap",
+    textOverflow: "ellipsis",
+    overflow: "hidden"
+  };
+  const fixedCellStyle = {
+    ...cellStyle,
+    ...{
+      position: {
+        xs: "absolute",
+        sm: "inherit",
+      },
+      width: {
+        xs: theme.spacing(29.75),
+        sm: "auto",
+      },
+      minHeight: {
+        xs: theme.spacing(4.75),
+        sm: "auto"
+      },
+      left: theme.spacing(1.75),
+      whiteSpace: "nowrap",
+      textOverflow: "ellipsis",
+      overflow: "hidden"
+    },
+  };
   const renderTableHeaderRow = () => (
     <TableHead>
       <TableRow sx={{ backgroundColor: bgColor }}>
-        <TableCell size="small" sx={cellStyle}></TableCell>
+        <TableCell
+          size="small"
+          sx={{
+            ...fixedCellStyle,
+            ...{
+              height: {
+                xs: "60px",
+                sm: "auto",
+              },
+            },
+          }}
+        ></TableCell>
         <TableCell variant="head" size="small">
           Score
         </TableCell>
@@ -183,7 +219,7 @@ export default function ScoringSummary(props) {
   const renderInstrumentLinkCell = (key) => (
     <TableCell
       sx={{
-        ...cellStyle,
+        ...fixedCellStyle,
         ...{
           fontWeight: 500,
         },
@@ -263,13 +299,25 @@ export default function ScoringSummary(props) {
       <TableContainer
         className="table-container"
         sx={{
-          padding: 2,
+          padding: {
+            xs: 0,
+            sm: 2,
+          },
           paddingTop: 0,
           marginBottom: 1,
           maxWidth: {
-            xs: "460px",
+            xs: "204px",
             sm: "100%",
           },
+          position: {
+            xs: "initial",
+            sm: "relative",
+          },
+          marginLeft: {
+            xs: theme.spacing(29.5),
+            sm: 0,
+          },
+          verticalAlign: "middle",
         }}
         component={Paper}
       >
