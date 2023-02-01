@@ -192,8 +192,8 @@ export default function ScoringSummary(props) {
           sx={{
             ...fixedCellStyle,
             ...{
-              height: {
-                xs: "60px",
+              minHeight: {
+                xs: theme.spacing(4.75),
                 sm: "auto",
               },
             },
@@ -209,7 +209,9 @@ export default function ScoringSummary(props) {
         <TableCell align="center" sx={cellStyle}>
           Meaning
         </TableCell>
-        <TableCell variant="head" size="small">
+        <TableCell variant="head" size="small" sx={{
+          whiteSpace: "nowrap"
+        }}>
           Compared to Last
         </TableCell>
       </TableRow>
