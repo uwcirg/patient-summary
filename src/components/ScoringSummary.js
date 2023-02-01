@@ -112,7 +112,11 @@ export default function ScoringSummary(props) {
       variant="h6"
       component="h3"
       color="accent"
-      sx={{ padding: 1, marginLeft: 1, marginTop: 0.5 }}
+      sx={{
+        padding: theme.spacing(0.5, 1, 0.5),
+        marginLeft: 1,
+        marginTop: 0.5,
+      }}
     >
       Scoring Summary
     </Typography>
@@ -157,11 +161,14 @@ export default function ScoringSummary(props) {
   };
 
   const scoreList = getScoreList();
+  const cellWhiteSpaceStyle = {
+    whiteSpace: { xs: "nowrap", sm: "normal" },
+    textOverflow: "ellipsis",
+    overflow: "hidden",
+  };
   const cellStyle = {
     borderRight: `1px solid ${borderColor}`,
-    whiteSpace: "nowrap",
-    textOverflow: "ellipsis",
-    overflow: "hidden"
+    ...cellWhiteSpaceStyle,
   };
   const fixedCellStyle = {
     ...cellStyle,
@@ -176,12 +183,10 @@ export default function ScoringSummary(props) {
       },
       minHeight: {
         xs: theme.spacing(4.75),
-        sm: "auto"
+        sm: "auto",
       },
       left: theme.spacing(1.75),
-      whiteSpace: "nowrap",
-      textOverflow: "ellipsis",
-      overflow: "hidden"
+      ...cellWhiteSpaceStyle,
     },
   };
   const renderTableHeaderRow = () => (
@@ -209,9 +214,7 @@ export default function ScoringSummary(props) {
         <TableCell align="center" sx={cellStyle}>
           Meaning
         </TableCell>
-        <TableCell variant="head" size="small" sx={{
-          whiteSpace: "nowrap"
-        }}>
+        <TableCell variant="head" size="small" sx={cellWhiteSpaceStyle}>
           Compared to Last
         </TableCell>
       </TableRow>
@@ -303,7 +306,7 @@ export default function ScoringSummary(props) {
         sx={{
           padding: {
             xs: 0,
-            sm: 2,
+            sm: theme.spacing(1, 2),
           },
           paddingTop: 0,
           marginBottom: 1,
@@ -320,6 +323,7 @@ export default function ScoringSummary(props) {
             sm: 0,
           },
           verticalAlign: "middle",
+          borderRadius: 0,
         }}
         component={Paper}
       >

@@ -12,7 +12,7 @@ export default function SectionList(props) {
   const { list, onClickEvent, expanded } = props;
   if (!list || !list.length) return null;
   return (
-    <List sx={{ marginTop: 0.5 }} className="sections-list">
+    <List className="sections-list">
       {list.map((section) => (
         <ListItem key={section.id} disablePadding sx={{ minHeight: "50px" }}>
           <ListItemButton
