@@ -216,7 +216,11 @@ export default function ScoringSummary(props) {
             },
           }}
         ></TableCell>
-        <TableCell variant="head" size="small" sx={cellStyle}>
+        <TableCell
+          variant="head"
+          size="small"
+          sx={{ ...cellStyle, borderRightWidth: 0 }}
+        >
           Score
         </TableCell>
         <TableCell sx={cellStyle}>{/* score range */}</TableCell>
@@ -258,7 +262,12 @@ export default function ScoringSummary(props) {
   );
 
   const renderScoreCell = (key) => (
-    <TableCell align="left" size="small" className="score-cell" sx={cellStyle}>
+    <TableCell
+      align="left"
+      size="small"
+      className="score-cell"
+      sx={{ ...cellStyle, borderRightWidth: 0 }}
+    >
       <Scoring
         score={getCurrentScoreByInstrument(summaryData[key].responses)}
         scoreParams={getCurrentResponses(summaryData[key].responses)}
