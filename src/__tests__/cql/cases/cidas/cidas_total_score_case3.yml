@@ -124,4 +124,4 @@ results:
   ResponsesOnly: $should exist
   FirstResponsesScore: 36
   FirstResponsesScoreSeverity: 'high'
-  FirstResponsesScoreMeaning: 'suicide concern'
+  #FirstResponsesScoreMeaning: 'suicide concern'

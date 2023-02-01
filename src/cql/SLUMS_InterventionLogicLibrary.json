@@ -527,49 +527,7 @@
                      }, {
                         "name" : "scoreMeaning",
                         "value" : {
-                           "type" : "If",
-                           "condition" : {
-                              "type" : "Equal",
-                              "operand" : [ {
-                                 "name" : "scoreSeverity",
-                                 "type" : "QueryLetRef"
-                              }, {
-                                 "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                 "value" : "high",
-                                 "type" : "Literal"
-                              } ]
-                           },
-                           "then" : {
-                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                              "value" : "dementia",
-                              "type" : "Literal"
-                           },
-                           "else" : {
-                              "type" : "If",
-                              "condition" : {
-                                 "type" : "Equal",
-                                 "operand" : [ {
-                                    "name" : "scoreSeverity",
-                                    "type" : "QueryLetRef"
-                                 }, {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                    "value" : "moderate",
-                                    "type" : "Literal"
-                                 } ]
-                              },
-                              "then" : {
-                                 "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                 "value" : "mild neurocognitive disorder",
-                                 "type" : "Literal"
-                              },
-                              "else" : {
-                                 "asType" : "{urn:hl7-org:elm-types:r1}String",
-                                 "type" : "As",
-                                 "operand" : {
-                                    "type" : "Null"
-                                 }
-                              }
-                           }
+                           "type" : "Null"
                         }
                      }, {
                         "name" : "scoringParams",

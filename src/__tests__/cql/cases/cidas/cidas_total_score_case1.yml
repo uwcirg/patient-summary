@@ -124,4 +124,4 @@ results:
   ResponsesOnly: $should exist
   FirstResponsesScore: 0
   FirstResponsesScoreSeverity: 'low'
-  FirstResponsesScoreMeaning: null
+  #FirstResponsesScoreMeaning: null

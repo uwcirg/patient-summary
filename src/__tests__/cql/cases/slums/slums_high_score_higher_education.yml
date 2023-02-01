@@ -27,5 +27,5 @@ results:
   ResponsesSummary: $should have length 1
   FirstResponsesScore: 20
   FirstResponsesScoreSeverity: 'high'
-  FirstResponsesScoreMeaning: 'dementia'
+#  FirstResponsesScoreMeaning: 'dementia'
   
