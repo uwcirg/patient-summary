@@ -527,12 +527,18 @@ export default function Summaries() {
         variant="outlined"
         size="small"
         onClick={() => window.print()}
-        sx={{ minWidth: "120px" }}
+        sx={{ minWidth: "120px", marginTop: { xs: theme.spacing(1), sm: 0 } }}
         startIcon={<PrintIcon></PrintIcon>}
       >
         Print
       </Button>
     );
+  };
+
+  const renderError = () => {
+  return (<Box sx={{ marginTop: 1 }}>
+                  <ErrorComponent message={error}></ErrorComponent>
+                </Box>)
   };
 
   useEffect(() => {
@@ -565,21 +571,10 @@ export default function Summaries() {
               <Stack direction="row" justifyContent="flex-end">
                 {renderPrintButton()}
               </Stack>
-              {error && (
-                <Box sx={{ marginTop: 1 }}>
-                  <ErrorComponent message={error}></ErrorComponent>
-                </Box>
-              )}
+              {error && renderError()}
               {!error && (
                 <>
-                  <Box
-                    sx={{
-                      marginTop: 1,
-                      marginBottom: 1,
-                    }}
-                  >
-                    {renderScoringSummary()}
-                  </Box>
+                  {renderScoringSummary()}
                   {renderSections()}
                 </>
               )}

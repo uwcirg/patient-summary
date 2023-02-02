@@ -9,7 +9,6 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
-import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 import NorthIcon from "@mui/icons-material/North";
@@ -81,29 +80,33 @@ export default function ScoringSummary(props) {
     const comparisonToAlert = qConfig[id] && qConfig[id].comparisonToAlert;
     const currentScore = getCurrentScoreByInstrument(rdata);
     const prevScore = getPrevScoreByInstrument(rdata);
+    const iconProps = {
+      fontSize: "small",
+      sx: { verticalAlign: "middle" },
+    };
     //console.log("current score ", currentScore, " prev score ", prevScore);
     if (isNaN(prevScore) || isNaN(currentScore)) return "--";
     if (!isNaN(prevScore)) {
       if (comparisonToAlert === "lower") {
         if (currentScore < prevScore)
-          return <SouthIcon color="error" fontSize="small"></SouthIcon>;
+          return <SouthIcon color="error" {...iconProps}></SouthIcon>;
         if (currentScore > prevScore)
-          return <NorthIcon color="success" fontSize="small"></NorthIcon>;
-        return <HorizontalRuleIcon fontSize="small"></HorizontalRuleIcon>;
+          return (
+            <NorthIcon color="success" {...iconProps}>
+            </NorthIcon>
+          );
+        return <HorizontalRuleIcon {...iconProps}></HorizontalRuleIcon>;
       } else {
         if (currentScore > prevScore)
-          return <NorthIcon color="error" fontSize="small"></NorthIcon>;
+          return <NorthIcon color="error" {...iconProps}></NorthIcon>;
         if (currentScore < prevScore)
-          return <SouthIcon color="success" fontSize="small"></SouthIcon>;
-        return <HorizontalRuleIcon fontSize="small"></HorizontalRuleIcon>;
+          return <SouthIcon color="success" {...iconProps}></SouthIcon>;
+        return <HorizontalRuleIcon {...iconProps}></HorizontalRuleIcon>;
       }
     } else {
       if (!isNaN(currentScore))
         return (
-          <HorizontalRuleIcon
-            color="info"
-            fontSize="small"
-          ></HorizontalRuleIcon>
+          <HorizontalRuleIcon color="info" {...iconProps}></HorizontalRuleIcon>
         );
       return null;
     }
@@ -115,15 +118,10 @@ export default function ScoringSummary(props) {
   const renderTitle = () => (
     <Typography
       variant="h6"
-      component="h3"
+      component="h2"
       color="accent"
       sx={{
-        padding: {
-          xs: theme.spacing(0, 1, 0),
-          sm: theme.spacing(0.5, 1, 0.5),
-        },
-        marginLeft: 1,
-        marginTop: 0.5,
+        padding: theme.spacing(1, 0, 0),
       }}
     >
       Scoring Summary
@@ -169,6 +167,14 @@ export default function ScoringSummary(props) {
   };
 
   const scoreList = getScoreList();
+  const defaultTableCellProps = {
+    size: "small",
+  };
+  const defaultHeaderCellProps = {
+    ...defaultTableCellProps,
+    align: "center",
+    variant: "head",
+  };
   const cellWhiteSpaceStyle = {
     whiteSpace: { xs: "nowrap", sm: "normal" },
     textOverflow: "ellipsis",
@@ -205,7 +211,6 @@ export default function ScoringSummary(props) {
     <TableHead>
       <TableRow sx={{ backgroundColor: bgColor }}>
         <TableCell
-          size="small"
           sx={{
             ...fixedCellStyle,
             ...{
@@ -215,25 +220,21 @@ export default function ScoringSummary(props) {
               },
             },
           }}
+          {...defaultHeaderCellProps}
         ></TableCell>
-        <TableCell
-          variant="head"
-          size="small"
-          sx={{ ...cellStyle, borderRightWidth: 0 }}
-        >
+        <TableCell sx={cellStyle} {...defaultHeaderCellProps} colSpan={2}>
           Score
         </TableCell>
-        <TableCell sx={cellStyle}>{/* score range */}</TableCell>
-        <TableCell align="center" size="small" sx={cellStyle}>
+        <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
           # Answered
         </TableCell>
-        <TableCell align="center" size="small" sx={cellStyle}>
+        <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
           Meaning
         </TableCell>
         <TableCell
           variant="head"
-          size="small"
           sx={{ ...cellStyle, borderRightWidth: 0 }}
+          {...defaultTableCellProps}
         >
           Compared to Last
         </TableCell>
@@ -271,13 +272,14 @@ export default function ScoringSummary(props) {
       <Scoring
         score={getCurrentScoreByInstrument(summaryData[key].responses)}
         scoreParams={getCurrentResponses(summaryData[key].responses)}
+        justifyContent="space-between"
       ></Scoring>
     </TableCell>
   );
 
   const renderScoreRangeCell = (key) => (
-    <TableCell align="left" size="small" sx={cellStyle}>
-      <Box className="no-wrap-text muted-text">
+    <TableCell align="right" size="small" sx={cellStyle}>
+      <Box className="no-wrap-text muted-text text-left">
         {displayScoreRange(summaryData[key])}
       </Box>
     </TableCell>
@@ -340,7 +342,7 @@ export default function ScoringSummary(props) {
         sx={{
           padding: {
             xs: 0,
-            sm: theme.spacing(1, 2),
+            sm: theme.spacing(1, 0),
           },
           paddingTop: 0,
           marginBottom: 1,
@@ -356,13 +358,11 @@ export default function ScoringSummary(props) {
             xs: theme.spacing(29.5),
             sm: 0,
           },
-          verticalAlign: "middle",
-          borderRadius: 0,
+          borderRadius: 0
         }}
-        component={Paper}
       >
         <Table
-          sx={{ border: "1px solid #ececec" }}
+          sx={{ border: `1px solid ${borderColor}` }}
           size="small"
           aria-label="scoring summary table"
           className="scoring-summary-table"
@@ -375,13 +375,12 @@ export default function ScoringSummary(props) {
   };
 
   return (
-    <Paper
+    <Box
       className="scoring-summary-container"
-      sx={{ borderTop: "1px solid rgb(0 0 0 / 5%)" }}
     >
       {renderTitle()}
       {renderSummary()}
-    </Paper>
+    </Box>
   );
 }
 
