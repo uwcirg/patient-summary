@@ -37,7 +37,7 @@ export default function QuestionnaireInfo(props) {
       <IconButton
         onClick={() => handleDialogOpen()}
         size="small"
-        className="info-butto print-hidden"
+        className="info-button print-hidden"
         aria-label="information link"
         title={`click to learn more about ${getQuestionnaireTitle()}`}
         edge="end"
