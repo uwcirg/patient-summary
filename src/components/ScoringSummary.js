@@ -116,7 +116,7 @@ export default function ScoringSummary(props) {
       component="h2"
       color="accent"
       sx={{
-        padding: theme.spacing(1, 0, 0),
+        padding: theme.spacing(1, 0.5, 0),
         fontSize: "1.4rem",
         fontWeight: 500
       }}
@@ -328,7 +328,7 @@ export default function ScoringSummary(props) {
   const renderSummary = () => {
     if (!hasList())
       return (
-        <Box sx={{ padding: theme.spacing(2, 0) }}>
+        <Box sx={{ padding: theme.spacing(2, 0.5) }}>
           <Alert severity="warning">No summary available</Alert>
         </Box>
       );
@@ -338,7 +338,7 @@ export default function ScoringSummary(props) {
         sx={{
           padding: {
             xs: 0,
-            sm: theme.spacing(1, 0),
+            sm: theme.spacing(1, 0.5),
           },
           paddingTop: 0,
           marginBottom: 1,

@@ -36,10 +36,12 @@ const closedMixin = (theme) => ({
   },
 });
 
-const DrawerHeader = styled("div")(({ theme }) => ({
+const DrawerHeader = styled("div", {
+  shouldForwardProp: (prop) => prop !== "open",
+})(({ theme, open }) => ({
   display: "flex",
   alignItems: "center",
-  justifyContent: "flex-end",
+  justifyContent: open ? "flex-end" : "center",
   backgroundColor: "#FFF",
   padding: theme.spacing(0, 1),
   // necessary for content to be below app bar
@@ -76,7 +78,7 @@ export default function SideNav (props) {
       setOpen(false);
     };
     const renderDrawerHeaderButton = () => (
-      <DrawerHeader>
+      <DrawerHeader open={open}>
         <IconButton
           onClick={open ? handleDrawerClose : handleDrawerOpen}
           title="collapse/expand"
