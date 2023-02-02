@@ -35,45 +35,43 @@ export default function ScoringSummary(props) {
       ? theme.palette.border.main
       : "#FFF";
   const { summaryData } = props;
+  const hasNoResponses = (responses) => !responses || !responses.length;
   const responsesHasScore = (responses) => {
-    if (!responses || !responses.length) return false;
-    return responses.filter((result) => isNumber(result.score)).length > 0;
-  };
-  const hasList = () =>
-    summaryData &&
-    Object.keys(summaryData).length > 0 &&
-    Object.keys(summaryData).filter((key) => {
-      return responsesHasScore(summaryData[key].responses);
-    }).length > 0;
-  const getSortedResponses = (rdata) => {
-    if (!rdata || rdata.length === 0) return [];
-    return rdata.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-  };
-  const getCurrentResponses = (rdata) => {
-    const sortedResponses = getSortedResponses(rdata);
-    if (!sortedResponses || !sortedResponses.length) return null;
-    return sortedResponses[0];
+    if (hasNoResponses(responses)) return false;
+    return responses.some((result) => isNumber(result.score));
   };
   const getInstrumentShortName = (id) =>
     qConfig[id] && qConfig[id].shortTitle
       ? qConfig[id].shortTitle
       : String(id).toUpperCase();
+  const hasList = () =>
+    summaryData &&
+    Object.keys(summaryData).length > 0 &&
+    Object.keys(summaryData).some((key) => {
+      return responsesHasScore(summaryData[key].responses);
+    });
+  const getSortedResponses = (rdata) => {
+    if (hasNoResponses(rdata)) return [];
+    return rdata.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  };
+  const getResponsesByIndex = (rdata, index) => {
+    const sortedResponses = getSortedResponses(rdata);
+    if (hasNoResponses(sortedResponses)) return null;
+    return sortedResponses[index];
+  };
 
   const getPrevScoreByInstrument = (rdata) => {
-    const responses = getSortedResponses(rdata);
-    if (!responses || !responses.length || responses.length === 1)
-      return parseInt(null);
-    if (!responses[1].date) return parseInt(null);
-    return parseInt(responses[1].score);
+    const responses = getResponsesByIndex(rdata, 1);
+    if (!responses || !responses.date) return parseInt(null);
+    return parseInt(responses.score);
   };
 
   const getCurrentScoreByInstrument = (rdata) => {
-    const sortedResponses = getSortedResponses(rdata);
-    if (!sortedResponses || !sortedResponses.length) return parseInt(null);
-    if (!sortedResponses[0].date) return parseInt(null);
-    const score = sortedResponses[0].score;
+    const responses = getResponsesByIndex(rdata, 0);
+    if (!responses || !responses.date) return parseInt(null);
+    const score = responses.score;
     return isNumber(score) ? score : "--";
   };
   const getDisplayIcon = (id, rdata) => {
@@ -91,10 +89,7 @@ export default function ScoringSummary(props) {
         if (currentScore < prevScore)
           return <SouthIcon color="error" {...iconProps}></SouthIcon>;
         if (currentScore > prevScore)
-          return (
-            <NorthIcon color="success" {...iconProps}>
-            </NorthIcon>
-          );
+          return <NorthIcon color="success" {...iconProps}></NorthIcon>;
         return <HorizontalRuleIcon {...iconProps}></HorizontalRuleIcon>;
       } else {
         if (currentScore > prevScore)
@@ -134,8 +129,7 @@ export default function ScoringSummary(props) {
   };
 
   const getMostRecentEntry = (summaryData) => {
-    if (!summaryData.responses || !summaryData.responses.length) return null;
-    return summaryData.responses[0];
+    return getResponsesByIndex(summaryData.responses, 0);
   };
 
   const displayScoreRange = (summaryData) => {
@@ -271,7 +265,7 @@ export default function ScoringSummary(props) {
     >
       <Scoring
         score={getCurrentScoreByInstrument(summaryData[key].responses)}
-        scoreParams={getCurrentResponses(summaryData[key].responses)}
+        scoreParams={getMostRecentEntry(summaryData[key])}
         justifyContent="space-between"
       ></Scoring>
     </TableCell>
@@ -358,7 +352,7 @@ export default function ScoringSummary(props) {
             xs: theme.spacing(29.5),
             sm: 0,
           },
-          borderRadius: 0
+          borderRadius: 0,
         }}
       >
         <Table
@@ -375,9 +369,7 @@ export default function ScoringSummary(props) {
   };
 
   return (
-    <Box
-      className="scoring-summary-container"
-    >
+    <Box className="scoring-summary-container">
       {renderTitle()}
       {renderSummary()}
     </Box>

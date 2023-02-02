@@ -536,9 +536,11 @@ export default function Summaries() {
   };
 
   const renderError = () => {
-  return (<Box sx={{ marginTop: 1 }}>
-                  <ErrorComponent message={error}></ErrorComponent>
-                </Box>)
+    return (
+      <Box sx={{ marginTop: 1 }}>
+        <ErrorComponent message={error}></ErrorComponent>
+      </Box>
+    );
   };
 
   useEffect(() => {
