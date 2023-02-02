@@ -44,7 +44,7 @@ const DrawerHeader = styled("div")(({ theme }) => ({
   padding: theme.spacing(0, 1),
   // necessary for content to be below app bar
   ...theme.mixins.toolbar,
-  minHeight: `${theme.spacing(6)} !important`
+  minHeight: `${theme.spacing(6)} !important`,
 }));
 
 const Drawer = styled(MuiDrawer, {

@@ -12,7 +12,7 @@ export default function SectionList(props) {
   const { list, onClickEvent, expanded } = props;
   if (!list || !list.length) return null;
   return (
-    <List className="sections-list">
+    <List className="sections-list" sx={{ marginTop: theme.spacing(3) }}>
       {list.map((section) => (
         <ListItem key={section.id} disablePadding sx={{ minHeight: "50px" }}>
           <ListItemButton
@@ -22,20 +22,27 @@ export default function SectionList(props) {
             }}
           >
             {section.icon && (
-              <ListItemIcon title={section.title} sx={{minWidth: theme.spacing(6)}}>{section.icon()}</ListItemIcon>
+              <ListItemIcon
+                title={section.title}
+                sx={{ minWidth: theme.spacing(6) }}
+              >
+                {section.icon()}
+              </ListItemIcon>
             )}
 
-            {expanded &&<ListItemText
-              primary={section.title}
-              primaryTypographyProps={{
-                variant: "body1",
-                component: "h3",
-                sx: {
-                  fontWeight: 500,
-                  whiteSpace: "normal",
-                },
-              }}
-            />}
+            {expanded && (
+              <ListItemText
+                primary={section.title}
+                primaryTypographyProps={{
+                  variant: "body1",
+                  component: "h3",
+                  sx: {
+                    fontWeight: 500,
+                    whiteSpace: "normal",
+                  },
+                }}
+              />
+            )}
           </ListItemButton>
         </ListItem>
       ))}

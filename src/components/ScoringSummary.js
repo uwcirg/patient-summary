@@ -112,11 +112,13 @@ export default function ScoringSummary(props) {
   };
   const renderTitle = () => (
     <Typography
-      variant="h6"
+      variant="h5"
       component="h2"
       color="accent"
       sx={{
         padding: theme.spacing(1, 0, 0),
+        fontSize: "1.4rem",
+        fontWeight: 500
       }}
     >
       Scoring Summary
