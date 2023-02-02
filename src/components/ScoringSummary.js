@@ -218,7 +218,7 @@ export default function ScoringSummary(props) {
           }}
           {...defaultHeaderCellProps}
         ></TableCell>
-        <TableCell sx={cellStyle} {...defaultHeaderCellProps} colSpan={2}>
+        <TableCell sx={cellStyle} {...{...defaultHeaderCellProps, ...{align: "left"}}} colSpan={2}>
           Score
         </TableCell>
         <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
