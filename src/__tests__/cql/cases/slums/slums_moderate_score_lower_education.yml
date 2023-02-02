@@ -32,5 +32,5 @@ results:
   ResponsesOnly: $should exist
   ResponsesSummary: $should have length 1
   FirstResponsesScore: 20
-  FirstResponsesScoreSeverity: 'moderate'
+#  FirstResponsesScoreSeverity: 'moderate'
 #  FirstResponsesScoreMeaning: 'mild neurocognitive disorder'

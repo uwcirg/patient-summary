@@ -345,57 +345,6 @@
                                  "type" : "QueryLetRef"
                               }, {
                                  "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                 "value" : "low",
-                                 "type" : "Literal"
-                              } ]
-                           }, {
-                              "type" : "And",
-                              "operand" : [ {
-                                 "type" : "GreaterOrEqual",
-                                 "operand" : [ {
-                                    "asType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "type" : "As",
-                                    "operand" : {
-                                       "name" : "score",
-                                       "type" : "QueryLetRef"
-                                    }
-                                 }, {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "20",
-                                    "type" : "Literal"
-                                 } ]
-                              }, {
-                                 "type" : "LessOrEqual",
-                                 "operand" : [ {
-                                    "asType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "type" : "As",
-                                    "operand" : {
-                                       "name" : "score",
-                                       "type" : "QueryLetRef"
-                                    }
-                                 }, {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "24",
-                                    "type" : "Literal"
-                                 } ]
-                              } ]
-                           } ]
-                        },
-                        "then" : {
-                           "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                           "value" : "moderate",
-                           "type" : "Literal"
-                        }
-                     }, {
-                        "when" : {
-                           "type" : "And",
-                           "operand" : [ {
-                              "type" : "Equal",
-                              "operand" : [ {
-                                 "name" : "educationLevel",
-                                 "type" : "QueryLetRef"
-                              }, {
-                                 "valueType" : "{urn:hl7-org:elm-types:r1}String",
                                  "value" : "high",
                                  "type" : "Literal"
                               } ]
@@ -418,57 +367,6 @@
                         "then" : {
                            "valueType" : "{urn:hl7-org:elm-types:r1}String",
                            "value" : "high",
-                           "type" : "Literal"
-                        }
-                     }, {
-                        "when" : {
-                           "type" : "And",
-                           "operand" : [ {
-                              "type" : "Equal",
-                              "operand" : [ {
-                                 "name" : "educationLevel",
-                                 "type" : "QueryLetRef"
-                              }, {
-                                 "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                 "value" : "high",
-                                 "type" : "Literal"
-                              } ]
-                           }, {
-                              "type" : "And",
-                              "operand" : [ {
-                                 "type" : "GreaterOrEqual",
-                                 "operand" : [ {
-                                    "asType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "type" : "As",
-                                    "operand" : {
-                                       "name" : "score",
-                                       "type" : "QueryLetRef"
-                                    }
-                                 }, {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "21",
-                                    "type" : "Literal"
-                                 } ]
-                              }, {
-                                 "type" : "LessOrEqual",
-                                 "operand" : [ {
-                                    "asType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "type" : "As",
-                                    "operand" : {
-                                       "name" : "score",
-                                       "type" : "QueryLetRef"
-                                    }
-                                 }, {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "26",
-                                    "type" : "Literal"
-                                 } ]
-                              } ]
-                           } ]
-                        },
-                        "then" : {
-                           "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                           "value" : "moderate",
                            "type" : "Literal"
                         }
                      } ],

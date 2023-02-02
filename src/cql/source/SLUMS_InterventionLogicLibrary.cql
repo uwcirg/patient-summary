@@ -47,9 +47,11 @@ define ResponsesSummary:
     scoreSeverity:
         case
           when educationLevel = 'low' and score <= 19 then 'high'
-          when educationLevel = 'low' and score between 20 and 24 then 'moderate'
+          //TBD
+          //when educationLevel = 'low' and score between 20 and 24 then 'moderate'
           when educationLevel = 'high' and score <= 20 then 'high'
-          when educationLevel = 'high' and score between 21 and 26 then 'moderate'
+          //TBD
+          //when educationLevel = 'high' and score between 21 and 26 then 'moderate'
           else 'low'
         end
     return {
