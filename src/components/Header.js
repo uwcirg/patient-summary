@@ -32,7 +32,6 @@ export default function Header(props) {
       component="h1"
       sx={{
         fontSize: "1.85rem",
-        fontWeight: 500,
         display: { xs: "none", sm: "none", md: "block" },
       }}
     >

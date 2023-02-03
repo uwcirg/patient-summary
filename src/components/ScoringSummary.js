@@ -117,7 +117,7 @@ export default function ScoringSummary(props) {
       color="accent"
       sx={{
         padding: theme.spacing(1, 0.5, 0),
-        fontSize: "1.4rem",
+        fontSize: "1.35rem",
         fontWeight: 500
       }}
     >
@@ -274,8 +274,8 @@ export default function ScoringSummary(props) {
   );
 
   const renderScoreRangeCell = (key) => (
-    <TableCell align="right" size="small" sx={cellStyle}>
-      <Box className="no-wrap-text muted-text text-left">
+    <TableCell align="right" size="small" sx={{...cellStyle, padding: 0}}>
+      <Box className="no-wrap-text muted-text text-left" sx={{width: "100%"}}>
         {displayScoreRange(summaryData[key])}
       </Box>
     </TableCell>
