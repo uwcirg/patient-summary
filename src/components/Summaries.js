@@ -1,7 +1,6 @@
 import {
   createRef,
   forwardRef,
-  memo,
   useContext,
   useEffect,
   useCallback,
@@ -24,6 +23,7 @@ import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import PrintIcon from "@mui/icons-material/Print";
 import { FhirClientContext } from "../context/FhirClientContext";
 import {
   gatherSummaryDataByQuestionnaireId,
@@ -36,7 +36,6 @@ import {
 } from "../util/util";
 import ErrorComponent from "./ErrorComponent";
 import MedicalHistory from "./MedicalHistory";
-import QuestionnaireSelector from "./QuestionnaireSelector";
 import ScoringSummary from "./ScoringSummary";
 import Summary from "./Summary";
 import Version from "./Version";
@@ -305,6 +304,9 @@ export default function Summaries() {
         <Box
           key={"accordion_wrapper_" + section.id}
           className="accordion-wrapper"
+          sx={{
+            marginBottom: theme.spacing(1),
+          }}
         >
           <Box
             id={`anchor_${section.id}`}
@@ -322,6 +324,14 @@ export default function Summaries() {
             defaultExpanded={
               section.hasOwnProperty("expanded") ? section.expanded : true
             }
+            sx={{
+              "& .MuiAccordionSummary-content": {
+                margin: 0,
+              },
+              "& .MuiPaper-root": {
+                borderRadius: 0,
+              },
+            }}
           >
             <AccordionSummary
               expandIcon={
@@ -352,7 +362,7 @@ export default function Summaries() {
                 </Typography>
               </Box>
             </AccordionSummary>
-            <AccordionDetails sx={{ padding: 2 }}>
+            <AccordionDetails sx={{ padding: theme.spacing(1, 2) }}>
               {sectionId === "medicalhistory" && renderMedicalHistory()}
               {sectionId === "responses" && renderSummaries()}
             </AccordionDetails>
@@ -401,24 +411,6 @@ export default function Summaries() {
     });
   };
 
-  const renderQuestionnaireSelector = () => {
-    return (
-      <BoxRef
-        className="print-hidden"
-        ref={selectorRef}
-        style={{
-          opacity: isReady() ? 1 : 0.4,
-          width: "100%",
-          alignSelf: "stretch",
-          border: "2px solid #ececec",
-          backgroundColor: "#FFF",
-        }}
-      >
-        <QuestionnaireSelector list={questionnaireList}></QuestionnaireSelector>
-      </BoxRef>
-    );
-  };
-
   const renderMedicalHistory = () => {
     const conditions = patientBundle.current.entry
       .filter((item) => {
@@ -429,8 +421,6 @@ export default function Summaries() {
       return <Alert severity="warning">No recorded condition.</Alert>;
     return <MedicalHistory data={conditions}></MedicalHistory>;
   };
-
-  const MemoizedQuestionnaireSelector = memo(renderQuestionnaireSelector);
 
   const renderProgressIndicator = () => {
     const total = loadedResources.length;
@@ -537,9 +527,19 @@ export default function Summaries() {
         variant="outlined"
         size="small"
         onClick={() => window.print()}
+        sx={{ minWidth: "120px", marginTop: { xs: theme.spacing(1), sm: 0 } }}
+        startIcon={<PrintIcon></PrintIcon>}
       >
         Print
       </Button>
+    );
+  };
+
+  const renderError = () => {
+    return (
+      <Box sx={{ marginTop: 1 }}>
+        <ErrorComponent message={error}></ErrorComponent>
+      </Box>
     );
   };
 
@@ -573,31 +573,11 @@ export default function Summaries() {
               <Stack direction="row" justifyContent="flex-end">
                 {renderPrintButton()}
               </Stack>
-              {error && (
-                <Box sx={{ marginTop: 1 }}>
-                  <ErrorComponent message={error}></ErrorComponent>
-                </Box>
-              )}
+              {error && renderError()}
               {!error && (
                 <>
-                  <>
-                    <Stack
-                      className="selector-stats-wrapper"
-                      direction={{ xs: "column", sm: "column", md: "row" }}
-                      spacing={2}
-                      sx={{
-                        marginTop: 1,
-                        marginBottom: 1,
-                        backgroundColor: (theme) =>
-                          theme.palette.background.main,
-                        padding: 2,
-                      }}
-                    >
-                      <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
-                      {renderScoringSummary()}
-                    </Stack>
-                    {renderSections()}
-                  </>
+                  {renderScoringSummary()}
+                  {renderSections()}
                 </>
               )}
             </section>

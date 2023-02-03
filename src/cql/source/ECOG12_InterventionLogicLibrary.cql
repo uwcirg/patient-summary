@@ -31,6 +31,10 @@ define question10LinkId: '/89290-1/89173-9'
 define question11LinkId: '/89285-1/89141-6'
 define question12LinkId: '/89285-1/89171-3'
 
+define scoringParams: {
+  maximumScore: 48
+}
+
 define Questionnaires:
   LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
 
@@ -81,7 +85,9 @@ define ResponsesSummary:
             (if question11Score = 9 then 0 else question11Score) +
             (if question12Score = 9 then 0 else question12Score)
           else null,
-
+    scoringParams: scoringParams,
+    totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
+    totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
     authoredDate: I.authored,
     lastUpdated: I.meta.lastUpdated.value
   }

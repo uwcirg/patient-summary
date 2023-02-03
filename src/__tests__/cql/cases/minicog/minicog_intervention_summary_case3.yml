@@ -1,5 +1,5 @@
 ---
-name: MiniCog Questionnaire Responses (One set of responses)
+name: MiniCog Questionnaire Responses (With all 0s)
 externalData:
 - minicog_reusable_resources
 data:
@@ -15,7 +15,7 @@ data:
     linkId: *q1LinkId
     answer:
     -
-      valueDecimal: 1  # NOTE: can change to a different answer value to test
+      valueDecimal: 0  # NOTE: can change to a different answer value to test
   -
     linkId: *q2LinkId
     answer:
@@ -25,10 +25,9 @@ data:
     linkId: *q3LinkId
     answer:
     -
-      valueDecimal: 1  # NOTE: can change to a different answer value to test
+      valueDecimal: 0  # NOTE: can change to a different answer value to test
 results:
   QuestionnaireResponses: $should exist  # make sure questionnaire responses are returned
-  ResponsesOnly: $should have length 1
   FirstResponsesScoreSeverity: 'high'
   #FirstResponsesScoreMeaning: 'cognitively impaired'
   

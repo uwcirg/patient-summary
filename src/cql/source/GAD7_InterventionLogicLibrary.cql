@@ -23,6 +23,10 @@ define question5LinkId: '/69735-9'
 define question6LinkId: '/69689-8'
 define question7LinkId: '/69736-7'
 
+define scoringParams: {
+  maximumScore: 21
+}
+
 define Questionnaires:
   LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
 
@@ -34,9 +38,13 @@ define QuestionnaireItems:
   CurrentQuestionnaire Q
   return Q.item
 
+define sortedResponses:
+  [QuestionnaireResponse] QR 
+  return QR
+  sort by authored desc
 // Load Questionnaire responses
 define QuestionnaireResponses:
-  LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], CurrentQuestionnaire)
+  LogicHelpers.MatchedReponsesByQuestionnaire(sortedResponses, CurrentQuestionnaire)
 
 define ResponsesSummary:
   (QuestionnaireResponses) I
@@ -52,7 +60,14 @@ define ResponsesSummary:
             Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question5LinkId)), 0) +
             Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question6LinkId)), 0) +
             Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question7LinkId)), 0))
-          else null
+          else null,
+    scoreSeverity: 
+        case
+          when score > 14 then 'high'
+          when score between 10 and 14 then 'moderate'
+          when score between 5 and 9 then 'mild'
+          else 'low'
+        end
     return {
       id: I.id.value,
       date: LogicHelpers.DateTimeText(I.authored),
@@ -60,18 +75,20 @@ define ResponsesSummary:
       currentQ: CurrentQuestionnaire,
       items: I.item,
       score: score,
-      scoreSeverity: 
-        case
-          when score > 14 then 'high'
-          when score between 10 and 14 then 'moderate'
-          when score between 5 and 9 then 'mild'
-          else 'low'
-        end,
+      scoreSeverity: scoreSeverity,
+      scoreMeaning: case
+        when scoreSeverity = 'high' then 'severe anxiety'
+        when scoreSeverity = 'moderate' then 'moderate anxiety'
+        when scoreSeverity = 'mild' then 'mild anxiety'
+        else if score > 0 then 'minimal anxiety' else '' 
+      end,
+      scoringParams: scoringParams,
+      totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
+      totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
       authoredDate: I.authored,
       lastUpdated: I.meta.lastUpdated.value
     }
-    sort by authoredDate desc, lastUpdated desc
-
+    
 define ResponsesOnly:
   (QuestionnaireResponses) I
   return LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId)
@@ -83,3 +100,7 @@ define FirstResponsesScore:
 define FirstResponsesScoreSeverity:
   (First(ResponsesSummary)) R 
   return R.scoreSeverity
+
+define FirstResponsesScoreMeaning:
+  (First(ResponsesSummary)) R 
+  return R.scoreMeaning

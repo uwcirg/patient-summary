@@ -1,34 +1,37 @@
-# test all Yes/No answers for questions that should get a score of 0
+# test all answers with option 2 (mile or intermitten) to make sure all have a correct value of 1
 ---
-name: GDS Total Score (test 0 point for Yes/No answers)
+name: CIDAS Total Score (test all 1)
 externalData:
-- gds_reusable_resources
+- cidas_reusable_resources
 data:
 - *patientResource
 - <<: *questionnaireResource
   item:
-  - *GDSQuestion1
-  - *GDSQuestion2
-  - *GDSQuestion3
-  - *GDSQuestion4
-  - *GDSQuestion5
-  - *GDSQuestion6
-  - *GDSQuestion7
-  - *GDSQuestion8
-  - *GDSQuestion9
-  - *GDSQuestion10
-  - *GDSQuestion11
-  - *GDSQuestion12
-  - *GDSQuestion13
-  - *GDSQuestion14
-  - *GDSQuestion15
+  - *Question1
+  - *Question2
+  - *Question3
+  - *Question4
+  - *Question5
+  - *Question6
+  - *Question7
+  - *Question8
+  - *Question9
+  - *Question10
+  - *Question11
+  - *Question12
+  - *Question13
+  - *Question14
+  - *Question15
+  - *Question16
+  - *Question17
 - <<: *questionnaireResponses  # answers are randomly assigned to test; can change to test; the goal is to test that the sum total from the scores is correct
   item:
   - # question 1
     linkId: *q1LinkId
     answer:
     -
-      valueCoding: *answerOption1ValueCode
+      valueCoding: *answerOption2ValueCode
+
   - # question 2
     linkId: *q2LinkId
     answer:
@@ -48,7 +51,7 @@ data:
     linkId: *q5LinkId
     answer:
     -
-      valueCoding: *answerOption1ValueCode
+      valueCoding: *answerOption2ValueCode
   - # question 6
     linkId: *q6LinkId
     answer:
@@ -58,7 +61,7 @@ data:
     linkId: *q7LinkId
     answer:
     -
-      valueCoding: *answerOption1ValueCode
+      valueCoding: *answerOption2ValueCode
   - # question 8
     linkId: *q8LinkId
     answer:
@@ -78,7 +81,7 @@ data:
     linkId: *q11LinkId
     answer:
     -
-      valueCoding: *answerOption1ValueCode
+      valueCoding: *answerOption2ValueCode
   - # question 12
     linkId: *q12LinkId
     answer:
@@ -88,7 +91,7 @@ data:
     linkId: *q13LinkId
     answer:
     -
-      valueCoding: *answerOption1ValueCode
+      valueCoding: *answerOption2ValueCode
   - # question 14
     linkId: *q14LinkId
     answer:
@@ -99,12 +102,26 @@ data:
     answer:
     -
       valueCoding: *answerOption2ValueCode
+  - # question 16
+    linkId: *q16LinkId
+    answer:
+    -
+      valueCoding: *answerOption2ValueCode
+  - # question 17
+    linkId: *q17LinkId
+    answer:
+    -
+      valueCoding: *answerOption2ValueCode
+  - # question 18
+    linkId: *q18LinkId
+    answer:
+    -
+      valueCoding: *answerOption2ValueCode
+
 results:
   QuestionnaireResponses: $should exist
   CurrentQuestionnaire: $should exist
-  QuestionnaireItems: $should have length 15
   ResponsesOnly: $should exist
-  ResponsesSummary: $should have length 1
-  FirstResponsesScore: 0
-  FirstResponsesScoreSeverity: 'low'
-  FirstResponsesScoreMeaning: null
+  FirstResponsesScore: 18
+  FirstResponsesScoreSeverity: 'high'
+  #FirstResponsesScoreMeaning: 'suicide concern'

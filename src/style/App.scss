@@ -1,5 +1,5 @@
 $chart-background-color: #f4f6f6;
-$muted-text-color: #777;
+$muted-text-color: #4f4d4d;
 $border-color: #ececec;
 $app-background-color: #dad7da;
 $summary-container-background-color: #fff;
@@ -66,6 +66,18 @@ p {
 .muted-text {
   color: $muted-text-color;
 }
+.capitalized-text {
+  text-transform: capitalize;
+}
+.no-wrap-text {
+  white-space: nowrap;
+}
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
 .header-logo {
   width: 120px;
 }
@@ -100,6 +112,10 @@ p {
   .chart__container {
     width: 100% !important;
     background-color: $default-print-background-color !important;
+  }
+  .table-container {
+    width: 100% !important;
+    min-width: 100% !important;
   }
   .summary-container:not(:first-of-type) {
     page-break-inside: avoid;
@@ -140,6 +156,10 @@ p {
   }
   .MuiAccordionDetails-root {
     padding: 8px 0 !important;
+  }
+  .table-container {
+    border: 0 !important;
+    box-shadow: none !important;
   }
   .MuiTab-root.Mui-selected {
     color: #444 !important;

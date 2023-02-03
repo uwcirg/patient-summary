@@ -25,6 +25,10 @@ define question1Id: 'minicog-question1'
 define question2Id: 'minicog-question2'
 define scoringQuestionId: 'minicog-total-score'
 
+define scoringParams: {
+  maximumScore: 5
+}
+
 // Load Questionnaire
 define Questionnaires:
   LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
@@ -53,15 +57,20 @@ define ResponsesSummary:
       R.linkId.value != scoringQuestionId),
     word_recall_score: Coalesce(First((responses) I where I.id = question1Id return I.value.value), 0),
     clock_draw_score: Coalesce(First((responses) I where I.id = question2Id return I.value.value), 0),
-    score: (word_recall_score as Integer) + (clock_draw_score as Integer)
+    score: (word_recall_score as Integer) + (clock_draw_score as Integer),
+    scoreSeverity: if score between 0 and 3 then 'high' else 'low'
     return {
       id: I.id.value,
       date: LogicHelpers.DateTimeText(I.authored),
       responses: responses,
       score: if Length(scoredResponses) > 0 then score else null,
-      scoreSeverity: if score between 0 and 3 then 'high' else 'low',
+      scoreSeverity: scoreSeverity,
+      //scoreMeaning: if scoreSeverity = 'high' then 'cognitively impaired' else null,
+      totalAnsweredItems: Length((I.item) O where O.linkId.value != scoringQuestionId),
+      totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, scoringQuestionId)),
       word_recall_score: word_recall_score,
       clock_draw_score: clock_draw_score,
+      scoringParams: scoringParams,
       authoredDate: I.authored,
       lastUpdated: I.meta.lastUpdated.value
     }
@@ -79,3 +88,15 @@ define ChartData:
     clock_draw: R.clock_draw_score,
     total: R.score
   }
+
+define FirstResponsesScore:
+  (First(ResponsesSummary)) R 
+  return R.score
+
+define FirstResponsesScoreSeverity:
+  (First(ResponsesSummary)) R 
+  return R.scoreSeverity
+
+// define FirstResponsesScoreMeaning:
+//   (First(ResponsesSummary)) R 
+//   return R.scoreMeaning

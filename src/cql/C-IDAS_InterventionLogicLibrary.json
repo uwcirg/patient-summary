@@ -249,6 +249,21 @@
                "type" : "Literal"
             }
          }, {
+            "name" : "scoringParams",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Tuple",
+               "element" : [ {
+                  "name" : "maximumScore",
+                  "value" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "36",
+                     "type" : "Literal"
+                  }
+               } ]
+            }
+         }, {
             "name" : "Questionnaires",
             "context" : "Patient",
             "accessLevel" : "Public",
@@ -915,6 +930,45 @@
                         "type" : "Literal"
                      } ]
                   }
+               }, {
+                  "identifier" : "scoreSeverity",
+                  "expression" : {
+                     "type" : "If",
+                     "condition" : {
+                        "type" : "Or",
+                        "operand" : [ {
+                           "type" : "Greater",
+                           "operand" : [ {
+                              "name" : "score",
+                              "type" : "QueryLetRef"
+                           }, {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "value" : "18",
+                              "type" : "Literal"
+                           } ]
+                        }, {
+                           "type" : "GreaterOrEqual",
+                           "operand" : [ {
+                              "name" : "suicideScore",
+                              "type" : "QueryLetRef"
+                           }, {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "value" : "1",
+                              "type" : "Literal"
+                           } ]
+                        } ]
+                     },
+                     "then" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                        "value" : "high",
+                        "type" : "Literal"
+                     },
+                     "else" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                        "value" : "low",
+                        "type" : "Literal"
+                     }
+                  }
                } ],
                "relationship" : [ ],
                "return" : {
@@ -970,41 +1024,13 @@
                      }, {
                         "name" : "scoreSeverity",
                         "value" : {
-                           "type" : "If",
-                           "condition" : {
-                              "type" : "Or",
-                              "operand" : [ {
-                                 "type" : "Greater",
-                                 "operand" : [ {
-                                    "name" : "score",
-                                    "type" : "QueryLetRef"
-                                 }, {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "18",
-                                    "type" : "Literal"
-                                 } ]
-                              }, {
-                                 "type" : "GreaterOrEqual",
-                                 "operand" : [ {
-                                    "name" : "suicideScore",
-                                    "type" : "QueryLetRef"
-                                 }, {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "1",
-                                    "type" : "Literal"
-                                 } ]
-                              } ]
-                           },
-                           "then" : {
-                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                              "value" : "high",
-                              "type" : "Literal"
-                           },
-                           "else" : {
-                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                              "value" : "low",
-                              "type" : "Literal"
-                           }
+                           "name" : "scoreSeverity",
+                           "type" : "QueryLetRef"
+                        }
+                     }, {
+                        "name" : "scoreMeaning",
+                        "value" : {
+                           "type" : "Null"
                         }
                      }, {
                         "name" : "alertNote",
@@ -1023,7 +1049,7 @@
                            },
                            "then" : {
                               "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                              "value" : "endorsed suicide ideation",
+                              "value" : "suicide concern",
                               "type" : "Literal"
                            },
                            "else" : {
@@ -1032,6 +1058,64 @@
                               "operand" : {
                                  "type" : "Null"
                               }
+                           }
+                        }
+                     }, {
+                        "name" : "scoringParams",
+                        "value" : {
+                           "name" : "scoringParams",
+                           "type" : "ExpressionRef"
+                        }
+                     }, {
+                        "name" : "totalAnsweredItems",
+                        "value" : {
+                           "type" : "Length",
+                           "operand" : {
+                              "type" : "Query",
+                              "source" : [ {
+                                 "alias" : "O",
+                                 "expression" : {
+                                    "path" : "item",
+                                    "scope" : "I",
+                                    "type" : "Property"
+                                 }
+                              } ],
+                              "relationship" : [ ],
+                              "where" : {
+                                 "type" : "Not",
+                                 "operand" : {
+                                    "type" : "Equal",
+                                    "operand" : [ {
+                                       "path" : "value",
+                                       "type" : "Property",
+                                       "source" : {
+                                          "path" : "linkId",
+                                          "scope" : "O",
+                                          "type" : "Property"
+                                       }
+                                    }, {
+                                       "name" : "ScoringQuestionId",
+                                       "type" : "ParameterRef"
+                                    } ]
+                                 }
+                              }
+                           }
+                        }
+                     }, {
+                        "name" : "totalItems",
+                        "value" : {
+                           "type" : "Length",
+                           "operand" : {
+                              "name" : "GetAnswerLinkIdsByQuestionnaire",
+                              "libraryName" : "LogicHelpers",
+                              "type" : "FunctionRef",
+                              "operand" : [ {
+                                 "name" : "CurrentQuestionnaire",
+                                 "type" : "ExpressionRef"
+                              }, {
+                                 "name" : "ScoringQuestionId",
+                                 "type" : "ParameterRef"
+                              } ]
                            }
                         }
                      }, {
@@ -1101,6 +1185,81 @@
                         "name" : "ScoringQuestionId",
                         "type" : "ParameterRef"
                      } ]
+                  }
+               }
+            }
+         }, {
+            "name" : "FirstResponsesScore",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "R",
+                  "expression" : {
+                     "type" : "First",
+                     "source" : {
+                        "name" : "ResponsesSummary",
+                        "type" : "ExpressionRef"
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "return" : {
+                  "expression" : {
+                     "path" : "score",
+                     "scope" : "R",
+                     "type" : "Property"
+                  }
+               }
+            }
+         }, {
+            "name" : "FirstResponsesScoreSeverity",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "R",
+                  "expression" : {
+                     "type" : "First",
+                     "source" : {
+                        "name" : "ResponsesSummary",
+                        "type" : "ExpressionRef"
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "return" : {
+                  "expression" : {
+                     "path" : "scoreSeverity",
+                     "scope" : "R",
+                     "type" : "Property"
+                  }
+               }
+            }
+         }, {
+            "name" : "FirstResponsesScoreMeaning",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "R",
+                  "expression" : {
+                     "type" : "First",
+                     "source" : {
+                        "name" : "ResponsesSummary",
+                        "type" : "ExpressionRef"
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "return" : {
+                  "expression" : {
+                     "path" : "scoreMeaning",
+                     "scope" : "R",
+                     "type" : "Property"
                   }
                }
             }
