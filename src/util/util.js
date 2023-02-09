@@ -1,6 +1,6 @@
 import ChartConfig from "../config/chart_config.js";
 import QuestionnaireConfig from "../config/questionnaire_config";
-import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts/consts";
+import { DEFAULT_TOOLBAR_HEIGHT, QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts/consts";
 import commonLibrary from "../cql/InterventionLogic_Common.json";
 import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
 import valueSetJson from "../cql/valueset-db.json";
@@ -362,7 +362,6 @@ export function gatherSummaryDataByQuestionnaireId(
       const questionaireKey = String(questionnaireId).toLowerCase();
       const chartConfig = getChartConfig(questionaireKey);
       const questionnaireConfig = QuestionnaireConfig[questionaireKey] || {};
-      
 
       /* get CQL expressions */
       const [elmJson, valueSetJson] = await getInterventionLogicLib(
@@ -398,10 +397,7 @@ export function gatherSummaryDataByQuestionnaireId(
         cqlData && cqlData.length
           ? cqlData.filter((item) => {
               return (
-                item &&
-                item.responses &&
-                isNumber(item.score) &&
-                item.date
+                item && item.responses && isNumber(item.score) && item.date
               );
             })
           : null;
@@ -414,7 +410,7 @@ export function gatherSummaryDataByQuestionnaireId(
           : null;
       const scoringParams =
         cqlData && cqlData.length ? cqlData[0].scoringParams : {};
-    
+
       const returnResult = {
         chartConfig: { ...chartConfig, ...scoringParams },
         chartData: chartData,
@@ -490,4 +486,16 @@ export function isNumber(target) {
   if (isNaN(target)) return false;
   if (typeof target === "number") return true;
   return target !== null;
+}
+
+export function shouldShowHeader() {
+  return String(getEnv("REACT_APP_DISABLE_HEADER")) !== "true";
+}
+export function shouldShowNav() {
+  return String(getEnv("REACT_APP_DISABLE_NAV")) !== "true";
+}
+export function getAppHeight() {
+  if (shouldShowHeader())
+  return `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT}px)`;
+  return "100vh";
 }

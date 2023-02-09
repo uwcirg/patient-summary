@@ -27,12 +27,15 @@ import PrintIcon from "@mui/icons-material/Print";
 import { FhirClientContext } from "../context/FhirClientContext";
 import {
   gatherSummaryDataByQuestionnaireId,
+  getAppHeight,
   getFhirResourcesFromQueryResult,
   getFHIRResourcesToLoad,
   getFHIRResourcePaths,
   getQuestionnaireList,
   getSectionsToShow,
   isInViewport,
+  shouldShowNav,
+  shouldShowHeader,
 } from "../util/util";
 import ErrorComponent from "./ErrorComponent";
 import MedicalHistory from "./MedicalHistory";
@@ -431,17 +434,20 @@ export default function Summaries() {
       <Box
         sx={{
           position: "fixed",
-          top: MOBILE_TOOLBAR_HEIGHT,
+          top: shouldShowHeader() ? MOBILE_TOOLBAR_HEIGHT : 0,
           [theme.breakpoints.up("sm")]: {
-            top: DEFAULT_TOOLBAR_HEIGHT,
+            top: shouldShowHeader() ? DEFAULT_TOOLBAR_HEIGHT : 0,
           },
           width: "100%",
           height: "100%",
           backgroundColor: "#FFF",
-          marginLeft: {
-            md: -1 * parseInt(MOBILE_DRAWER_WIDTH) + "px",
-            lg: -1 * parseInt(DEFAULT_DRAWER_WIDTH) + "px",
-          },
+          marginLeft: shouldShowNav()
+            ? {
+                md: -1 * parseInt(MOBILE_DRAWER_WIDTH) + "px",
+                lg: -1 * parseInt(DEFAULT_DRAWER_WIDTH) + "px",
+              }
+            : "auto",
+          marginRight: "auto",
           zIndex: (theme) => theme.zIndex.drawer + 1,
           padding: (theme) => theme.spacing(4, 2),
         }}
@@ -552,10 +558,7 @@ export default function Summaries() {
   }, [handleFab]);
 
   return (
-    <Box
-      className="app"
-      sx={{ minHeight: `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT}px)` }}
-    >
+    <Box className="app" sx={{ minHeight: getAppHeight() }}>
       {!isReady() && renderProgressIndicator()}
       {isReady() && (
         <>
