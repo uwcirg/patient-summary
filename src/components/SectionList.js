@@ -14,10 +14,10 @@ export default function SectionList(props) {
   return (
     <List className="sections-list" sx={{ marginTop: theme.spacing(3) }}>
       {list.map((section) => (
-        <ListItem key={section.id} disablePadding sx={{ minHeight: "50px" }}>
+        <ListItem key={`listItem_${section.id}`} disablePadding sx={{ minHeight: "50px" }}>
           <ListItemButton
             onClick={() => {
-              scrollToElement(`anchor_${section.id}`);
+              scrollToElement(`anchor_${String(section.id).toLowerCase()}`);
               if (onClickEvent) onClickEvent();
             }}
           >

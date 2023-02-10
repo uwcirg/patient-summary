@@ -76,7 +76,7 @@ export default function BottomNav() {
           display: mediaDisplays,
           zIndex: (theme) => theme.zIndex.drawer,
           borderTop: `2px solid ${
-            theme.palette.lighter ? theme.palette.lighter.main : "#777"
+            theme.palette.border ? theme.palette.border.main : "#777"
           }`,
         }}
         elevation={5}

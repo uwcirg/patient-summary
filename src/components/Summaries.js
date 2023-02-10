@@ -17,7 +17,6 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import CheckIcon from "@mui/icons-material/Check";
@@ -38,9 +37,7 @@ import {
   shouldShowHeader,
 } from "../util/util";
 import ErrorComponent from "./ErrorComponent";
-import MedicalHistory from "./MedicalHistory";
 import ScoringSummary from "./ScoringSummary";
-import Summary from "./Summary";
 import Version from "./Version";
 import { Button, Typography } from "@mui/material";
 import qConfig from "../config/questionnaire_config";
@@ -299,21 +296,21 @@ export default function Summaries() {
   );
 
   const renderSections = () => {
-    if (!sectionsToShow)
-      return <Alert severity="warning">No section to show</Alert>;
+    if (!sectionsToShow || !sectionsToShow.length)
+      return <Alert severity="warning">No section to show.</Alert>;
     return sectionsToShow.map((section) => {
       const sectionId = section.id.toLowerCase();
       return (
         <Box
-          key={"accordion_wrapper_" + section.id}
+          key={"accordion_wrapper_" + sectionId}
           className="accordion-wrapper"
           sx={{
             marginBottom: theme.spacing(1),
           }}
         >
           <Box
-            id={`anchor_${section.id}`}
-            key={`anchor_${section.id}`}
+            id={`anchor_${sectionId}`}
+            key={`anchor_${sectionId}`}
             sx={{
               position: "relative",
               top: -1 * parseInt(DEFAULT_TOOLBAR_HEIGHT),
@@ -322,7 +319,7 @@ export default function Summaries() {
             }}
           ></Box>
           <Accordion
-            key={`section_${section.id}`}
+            key={`section_${sectionId}`}
             disableGutters={true}
             defaultExpanded={
               section.hasOwnProperty("expanded") ? section.expanded : true
@@ -344,7 +341,7 @@ export default function Summaries() {
                 />
               }
               aria-controls="panel1a-content"
-              id={`accordion_${section.id}`}
+              id={`accordion_${sectionId}`}
               sx={{
                 backgroundColor: theme.palette.primary.main,
                 color: "#FFF",
@@ -360,14 +357,25 @@ export default function Summaries() {
                 }}
               >
                 {section.icon({ color: "#FFF" })}
-                <Typography variant="h6" component="h2" id={section.id}>
+                <Typography
+                  variant="h6"
+                  component="h2"
+                  id={`${sectionId}_title`}
+                >
                   {section.title}
                 </Typography>
               </Box>
             </AccordionSummary>
             <AccordionDetails sx={{ padding: theme.spacing(1, 2) }}>
-              {sectionId === "medicalhistory" && renderMedicalHistory()}
-              {sectionId === "responses" && renderSummaries()}
+              {section.component &&
+                section.component({
+                  patientBundle: patientBundle.current.entry,
+                  summaryData: summaryData,
+                  questionnaireList: questionnaireList,
+                })}
+              {!section.component && (
+                <ErrorComponent message="no section component to render"></ErrorComponent>
+              )}
             </AccordionDetails>
           </Accordion>
         </Box>
@@ -386,44 +394,6 @@ export default function Summaries() {
       }}
     ></BoxRef>
   );
-
-  const renderSummaries = () => {
-    return questionnaireList.map((questionnaireId, index) => {
-      const dataObject =
-        summaryData.data && summaryData.data[questionnaireId]
-          ? summaryData.data[questionnaireId]
-          : null;
-      if (!dataObject) return null;
-      return (
-        <Box className="summary-container" key={`summary_container_${index}`}>
-          <Summary
-            questionnaireId={questionnaireId}
-            data={dataObject}
-            key={`questionnaire_summary_${index}`}
-          ></Summary>
-          {index !== questionnaireList.length - 1 && (
-            <Divider
-              className="print-hidden"
-              key={`questionnaire_divider_${index}`}
-              sx={{ borderWidth: "2px", marginBottom: 2 }}
-              light
-            ></Divider>
-          )}
-        </Box>
-      );
-    });
-  };
-
-  const renderMedicalHistory = () => {
-    const conditions = patientBundle.current.entry
-      .filter((item) => {
-        return item.resource && item.resource.resourceType === "Condition";
-      })
-      .map((item) => item.resource);
-    if (!conditions.length)
-      return <Alert severity="warning">No recorded condition.</Alert>;
-    return <MedicalHistory data={conditions}></MedicalHistory>;
-  };
 
   const renderProgressIndicator = () => {
     const total = loadedResources.length;
