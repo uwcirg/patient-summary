@@ -19,6 +19,11 @@ body {
   font-family: "Roboto", sans-serif;
   font-size: 16px;
 }
+.no-header {
+  .MuiToolbar-root {
+    display: none !important;
+  }
+}
 main {
   background-color: $app-background-color;
   min-height: 100%;
