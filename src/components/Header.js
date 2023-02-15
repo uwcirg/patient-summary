@@ -7,13 +7,9 @@ import Button from "@mui/material/Button";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
-<<<<<<< HEAD
 import { getEnvProjectId, imageOK } from "../util/util";
-=======
 import PatientInfo from "./PatientInfo";
-import { getEnv, imageOK } from "../util/util";
 import { FhirClientContext } from "../context/FhirClientContext";
->>>>>>> 4d5d438b59ace72495bfcb873938141362e8ac2b
 
 export default function Header(props) {
   const theme = useTheme();

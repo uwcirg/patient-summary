@@ -57,7 +57,7 @@ export default function FhirClientProvider(props) {
             setError(null);
             writeToLog(
               "info",
-              ["authSessionCreated"],
+              ["authSessionStarted"],
               {
                 subject: `Patient/${result.id}`,
               },
