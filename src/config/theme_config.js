@@ -42,6 +42,9 @@ export const themes = {
       muted: {
         main: grey[500],
       },
+      border: {
+        main: "#ececec",
+      },
     },
   }),
   dcw: createTheme({
@@ -73,6 +76,9 @@ export const themes = {
       },
       muted: {
         main: grey[700],
+      },
+      border: {
+        main: "#ececec",
       },
       link: {
         main: indigo["A700"],

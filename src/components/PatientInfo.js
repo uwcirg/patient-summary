@@ -1,7 +1,6 @@
 import dayjs from "dayjs";
 import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
-import PersonIcon from "@mui/icons-material/Person";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
@@ -59,7 +58,9 @@ export default function PatientInfo(props) {
       >
         age:{" "}
       </Typography>
-      <Typography component="span" className="patient-age">{getPatientAge()}</Typography>
+      <Typography component="span" className="patient-age">
+        {getPatientAge()}
+      </Typography>
     </Box>
   );
   // const renderGender = () => (
@@ -74,19 +75,32 @@ export default function PatientInfo(props) {
   // );
   if (!patient) return null;
   return (
-    <Stack spacing={3} direction="row" className="patientinfo-container">
+    <Box
+      className="patientinfo-container"
+      sx={{ marginLeft: theme.spacing(1) }}
+    >
       <Stack spacing={0.5} direction="row" alignItems="center">
-        <PersonIcon fontSize="large" color="primary"></PersonIcon>
-        <Typography component="span" variant="h6" color="primary" className="patient-name">
+        <Typography
+          component="span"
+          variant="h6"
+          color="primary"
+          className="patient-name"
+          sx={{ fontSize: "1.15rem" }}
+        >
           {getPatientName()}
         </Typography>
       </Stack>
-      <Stack spacing={1} direction="row" alignItems="center" className="patient-dob-container">
+      <Stack
+        spacing={1}
+        direction="row"
+        alignItems="center"
+        className="patient-dob-container"
+      >
         {renderDOB()}
         {renderAge()}
         {/* {renderGender()} */}
       </Stack>
-    </Stack>
+    </Box>
   );
 }
 

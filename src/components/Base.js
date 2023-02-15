@@ -16,11 +16,12 @@ import {
   fetchEnvData,
   getEnv,
   getSectionsToShow,
+  shouldShowHeader,
+  shouldShowNav,
 } from "../util/util";
 import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
 import FhirClientProvider from "../context/FhirClientProvider";
-
 
 function ErrorFallBack({ error }) {
   return (
@@ -45,16 +46,21 @@ export default function Base({ children }) {
       <ThemeProvider theme={theme}>
         <QueryClientProvider client={queryClient}>
           <FhirClientProvider>
-            <Box sx={{ display: "flex" }}>
+            <Box
+              sx={{ display: "flex" }}
+              className={!shouldShowHeader() ? "no-header" : ""}
+            >
               <CssBaseline />
-              <Header returnURL={getEnv("REACT_APP_DASHBOARD_URL")} />
-              <SideNav sections={sections}></SideNav>
+              {shouldShowHeader() && (
+                <Header returnURL={getEnv("REACT_APP_DASHBOARD_URL")} />
+              )}
+              {shouldShowNav() && <SideNav sections={sections}></SideNav>}
               <Box component="main" sx={{ flexGrow: 1 }}>
                 <Toolbar />
                 {children}
                 {/* add other components as needed */}
               </Box>
-              <BottomNav></BottomNav>
+              {shouldShowNav() && <BottomNav></BottomNav>}
             </Box>
           </FhirClientProvider>
         </QueryClientProvider>

@@ -97,6 +97,21 @@
                "type" : "Literal"
             }
          }, {
+            "name" : "scoringParams",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Tuple",
+               "element" : [ {
+                  "name" : "maximumScore",
+                  "value" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "5",
+                     "type" : "Literal"
+                  }
+               } ]
+            }
+         }, {
             "name" : "Questionnaires",
             "context" : "Patient",
             "accessLevel" : "Public",
@@ -435,6 +450,45 @@
                         }
                      } ]
                   }
+               }, {
+                  "identifier" : "scoreSeverity",
+                  "expression" : {
+                     "type" : "If",
+                     "condition" : {
+                        "type" : "And",
+                        "operand" : [ {
+                           "type" : "GreaterOrEqual",
+                           "operand" : [ {
+                              "name" : "score",
+                              "type" : "QueryLetRef"
+                           }, {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "value" : "0",
+                              "type" : "Literal"
+                           } ]
+                        }, {
+                           "type" : "LessOrEqual",
+                           "operand" : [ {
+                              "name" : "score",
+                              "type" : "QueryLetRef"
+                           }, {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "value" : "3",
+                              "type" : "Literal"
+                           } ]
+                        } ]
+                     },
+                     "then" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                        "value" : "high",
+                        "type" : "Literal"
+                     },
+                     "else" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                        "value" : "low",
+                        "type" : "Literal"
+                     }
+                  }
                } ],
                "relationship" : [ ],
                "return" : {
@@ -502,40 +556,59 @@
                      }, {
                         "name" : "scoreSeverity",
                         "value" : {
-                           "type" : "If",
-                           "condition" : {
-                              "type" : "And",
+                           "name" : "scoreSeverity",
+                           "type" : "QueryLetRef"
+                        }
+                     }, {
+                        "name" : "totalAnsweredItems",
+                        "value" : {
+                           "type" : "Length",
+                           "operand" : {
+                              "type" : "Query",
+                              "source" : [ {
+                                 "alias" : "O",
+                                 "expression" : {
+                                    "path" : "item",
+                                    "scope" : "I",
+                                    "type" : "Property"
+                                 }
+                              } ],
+                              "relationship" : [ ],
+                              "where" : {
+                                 "type" : "Not",
+                                 "operand" : {
+                                    "type" : "Equal",
+                                    "operand" : [ {
+                                       "path" : "value",
+                                       "type" : "Property",
+                                       "source" : {
+                                          "path" : "linkId",
+                                          "scope" : "O",
+                                          "type" : "Property"
+                                       }
+                                    }, {
+                                       "name" : "scoringQuestionId",
+                                       "type" : "ExpressionRef"
+                                    } ]
+                                 }
+                              }
+                           }
+                        }
+                     }, {
+                        "name" : "totalItems",
+                        "value" : {
+                           "type" : "Length",
+                           "operand" : {
+                              "name" : "GetAnswerLinkIdsByQuestionnaire",
+                              "libraryName" : "LogicHelpers",
+                              "type" : "FunctionRef",
                               "operand" : [ {
-                                 "type" : "GreaterOrEqual",
-                                 "operand" : [ {
-                                    "name" : "score",
-                                    "type" : "QueryLetRef"
-                                 }, {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "0",
-                                    "type" : "Literal"
-                                 } ]
+                                 "name" : "CurrentQuestionnaire",
+                                 "type" : "ExpressionRef"
                               }, {
-                                 "type" : "LessOrEqual",
-                                 "operand" : [ {
-                                    "name" : "score",
-                                    "type" : "QueryLetRef"
-                                 }, {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "3",
-                                    "type" : "Literal"
-                                 } ]
+                                 "name" : "scoringQuestionId",
+                                 "type" : "ExpressionRef"
                               } ]
-                           },
-                           "then" : {
-                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                              "value" : "high",
-                              "type" : "Literal"
-                           },
-                           "else" : {
-                              "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                              "value" : "low",
-                              "type" : "Literal"
                            }
                         }
                      }, {
@@ -549,6 +622,12 @@
                         "value" : {
                            "name" : "clock_draw_score",
                            "type" : "QueryLetRef"
+                        }
+                     }, {
+                        "name" : "scoringParams",
+                        "value" : {
+                           "name" : "scoringParams",
+                           "type" : "ExpressionRef"
                         }
                      }, {
                         "name" : "authoredDate",
@@ -666,6 +745,56 @@
                            "type" : "Property"
                         }
                      } ]
+                  }
+               }
+            }
+         }, {
+            "name" : "FirstResponsesScore",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "R",
+                  "expression" : {
+                     "type" : "First",
+                     "source" : {
+                        "name" : "ResponsesSummary",
+                        "type" : "ExpressionRef"
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "return" : {
+                  "expression" : {
+                     "path" : "score",
+                     "scope" : "R",
+                     "type" : "Property"
+                  }
+               }
+            }
+         }, {
+            "name" : "FirstResponsesScoreSeverity",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "R",
+                  "expression" : {
+                     "type" : "First",
+                     "source" : {
+                        "name" : "ResponsesSummary",
+                        "type" : "ExpressionRef"
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "return" : {
+                  "expression" : {
+                     "path" : "scoreSeverity",
+                     "scope" : "R",
+                     "type" : "Property"
                   }
                }
             }

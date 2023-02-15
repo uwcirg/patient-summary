@@ -1,7 +1,6 @@
 import {
   createRef,
   forwardRef,
-  memo,
   useContext,
   useEffect,
   useCallback,
@@ -18,28 +17,27 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import PrintIcon from "@mui/icons-material/Print";
 import { FhirClientContext } from "../context/FhirClientContext";
 import {
   gatherSummaryDataByQuestionnaireId,
+  getAppHeight,
   getFhirResourcesFromQueryResult,
   getFHIRResourcesToLoad,
   getFHIRResourcePaths,
   getQuestionnaireList,
   getSectionsToShow,
   isInViewport,
+  shouldShowNav,
+  shouldShowHeader,
 } from "../util/util";
 import ErrorComponent from "./ErrorComponent";
-import MedicalHistory from "./MedicalHistory";
-import PatientInfo from "./PatientInfo";
-import QuestionnaireSelector from "./QuestionnaireSelector";
 import ScoringSummary from "./ScoringSummary";
-import Summary from "./Summary";
 import Version from "./Version";
 import { Button, Typography } from "@mui/material";
 import qConfig from "../config/questionnaire_config";
@@ -298,18 +296,21 @@ export default function Summaries() {
   );
 
   const renderSections = () => {
-    if (!sectionsToShow)
-      return <Alert severity="warning">No section to show</Alert>;
+    if (!sectionsToShow || !sectionsToShow.length)
+      return <Alert severity="warning">No section to show.</Alert>;
     return sectionsToShow.map((section) => {
       const sectionId = section.id.toLowerCase();
       return (
         <Box
-          key={"accordion_wrapper_" + section.id}
+          key={"accordion_wrapper_" + sectionId}
           className="accordion-wrapper"
+          sx={{
+            marginBottom: theme.spacing(1),
+          }}
         >
           <Box
-            id={`anchor_${section.id}`}
-            key={`anchor_${section.id}`}
+            id={`anchor_${sectionId}`}
+            key={`anchor_${sectionId}`}
             sx={{
               position: "relative",
               top: -1 * parseInt(DEFAULT_TOOLBAR_HEIGHT),
@@ -318,11 +319,19 @@ export default function Summaries() {
             }}
           ></Box>
           <Accordion
-            key={`section_${section.id}`}
+            key={`section_${sectionId}`}
             disableGutters={true}
             defaultExpanded={
               section.hasOwnProperty("expanded") ? section.expanded : true
             }
+            sx={{
+              "& .MuiAccordionSummary-content": {
+                margin: 0,
+              },
+              "& .MuiPaper-root": {
+                borderRadius: 0,
+              },
+            }}
           >
             <AccordionSummary
               expandIcon={
@@ -332,7 +341,7 @@ export default function Summaries() {
                 />
               }
               aria-controls="panel1a-content"
-              id={`accordion_${section.id}`}
+              id={`accordion_${sectionId}`}
               sx={{
                 backgroundColor: theme.palette.primary.main,
                 color: "#FFF",
@@ -348,14 +357,25 @@ export default function Summaries() {
                 }}
               >
                 {section.icon({ color: "#FFF" })}
-                <Typography variant="h6" component="h2" id={section.id}>
+                <Typography
+                  variant="h6"
+                  component="h2"
+                  id={`${sectionId}_title`}
+                >
                   {section.title}
                 </Typography>
               </Box>
             </AccordionSummary>
-            <AccordionDetails sx={{ padding: 2 }}>
-              {sectionId === "medicalhistory" && renderMedicalHistory()}
-              {sectionId === "responses" && renderSummaries()}
+            <AccordionDetails sx={{ padding: theme.spacing(1, 2) }}>
+              {section.component &&
+                section.component({
+                  patientBundle: patientBundle.current.entry,
+                  summaryData: summaryData,
+                  questionnaireList: questionnaireList,
+                })}
+              {!section.component && (
+                <ErrorComponent message="no section component to render"></ErrorComponent>
+              )}
             </AccordionDetails>
           </Accordion>
         </Box>
@@ -375,64 +395,6 @@ export default function Summaries() {
     ></BoxRef>
   );
 
-  const renderSummaries = () => {
-    return questionnaireList.map((questionnaireId, index) => {
-      const dataObject =
-        summaryData.data && summaryData.data[questionnaireId]
-          ? summaryData.data[questionnaireId]
-          : null;
-      if (!dataObject) return null;
-      return (
-        <Box className="summary-container" key={`summary_container_${index}`}>
-          <Summary
-            questionnaireId={questionnaireId}
-            data={summaryData.data[questionnaireId]}
-            key={`questionnaire_summary_${index}`}
-          ></Summary>
-          {index !== questionnaireList.length - 1 && (
-            <Divider
-              className="print-hidden"
-              key={`questionnaire_divider_${index}`}
-              sx={{ borderWidth: "2px", marginBottom: 2 }}
-              light
-            ></Divider>
-          )}
-        </Box>
-      );
-    });
-  };
-
-  const renderQuestionnaireSelector = () => {
-    return (
-      <BoxRef
-        className="print-hidden"
-        ref={selectorRef}
-        style={{
-          opacity: isReady() ? 1 : 0.4,
-          width: "100%",
-          alignSelf: "stretch",
-          border: "2px solid #ececec",
-          backgroundColor: "#FFF",
-        }}
-      >
-        <QuestionnaireSelector list={questionnaireList}></QuestionnaireSelector>
-      </BoxRef>
-    );
-  };
-
-  const renderMedicalHistory = () => {
-    const conditions = patientBundle.current.entry
-      .filter((item) => {
-        return item.resource && item.resource.resourceType === "Condition";
-      })
-      .map((item) => item.resource);
-    if (!conditions.length)
-      return <Alert severity="warning">No recorded condition.</Alert>;
-    return <MedicalHistory data={conditions}></MedicalHistory>;
-  };
-
-  const MemoizedQuestionnaireSelector = memo(renderQuestionnaireSelector);
-
   const renderProgressIndicator = () => {
     const total = loadedResources.length;
     const loaded = loadedResources.filter(
@@ -442,24 +404,27 @@ export default function Summaries() {
       <Box
         sx={{
           position: "fixed",
-          top: MOBILE_TOOLBAR_HEIGHT,
+          top: shouldShowHeader() ? MOBILE_TOOLBAR_HEIGHT : 0,
           [theme.breakpoints.up("sm")]: {
-            top: DEFAULT_TOOLBAR_HEIGHT,
+            top: shouldShowHeader() ? DEFAULT_TOOLBAR_HEIGHT : 0,
           },
           width: "100%",
           height: "100%",
           backgroundColor: "#FFF",
-          marginLeft: {
-            md: -1 * parseInt(MOBILE_DRAWER_WIDTH) + "px",
-            lg: -1 * parseInt(DEFAULT_DRAWER_WIDTH) + "px",
-          },
+          marginLeft: shouldShowNav()
+            ? {
+                md: -1 * parseInt(MOBILE_DRAWER_WIDTH) + "px",
+                lg: -1 * parseInt(DEFAULT_DRAWER_WIDTH) + "px",
+              }
+            : "auto",
+          marginRight: "auto",
           zIndex: (theme) => theme.zIndex.drawer + 1,
           padding: (theme) => theme.spacing(4, 2),
         }}
       >
         <Stack
           sx={{
-            marginTop: 2,
+            marginTop: 1,
             marginBottom: 4,
             padding: 2,
           }}
@@ -536,10 +501,21 @@ export default function Summaries() {
       <Button
         className="print-hidden"
         variant="outlined"
+        size="small"
         onClick={() => window.print()}
+        sx={{ minWidth: "120px", marginTop: { xs: theme.spacing(1), sm: 0 } }}
+        startIcon={<PrintIcon></PrintIcon>}
       >
         Print
       </Button>
+    );
+  };
+
+  const renderError = () => {
+    return (
+      <Box sx={{ marginTop: 1 }}>
+        <ErrorComponent message={error}></ErrorComponent>
+      </Box>
     );
   };
 
@@ -552,10 +528,7 @@ export default function Summaries() {
   }, [handleFab]);
 
   return (
-    <Box
-      className="app"
-      sx={{ minHeight: `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT}px)` }}
-    >
+    <Box className="app" sx={{ minHeight: getAppHeight() }}>
       {!isReady() && renderProgressIndicator()}
       {isReady() && (
         <>
@@ -570,35 +543,14 @@ export default function Summaries() {
             }}
           >
             <section>
-              <Stack direction="row" justifyContent="space-between" spacing={2}>
-                <PatientInfo patient={patient}></PatientInfo>
+              <Stack direction="row" justifyContent="flex-end">
                 {renderPrintButton()}
               </Stack>
-              {error && (
-                <Box sx={{ marginTop: 1 }}>
-                  <ErrorComponent message={error}></ErrorComponent>
-                </Box>
-              )}
+              {error && renderError()}
               {!error && (
                 <>
-                  <>
-                    <Stack
-                      className="selector-stats-wrapper"
-                      direction={{ xs: "column", sm: "column", md: "row" }}
-                      spacing={2}
-                      sx={{
-                        marginTop: 2,
-                        marginBottom: 3,
-                        backgroundColor: (theme) =>
-                          theme.palette.background.main,
-                        padding: 2,
-                      }}
-                    >
-                      <MemoizedQuestionnaireSelector></MemoizedQuestionnaireSelector>
-                      {renderScoringSummary()}
-                    </Stack>
-                    {renderSections()}
-                  </>
+                  {renderScoringSummary()}
+                  {renderSections()}
                 </>
               )}
             </section>

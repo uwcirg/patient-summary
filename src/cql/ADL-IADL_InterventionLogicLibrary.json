@@ -177,6 +177,21 @@
                "type" : "Literal"
             }
          }, {
+            "name" : "scoringParams",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Tuple",
+               "element" : [ {
+                  "name" : "maximumScore",
+                  "value" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "45",
+                     "type" : "Literal"
+                  }
+               } ]
+            }
+         }, {
             "name" : "Questionnaires",
             "context" : "Patient",
             "accessLevel" : "Public",
@@ -607,6 +622,64 @@
                                  "type" : "Literal"
                               } ]
                            } ]
+                        }
+                     }, {
+                        "name" : "totalAnsweredItems",
+                        "value" : {
+                           "type" : "Length",
+                           "operand" : {
+                              "type" : "Query",
+                              "source" : [ {
+                                 "alias" : "O",
+                                 "expression" : {
+                                    "path" : "item",
+                                    "scope" : "I",
+                                    "type" : "Property"
+                                 }
+                              } ],
+                              "relationship" : [ ],
+                              "where" : {
+                                 "type" : "Not",
+                                 "operand" : {
+                                    "type" : "Equal",
+                                    "operand" : [ {
+                                       "path" : "value",
+                                       "type" : "Property",
+                                       "source" : {
+                                          "path" : "linkId",
+                                          "scope" : "O",
+                                          "type" : "Property"
+                                       }
+                                    }, {
+                                       "name" : "ScoringQuestionId",
+                                       "type" : "ParameterRef"
+                                    } ]
+                                 }
+                              }
+                           }
+                        }
+                     }, {
+                        "name" : "totalItems",
+                        "value" : {
+                           "type" : "Length",
+                           "operand" : {
+                              "name" : "GetAnswerLinkIdsByQuestionnaire",
+                              "libraryName" : "LogicHelpers",
+                              "type" : "FunctionRef",
+                              "operand" : [ {
+                                 "name" : "CurrentQuestionnaire",
+                                 "type" : "ExpressionRef"
+                              }, {
+                                 "name" : "ScoringQuestionId",
+                                 "type" : "ParameterRef"
+                              } ]
+                           }
+                        }
+                     }, {
+                        "name" : "scoringParams",
+                        "value" : {
+                           "name" : "scoringParams",
+                           "type" : "ExpressionRef"
                         }
                      }, {
                         "name" : "authoredDate",

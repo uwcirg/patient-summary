@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
 import MaterialTable from "@material-table/core";
+import TableContainer from "@mui/material/TableContainer";
 import { getCorrectedISODate } from "../util/util";
 
 export default function MedicalHistory(props) {
@@ -88,7 +89,12 @@ export default function MedicalHistory(props) {
     );
   return (
     <>
-      <div className="print-hidden">
+      <TableContainer className="print-hidden" sx={{
+        maxWidth: {
+          xs: "460px",
+          sm: "100%"
+        }
+      }}>
         <MaterialTable
           columns={columns}
           data={getData(data)}
@@ -102,7 +108,7 @@ export default function MedicalHistory(props) {
             },
           }}
         ></MaterialTable>
-      </div>
+      </TableContainer>
       <div className="print-only">{renderPrintView(results)}</div>
     </>
   );

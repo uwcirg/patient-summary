@@ -6,6 +6,7 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import ScoringSummary from "../../components/ScoringSummary";
 import summaryData from "../mockfiles/MockSummaryData.json";
+import summaryData2 from "../mockfiles/MockSummaryData2.json";
 
 test("Renders scoring summary without data", () => {
   render(<ScoringSummary />);
@@ -16,4 +17,11 @@ test("Renders scoring summary with data", () => {
   const { container } = render(<ScoringSummary summaryData={summaryData} />);
   const tableElement = container.querySelector(".scoring-summary-table");
   expect(tableElement).toBeInTheDocument();
+});
+
+test("Renders score cell", () => {
+  const { container } = render(<ScoringSummary summaryData={summaryData2} />);
+  const scoreElement = container.querySelector(".score-cell");
+  const descendant = screen.getByTestId("score");
+  expect(scoreElement).toContainElement(descendant);
 });

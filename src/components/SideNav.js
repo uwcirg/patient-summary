@@ -30,20 +30,23 @@ const closedMixin = (theme) => ({
     duration: theme.transitions.duration.leavingScreen,
   }),
   overflowX: "hidden",
-  width: `calc(${theme.spacing(7)} + 1px)`,
+  width: `calc(${theme.spacing(7.5)} + 1px)`,
   [theme.breakpoints.up("sm")]: {
-    width: `calc(${theme.spacing(8)} + 1px)`,
+    width: `calc(${theme.spacing(8.5)} + 1px)`,
   },
 });
 
-const DrawerHeader = styled("div")(({ theme }) => ({
+const DrawerHeader = styled("div", {
+  shouldForwardProp: (prop) => prop !== "open",
+})(({ theme, open }) => ({
   display: "flex",
   alignItems: "center",
-  justifyContent: "flex-end",
+  justifyContent: open ? "flex-end" : "center",
   backgroundColor: "#FFF",
-  padding: theme.spacing(0, 1.5),
+  padding: theme.spacing(0, 1),
   // necessary for content to be below app bar
   ...theme.mixins.toolbar,
+  minHeight: `${theme.spacing(6)} !important`,
 }));
 
 const Drawer = styled(MuiDrawer, {
@@ -75,7 +78,7 @@ export default function SideNav (props) {
       setOpen(false);
     };
     const renderDrawerHeaderButton = () => (
-      <DrawerHeader>
+      <DrawerHeader open={open}>
         <IconButton
           onClick={open ? handleDrawerClose : handleDrawerOpen}
           title="collapse/expand"
