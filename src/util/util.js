@@ -1,6 +1,9 @@
 import ChartConfig from "../config/chart_config.js";
 import QuestionnaireConfig from "../config/questionnaire_config";
-import { DEFAULT_TOOLBAR_HEIGHT, QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts/consts";
+import {
+  DEFAULT_TOOLBAR_HEIGHT,
+  QUESTIONNAIRE_ANCHOR_ID_PREFIX,
+} from "../consts/consts";
 import commonLibrary from "../cql/InterventionLogic_Common.json";
 import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
 import valueSetJson from "../cql/valueset-db.json";
@@ -512,7 +515,56 @@ export function shouldShowNav() {
   return String(getEnv("REACT_APP_DISABLE_NAV")) !== "true";
 }
 export function getAppHeight() {
-  if (shouldShowHeader())
-  return `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT}px)`;
+  if (shouldShowHeader()) return `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT}px)`;
   return "100vh";
+}
+export function getUserId(client) {
+  if (!client) return null;
+  if (client.user && client.user.id) return client.user.id;
+  const accessToken = parseJwt(
+    client.getState("tokenResponse.access_token")
+  );
+  if (accessToken) return accessToken["preferred_username"];
+}
+export function parseJwt(token) {
+  if (!token) return null;
+  var base64Url = token.split(".")[1];
+  var base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+  var jsonPayload = decodeURIComponent(
+    atob(base64)
+      .split("")
+      .map(function (c) {
+        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+      })
+      .join("")
+  );
+  return JSON.parse(jsonPayload);
+}
+
+export const queryPatientIdKey = "launch_queryPatientId";
+export function addMamotoTracking(userId) {
+  if (document.querySelector("#matomoScript")) return;
+  const siteId = getEnv("REACT_APP_MATOMO_SITE_ID");
+  // no site ID specified, not proceeding
+  if (!siteId) return;
+  window._paq = [];
+  window._paq.push(["trackPageView"]);
+  window._paq.push(["enableLinkTracking"]);
+  window._paq.push(["setSiteId", siteId]);
+
+  if (userId) {
+    window._paq.push(["setUserId", userId]);
+  }
+
+  let u = "https://piwik.cirg.washington.edu/";
+  window._paq.push(["setTrackerUrl", u + "matomo.php"]);
+  let d = document,
+    g = d.createElement("script"),
+    headElement = document.querySelector("head");
+  g.type = "text/javascript";
+  g.async = true;
+  g.defer = true;
+  g.setAttribute("src", u + "matomo.js");
+  g.setAttribute("id", "matomoScript");
+  headElement.appendChild(g);
 }
