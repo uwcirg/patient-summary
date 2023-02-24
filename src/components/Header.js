@@ -7,8 +7,8 @@ import Button from "@mui/material/Button";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
+import { getEnvProjectId, imageOK } from "../util/util";
 import PatientInfo from "./PatientInfo";
-import { getEnv, imageOK } from "../util/util";
 import { FhirClientContext } from "../context/FhirClientContext";
 
 export default function Header(props) {
@@ -51,7 +51,7 @@ export default function Header(props) {
       >
         <img
           className="header-logo"
-          src={`/assets/${getEnv("REACT_APP_PROJECT_ID")}/img/logo.png`}
+          src={`/assets/${getEnvProjectId()}/img/logo.png`}
           alt={"project logo"}
           onLoad={handleImageLoaded}
           onError={handleImageLoaded}
@@ -67,7 +67,7 @@ export default function Header(props) {
         }}
       >
         <img
-          src={`/assets/${getEnv("REACT_APP_PROJECT_ID")}/img/logo_mobile.png`}
+          src={`/assets/${getEnvProjectId()}/img/logo_mobile.png`}
           alt={"project logo"}
           onLoad={handleImageLoaded}
           onError={handleImageLoaded}

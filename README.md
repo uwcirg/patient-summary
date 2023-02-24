@@ -73,6 +73,7 @@ Parameters for the app are stored in [environmental variables](http://man7.org/l
 | `REACT_APP_CLIENT_ID` | Define unique client id for when launching as a confidential client | example: `summary_openid_client`
 | `REACT_APP_SECTIONS` | Definition of which sections in app. | `MedicalHistory,Responses`, `MedicalHistory`, `Responses`
 | `REACT_APP_BACKEND_URL` | Define the backend auth URL for launching as a confidential client | 
+| `REACT_APP_SYSTEM_TYPE` | Define the system type of the app | example: `development` | [`development`, `stage`, `demo`, `production`]
 | `REACT_APP_DISABLE_HEADER` | Define whether the header element should appear, default is `false` |`true`, `false`
 | `REACT_APP_DISABLE_NAV` | Define whether the navigation menu element should appear, default is `false` |`true`, `false`
 

@@ -1,6 +1,6 @@
 import { createTheme } from "@mui/material/styles";
 import { teal, grey, deepPurple, purple, indigo} from "@mui/material/colors";
-import { getEnv } from "../util/util";
+import { getEnvProjectId } from "../util/util";
 const defaultOptions = {
   zIndex: {
     drawer: 100,
@@ -88,6 +88,6 @@ export const themes = {
   //project dependent theme here
 };
 export const getTheme = () => {
-  const projectId = getEnv("REACT_APP_PROJECT_ID");
+  const projectId = getEnvProjectId();
   return themes[String(projectId).toLowerCase()] || themes["default"];
 };

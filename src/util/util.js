@@ -468,6 +468,23 @@ export function gatherSummaryDataByQuestionnaireId(
   }); // end promise
 }
 
+/*
+ * @param client is a SoF frontend client
+ * return the state key property of the client
+ */
+export function getClientSessionKey(client) {
+  if (!client) return null;
+  return client.getState().key;
+}
+
+export function getEnvProjectId() {
+  return getEnv("REACT_APP_PROJECT_ID");
+}
+
+export function getEnvSystemType() {
+  return getEnv("REACT_APP_SYSTEM_TYPE");
+}
+
 export function getIntroTextFromQuestionnaire(questionnaireJson) {
   if (!questionnaireJson) return "";
   const targetItem = questionnaireJson.item

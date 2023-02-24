@@ -6,7 +6,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { FhirClientContext } from "./FhirClientContext";
 import { queryPatientIdKey } from "../consts/consts";
 import ErrorComponent from "../components/ErrorComponent";
-import {getEnv} from "../util/util";
+import { getEnv, getClientSessionKey } from "../util/util";
+import { writeToLog } from "../util/log";
 
 export default function FhirClientProvider(props) {
   const [client, setClient] = useState(null);
@@ -26,7 +27,6 @@ export default function FhirClientProvider(props) {
     return await client.patient.read();
   };
 
-
   const renderReturnButton = () => {
     const returnURL = getEnv("REACT_APP_DASHBOARD_URL");
     if (!returnURL) return null;
@@ -37,7 +37,7 @@ export default function FhirClientProvider(props) {
         variant="contained"
         sx={{
           marginTop: 2,
-          marginLeft: 2
+          marginLeft: 2,
         }}
       >
         Back to Patient List
@@ -55,6 +55,17 @@ export default function FhirClientProvider(props) {
             console.log("Patient loaded.");
             setPatient(result);
             setError(null);
+            writeToLog(
+              "info",
+              ["authSessionStarted"],
+              {
+                subject: `Patient/${result.id}`,
+              },
+              {
+                authSessionID: getClientSessionKey(client),
+                text: "auth session started",
+              }
+            );
           })
           .catch((e) => {
             setError(e);
