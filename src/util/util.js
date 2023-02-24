@@ -525,6 +525,7 @@ export function getUserId(client) {
     client.getState("tokenResponse.access_token")
   );
   if (accessToken) return accessToken["preferred_username"];
+  return null;
 }
 export function parseJwt(token) {
   if (!token) return null;
