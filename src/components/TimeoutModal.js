@@ -2,6 +2,7 @@ import {useState} from "react";
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import Timeout from "../util/timeout";
+import { getEnvDashboardURL } from "../util/util";
 
 const style = {
   position: 'absolute',
@@ -39,7 +40,7 @@ export default function TimeoutModal() {
         <Box sx={{ ...style, width: 400 }}>
           <h2>Session timed out</h2>
           <p>Your session is about to expire.</p>
-          <p><b>Returning to patient list...</b></p>
+          {getEnvDashboardURL() && <p><b>Returning to patient list...</b></p>}
         </Box>
       </Modal>
     </>

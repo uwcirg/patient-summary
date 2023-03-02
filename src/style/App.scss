@@ -19,11 +19,11 @@ body {
   font-family: "Roboto", sans-serif;
   font-size: 16px;
 }
-.no-header {
-  .MuiToolbar-root {
-    display: none !important;
-  }
-}
+// .no-header {
+//   .MuiToolbar-root {
+//     display: none !important;
+//   }
+// }
 main {
   background-color: $app-background-color;
   min-height: 100%;
@@ -82,14 +82,6 @@ p {
 }
 .text-right {
   text-align: right;
-}
-.header-logo {
-  width: 120px;
-}
-@media (min-width: 600px) {
-  .header-logo {
-    width: 180px;
-  }
 }
 @media print {
   @page {

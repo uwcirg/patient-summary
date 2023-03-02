@@ -1,8 +1,8 @@
 import ChartConfig from "../config/chart_config.js";
 import QuestionnaireConfig from "../config/questionnaire_config";
 import {
-  DEFAULT_TOOLBAR_HEIGHT,
   QUESTIONNAIRE_ANCHOR_ID_PREFIX,
+  queryNeedPatientBanner,
 } from "../consts/consts";
 import commonLibrary from "../cql/InterventionLogic_Common.json";
 import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
@@ -488,6 +488,10 @@ export function getEnvSystemType() {
   return getEnv("REACT_APP_SYSTEM_TYPE");
 }
 
+export function getEnvDashboardURL() {
+  return getEnv("REACT_APP_DASHBOARD_URL");
+}
+
 export function getIntroTextFromQuestionnaire(questionnaireJson) {
   if (!questionnaireJson) return "";
   const targetItem = questionnaireJson.item
@@ -508,15 +512,20 @@ export function isNumber(target) {
   return target !== null;
 }
 
-export function shouldShowHeader() {
+export function shouldShowPatientInfo(client) {
+  const tokenResponse = client ? client.getState("tokenResponse") : null ;
+  console.log("token response ? ", tokenResponse);
+  console.log("has banner attr ", tokenResponse ? tokenResponse.hasOwnProperty("need_patient_banner") : false)
+  //check access token first
+  if (tokenResponse && tokenResponse.hasOwnProperty("need_patient_banner"))
+    return tokenResponse["need_patient_banner"];
+  if (sessionStorage.getItem(queryNeedPatientBanner) !== null) {
+    return sessionStorage.getItem(queryNeedPatientBanner);
+  }
   return String(getEnv("REACT_APP_DISABLE_HEADER")) !== "true";
 }
 export function shouldShowNav() {
   return String(getEnv("REACT_APP_DISABLE_NAV")) !== "true";
-}
-export function getAppHeight() {
-  if (shouldShowHeader()) return `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT}px)`;
-  return "100vh";
 }
 export function getUserId(client) {
   if (!client) return null;
@@ -541,8 +550,6 @@ export function parseJwt(token) {
   );
   return JSON.parse(jsonPayload);
 }
-
-export const queryPatientIdKey = "launch_queryPatientId";
 export function addMamotoTracking(userId) {
   if (document.querySelector("#matomoScript")) return;
   const siteId = getEnv("REACT_APP_MATOMO_SITE_ID");

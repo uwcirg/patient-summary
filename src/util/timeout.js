@@ -1,4 +1,4 @@
-import { getEnv, fetchEnvData } from "./util";
+import { getEnv, getEnvDashboardURL, fetchEnvData } from "./util";
 
 var Timeout = function (options) {
   options = options || {};
@@ -9,13 +9,14 @@ var Timeout = function (options) {
   var sessionLifetime = 1800; //in seconds, default to 30 minutes, modifiable based on access token exp when applicable
   var logoutLocation = "/"; //default logout location, modifiable by config
   var tokenInfo = {};
+  var dashboardURL = getEnvDashboardURL();
 
   /*
    * check if the system type is production
    */
   function isProduction() {
     return (
-      getEnv("REACT_APP_DASHBOARD_URL") &&
+      dashboardURL &&
       String(getEnv("REACT_APP_SYSTEM_TYPE")).toLowerCase() !== "development"
     );
   }
@@ -32,13 +33,13 @@ var Timeout = function (options) {
    * set logout location
    */
   function setLogoutLocation() {
-    if (!getEnv("REACT_APP_DASHBOARD_URL")) {
+    if (!dashboardURL) {
       printDebugStatement(
         "No environment variable available. logout location " + logoutLocation
       );
       return;
     }
-    var loc = getEnv("REACT_APP_DASHBOARD_URL") + "/logout?timeout=true";
+    var loc = dashboardURL + "/logout?timeout=true";
     logoutLocation = loc;
     printDebugStatement("Logout location " + logoutLocation);
     return loc; //this should log to the server
@@ -163,9 +164,11 @@ var Timeout = function (options) {
         options.onAboutToExpire();
       }
       //back to patient search
-      setTimeout(function () {
-        window.location = getEnv("REACT_APP_DASHBOARD_URL") + "/clear_session";
-      }, 3000);
+      if (dashboardURL) {
+        setTimeout(function () {
+          window.location = dashboardURL + "/clear_session";
+        }, 3000);
+      }
       printDebugStatement(
         "Session about to expire. Time elapsed since first visiting " +
           timeElapsed
@@ -218,8 +221,8 @@ var Timeout = function (options) {
     getSessionTokenInfo();
     if (hasNoToken()) {
       //back to dashboard
-      if (getEnv("REACT_APP_DASHBOARD_URL")) {
-        window.location = getEnv("REACT_APP_DASHBOARD_URL") + "/home";
+      if (dashboardURL) {
+        window.location = dashboardURL + "/home";
       }
       clearInterval(waitForDOMIntervalId);
     }

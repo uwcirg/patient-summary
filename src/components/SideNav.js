@@ -11,7 +11,6 @@ import Divider from "@mui/material/Divider";
 import SectionList from "./SectionList";
 import { MOBILE_DRAWER_WIDTH, DEFAULT_DRAWER_WIDTH } from "../consts/consts";
 
-
 const openedMixin = (theme) => ({
   width: MOBILE_DRAWER_WIDTH,
   [theme.breakpoints.up("lg")]: {
@@ -43,10 +42,10 @@ const DrawerHeader = styled("div", {
   alignItems: "center",
   justifyContent: open ? "flex-end" : "center",
   backgroundColor: "#FFF",
-  padding: theme.spacing(0, 1),
+  padding: theme.spacing(1.5, 1, 0.5),
   // necessary for content to be below app bar
   ...theme.mixins.toolbar,
-  minHeight: `${theme.spacing(6)} !important`,
+  minHeight: `${theme.spacing(7)} !important`,
 }));
 
 const Drawer = styled(MuiDrawer, {
@@ -107,7 +106,7 @@ export default function SideNav (props) {
           },
         }}
       >
-        <Toolbar />
+        <Toolbar variant="dense"/>
         {renderDrawerHeaderButton()}
         <Divider />
         <Box>

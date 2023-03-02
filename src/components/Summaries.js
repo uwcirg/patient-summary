@@ -18,15 +18,14 @@ import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import PrintIcon from "@mui/icons-material/Print";
 import { FhirClientContext } from "../context/FhirClientContext";
 import {
   gatherSummaryDataByQuestionnaireId,
-  getAppHeight,
   getFhirResourcesFromQueryResult,
   getFHIRResourcesToLoad,
   getFHIRResourcePaths,
@@ -34,18 +33,15 @@ import {
   getSectionsToShow,
   isInViewport,
   shouldShowNav,
-  shouldShowHeader,
 } from "../util/util";
 import ErrorComponent from "./ErrorComponent";
 import ScoringSummary from "./ScoringSummary";
 import Version from "./Version";
-import { Button, Typography } from "@mui/material";
 import qConfig from "../config/questionnaire_config";
 import {
   DEFAULT_DRAWER_WIDTH,
   MOBILE_DRAWER_WIDTH,
-  DEFAULT_TOOLBAR_HEIGHT,
-  MOBILE_TOOLBAR_HEIGHT,
+  DEFAULT_ACCORDION_HEADER_HEIGHT,
 } from "../consts/consts";
 let scrollIntervalId = 0;
 
@@ -54,7 +50,6 @@ export default function Summaries() {
   const { client, patient } = useContext(FhirClientContext);
   const fabRef = createRef();
   const anchorRef = createRef();
-  const selectorRef = createRef();
   const questionnaireList = getQuestionnaireList();
   const sectionsToShow = getSectionsToShow();
   const [summaryData, setSummaryData] = useState({
@@ -71,6 +66,7 @@ export default function Summaries() {
     loadComplete: false,
   });
   const [error, setError] = useState(null);
+
   // all the resources that will be loaded
   const initialResourcesToLoad = [
     ...getFHIRResourcesToLoad().map((resource) => ({
@@ -214,12 +210,11 @@ export default function Summaries() {
     </Fab>
   ));
   const handleFab = useCallback(() => {
-    const selectorElement = selectorRef.current;
     const fabElement = fabRef.current;
-    if (!fabElement || !selectorElement) return;
+    if (!fabElement) return;
     clearInterval(scrollIntervalId);
     scrollIntervalId = setInterval(() => {
-      if (isInViewport(selectorElement)) {
+      if (isInViewport(anchorRef.current)) {
         fabElement.classList.remove("flex");
         fabElement.classList.add("hide");
         return;
@@ -227,7 +222,7 @@ export default function Summaries() {
       fabElement.classList.add("flex");
       fabElement.classList.remove("hide");
     }, 150);
-  }, [fabRef, selectorRef]);
+  }, [fabRef, anchorRef]);
 
   const isReady = () => summaryData.loadComplete || error;
 
@@ -313,7 +308,7 @@ export default function Summaries() {
             key={`anchor_${sectionId}`}
             sx={{
               position: "relative",
-              top: -1 * parseInt(DEFAULT_TOOLBAR_HEIGHT),
+              top: -1 * parseInt(DEFAULT_ACCORDION_HEADER_HEIGHT),
               height: "1px",
               width: "1px",
             }}
@@ -388,7 +383,6 @@ export default function Summaries() {
       ref={anchorRef}
       sx={{
         position: "relative",
-        top: -1 * parseInt(DEFAULT_TOOLBAR_HEIGHT) + "px",
         height: "2px",
         width: "2px",
       }}
@@ -404,10 +398,6 @@ export default function Summaries() {
       <Box
         sx={{
           position: "fixed",
-          top: shouldShowHeader() ? MOBILE_TOOLBAR_HEIGHT : 0,
-          [theme.breakpoints.up("sm")]: {
-            top: shouldShowHeader() ? DEFAULT_TOOLBAR_HEIGHT : 0,
-          },
           width: "100%",
           height: "100%",
           backgroundColor: "#FFF",
@@ -495,22 +485,6 @@ export default function Summaries() {
     );
   };
 
-  const renderPrintButton = () => {
-    if (error) return null;
-    return (
-      <Button
-        className="print-hidden"
-        variant="outlined"
-        size="small"
-        onClick={() => window.print()}
-        sx={{ minWidth: "120px", marginTop: { xs: theme.spacing(1), sm: 0 } }}
-        startIcon={<PrintIcon></PrintIcon>}
-      >
-        Print
-      </Button>
-    );
-  };
-
   const renderError = () => {
     return (
       <Box sx={{ marginTop: 1 }}>
@@ -528,7 +502,7 @@ export default function Summaries() {
   }, [handleFab]);
 
   return (
-    <Box className="app" sx={{ minHeight: getAppHeight() }}>
+    <Box className="app">
       {!isReady() && renderProgressIndicator()}
       {isReady() && (
         <>
@@ -543,9 +517,9 @@ export default function Summaries() {
             }}
           >
             <section>
-              <Stack direction="row" justifyContent="flex-end">
+              {/* <Stack direction="row" justifyContent="flex-end">
                 {renderPrintButton()}
-              </Stack>
+              </Stack> */}
               {error && renderError()}
               {!error && (
                 <>
