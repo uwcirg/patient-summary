@@ -47,6 +47,8 @@ export default function Header(props) {
         <Typography
           variant="h4"
           component="h1"
+          color="primary"
+          dark
           sx={{
             fontSize: inEHR ? "1.6rem" : "1.8rem",
             display: { xs: "none", sm: "none", md: "block" },

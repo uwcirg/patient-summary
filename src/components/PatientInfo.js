@@ -82,7 +82,6 @@ export default function PatientInfo(props) {
       <Stack spacing={0.5} direction="row" alignItems="center">
         <Typography
           component="span"
-          color="primary"
           className="patient-name"
           sx={{fontWeight: 500}}
         >
