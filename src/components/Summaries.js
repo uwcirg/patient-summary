@@ -134,7 +134,7 @@ export default function Summaries() {
           loadComplete: true,
         };
         if (!questionnaireList.length) {
-          onErrorCallback("No configured questionnaire id(s) found.");
+          onErrorCallback();
           return;
         }
         if (summaryData.loadComplete) return;

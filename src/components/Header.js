@@ -16,6 +16,7 @@ import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MoreIcon from "@mui/icons-material/MoreVert";
+import SummarizeIcon from "@mui/icons-material/Summarize";
 import PrintIcon from "@mui/icons-material/Print";
 import { getEnv, getEnvProjectId, imageOK } from "../util/util";
 import PatientInfo from "./PatientInfo";
@@ -40,14 +41,14 @@ export default function Header(props) {
     e.target.classList.remove("invisible");
   };
   const renderTitle = () => {
-    const appTitle = getEnv("REACT_APP_PROJECT_TITLE") || "Patient Summary";
+    const appTitle = getEnv("REACT_APP_TITLE") || "Patient Summary";
     return (
       <>
         <Typography
           variant="h4"
           component="h1"
           sx={{
-            fontSize: "1.8rem",
+            fontSize: inEHR ? "1.6rem" : "1.8rem",
             display: { xs: "none", sm: "none", md: "block" },
           }}
         >
@@ -60,46 +61,54 @@ export default function Header(props) {
     );
   };
 
-  const renderLogo = () => (
-    <>
-      <Box
-        sx={{
-          display: {
-            xs: "none",
-            sm: "none",
-            md: "inline-flex",
-          },
-        }}
-      >
-        <img
-          className="header-logo"
-          src={`/assets/${getEnvProjectId()}/img/logo.png`}
-          alt={"project logo"}
-          style={{
-            width: 152,
-          }}
-          onLoad={handleImageLoaded}
-          onError={handleImageLoaded}
-        ></img>
-      </Box>
-      <Box
-        sx={{
-          display: {
-            xs: "inline-flex",
-            sm: "inline-flex",
-            md: "none",
-          },
-        }}
-      >
-        <img
-          src={`/assets/${getEnvProjectId()}/img/logo_mobile.png`}
-          alt={"project logo"}
-          onLoad={handleImageLoaded}
-          onError={handleImageLoaded}
-        ></img>
-      </Box>
-    </>
-  );
+  const renderLogo = () => {
+    const projectID = getEnvProjectId();
+    if (!projectID)
+      return (
+        <SummarizeIcon fontSize="large" color="primary" dark></SummarizeIcon>
+      );
+    else
+      return (
+        <>
+          <Box
+            sx={{
+              display: {
+                xs: "none",
+                sm: "none",
+                md: "inline-flex",
+              },
+            }}
+          >
+            <img
+              className="header-logo"
+              src={`/assets/${getEnvProjectId()}/img/logo.png`}
+              alt={"project logo"}
+              style={{
+                width: 152,
+              }}
+              onLoad={handleImageLoaded}
+              onError={handleImageLoaded}
+            ></img>
+          </Box>
+          <Box
+            sx={{
+              display: {
+                xs: "inline-flex",
+                sm: "inline-flex",
+                md: "none",
+              },
+            }}
+          >
+            <img
+              src={`/assets/${getEnvProjectId()}/img/logo_mobile.png`}
+              alt={"project logo"}
+              onLoad={handleImageLoaded}
+              onError={handleImageLoaded}
+            ></img>
+          </Box>
+        </>
+      );
+  };
   const renderPatientInfo = () => <PatientInfo patient={patient}></PatientInfo>;
   const renderPrintButton = (props) => {
     return (
@@ -259,9 +268,9 @@ export default function Header(props) {
         <Stack
           direction={"row"}
           spacing={{
-            xs: 0,
-            sm: 0,
-            md: 2.5,
+            xs: 1,
+            sm: 1,
+            md: 1.5,
           }}
           alignItems="center"
           sx={{ width: "100%" }}

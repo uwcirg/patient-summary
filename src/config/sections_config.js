@@ -24,7 +24,7 @@ const renderSummaries = (props) => {
       : [];
   if (!questionnaireList.length) {
     return (
-      <Alert severity="error">No questionnaire list found.  Is it configured?</Alert>
+      <Alert severity="error">No questionnaire id(s) found.  Is it configured?</Alert>
     );
   }
   const summaryData = props.summaryData || [];

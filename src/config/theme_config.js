@@ -28,10 +28,10 @@ export const themes = {
         main: teal[300],
       },
       primary: {
-        main: teal[500],
+        main: teal[700],
       },
       dark: {
-        main: teal[800],
+        main: teal[900],
       },
       secondary: {
         main: grey[800],

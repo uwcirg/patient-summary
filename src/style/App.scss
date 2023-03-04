@@ -78,6 +78,10 @@ p {
 .text-right {
   text-align: right;
 }
+.MuiButton-contained,
+.MuiButton-outlined {
+  border-radius: 24px !important;
+}
 @media print {
   @page {
     margin: 5mm 5mm 5mm 5mm;
