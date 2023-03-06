@@ -9,6 +9,7 @@ import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack
 import valueSetJson from "../cql/valueset-db.json";
 import { initialzieCqlWorker } from "cql-worker";
 import defaultSections from "../config/sections_config.js";
+import {DEFAULT_TOOLBAR_HEIGHT} from "../consts/consts";
 
 export function getCorrectedISODate(dateString) {
   if (!dateString || dateString instanceof Date) return dateString;
@@ -526,6 +527,9 @@ export function shouldShowPatientInfo(client) {
 }
 export function shouldShowNav() {
   return String(getEnv("REACT_APP_DISABLE_NAV")) !== "true";
+}
+export function getAppHeight() {
+  return `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT}px)`;
 }
 export function getUserId(client) {
   if (!client) return null;

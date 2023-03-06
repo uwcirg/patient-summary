@@ -26,6 +26,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { FhirClientContext } from "../context/FhirClientContext";
 import {
   gatherSummaryDataByQuestionnaireId,
+  getAppHeight,
   getFhirResourcesFromQueryResult,
   getFHIRResourcesToLoad,
   getFHIRResourcePaths,
@@ -513,13 +514,11 @@ export default function Summaries() {
             sx={{
               position: "relative",
               maxWidth: "1100px",
+              minHeight: getAppHeight(),
               margin: "auto",
             }}
           >
             <section>
-              {/* <Stack direction="row" justifyContent="flex-end">
-                {renderPrintButton()}
-              </Stack> */}
               {error && renderError()}
               {!error && (
                 <>

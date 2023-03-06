@@ -77,7 +77,7 @@ export default function PatientInfo(props) {
   return (
     <Box
       className="patientinfo-container"
-      sx={{ marginLeft: theme.spacing(1) }}
+      sx={{ marginLeft: theme.spacing(1), padding: theme.spacing(0.25, 0, 0.25) }}
     >
       <Stack spacing={0.5} direction="row" alignItems="center">
         <Typography
