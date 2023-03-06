@@ -14,7 +14,11 @@ export default function SectionList(props) {
   return (
     <List className="sections-list" sx={{ marginTop: theme.spacing(3) }}>
       {list.map((section) => (
-        <ListItem key={`listItem_${section.id}`} disablePadding sx={{ minHeight: "50px" }}>
+        <ListItem
+          key={`listItem_${section.id}`}
+          disablePadding
+          sx={{ minHeight: "50px" }}
+        >
           <ListItemButton
             onClick={() => {
               scrollToElement(`anchor_${String(section.id).toLowerCase()}`);
@@ -24,7 +28,9 @@ export default function SectionList(props) {
             {section.icon && (
               <ListItemIcon
                 title={section.title}
-                sx={{ minWidth: theme.spacing(6) }}
+                sx={{
+                  minWidth: theme.spacing(6),
+                }}
               >
                 {section.icon()}
               </ListItemIcon>
@@ -53,5 +59,5 @@ export default function SectionList(props) {
 SectionList.propTypes = {
   list: PropTypes.array,
   onClickEvent: PropTypes.func,
-  expandFlag: PropTypes.bool
+  expandFlag: PropTypes.bool,
 };

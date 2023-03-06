@@ -273,7 +273,7 @@ export default function Summaries() {
       ref={fabRef}
       color="primary"
       aria-label="add"
-      size="small"
+      size="medium"
       sx={{
         position: "fixed",
         bottom: "8px",

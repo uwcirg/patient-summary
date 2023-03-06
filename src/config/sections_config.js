@@ -13,7 +13,7 @@ const renderLoader = () => (
     spacing={2}
     alignItems="center"
   >
-    <div>Loading Data ...</div>
+    <Box color="primary">Loading content ...</Box>
     <CircularProgress color="primary" size={24}></CircularProgress>
   </Stack>
 );
