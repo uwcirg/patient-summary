@@ -55,8 +55,8 @@ const renderSummaries = (props) => {
         : null;
     if (!dataObject) return null;
     return (
-      <Suspense fallback={renderLoader()}>
-        <Box className="summary-container" key={`summary_container_${index}`}>
+      <Suspense fallback={renderLoader()} key={`summary_container_${index}`}>
+        <Box className="summary-container">
           <Summary
             questionnaireId={questionnaireId}
             data={dataObject}
@@ -80,6 +80,7 @@ const DEFAULT_SECTIONS = [
   {
     id: "medicalHistory",
     title: "Pertinent Medical History",
+    anchorElementId: `anchor_medicalhistory`,
     icon: (props) => (
       <MedicalInformationIcon
         fontSize="large"
@@ -92,6 +93,7 @@ const DEFAULT_SECTIONS = [
   {
     id: "responses",
     title: "Questionnaire Responses",
+    anchorElementId: `anchor_responses`,
     icon: (props) => (
       <BallotIcon fontSize="large" color="primary" {...props}></BallotIcon>
     ),

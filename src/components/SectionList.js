@@ -5,15 +5,16 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import { scrollToElement } from "../util/util";
+import { getSectionsToShow, scrollToElement } from "../util/util";
 
 export default function SectionList(props) {
   const theme = useTheme();
   const { list, onClickEvent, expanded } = props;
-  if (!list || !list.length) return null;
+  const renderList = list && list.length ? list : getSectionsToShow();
+  if (!renderList || !renderList.length) return null;
   return (
     <List className="sections-list" sx={{ marginTop: theme.spacing(3) }}>
-      {list.map((section) => (
+      {renderList.map((section) => (
         <ListItem
           key={`listItem_${section.id}`}
           disablePadding

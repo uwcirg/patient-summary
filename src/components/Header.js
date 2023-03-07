@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { useRef, useContext, useState } from "react";
+import { useRef, useContext, useEffect, useState } from "react";
 import { useTheme } from "@mui/material/styles";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
@@ -7,6 +7,8 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
 import Grow from "@mui/material/Grow";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
 import MenuItem from "@mui/material/MenuItem";
 import MenuList from "@mui/material/MenuList";
 import Paper from "@mui/material/Paper";
@@ -18,15 +20,24 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MoreIcon from "@mui/icons-material/MoreVert";
 import SummarizeIcon from "@mui/icons-material/Summarize";
 import PrintIcon from "@mui/icons-material/Print";
-import { getEnv, getEnvProjectId, imageOK } from "../util/util";
+import {
+  getEnv,
+  getEnvProjectId,
+  getSectionsToShow,
+  imageOK,
+  scrollToElement,
+} from "../util/util";
 import PatientInfo from "./PatientInfo";
 import { FhirClientContext } from "../context/FhirClientContext";
+import { Divider } from "@mui/material";
 
 export default function Header(props) {
   const theme = useTheme();
   const { patient } = useContext(FhirClientContext);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const anchorRef = useRef(null);
+  const sections = getSectionsToShow();
+  const hasSections = sections && sections.length > 0;
 
   const { returnURL, inEHR } = props;
   const handleImageLoaded = (e) => {
@@ -40,6 +51,8 @@ export default function Header(props) {
     }
     e.target.classList.remove("invisible");
   };
+  const shouldHideReturnButton = () => !returnURL || inEHR;
+
   const renderTitle = () => {
     const appTitle = getEnv("REACT_APP_TITLE") || "Patient Summary";
     return (
@@ -48,10 +61,9 @@ export default function Header(props) {
           variant="h4"
           component="h1"
           color="primary"
-          dark
           sx={{
             fontSize: inEHR ? "1.6rem" : "1.8rem",
-            display: { xs: "none", sm: "none", md: "block" },
+            display: inEHR ? "block" : { xs: "none", sm: "none", md: "block" },
           }}
         >
           {appTitle}
@@ -66,9 +78,7 @@ export default function Header(props) {
   const renderLogo = () => {
     const projectID = getEnvProjectId();
     if (!projectID)
-      return (
-        <SummarizeIcon fontSize="large" color="primary" dark></SummarizeIcon>
-      );
+      return <SummarizeIcon fontSize="large" color="primary"></SummarizeIcon>;
     else
       return (
         <>
@@ -130,8 +140,6 @@ export default function Header(props) {
     );
   };
   const renderReturnButton = (props) => {
-    if (!returnURL) return null;
-    if (inEHR) return null;
     return (
       <Box className="print-hidden">
         <Button
@@ -148,7 +156,7 @@ export default function Header(props) {
       </Box>
     );
   };
-  const renderSideMenu = () => {
+  const renderDesktopMenu = () => {
     return (
       <Stack
         flexDirection="row"
@@ -163,7 +171,7 @@ export default function Header(props) {
           },
         }}
       >
-        {renderReturnButton()}
+        {!shouldHideReturnButton() && renderReturnButton()}
         {renderPrintButton()}
       </Stack>
     );
@@ -178,16 +186,17 @@ export default function Header(props) {
           },
         }}
         ref={anchorRef}
-        aria-controls={mobileOpen ? "composition-menu" : undefined}
-        aria-expanded={mobileOpen ? "true" : undefined}
+        aria-controls={mobileMenuOpen ? "composition-menu" : undefined}
+        aria-expanded={mobileMenuOpen ? "true" : undefined}
         aria-haspopup="true"
         onClick={handleMobileMenuToggle}
         className="print-hidden"
+        title="Menu"
       >
         <MoreIcon></MoreIcon>
       </IconButton>
       <Popper
-        open={mobileOpen}
+        open={mobileMenuOpen}
         anchorEl={anchorRef.current}
         role={undefined}
         placement="bottom-start"
@@ -205,16 +214,33 @@ export default function Header(props) {
             <Paper>
               <ClickAwayListener onClickAway={handleMobileMenuClose}>
                 <MenuList
-                  autoFocusItem={mobileOpen}
+                  autoFocusItem={mobileMenuOpen}
                   id="composition-menu"
                   aria-labelledby="composition-button"
                   onKeyDown={handleListKeyDown}
                 >
-                  <MenuItem>
-                    {renderReturnButton({
-                      variant: "text",
-                    })}
-                  </MenuItem>
+                  {!shouldHideReturnButton() && (
+                    <>
+                      <MenuItem>
+                        {renderReturnButton({
+                          variant: "text",
+                        })}
+                      </MenuItem>
+                      <Divider></Divider>
+                    </>
+                  )}
+                  {hasSections &&
+                    sections.map((section) => (
+                      <MenuItem
+                        onClick={() => scrollToElement(section.anchorElementId)}
+                      >
+                        <ListItemIcon>
+                          {section.icon({ fontSize: "small" })}
+                        </ListItemIcon>
+                        <ListItemText>{section.title}</ListItemText>
+                      </MenuItem>
+                    ))}
+                  {hasSections && <Divider></Divider>}
                   <MenuItem>
                     {renderPrintButton({
                       variant: "text",
@@ -233,60 +259,72 @@ export default function Header(props) {
       return;
     }
 
-    setMobileOpen(false);
+    setMobileMenuOpen(false);
   };
   const handleMobileMenuToggle = () => {
-    setMobileOpen((prevOpen) => !prevOpen);
+    setMobileMenuOpen((prevOpen) => !prevOpen);
   };
   const handleListKeyDown = (event) => {
     if (event.key === "Tab") {
       event.preventDefault();
-      setMobileOpen(false);
+      setMobileMenuOpen(false);
     } else if (event.key === "Escape") {
-      setMobileOpen(false);
+      setMobileMenuOpen(false);
     }
   };
+
+  const handleWindowResize = () => {
+    setMobileMenuOpen(false);
+  };
+
+  useEffect(() => {
+    window.addEventListener("resize", () => handleWindowResize());
+    return window.removeEventListener("resize", handleWindowResize, true);
+  }, []);
+
   return (
-    <AppBar
-      position="fixed"
-      elevation={1}
-      sx={{ paddingRight: "0 !important", paddingLeft: "0 !important" }}
-    >
-      <Toolbar
-        sx={{
-          backgroundColor: theme.palette.lighter
-            ? theme.palette.lighter.main
-            : "#FFF",
-          color: theme.palette.secondary
-            ? theme.palette.secondary.main
-            : "#444",
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-          paddingLeft: theme.spacing(2),
-          paddingRight: theme.spacing(2),
-        }}
-        disableGutters
-        variant="dense"
+    <>
+      <AppBar
+        position="fixed"
+        elevation={1}
+        sx={{ paddingRight: "0 !important", paddingLeft: "0 !important" }}
       >
-        <Stack
-          direction={"row"}
-          spacing={{
-            xs: 1,
-            sm: 1,
-            md: 1.5,
+        <Toolbar
+          sx={{
+            backgroundColor: theme.palette.lighter
+              ? theme.palette.lighter.main
+              : "#FFF",
+            color: theme.palette.secondary
+              ? theme.palette.secondary.main
+              : "#444",
+            zIndex: (theme) => theme.zIndex.drawer + 1,
+            paddingLeft: theme.spacing(2),
+            paddingRight: theme.spacing(2),
           }}
-          alignItems="center"
-          sx={{ width: "100%" }}
+          disableGutters
+          variant="dense"
         >
-          {renderLogo()}
-          {renderTitle()}
-          <Stack direction={"row"} sx={{ flex: "1 1" }} alignItems="center">
-            {!inEHR && renderPatientInfo()}
-            {renderSideMenu()}
+          <Stack
+            direction={"row"}
+            spacing={{
+              xs: 1,
+              sm: 1,
+              md: 1.5,
+            }}
+            alignItems="center"
+            sx={{ width: "100%" }}
+          >
+            {renderLogo()}
+            {renderTitle()}
+            <Stack direction={"row"} sx={{ flex: "1 1" }} alignItems="center">
+              {!inEHR && renderPatientInfo()}
+              {renderDesktopMenu()}
+            </Stack>
+            {renderMobileMenu()}
           </Stack>
-          {renderMobileMenu()}
-        </Stack>
-      </Toolbar>
-    </AppBar>
+        </Toolbar>
+      </AppBar>
+    </>
   );
 }
 

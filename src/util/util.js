@@ -514,15 +514,15 @@ export function isNumber(target) {
 }
 
 export function shouldShowPatientInfo(client) {
+  // from query string
+  if (sessionStorage.getItem(queryNeedPatientBanner) !== null) {
+    return String(sessionStorage.getItem(queryNeedPatientBanner)) === "true";
+  }
+  // check token response, 
   const tokenResponse = client ? client.getState("tokenResponse") : null ;
-  console.log("token response ? ", tokenResponse);
-  console.log("has banner attr ", tokenResponse ? tokenResponse.hasOwnProperty("need_patient_banner") : false)
-  //check access token first
+  //check need_patient_banner launch context parameter
   if (tokenResponse && tokenResponse.hasOwnProperty("need_patient_banner"))
     return tokenResponse["need_patient_banner"];
-  if (sessionStorage.getItem(queryNeedPatientBanner) !== null) {
-    return sessionStorage.getItem(queryNeedPatientBanner);
-  }
   return String(getEnv("REACT_APP_DISABLE_HEADER")) !== "true";
 }
 export function shouldShowNav() {

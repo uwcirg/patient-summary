@@ -305,8 +305,8 @@ export default function Summaries() {
           }}
         >
           <Box
-            id={`anchor_${sectionId}`}
-            key={`anchor_${sectionId}`}
+            id={section.anchorElementId}
+            key={section.anchorElementId}
             sx={{
               position: "relative",
               top: -1 * parseInt(DEFAULT_ACCORDION_HEADER_HEIGHT),

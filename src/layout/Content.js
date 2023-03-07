@@ -2,7 +2,6 @@ import PropTypes from "prop-types";
 import { useContext } from "react";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
-import BottomNav from "../components/BottomNav";
 import Header from "../components/Header";
 import SideNav from "../components/SideNav";
 import {
@@ -28,7 +27,6 @@ export default function Content({ children }) {
           {children}
           {/* add other components as needed */}
         </Box>
-        {shouldShowNav() && <BottomNav></BottomNav>}
       </Box>
     )
   );
