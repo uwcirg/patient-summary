@@ -12,6 +12,10 @@ const renderLoader = () => (
     direction="row"
     spacing={2}
     alignItems="center"
+    sx={{
+      marginTop: "8px",
+      marginBottom: "8px",
+    }}
   >
     <Box color="primary">Loading content ...</Box>
     <CircularProgress color="primary" size={24}></CircularProgress>
@@ -48,32 +52,34 @@ const renderSummaries = (props) => {
   }
   const Summary = lazy(() => import("../components/Summary"));
   const summaryData = props.summaryData || [];
-  return questionnaireList.map((questionnaireId, index) => {
-    const dataObject =
-      summaryData.data && summaryData.data[questionnaireId]
-        ? summaryData.data[questionnaireId]
-        : null;
-    if (!dataObject) return null;
-    return (
-      <Suspense fallback={renderLoader()} key={`summary_container_${index}`}>
-        <Box className="summary-container">
-          <Summary
-            questionnaireId={questionnaireId}
-            data={dataObject}
-            key={`questionnaire_summary_${index}`}
-          ></Summary>
-          {index !== questionnaireList.length - 1 && (
-            <Divider
-              className="print-hidden"
-              key={`questionnaire_divider_${index}`}
-              sx={{ borderWidth: "2px", marginBottom: 2 }}
-              light
-            ></Divider>
-          )}
-        </Box>
-      </Suspense>
-    );
-  });
+  return (
+    <Suspense fallback={renderLoader()}>
+      {questionnaireList.map((questionnaireId, index) => {
+        const dataObject =
+          summaryData.data && summaryData.data[questionnaireId]
+            ? summaryData.data[questionnaireId]
+            : null;
+        if (!dataObject) return null;
+        return (
+          <Box className="summary-container">
+            <Summary
+              questionnaireId={questionnaireId}
+              data={dataObject}
+              key={`questionnaire_summary_${index}`}
+            ></Summary>
+            {index !== questionnaireList.length - 1 && (
+              <Divider
+                className="print-hidden"
+                key={`questionnaire_divider_${index}`}
+                sx={{ borderWidth: "2px", marginBottom: 2 }}
+                light
+              ></Divider>
+            )}
+          </Box>
+        );
+      })}
+    </Suspense>
+  );
 };
 
 const DEFAULT_SECTIONS = [
