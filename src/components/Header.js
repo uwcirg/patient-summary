@@ -65,6 +65,7 @@ export default function Header(props) {
             fontSize: inEHR ? "1.6rem" : "1.8rem",
             display: inEHR ? "block" : { xs: "none", sm: "none", md: "block" },
           }}
+          className="print-hidden"
         >
           {appTitle}
         </Typography>
