@@ -77,15 +77,13 @@ export default function PatientInfo(props) {
   return (
     <Box
       className="patientinfo-container"
-      sx={{ marginLeft: theme.spacing(1) }}
+      sx={{ marginLeft: theme.spacing(1), padding: theme.spacing(0.25, 0, 0.25) }}
     >
       <Stack spacing={0.5} direction="row" alignItems="center">
         <Typography
           component="span"
-          variant="h6"
-          color="primary"
           className="patient-name"
-          sx={{ fontSize: "1.15rem" }}
+          sx={{fontWeight: 500}}
         >
           {getPatientName()}
         </Typography>

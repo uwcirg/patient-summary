@@ -5,16 +5,21 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import { scrollToElement } from "../util/util";
+import { getSectionsToShow, scrollToElement } from "../util/util";
 
 export default function SectionList(props) {
   const theme = useTheme();
   const { list, onClickEvent, expanded } = props;
-  if (!list || !list.length) return null;
+  const renderList = list && list.length ? list : getSectionsToShow();
+  if (!renderList || !renderList.length) return null;
   return (
     <List className="sections-list" sx={{ marginTop: theme.spacing(3) }}>
-      {list.map((section) => (
-        <ListItem key={`listItem_${section.id}`} disablePadding sx={{ minHeight: "50px" }}>
+      {renderList.map((section) => (
+        <ListItem
+          key={`listItem_${section.id}`}
+          disablePadding
+          sx={{ minHeight: "50px" }}
+        >
           <ListItemButton
             onClick={() => {
               scrollToElement(`anchor_${String(section.id).toLowerCase()}`);
@@ -24,7 +29,9 @@ export default function SectionList(props) {
             {section.icon && (
               <ListItemIcon
                 title={section.title}
-                sx={{ minWidth: theme.spacing(6) }}
+                sx={{
+                  minWidth: theme.spacing(6),
+                }}
               >
                 {section.icon()}
               </ListItemIcon>
@@ -53,5 +60,5 @@ export default function SectionList(props) {
 SectionList.propTypes = {
   list: PropTypes.array,
   onClickEvent: PropTypes.func,
-  expandFlag: PropTypes.bool
+  expandFlag: PropTypes.bool,
 };

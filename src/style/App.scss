@@ -19,11 +19,6 @@ body {
   font-family: "Roboto", sans-serif;
   font-size: 16px;
 }
-.no-header {
-  .MuiToolbar-root {
-    display: none !important;
-  }
-}
 main {
   background-color: $app-background-color;
   min-height: 100%;
@@ -83,13 +78,9 @@ p {
 .text-right {
   text-align: right;
 }
-.header-logo {
-  width: 120px;
-}
-@media (min-width: 600px) {
-  .header-logo {
-    width: 180px;
-  }
+.MuiButton-contained,
+.MuiButton-outlined {
+  border-radius: 24px !important;
 }
 @media print {
   @page {
@@ -113,6 +104,12 @@ p {
   }
   .scoring-summary-container {
     padding: 0 !important;
+    th, td {
+      position: relative !important;
+      width: auto !important;
+      left: 0 !important;
+      min-height: auto !important;
+    }
   }
   .chart__container {
     width: 100% !important;
@@ -121,6 +118,7 @@ p {
   .table-container {
     width: 100% !important;
     min-width: 100% !important;
+    margin-left: 0 !important;
   }
   .summary-container:not(:first-of-type) {
     page-break-inside: avoid;

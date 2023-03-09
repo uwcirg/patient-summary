@@ -1,5 +1,5 @@
 import { createTheme } from "@mui/material/styles";
-import { teal, grey, deepPurple, purple, indigo} from "@mui/material/colors";
+import { grey, deepPurple, blue, indigo} from "@mui/material/colors";
 import { getEnvProjectId } from "../util/util";
 const defaultOptions = {
   zIndex: {
@@ -22,22 +22,22 @@ export const themes = {
         main: "#FFF",
       },
       lighter: {
-        main: teal[50],
+        main: indigo[50],
       },
       light: {
-        main: teal[300],
+        main: indigo[300],
       },
       primary: {
-        main: teal[500],
+        main: indigo[800],
       },
       dark: {
-        main: teal[800],
+        main: indigo[900],
       },
       secondary: {
         main: grey[800],
       },
       link: {
-        main: purple[700],
+        main: blue[700],
       },
       muted: {
         main: grey[500],
