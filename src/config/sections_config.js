@@ -61,7 +61,7 @@ const renderSummaries = (props) => {
             : null;
         if (!dataObject) return null;
         return (
-          <Box className="summary-container">
+          <Box className="summary-container" key={`summary_${questionnaireId}`}>
             <Summary
               questionnaireId={questionnaireId}
               data={dataObject}
