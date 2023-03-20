@@ -168,7 +168,8 @@ export default function Header(props) {
           columnGap: theme.spacing(1.5),
           display: {
             xs: "none",
-            sm: "inline-flex",
+            sm: "none",
+            md: "inline-flex"
           },
         }}
       >
@@ -183,7 +184,8 @@ export default function Header(props) {
         sx={{
           display: {
             sx: "inline-flex",
-            sm: "none",
+            sm: "inline-flex",
+            md: "none"
           },
         }}
         ref={anchorRef}
@@ -194,7 +196,7 @@ export default function Header(props) {
         className="print-hidden"
         title="Menu"
       >
-        <MoreIcon></MoreIcon>
+        <MoreIcon color="primary" fontSize="large"></MoreIcon>
       </IconButton>
       <Popper
         open={mobileMenuOpen}
