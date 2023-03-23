@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import ChartConfig from "../config/chart_config.js";
 import QuestionnaireConfig from "../config/questionnaire_config";
 import {
@@ -9,7 +10,7 @@ import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack
 import valueSetJson from "../cql/valueset-db.json";
 import { initialzieCqlWorker } from "cql-worker";
 import defaultSections from "../config/sections_config.js";
-import {DEFAULT_TOOLBAR_HEIGHT} from "../consts/consts";
+import { DEFAULT_TOOLBAR_HEIGHT } from "../consts/consts";
 
 export function getCorrectedISODate(dateString) {
   if (!dateString || dateString instanceof Date) return dateString;
@@ -518,8 +519,8 @@ export function shouldShowPatientInfo(client) {
   if (sessionStorage.getItem(queryNeedPatientBanner) !== null) {
     return String(sessionStorage.getItem(queryNeedPatientBanner)) === "true";
   }
-  // check token response, 
-  const tokenResponse = client ? client.getState("tokenResponse") : null ;
+  // check token response,
+  const tokenResponse = client ? client.getState("tokenResponse") : null;
   //check need_patient_banner launch context parameter
   if (tokenResponse && tokenResponse.hasOwnProperty("need_patient_banner"))
     return tokenResponse["need_patient_banner"];
@@ -534,9 +535,7 @@ export function getAppHeight() {
 export function getUserId(client) {
   if (!client) return null;
   if (client.user && client.user.id) return client.user.id;
-  const accessToken = parseJwt(
-    client.getState("tokenResponse.access_token")
-  );
+  const accessToken = parseJwt(client.getState("tokenResponse.access_token"));
   if (accessToken) return accessToken["preferred_username"];
   return null;
 }
@@ -579,4 +578,10 @@ export function addMamotoTracking(userId) {
   g.setAttribute("src", u + "matomo.js");
   g.setAttribute("id", "matomoScript");
   headElement.appendChild(g);
+}
+
+export function getLocaleDateStringFromDate(dateString, format) {
+  if (!dateString) return "";
+  const dateFormat = format ? format : "YYYY-MM-DD hh:mm";
+  return dayjs(dateString).format(dateFormat);
 }
