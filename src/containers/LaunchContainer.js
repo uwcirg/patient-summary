@@ -47,7 +47,7 @@ export default function Launch() {
   const [error, setError] = React.useState("");
   fetchEnvData();
   React.useLayoutEffect(() => {
-    const backendURL = getEnv("REACT_APP_BACKEND_URL");
+    const backendURL = getEnv("REACT_APP_CONF_API_URL");
     const authURL = backendURL ? `${backendURL}/auth/auth-info` : "";
     const urlParams = new URLSearchParams(window.location.search);
     //retrieve patient id from URL querystring if any
