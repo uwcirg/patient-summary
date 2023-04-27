@@ -15,7 +15,7 @@ function getDefaultLogObject() {
 // @param body, expect object, e.g. { "projectID": "DCW"}
 // @param message, expect object, e.g. { "text": "ok"}
 export function writeToLog(level, tags, body, message) {
-  const confidentialBackendURL = getEnv("REACT_APP_BACKEND_URL");
+  const confidentialBackendURL = getEnv("REACT_APP_CONF_API_URL");
   if (!confidentialBackendURL) {
     console.log("audit log skipped; confidential backend URL is not set");
     return;
