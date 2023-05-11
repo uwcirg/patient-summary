@@ -1,25 +1,14 @@
-import {
-  createRef,
-  forwardRef,
-  useContext,
-  useEffect,
-  useCallback,
-  useReducer,
-  useState,
-  useRef,
-} from "react";
+import { useContext, useReducer, useState, useRef } from "react";
 import { useQuery } from "react-query";
 import { useTheme } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
-import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -32,7 +21,6 @@ import {
   getFHIRResourcePaths,
   getQuestionnaireList,
   getSectionsToShow,
-  isInViewport,
   shouldShowNav,
 } from "../util/util";
 import ErrorComponent from "./ErrorComponent";
@@ -44,13 +32,11 @@ import {
   MOBILE_DRAWER_WIDTH,
   DEFAULT_ACCORDION_HEADER_HEIGHT,
 } from "../consts/consts";
-let scrollIntervalId = 0;
+import FloatingNavButton from "./FloatingNavButton";
 
 export default function Summaries() {
   const theme = useTheme();
   const { client, patient } = useContext(FhirClientContext);
-  const fabRef = createRef();
-  const anchorRef = createRef();
   const questionnaireList = getQuestionnaireList();
   const sectionsToShow = getSectionsToShow();
   const [summaryData, setSummaryData] = useState({
@@ -200,31 +186,6 @@ export default function Summaries() {
     });
   };
 
-  const BoxRef = forwardRef((props, ref) => (
-    <Box {...props} ref={ref}>
-      {props.children}
-    </Box>
-  ));
-  const FabRef = forwardRef((props, ref) => (
-    <Fab ref={ref} {...props}>
-      {props.children}
-    </Fab>
-  ));
-  const handleFab = useCallback(() => {
-    const fabElement = fabRef.current;
-    if (!fabElement) return;
-    clearInterval(scrollIntervalId);
-    scrollIntervalId = setInterval(() => {
-      if (isInViewport(anchorRef.current)) {
-        fabElement.classList.remove("flex");
-        fabElement.classList.add("hide");
-        return;
-      }
-      fabElement.classList.add("flex");
-      fabElement.classList.remove("hide");
-    }, 150);
-  }, [fabRef, anchorRef]);
-
   const isReady = () => summaryData.loadComplete || error;
 
   const getFhirResources = async () => {
@@ -266,30 +227,6 @@ export default function Summaries() {
       }
     );
   };
-
-  const renderNavButton = () => (
-    <FabRef
-      className={"hide print-hidden"}
-      ref={fabRef}
-      color="primary"
-      aria-label="add"
-      size="medium"
-      sx={{
-        position: "fixed",
-        bottom: "8px",
-        right: "24px",
-        zIndex: (theme) => theme.zIndex.drawer - 1,
-      }}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (!anchorRef.current) return;
-        anchorRef.current.scrollIntoView();
-      }}
-      title="Back to Top"
-    >
-      <ArrowUpwardIcon aria-label="Back to Top" />
-    </FabRef>
-  );
 
   const renderSections = () => {
     if (!sectionsToShow || !sectionsToShow.length)
@@ -344,13 +281,11 @@ export default function Summaries() {
                 borderBottom: "1px solid #FFF",
               }}
             >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 1,
-                }}
+              <Stack
+                spacing={1}
+                direction={"row"}
+                justifyContent={"center"}
+                alignItems={"center"}
               >
                 {section.icon({ color: "#FFF" })}
                 <Typography
@@ -360,7 +295,7 @@ export default function Summaries() {
                 >
                   {section.title}
                 </Typography>
-              </Box>
+              </Stack>
             </AccordionSummary>
             <AccordionDetails sx={{ padding: theme.spacing(1, 2) }}>
               {section.component &&
@@ -379,22 +314,12 @@ export default function Summaries() {
     });
   };
 
-  const renderAnchorTop = () => (
-    <BoxRef
-      ref={anchorRef}
-      sx={{
-        position: "relative",
-        height: "2px",
-        width: "2px",
-      }}
-    ></BoxRef>
-  );
-
   const renderProgressIndicator = () => {
-    const total = loadedResources.length;
-    const loaded = loadedResources.filter(
+    const total = loadedResources?.length;
+    const loaded = loadedResources?.filter(
       (resource) => resource.complete || resource.error
     ).length;
+    if (total === 0) return false;
     return (
       <Box
         sx={{
@@ -494,30 +419,20 @@ export default function Summaries() {
     );
   };
 
-  useEffect(() => {
-    window.addEventListener("scroll", handleFab);
-    return () => {
-      clearInterval(scrollIntervalId);
-      window.removeEventListener("scroll", handleFab, false);
-    };
-  }, [handleFab]);
+  const mainStackStyleProps = {
+    position: "relative",
+    maxWidth: "1100px",
+    minHeight: getAppHeight(),
+    margin: "auto",
+  };
 
   return (
     <Box className="app">
       {!isReady() && renderProgressIndicator()}
       {isReady() && (
         <>
-          {renderAnchorTop()}
-          {renderNavButton()}
-          <Stack
-            className="summaries"
-            sx={{
-              position: "relative",
-              maxWidth: "1100px",
-              minHeight: getAppHeight(),
-              margin: "auto",
-            }}
-          >
+          <FloatingNavButton></FloatingNavButton>
+          <Stack className="summaries" sx={mainStackStyleProps}>
             <section>
               {error && renderError()}
               {!error && (

@@ -59,7 +59,7 @@ const renderSummaries = (props) => {
           summaryData.data && summaryData.data[questionnaireId]
             ? summaryData.data[questionnaireId]
             : null;
-        if (!dataObject) return null;
+        if (!dataObject) return false;
         return (
           <Box className="summary-container" key={`summary_${questionnaireId}`}>
             <Summary

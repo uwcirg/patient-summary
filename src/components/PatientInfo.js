@@ -30,7 +30,7 @@ export default function PatientInfo(props) {
   };
   const getPatientAge = () => {
     const dob = getPatientDob();
-    if (!dob) return "--";
+    if (!dob || dob === "--") return "--";
     const today = new Date().toLocaleDateString("en-us");
     const date1 = dayjs(today);
     const date2 = dayjs(dob);

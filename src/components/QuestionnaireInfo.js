@@ -31,7 +31,7 @@ export default function QuestionnaireInfo(props) {
       : questionnaireJson.name;
   };
 
-  if (!introText) return null;
+  if (!introText) return false;
   return (
     <>
       <IconButton

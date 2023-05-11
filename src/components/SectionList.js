@@ -11,7 +11,7 @@ export default function SectionList(props) {
   const theme = useTheme();
   const { list, onClickEvent, expanded } = props;
   const renderList = list && list.length ? list : getSectionsToShow();
-  if (!renderList || !renderList.length) return null;
+  if (!renderList || !renderList.length) return false;
   return (
     <List className="sections-list" sx={{ marginTop: theme.spacing(3) }}>
       {renderList.map((section) => (
