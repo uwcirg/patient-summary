@@ -2,10 +2,8 @@ import { lazy, Suspense } from "react";
 import BallotIcon from "@mui/icons-material/Ballot";
 import MedicalInformationIcon from "@mui/icons-material/MedicalInformation";
 import SummarizeIcon from "@mui/icons-material/Summarize";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 
 const renderLoader = () => (
@@ -14,18 +12,20 @@ const renderLoader = () => (
     spacing={2}
     alignItems="center"
     sx={{
-      marginTop: "8px",
-      marginBottom: "8px",
+      marginTop: (theme) => theme.spacing(1),
+      marginBottom: (theme) => theme.spacing(1),
     }}
   >
-    <Box color="primary">Loading content ...</Box>
+    <Box color="primary">Retrieving content ...</Box>
     <CircularProgress color="primary" size={24}></CircularProgress>
   </Stack>
 );
 
 const renderScoringSummary = (props) => {
   const summaryData = props.summaryData || {};
-  const ScoreSummary = lazy(() => import("../components/ScoringSummary"));
+  const ScoreSummary = lazy(() =>
+    import("../components/sections/ScoringSummary")
+  );
   return (
     <Suspense fallback={renderLoader()}>
       <ScoreSummary
@@ -43,55 +43,25 @@ const renderMedicalHistory = (props) => {
       return item.resource && item.resource.resourceType === "Condition";
     })
     .map((item) => item.resource);
-  if (!conditions.length)
-    return <Alert severity="warning">No recorded condition.</Alert>;
-  const MedicalHistory = lazy(() => import("../components/MedicalHistory"));
+  const MedicalHistory = lazy(() =>
+    import("../components/sections/MedicalHistory")
+  );
   return (
     <Suspense fallback={renderLoader()}>
       <MedicalHistory data={conditions}></MedicalHistory>
     </Suspense>
   );
 };
-const renderSummaries = (props) => {
-  const questionnaireList =
-    props.questionnaireList && props.questionnaireList.length
-      ? props.questionnaireList
-      : [];
-  if (!questionnaireList.length) {
-    return (
-      <Alert severity="error">
-        No matching data found.
-      </Alert>
-    );
-  }
-  const Summary = lazy(() => import("../components/Summary"));
-  const summaryData = props.summaryData || {};
+const renderSummaries = ({ questionnaireList, summaryData }) => {
+  const Summaries = lazy(() => import("../components/sections/Summaries"));
   return (
     <Suspense fallback={renderLoader()}>
-      {questionnaireList.map((questionnaireId, index) => {
-        const dataObject =
-          summaryData.data && summaryData.data[questionnaireId]
-            ? summaryData.data[questionnaireId]
-            : null;
-        if (!dataObject) return false;
-        return (
-          <Box className="summary-container" key={`summary_${questionnaireId}`}>
-            <Summary
-              questionnaireId={questionnaireId}
-              data={dataObject}
-              key={`questionnaire_summary_${index}`}
-            ></Summary>
-            {index !== questionnaireList.length - 1 && (
-              <Divider
-                className="print-hidden"
-                key={`questionnaire_divider_${index}`}
-                sx={{ borderWidth: "2px", marginBottom: 2 }}
-                light
-              ></Divider>
-            )}
-          </Box>
-        );
-      })}
+      {
+        <Summaries
+          questionnaireList={questionnaireList}
+          summaryData={summaryData}
+        ></Summaries>
+      }
     </Suspense>
   );
 };

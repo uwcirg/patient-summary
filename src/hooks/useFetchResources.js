@@ -1,38 +1,22 @@
 import { useContext, useReducer, useState, useRef } from "react";
 import { useQuery } from "react-query";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import CircularProgress from "@mui/material/CircularProgress";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
 import { FhirClientContext } from "../context/FhirClientContext";
 import { QuestionnaireListContext } from "../context/QuestionnaireListContext";
 import {
   gatherSummaryDataByQuestionnaireId,
-  getAppHeight,
   getFhirResourcesFromQueryResult,
   getFHIRResourcesToLoad,
   getFHIRResourcePaths,
-  getSectionsToShow,
-  shouldShowNav,
 } from "../util/util";
-import ErrorComponent from "./ErrorComponent";
-import Section from "./Section";
-import Version from "./Version";
 import qConfig from "../config/questionnaire_config";
-import { DEFAULT_DRAWER_WIDTH, MOBILE_DRAWER_WIDTH } from "../consts/consts";
-import FloatingNavButton from "./FloatingNavButton";
 
-export default function Summaries() {
+export default function useFetchResources () {
   const { client, patient } = useContext(FhirClientContext);
   const { questionnaireList } = useContext(QuestionnaireListContext);
   const questionnareKeys =
     questionnaireList && questionnaireList.length
       ? questionnaireList.filter((o) => o.id).map((o) => o.id)
       : [];
-  const sectionsToShow = getSectionsToShow();
   const [summaryData, setSummaryData] = useState({
     data: questionnareKeys.map((qid) => {
       return { [qid]: null };
@@ -89,7 +73,7 @@ export default function Summaries() {
     }
   };
 
-  const [loadedResources, dispatch] = useReducer(
+  const [toBeLoadedResources, dispatch] = useReducer(
     resourceReducer,
     initialResourcesToLoad
   );
@@ -228,143 +212,13 @@ export default function Summaries() {
     );
   };
 
-  const renderSections = () => {
-    if (!sectionsToShow || !sectionsToShow.length)
-      return <Alert severity="warning">No section to show.</Alert>;
-    return sectionsToShow.map((section) => {
-      return (
-        <Section
-          section={section}
-          data={{
-            patientBundle: patientBundle.current.entry,
-            summaryData: summaryData,
-            questionnaireList: questionnareKeys,
-          }}
-          key={`section_${section.id}`}
-        ></Section>
-      );
-    });
+  return {
+    isReady: isReady(),
+    error: error,
+    toBeLoadedResources: toBeLoadedResources,
+    patientBundle: patientBundle.current.entry,
+    summaryData: summaryData,
+    questionnareKeys: questionnareKeys,
+    questionnaireList: questionnaireList
   };
-
-  const renderProgressIndicator = () => {
-    const total = loadedResources?.length;
-    const loaded = loadedResources?.filter(
-      (resource) => resource.complete || resource.error
-    ).length;
-    if (total === 0) return false;
-    return (
-      <Box
-        sx={{
-          position: "fixed",
-          width: "100%",
-          height: "100%",
-          backgroundColor: "#FFF",
-          marginLeft: shouldShowNav()
-            ? {
-                md: -1 * parseInt(MOBILE_DRAWER_WIDTH) + "px",
-                lg: -1 * parseInt(DEFAULT_DRAWER_WIDTH) + "px",
-              }
-            : "auto",
-          marginRight: "auto",
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-          padding: (theme) => theme.spacing(4, 2),
-        }}
-      >
-        <Stack
-          sx={{
-            marginTop: 1,
-            marginBottom: 4,
-            padding: 2,
-          }}
-          alignItems={{
-            xs: "flex-start",
-            sm: "center",
-          }}
-          justifyContent="center"
-          direction="column"
-          spacing={2}
-        >
-          <Stack
-            direction="row"
-            spacing={2}
-            alignItems="center"
-            sx={{ fontSize: "1.3rem", marginBottom: 1.25 }}
-          >
-            <div>Loading Data ...</div>
-            <div>
-              <b>{Math.ceil((loaded / total) * 100)} %</b>
-            </div>
-            <CircularProgress color="info"></CircularProgress>
-          </Stack>
-          <Stack direction="column" alignItems="flex-start" spacing={1}>
-            {loadedResources.map((resource, index) => {
-              const { title, name, id } = resource;
-              const displayName = title || name || `Resource ${id}`;
-              return (
-                <Stack
-                  direction="row"
-                  spacing={2}
-                  justifyContent="flex-start"
-                  key={`resource_${resource}_${index}`}
-                >
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      color: (theme) =>
-                        resource.error
-                          ? theme.palette.error.main
-                          : resource.complete
-                          ? theme.palette.success.main
-                          : theme.palette.warning.main,
-                    }}
-                  >
-                    {String(displayName).toUpperCase()}
-                  </Typography>
-                  {resource.complete && resource.error && (
-                    <CloseIcon color="error"></CloseIcon>
-                  )}
-                  {resource.complete && !resource.error && (
-                    <CheckIcon color="success"></CheckIcon>
-                  )}
-                </Stack>
-              );
-            })}
-          </Stack>
-        </Stack>
-      </Box>
-    );
-  };
-
-  const renderError = () => {
-    return (
-      <Box sx={{ marginTop: 1 }}>
-        <ErrorComponent message={error}></ErrorComponent>
-      </Box>
-    );
-  };
-
-  const mainStackStyleProps = {
-    position: "relative",
-    maxWidth: "1100px",
-    minHeight: getAppHeight(),
-    margin: "auto",
-  };
-
-  return (
-    <Box className="app">
-      {!isReady() && renderProgressIndicator()}
-      {isReady() && (
-        <>
-          <FloatingNavButton></FloatingNavButton>
-          <Stack className="summaries" sx={mainStackStyleProps}>
-            <section>
-              {error && renderError()}
-              {!error && <>{renderSections()}</>}
-            </section>
-            <Version></Version>
-          </Stack>
-        </>
-      )}
-    </Box>
-  );
 }

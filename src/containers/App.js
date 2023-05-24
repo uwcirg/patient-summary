@@ -1,11 +1,11 @@
-import Summaries from "../components/Summaries";
+import Dashboard from "../components/Dashboard";
 import TimeoutModal from "../components/TimeoutModal";
 import Base from "../layout/Base";
 
 export default function App() {
   return (
     <Base>
-      <Summaries />
+      <Dashboard />
       <TimeoutModal />
     </Base>
   );

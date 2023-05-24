@@ -4,7 +4,7 @@ import { useTheme } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
 import MaterialTable from "@material-table/core";
 import TableContainer from "@mui/material/TableContainer";
-import { getCorrectedISODate } from "../util/util";
+import { getCorrectedISODate } from "../../util/util";
 
 export default function MedicalHistory(props) {
   const theme = useTheme();

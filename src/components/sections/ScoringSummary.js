@@ -13,9 +13,9 @@ import Stack from "@mui/material/Stack";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
-import Scoring from "./Score";
-import qConfig from "../config/questionnaire_config";
-import { isNumber, getDisplayQTitle, scrollToAnchor } from "../util/util";
+import Scoring from "../Score";
+import qConfig from "../../config/questionnaire_config";
+import { isNumber, getDisplayQTitle, scrollToAnchor } from "../../util/util";
 
 export default function ScoringSummary(props) {
   const theme = useTheme();
