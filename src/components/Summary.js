@@ -7,7 +7,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Error from "./ErrorComponent";
 import QuestionnaireInfo from "./QuestionnaireInfo";
-import { getDisplayQTitle, hasData } from "../util/util";
+import { getDisplayQTitle, getQuestionnaireName, hasData } from "../util/util";
 import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts/consts";
 import Responses from "./Responses";
 import Chart from "./Chart";
@@ -129,11 +129,7 @@ export default function Summary(props) {
     dispatch({ type: "update", payload: data });
     setHasChart(hasData(data ? data.chartData : null));
     if (data) {
-      setQuestionnaireTitle(
-        data.questionnaire && data.questionnaire.title
-          ? data.questionnaire.title
-          : ""
-      );
+      setQuestionnaireTitle(getQuestionnaireName(data.questionnaire));
       if (data.error) setError(data.error);
     }
     setLoading(false);

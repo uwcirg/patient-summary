@@ -9,13 +9,13 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
-import Typography from "@mui/material/Typography";
+import Stack from "@mui/material/Stack";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import Scoring from "./Score";
 import qConfig from "../config/questionnaire_config";
-import { isNumber, scrollToAnchor } from "../util/util";
+import { isNumber, getDisplayQTitle, scrollToAnchor } from "../util/util";
 
 export default function ScoringSummary(props) {
   const theme = useTheme();
@@ -40,10 +40,12 @@ export default function ScoringSummary(props) {
     if (hasNoResponses(responses)) return false;
     return responses.some((result) => isNumber(result.score));
   };
-  const getInstrumentShortName = (id) =>
-    qConfig[id] && qConfig[id].shortTitle
-      ? qConfig[id].shortTitle
-      : String(id).toUpperCase();
+  const getInstrumentShortName = (id) => {
+    const key = getDisplayQTitle(id);
+    return qConfig[key] && qConfig[key].shortTitle
+      ? qConfig[key].shortTitle
+      : String(key).toUpperCase();
+  }
   const hasList = () =>
     summaryData &&
     Object.keys(summaryData).length > 0 &&
@@ -110,21 +112,6 @@ export default function ScoringSummary(props) {
     e.preventDefault();
     scrollToAnchor(anchorElementId);
   };
-  const renderTitle = () => (
-    <Typography
-      variant="h5"
-      component="h2"
-      color="accent"
-      sx={{
-        padding: theme.spacing(1, 0.5, 0),
-        fontSize: "1.35rem",
-        fontWeight: 500
-      }}
-    >
-      Scoring Summary
-    </Typography>
-  );
-
   const getScoreList = () => {
     if (!hasList()) return [];
     return Object.keys(summaryData);
@@ -328,7 +315,7 @@ export default function ScoringSummary(props) {
   const renderSummary = () => {
     if (!hasList())
       return (
-        <Box sx={{ padding: theme.spacing(2, 0.5) }}>
+        <Box sx={{ padding: theme.spacing(1, 0.5) }}>
           <Alert severity="warning">No summary available</Alert>
         </Box>
       );
@@ -371,10 +358,9 @@ export default function ScoringSummary(props) {
   };
 
   return (
-    <Box className="scoring-summary-container">
-      {renderTitle()}
+    <Stack className="scoring-summary-container" spacing={1} direction="column">
       {renderSummary()}
-    </Box>
+    </Stack>
   );
 }
 

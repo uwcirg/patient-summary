@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
-import MedicalInformationIcon from "@mui/icons-material/MedicalInformation";
 import BallotIcon from "@mui/icons-material/Ballot";
+import MedicalInformationIcon from "@mui/icons-material/MedicalInformation";
+import SummarizeIcon from "@mui/icons-material/Summarize";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -21,6 +22,19 @@ const renderLoader = () => (
     <CircularProgress color="primary" size={24}></CircularProgress>
   </Stack>
 );
+
+const renderScoringSummary = (props) => {
+  const summaryData = props.summaryData || {};
+  const ScoreSummary = lazy(() => import("../components/ScoringSummary"));
+  return (
+    <Suspense fallback={renderLoader()}>
+      <ScoreSummary
+        list={props.questionnaireList}
+        summaryData={summaryData.data}
+      ></ScoreSummary>
+    </Suspense>
+  );
+};
 
 const renderMedicalHistory = (props) => {
   const patientBundle = props.patientBundle ? props.patientBundle : [];
@@ -46,12 +60,12 @@ const renderSummaries = (props) => {
   if (!questionnaireList.length) {
     return (
       <Alert severity="error">
-        No questionnaire id(s) found. Is it configured?
+        No matching data found.
       </Alert>
     );
   }
   const Summary = lazy(() => import("../components/Summary"));
-  const summaryData = props.summaryData || [];
+  const summaryData = props.summaryData || {};
   return (
     <Suspense fallback={renderLoader()}>
       {questionnaireList.map((questionnaireId, index) => {
@@ -83,6 +97,19 @@ const renderSummaries = (props) => {
 };
 
 const DEFAULT_SECTIONS = [
+  {
+    id: "scoreSummary",
+    title: "Score Summary",
+    anchorElementId: "anchor_scoresummary",
+    icon: (props) => (
+      <SummarizeIcon
+        fontSize="large"
+        color="primary"
+        {...props}
+      ></SummarizeIcon>
+    ),
+    component: (props) => renderScoringSummary(props),
+  },
   {
     id: "medicalHistory",
     title: "Pertinent Medical History",

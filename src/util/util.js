@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import ChartConfig from "../config/chart_config.js";
 import QuestionnaireConfig from "../config/questionnaire_config";
 import {
@@ -9,7 +10,7 @@ import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack
 import valueSetJson from "../cql/valueset-db.json";
 import { initialzieCqlWorker } from "cql-worker";
 import defaultSections from "../config/sections_config.js";
-import {DEFAULT_TOOLBAR_HEIGHT} from "../consts/consts";
+import { DEFAULT_TOOLBAR_HEIGHT } from "../consts/consts";
 
 export function getCorrectedISODate(dateString) {
   if (!dateString || dateString instanceof Date) return dateString;
@@ -64,7 +65,7 @@ export function getFHIRResourcePaths(patientId) {
     const observationCategories = getEnv(
       "REACT_APP_FHIR_OBSERVATION_CATEGORIES"
     );
-    const qList = getQuestionnaireList().join(",");
+    const qList = getEnvQuestionnaireList().join(",");
     if (resource.toLowerCase() === "questionnaire") {
       const params = qList;
       if (params) path = path + `?name:contains:${params}`;
@@ -152,7 +153,7 @@ export function getChartConfig(questionnaire) {
   return { ...ChartConfig["default"], ...qChartConfig };
 }
 
-export function getQuestionnaireList() {
+export function getEnvQuestionnaireList() {
   const configList = getEnv("REACT_APP_QUESTIONNAIRES");
   if (configList)
     return configList.split(",").map((item) => item.replace(/_/g, "-").trim());
@@ -335,7 +336,8 @@ export function range(start, end) {
 export function gatherSummaryDataByQuestionnaireId(
   client,
   patientBundle,
-  questionnaireId
+  questionnaireId,
+  exactMatch
 ) {
   return new Promise((resolve, reject) => {
     // search for matching questionnaire
@@ -347,7 +349,9 @@ export function gatherSummaryDataByQuestionnaireId(
       const qResult = await client
         .request(
           {
-            url: "Questionnaire?name:contains=" + questionnaireId,
+            url: exactMatch
+              ? "Questionnaire/" + questionnaireId
+              : "Questionnaire?name:contains=" + questionnaireId,
           },
           fhirSearchOptions
         )
@@ -364,12 +368,21 @@ export function gatherSummaryDataByQuestionnaireId(
       const [setupExecution, sendPatientBundle, evaluateExpression] =
         initialzieCqlWorker(cqlWorker);
       const questionaireKey = String(questionnaireId).toLowerCase();
-      const chartConfig = getChartConfig(questionaireKey);
-      const questionnaireConfig = QuestionnaireConfig[questionaireKey] || {};
+      const matchedKeys = Object.keys(QuestionnaireConfig).filter((id) => {
+        const match = String(id).toLowerCase();
+        return (
+          String(questionnaireJson.name).toLowerCase().includes(match) ||
+          String(questionnaireJson.title).toLowerCase().includes(match) ||
+          String(questionnaireJson.id).toLowerCase().includes(match)
+        );
+      });
+      const targetQId = matchedKeys.length ? matchedKeys[0] : questionaireKey;
+      const chartConfig = getChartConfig(targetQId);
+      const questionnaireConfig = QuestionnaireConfig[targetQId] || {};
 
       /* get CQL expressions */
       const [elmJson, valueSetJson] = await getInterventionLogicLib(
-        questionnaireConfig.customCQL ? questionnaireId : ""
+        questionnaireConfig.customCQL ? targetQId : ""
       ).catch((e) => {
         console.log("Error retrieving ELM lib son for " + questionnaireId, e);
         throw new Error("Error retrieving ELM lib son for " + questionnaireId);
@@ -432,10 +445,17 @@ export function gatherSummaryDataByQuestionnaireId(
     // find matching questionnaire & questionnaire response(s)
     searchMatchingResources()
       .then((result) => {
+        if (!result) {
+          reject("No questionnaire results found.");
+          return;
+        }
         let bundles = [];
-        result.forEach((item) => {
-          bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];
-        });
+        if (Array.isArray(result)) {
+          result.forEach((item) => {
+            bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];
+          });
+        } else
+          bundles = [...bundles, ...getFhirResourcesFromQueryResult(result)];
         const arrQuestionnaires = bundles.filter(
           (entry) =>
             entry.resource &&
@@ -518,8 +538,8 @@ export function shouldShowPatientInfo(client) {
   if (sessionStorage.getItem(queryNeedPatientBanner) !== null) {
     return String(sessionStorage.getItem(queryNeedPatientBanner)) === "true";
   }
-  // check token response, 
-  const tokenResponse = client ? client.getState("tokenResponse") : null ;
+  // check token response,
+  const tokenResponse = client ? client.getState("tokenResponse") : null;
   //check need_patient_banner launch context parameter
   if (tokenResponse && tokenResponse.hasOwnProperty("need_patient_banner"))
     return tokenResponse["need_patient_banner"];
@@ -534,9 +554,7 @@ export function getAppHeight() {
 export function getUserId(client) {
   if (!client) return null;
   if (client.user && client.user.id) return client.user.id;
-  const accessToken = parseJwt(
-    client.getState("tokenResponse.access_token")
-  );
+  const accessToken = parseJwt(client.getState("tokenResponse.access_token"));
   if (accessToken) return accessToken["preferred_username"];
   return null;
 }
@@ -579,4 +597,16 @@ export function addMamotoTracking(userId) {
   g.setAttribute("src", u + "matomo.js");
   g.setAttribute("id", "matomoScript");
   headElement.appendChild(g);
+}
+
+export function getQuestionnaireName(questionnaireJson) {
+  if (!questionnaireJson) return "";
+  const { id, title, name } = questionnaireJson;
+  return title || name || `Questionnaire ${id}`;
+}
+
+export function getLocaleDateStringFromDate(dateString, format) {
+  if (!dateString) return "";
+  const dateFormat = format ? format : "YYYY-MM-DD hh:mm";
+  return dayjs(dateString).format(dateFormat);
 }

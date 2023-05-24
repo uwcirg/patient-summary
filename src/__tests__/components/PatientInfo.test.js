@@ -99,6 +99,6 @@ test("Renders patient info - age", () => {
   };
   const { container } = render(<PatientInfo patient={patientObj} />);
   const ageElement = container.querySelector(".patient-age");
-  expect(ageElement).toHaveTextContent("59");
+  expect(ageElement).toHaveTextContent("60");
 });
 

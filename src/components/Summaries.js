@@ -1,46 +1,40 @@
 import { useContext, useReducer, useState, useRef } from "react";
 import { useQuery } from "react-query";
-import { useTheme } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
-import Accordion from "@mui/material/Accordion";
-import AccordionSummary from "@mui/material/AccordionSummary";
-import AccordionDetails from "@mui/material/AccordionDetails";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { FhirClientContext } from "../context/FhirClientContext";
+import { QuestionnaireListContext } from "../context/QuestionnaireListContext";
 import {
   gatherSummaryDataByQuestionnaireId,
   getAppHeight,
   getFhirResourcesFromQueryResult,
   getFHIRResourcesToLoad,
   getFHIRResourcePaths,
-  getQuestionnaireList,
   getSectionsToShow,
   shouldShowNav,
 } from "../util/util";
 import ErrorComponent from "./ErrorComponent";
-import ScoringSummary from "./ScoringSummary";
+import Section from "./Section";
 import Version from "./Version";
 import qConfig from "../config/questionnaire_config";
-import {
-  DEFAULT_DRAWER_WIDTH,
-  MOBILE_DRAWER_WIDTH,
-  DEFAULT_ACCORDION_HEADER_HEIGHT,
-} from "../consts/consts";
+import { DEFAULT_DRAWER_WIDTH, MOBILE_DRAWER_WIDTH } from "../consts/consts";
 import FloatingNavButton from "./FloatingNavButton";
 
 export default function Summaries() {
-  const theme = useTheme();
   const { client, patient } = useContext(FhirClientContext);
-  const questionnaireList = getQuestionnaireList();
+  const { questionnaireList } = useContext(QuestionnaireListContext);
+  const questionnareKeys =
+    questionnaireList && questionnaireList.length
+      ? questionnaireList.filter((o) => o.id).map((o) => o.id)
+      : [];
   const sectionsToShow = getSectionsToShow();
   const [summaryData, setSummaryData] = useState({
-    data: questionnaireList.map((qid) => {
+    data: questionnareKeys.map((qid) => {
       return { [qid]: null };
     }),
     loadComplete: false,
@@ -61,9 +55,12 @@ export default function Summaries() {
       complete: false,
       error: false,
     })),
-    ...questionnaireList.map((qid) => ({
+    ...questionnareKeys.map((qid) => ({
       id: qid,
-      title: qConfig[qid] ? qConfig[qid].shortTitle : "",
+      title:
+        qConfig[qid] && qConfig[qid].shortTitle
+          ? `Questionnaire ${qConfig[qid].shortTitle}`
+          : `Questionnaire ${qid}`,
       complete: false,
       error: false,
     })),
@@ -126,13 +123,16 @@ export default function Summaries() {
         }
         if (summaryData.loadComplete) return;
         console.log("patient bundle ", patientBundle.current);
-        const requests = questionnaireList.map((qid) =>
+        console.log("fhirData", fhirData);
+        const requests = questionnaireList.map((o) =>
           (async () => {
             let error = "";
+            const qid = o.id;
             let results = await gatherSummaryDataByQuestionnaireId(
               client,
               patientBundle.current,
-              qid
+              o.id,
+              o.exactMatch
             ).catch((e) => (error = e));
             if (error) handleResourceError(qid);
             else handleResourceComplete(qid);
@@ -232,84 +232,16 @@ export default function Summaries() {
     if (!sectionsToShow || !sectionsToShow.length)
       return <Alert severity="warning">No section to show.</Alert>;
     return sectionsToShow.map((section) => {
-      const sectionId = section.id.toLowerCase();
       return (
-        <Box
-          key={"accordion_wrapper_" + sectionId}
-          className="accordion-wrapper"
-          sx={{
-            marginBottom: theme.spacing(1),
+        <Section
+          section={section}
+          data={{
+            patientBundle: patientBundle.current.entry,
+            summaryData: summaryData,
+            questionnaireList: questionnareKeys,
           }}
-        >
-          <Box
-            id={section.anchorElementId}
-            key={section.anchorElementId}
-            sx={{
-              position: "relative",
-              top: -1 * parseInt(DEFAULT_ACCORDION_HEADER_HEIGHT),
-              height: "1px",
-              width: "1px",
-            }}
-          ></Box>
-          <Accordion
-            key={`section_${sectionId}`}
-            disableGutters={true}
-            defaultExpanded={
-              section.hasOwnProperty("expanded") ? section.expanded : true
-            }
-            sx={{
-              "& .MuiAccordionSummary-content": {
-                margin: 0,
-              },
-              "& .MuiPaper-root": {
-                borderRadius: 0,
-              },
-            }}
-          >
-            <AccordionSummary
-              expandIcon={
-                <ExpandMoreIcon
-                  sx={{ color: "#FFF" }}
-                  className="print-hidden"
-                />
-              }
-              aria-controls="panel1a-content"
-              id={`accordion_${sectionId}`}
-              sx={{
-                backgroundColor: theme.palette.primary.main,
-                color: "#FFF",
-                borderBottom: "1px solid #FFF",
-              }}
-            >
-              <Stack
-                spacing={1}
-                direction={"row"}
-                justifyContent={"center"}
-                alignItems={"center"}
-              >
-                {section.icon({ color: "#FFF" })}
-                <Typography
-                  variant="h6"
-                  component="h2"
-                  id={`${sectionId}_title`}
-                >
-                  {section.title}
-                </Typography>
-              </Stack>
-            </AccordionSummary>
-            <AccordionDetails sx={{ padding: theme.spacing(1, 2) }}>
-              {section.component &&
-                section.component({
-                  patientBundle: patientBundle.current.entry,
-                  summaryData: summaryData,
-                  questionnaireList: questionnaireList,
-                })}
-              {!section.component && (
-                <ErrorComponent message="no section component to render"></ErrorComponent>
-              )}
-            </AccordionDetails>
-          </Accordion>
-        </Box>
+          key={`section_${section.id}`}
+        ></Section>
       );
     });
   };
@@ -366,7 +298,8 @@ export default function Summaries() {
           </Stack>
           <Stack direction="column" alignItems="flex-start" spacing={1}>
             {loadedResources.map((resource, index) => {
-              const displayName = resource.title ? resource.title : resource.id;
+              const { title, name, id } = resource;
+              const displayName = title || name || `Resource ${id}`;
               return (
                 <Stack
                   direction="row"
@@ -402,15 +335,6 @@ export default function Summaries() {
     );
   };
 
-  const renderScoringSummary = () => {
-    return (
-      <ScoringSummary
-        list={getQuestionnaireList()}
-        summaryData={summaryData.data}
-      ></ScoringSummary>
-    );
-  };
-
   const renderError = () => {
     return (
       <Box sx={{ marginTop: 1 }}>
@@ -435,12 +359,7 @@ export default function Summaries() {
           <Stack className="summaries" sx={mainStackStyleProps}>
             <section>
               {error && renderError()}
-              {!error && (
-                <>
-                  {renderScoringSummary()}
-                  {renderSections()}
-                </>
-              )}
+              {!error && <>{renderSections()}</>}
             </section>
             <Version></Version>
           </Stack>

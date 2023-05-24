@@ -14,6 +14,7 @@ import {
 import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
 import FhirClientProvider from "../context/FhirClientProvider";
+import QuestionnaireListProvider from "../context/QuestionnaireListProvider";
 
 function ErrorFallBack({ error }) {
   return (
@@ -38,7 +39,9 @@ export default function Base({ children }) {
         <QueryClientProvider client={queryClient}>
           <FhirClientProvider>
             <CssBaseline />
-            <Content>{children}</Content>
+            <QuestionnaireListProvider>
+                <Content>{children}</Content>
+            </QuestionnaireListProvider>
           </FhirClientProvider>
         </QueryClientProvider>
       </ThemeProvider>

@@ -23,9 +23,12 @@ import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import Filter from "@mui/icons-material/FilterAlt";
 import OutlinedIcon from "@mui/icons-material/WysiwygOutlined";
-import ListAltIcon from '@mui/icons-material/ListAlt';
+import ListAltIcon from "@mui/icons-material/ListAlt";
 import Score from "./Score";
-
+import {
+  getLocaleDateStringFromDate,
+  getQuestionnaireName,
+} from "../util/util";
 
 const Transition = forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -55,7 +58,8 @@ export default function Responses(props) {
         left: 0,
       },
       render: (rowData) => {
-        if (String(rowData["question"]).toLowerCase() === "score") return <b>{rowData["question"]}</b>
+        if (String(rowData["question"]).toLowerCase() === "score")
+          return <b>{rowData["question"]}</b>;
         else return rowData["question"];
       },
     },
@@ -94,7 +98,10 @@ export default function Responses(props) {
     })),
   ];
 
-  const hasData = () => data && data.length > 0 && (data.filter(item => item.responses && item.responses.length).length > 0);
+  const hasData = () =>
+    data &&
+    data.length > 0 &&
+    data.filter((item) => item.responses && item.responses.length).length > 0;
   const hasScores = () =>
     data.filter((item) => item.hasOwnProperty("score") && !isNaN(item.score))
       .length > 0;
@@ -113,7 +120,9 @@ export default function Responses(props) {
       let scoringResult = {
         question: "Score",
       };
-      data.forEach((item) => (scoringResult[item.id] = { score: item.score, ...item }));
+      data.forEach(
+        (item) => (scoringResult[item.id] = { score: item.score, ...item })
+      );
       result.push(scoringResult);
     }
     return result;
@@ -154,16 +163,9 @@ export default function Responses(props) {
     return getAnswer(answerItem[0]);
   };
 
-  const getQuestionnaireName = () => {
-    if (!questionnaireJson) return questionnaireId;
-    return questionnaireJson.title
-      ? questionnaireJson.title
-      : questionnaireJson.name;
-  };
-
   const Root = styled("div")(({ theme }) => ({
     width: "100%",
-    paddingTop: theme.spacing(1)
+    paddingTop: theme.spacing(1),
   }));
 
   const renderTitle = () => (
@@ -194,7 +196,9 @@ export default function Responses(props) {
             <TableRow>
               {["Questions", ...arrDates.map((item) => item.date)].map(
                 (item, index) => (
-                  <TableCell key={`header_${index}`}>{item}</TableCell>
+                  <TableCell key={`header_${index}`}>
+                    {getLocaleDateStringFromDate(item)}
+                  </TableCell>
                 )
               )}
             </TableRow>
@@ -321,7 +325,7 @@ export default function Responses(props) {
       TransitionComponent={Transition}
       transitionDuration={{
         enter: 500,
-        exit: 500
+        exit: 500,
       }}
     >
       <AppBar sx={{ position: "relative" }}>
@@ -335,7 +339,8 @@ export default function Responses(props) {
             <CloseIcon />
           </IconButton>
           <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-            Questionnaire Responses for {getQuestionnaireName()}
+            Questionnaire Responses for{" "}
+            {getQuestionnaireName(questionnaireJson)}
           </Typography>
           <Button autoFocus color="inherit" onClick={handleClose}>
             Close
