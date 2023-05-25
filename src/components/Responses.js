@@ -215,9 +215,10 @@ export default function Responses(props) {
                   dangerouslySetInnerHTML={{
                     __html: getQuestion(row),
                   }}
+                  size="small"
                 ></TableCell>
                 {arrDates.map((item, index) => (
-                  <TableCell key={`answer_cell_${index}`}>
+                  <TableCell key={`answer_cell_${index}`} size="small">
                     {getMatchedAnswerByLinkIdDateId(row.id, item.date, item.id)}
                   </TableCell>
                 ))}

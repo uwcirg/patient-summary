@@ -18,6 +18,7 @@ export default function Dashboard() {
     isReady,
     patientBundle,
     questionnareKeys,
+    questionnaireList,
     summaryData,
     toBeLoadedResources,
   } = useFetchResources();
@@ -33,7 +34,8 @@ export default function Dashboard() {
           data={{
             patientBundle: patientBundle,
             summaryData: summaryData,
-            questionnaireList: questionnareKeys,
+            questionnaireKeys: questionnareKeys,
+            questionnaireList: questionnaireList
           }}
           key={`section_${section.id}`}
         ></Section>

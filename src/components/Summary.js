@@ -75,7 +75,7 @@ export default function Summary(props) {
     );
   const renderAnchor = () => (
     <div
-      id={`${getAnchorElementId()}_${questionnaireId.toLowerCase()}`}
+      id={`${getAnchorElementId()}_${questionnaireId}`}
       style={anchorElementStyle}
     ></div>
   );

@@ -10,9 +10,9 @@ import {
 } from "../util/util";
 import qConfig from "../config/questionnaire_config";
 
-export default function useFetchResources () {
+export default function useFetchResources() {
   const { client, patient } = useContext(FhirClientContext);
-  const { questionnaireList } = useContext(QuestionnaireListContext);
+  let { questionnaireList } = useContext(QuestionnaireListContext);
   const questionnareKeys =
     questionnaireList && questionnaireList.length
       ? questionnaireList.filter((o) => o.id).map((o) => o.id)
@@ -141,16 +141,22 @@ export default function useFetchResources () {
               const o = Object.entries(result.value)[0];
               const key = o[0];
               summaries[key] = o[1];
+              if (o[1].questionnaire) {
+                questionnaireList.forEach((q) => {
+                  if (q.id === key) {
+                    q.questionnaireJson = o[1].questionnaire;
+                  }
+                });
+              }
             }
           });
-          setTimeout(
-            () =>
-              setSummaryData({
-                data: summaries,
-                loadComplete: true,
-              }),
-            150
-          );
+
+          console.log("Summary data ", summaries);
+
+          setSummaryData({
+            data: summaries,
+            loadComplete: true,
+          });
         });
       },
       onError: (e) => {
@@ -218,7 +224,7 @@ export default function useFetchResources () {
     toBeLoadedResources: toBeLoadedResources,
     patientBundle: patientBundle.current.entry,
     summaryData: summaryData,
-    questionnareKeys: questionnareKeys,
-    questionnaireList: questionnaireList
+    questionnareKeys: questionnaireList.map(q => q.id),
+    questionnaireList: questionnaireList,
   };
 }

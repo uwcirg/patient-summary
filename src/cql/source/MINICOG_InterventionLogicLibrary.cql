@@ -49,6 +49,7 @@ define ResponsesSummary:
   (QuestionnaireResponses) I
   let
     responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, scoringQuestionId),
+    answeredResponses: (responses R where R.id != 'minicog-question1-instruction' and R.id != 'minicog-question2-instruction' and R.id != 'minicog-total-score-explanation' and R.id != 'minicog-questionnaire-footnote'),
     scoredResponses: (I.item R where 
       R.linkId.value != 'minicog-question1-instruction' and 
       R.linkId.value != 'minicog-question2-instruction' and 
@@ -62,16 +63,16 @@ define ResponsesSummary:
     return {
       id: I.id.value,
       date: LogicHelpers.DateTimeText(I.authored),
-      responses: responses,
+      responses: answeredResponses,
       score: if Length(scoredResponses) > 0 then score else null,
       scoreSeverity: scoreSeverity,
-      //scoreMeaning: if scoreSeverity = 'high' then 'cognitively impaired' else null,
+      comparisonToAlert: 'lower',
       totalAnsweredItems: Length((I.item) O where O.linkId.value != scoringQuestionId),
       totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, scoringQuestionId)),
       word_recall_score: word_recall_score,
       clock_draw_score: clock_draw_score,
       scoringParams: scoringParams,
-      authoredDate: I.authored,
+      authoredDate: I.authored.value,
       lastUpdated: I.meta.lastUpdated.value
     }
     sort by authoredDate desc, lastUpdated desc

@@ -85,7 +85,7 @@ define ResponsesSummary:
       scoringParams: scoringParams,
       totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
       totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
-      authoredDate: I.authored,
+      authoredDate: I.authored.value,
       lastUpdated: I.meta.lastUpdated.value
     }
     

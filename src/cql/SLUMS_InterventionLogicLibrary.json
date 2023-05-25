@@ -428,6 +428,13 @@
                            "type" : "Null"
                         }
                      }, {
+                        "name" : "comparisonToAlert",
+                        "value" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                           "value" : "lower",
+                           "type" : "Literal"
+                        }
+                     }, {
                         "name" : "scoringParams",
                         "value" : {
                            "name" : "scoringParams",
@@ -488,9 +495,13 @@
                      }, {
                         "name" : "authoredDate",
                         "value" : {
-                           "path" : "authored",
-                           "scope" : "I",
-                           "type" : "Property"
+                           "path" : "value",
+                           "type" : "Property",
+                           "source" : {
+                              "path" : "authored",
+                              "scope" : "I",
+                              "type" : "Property"
+                           }
                         }
                      }, {
                         "name" : "lastUpdated",

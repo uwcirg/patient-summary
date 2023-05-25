@@ -5,22 +5,22 @@ import Divider from "@mui/material/Divider";
 import Summary from "../Summary";
 
 export default function Summaries(props) {
-  const questionnaireList =
-    props.questionnaireList && props.questionnaireList.length
-      ? props.questionnaireList
+  const questionnaireKeys =
+    props.questionnaireKeys && props.questionnaireKeys.length
+      ? props.questionnaireKeys
       : [];
-  if (!questionnaireList.length) {
+  if (!questionnaireKeys.length) {
     return <Alert severity="error">No matching data found.</Alert>;
   }
   const summaryData = props.summaryData || {};
   return (
     <Box>
-      {questionnaireList.map((questionnaireId, index) => {
+      {questionnaireKeys.map((questionnaireId, index) => {
         const dataObject =
           summaryData.data && summaryData.data[questionnaireId]
             ? summaryData.data[questionnaireId]
             : null;
-        if (!dataObject) return false;
+        if (!dataObject) return <Alert severity="warning">No data found.</Alert>;
         return (
           <Box className="summary-container" key={`summary_${questionnaireId}`}>
             <Summary
@@ -28,7 +28,7 @@ export default function Summaries(props) {
               data={dataObject}
               key={`questionnaire_summary_${index}`}
             ></Summary>
-            {index !== questionnaireList.length - 1 && (
+            {index !== questionnaireKeys.length - 1 && (
               <Divider
                 className="print-hidden"
                 key={`questionnaire_divider_${index}`}
@@ -44,6 +44,6 @@ export default function Summaries(props) {
 }
 
 Summaries.propTypes = {
-  questionnaireList: PropTypes.array,
+  questionnaireKeys: PropTypes.array,
   summaryData: PropTypes.object,
 };

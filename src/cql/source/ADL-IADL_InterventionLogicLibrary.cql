@@ -70,7 +70,7 @@ define ResponsesSummary:
     totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
     totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
     scoringParams: scoringParams,
-    authoredDate: I.authored,
+    authoredDate: I.authored.value,
     lastUpdated: I.meta.lastUpdated.value
     }
   sort by authoredDate desc, lastUpdated desc

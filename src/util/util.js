@@ -96,6 +96,15 @@ export function getFHIRResourcePaths(patientId) {
   });
 }
 
+export function getResourcesByResourceType(patientBundle) {
+  if (!patientBundle || !patientBundle.length) return null;
+  return patientBundle
+    .filter((item) => {
+      return item.resource && item.resource.resourceType === "Condition";
+    })
+    .map((item) => item.resource);
+}
+
 export function getQuestionnairesByCarePlan(arrCarePlans) {
   if (!arrCarePlans) return [];
   let activities = [];
@@ -236,7 +245,7 @@ export function fetchEnvData() {
       console.log("Request failed! ");
       return;
     }
-    var envObj;
+    let envObj;
     try {
       envObj = JSON.parse(xhr.responseText);
     } catch (e) {

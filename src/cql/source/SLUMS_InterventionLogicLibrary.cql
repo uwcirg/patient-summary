@@ -63,10 +63,11 @@ define ResponsesSummary:
       // TBD
       // scoreMeaning: if scoreSeverity = 'high' then 'dementia' else if scoreSeverity = 'moderate' then 'mild neurocognitive disorder' else null,
       scoreMeaning: null,
+      comparisonToAlert: 'lower',
       scoringParams: scoringParams,
       totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
       totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
-      authoredDate: I.authored,
+      authoredDate: I.authored.value,
       lastUpdated: I.meta.lastUpdated.value,
       educationLevel: educationLevel
     }

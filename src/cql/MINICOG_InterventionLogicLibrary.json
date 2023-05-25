@@ -209,6 +209,85 @@
                      } ]
                   }
                }, {
+                  "identifier" : "answeredResponses",
+                  "expression" : {
+                     "type" : "Query",
+                     "source" : [ {
+                        "alias" : "R",
+                        "expression" : {
+                           "name" : "responses",
+                           "type" : "QueryLetRef"
+                        }
+                     } ],
+                     "relationship" : [ ],
+                     "where" : {
+                        "type" : "And",
+                        "operand" : [ {
+                           "type" : "And",
+                           "operand" : [ {
+                              "type" : "And",
+                              "operand" : [ {
+                                 "type" : "Not",
+                                 "operand" : {
+                                    "type" : "Equal",
+                                    "operand" : [ {
+                                       "path" : "id",
+                                       "scope" : "R",
+                                       "type" : "Property"
+                                    }, {
+                                       "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                       "value" : "minicog-question1-instruction",
+                                       "type" : "Literal"
+                                    } ]
+                                 }
+                              }, {
+                                 "type" : "Not",
+                                 "operand" : {
+                                    "type" : "Equal",
+                                    "operand" : [ {
+                                       "path" : "id",
+                                       "scope" : "R",
+                                       "type" : "Property"
+                                    }, {
+                                       "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                       "value" : "minicog-question2-instruction",
+                                       "type" : "Literal"
+                                    } ]
+                                 }
+                              } ]
+                           }, {
+                              "type" : "Not",
+                              "operand" : {
+                                 "type" : "Equal",
+                                 "operand" : [ {
+                                    "path" : "id",
+                                    "scope" : "R",
+                                    "type" : "Property"
+                                 }, {
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                    "value" : "minicog-total-score-explanation",
+                                    "type" : "Literal"
+                                 } ]
+                              }
+                           } ]
+                        }, {
+                           "type" : "Not",
+                           "operand" : {
+                              "type" : "Equal",
+                              "operand" : [ {
+                                 "path" : "id",
+                                 "scope" : "R",
+                                 "type" : "Property"
+                              }, {
+                                 "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                 "value" : "minicog-questionnaire-footnote",
+                                 "type" : "Literal"
+                              } ]
+                           }
+                        } ]
+                     }
+                  }
+               }, {
                   "identifier" : "scoredResponses",
                   "expression" : {
                      "type" : "Query",
@@ -520,7 +599,7 @@
                      }, {
                         "name" : "responses",
                         "value" : {
-                           "name" : "responses",
+                           "name" : "answeredResponses",
                            "type" : "QueryLetRef"
                         }
                      }, {
@@ -558,6 +637,13 @@
                         "value" : {
                            "name" : "scoreSeverity",
                            "type" : "QueryLetRef"
+                        }
+                     }, {
+                        "name" : "comparisonToAlert",
+                        "value" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                           "value" : "lower",
+                           "type" : "Literal"
                         }
                      }, {
                         "name" : "totalAnsweredItems",
@@ -632,9 +718,13 @@
                      }, {
                         "name" : "authoredDate",
                         "value" : {
-                           "path" : "authored",
-                           "scope" : "I",
-                           "type" : "Property"
+                           "path" : "value",
+                           "type" : "Property",
+                           "source" : {
+                              "path" : "authored",
+                              "scope" : "I",
+                              "type" : "Property"
+                           }
                         }
                      }, {
                         "name" : "lastUpdated",

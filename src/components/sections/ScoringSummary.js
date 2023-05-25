@@ -34,18 +34,28 @@ export default function ScoringSummary(props) {
     theme && theme.palette && theme.palette.border && theme.palette.border.main
       ? theme.palette.border.main
       : "#FFF";
-  const { summaryData } = props;
+  const { summaryData, questionnaireList } = props;
   const hasNoResponses = (responses) => !responses || !responses.length;
   const responsesHasScore = (responses) => {
     if (hasNoResponses(responses)) return false;
     return responses.some((result) => isNumber(result.score));
   };
   const getInstrumentShortName = (id) => {
-    const key = getDisplayQTitle(id);
-    return qConfig[key] && qConfig[key].shortTitle
-      ? qConfig[key].shortTitle
-      : String(key).toUpperCase();
-  }
+    const key = getDisplayQTitle(id).toLowerCase();
+    if (qConfig[key] && qConfig[key].shortTitle) {
+      return qConfig[key].shortTitle;
+    }
+    const matchedQuestionnaire = questionnaireList
+      ? questionnaireList
+          .filter((q) => q.id === id && q.questionnaireJson)
+          .map((q) => q.questionnaireJson)
+      : null;
+    if (matchedQuestionnaire && matchedQuestionnaire.length) {
+      const { id, name, title } = matchedQuestionnaire[0];
+      return name || title || id;
+    }
+    return String(key).toUpperCase();
+  };
   const hasList = () =>
     summaryData &&
     Object.keys(summaryData).length > 0 &&
@@ -55,7 +65,11 @@ export default function ScoringSummary(props) {
   const getSortedResponses = (rdata) => {
     if (hasNoResponses(rdata)) return [];
     return rdata.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      (a, b) => {
+        const aTime = new Date(a.date).getTime();
+        const bTime = new Date(b.date).getTime();
+        return bTime - aTime;
+      }
     );
   };
   const getResponsesByIndex = (rdata, index) => {
@@ -64,20 +78,29 @@ export default function ScoringSummary(props) {
     return sortedResponses[index];
   };
 
+  const getCurrentResponses = (rdata) => {
+    return getResponsesByIndex(rdata, 0);
+  };
+
+  const getPrevResponses = (rdata) => {
+    return getResponsesByIndex(rdata, 1);
+  }
+
   const getPrevScoreByInstrument = (rdata) => {
-    const responses = getResponsesByIndex(rdata, 1);
+    const responses = getPrevResponses(rdata);
     if (!responses || !responses.date) return parseInt(null);
     return parseInt(responses.score);
   };
 
   const getCurrentScoreByInstrument = (rdata) => {
-    const responses = getResponsesByIndex(rdata, 0);
+    const responses = getCurrentResponses(rdata);
     if (!responses || !responses.date) return parseInt(null);
     const score = responses.score;
     return isNumber(score) ? score : "--";
   };
-  const getDisplayIcon = (id, rdata) => {
-    const comparisonToAlert = qConfig[id] && qConfig[id].comparisonToAlert;
+  const getDisplayIcon = (rdata) => {
+    const currentResponses = getCurrentResponses(rdata);
+    const comparisonToAlert = currentResponses ? currentResponses.comparisonToAlert : ""; // display alert if score is lower/higher than previous
     const currentScore = getCurrentScoreByInstrument(rdata);
     const prevScore = getPrevScoreByInstrument(rdata);
     const iconProps = {
@@ -205,7 +228,11 @@ export default function ScoringSummary(props) {
           }}
           {...defaultHeaderCellProps}
         ></TableCell>
-        <TableCell sx={cellStyle} {...{...defaultHeaderCellProps, ...{align: "left"}}} colSpan={2}>
+        <TableCell
+          sx={cellStyle}
+          {...{ ...defaultHeaderCellProps, ...{ align: "left" } }}
+          colSpan={2}
+        >
           Score
         </TableCell>
         <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
@@ -239,6 +266,7 @@ export default function ScoringSummary(props) {
         onClick={(e) => handleClick(e, key)}
         underline="none"
         sx={{ color: linkColor, cursor: "pointer" }}
+        href={`#${key}`}
       >
         {getInstrumentShortName(key)}
       </Link>
@@ -261,8 +289,8 @@ export default function ScoringSummary(props) {
   );
 
   const renderScoreRangeCell = (key) => (
-    <TableCell align="right" size="small" sx={{...cellStyle, padding: 0}}>
-      <Box className="no-wrap-text muted-text text-left" sx={{width: "100%"}}>
+    <TableCell align="right" size="small" sx={{ ...cellStyle, padding: 0 }}>
+      <Box className="no-wrap-text muted-text text-left" sx={{ width: "100%" }}>
         {displayScoreRange(summaryData[key])}
       </Box>
     </TableCell>
@@ -291,7 +319,7 @@ export default function ScoringSummary(props) {
       size="small"
       sx={{ ...cellStyle, borderRightWidth: 0 }}
     >
-      {getDisplayIcon(key, summaryData[key].responses)}
+      {getDisplayIcon(summaryData[key].responses)}
     </TableCell>
   );
 
@@ -366,4 +394,5 @@ export default function ScoringSummary(props) {
 
 ScoringSummary.propTypes = {
   summaryData: PropTypes.object,
+  questionnaireList: PropTypes.array,
 };

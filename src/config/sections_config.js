@@ -5,6 +5,7 @@ import SummarizeIcon from "@mui/icons-material/Summarize";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
+import { getResourcesByResourceType } from "../util/util";
 
 const renderLoader = () => (
   <Stack
@@ -23,42 +24,39 @@ const renderLoader = () => (
 
 const renderScoringSummary = (props) => {
   const summaryData = props.summaryData || {};
+  const questionnaireList = props.questionnaireList || [];
   const ScoreSummary = lazy(() =>
     import("../components/sections/ScoringSummary")
   );
   return (
     <Suspense fallback={renderLoader()}>
       <ScoreSummary
-        list={props.questionnaireList}
         summaryData={summaryData.data}
+        questionnaireList={questionnaireList}
       ></ScoreSummary>
     </Suspense>
   );
 };
 
 const renderMedicalHistory = (props) => {
-  const patientBundle = props.patientBundle ? props.patientBundle : [];
-  const conditions = patientBundle
-    .filter((item) => {
-      return item.resource && item.resource.resourceType === "Condition";
-    })
-    .map((item) => item.resource);
   const MedicalHistory = lazy(() =>
     import("../components/sections/MedicalHistory")
   );
   return (
     <Suspense fallback={renderLoader()}>
-      <MedicalHistory data={conditions}></MedicalHistory>
+      <MedicalHistory
+        data={getResourcesByResourceType(props.patientBundle)}
+      ></MedicalHistory>
     </Suspense>
   );
 };
-const renderSummaries = ({ questionnaireList, summaryData }) => {
+const renderSummaries = ({ questionnaireKeys, summaryData }) => {
   const Summaries = lazy(() => import("../components/sections/Summaries"));
   return (
     <Suspense fallback={renderLoader()}>
       {
         <Summaries
-          questionnaireList={questionnaireList}
+          questionnaireKeys={questionnaireKeys}
           summaryData={summaryData}
         ></Summaries>
       }

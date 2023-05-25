@@ -28,9 +28,8 @@ const qConfig = {
     customCQL: true,
   },
   minicog: {
-    shortTitle: "MINI COGNITIVE ASSESSMENT",
+    shortTitle: "MINI COG",
     customCQL: true,
-    comparisonToAlert: "lower", // display alert if score is lower than previous
   },
   phq9: {
     shortTitle: "Depression (PHQ-9)",
@@ -38,7 +37,6 @@ const qConfig = {
   },
   slums: {
     customCQL: true,
-    comparisonToAlert: "lower", // display alert if score is lower than previous
   },
 };
 export default qConfig;
