@@ -65,6 +65,7 @@ define ResponsesSummary:
       scoreMeaning: null,
       comparisonToAlert: 'lower',
       scoringParams: scoringParams,
+      highSeverityScoreCutoff: if HasLowerLevelEducation is true then 19 else 20,
       totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
       totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
       authoredDate: I.authored.value,

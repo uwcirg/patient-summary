@@ -441,6 +441,28 @@
                            "type" : "ExpressionRef"
                         }
                      }, {
+                        "name" : "highSeverityScoreCutoff",
+                        "value" : {
+                           "type" : "If",
+                           "condition" : {
+                              "type" : "IsTrue",
+                              "operand" : {
+                                 "name" : "HasLowerLevelEducation",
+                                 "type" : "ExpressionRef"
+                              }
+                           },
+                           "then" : {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "value" : "19",
+                              "type" : "Literal"
+                           },
+                           "else" : {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "value" : "20",
+                              "type" : "Literal"
+                           }
+                        }
+                     }, {
                         "name" : "totalAnsweredItems",
                         "value" : {
                            "type" : "Length",

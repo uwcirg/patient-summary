@@ -3,15 +3,18 @@ import { useTheme } from "@mui/material/styles";
 import {
   LineChart,
   Line,
+  ReferenceArea,
+  ReferenceLine,
   XAxis,
   YAxis,
   CartesianGrid,
+  Text,
   Tooltip,
   Label,
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import {range} from "../../util/util";
+import { range } from "../../util/util";
 export default function LineCharts(props) {
   const {
     id,
@@ -65,7 +68,7 @@ export default function LineCharts(props) {
       <Label value={xLabel} offset={12} position="insideBottom" />
     </XAxis>
   );
-  const yDomain = maximumScore ? [0, maximumScore]: [0, "auto"];
+  const yDomain = maximumScore ? [0, maximumScore] : [0, "auto"];
   const yTicks = maximumScore ? range(0, maximumScore) : range(0, 50);
 
   const renderYAxis = () => (
@@ -73,7 +76,28 @@ export default function LineCharts(props) {
       domain={yDomain}
       label={{ value: yLabel, angle: -90, position: "insideLeft" }}
       interval="preserveStartEnd"
-      tick={{ style: { fontSize: "12px" } }}
+      //tick={{ style: { fontSize: "12px", fill: "red" } }}
+      tick={(e) => {
+        const configData = data.find((item) => item.highSeverityScoreCutoff);
+        let color = "#666";
+        const {
+          payload: { value },
+        } = e;
+        if (configData) {
+          if (configData.comparisonToAlert === "lower") {
+            if (value <= parseInt(configData.highSeverityScoreCutoff)) {
+              color = "red";
+            }
+          } else {
+            if (value >= parseInt(configData.highSeverityScoreCutoff)) {
+              color = "red";
+            }
+          }
+        }
+        e["fill"] = color;
+        e["fontSize"] = "12px";
+        return <Text {...e}>{value}</Text>;
+      }}
       tickFormatter={yTickFormatter}
       ticks={yTicks}
       tickMargin={8}
@@ -121,7 +145,92 @@ export default function LineCharts(props) {
       strokeWidth={strokeWidth ? strokeWidth : 2}
     />
   );
-  const MIN_CHART_WIDTH = xsChartWidth? xsChartWidth : 400;
+  const renderMinScoreMeaningLabel = () => {
+    if (!maximumScore) return null;
+    if (!data || !data.length) return null;
+    if (!data.find((item) => item.scoreSeverity)) return null;
+    const configData =
+      data.find((item) => item && item.comparisonToAlert) ?? {};
+    return (
+      <ReferenceLine
+        y={0}
+        stroke={configData.comparisonToAlert === "lower" ? "red" : "green"}
+        strokeWidth={0}
+      >
+        <Label
+          value={configData.comparisonToAlert === "lower" ? "Worst" : "Best"}
+          fontSize="12px"
+          fontWeight={500}
+          fill={configData.comparisonToAlert === "lower" ? "red" : "green"}
+          position="insideLeft"
+        />
+      </ReferenceLine>
+    );
+  };
+  const renderMaxScoreMeaningLabel = () => {
+    if (!maximumScore) return null;
+    if (!data || !data.length) return null;
+    if (!data.find((item) => item.scoreSeverity)) return null;
+    const configData =
+      data.find((item) => item && item.comparisonToAlert) ?? {};
+    return (
+      <ReferenceLine
+        y={maximumScore}
+        x={100}
+        stroke={configData.comparisonToAlert === "lower" ? "green" : "red"}
+        strokeWidth={0}
+      >
+        <Label
+          value={configData.comparisonToAlert === "lower" ? "Best" : "Worst"}
+          fontSize="12px"
+          fontWeight={500}
+          fill={configData.comparisonToAlert === "lower" ? "green" : "red"}
+          position="insideLeft"
+        />
+      </ReferenceLine>
+    );
+  };
+  const renderScoreSeverityCutoffLine = () => {
+    if (!maximumScore) return null;
+    if (!data || !data.length) return null;
+    const configData = data.find(
+      (item) => item && item.highSeverityScoreCutoff
+    );
+    if (!configData) return null;
+    return (
+      <ReferenceLine
+        y={configData.highSeverityScoreCutoff}
+        stroke="red"
+        strokeWidth={1}
+        strokeDasharray="3 3"
+      ></ReferenceLine>
+    );
+  };
+  const renderScoreSeverityArea = () => {
+    if (!maximumScore) return null;
+    if (!data || !data.length) return null;
+    const configData = data.find(
+      (item) => item && item.highSeverityScoreCutoff
+    );
+    if (!configData) return null;
+    if (configData.comparisonToAlert === "lower") {
+      return (
+        <ReferenceArea
+          y2={configData.highSeverityScoreCutoff}
+          fill="#FCE3DA"
+          fillOpacity={0.3}
+        />
+      );
+    }
+    return (
+      <ReferenceArea
+        y1={configData.highSeverityScoreCutoff}
+        fill="#FCE3DA"
+        fillOpacity={0.3}
+      />
+    );
+  };
+  const MIN_CHART_WIDTH = xsChartWidth ? xsChartWidth : 400;
   return (
     <>
       {renderTitle()}
@@ -130,7 +239,7 @@ export default function LineCharts(props) {
           width: {
             xs: MIN_CHART_WIDTH,
             sm: chartWidth,
-            lg: lgChartWidth ? lgChartWidth: chartWidth
+            lg: lgChartWidth ? lgChartWidth : chartWidth,
           },
           height: chartHeight,
         }}
@@ -151,8 +260,12 @@ export default function LineCharts(props) {
             {renderYAxis()}
             {renderToolTip()}
             {renderLegend()}
+            {renderScoreSeverityCutoffLine()}
+            {renderScoreSeverityArea()}
             {hasYFields() && renderMultipleLines()}
             {!hasYFields() && renderSingleLine()}
+            {renderMaxScoreMeaningLabel()}
+            {renderMinScoreMeaningLabel()}
           </LineChart>
         </ResponsiveContainer>
       </Box>

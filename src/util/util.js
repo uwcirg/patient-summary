@@ -43,7 +43,7 @@ export async function getInterventionLogicLib(interventionId) {
 }
 
 export function getFHIRResourcesToLoad() {
-  const defaultList = ["QuestionnaireResponse", "Condition"];
+  const defaultList = ["Condition"];
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
   let resources = resourcesToLoad ? resourcesToLoad.split(",") : defaultList;
   defaultList.forEach((item) => {
@@ -430,6 +430,8 @@ export function gatherSummaryDataByQuestionnaireId(
       const chartData =
         scoringData && scoringData.length
           ? scoringData.map((item) => ({
+              ...item,
+              ...item.scoringParams?item.scoringParams:{},
               date: item.date,
               total: item.score,
             }))

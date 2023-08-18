@@ -540,6 +540,13 @@
                            }
                         }
                      }, {
+                        "name" : "highSeverityScoreCutoff",
+                        "value" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "1",
+                           "type" : "Literal"
+                        }
+                     }, {
                         "name" : "scoringParams",
                         "value" : {
                            "name" : "scoringParams",

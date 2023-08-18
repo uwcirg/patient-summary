@@ -96,6 +96,7 @@ define ResponsesSummary:
       score: if (Length(scoredResponses) > 0) then score else null,
       scoreSeverity: scoreSeverity,
       scoreMeaning: if scoreSeverity = 'high' then 'depression' else null,
+      highSeverityScoreCutoff: 5,
       scoringParams: scoringParams,
       totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
       totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),

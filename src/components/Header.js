@@ -98,9 +98,11 @@ export default function Header(props) {
               alt={"project logo"}
               style={{
                 width: 152,
+                cursor: "pointer"
               }}
               onLoad={handleImageLoaded}
               onError={handleImageLoaded}
+              onClick={() => window.location = returnURL + "/clear_session"}
             ></img>
           </Box>
           <Box
@@ -117,6 +119,10 @@ export default function Header(props) {
               alt={"project logo"}
               onLoad={handleImageLoaded}
               onError={handleImageLoaded}
+              style={{
+                cursor: "pointer"
+              }}
+              onClick={() => window.location = returnURL + "/clear_session"}
             ></img>
           </Box>
         </>

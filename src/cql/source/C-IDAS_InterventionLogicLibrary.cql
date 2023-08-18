@@ -91,6 +91,7 @@ define ResponsesSummary:
         responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
         score: score,
         scoreSeverity: scoreSeverity,
+        highSeverityScoreCutoff: 19,
         scoreMeaning: null,
         // TBD
         // scoreMeaning: case

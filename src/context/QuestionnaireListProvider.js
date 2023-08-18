@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
-import { getEnvQuestionnaireList } from "../util/util";
+import { getEnvQuestionnaireList, getFhirResourcesFromQueryResult } from "../util/util";
 import { QuestionnaireListContext } from "./QuestionnaireListContext";
 import { FhirClientContext } from "../context/FhirClientContext";
 
@@ -10,6 +10,7 @@ let loadComplete = false;
 export default function QuestionnaireListProvider({ children }) {
   const [error, setError] = useState(null);
   const [questionnaireList, setQuestionnaireList] = useState([]);
+  const [questionnaireResponses, setQuestionnaireResponses] = useState([]);
   const { client, patient } = useContext(FhirClientContext);
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function QuestionnaireListProvider({ children }) {
     };
     client
       .request(
-        "QuestionnaireResponse?_elements=questionnaire&_count=200&patient=" +
+        "QuestionnaireResponse?_sort=-_lastUpdated&_count=200&patient=" +
           patient.id
       )
       .then((results) => {
@@ -48,6 +49,7 @@ export default function QuestionnaireListProvider({ children }) {
                   item.resource.questionnaire.split("/")[1]
               )
             : null;
+        //console.log("matched results ", matchedResults)
         if (!matchedResults || !matchedResults.length) {
           handleErrorCallback();
           return;
@@ -81,6 +83,10 @@ export default function QuestionnaireListProvider({ children }) {
         }
         console.log("questionnaire list to load ", uniqueQIds);
         setQuestionnaireList(uniqueQIds);
+
+        const responseResources = getFhirResourcesFromQueryResult(results);
+        //console.log("responses ", responseResources);
+        setQuestionnaireResponses(responseResources);
         loadComplete = true;
       })
       .catch((e) => {
@@ -92,6 +98,7 @@ export default function QuestionnaireListProvider({ children }) {
     <QuestionnaireListContext.Provider
       value={{
         questionnaireList: questionnaireList,
+        questionnaireResponses: questionnaireResponses,
         error: error,
       }}
     >

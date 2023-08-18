@@ -66,6 +66,7 @@ define ResponsesSummary:
       responses: answeredResponses,
       score: if Length(scoredResponses) > 0 then score else null,
       scoreSeverity: scoreSeverity,
+      highSeverityScoreCutoff: 3,
       comparisonToAlert: 'lower',
       totalAnsweredItems: Length((I.item) O where O.linkId.value != scoringQuestionId),
       totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, scoringQuestionId)),

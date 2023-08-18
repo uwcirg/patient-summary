@@ -79,6 +79,7 @@ define ResponsesSummary:
     responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
     score: score,
     scoreSeverity: scoreSeverity,
+    highSeverityScoreCutoff: 20,
     scoreMeaning: case
         when scoreSeverity = 'high' then 'severe depression'
         when scoreSeverity = 'moderately high' then 'moderately severe depression'

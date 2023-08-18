@@ -45,7 +45,7 @@ define ResponsesSummary:
     responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
     totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
     totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
-    authoredDate: I.authored,
+    authoredDate: I.authored.value,
     lastUpdated: I.meta.lastUpdated.value
   }
   sort by date desc, lastUpdated desc

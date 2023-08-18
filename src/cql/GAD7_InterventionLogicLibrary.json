@@ -674,6 +674,13 @@
                            "type" : "QueryLetRef"
                         }
                      }, {
+                        "name" : "highSeverityScoreCutoff",
+                        "value" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "15",
+                           "type" : "Literal"
+                        }
+                     }, {
                         "name" : "scoreMeaning",
                         "value" : {
                            "type" : "Case",

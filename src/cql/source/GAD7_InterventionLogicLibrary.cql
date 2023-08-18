@@ -76,6 +76,7 @@ define ResponsesSummary:
       items: I.item,
       score: score,
       scoreSeverity: scoreSeverity,
+      highSeverityScoreCutoff: 15,
       scoreMeaning: case
         when scoreSeverity = 'high' then 'severe anxiety'
         when scoreSeverity = 'moderate' then 'moderate anxiety'

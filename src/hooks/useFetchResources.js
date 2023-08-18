@@ -12,7 +12,9 @@ import qConfig from "../config/questionnaire_config";
 
 export default function useFetchResources() {
   const { client, patient } = useContext(FhirClientContext);
-  let { questionnaireList } = useContext(QuestionnaireListContext);
+  let { questionnaireList, questionnaireResponses } = useContext(
+    QuestionnaireListContext
+  );
   const questionnareKeys =
     questionnaireList && questionnaireList.length
       ? questionnaireList.filter((o) => o.id).map((o) => o.id)
@@ -27,7 +29,7 @@ export default function useFetchResources() {
     resourceType: "Bundle",
     id: "resource-bundle",
     type: "collection",
-    entry: [],
+    entry: [{ resource: patient }, ...questionnaireResponses],
     loadComplete: false,
   });
   const [error, setError] = useState(null);
@@ -199,7 +201,7 @@ export default function useFetchResources() {
       return [];
     }
     let bundle = [];
-    bundle.push({ resource: patient });
+   // bundle.push({ resource: patient });
     return Promise.allSettled(requests).then(
       (results) => {
         results.forEach((item) => {
@@ -224,7 +226,7 @@ export default function useFetchResources() {
     toBeLoadedResources: toBeLoadedResources,
     patientBundle: patientBundle.current.entry,
     summaryData: summaryData,
-    questionnareKeys: questionnaireList.map(q => q.id),
+    questionnareKeys: questionnaireList.map((q) => q.id),
     questionnaireList: questionnaireList,
   };
 }

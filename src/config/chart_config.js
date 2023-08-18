@@ -72,7 +72,7 @@ const CHART_CONFIG = {
     // applicable only to line graph
     yLineFields: [
       {
-        key: "word_recall",
+        key: "word_recall_score",
         color: "#6d4c41",
         strokeWidth: 1,
         strokeDasharray: "4 2",
@@ -80,10 +80,10 @@ const CHART_CONFIG = {
         dot: (props) => <Rect {...props} color="#6d4c41"></Rect>,
       },
       {
-        key: "clock_draw",
+        key: "clock_draw_score",
         color: "#5c6bc0",
         strokeWidth: 1,
-        strokeDasharray: "4 2",
+        strokeDasharray: "6 2",
         legendType: "square",
         dot: (props) => <Rect {...props} color="#5c6bc0"></Rect>,
       },
