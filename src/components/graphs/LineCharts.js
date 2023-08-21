@@ -63,9 +63,9 @@ export default function LineCharts(props) {
       domain={xDomain}
       tick={{ style: { fontSize: "12px" } }}
       tickFormatter={xTickFormatter}
-      tickMargin={8}
+      tickMargin={12}
     >
-      <Label value={xLabel} offset={12} position="insideBottom" />
+      <Label value={xLabel} offset={8} position="insideBottom" />
     </XAxis>
   );
   const yDomain = maximumScore ? [0, maximumScore] : [0, "auto"];
@@ -74,9 +74,9 @@ export default function LineCharts(props) {
   const renderYAxis = () => (
     <YAxis
       domain={yDomain}
-      label={{ value: yLabel, angle: -90, position: "insideLeft" }}
-      interval="preserveStartEnd"
-      //tick={{ style: { fontSize: "12px", fill: "red" } }}
+      label={{ value: yLabel, angle: -90, position: "insideLeft"}}
+      interval={maximumScore > 40 ? "preserveEnd" : 0}
+      minTickGap={8}
       tick={(e) => {
         const configData = data.find((item) => item.highSeverityScoreCutoff);
         let color = "#666";
@@ -162,7 +162,7 @@ export default function LineCharts(props) {
           fontSize="12px"
           fontWeight={500}
           fill={configData.comparisonToAlert === "lower" ? "red" : "green"}
-          position="insideLeft"
+          position="insideTopLeft"
         />
       </ReferenceLine>
     );
@@ -185,7 +185,7 @@ export default function LineCharts(props) {
           fontSize="12px"
           fontWeight={500}
           fill={configData.comparisonToAlert === "lower" ? "green" : "red"}
-          position="insideLeft"
+          position="insideBottomLeft"
         />
       </ReferenceLine>
     );

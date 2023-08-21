@@ -157,18 +157,25 @@ export default function ScoringSummary(props) {
     return `( ${minScore} - ${maxScore} )`;
   };
 
+  const displayLastAssessed = (summaryData) => {
+    const mostRecentEntry = getMostRecentEntry(summaryData);
+    if (!mostRecentEntry) return "--";
+    if (!mostRecentEntry.date) return "--";
+    return mostRecentEntry.date;
+  };
+
   const displayNumAnswered = (summaryData) => {
     const mostRecentEntry = getMostRecentEntry(summaryData);
-    if (!mostRecentEntry) return null;
+    if (!mostRecentEntry) return "--";
     const totalItems = mostRecentEntry.totalItems;
     const totalAnsweredItems = mostRecentEntry.totalAnsweredItems;
-    if (!totalItems || !totalAnsweredItems) return null;
+    if (!totalItems || !totalAnsweredItems) return "--";
     return `${totalAnsweredItems} / ${totalItems}`;
   };
 
   const displayScoreMeaning = (summaryData) => {
     const mostRecentEntry = getMostRecentEntry(summaryData);
-    if (!mostRecentEntry) return null;
+    if (!mostRecentEntry) return "--";
     return mostRecentEntry.scoreMeaning;
   };
 
@@ -182,12 +189,13 @@ export default function ScoringSummary(props) {
     variant: "head",
   };
   const cellWhiteSpaceStyle = {
-    whiteSpace: { xs: "nowrap", sm: "normal" },
+    whiteSpace: "nowrap",
     textOverflow: "ellipsis",
     overflow: "hidden",
   };
   const cellStyle = {
     borderRight: `1px solid ${borderColor}`,
+    whiteSpace: "nowrap",
     padding: {
       xs: theme.spacing(0.5, 1),
       sm: theme.spacing(0.5, 2),
@@ -208,9 +216,9 @@ export default function ScoringSummary(props) {
       minHeight: {
         xs: "34px",
         sm: "auto",
-      },
+      }, 
       left: theme.spacing(1.75),
-      ...cellWhiteSpaceStyle,
+      ...{whiteSpace: { xs: "nowrap", sm: "normal" }},
     },
   };
   const renderTableHeaderRow = () => (
@@ -230,9 +238,11 @@ export default function ScoringSummary(props) {
         ></TableCell>
         <TableCell
           sx={cellStyle}
-          {...{ ...defaultHeaderCellProps, ...{ align: "left" } }}
-          colSpan={2}
+          {...defaultHeaderCellProps}
         >
+          Last assessed
+        </TableCell>
+        <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
           Score
         </TableCell>
         <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
@@ -274,25 +284,29 @@ export default function ScoringSummary(props) {
   );
 
   const renderScoreCell = (key) => (
-    <TableCell
-      align="left"
-      size="small"
-      className="score-cell"
-      sx={{ ...cellStyle, borderRightWidth: 0 }}
-    >
-      <Scoring
-        score={getCurrentScoreByInstrument(summaryData[key].responses)}
-        scoreParams={getMostRecentEntry(summaryData[key])}
-        justifyContent="space-between"
-      ></Scoring>
+    <TableCell align="left" size="small" className="score-cell" sx={cellStyle}>
+      <Stack
+        direction={"row"}
+        spacing={1}
+        justifyContent={"space-between"}
+        alignItems={"center"}
+        sx={{ width: "100%" }}
+      >
+        <Scoring
+          score={getCurrentScoreByInstrument(summaryData[key].responses)}
+          scoreParams={getMostRecentEntry(summaryData[key])}
+          justifyContent="space-between"
+        ></Scoring>
+        <Box className="no-wrap-text muted-text" sx={{ fontSize: "0.7rem" }}>
+          {displayScoreRange(summaryData[key])}
+        </Box>
+      </Stack>
     </TableCell>
   );
 
-  const renderScoreRangeCell = (key) => (
-    <TableCell align="right" size="small" sx={{ ...cellStyle, padding: 0 }}>
-      <Box className="no-wrap-text muted-text text-left" sx={{ width: "100%" }}>
-        {displayScoreRange(summaryData[key])}
-      </Box>
+  const renderLastAssessedCell = (key) => (
+    <TableCell align="center" size="small" sx={cellStyle}>
+      {displayLastAssessed(summaryData[key])}
     </TableCell>
   );
 
@@ -329,8 +343,8 @@ export default function ScoringSummary(props) {
         {scoreList.map((key, index) => (
           <TableRow key={`{summary_${index}}`}>
             {renderInstrumentLinkCell(key)}
+            {renderLastAssessedCell(key)}
             {renderScoreCell(key)}
-            {renderScoreRangeCell(key)}
             {renderNumAnsweredCell(key)}
             {renderScoreMeaningCell(key)}
             {renderComparedToLastCell(key)}

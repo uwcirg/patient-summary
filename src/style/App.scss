@@ -82,6 +82,11 @@ p {
 .MuiButton-outlined {
   border-radius: 24px !important;
 }
+.recharts-xAxis {
+  .recharts-cartesian-axis-tick:first-of-type {
+    display: none;
+  }
+}
 @media print {
   @page {
     margin: 5mm 5mm 5mm 5mm;
@@ -119,6 +124,11 @@ p {
     width: 100% !important;
     min-width: 100% !important;
     margin-left: 0 !important;
+    table {
+      th, td {
+        white-space: normal !important;
+      }
+    }
   }
   .summary-container:not(:first-of-type) {
     page-break-inside: avoid;
