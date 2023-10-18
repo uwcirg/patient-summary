@@ -45,7 +45,19 @@ export async function getInterventionLogicLib(interventionId) {
 export function getFHIRResourcesToLoad() {
   const defaultList = ["Condition", "Observation"];
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
-  let resources = resourcesToLoad ? resourcesToLoad.split(",") : defaultList;
+  const sections = getSectionsToShow();
+  const envResourcesToLoad = resourcesToLoad ? resourcesToLoad.split(",") : [];
+  let resourcesForSection = [];
+  if (sections && sections.length) {
+    sections.forEach((section) => {
+      if (section.resources && section.resources.length) {
+        resourcesForSection = [...resourcesForSection, ...section.resources];
+      }
+    });
+  }
+  const combinedResources = [...envResourcesToLoad, ...resourcesForSection];
+  const allResources = [...new Set(combinedResources)];
+  let resources = allResources.length ? allResources : defaultList;
   defaultList.forEach((item) => {
     let inList =
       resources.filter((r) => r.toLowerCase() === item.toLowerCase()).length >
@@ -70,11 +82,10 @@ export function getFHIRResourcePaths(patientId) {
         path +
         `?subject=Patient/${patientId}&_sort=-_lastUpdated&category:text=Questionnaire`;
     } else {
-      path =
-        path + `?patient=${patientId}&_sort=-_lastUpdated`;
+      path = path + `?patient=${patientId}&_sort=-_lastUpdated&_count=100`;
     }
     if (resource.toLowerCase() === "observation" && observationCategories) {
-      path += "&category=" + observationCategories
+      path += "&category=" + observationCategories;
     }
     return {
       resourceType: resource,

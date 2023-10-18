@@ -20,7 +20,6 @@ export default function Procedure(props) {
     if (!data) return null;
     const goodData = data.filter(
       (item) =>
-        item.resourceType === "Observation" &&
         item.code &&
         item.code.coding &&
         item.code.coding.length > 0

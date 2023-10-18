@@ -95,6 +95,7 @@ const DEFAULT_SECTIONS = [
     id: "medicalHistory",
     title: "Pertinent Medical History",
     anchorElementId: `anchor_medicalhistory`,
+    resources: ["Condition"],
     icon: (props) => (
       <MedicalInformationIcon
         fontSize="large"
@@ -108,6 +109,7 @@ const DEFAULT_SECTIONS = [
     id: "observations",
     title: "Procedures / Diagnoses",
     anchorElementId: `anchor_observations`,
+    resources: ["Observation"],
     icon: (props) => (
       <FactCheckIcon
         fontSize="large"
