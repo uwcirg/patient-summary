@@ -390,7 +390,6 @@ export function gatherSummaryDataByQuestionnaireId(
         console.log("Error retrieving ELM lib son for " + questionnaireId, e);
         throw new Error("Error retrieving ELM lib son for " + questionnaireId);
       });
-      console.log("elmJson? ", elmJson);
       setupExecution(
         elmJson,
         valueSetJson,
@@ -416,7 +415,7 @@ export function gatherSummaryDataByQuestionnaireId(
           );
         });
       } catch (e) {
-        console.log("WTF ? ", e);
+        console.log("Error executing CQL expression: ", e);
       }
       const scoringData =
         cqlData && cqlData.length
