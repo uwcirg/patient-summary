@@ -64,7 +64,7 @@ export default function Responses(props) {
       },
     },
     ...dates.map((item) => ({
-      title: item.date,
+      title: getLocaleDateStringFromDate(item.date),
       field: item.id,
       filterComponent: ({ columnDef, onFilterChanged }) => (
         <Input
@@ -141,7 +141,7 @@ export default function Responses(props) {
       (parseInt(response.value.value) === 0 || response.value.value)
       ? response.value.value
       : response.answer
-      ? response.answer
+      ? String(response.answer)
       : "---";
   };
   const getQuestion = (item) => {

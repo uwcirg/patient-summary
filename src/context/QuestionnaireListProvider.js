@@ -1,7 +1,10 @@
 import { useContext, useEffect, useState } from "react";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
-import { getEnvQuestionnaireList, getFhirResourcesFromQueryResult } from "../util/util";
+import {
+  getEnvQuestionnaireList,
+  getFhirResourcesFromQueryResult,
+} from "../util/util";
 import { QuestionnaireListContext } from "./QuestionnaireListContext";
 import { FhirClientContext } from "../context/FhirClientContext";
 
@@ -23,12 +26,7 @@ export default function QuestionnaireListProvider({ children }) {
     const envQList = getEnvQuestionnaireList() || [];
     const handleErrorCallback = (message) => {
       if (envQList.length) {
-        setQuestionnaireList(
-          envQList.map((q) => ({
-            id: q,
-            exactMatch: false,
-          }))
-        );
+        setQuestionnaireList(envQList.map((q) => ({ id: q })));
       } else {
         setError(message ? message : "No questionnaire list set");
       }
@@ -36,7 +34,7 @@ export default function QuestionnaireListProvider({ children }) {
     };
     client
       .request(
-        "QuestionnaireResponse?_sort=-_lastUpdated&_count=200&patient=" +
+        "QuestionnaireResponse?_sort=-_lastUpdated&_count=500&patient=" +
           patient.id
       )
       .then((results) => {
@@ -60,29 +58,14 @@ export default function QuestionnaireListProvider({ children }) {
         );
         let uniqueQIds = [...new Set(qIds)];
         if (envQList.length) {
-          // check if questionnaire key matches any questionnaire response
-          uniqueQIds = envQList.map((q) => {
-            const match = uniqueQIds.filter((item) =>
-              String(item).toLowerCase().includes(String(q).toLowerCase())
-            );
-            if (match.length)
-              return {
-                id: match[0],
-                exactMatch: true,
-              };
-            return {
-              id: q,
-              exactMatch: false,
-            };
-          });
-        } else {
-          uniqueQIds = uniqueQIds.map((q) => ({
-            id: q,
-            exactMatch: true,
-          }));
+          uniqueQIds = [...new Set([...qIds, ...envQList])];
         }
         console.log("questionnaire list to load ", uniqueQIds);
-        setQuestionnaireList(uniqueQIds);
+        setQuestionnaireList(
+          uniqueQIds.map((id) => ({
+            id: id,
+          }))
+        );
 
         const responseResources = getFhirResourcesFromQueryResult(results);
         //console.log("responses ", responseResources);

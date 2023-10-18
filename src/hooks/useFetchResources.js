@@ -17,7 +17,7 @@ export default function useFetchResources() {
   );
   const questionnareKeys =
     questionnaireList && questionnaireList.length
-      ? questionnaireList.filter((o) => o.id).map((o) => o.id)
+      ? questionnaireList.map((q) => q.id)
       : [];
   const [summaryData, setSummaryData] = useState({
     data: questionnareKeys.map((qid) => {
@@ -117,8 +117,7 @@ export default function useFetchResources() {
             let results = await gatherSummaryDataByQuestionnaireId(
               client,
               patientBundle.current,
-              o.id,
-              o.exactMatch
+              o.id
             ).catch((e) => (error = e));
             if (error) handleResourceError(qid);
             else handleResourceComplete(qid);

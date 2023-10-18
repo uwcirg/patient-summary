@@ -15,7 +15,7 @@ import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import Scoring from "../Score";
 import qConfig from "../../config/questionnaire_config";
-import { isNumber, getDisplayQTitle, scrollToAnchor } from "../../util/util";
+import { isNumber, getDisplayQTitle, scrollToAnchor, getLocaleDateStringFromDate } from "../../util/util";
 
 export default function ScoringSummary(props) {
   const theme = useTheme();
@@ -161,7 +161,7 @@ export default function ScoringSummary(props) {
     const mostRecentEntry = getMostRecentEntry(summaryData);
     if (!mostRecentEntry) return "--";
     if (!mostRecentEntry.date) return "--";
-    return mostRecentEntry.date;
+    return getLocaleDateStringFromDate(mostRecentEntry.date);
   };
 
   const displayNumAnswered = (summaryData) => {

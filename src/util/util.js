@@ -43,7 +43,7 @@ export async function getInterventionLogicLib(interventionId) {
 }
 
 export function getFHIRResourcesToLoad() {
-  const defaultList = ["Condition"];
+  const defaultList = ["Condition", "Observation"];
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
   let resources = resourcesToLoad ? resourcesToLoad.split(",") : defaultList;
   defaultList.forEach((item) => {
@@ -65,29 +65,16 @@ export function getFHIRResourcePaths(patientId) {
     const observationCategories = getEnv(
       "REACT_APP_FHIR_OBSERVATION_CATEGORIES"
     );
-    const qList = getEnvQuestionnaireList().join(",");
-    if (resource.toLowerCase() === "questionnaire") {
-      const params = qList;
-      if (params) path = path + `?name:contains:${params}`;
-    }
     if (resource.toLowerCase() === "careplan") {
       path =
         path +
         `?subject=Patient/${patientId}&_sort=-_lastUpdated&category:text=Questionnaire`;
     } else {
       path =
-        path +
-        (resource.toLowerCase() !== "questionnaire"
-          ? `?patient=${patientId}&_sort=-_lastUpdated`
-          : "");
+        path + `?patient=${patientId}&_sort=-_lastUpdated`;
     }
     if (resource.toLowerCase() === "observation" && observationCategories) {
-      let categories = observationCategories.split(",");
-      path +=
-        "&" +
-        encodeURIComponent(
-          categories.map((cat) => "category=" + cat).join("&")
-        );
+      path += "&category=" + observationCategories
     }
     return {
       resourceType: resource,
@@ -96,11 +83,11 @@ export function getFHIRResourcePaths(patientId) {
   });
 }
 
-export function getResourcesByResourceType(patientBundle) {
+export function getResourcesByResourceType(patientBundle, resourceType) {
   if (!patientBundle || !patientBundle.length) return null;
   return patientBundle
     .filter((item) => {
-      return item.resource && item.resource.resourceType === "Condition";
+      return item.resource && item.resource.resourceType === resourceType;
     })
     .map((item) => item.resource);
 }
@@ -345,8 +332,7 @@ export function range(start, end) {
 export function gatherSummaryDataByQuestionnaireId(
   client,
   patientBundle,
-  questionnaireId,
-  exactMatch
+  questionnaireId
 ) {
   return new Promise((resolve, reject) => {
     // search for matching questionnaire
@@ -355,20 +341,28 @@ export function gatherSummaryDataByQuestionnaireId(
       const storageQuestionnaire = sessionStorage.getItem(storageKey);
       if (storageQuestionnaire) return JSON.parse(storageQuestionnaire);
       const fhirSearchOptions = { pageLimit: 0 };
-      const qResult = await client
-        .request(
+      // query by id and name
+      const qResult = await Promise.allSettled([
+        client.request(
           {
-            url: exactMatch
-              ? "Questionnaire/" + questionnaireId
-              : "Questionnaire?name:contains=" + questionnaireId,
+            url: "Questionnaire/" + questionnaireId,
           },
           fhirSearchOptions
-        )
-        .catch((e) => {
-          throw new Error(e);
-        });
-      if (qResult) sessionStorage.setItem(storageKey, JSON.stringify(qResult));
-      return qResult;
+        ),
+        client.request(
+          {
+            url: "Questionnaire?name:contains=" + questionnaireId,
+          },
+          fhirSearchOptions
+        ),
+      ]).catch((e) => {
+        throw new Error(e);
+      });
+      if (qResult[0] && qResult[0].status !== "rejected" && qResult[0].value) {
+        sessionStorage.setItem(storageKey, JSON.stringify(qResult[0].value));
+        return qResult[0].value;
+      }
+      return null;
     };
     const gatherSummaryData = async (questionnaireJson) => {
       // Define a web worker for evaluating CQL expressions
@@ -396,13 +390,15 @@ export function gatherSummaryDataByQuestionnaireId(
         console.log("Error retrieving ELM lib son for " + questionnaireId, e);
         throw new Error("Error retrieving ELM lib son for " + questionnaireId);
       });
-
+      console.log("elmJson? ", elmJson);
       setupExecution(
         elmJson,
         valueSetJson,
         {
-          QuestionnaireName: questionnaireJson.name,
-          QuestionnaireURL: questionnaireJson.url,
+          QuestionnaireName: questionnaireJson.id
+            ? questionnaireJson.id
+            : questionnaireJson.name,
+          // QuestionnaireURL: questionnaireJson.url,
         },
         getElmDependencies()
       );
@@ -411,14 +407,17 @@ export function gatherSummaryDataByQuestionnaireId(
       sendPatientBundle(patientBundle);
 
       // get formatted questionnaire responses
-      const cqlData = await evaluateExpression("ResponsesSummary").catch(
-        (e) => {
+      let cqlData = null;
+      try {
+        cqlData = await evaluateExpression("ResponsesSummary").catch((e) => {
           console.log(e);
           throw new Error(
             "CQL evaluation expression, ResponsesSummary, error "
           );
-        }
-      );
+        });
+      } catch (e) {
+        console.log("WTF ? ", e);
+      }
       const scoringData =
         cqlData && cqlData.length
           ? cqlData.filter((item) => {
@@ -431,7 +430,7 @@ export function gatherSummaryDataByQuestionnaireId(
         scoringData && scoringData.length
           ? scoringData.map((item) => ({
               ...item,
-              ...item.scoringParams?item.scoringParams:{},
+              ...(item.scoringParams ? item.scoringParams : {}),
               date: item.date,
               total: item.score,
             }))

@@ -6,7 +6,7 @@ import MaterialTable from "@material-table/core";
 import TableContainer from "@mui/material/TableContainer";
 import { getCorrectedISODate } from "../../util/util";
 
-export default function MedicalHistory(props) {
+export default function Procedure(props) {
   const theme = useTheme();
   const bgColor =
     theme &&
@@ -20,6 +20,7 @@ export default function MedicalHistory(props) {
     if (!data) return null;
     const goodData = data.filter(
       (item) =>
+        item.resourceType === "Observation" &&
         item.code &&
         item.code.coding &&
         item.code.coding.length > 0
@@ -27,16 +28,13 @@ export default function MedicalHistory(props) {
     return goodData
       .map((item, index) => {
         item.id = item.id + "_" + index;
-        item.condition = item.code.coding[0].display;
-        item.onsetDateTime = getCorrectedISODate(item.onsetDateTime);
-        item.recordedDate = getCorrectedISODate(item.recordedDate);
+        item.text = item.code.coding[0].display;
+        item.date = getCorrectedISODate(item.issued);
+        item.provider = item.performer && item.performer.length? item.performer[0].display: "";
         return item;
       })
       .sort((a, b) => {
-        return (
-          new Date(b.onsetDateTime).getTime() -
-          new Date(a.onsetDateTime).getTime()
-        );
+        return new Date(b.issued).getTime() - new Date(a.issued).getTime();
       });
   };
   const results = getData(data);
@@ -47,16 +45,16 @@ export default function MedicalHistory(props) {
       hidden: true,
     },
     {
-      title: "Condition",
-      field: "condition",
+      title: "Procedure / Diagnosis",
+      field: "text",
     },
     {
-      title: "Onset Date",
-      field: "onsetDateTime",
+      title: "Date",
+      field: "date",
     },
     {
-      title: "Recorded Date",
-      field: "recordedDate",
+      title: "Provider",
+      field: "provider",
     },
   ];
   const renderPrintView = (data) => {
@@ -120,6 +118,6 @@ export default function MedicalHistory(props) {
   );
 }
 
-MedicalHistory.propTypes = {
+Procedure.propTypes = {
   data: PropTypes.array,
 };

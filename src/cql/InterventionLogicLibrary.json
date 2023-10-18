@@ -131,17 +131,43 @@
             "context" : "Patient",
             "accessLevel" : "Public",
             "expression" : {
-               "name" : "MatchedReponsesByQuestionnaire",
-               "libraryName" : "LogicHelpers",
-               "type" : "FunctionRef",
-               "operand" : [ {
-                  "dataType" : "{http://hl7.org/fhir}QuestionnaireResponse",
-                  "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
-                  "type" : "Retrieve"
-               }, {
-                  "name" : "CurrentQuestionnaire",
-                  "type" : "ExpressionRef"
-               } ]
+               "type" : "If",
+               "condition" : {
+                  "type" : "Not",
+                  "operand" : {
+                     "type" : "IsNull",
+                     "operand" : {
+                        "name" : "QuestionnaireItems",
+                        "type" : "ExpressionRef"
+                     }
+                  }
+               },
+               "then" : {
+                  "name" : "MatchedReponsesByQuestionnaire",
+                  "libraryName" : "LogicHelpers",
+                  "type" : "FunctionRef",
+                  "operand" : [ {
+                     "dataType" : "{http://hl7.org/fhir}QuestionnaireResponse",
+                     "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
+                     "type" : "Retrieve"
+                  }, {
+                     "name" : "CurrentQuestionnaire",
+                     "type" : "ExpressionRef"
+                  } ]
+               },
+               "else" : {
+                  "name" : "MatchedReponsesByQuestionnaireName",
+                  "libraryName" : "LogicHelpers",
+                  "type" : "FunctionRef",
+                  "operand" : [ {
+                     "dataType" : "{http://hl7.org/fhir}QuestionnaireResponse",
+                     "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
+                     "type" : "Retrieve"
+                  }, {
+                     "name" : "QuestionnaireName",
+                     "type" : "ParameterRef"
+                  } ]
+               }
             }
          }, {
             "name" : "ResponsesSummary",
@@ -186,20 +212,43 @@
                      }, {
                         "name" : "responses",
                         "value" : {
-                           "name" : "FormattedResponses",
-                           "libraryName" : "LogicHelpers",
-                           "type" : "FunctionRef",
-                           "operand" : [ {
-                              "name" : "QuestionnaireItems",
-                              "type" : "ExpressionRef"
-                           }, {
-                              "path" : "item",
-                              "scope" : "I",
-                              "type" : "Property"
-                           }, {
-                              "name" : "ScoringQuestionId",
-                              "type" : "ParameterRef"
-                           } ]
+                           "type" : "If",
+                           "condition" : {
+                              "type" : "Not",
+                              "operand" : {
+                                 "type" : "IsNull",
+                                 "operand" : {
+                                    "name" : "QuestionnaireItems",
+                                    "type" : "ExpressionRef"
+                                 }
+                              }
+                           },
+                           "then" : {
+                              "name" : "FormattedResponses",
+                              "libraryName" : "LogicHelpers",
+                              "type" : "FunctionRef",
+                              "operand" : [ {
+                                 "name" : "QuestionnaireItems",
+                                 "type" : "ExpressionRef"
+                              }, {
+                                 "path" : "item",
+                                 "scope" : "I",
+                                 "type" : "Property"
+                              }, {
+                                 "name" : "ScoringQuestionId",
+                                 "type" : "ParameterRef"
+                              } ]
+                           },
+                           "else" : {
+                              "name" : "ResponsesOnly",
+                              "libraryName" : "LogicHelpers",
+                              "type" : "FunctionRef",
+                              "operand" : [ {
+                                 "path" : "item",
+                                 "scope" : "I",
+                                 "type" : "Property"
+                              } ]
+                           }
                         }
                      }, {
                         "name" : "totalAnsweredItems",
@@ -239,26 +288,51 @@
                      }, {
                         "name" : "totalItems",
                         "value" : {
-                           "type" : "Length",
-                           "operand" : {
-                              "name" : "GetAnswerLinkIdsByQuestionnaire",
-                              "libraryName" : "LogicHelpers",
-                              "type" : "FunctionRef",
-                              "operand" : [ {
-                                 "name" : "CurrentQuestionnaire",
-                                 "type" : "ExpressionRef"
-                              }, {
-                                 "name" : "ScoringQuestionId",
-                                 "type" : "ParameterRef"
-                              } ]
+                           "type" : "If",
+                           "condition" : {
+                              "type" : "Not",
+                              "operand" : {
+                                 "type" : "IsNull",
+                                 "operand" : {
+                                    "name" : "QuestionnaireItems",
+                                    "type" : "ExpressionRef"
+                                 }
+                              }
+                           },
+                           "then" : {
+                              "type" : "Length",
+                              "operand" : {
+                                 "name" : "GetAnswerLinkIdsByQuestionnaire",
+                                 "libraryName" : "LogicHelpers",
+                                 "type" : "FunctionRef",
+                                 "operand" : [ {
+                                    "name" : "CurrentQuestionnaire",
+                                    "type" : "ExpressionRef"
+                                 }, {
+                                    "name" : "ScoringQuestionId",
+                                    "type" : "ParameterRef"
+                                 } ]
+                              }
+                           },
+                           "else" : {
+                              "type" : "Length",
+                              "operand" : {
+                                 "path" : "item",
+                                 "scope" : "I",
+                                 "type" : "Property"
+                              }
                            }
                         }
                      }, {
                         "name" : "authoredDate",
                         "value" : {
-                           "path" : "authored",
-                           "scope" : "I",
-                           "type" : "Property"
+                           "path" : "value",
+                           "type" : "Property",
+                           "source" : {
+                              "path" : "authored",
+                              "scope" : "I",
+                              "type" : "Property"
+                           }
                         }
                      }, {
                         "name" : "lastUpdated",
