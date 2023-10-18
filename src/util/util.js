@@ -628,5 +628,6 @@ export function getQuestionnaireName(questionnaireJson) {
 export function getLocaleDateStringFromDate(dateString, format) {
   if (!dateString) return "";
   const dateFormat = format ? format : "YYYY-MM-DD hh:mm";
+  if (!dayjs(dateString).isValid()) return dateString;
   return dayjs(dateString).format(dateFormat);
 }

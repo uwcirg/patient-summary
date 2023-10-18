@@ -45,7 +45,33 @@ export default function Responses(props) {
     theme.palette.lightest.main
       ? theme.palette.lightest.main
       : "#FFF";
-  const data = props.data || [];
+  const getFormattedData = (data) => {
+    if (!data || !data.length) return null;
+    let copyData = JSON.parse(JSON.stringify(data));
+    const maxResponsesLength = Math.max(
+      ...copyData.map((d) => (d.responses ? d.responses.length : 0))
+    );
+    const dataForQuestions = copyData.find(
+      (d) => d.responses && d.responses.length === maxResponsesLength
+    );
+    if (!dataForQuestions) return null;
+    copyData.forEach((d) => {
+      if (d.id === dataForQuestions.id) return true;
+      if (!d.responses || !d.responses.length) return true;
+      dataForQuestions.responses.forEach((item) => {
+        const matched = d.responses.find((o) => o.id === item.id);
+        if (!matched) {
+          d.responses.push({
+            id: item.id,
+            question: item.question,
+            answer: "",
+          });
+        }
+      });
+    });
+    return copyData;
+  };
+  const data = getFormattedData(props.data) || [];
   const dates = data.map((item) => ({ date: item.date, id: item.id }));
   const columns = [
     {
@@ -125,6 +151,7 @@ export default function Responses(props) {
       );
       result.push(scoringResult);
     }
+    console.log("result ", result);
     return result;
   };
 
@@ -178,6 +205,7 @@ export default function Responses(props) {
     if (!hasData()) return null;
     const arrDates = dates.filter((item, index) => index < 2);
     const arrData = data.filter((item, index) => index < 2);
+    console.log("data ? ", data);
     // this will render the current and the previous response(s) for print
     return (
       <Box className="print-only">
@@ -238,6 +266,7 @@ export default function Responses(props) {
                         scoreParams={item}
                       ></Score>
                     )}
+                    {isNaN(item.score) && <span>--</span>}
                   </TableCell>
                 ))}
               </TableRow>
