@@ -31,10 +31,10 @@ define function DateTimeText(d FHIR.dateTime):
 
 define function GetMatchQuestionnaire(QuestionnaireName String, QuestionnaireURL String):
   ([Questionnaire] Q
-    where 
-    Q.url.value = QuestionnaireURL or 
+    where
+    Q.id = QuestionnaireName or
+    (Q.url is not null and Q.url.value = QuestionnaireURL) or 
     Lower(Q.name) = Lower(QuestionnaireName) or
-    PositionOf(Lower(QuestionnaireName), Lower(Q.id)) != -1 or
     PositionOf(Lower(QuestionnaireName), Lower(Q.name)) != -1 or
     PositionOf(Lower(Q.name), Lower(QuestionnaireName)) != -1
   )
@@ -55,12 +55,29 @@ define function MatchedReponsesByQuestionnaire(responses List<FHIR.Questionnaire
       Q.status.value = 'completed')
       sort by authored desc, meta.lastUpdated desc
   )
+
+/*
+ * retrieve questionnaire responses matched by keyward for questionnaire name
+ * @param responses as FHIR.QuestionnaireResponse
+ * @param questionnaireName as String to match against
+ */
+define function MatchedReponsesByQuestionnaireName(responses List<FHIR.QuestionnaireResponse>, QuestionnaireName String):
+  ((responses) Q
+    where 
+    (
+      (
+        PositionOf(Lower(QuestionnaireName), Lower(Q.questionnaire.value)) != -1 or
+        PositionOf(Lower(QuestionnaireName), Lower(Q.questionnaire.value)) != -1
+      ) and 
+      Q.status.value = 'completed')
+      sort by authored desc, meta.lastUpdated desc
+  )
   
 
 define function GetAnswerLinkIdsByQuestionnaire(currentQuestionnaire FHIR.Questionnaire, scoringQuestionId String):
   (currentQuestionnaire C) O
   let
-    responseItems: ((O.item) I where IndexOf(AnswerQuestionTypes, I.type.value) != -1 and I.linkId.value != scoringQuestionId)
+    responseItems: ((O.item) I where I.type is not null and I.linkId is not null and IndexOf(AnswerQuestionTypes, I.type.value) != -1 and I.linkId.value != scoringQuestionId)
     return responseItems.linkId.value
 
 /*
@@ -138,6 +155,29 @@ define function FormattedResponses(questionnaireItems List<FHIR.Questionnaire.It
       question: if Q.linkId.value = scoringQuestionId then '<b>' + Q.text.value + '</b>' else Q.text.value,
       text: Q.text.value
     }
+
+
+//responses from QuestionnaireResponse
+define function ResponsesOnly(responseItems List<FHIR.QuestionnaireResponse.Item>):
+  (responseItems) I
+  let
+    value: I.answer[0].value.value
+  return {
+      id: I.linkId.value,
+      answer: 
+        case
+          when value is String then value
+          when value is Integer then value
+          when value is Date then ToString(value as Date)
+          when value is DateTime then ToString(value as DateTime)
+          else value
+        end,
+     // I.answer[0].value.value,
+      value: null,
+      valueObject: I.answer[0].value,
+      question: I.text.value,
+      text: I.text.value
+  }
 
 
 define function ResponsesSummary (

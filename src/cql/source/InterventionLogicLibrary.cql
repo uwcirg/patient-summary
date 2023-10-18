@@ -33,18 +33,30 @@ define QuestionnaireItems:
   CurrentQuestionnaire Q
   return Q.item
 
-// Load Questionnaire responses
+//Load Questionnaire responses
 define QuestionnaireResponses:
-  LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], CurrentQuestionnaire)
+  if QuestionnaireItems is not null then 
+    LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], CurrentQuestionnaire)
+  else
+    LogicHelpers.MatchedReponsesByQuestionnaireName([QuestionnaireResponse], QuestionnaireName)
 
 define ResponsesSummary:
   (QuestionnaireResponses) I
   return {
     id: I.id.value,
     date: LogicHelpers.DateTimeText(I.authored),
-    responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
+    responses: 
+      if QuestionnaireItems is not null then
+        LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId)
+      else
+        LogicHelpers.ResponsesOnly(I.item),
     totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
-    totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
+    totalItems: 
+      if QuestionnaireItems is not null then
+        Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId))
+      else
+        Length(I.item),
+   // totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
     authoredDate: I.authored.value,
     lastUpdated: I.meta.lastUpdated.value
   }
