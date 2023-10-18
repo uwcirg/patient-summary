@@ -155,9 +155,8 @@ define function FormattedResponses(questionnaireItems List<FHIR.Questionnaire.It
       question: if Q.linkId.value = scoringQuestionId then '<b>' + Q.text.value + '</b>' else Q.text.value,
       text: Q.text.value
     }
-
-
-//responses from QuestionnaireResponse
+//return responses from QuestionnaireResponse
+// @param responsesItems of type FHIR.QuestionnaireResponse.Item
 define function ResponsesOnly(responseItems List<FHIR.QuestionnaireResponse.Item>):
   (responseItems) I
   let
@@ -172,7 +171,6 @@ define function ResponsesOnly(responseItems List<FHIR.QuestionnaireResponse.Item
           when value is DateTime then ToString(value as DateTime)
           else value
         end,
-     // I.answer[0].value.value,
       value: null,
       valueObject: I.answer[0].value,
       question: I.text.value,
