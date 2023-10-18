@@ -52,7 +52,9 @@ export default function ScoringSummary(props) {
       : null;
     if (matchedQuestionnaire && matchedQuestionnaire.length) {
       const { id, name, title } = matchedQuestionnaire[0];
-      return name || title || id;
+      if (name) return name;
+      if (title) return title;
+      return id;
     }
     return String(key).toUpperCase();
   };
