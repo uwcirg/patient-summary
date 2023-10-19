@@ -58,7 +58,26 @@ export default function QuestionnaireListProvider({ children }) {
         );
         let uniqueQIds = [...new Set(qIds)];
         if (envQList.length) {
-          uniqueQIds = [...new Set([...qIds, ...envQList])];
+          // const uniqueEnvQList = envQList.filter(
+          //   (qid) =>
+          //     !matchedResults.find((item) =>
+          //       String(item.resource.questionnaire)
+          //         .toLowerCase()
+          //         .includes(String(qid).toLowerCase())
+          //     )
+          // );
+          // uniqueQIds = uniqueQIds.filter((qid) => {
+          //   const QRs = matchedResults.map((item) => item.resource);
+          //   const matchedQR = QRs.find((qr) => qr.id === qid);
+          //   return !envQList.find((id) =>
+          //     String(matchedQR.questionnaire)
+          //       .toLowerCase()
+          //       .includes(String(id).toLowerCase())
+          //   );
+          // });
+          //TODO only include QIDs from environment Q list
+          //uniqueQIds = [...envQList, ...new Set([...uniqueQIds])];
+          uniqueQIds = [...new Set([...uniqueQIds])];
         }
         console.log("questionnaire list to load ", uniqueQIds);
         setQuestionnaireList(

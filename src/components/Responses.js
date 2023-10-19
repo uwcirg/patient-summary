@@ -205,7 +205,6 @@ export default function Responses(props) {
     if (!hasData()) return null;
     const arrDates = dates.filter((item, index) => index < 2);
     const arrData = data.filter((item, index) => index < 2);
-    console.log("data ? ", data);
     // this will render the current and the previous response(s) for print
     return (
       <Box className="print-only">

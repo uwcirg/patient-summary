@@ -130,11 +130,24 @@ define function getAnswerValueByCode(questionnaire FHIR.Questionnaire, code Stri
  * @return score in Integer
  */
 define function getScoringByResponseItem(questionnaire FHIR.Questionnaire, responses List<FHIR.QuestionnaireResponse.Item>, linkId String):
-  (singleton from (((responses) o where o.linkId.value = linkId) I
-  return 
-    if I is null then ({null as Integer})
-    else
-      if I.answer[0].value.code is not null then getAnswerValueByCode(questionnaire, I.answer[0].value.code.value) else 0 as Integer))
+    (singleton from (((responses) o where o.linkId.value = linkId) I
+      let answerCode: I.answer[0].value.code.value
+      return 
+        if I is null then ({null as Integer})
+        else
+          case 
+            when questionnaire is not null and answerCode is not null then getAnswerValueByCode(questionnaire, answerCode) 
+            when  answerCode is not null then
+              case
+                when answerCode = 'LA6568-5' then 0
+                when answerCode = 'LA6569-3' then 1
+                when answerCode = 'LA6570-1' then 2
+                when answerCode = 'LA6571-9' then 3
+                else 0
+              end
+            else 0 as Integer
+          end)
+    )
 
 /* 
  * retrieve responses in a list of Tuple of formatted question and answer

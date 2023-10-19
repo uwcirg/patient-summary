@@ -53,7 +53,7 @@ const renderMedicalHistory = (props) => {
 };
 const renderObservations = (props) => {
   const Procedure = lazy(() =>
-    import("../components/sections/Procedure")
+    import("../components/sections/Observations")
   );
   return (
     <Suspense fallback={renderLoader()}>
@@ -107,7 +107,7 @@ const DEFAULT_SECTIONS = [
   },
   {
     id: "observations",
-    title: "Procedures / Diagnoses",
+    title: "Observations",
     anchorElementId: `anchor_observations`,
     resources: ["Observation"],
     icon: (props) => (

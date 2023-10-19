@@ -85,7 +85,11 @@ define ResponsesSummary:
       end,
       scoringParams: scoringParams,
       totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
-      totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
+      totalItems: 
+        if QuestionnaireItems is not null then
+          Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId))
+        else
+          Length(I.item),
       authoredDate: I.authored.value,
       lastUpdated: I.meta.lastUpdated.value
     }

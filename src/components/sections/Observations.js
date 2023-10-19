@@ -6,7 +6,7 @@ import MaterialTable from "@material-table/core";
 import TableContainer from "@mui/material/TableContainer";
 import { getCorrectedISODate } from "../../util/util";
 
-export default function Procedure(props) {
+export default function Observations(props) {
   const theme = useTheme();
   const bgColor =
     theme &&
@@ -117,6 +117,6 @@ export default function Procedure(props) {
   );
 }
 
-Procedure.propTypes = {
+Observations.propTypes = {
   data: PropTypes.array,
 };

@@ -369,9 +369,10 @@ export function gatherSummaryDataByQuestionnaireId(
       ]).catch((e) => {
         throw new Error(e);
       });
-      if (qResult[0] && qResult[0].status !== "rejected" && qResult[0].value) {
-        sessionStorage.setItem(storageKey, JSON.stringify(qResult[0].value));
-        return qResult[0].value;
+      const returnResult = qResult.find(result => result.status !== "rejected");
+      if (returnResult) {
+        sessionStorage.setItem(storageKey, JSON.stringify(returnResult.value));
+        return returnResult.value;
       }
       return null;
     };
@@ -391,6 +392,9 @@ export function gatherSummaryDataByQuestionnaireId(
         );
       });
       const targetQId = matchedKeys.length ? matchedKeys[0] : questionaireKey;
+      console.log("matched keys ? ", matchedKeys)
+      console.log("questionnaireJSON ", questionnaireJson)
+      console.log('targetQID ', targetQId)
       const chartConfig = getChartConfig(targetQId);
       const questionnaireConfig = QuestionnaireConfig[targetQId] || {};
 
@@ -405,13 +409,12 @@ export function gatherSummaryDataByQuestionnaireId(
         elmJson,
         valueSetJson,
         {
-          QuestionnaireName: questionnaireJson.id
-            ? questionnaireJson.id
-            : questionnaireJson.name,
-          // QuestionnaireURL: questionnaireJson.url,
+          QuestionnaireName: questionnaireJson.id ? questionnaireJson.id : questionnaireJson.name
         },
         getElmDependencies()
       );
+
+      console.log("elmsJson? ", elmJson)
 
       // Send patient info to CQL worker to process
       sendPatientBundle(patientBundle);
@@ -429,7 +432,7 @@ export function gatherSummaryDataByQuestionnaireId(
         console.log("Error executing CQL expression: ", e);
       }
       const scoringData =
-        cqlData && cqlData.length
+        cqlData && Array.isArray(cqlData) && cqlData.length
           ? cqlData.filter((item) => {
               return (
                 item && item.responses && isNumber(item.score) && item.date
@@ -540,17 +543,19 @@ export function getIntroTextFromQuestionnaire(questionnaireJson) {
         (item) => String(item.linkId).toLowerCase() === "introduction"
       )
     : null;
-  if (!targetItem || !targetItem.length) return "";
-  const textElement = targetItem[0]._text;
-  if (!textElement || !textElement.extension || !textElement.extension[0])
-    return "";
-  return textElement.extension[0].valueString;
+  if (targetItem && targetItem.length) {
+    const textElement = targetItem[0]._text;
+    if (!textElement || !textElement.extension || !textElement.extension[0])
+      return "";
+    return textElement.extension[0].valueString;
+  }
+  return questionnaireJson.description;
 }
 
 export function isNumber(target) {
   if (isNaN(target)) return false;
   if (typeof target === "number") return true;
-  return target !== null;
+  return target != null;
 }
 
 export function shouldShowPatientInfo(client) {
