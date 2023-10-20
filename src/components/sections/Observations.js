@@ -16,7 +16,7 @@ export default function Observations(props) {
       ? theme.palette.lightest.main
       : "#FFF";
   const { data } = props;
-  const getItemValue = (item ) => {
+  const getItemValue = (item) => {
     if (!item) return "--";
     if (item.valueQuantity && item.valueQuantity.value) {
       return item.valueQuantity.value;
@@ -36,12 +36,15 @@ export default function Observations(props) {
     // need to handle date/time value
 
     return "--";
-
-  }
+  };
   const getData = (data) => {
     if (!data) return null;
     const goodData = data.filter(
-      (item) => item.code && item.code.coding && item.code.coding.length > 0
+      (item) =>
+        item.resourceType === "Observation" &&
+        item.code &&
+        item.code.coding &&
+        item.code.coding.length > 0
     );
     return goodData
       .map((item, index) => {

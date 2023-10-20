@@ -20,6 +20,7 @@ export default function MedicalHistory(props) {
     if (!data) return null;
     const goodData = data.filter(
       (item) =>
+        item.resourceType === "Condition" &&
         item.code &&
         item.code.coding &&
         item.code.coding.length > 0
@@ -27,7 +28,7 @@ export default function MedicalHistory(props) {
     return goodData
       .map((item, index) => {
         item.id = item.id + "_" + index;
-        item.condition = item.code.coding[0].display;
+        item.condition = item.code.coding.map(o => o.display).join(", ");
         item.onsetDateTime = getCorrectedISODate(item.onsetDateTime);
         item.recordedDate = getCorrectedISODate(item.recordedDate);
         return item;
