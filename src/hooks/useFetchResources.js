@@ -18,7 +18,7 @@ import qConfig from "../config/questionnaire_config";
 
 export default function useFetchResources() {
   const { client, patient } = useContext(FhirClientContext);
-  let { questionnaireList } = useContext(QuestionnaireListContext);
+  let { questionnaireList, exactMatch } = useContext(QuestionnaireListContext);
   const questionnareKeys =
     questionnaireList && questionnaireList.length ? questionnaireList : [];
   const [summaryData, setSummaryData] = useState({
@@ -93,7 +93,8 @@ export default function useFetchResources() {
   const gatherSummaryDataByQuestionnaireId = (
     client,
     patientBundle,
-    questionnaireId
+    questionnaireId,
+    exactMatch
   ) => {
     return new Promise((resolve, reject) => {
       // search for matching questionnaire
@@ -102,21 +103,26 @@ export default function useFetchResources() {
         const storageQuestionnaire = sessionStorage.getItem(storageKey);
         if (storageQuestionnaire) return JSON.parse(storageQuestionnaire);
         const fhirSearchOptions = { pageLimit: 0 };
-        // query by id and name
-        const qResult = await Promise.allSettled([
+        const requests = [
           client.request(
             {
               url: "Questionnaire/" + questionnaireId,
             },
             fhirSearchOptions
           ),
-          client.request(
-            {
-              url: "Questionnaire?name:contains=" + questionnaireId,
-            },
-            fhirSearchOptions
-          ),
-        ]).catch((e) => {
+        ];
+        if (!exactMatch) {
+          requests.push(
+            client.request(
+              {
+                url: "Questionnaire?name:contains=" + questionnaireId,
+              },
+              fhirSearchOptions
+            )
+          );
+        }
+        // query by id and name
+        const qResult = await Promise.allSettled(requests).catch((e) => {
           throw new Error(e);
         });
         const returnResult = qResult.find(
@@ -142,14 +148,13 @@ export default function useFetchResources() {
           const match = String(id).toLowerCase();
           return (
             String(questionnaireJson.name).toLowerCase().includes(match) ||
-            String(questionnaireJson.title).toLowerCase().includes(match) ||
-            String(questionnaireJson.id).toLowerCase().includes(match)
+            String(questionnaireJson.title).toLowerCase().includes(match)
           );
         });
         const targetQId = matchedKeys.length ? matchedKeys[0] : questionaireKey;
-        // console.log("matched keys ? ", matchedKeys)
-        // console.log("questionnaireJSON ", questionnaireJson);
-        // console.log("targetQID ", targetQId);
+        console.log("matched keys ? ", matchedKeys);
+        console.log("questionnaireJSON ", questionnaireJson);
+        console.log("targetQID ", targetQId);
         const chartConfig = getChartConfig(targetQId);
         const questionnaireConfig = QuestionnaireConfig[targetQId] || {};
 
@@ -310,14 +315,15 @@ export default function useFetchResources() {
         console.log("patient bundle ", patientBundle.current);
         console.log("fhirData", fhirData);
         console.log("questionnaire list to load ", questionnaireList);
-
+        console.log("exact match ", exactMatch);
         const requests = questionnaireList.map((qid) =>
           (async () => {
             let error = "";
             let results = await gatherSummaryDataByQuestionnaireId(
               client,
               patientBundle.current,
-              qid
+              qid,
+              exactMatch
             ).catch((e) => (error = e));
             if (error) handleResourceError(qid);
             else handleResourceComplete(qid);

@@ -3,6 +3,7 @@ import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import {
   getEnvQuestionnaireList,
+  getEnv
 } from "../util/util";
 import { QuestionnaireListContext } from "./QuestionnaireListContext";
 import { FhirClientContext } from "../context/FhirClientContext";
@@ -12,6 +13,7 @@ let loadComplete = false;
 export default function QuestionnaireListProvider({ children }) {
   const [error, setError] = useState();
   const [questionnaireList, setQuestionnaireList] = useState([]);
+  const [exactMatch, setExactMatch] = useState(false);
   const { client, patient } = useContext(FhirClientContext);
 
   useEffect(() => {
@@ -60,6 +62,7 @@ export default function QuestionnaireListProvider({ children }) {
             "questionnaire list from questionnaire responses to load ",
             uniqueQIds
           );
+          setExactMatch(true);
           setQuestionnaireList(uniqueQIds);
      //  }
         loadComplete = true;
@@ -73,6 +76,7 @@ export default function QuestionnaireListProvider({ children }) {
     <QuestionnaireListContext.Provider
       value={{
         questionnaireList: questionnaireList,
+        exactMatch: getEnv("REACT_APP_MATCH_QUESTIONNAIRE_BY_ID") || exactMatch,
         error: error,
       }}
     >
