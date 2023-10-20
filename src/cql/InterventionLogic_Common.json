@@ -457,15 +457,27 @@
                            "operand" : [ {
                               "type" : "And",
                               "operand" : [ {
-                                 "type" : "Not",
-                                 "operand" : {
-                                    "type" : "IsNull",
+                                 "type" : "And",
+                                 "operand" : [ {
+                                    "type" : "Not",
                                     "operand" : {
-                                       "path" : "type",
-                                       "scope" : "I",
-                                       "type" : "Property"
+                                       "type" : "IsNull",
+                                       "operand" : {
+                                          "name" : "I",
+                                          "type" : "AliasRef"
+                                       }
                                     }
-                                 }
+                                 }, {
+                                    "type" : "Not",
+                                    "operand" : {
+                                       "type" : "IsNull",
+                                       "operand" : {
+                                          "path" : "type",
+                                          "scope" : "I",
+                                          "type" : "Property"
+                                       }
+                                    }
+                                 } ]
                               }, {
                                  "type" : "Not",
                                  "operand" : {

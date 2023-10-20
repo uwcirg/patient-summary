@@ -83,7 +83,7 @@ define function MatchedReponsesByQuestionnaire(responses List<FHIR.Questionnaire
 define function GetAnswerLinkIdsByQuestionnaire(currentQuestionnaire FHIR.Questionnaire, scoringQuestionId String):
   (currentQuestionnaire C) O
   let
-    responseItems: ((O.item) I where I.type is not null and I.linkId is not null and IndexOf(AnswerQuestionTypes, I.type.value) != -1 and I.linkId.value != scoringQuestionId)
+    responseItems: ((O.item) I where  I is not null and I.type is not null and I.linkId is not null and IndexOf(AnswerQuestionTypes, I.type.value) != -1 and I.linkId.value != scoringQuestionId)
     return responseItems.linkId.value
 
 /*
