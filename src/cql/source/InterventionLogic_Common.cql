@@ -49,17 +49,17 @@ define function GetMatchQuestionnaire(QuestionnaireID String, QuestionnaireName 
  * @param responses as FHIR.QuestionnaireResponse
  * @param questionnaire as FHIR.Questionnaire to match against
  */
-define function MatchedReponsesByQuestionnaire(responses List<FHIR.QuestionnaireResponse>, currentQuestionnaire FHIR.Questionnaire):
-  ((responses) Q
-    where 
-    (
-      (
-        PositionOf(Lower(currentQuestionnaire.name), Lower(Q.questionnaire.value)) != -1 or
-        PositionOf(Lower(currentQuestionnaire.id), Lower(Q.questionnaire.value)) != -1
-      ) and 
-      Q.status.value = 'completed')
-      sort by authored desc, meta.lastUpdated desc
-  )
+// define function MatchedReponsesByQuestionnaire(responses List<FHIR.QuestionnaireResponse>, currentQuestionnaire FHIR.Questionnaire):
+//   ((responses) Q
+//     where 
+//     (
+//       (
+//         PositionOf(Lower(currentQuestionnaire.name), Lower(Q.questionnaire.value)) != -1 or
+//         PositionOf(Lower(currentQuestionnaire.id), Lower(Q.questionnaire.value)) != -1
+//       ) and 
+//       Q.status.value = 'completed')
+//       sort by authored desc, meta.lastUpdated desc
+//   )
 
 /*
  * retrieve questionnaire responses matched by keyward for the questionnaire element

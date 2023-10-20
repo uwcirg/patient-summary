@@ -204,6 +204,14 @@
                "type" : "ParameterRef"
             }
          }, {
+            "name" : "CurrentQuestionnaireID",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "name" : "QuestionnaireID",
+               "type" : "ParameterRef"
+            }
+         }, {
             "name" : "QuestionnaireItems",
             "context" : "Patient",
             "accessLevel" : "Public",
@@ -259,50 +267,24 @@
             "context" : "Patient",
             "accessLevel" : "Public",
             "expression" : {
-               "type" : "If",
-               "condition" : {
-                  "type" : "Not",
+               "name" : "MatchedReponsesByQuestionnaire",
+               "libraryName" : "LogicHelpers",
+               "type" : "FunctionRef",
+               "operand" : [ {
+                  "dataType" : "{http://hl7.org/fhir}QuestionnaireResponse",
+                  "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
+                  "type" : "Retrieve"
+               }, {
+                  "asType" : "{urn:hl7-org:elm-types:r1}String",
+                  "type" : "As",
                   "operand" : {
-                     "type" : "IsNull",
-                     "operand" : {
-                        "name" : "QuestionnaireItems",
-                        "type" : "ExpressionRef"
-                     }
-                  }
-               },
-               "then" : {
-                  "name" : "MatchedReponsesByQuestionnaire",
-                  "libraryName" : "LogicHelpers",
-                  "type" : "FunctionRef",
-                  "operand" : [ {
-                     "dataType" : "{http://hl7.org/fhir}QuestionnaireResponse",
-                     "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
-                     "type" : "Retrieve"
-                  }, {
-                     "name" : "CurrentQuestionnaire",
-                     "type" : "ExpressionRef"
-                  } ]
-               },
-               "else" : {
-                  "name" : "MatchedReponsesByQuestionnaire",
-                  "libraryName" : "LogicHelpers",
-                  "type" : "FunctionRef",
-                  "operand" : [ {
-                     "dataType" : "{http://hl7.org/fhir}QuestionnaireResponse",
-                     "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
-                     "type" : "Retrieve"
-                  }, {
-                     "asType" : "{urn:hl7-org:elm-types:r1}String",
-                     "type" : "As",
-                     "operand" : {
-                        "name" : "QuestionnaireID",
-                        "type" : "ParameterRef"
-                     }
-                  }, {
-                     "name" : "QuestionnaireName",
+                     "name" : "QuestionnaireID",
                      "type" : "ParameterRef"
-                  } ]
-               }
+                  }
+               }, {
+                  "name" : "QuestionnaireName",
+                  "type" : "ParameterRef"
+               } ]
             }
          }, {
             "name" : "ResponsesSummary",

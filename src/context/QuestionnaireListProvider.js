@@ -3,7 +3,6 @@ import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import {
   getEnvQuestionnaireList,
-  getFhirResourcesFromQueryResult,
 } from "../util/util";
 import { QuestionnaireListContext } from "./QuestionnaireListContext";
 import { FhirClientContext } from "../context/FhirClientContext";
@@ -11,9 +10,8 @@ import { FhirClientContext } from "../context/FhirClientContext";
 let loadComplete = false;
 
 export default function QuestionnaireListProvider({ children }) {
-  const [error, setError] = useState(null);
+  const [error, setError] = useState();
   const [questionnaireList, setQuestionnaireList] = useState([]);
-  const [questionnaireResponses, setQuestionnaireResponses] = useState([]);
   const { client, patient } = useContext(FhirClientContext);
 
   useEffect(() => {
@@ -22,76 +20,48 @@ export default function QuestionnaireListProvider({ children }) {
       return;
     }
     if (loadComplete || error) return;
-
-    const envQList = getEnvQuestionnaireList() || [];
+    const envQList = getEnvQuestionnaireList();
+    console.log("env List? ", envQList)
     const handleErrorCallback = (message) => {
-      if (envQList.length) {
-        setQuestionnaireList(envQList.map((q) => ({ id: q })));
-      } else {
-        setError(message ? message : "No questionnaire list set");
-      }
+      setError(message);
       loadComplete = true;
     };
+    // load questionnaires based on questionnaire responses
     client
       .request(
         "QuestionnaireResponse?_sort=-_lastUpdated&_count=500&patient=" +
           patient.id
       )
       .then((results) => {
-        const matchedResults =
-          results && results.entry && results.entry.length
-            ? results.entry.filter(
-                (item) =>
-                  item.resource &&
-                  item.resource.questionnaire &&
-                  item.resource.questionnaire.split("/")[1]
-              )
-            : null;
-        //console.log("matched results ", matchedResults)
-        if (!matchedResults || !matchedResults.length) {
-          handleErrorCallback();
-          return;
-        }
+        // if (envQList.length) {
+        //   setQuestionnaireList(envQList);
+        //   console.log("questionnaire list to load from env var: ", envQList);
+        // } else {
+          const matchedResults =
+            results && results.entry && results.entry.length
+              ? results.entry.filter(
+                  (item) =>
+                    item.resource &&
+                    item.resource.questionnaire &&
+                    item.resource.questionnaire.split("/")[1]
+                )
+              : null;
 
-        const qIds = matchedResults.map(
-          (item) => item.resource.questionnaire.split("/")[1]
-        );
-        let uniqueQIds = [...new Set(qIds)];
-        if (envQList.length) {
-          // const uniqueEnvQList = envQList.filter(
-          //   (qid) =>
-          //     !matchedResults.find((item) =>
-          //       String(item.resource.questionnaire)
-          //         .toLowerCase()
-          //         .includes(String(qid).toLowerCase())
-          //     )
-          // );
-          // uniqueQIds = uniqueQIds.filter((qid) => {
-          //   const QRs = matchedResults.map((item) => item.resource);
-          //   const matchedQR = QRs.find((qr) => qr.id === qid);
-          //   return !envQList.find((id) =>
-          //     String(matchedQR.questionnaire)
-          //       .toLowerCase()
-          //       .includes(String(id).toLowerCase())
-          //   );
-          // });
-          //TODO only include QIDs from environment Q list
-          //uniqueQIds = [...envQList, ...new Set([...uniqueQIds])];
-          uniqueQIds = envQList;
-          
-        } else {
-          uniqueQIds = [...new Set([...uniqueQIds])];
-        }
-        console.log("questionnaire list to load ", uniqueQIds);
-        setQuestionnaireList(
-          uniqueQIds.map((id) => ({
-            id: id,
-          }))
-        );
-
-        const responseResources = getFhirResourcesFromQueryResult(results);
-        //console.log("responses ", responseResources);
-        setQuestionnaireResponses(responseResources);
+          //console.log("matched results ", matchedResults)
+          if (!matchedResults || !matchedResults.length) {
+            setError("No questionnaire list set");
+            return;
+          }
+          const qIds = matchedResults.map(
+            (item) => item.resource.questionnaire.split("/")[1]
+          );
+          let uniqueQIds = [...new Set(qIds)];
+          console.log(
+            "questionnaire list from questionnaire responses to load ",
+            uniqueQIds
+          );
+          setQuestionnaireList(uniqueQIds);
+       // }
         loadComplete = true;
       })
       .catch((e) => {
@@ -103,7 +73,6 @@ export default function QuestionnaireListProvider({ children }) {
     <QuestionnaireListContext.Provider
       value={{
         questionnaireList: questionnaireList,
-        questionnaireResponses: questionnaireResponses,
         error: error,
       }}
     >

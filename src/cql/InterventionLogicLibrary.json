@@ -142,46 +142,20 @@
             "context" : "Patient",
             "accessLevel" : "Public",
             "expression" : {
-               "type" : "If",
-               "condition" : {
-                  "type" : "Not",
-                  "operand" : {
-                     "type" : "IsNull",
-                     "operand" : {
-                        "name" : "QuestionnaireItems",
-                        "type" : "ExpressionRef"
-                     }
-                  }
-               },
-               "then" : {
-                  "name" : "MatchedReponsesByQuestionnaire",
-                  "libraryName" : "LogicHelpers",
-                  "type" : "FunctionRef",
-                  "operand" : [ {
-                     "dataType" : "{http://hl7.org/fhir}QuestionnaireResponse",
-                     "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
-                     "type" : "Retrieve"
-                  }, {
-                     "name" : "CurrentQuestionnaire",
-                     "type" : "ExpressionRef"
-                  } ]
-               },
-               "else" : {
-                  "name" : "MatchedReponsesByQuestionnaire",
-                  "libraryName" : "LogicHelpers",
-                  "type" : "FunctionRef",
-                  "operand" : [ {
-                     "dataType" : "{http://hl7.org/fhir}QuestionnaireResponse",
-                     "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
-                     "type" : "Retrieve"
-                  }, {
-                     "name" : "QuestionnaireID",
-                     "type" : "ParameterRef"
-                  }, {
-                     "name" : "QuestionnaireName",
-                     "type" : "ParameterRef"
-                  } ]
-               }
+               "name" : "MatchedReponsesByQuestionnaire",
+               "libraryName" : "LogicHelpers",
+               "type" : "FunctionRef",
+               "operand" : [ {
+                  "dataType" : "{http://hl7.org/fhir}QuestionnaireResponse",
+                  "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
+                  "type" : "Retrieve"
+               }, {
+                  "name" : "QuestionnaireID",
+                  "type" : "ParameterRef"
+               }, {
+                  "name" : "QuestionnaireName",
+                  "type" : "ParameterRef"
+               } ]
             }
          }, {
             "name" : "ResponsesSummary",

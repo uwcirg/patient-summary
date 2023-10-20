@@ -16,20 +16,43 @@ export default function Observations(props) {
       ? theme.palette.lightest.main
       : "#FFF";
   const { data } = props;
+  const getItemValue = (item ) => {
+    if (!item) return "--";
+    if (item.valueQuantity && item.valueQuantity.value) {
+      return item.valueQuantity.value;
+    }
+    if (item.valueString && item.valueString.value) {
+      return item.valueString.value;
+    }
+    if (item.valueBoolean && item.valueBoolean.value) {
+      return String(item.valueBoolean.value);
+    }
+    if (item.valueInteger && item.valueInteger.value) {
+      return item.valueInteger.value;
+    }
+    if (item.valueCodeableConcept && item.valueCodeableConcept.text) {
+      return item.valueCodeableConcept.text;
+    }
+    // need to handle date/time value
+
+    return "--";
+
+  }
   const getData = (data) => {
     if (!data) return null;
     const goodData = data.filter(
-      (item) =>
-        item.code &&
-        item.code.coding &&
-        item.code.coding.length > 0
+      (item) => item.code && item.code.coding && item.code.coding.length > 0
     );
     return goodData
       .map((item, index) => {
         item.id = item.id + "_" + index;
         item.text = item.code.coding[0].display;
         item.date = getCorrectedISODate(item.issued);
-        item.provider = item.performer && item.performer.length? item.performer[0].display: "";
+        item.provider =
+          item.performer && item.performer.length
+            ? item.performer[0].display
+            : "--";
+        item.value = getItemValue(item);
         return item;
       })
       .sort((a, b) => {
@@ -44,8 +67,12 @@ export default function Observations(props) {
       hidden: true,
     },
     {
-      title: "Procedure / Diagnosis",
+      title: "Name",
       field: "text",
+    },
+    {
+      title: "Value / Text",
+      field: "value",
     },
     {
       title: "Date",

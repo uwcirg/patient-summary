@@ -36,10 +36,7 @@ define QuestionnaireItems:
 
 //Load Questionnaire responses
 define QuestionnaireResponses:
-  if QuestionnaireItems is not null then 
-    LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], CurrentQuestionnaire)
-  else
-    LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], QuestionnaireID, QuestionnaireName)
+  LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], QuestionnaireID, QuestionnaireName)
 
 define ResponsesSummary:
   (QuestionnaireResponses) I
