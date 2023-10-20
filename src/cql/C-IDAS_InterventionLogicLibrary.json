@@ -35,6 +35,12 @@
       },
       "parameters" : {
          "def" : [ {
+            "name" : "QuestionnaireID",
+            "accessLevel" : "Public",
+            "default" : {
+               "type" : "Null"
+            }
+         }, {
             "name" : "QuestionnaireName",
             "accessLevel" : "Public",
             "default" : {
@@ -272,6 +278,13 @@
                "libraryName" : "LogicHelpers",
                "type" : "FunctionRef",
                "operand" : [ {
+                  "asType" : "{urn:hl7-org:elm-types:r1}String",
+                  "type" : "As",
+                  "operand" : {
+                     "name" : "QuestionnaireID",
+                     "type" : "ParameterRef"
+                  }
+               }, {
                   "name" : "QuestionnaireName",
                   "type" : "ParameterRef"
                }, {
@@ -431,20 +444,23 @@
                                                                            "operand" : [ {
                                                                               "type" : "First",
                                                                               "source" : {
-                                                                                 "name" : "getScoringByResponseItem",
-                                                                                 "libraryName" : "LogicHelpers",
-                                                                                 "type" : "FunctionRef",
-                                                                                 "operand" : [ {
-                                                                                    "name" : "CurrentQuestionnaire",
-                                                                                    "type" : "ExpressionRef"
-                                                                                 }, {
-                                                                                    "path" : "item",
-                                                                                    "scope" : "I",
-                                                                                    "type" : "Property"
-                                                                                 }, {
-                                                                                    "name" : "question1LinkId",
-                                                                                    "type" : "ExpressionRef"
-                                                                                 } ]
+                                                                                 "type" : "ToList",
+                                                                                 "operand" : {
+                                                                                    "name" : "getScoringByResponseItem",
+                                                                                    "libraryName" : "LogicHelpers",
+                                                                                    "type" : "FunctionRef",
+                                                                                    "operand" : [ {
+                                                                                       "name" : "CurrentQuestionnaire",
+                                                                                       "type" : "ExpressionRef"
+                                                                                    }, {
+                                                                                       "path" : "item",
+                                                                                       "scope" : "I",
+                                                                                       "type" : "Property"
+                                                                                    }, {
+                                                                                       "name" : "question1LinkId",
+                                                                                       "type" : "ExpressionRef"
+                                                                                    } ]
+                                                                                 }
                                                                               }
                                                                            }, {
                                                                               "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -456,20 +472,23 @@
                                                                            "operand" : [ {
                                                                               "type" : "First",
                                                                               "source" : {
-                                                                                 "name" : "getScoringByResponseItem",
-                                                                                 "libraryName" : "LogicHelpers",
-                                                                                 "type" : "FunctionRef",
-                                                                                 "operand" : [ {
-                                                                                    "name" : "CurrentQuestionnaire",
-                                                                                    "type" : "ExpressionRef"
-                                                                                 }, {
-                                                                                    "path" : "item",
-                                                                                    "scope" : "I",
-                                                                                    "type" : "Property"
-                                                                                 }, {
-                                                                                    "name" : "question2LinkId",
-                                                                                    "type" : "ExpressionRef"
-                                                                                 } ]
+                                                                                 "type" : "ToList",
+                                                                                 "operand" : {
+                                                                                    "name" : "getScoringByResponseItem",
+                                                                                    "libraryName" : "LogicHelpers",
+                                                                                    "type" : "FunctionRef",
+                                                                                    "operand" : [ {
+                                                                                       "name" : "CurrentQuestionnaire",
+                                                                                       "type" : "ExpressionRef"
+                                                                                    }, {
+                                                                                       "path" : "item",
+                                                                                       "scope" : "I",
+                                                                                       "type" : "Property"
+                                                                                    }, {
+                                                                                       "name" : "question2LinkId",
+                                                                                       "type" : "ExpressionRef"
+                                                                                    } ]
+                                                                                 }
                                                                               }
                                                                            }, {
                                                                               "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -482,20 +501,23 @@
                                                                         "operand" : [ {
                                                                            "type" : "First",
                                                                            "source" : {
-                                                                              "name" : "getScoringByResponseItem",
-                                                                              "libraryName" : "LogicHelpers",
-                                                                              "type" : "FunctionRef",
-                                                                              "operand" : [ {
-                                                                                 "name" : "CurrentQuestionnaire",
-                                                                                 "type" : "ExpressionRef"
-                                                                              }, {
-                                                                                 "path" : "item",
-                                                                                 "scope" : "I",
-                                                                                 "type" : "Property"
-                                                                              }, {
-                                                                                 "name" : "question3LinkId",
-                                                                                 "type" : "ExpressionRef"
-                                                                              } ]
+                                                                              "type" : "ToList",
+                                                                              "operand" : {
+                                                                                 "name" : "getScoringByResponseItem",
+                                                                                 "libraryName" : "LogicHelpers",
+                                                                                 "type" : "FunctionRef",
+                                                                                 "operand" : [ {
+                                                                                    "name" : "CurrentQuestionnaire",
+                                                                                    "type" : "ExpressionRef"
+                                                                                 }, {
+                                                                                    "path" : "item",
+                                                                                    "scope" : "I",
+                                                                                    "type" : "Property"
+                                                                                 }, {
+                                                                                    "name" : "question3LinkId",
+                                                                                    "type" : "ExpressionRef"
+                                                                                 } ]
+                                                                              }
                                                                            }
                                                                         }, {
                                                                            "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -508,20 +530,23 @@
                                                                      "operand" : [ {
                                                                         "type" : "First",
                                                                         "source" : {
-                                                                           "name" : "getScoringByResponseItem",
-                                                                           "libraryName" : "LogicHelpers",
-                                                                           "type" : "FunctionRef",
-                                                                           "operand" : [ {
-                                                                              "name" : "CurrentQuestionnaire",
-                                                                              "type" : "ExpressionRef"
-                                                                           }, {
-                                                                              "path" : "item",
-                                                                              "scope" : "I",
-                                                                              "type" : "Property"
-                                                                           }, {
-                                                                              "name" : "question4LinkId",
-                                                                              "type" : "ExpressionRef"
-                                                                           } ]
+                                                                           "type" : "ToList",
+                                                                           "operand" : {
+                                                                              "name" : "getScoringByResponseItem",
+                                                                              "libraryName" : "LogicHelpers",
+                                                                              "type" : "FunctionRef",
+                                                                              "operand" : [ {
+                                                                                 "name" : "CurrentQuestionnaire",
+                                                                                 "type" : "ExpressionRef"
+                                                                              }, {
+                                                                                 "path" : "item",
+                                                                                 "scope" : "I",
+                                                                                 "type" : "Property"
+                                                                              }, {
+                                                                                 "name" : "question4LinkId",
+                                                                                 "type" : "ExpressionRef"
+                                                                              } ]
+                                                                           }
                                                                         }
                                                                      }, {
                                                                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -534,20 +559,23 @@
                                                                   "operand" : [ {
                                                                      "type" : "First",
                                                                      "source" : {
-                                                                        "name" : "getScoringByResponseItem",
-                                                                        "libraryName" : "LogicHelpers",
-                                                                        "type" : "FunctionRef",
-                                                                        "operand" : [ {
-                                                                           "name" : "CurrentQuestionnaire",
-                                                                           "type" : "ExpressionRef"
-                                                                        }, {
-                                                                           "path" : "item",
-                                                                           "scope" : "I",
-                                                                           "type" : "Property"
-                                                                        }, {
-                                                                           "name" : "question5LinkId",
-                                                                           "type" : "ExpressionRef"
-                                                                        } ]
+                                                                        "type" : "ToList",
+                                                                        "operand" : {
+                                                                           "name" : "getScoringByResponseItem",
+                                                                           "libraryName" : "LogicHelpers",
+                                                                           "type" : "FunctionRef",
+                                                                           "operand" : [ {
+                                                                              "name" : "CurrentQuestionnaire",
+                                                                              "type" : "ExpressionRef"
+                                                                           }, {
+                                                                              "path" : "item",
+                                                                              "scope" : "I",
+                                                                              "type" : "Property"
+                                                                           }, {
+                                                                              "name" : "question5LinkId",
+                                                                              "type" : "ExpressionRef"
+                                                                           } ]
+                                                                        }
                                                                      }
                                                                   }, {
                                                                      "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -560,20 +588,23 @@
                                                                "operand" : [ {
                                                                   "type" : "First",
                                                                   "source" : {
-                                                                     "name" : "getScoringByResponseItem",
-                                                                     "libraryName" : "LogicHelpers",
-                                                                     "type" : "FunctionRef",
-                                                                     "operand" : [ {
-                                                                        "name" : "CurrentQuestionnaire",
-                                                                        "type" : "ExpressionRef"
-                                                                     }, {
-                                                                        "path" : "item",
-                                                                        "scope" : "I",
-                                                                        "type" : "Property"
-                                                                     }, {
-                                                                        "name" : "question6LinkId",
-                                                                        "type" : "ExpressionRef"
-                                                                     } ]
+                                                                     "type" : "ToList",
+                                                                     "operand" : {
+                                                                        "name" : "getScoringByResponseItem",
+                                                                        "libraryName" : "LogicHelpers",
+                                                                        "type" : "FunctionRef",
+                                                                        "operand" : [ {
+                                                                           "name" : "CurrentQuestionnaire",
+                                                                           "type" : "ExpressionRef"
+                                                                        }, {
+                                                                           "path" : "item",
+                                                                           "scope" : "I",
+                                                                           "type" : "Property"
+                                                                        }, {
+                                                                           "name" : "question6LinkId",
+                                                                           "type" : "ExpressionRef"
+                                                                        } ]
+                                                                     }
                                                                   }
                                                                }, {
                                                                   "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -586,20 +617,23 @@
                                                             "operand" : [ {
                                                                "type" : "First",
                                                                "source" : {
-                                                                  "name" : "getScoringByResponseItem",
-                                                                  "libraryName" : "LogicHelpers",
-                                                                  "type" : "FunctionRef",
-                                                                  "operand" : [ {
-                                                                     "name" : "CurrentQuestionnaire",
-                                                                     "type" : "ExpressionRef"
-                                                                  }, {
-                                                                     "path" : "item",
-                                                                     "scope" : "I",
-                                                                     "type" : "Property"
-                                                                  }, {
-                                                                     "name" : "question7LinkId",
-                                                                     "type" : "ExpressionRef"
-                                                                  } ]
+                                                                  "type" : "ToList",
+                                                                  "operand" : {
+                                                                     "name" : "getScoringByResponseItem",
+                                                                     "libraryName" : "LogicHelpers",
+                                                                     "type" : "FunctionRef",
+                                                                     "operand" : [ {
+                                                                        "name" : "CurrentQuestionnaire",
+                                                                        "type" : "ExpressionRef"
+                                                                     }, {
+                                                                        "path" : "item",
+                                                                        "scope" : "I",
+                                                                        "type" : "Property"
+                                                                     }, {
+                                                                        "name" : "question7LinkId",
+                                                                        "type" : "ExpressionRef"
+                                                                     } ]
+                                                                  }
                                                                }
                                                             }, {
                                                                "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -612,20 +646,23 @@
                                                          "operand" : [ {
                                                             "type" : "First",
                                                             "source" : {
-                                                               "name" : "getScoringByResponseItem",
-                                                               "libraryName" : "LogicHelpers",
-                                                               "type" : "FunctionRef",
-                                                               "operand" : [ {
-                                                                  "name" : "CurrentQuestionnaire",
-                                                                  "type" : "ExpressionRef"
-                                                               }, {
-                                                                  "path" : "item",
-                                                                  "scope" : "I",
-                                                                  "type" : "Property"
-                                                               }, {
-                                                                  "name" : "question8LinkId",
-                                                                  "type" : "ExpressionRef"
-                                                               } ]
+                                                               "type" : "ToList",
+                                                               "operand" : {
+                                                                  "name" : "getScoringByResponseItem",
+                                                                  "libraryName" : "LogicHelpers",
+                                                                  "type" : "FunctionRef",
+                                                                  "operand" : [ {
+                                                                     "name" : "CurrentQuestionnaire",
+                                                                     "type" : "ExpressionRef"
+                                                                  }, {
+                                                                     "path" : "item",
+                                                                     "scope" : "I",
+                                                                     "type" : "Property"
+                                                                  }, {
+                                                                     "name" : "question8LinkId",
+                                                                     "type" : "ExpressionRef"
+                                                                  } ]
+                                                               }
                                                             }
                                                          }, {
                                                             "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -638,20 +675,23 @@
                                                       "operand" : [ {
                                                          "type" : "First",
                                                          "source" : {
-                                                            "name" : "getScoringByResponseItem",
-                                                            "libraryName" : "LogicHelpers",
-                                                            "type" : "FunctionRef",
-                                                            "operand" : [ {
-                                                               "name" : "CurrentQuestionnaire",
-                                                               "type" : "ExpressionRef"
-                                                            }, {
-                                                               "path" : "item",
-                                                               "scope" : "I",
-                                                               "type" : "Property"
-                                                            }, {
-                                                               "name" : "question9LinkId",
-                                                               "type" : "ExpressionRef"
-                                                            } ]
+                                                            "type" : "ToList",
+                                                            "operand" : {
+                                                               "name" : "getScoringByResponseItem",
+                                                               "libraryName" : "LogicHelpers",
+                                                               "type" : "FunctionRef",
+                                                               "operand" : [ {
+                                                                  "name" : "CurrentQuestionnaire",
+                                                                  "type" : "ExpressionRef"
+                                                               }, {
+                                                                  "path" : "item",
+                                                                  "scope" : "I",
+                                                                  "type" : "Property"
+                                                               }, {
+                                                                  "name" : "question9LinkId",
+                                                                  "type" : "ExpressionRef"
+                                                               } ]
+                                                            }
                                                          }
                                                       }, {
                                                          "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -664,20 +704,23 @@
                                                    "operand" : [ {
                                                       "type" : "First",
                                                       "source" : {
-                                                         "name" : "getScoringByResponseItem",
-                                                         "libraryName" : "LogicHelpers",
-                                                         "type" : "FunctionRef",
-                                                         "operand" : [ {
-                                                            "name" : "CurrentQuestionnaire",
-                                                            "type" : "ExpressionRef"
-                                                         }, {
-                                                            "path" : "item",
-                                                            "scope" : "I",
-                                                            "type" : "Property"
-                                                         }, {
-                                                            "name" : "question10LinkId",
-                                                            "type" : "ExpressionRef"
-                                                         } ]
+                                                         "type" : "ToList",
+                                                         "operand" : {
+                                                            "name" : "getScoringByResponseItem",
+                                                            "libraryName" : "LogicHelpers",
+                                                            "type" : "FunctionRef",
+                                                            "operand" : [ {
+                                                               "name" : "CurrentQuestionnaire",
+                                                               "type" : "ExpressionRef"
+                                                            }, {
+                                                               "path" : "item",
+                                                               "scope" : "I",
+                                                               "type" : "Property"
+                                                            }, {
+                                                               "name" : "question10LinkId",
+                                                               "type" : "ExpressionRef"
+                                                            } ]
+                                                         }
                                                       }
                                                    }, {
                                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -690,20 +733,23 @@
                                                 "operand" : [ {
                                                    "type" : "First",
                                                    "source" : {
-                                                      "name" : "getScoringByResponseItem",
-                                                      "libraryName" : "LogicHelpers",
-                                                      "type" : "FunctionRef",
-                                                      "operand" : [ {
-                                                         "name" : "CurrentQuestionnaire",
-                                                         "type" : "ExpressionRef"
-                                                      }, {
-                                                         "path" : "item",
-                                                         "scope" : "I",
-                                                         "type" : "Property"
-                                                      }, {
-                                                         "name" : "question11LinkId",
-                                                         "type" : "ExpressionRef"
-                                                      } ]
+                                                      "type" : "ToList",
+                                                      "operand" : {
+                                                         "name" : "getScoringByResponseItem",
+                                                         "libraryName" : "LogicHelpers",
+                                                         "type" : "FunctionRef",
+                                                         "operand" : [ {
+                                                            "name" : "CurrentQuestionnaire",
+                                                            "type" : "ExpressionRef"
+                                                         }, {
+                                                            "path" : "item",
+                                                            "scope" : "I",
+                                                            "type" : "Property"
+                                                         }, {
+                                                            "name" : "question11LinkId",
+                                                            "type" : "ExpressionRef"
+                                                         } ]
+                                                      }
                                                    }
                                                 }, {
                                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -716,20 +762,23 @@
                                              "operand" : [ {
                                                 "type" : "First",
                                                 "source" : {
-                                                   "name" : "getScoringByResponseItem",
-                                                   "libraryName" : "LogicHelpers",
-                                                   "type" : "FunctionRef",
-                                                   "operand" : [ {
-                                                      "name" : "CurrentQuestionnaire",
-                                                      "type" : "ExpressionRef"
-                                                   }, {
-                                                      "path" : "item",
-                                                      "scope" : "I",
-                                                      "type" : "Property"
-                                                   }, {
-                                                      "name" : "question12LinkId",
-                                                      "type" : "ExpressionRef"
-                                                   } ]
+                                                   "type" : "ToList",
+                                                   "operand" : {
+                                                      "name" : "getScoringByResponseItem",
+                                                      "libraryName" : "LogicHelpers",
+                                                      "type" : "FunctionRef",
+                                                      "operand" : [ {
+                                                         "name" : "CurrentQuestionnaire",
+                                                         "type" : "ExpressionRef"
+                                                      }, {
+                                                         "path" : "item",
+                                                         "scope" : "I",
+                                                         "type" : "Property"
+                                                      }, {
+                                                         "name" : "question12LinkId",
+                                                         "type" : "ExpressionRef"
+                                                      } ]
+                                                   }
                                                 }
                                              }, {
                                                 "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -742,20 +791,23 @@
                                           "operand" : [ {
                                              "type" : "First",
                                              "source" : {
-                                                "name" : "getScoringByResponseItem",
-                                                "libraryName" : "LogicHelpers",
-                                                "type" : "FunctionRef",
-                                                "operand" : [ {
-                                                   "name" : "CurrentQuestionnaire",
-                                                   "type" : "ExpressionRef"
-                                                }, {
-                                                   "path" : "item",
-                                                   "scope" : "I",
-                                                   "type" : "Property"
-                                                }, {
-                                                   "name" : "question13LinkId",
-                                                   "type" : "ExpressionRef"
-                                                } ]
+                                                "type" : "ToList",
+                                                "operand" : {
+                                                   "name" : "getScoringByResponseItem",
+                                                   "libraryName" : "LogicHelpers",
+                                                   "type" : "FunctionRef",
+                                                   "operand" : [ {
+                                                      "name" : "CurrentQuestionnaire",
+                                                      "type" : "ExpressionRef"
+                                                   }, {
+                                                      "path" : "item",
+                                                      "scope" : "I",
+                                                      "type" : "Property"
+                                                   }, {
+                                                      "name" : "question13LinkId",
+                                                      "type" : "ExpressionRef"
+                                                   } ]
+                                                }
                                              }
                                           }, {
                                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -768,20 +820,23 @@
                                        "operand" : [ {
                                           "type" : "First",
                                           "source" : {
-                                             "name" : "getScoringByResponseItem",
-                                             "libraryName" : "LogicHelpers",
-                                             "type" : "FunctionRef",
-                                             "operand" : [ {
-                                                "name" : "CurrentQuestionnaire",
-                                                "type" : "ExpressionRef"
-                                             }, {
-                                                "path" : "item",
-                                                "scope" : "I",
-                                                "type" : "Property"
-                                             }, {
-                                                "name" : "question14LinkId",
-                                                "type" : "ExpressionRef"
-                                             } ]
+                                             "type" : "ToList",
+                                             "operand" : {
+                                                "name" : "getScoringByResponseItem",
+                                                "libraryName" : "LogicHelpers",
+                                                "type" : "FunctionRef",
+                                                "operand" : [ {
+                                                   "name" : "CurrentQuestionnaire",
+                                                   "type" : "ExpressionRef"
+                                                }, {
+                                                   "path" : "item",
+                                                   "scope" : "I",
+                                                   "type" : "Property"
+                                                }, {
+                                                   "name" : "question14LinkId",
+                                                   "type" : "ExpressionRef"
+                                                } ]
+                                             }
                                           }
                                        }, {
                                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -794,20 +849,23 @@
                                     "operand" : [ {
                                        "type" : "First",
                                        "source" : {
-                                          "name" : "getScoringByResponseItem",
-                                          "libraryName" : "LogicHelpers",
-                                          "type" : "FunctionRef",
-                                          "operand" : [ {
-                                             "name" : "CurrentQuestionnaire",
-                                             "type" : "ExpressionRef"
-                                          }, {
-                                             "path" : "item",
-                                             "scope" : "I",
-                                             "type" : "Property"
-                                          }, {
-                                             "name" : "question15LinkId",
-                                             "type" : "ExpressionRef"
-                                          } ]
+                                          "type" : "ToList",
+                                          "operand" : {
+                                             "name" : "getScoringByResponseItem",
+                                             "libraryName" : "LogicHelpers",
+                                             "type" : "FunctionRef",
+                                             "operand" : [ {
+                                                "name" : "CurrentQuestionnaire",
+                                                "type" : "ExpressionRef"
+                                             }, {
+                                                "path" : "item",
+                                                "scope" : "I",
+                                                "type" : "Property"
+                                             }, {
+                                                "name" : "question15LinkId",
+                                                "type" : "ExpressionRef"
+                                             } ]
+                                          }
                                        }
                                     }, {
                                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -820,20 +878,23 @@
                                  "operand" : [ {
                                     "type" : "First",
                                     "source" : {
-                                       "name" : "getScoringByResponseItem",
-                                       "libraryName" : "LogicHelpers",
-                                       "type" : "FunctionRef",
-                                       "operand" : [ {
-                                          "name" : "CurrentQuestionnaire",
-                                          "type" : "ExpressionRef"
-                                       }, {
-                                          "path" : "item",
-                                          "scope" : "I",
-                                          "type" : "Property"
-                                       }, {
-                                          "name" : "question16LinkId",
-                                          "type" : "ExpressionRef"
-                                       } ]
+                                       "type" : "ToList",
+                                       "operand" : {
+                                          "name" : "getScoringByResponseItem",
+                                          "libraryName" : "LogicHelpers",
+                                          "type" : "FunctionRef",
+                                          "operand" : [ {
+                                             "name" : "CurrentQuestionnaire",
+                                             "type" : "ExpressionRef"
+                                          }, {
+                                             "path" : "item",
+                                             "scope" : "I",
+                                             "type" : "Property"
+                                          }, {
+                                             "name" : "question16LinkId",
+                                             "type" : "ExpressionRef"
+                                          } ]
+                                       }
                                     }
                                  }, {
                                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -846,20 +907,23 @@
                               "operand" : [ {
                                  "type" : "First",
                                  "source" : {
-                                    "name" : "getScoringByResponseItem",
-                                    "libraryName" : "LogicHelpers",
-                                    "type" : "FunctionRef",
-                                    "operand" : [ {
-                                       "name" : "CurrentQuestionnaire",
-                                       "type" : "ExpressionRef"
-                                    }, {
-                                       "path" : "item",
-                                       "scope" : "I",
-                                       "type" : "Property"
-                                    }, {
-                                       "name" : "question17LinkId",
-                                       "type" : "ExpressionRef"
-                                    } ]
+                                    "type" : "ToList",
+                                    "operand" : {
+                                       "name" : "getScoringByResponseItem",
+                                       "libraryName" : "LogicHelpers",
+                                       "type" : "FunctionRef",
+                                       "operand" : [ {
+                                          "name" : "CurrentQuestionnaire",
+                                          "type" : "ExpressionRef"
+                                       }, {
+                                          "path" : "item",
+                                          "scope" : "I",
+                                          "type" : "Property"
+                                       }, {
+                                          "name" : "question17LinkId",
+                                          "type" : "ExpressionRef"
+                                       } ]
+                                    }
                                  }
                               }, {
                                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -872,20 +936,23 @@
                            "operand" : [ {
                               "type" : "First",
                               "source" : {
-                                 "name" : "getScoringByResponseItem",
-                                 "libraryName" : "LogicHelpers",
-                                 "type" : "FunctionRef",
-                                 "operand" : [ {
-                                    "name" : "CurrentQuestionnaire",
-                                    "type" : "ExpressionRef"
-                                 }, {
-                                    "path" : "item",
-                                    "scope" : "I",
-                                    "type" : "Property"
-                                 }, {
-                                    "name" : "question18LinkId",
-                                    "type" : "ExpressionRef"
-                                 } ]
+                                 "type" : "ToList",
+                                 "operand" : {
+                                    "name" : "getScoringByResponseItem",
+                                    "libraryName" : "LogicHelpers",
+                                    "type" : "FunctionRef",
+                                    "operand" : [ {
+                                       "name" : "CurrentQuestionnaire",
+                                       "type" : "ExpressionRef"
+                                    }, {
+                                       "path" : "item",
+                                       "scope" : "I",
+                                       "type" : "Property"
+                                    }, {
+                                       "name" : "question18LinkId",
+                                       "type" : "ExpressionRef"
+                                    } ]
+                                 }
                               }
                            }, {
                               "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -909,20 +976,23 @@
                      "operand" : [ {
                         "type" : "First",
                         "source" : {
-                           "name" : "getScoringByResponseItem",
-                           "libraryName" : "LogicHelpers",
-                           "type" : "FunctionRef",
-                           "operand" : [ {
-                              "name" : "CurrentQuestionnaire",
-                              "type" : "ExpressionRef"
-                           }, {
-                              "path" : "item",
-                              "scope" : "I",
-                              "type" : "Property"
-                           }, {
-                              "name" : "suicideQuestionLinkId",
-                              "type" : "ExpressionRef"
-                           } ]
+                           "type" : "ToList",
+                           "operand" : {
+                              "name" : "getScoringByResponseItem",
+                              "libraryName" : "LogicHelpers",
+                              "type" : "FunctionRef",
+                              "operand" : [ {
+                                 "name" : "CurrentQuestionnaire",
+                                 "type" : "ExpressionRef"
+                              }, {
+                                 "path" : "item",
+                                 "scope" : "I",
+                                 "type" : "Property"
+                              }, {
+                                 "name" : "suicideQuestionLinkId",
+                                 "type" : "ExpressionRef"
+                              } ]
+                           }
                         }
                      }, {
                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",

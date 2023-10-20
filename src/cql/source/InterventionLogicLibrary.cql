@@ -9,6 +9,7 @@ include "InterventionLogic_Common" version '1.0.0' called LogicHelpers
 // -----------------------------------------------------------------------------
 // PARAMETERS
 // -----------------------------------------------------------------------------
+parameter QuestionnaireID default ''
 parameter QuestionnaireName default ''
 parameter QuestionnaireURL default ''
 parameter ScoringQuestionId default ''
@@ -23,7 +24,7 @@ context Patient
 //------------------------------------------------------------------------------
 
 define Questionnaires:
-  LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
+  LogicHelpers.GetMatchQuestionnaire(QuestionnaireID, QuestionnaireName, QuestionnaireURL)
 
 // Load Questionnaire
 define CurrentQuestionnaire:
@@ -38,25 +39,20 @@ define QuestionnaireResponses:
   if QuestionnaireItems is not null then 
     LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], CurrentQuestionnaire)
   else
-    LogicHelpers.MatchedReponsesByQuestionnaireName([QuestionnaireResponse], QuestionnaireName)
+    LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], QuestionnaireID, QuestionnaireName)
 
 define ResponsesSummary:
   (QuestionnaireResponses) I
   return {
     id: I.id.value,
     date: LogicHelpers.DateTimeText(I.authored),
-    responses: 
-      if QuestionnaireItems is not null then
-        LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId)
-      else
-        LogicHelpers.ResponsesOnly(I.item),
-    totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
+    responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
+    totalAnsweredItems: Length((I.item) O where PositionOf(O.linkId, ScoringQuestionId) = -1 or PositionOf(ScoringQuestionId, O.linkId) = -1),
     totalItems: 
       if QuestionnaireItems is not null then
         Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId))
       else
         Length(I.item),
-   // totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
     authoredDate: I.authored.value,
     lastUpdated: I.meta.lastUpdated.value
   }

@@ -77,6 +77,9 @@ export default function QuestionnaireListProvider({ children }) {
           // });
           //TODO only include QIDs from environment Q list
           //uniqueQIds = [...envQList, ...new Set([...uniqueQIds])];
+          uniqueQIds = envQList;
+          
+        } else {
           uniqueQIds = [...new Set([...uniqueQIds])];
         }
         console.log("questionnaire list to load ", uniqueQIds);

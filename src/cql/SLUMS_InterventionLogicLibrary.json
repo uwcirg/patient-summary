@@ -35,6 +35,12 @@
       },
       "parameters" : {
          "def" : [ {
+            "name" : "QuestionnaireID",
+            "accessLevel" : "Public",
+            "default" : {
+               "type" : "Null"
+            }
+         }, {
             "name" : "QuestionnaireName",
             "accessLevel" : "Public",
             "default" : {
@@ -101,6 +107,13 @@
                "libraryName" : "LogicHelpers",
                "type" : "FunctionRef",
                "operand" : [ {
+                  "asType" : "{urn:hl7-org:elm-types:r1}String",
+                  "type" : "As",
+                  "operand" : {
+                     "name" : "QuestionnaireID",
+                     "type" : "ParameterRef"
+                  }
+               }, {
                   "name" : "QuestionnaireName",
                   "type" : "ParameterRef"
                }, {
@@ -257,21 +270,48 @@
                }, {
                   "identifier" : "score",
                   "expression" : {
-                     "path" : "value",
-                     "type" : "Property",
-                     "source" : {
-                        "path" : "value",
-                        "type" : "Property",
-                        "source" : {
-                           "type" : "Indexer",
-                           "operand" : [ {
+                     "type" : "If",
+                     "condition" : {
+                        "type" : "Not",
+                        "operand" : {
+                           "type" : "IsNull",
+                           "operand" : {
                               "name" : "responses",
                               "type" : "QueryLetRef"
-                           }, {
-                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                              "value" : "0",
-                              "type" : "Literal"
-                           } ]
+                           }
+                        }
+                     },
+                     "then" : {
+                        "type" : "ToInteger",
+                        "operand" : {
+                           "strict" : false,
+                           "type" : "As",
+                           "operand" : {
+                              "path" : "answer",
+                              "type" : "Property",
+                              "source" : {
+                                 "type" : "Indexer",
+                                 "operand" : [ {
+                                    "name" : "responses",
+                                    "type" : "QueryLetRef"
+                                 }, {
+                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                    "value" : "0",
+                                    "type" : "Literal"
+                                 } ]
+                              }
+                           },
+                           "asTypeSpecifier" : {
+                              "name" : "{urn:hl7-org:elm-types:r1}String",
+                              "type" : "NamedTypeSpecifier"
+                           }
+                        }
+                     },
+                     "else" : {
+                        "asType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "type" : "As",
+                        "operand" : {
+                           "type" : "Null"
                         }
                      }
                   }
@@ -317,12 +357,8 @@
                            }, {
                               "type" : "LessOrEqual",
                               "operand" : [ {
-                                 "asType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                 "type" : "As",
-                                 "operand" : {
-                                    "name" : "score",
-                                    "type" : "QueryLetRef"
-                                 }
+                                 "name" : "score",
+                                 "type" : "QueryLetRef"
                               }, {
                                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                                  "value" : "19",
@@ -351,12 +387,8 @@
                            }, {
                               "type" : "LessOrEqual",
                               "operand" : [ {
-                                 "asType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                 "type" : "As",
-                                 "operand" : {
-                                    "name" : "score",
-                                    "type" : "QueryLetRef"
-                                 }
+                                 "name" : "score",
+                                 "type" : "QueryLetRef"
                               }, {
                                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                                  "value" : "20",

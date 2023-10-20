@@ -9,6 +9,7 @@ include "InterventionLogic_Common" version '1.0.0' called LogicHelpers
 // -----------------------------------------------------------------------------
 // PARAMETERS
 // -----------------------------------------------------------------------------
+parameter QuestionnaireID default null
 parameter QuestionnaireName default 'slums'
 parameter QuestionnaireURL default 'http://www.cdc.gov/ncbddd/fasd/slums'
 parameter ScoringQuestionId default '71492-3'
@@ -25,7 +26,7 @@ define scoringParams: {
 
 // Load Questionnaire
 define Questionnaires:
-  LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
+  LogicHelpers.GetMatchQuestionnaire(QuestionnaireID, QuestionnaireName, QuestionnaireURL)
 
 define CurrentQuestionnaire:
   First(Questionnaires)
@@ -42,7 +43,7 @@ define ResponsesSummary:
   (QuestionnaireResponses) I
   let
     responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
-    score: responses[0].value.value,
+    score: if responses is not null then ToInteger(responses[0].answer as String) else null,
     educationLevel: if HasLowerLevelEducation is true then 'low' else 'high',
     scoreSeverity:
         case

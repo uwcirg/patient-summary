@@ -135,11 +135,9 @@ export default function useFetchResources() {
             onErrorCallback();
             return;
           }
-          console.log("results ", results)
           let summaries = {};
           results.forEach((result) => {
             if (result.status === "rejected") return true;
-            console.log("result ? ", result)
             if (result.value) {
               const o = Object.entries(result.value)[0];
               const key = o[0];

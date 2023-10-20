@@ -392,9 +392,9 @@ export function gatherSummaryDataByQuestionnaireId(
         );
       });
       const targetQId = matchedKeys.length ? matchedKeys[0] : questionaireKey;
-      console.log("matched keys ? ", matchedKeys)
-      console.log("questionnaireJSON ", questionnaireJson)
-      console.log('targetQID ', targetQId)
+      // console.log("matched keys ? ", matchedKeys)
+      // console.log("questionnaireJSON ", questionnaireJson)
+      // console.log('targetQID ', targetQId)
       const chartConfig = getChartConfig(targetQId);
       const questionnaireConfig = QuestionnaireConfig[targetQId] || {};
 
@@ -409,12 +409,11 @@ export function gatherSummaryDataByQuestionnaireId(
         elmJson,
         valueSetJson,
         {
-          QuestionnaireName: questionnaireJson.id ? questionnaireJson.id : questionnaireJson.name
+          QuestionnaireID: questionnaireJson.id,
+          QuestionnaireName: questionnaireJson.name
         },
         getElmDependencies()
       );
-
-      console.log("elmsJson? ", elmJson)
 
       // Send patient info to CQL worker to process
       sendPatientBundle(patientBundle);

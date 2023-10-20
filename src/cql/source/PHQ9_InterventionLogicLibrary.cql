@@ -9,6 +9,7 @@ include "InterventionLogic_Common" version '1.0.0' called LogicHelpers
 // -----------------------------------------------------------------------------
 // PARAMETERS
 // -----------------------------------------------------------------------------
+parameter QuestionnaireID default null
 parameter QuestionnaireName default 'phq9'
 parameter QuestionnaireURL default 'http://www.cdc.gov/ncbddd/fasd/phq9'
 parameter ScoringQuestionId default '/44261-6'
@@ -35,11 +36,14 @@ define scoringParams: {
 }
 
 define Questionnaires:
-  LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
+  LogicHelpers.GetMatchQuestionnaire(QuestionnaireID, QuestionnaireName, QuestionnaireURL)
 
 // Load Questionnaire
 define CurrentQuestionnaire:
   First(Questionnaires)
+
+define CurrentQuestionnaireName:
+  QuestionnaireName
 
 define QuestionnaireItems:
   CurrentQuestionnaire Q
@@ -47,24 +51,60 @@ define QuestionnaireItems:
 
 // Load Questionnaire responses
 define QuestionnaireResponses:
-  LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], CurrentQuestionnaire)
+  if QuestionnaireItems is not null then 
+    LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], CurrentQuestionnaire)
+  else
+    LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], QuestionnaireID, QuestionnaireName)
 
 define ResponsesSummary:
   (QuestionnaireResponses) I
   let
     scoredResponses: (I.item R where R.linkId.value != ScoringQuestionId),
+    totalItems: if QuestionnaireItems is not null then 
+                  Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId))
+                else
+                  Length((I.item) O where 
+                          PositionOf(O.linkId, ScoringQuestionId) = -1 or PositionOf(ScoringQuestionId, O.linkId) = -1),
+    totalAnsweredItems:  Min({Length(
+                                (I.item) O where 
+                                  (PositionOf(O.linkId, ScoringQuestionId) = -1 or PositionOf(ScoringQuestionId, O.linkId) = -1)
+                                  and O.answer is not null
+                                ), totalItems}),
+    scoringQuestionScore: if ScoringQuestionId is not null then First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, ScoringQuestionId)) else null,
+    question1Score: First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question1LinkId)),
+    question2Score: First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question2LinkId)),
+    question3Score: First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question3LinkId)),
+    question4Score: First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question4LinkId)),
+    question5Score: First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question5LinkId)),
+    question6Score: First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question6LinkId)),
+    question7Score: First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question7LinkId)),
+    question8Score: First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question8LinkId)),
+    question9Score: First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question9LinkId)),
     score: 
-          if Length(scoredResponses) > 0 then 
-            Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question1LinkId)), 0) +
-            Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question2LinkId)), 0) +
-            Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question3LinkId)), 0) + 
-            Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question4LinkId)), 0) +
-            Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question5LinkId)), 0) +
-            Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question6LinkId)), 0) +
-            Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question7LinkId)), 0) +
-            Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question8LinkId)), 0) + 
-            Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question9LinkId)), 0)
-          else null,
+          case
+            when scoringQuestionScore is not null then scoringQuestionScore
+            when Length(scoredResponses) > 0 and (
+              question1Score is not null and
+              question2Score is not null and
+              question3Score is not null and
+              question4Score is not null and
+              question5Score is not null and
+              question6Score is not null and
+              question7Score is not null and
+              question8Score is not null and
+              question9Score is not null
+            ) then 
+              Coalesce(question1Score, 0) +
+              Coalesce(question2Score, 0) +
+              Coalesce(question3Score, 0) + 
+              Coalesce(question4Score, 0) +
+              Coalesce(question5Score, 0) +
+              Coalesce(question6Score, 0) +
+              Coalesce(question7Score, 0) +
+              Coalesce(question8Score, 0) + 
+              Coalesce(question9Score, 0)
+            else null
+          end,
     scoreSeverity:
       case
         when score >= 20 then 'high'
@@ -77,6 +117,7 @@ define ResponsesSummary:
     id: I.id.value,
     date: LogicHelpers.DateTimeText(I.authored),
     responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
+    scoringQuestionScore: scoringQuestionScore,
     score: score,
     scoreSeverity: scoreSeverity,
     highSeverityScoreCutoff: 20,
@@ -88,12 +129,8 @@ define ResponsesSummary:
         else null 
       end,
     scoringParams: scoringParams,
-    totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
-    totalItems:
-      if QuestionnaireItems is not null then 
-        Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId))
-      else
-        Length(I.item),
+    totalItems: totalItems,
+    totalAnsweredItems: totalAnsweredItems,
     authoredDate: I.authored.value,
     lastUpdated: I.meta.lastUpdated.value
   }

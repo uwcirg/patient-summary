@@ -35,6 +35,12 @@
       },
       "parameters" : {
          "def" : [ {
+            "name" : "QuestionnaireID",
+            "accessLevel" : "Public",
+            "default" : {
+               "type" : "Null"
+            }
+         }, {
             "name" : "QuestionnaireName",
             "accessLevel" : "Public",
             "default" : {
@@ -164,6 +170,13 @@
                "libraryName" : "LogicHelpers",
                "type" : "FunctionRef",
                "operand" : [ {
+                  "asType" : "{urn:hl7-org:elm-types:r1}String",
+                  "type" : "As",
+                  "operand" : {
+                     "name" : "QuestionnaireID",
+                     "type" : "ParameterRef"
+                  }
+               }, {
                   "name" : "QuestionnaireName",
                   "type" : "ParameterRef"
                }, {
@@ -271,13 +284,20 @@
                   } ]
                },
                "else" : {
-                  "name" : "MatchedReponsesByQuestionnaireName",
+                  "name" : "MatchedReponsesByQuestionnaire",
                   "libraryName" : "LogicHelpers",
                   "type" : "FunctionRef",
                   "operand" : [ {
                      "dataType" : "{http://hl7.org/fhir}QuestionnaireResponse",
                      "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
                      "type" : "Retrieve"
+                  }, {
+                     "asType" : "{urn:hl7-org:elm-types:r1}String",
+                     "type" : "As",
+                     "operand" : {
+                        "name" : "QuestionnaireID",
+                        "type" : "ParameterRef"
+                     }
                   }, {
                      "name" : "QuestionnaireName",
                      "type" : "ParameterRef"

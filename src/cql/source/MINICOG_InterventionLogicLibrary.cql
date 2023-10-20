@@ -9,6 +9,7 @@ include "InterventionLogic_Common" version '1.0.0' called LogicHelpers
 // -----------------------------------------------------------------------------
 // PARAMETERS
 // -----------------------------------------------------------------------------
+parameter QuestionnaireID default null
 parameter QuestionnaireName default 'MINICOG'
 parameter QuestionnaireURL default 'http://www.cdc.gov/ncbddd/fasd/minicog'
 
@@ -31,7 +32,7 @@ define scoringParams: {
 
 // Load Questionnaire
 define Questionnaires:
-  LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
+  LogicHelpers.GetMatchQuestionnaire(QuestionnaireID, QuestionnaireName, QuestionnaireURL)
 
 // Load Questionnaire
 define CurrentQuestionnaire:
@@ -56,9 +57,9 @@ define ResponsesSummary:
       R.linkId.value != 'minicog-total-score-explanation' and
       R.linkId.value != 'minicog-questionnaire-footnote' and
       R.linkId.value != scoringQuestionId),
-    word_recall_score: Coalesce(First((responses) I where I.id = question1Id return I.value.value), 0),
-    clock_draw_score: Coalesce(First((responses) I where I.id = question2Id return I.value.value), 0),
-    score: (word_recall_score as Integer) + (clock_draw_score as Integer),
+    word_recall_score: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question1Id)), 0),
+    clock_draw_score:  Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question2Id)), 0),
+    score: word_recall_score + clock_draw_score,
     scoreSeverity: if score between 0 and 3 then 'high' else 'low'
     return {
       id: I.id.value,

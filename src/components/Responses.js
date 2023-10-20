@@ -151,7 +151,6 @@ export default function Responses(props) {
       );
       result.push(scoringResult);
     }
-    console.log("result ", result);
     return result;
   };
 
