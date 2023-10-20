@@ -36,7 +36,7 @@ export default function QuestionnaireListProvider({ children }) {
         // if (envQList.length) {
         //   setQuestionnaireList(envQList);
         //   console.log("questionnaire list to load from env var: ", envQList);
-        // } else {
+     //   } else {
           const matchedResults =
             results && results.entry && results.entry.length
               ? results.entry.filter(
@@ -61,7 +61,7 @@ export default function QuestionnaireListProvider({ children }) {
             uniqueQIds
           );
           setQuestionnaireList(uniqueQIds);
-       // }
+     //  }
         loadComplete = true;
       })
       .catch((e) => {

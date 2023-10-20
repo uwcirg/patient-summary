@@ -15,7 +15,12 @@ import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import Scoring from "../Score";
 import qConfig from "../../config/questionnaire_config";
-import { isNumber, getDisplayQTitle, scrollToAnchor, getLocaleDateStringFromDate } from "../../util/util";
+import {
+  isNumber,
+  getDisplayQTitle,
+  scrollToAnchor,
+  getLocaleDateStringFromDate,
+} from "../../util/util";
 
 export default function ScoringSummary(props) {
   const theme = useTheme();
@@ -34,7 +39,7 @@ export default function ScoringSummary(props) {
     theme && theme.palette && theme.palette.border && theme.palette.border.main
       ? theme.palette.border.main
       : "#FFF";
-  const { summaryData, questionnaireList } = props;
+  const { summaryData } = props;
   const hasNoResponses = (responses) => !responses || !responses.length;
   const responsesHasScore = (responses) => {
     if (hasNoResponses(responses)) return false;
@@ -45,13 +50,17 @@ export default function ScoringSummary(props) {
     if (qConfig[key] && qConfig[key].shortTitle) {
       return qConfig[key].shortTitle;
     }
-    const matchedQuestionnaire = questionnaireList
-      ? questionnaireList
-          .filter((q) => q.id === id && q.questionnaireJson)
-          .map((q) => q.questionnaireJson)
-      : null;
-    if (matchedQuestionnaire && matchedQuestionnaire.length) {
-      const { id, name, title } = matchedQuestionnaire[0];
+    // const matchedQuestionnaire = questionnaireList
+    //   ? questionnaireList
+    //       .filter((q) => q.id === id && q.questionnaireJson)
+    //       .map((q) => q.questionnaireJson)
+    //   : null;
+    const matchedQuestionnaire =
+      summaryData[id] && summaryData[id].questionnaire
+        ? summaryData[id].questionnaire
+        : null;
+    if (matchedQuestionnaire) {
+      const { id, name, title } = matchedQuestionnaire;
       if (name) return name;
       if (title) return title;
       return id;
@@ -66,13 +75,11 @@ export default function ScoringSummary(props) {
     });
   const getSortedResponses = (rdata) => {
     if (hasNoResponses(rdata)) return [];
-    return rdata.sort(
-      (a, b) => {
-        const aTime = new Date(a.date).getTime();
-        const bTime = new Date(b.date).getTime();
-        return bTime - aTime;
-      }
-    );
+    return rdata.sort((a, b) => {
+      const aTime = new Date(a.date).getTime();
+      const bTime = new Date(b.date).getTime();
+      return bTime - aTime;
+    });
   };
   const getResponsesByIndex = (rdata, index) => {
     const sortedResponses = getSortedResponses(rdata);
@@ -86,7 +93,7 @@ export default function ScoringSummary(props) {
 
   const getPrevResponses = (rdata) => {
     return getResponsesByIndex(rdata, 1);
-  }
+  };
 
   const getPrevScoreByInstrument = (rdata) => {
     const responses = getPrevResponses(rdata);
@@ -102,7 +109,9 @@ export default function ScoringSummary(props) {
   };
   const getDisplayIcon = (rdata) => {
     const currentResponses = getCurrentResponses(rdata);
-    const comparisonToAlert = currentResponses ? currentResponses.comparisonToAlert : ""; // display alert if score is lower/higher than previous
+    const comparisonToAlert = currentResponses
+      ? currentResponses.comparisonToAlert
+      : ""; // display alert if score is lower/higher than previous
     const currentScore = getCurrentScoreByInstrument(rdata);
     const prevScore = getPrevScoreByInstrument(rdata);
     const iconProps = {
@@ -218,9 +227,9 @@ export default function ScoringSummary(props) {
       minHeight: {
         xs: "34px",
         sm: "auto",
-      }, 
+      },
       left: theme.spacing(1.75),
-      ...{whiteSpace: { xs: "nowrap", sm: "normal" }},
+      ...{ whiteSpace: { xs: "nowrap", sm: "normal" } },
     },
   };
   const renderTableHeaderRow = () => (
@@ -238,10 +247,7 @@ export default function ScoringSummary(props) {
           }}
           {...defaultHeaderCellProps}
         ></TableCell>
-        <TableCell
-          sx={cellStyle}
-          {...defaultHeaderCellProps}
-        >
+        <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
           Last assessed
         </TableCell>
         <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
