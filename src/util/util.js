@@ -74,9 +74,10 @@ export function getFHIRResourcePaths(patientId) {
   const resources = getFHIRResourcesToLoad();
   return resources.map((resource) => {
     let path = `/${resource}`;
-    const observationCategories = getEnv(
-      "REACT_APP_FHIR_OBSERVATION_CATEGORIES"
-    );
+    const envObCategories = getEnv("REACT_APP_FHIR_OBSERVATION_CATEGORIES");
+    const observationCategories = envObCategories
+      ? envObCategories
+      : "social-history,vital-signs,imaging,laboratory,procedure,survey,exam,therapy,activity,smartdata";
     if (resource.toLowerCase() === "careplan") {
       path =
         path +

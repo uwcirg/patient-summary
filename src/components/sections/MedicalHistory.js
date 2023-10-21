@@ -28,9 +28,10 @@ export default function MedicalHistory(props) {
     return goodData
       .map((item, index) => {
         item.id = item.id + "_" + index;
-        item.condition = item.code.coding.map(o => o.display).join(", ");
-        item.onsetDateTime = getCorrectedISODate(item.onsetDateTime);
-        item.recordedDate = getCorrectedISODate(item.recordedDate);
+        const joinedDisplays = item.code.coding.filter(o => o.display).map(o => o.display).join(", ");
+        item.condition = joinedDisplays || "--";
+        item.onsetDateTime = item.onsetDateTime ? getCorrectedISODate(item.onsetDateTime) : "";
+        item.recordedDate = item.recordedDate ? getCorrectedISODate(item.recordedDate) : "";
         return item;
       })
       .sort((a, b) => {
