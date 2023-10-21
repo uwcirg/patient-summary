@@ -37,6 +37,14 @@ export default function Observations(props) {
 
     return "--";
   };
+  const getComponentDisplays = (item) => {
+    if (!item || !item.component || !item.component.length) return "--";
+    return item.component.map(o => {
+      const textDisplay = o.code && o.code.text ? o.code.text: "";
+      const valueDisplay = getItemValue(o);
+      return [textDisplay, valueDisplay].join("/");
+    }).join(", ");
+  }
   const getData = (data) => {
     if (!data) return null;
     const goodData = data.filter(
@@ -49,13 +57,14 @@ export default function Observations(props) {
     return goodData
       .map((item, index) => {
         item.id = item.id + "_" + index;
-        item.text = item.code.coding[0].display;
+        const joinedDisplays = item.code.coding.filter(o => o.display).map(o => o.display).join(", ");
+        item.text = joinedDisplays || "--";
         item.date = getCorrectedISODate(item.issued);
         item.provider =
           item.performer && item.performer.length
             ? item.performer[0].display
             : "--";
-        item.value = getItemValue(item);
+        item.value = item.component ? getComponentDisplays(item) : getItemValue(item);
         return item;
       })
       .sort((a, b) => {
