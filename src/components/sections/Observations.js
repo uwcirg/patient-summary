@@ -30,6 +30,15 @@ export default function Observations(props) {
     if (item.valueInteger && item.valueInteger.value) {
       return item.valueInteger.value;
     }
+    if (item.valueDecimal && item.valueDecimal.value) {
+      return item.valueDecimal.value;
+    }
+    if (item.valueDate && item.valueDate.value) {
+      return item.valueDate.value;
+    }
+    if (item.valueDateTime && item.valueDateTime.value) {
+      return item.valueDate.value;
+    }
     if (item.valueCodeableConcept && item.valueCodeableConcept.text) {
       return item.valueCodeableConcept.text;
     }
@@ -123,7 +132,7 @@ export default function Observations(props) {
   if (!results || !results.length)
     return (
       <Alert severity="warning" className="condition-no-data">
-        No recorded condition
+        No recorded observation
       </Alert>
     );
   return (

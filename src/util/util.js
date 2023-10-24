@@ -43,7 +43,7 @@ export async function getInterventionLogicLib(interventionId) {
 }
 
 export function getFHIRResourcesToLoad() {
-  const defaultList = ["Condition", "Observation", "QuestionnaireResponse"];
+  const defaultList = ["Condition", "Observation", "Questionnaire", "QuestionnaireResponse"];
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
   const sections = getSectionsToShow();
   const envResourcesToLoad = resourcesToLoad ? resourcesToLoad.split(",") : [];
@@ -57,37 +57,50 @@ export function getFHIRResourcesToLoad() {
   }
   const combinedResources = [...envResourcesToLoad, ...resourcesForSection];
   const allResources = [...new Set(combinedResources)];
-  let resources = allResources.length ? allResources : defaultList;
-  defaultList.forEach((item) => {
-    let inList =
-      resources.filter((r) => r.toLowerCase() === item.toLowerCase()).length >
-      0;
-    if (!inList) {
-      resources.push(item);
-    }
-  });
+  const resources = allResources.length
+    ? [...new Set([...allResources, ...defaultList])]
+    : defaultList;
+
+  //console.log("Resources to load : ", resources);
   return resources;
 }
 
-export function getFHIRResourcePaths(patientId) {
+export function getFHIRResourcePaths(patientId, options) {
   if (!patientId) return [];
   const resources = getFHIRResourcesToLoad();
   return resources.map((resource) => {
     let path = `/${resource}`;
-    const envObCategories = getEnv("REACT_APP_FHIR_OBSERVATION_CATEGORIES");
-    const observationCategories = envObCategories
-      ? envObCategories
-      : "social-history,vital-signs,imaging,laboratory,procedure,survey,exam,therapy,activity,smartdata";
-    if (resource.toLowerCase() === "careplan") {
-      path =
-        path +
-        `?subject=Patient/${patientId}&_sort=-_lastUpdated&category:text=Questionnaire`;
+    const resourceToLoad = resource.toLowerCase();
+    let paramsObj = {
+      _sort: "-_lastUpdated",
+      _count: 200,
+    };
+    if (resourceToLoad === "careplan") {
+      const envCategory = getEnv("REACT_APP_FHIR_CAREPLAN_CATEGORY");
+      paramsObj["subject"] = `Patient/${patientId}`;
+      paramsObj["category:text"] = envCategory ? envCategory : "Questionnaire";
     } else {
-      path = path + `?patient=${patientId}&_sort=-_lastUpdated&_count=100`;
+      if (resourceToLoad !== "questionnaire") {
+        paramsObj["patient"] = patientId;
+      }
     }
-    if (resource.toLowerCase() === "observation" && observationCategories) {
-      path += "&category=" + observationCategories;
+    if (resourceToLoad === "questionnaire") {
+      if (options) {
+        if (options.questionnaireList) {
+          paramsObj[options.exactMatch ? "_id" : "name:contains"] =
+            options.questionnaireList.join(",");
+        }
+      }
     }
+    if (resourceToLoad === "observation") {
+      const envObCategories = getEnv("REACT_APP_FHIR_OBSERVATION_CATEGORIES");
+      const observationCategories = envObCategories
+        ? envObCategories
+        : "social-history,vital-signs,imaging,laboratory,procedure,survey,exam,therapy,activity,smartdata";
+      paramsObj["category"] = observationCategories;
+    }
+    const searchParams = new URLSearchParams(paramsObj);
+    path = path + "?" + searchParams.toString();
     return {
       resourceType: resource,
       resourcePath: path,
@@ -341,180 +354,6 @@ export function range(start, end) {
   return new Array(end - start + 1).fill(undefined).map((_, i) => i + start);
 }
 
-// export function gatherSummaryDataByQuestionnaireId(
-//   client,
-//   patientBundle,
-//   questionnaireId
-// ) {
-//   return new Promise((resolve, reject) => {
-//     // search for matching questionnaire
-//     const searchMatchingResources = async () => {
-//       const storageKey = `questionnaire_${questionnaireId}`;
-//       const storageQuestionnaire = sessionStorage.getItem(storageKey);
-//       if (storageQuestionnaire) return JSON.parse(storageQuestionnaire);
-//       const fhirSearchOptions = { pageLimit: 0 };
-//       // query by id and name
-//       const qResult = await Promise.allSettled([
-//         client.request(
-//           {
-//             url: "Questionnaire/" + questionnaireId,
-//           },
-//           fhirSearchOptions
-//         ),
-//         client.request(
-//           {
-//             url: "Questionnaire?name:contains=" + questionnaireId,
-//           },
-//           fhirSearchOptions
-//         ),
-//       ]).catch((e) => {
-//         throw new Error(e);
-//       });
-//       const returnResult = qResult.find(result => result.status !== "rejected");
-//       if (returnResult) {
-//         sessionStorage.setItem(storageKey, JSON.stringify(returnResult.value));
-//         return returnResult.value;
-//       }
-//       return null;
-//     };
-//     const gatherSummaryData = async (questionnaireJson) => {
-//       // Define a web worker for evaluating CQL expressions
-//       const cqlWorker = new Worker();
-//       // Initialize the cql-worker
-//       const [setupExecution, sendPatientBundle, evaluateExpression] =
-//         initialzieCqlWorker(cqlWorker);
-//       const questionaireKey = String(questionnaireId).toLowerCase();
-//       const matchedKeys = Object.keys(QuestionnaireConfig).filter((id) => {
-//         const match = String(id).toLowerCase();
-//         return (
-//           String(questionnaireJson.name).toLowerCase().includes(match) ||
-//           String(questionnaireJson.title).toLowerCase().includes(match) ||
-//           String(questionnaireJson.id).toLowerCase().includes(match)
-//         );
-//       });
-//       const targetQId = matchedKeys.length ? matchedKeys[0] : questionaireKey;
-//       // console.log("matched keys ? ", matchedKeys)
-//       // console.log("questionnaireJSON ", questionnaireJson)
-//       // console.log('targetQID ', targetQId)
-//       const chartConfig = getChartConfig(targetQId);
-//       const questionnaireConfig = QuestionnaireConfig[targetQId] || {};
-
-//       /* get CQL expressions */
-//       const [elmJson, valueSetJson] = await getInterventionLogicLib(
-//         questionnaireConfig.customCQL ? targetQId : ""
-//       ).catch((e) => {
-//         console.log("Error retrieving ELM lib son for " + questionnaireId, e);
-//         throw new Error("Error retrieving ELM lib son for " + questionnaireId);
-//       });
-//       setupExecution(
-//         elmJson,
-//         valueSetJson,
-//         {
-//           QuestionnaireID: questionnaireJson.id,
-//           QuestionnaireName: questionnaireJson.name
-//         },
-//         getElmDependencies()
-//       );
-
-//       // Send patient info to CQL worker to process
-//       sendPatientBundle(patientBundle);
-
-//       // get formatted questionnaire responses
-//       let cqlData = null;
-//       try {
-//         cqlData = await evaluateExpression("ResponsesSummary").catch((e) => {
-//           console.log(e);
-//           throw new Error(
-//             "CQL evaluation expression, ResponsesSummary, error "
-//           );
-//         });
-//       } catch (e) {
-//         console.log("Error executing CQL expression: ", e);
-//       }
-//       const scoringData =
-//         cqlData && Array.isArray(cqlData) && cqlData.length
-//           ? cqlData.filter((item) => {
-//               return (
-//                 item && item.responses && isNumber(item.score) && item.date
-//               );
-//             })
-//           : null;
-//       const chartData =
-//         scoringData && scoringData.length
-//           ? scoringData.map((item) => ({
-//               ...item,
-//               ...(item.scoringParams ? item.scoringParams : {}),
-//               date: item.date,
-//               total: item.score,
-//             }))
-//           : null;
-//       const scoringParams =
-//         cqlData && cqlData.length ? cqlData[0].scoringParams : {};
-
-//       const returnResult = {
-//         chartConfig: { ...chartConfig, ...scoringParams },
-//         chartData: chartData,
-//         responses: cqlData,
-//         questionnaire: questionnaireJson,
-//       };
-//       console.log(
-//         "return result from CQL execution for " + questionnaireId,
-//         returnResult
-//       );
-//       cqlWorker.terminate();
-//       return returnResult;
-//     };
-
-//     // find matching questionnaire & questionnaire response(s)
-//     searchMatchingResources()
-//       .then((result) => {
-//         if (!result) {
-//           reject("No questionnaire results found.");
-//           return;
-//         }
-//         let bundles = [];
-//         if (Array.isArray(result)) {
-//           result.forEach((item) => {
-//             bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];
-//           });
-//         } else
-//           bundles = [...bundles, ...getFhirResourcesFromQueryResult(result)];
-//         const arrQuestionnaires = bundles.filter(
-//           (entry) =>
-//             entry.resource &&
-//             String(entry.resource.resourceType).toLowerCase() ===
-//               "questionnaire"
-//         );
-//         const questionnaireJson = arrQuestionnaires.length
-//           ? arrQuestionnaires[0].resource
-//           : null;
-//         if (!questionnaireJson) {
-//           reject("No matching questionnaire found");
-//           return;
-//         }
-//         patientBundle = {
-//           ...patientBundle,
-//           entry: [...patientBundle.entry, ...bundles],
-//           questionnaire: questionnaireJson,
-//         };
-//         gatherSummaryData(questionnaireJson)
-//           .then((data) => {
-//             resolve(data);
-//           })
-//           .catch((e) => {
-//             reject(
-//               "Error occurred gathering summary data.  See console for detail."
-//             );
-//             console.log("Error occurred gathering summary data: ", e);
-//           });
-//       })
-//       .catch((e) => {
-//         reject("Error occurred retrieving matching resources");
-//         console.log("Error occurred retrieving matching resources: ", e);
-//       });
-//   }); // end promise
-// }
-
 /*
  * @param client is a SoF frontend client
  * return the state key property of the client
@@ -627,7 +466,9 @@ export function addMamotoTracking(userId) {
 export function getQuestionnaireName(questionnaireJson) {
   if (!questionnaireJson) return "";
   const { id, title, name } = questionnaireJson;
-  return title || name || `Questionnaire ${id}`;
+  if (name) return name;
+  if (title) return title;
+  return `Questionnaire ${id}`;
 }
 
 export function getLocaleDateStringFromDate(dateString, format) {

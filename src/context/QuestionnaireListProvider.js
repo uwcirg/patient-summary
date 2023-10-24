@@ -1,10 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
-import {
-  getEnvQuestionnaireList,
-  getEnv
-} from "../util/util";
+import { getEnvQuestionnaireList, getEnv } from "../util/util";
 import { QuestionnaireListContext } from "./QuestionnaireListContext";
 import { FhirClientContext } from "../context/FhirClientContext";
 
@@ -13,7 +10,7 @@ let loadComplete = false;
 export default function QuestionnaireListProvider({ children }) {
   const [error, setError] = useState();
   const [questionnaireList, setQuestionnaireList] = useState([]);
-  const [exactMatch, setExactMatch] = useState(false);
+  const [exactMatch, setExactMatch] = useState(getEnv("REACT_APP_MATCH_QUESTIONNAIRE_BY_ID"));
   const { client, patient } = useContext(FhirClientContext);
 
   useEffect(() => {
@@ -23,7 +20,11 @@ export default function QuestionnaireListProvider({ children }) {
     }
     if (loadComplete || error) return;
     const envQList = getEnvQuestionnaireList();
-    console.log("env List? ", envQList)
+    if (envQList.length) {
+      setQuestionnaireList(envQList);
+      loadComplete = true;
+      return;
+    }
     const handleErrorCallback = (message) => {
       setError(message);
       loadComplete = true;
@@ -38,33 +39,33 @@ export default function QuestionnaireListProvider({ children }) {
         // if (envQList.length) {
         //   setQuestionnaireList(envQList);
         //   console.log("questionnaire list to load from env var: ", envQList);
-     //   } else {
-          const matchedResults =
-            results && results.entry && results.entry.length
-              ? results.entry.filter(
-                  (item) =>
-                    item.resource &&
-                    item.resource.questionnaire &&
-                    item.resource.questionnaire.split("/")[1]
-                )
-              : null;
+        //   } else {
+        const matchedResults =
+          results && results.entry && results.entry.length
+            ? results.entry.filter(
+                (item) =>
+                  item.resource &&
+                  item.resource.questionnaire &&
+                  item.resource.questionnaire.split("/")[1]
+              )
+            : null;
 
-          //console.log("matched results ", matchedResults)
-          if (!matchedResults || !matchedResults.length) {
-            setError("No questionnaire list set");
-            return;
-          }
-          const qIds = matchedResults.map(
-            (item) => item.resource.questionnaire.split("/")[1]
-          );
-          let uniqueQIds = [...new Set(qIds)];
-          console.log(
-            "questionnaire list from questionnaire responses to load ",
-            uniqueQIds
-          );
-          setExactMatch(true);
-          setQuestionnaireList(uniqueQIds);
-     //  }
+        //console.log("matched results ", matchedResults)
+        if (!matchedResults || !matchedResults.length) {
+          setError("No questionnaire list set");
+          return;
+        }
+        const qIds = matchedResults.map(
+          (item) => item.resource.questionnaire.split("/")[1]
+        );
+        let uniqueQIds = [...new Set(qIds)];
+        console.log(
+          "questionnaire list from questionnaire responses to load ",
+          uniqueQIds
+        );
+        setExactMatch(true);
+        setQuestionnaireList(uniqueQIds);
+        //  }
         loadComplete = true;
       })
       .catch((e) => {
@@ -76,7 +77,7 @@ export default function QuestionnaireListProvider({ children }) {
     <QuestionnaireListContext.Provider
       value={{
         questionnaireList: questionnaireList,
-        exactMatch: getEnv("REACT_APP_MATCH_QUESTIONNAIRE_BY_ID") || exactMatch,
+        exactMatch: exactMatch,
         error: error,
       }}
     >

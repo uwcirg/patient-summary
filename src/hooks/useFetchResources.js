@@ -9,6 +9,7 @@ import {
   getChartConfig,
   getElmDependencies,
   getInterventionLogicLib,
+  getResourcesByResourceType,
   getFhirResourcesFromQueryResult,
   getFHIRResourcesToLoad,
   getFHIRResourcePaths,
@@ -47,8 +48,8 @@ export default function useFetchResources() {
       id: qid,
       title:
         qConfig[qid] && qConfig[qid].shortTitle
-          ? `Questionnaire ${qConfig[qid].shortTitle}`
-          : `Questionnaire ${qid}`,
+          ? `Summary data for Questionnaire ${qConfig[qid].shortTitle}`
+          : `Summary data for Questionnaire ${qid}`,
       complete: false,
       error: false,
     })),
@@ -102,38 +103,51 @@ export default function useFetchResources() {
         const storageKey = `questionnaire_${questionnaireId}`;
         const storageQuestionnaire = sessionStorage.getItem(storageKey);
         if (storageQuestionnaire) return JSON.parse(storageQuestionnaire);
-        const fhirSearchOptions = { pageLimit: 0 };
-        const requests = [
-          client.request(
-            {
-              url: "Questionnaire/" + questionnaireId,
-            },
-            fhirSearchOptions
-          ),
-        ];
-        if (!exactMatch) {
-          requests.push(
-            client.request(
-              {
-                url: "Questionnaire?name:contains=" + questionnaireId,
-              },
-              fhirSearchOptions
-            )
-          );
-        }
-        // query by id and name
-        const qResult = await Promise.allSettled(requests).catch((e) => {
-          throw new Error(e);
-        });
-        const returnResult = qResult.find(
-          (result) => result.status !== "rejected" && result.value
+        const questionnaireResources = getResourcesByResourceType(
+          patientBundle,
+          "Questionnaire"
         );
-        if (returnResult) {
-          sessionStorage.setItem(
-            storageKey,
-            JSON.stringify(returnResult.value)
-          );
-          return returnResult.value;
+        console.log("patient Bundle ", patientBundle);
+        console.log("questionnaireResources ", questionnaireResources);
+        const returnResult =
+          questionnaireResources
+            ? questionnaireResources.filter((resource) => {
+                if (!exactMatch)
+                  return String(resource.name)
+                    .toLowerCase()
+                    .includes(String(questionnaireId).toLowerCase());
+                return resource.id === questionnaireId;
+              })
+            : null;
+        // const fhirSearchOptions = { pageLimit: 0 };
+        // const requests = [
+        //   client.request(
+        //     {
+        //       url: "Questionnaire/" + questionnaireId,
+        //     },
+        //     fhirSearchOptions
+        //   ),
+        // ];
+        // if (!exactMatch) {
+        //   requests.push(
+        //     client.request(
+        //       {
+        //         url: "Questionnaire?name:contains=" + questionnaireId,
+        //       },
+        //       fhirSearchOptions
+        //     )
+        //   );
+        // }
+        // // query by id and name
+        // const qResult = await Promise.allSettled(requests).catch((e) => {
+        //   throw new Error(e);
+        // });
+        // const returnResult = qResult.find(
+        //   (result) => result.status !== "rejected" && result.value
+        // );
+        if (returnResult && returnResult.length) {
+          sessionStorage.setItem(storageKey, JSON.stringify(returnResult[0]));
+          return returnResult[0];
         }
         return null;
       };
@@ -152,9 +166,9 @@ export default function useFetchResources() {
           );
         });
         const targetQId = matchedKeys.length ? matchedKeys[0] : questionaireKey;
-        console.log("matched keys ? ", matchedKeys);
+        console.log("matched item from qConfig ", matchedKeys);
         console.log("questionnaireJSON ", questionnaireJson);
-        console.log("targetQID ", targetQId);
+        console.log("matched target  ", targetQId);
         const chartConfig = getChartConfig(targetQId);
         const questionnaireConfig = QuestionnaireConfig[targetQId] || {};
 
@@ -271,7 +285,7 @@ export default function useFetchResources() {
           }
           patientBundle = {
             ...patientBundle,
-            entry: [...patientBundle.entry, ...bundles],
+            entry: [...patientBundle, ...bundles],
             questionnaire: questionnaireJson,
           };
           gatherSummaryData(questionnaireJson)
@@ -321,7 +335,7 @@ export default function useFetchResources() {
             let error = "";
             let results = await gatherSummaryDataByQuestionnaireId(
               client,
-              patientBundle.current,
+              patientBundle.current.entry,
               qid,
               exactMatch
             ).catch((e) => (error = e));
@@ -388,10 +402,15 @@ export default function useFetchResources() {
   const getFhirResources = async () => {
     if (!client || !patient || !patient.id)
       throw new Error("Client or patient missing.");
-    const resources = getFHIRResourcePaths(patient.id);
+    const resources = getFHIRResourcePaths(patient.id, {
+      questionnaireList: questionnaireList,
+      exactMatch: exactMatch,
+    });
     const requests = resources.map((resource) =>
       client
-        .request(resource.resourcePath)
+        .request(resource.resourcePath, {
+          "Cache-Control": "no-cache, no-store, max-age=0",
+        })
         .then((result) => {
           handleResourceComplete(resource.resourceType);
           return result;
