@@ -55,14 +55,31 @@ export default function Observations(props) {
     return "--";
   };
   const getComponentDisplays = (item) => {
-    if (!item || !item.component || !item.component.length) return "--";
-    return item.component
+    let displayText = "";
+    if (item.valueCodeableConcept) {
+      if (item.valueCodeableConcept.text)
+        displayText = item.valueCodeableConcept.text;
+      else if (
+        item.valueCodeableConcept.coding &&
+        Array.isArray(item.valueCodeableConcept.coding) &&
+        item.valueCodeableConcept.coding.length
+      ) {
+        displayText = item.valueCodeableConcept.coding[0].display;
+      }
+    }
+    if (!item || !item.component || !item.component.length) return displayText || "--";
+    const componentDisplay = item.component
       .map((o) => {
         const textDisplay = o.code && o.code.text ? o.code.text : "";
         const valueDisplay = getItemValue(o);
-        return [textDisplay, valueDisplay].join("/");
+        return [textDisplay, valueDisplay].join(": ");
       })
       .join(", ");
+    if (displayText && componentDisplay) {
+      return [displayText, componentDisplay].join(", ");
+    }
+    if (componentDisplay) return componentDisplay;
+    if (displayText) return displayText;
   };
   const getData = (data) => {
     if (!data) return null;
