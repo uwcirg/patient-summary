@@ -31,11 +31,11 @@ export default function Observations(props) {
       if (item.valueBoolean.value) return String(item.valueBoolean.value);
       return String(item.valueBoolean);
     }
-    if (item.valueInteger) {
+    if (item.valueInteger != null) {
       if (item.valueInteger.value) return item.valueInteger.value;
       return item.valueInteger;
     }
-    if (item.valueDecimal) {
+    if (item.valueDecimal != null) {
       if (item.valueDecimal.value) return item.valueDecimal.value;
       return item.valueDecimal;
     }
