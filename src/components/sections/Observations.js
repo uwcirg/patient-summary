@@ -120,12 +120,12 @@ export default function Observations(props) {
       field: "value",
     },
     {
-      title: "Category",
-      field: "category",
-    },
-    {
       title: "Issued Date",
       field: "date",
+    },
+    {
+      title: "Category",
+      field: "category",
     },
     // {
     //   title: "Provider",
