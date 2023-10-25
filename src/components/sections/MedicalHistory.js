@@ -22,16 +22,25 @@ export default function MedicalHistory(props) {
       (item) =>
         item.resourceType === "Condition" &&
         item.code &&
-        item.code.coding &&
-        item.code.coding.length > 0
+        ((item.code.coding &&
+          Array.isArray(item.code.coding) && 
+          item.code.coding.length > 0 &&
+          item.code.coding.find((o) => o.display)) ||
+          item.code.text)
     );
     return goodData
       .map((item, index) => {
         item.id = item.id + "_" + index;
-        const joinedDisplays = item.code.coding.filter(o => o.display).map(o => o.display).join(", ");
-        item.condition = joinedDisplays || "--";
-        item.onsetDateTime = item.onsetDateTime ? getCorrectedISODate(item.onsetDateTime) : "";
-        item.recordedDate = item.recordedDate ? getCorrectedISODate(item.recordedDate) : "";
+        const displayText = item.code.text
+          ? item.code.text
+          : item.code.coding.map((o) => o.display).join(", ");
+        item.condition = displayText || "--";
+        item.onsetDateTime = item.onsetDateTime
+          ? getCorrectedISODate(item.onsetDateTime)
+          : "";
+        item.recordedDate = item.recordedDate
+          ? getCorrectedISODate(item.recordedDate)
+          : "";
         return item;
       })
       .sort((a, b) => {

@@ -19,6 +19,9 @@ export default function Observations(props) {
   const getItemValue = (item) => {
     if (!item) return "--";
     if (item.valueQuantity && item.valueQuantity.value) {
+      if (item.valueQuantity.unit) {
+        return [item.valueQuantity.value, item.valueQuantity.unit].join(" ");
+      }
       return item.valueQuantity.value;
     }
     if (item.valueString && item.valueString.value) {
@@ -48,12 +51,14 @@ export default function Observations(props) {
   };
   const getComponentDisplays = (item) => {
     if (!item || !item.component || !item.component.length) return "--";
-    return item.component.map(o => {
-      const textDisplay = o.code && o.code.text ? o.code.text: "";
-      const valueDisplay = getItemValue(o);
-      return [textDisplay, valueDisplay].join("/");
-    }).join(", ");
-  }
+    return item.component
+      .map((o) => {
+        const textDisplay = o.code && o.code.text ? o.code.text : "";
+        const valueDisplay = getItemValue(o);
+        return [textDisplay, valueDisplay].join("/");
+      })
+      .join(", ");
+  };
   const getData = (data) => {
     if (!data) return null;
     const goodData = data.filter(
@@ -66,14 +71,33 @@ export default function Observations(props) {
     return goodData
       .map((item, index) => {
         item.id = item.id + "_" + index;
-        const joinedDisplays = item.code.coding.filter(o => o.display).map(o => o.display).join(", ");
+        item.category =
+          item.category && Array.isArray(item.category) && item.category.length
+            ? item.category
+                .map((o) =>
+                  o.text
+                    ? o.text
+                    : o.coding && o.coding.length && o.coding[0].display
+                    ? o.coding[0].display
+                    : "--"
+                )
+                .join(", ")
+            : item.category
+            ? item.category
+            : "--";
+        const joinedDisplays = item.code.coding
+          .filter((o) => o.display)
+          .map((o) => o.display)
+          .join(", ");
         item.text = joinedDisplays || "--";
         item.date = getCorrectedISODate(item.issued);
         item.provider =
           item.performer && item.performer.length
             ? item.performer[0].display
             : "--";
-        item.value = item.component ? getComponentDisplays(item) : getItemValue(item);
+        item.value = item.component
+          ? getComponentDisplays(item)
+          : getItemValue(item);
         return item;
       })
       .sort((a, b) => {
@@ -96,13 +120,17 @@ export default function Observations(props) {
       field: "value",
     },
     {
-      title: "Date",
-      field: "date",
+      title: "Category",
+      field: "category",
     },
     {
-      title: "Provider",
-      field: "provider",
+      title: "Issued Date",
+      field: "date",
     },
+    // {
+    //   title: "Provider",
+    //   field: "provider",
+    // },
   ];
   const renderPrintView = (data) => {
     const displayColumns = columns.filter((column) => !column.hidden);
