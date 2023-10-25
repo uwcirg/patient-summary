@@ -23,7 +23,7 @@ export default function MedicalHistory(props) {
         item.resourceType === "Condition" &&
         item.code &&
         ((item.code.coding &&
-          Array.isArray(item.code.coding) && 
+          Array.isArray(item.code.coding) &&
           item.code.coding.length > 0 &&
           item.code.coding.find((o) => o.display)) ||
           item.code.text)
@@ -41,6 +41,17 @@ export default function MedicalHistory(props) {
         item.recordedDate = item.recordedDate
           ? getCorrectedISODate(item.recordedDate)
           : "";
+        item.status = item.verificationStatus
+          ? item.verificationStatus.text
+            ? item.verificationStatus.text
+            : item.verificationStatus.coding &&
+              Array.isArray(item.verificationStatus.coding) &&
+              item.verificationStatus.coding.length
+            ? item.verificationStatus.coding[0].display
+              ? item.verificationStatus.coding[0].display
+              : item.verificationStatus.coding[0].code
+            : "--"
+          : "--";
         return item;
       })
       .sort((a, b) => {
@@ -69,6 +80,10 @@ export default function MedicalHistory(props) {
       title: "Recorded Date",
       field: "recordedDate",
     },
+    {
+      title: "Status",
+      field: "status"
+    }
   ];
   const renderPrintView = (data) => {
     const displayColumns = columns.filter((column) => !column.hidden);
