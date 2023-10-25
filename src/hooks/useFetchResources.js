@@ -37,9 +37,20 @@ export default function useFetchResources() {
   });
   const [error, setError] = useState(null);
 
+  const getResourcesToLoad = () => {
+    let resources = getFHIRResourcesToLoad();
+    if (!questionnaireList || !questionnaireList.length) {
+      const qIndex = resources.indexOf("Questionnaire");
+      if (qIndex !== -1) resources.splice(qIndex, 1);
+    }
+    return resources;
+  }
+
+  const resourcesToLoad = getResourcesToLoad();
+
   // all the resources that will be loaded
   const initialResourcesToLoad = [
-    ...getFHIRResourcesToLoad().map((resource) => ({
+    ...resourcesToLoad.map((resource) => ({
       id: resource,
       complete: false,
       error: false,
@@ -402,7 +413,7 @@ export default function useFetchResources() {
   const getFhirResources = async () => {
     if (!client || !patient || !patient.id)
       throw new Error("Client or patient missing.");
-    const resources = getFHIRResourcePaths(patient.id, {
+    const resources = getFHIRResourcePaths(patient.id, resourcesToLoad, {
       questionnaireList: questionnaireList,
       exactMatch: exactMatch,
     });

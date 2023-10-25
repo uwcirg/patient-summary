@@ -65,9 +65,9 @@ export function getFHIRResourcesToLoad() {
   return resources;
 }
 
-export function getFHIRResourcePaths(patientId, options) {
+export function getFHIRResourcePaths(patientId, resourcesToLoad, options) {
   if (!patientId) return [];
-  const resources = getFHIRResourcesToLoad();
+  const resources = resourcesToLoad ? resourcesToLoad : getFHIRResourcesToLoad();
   return resources.map((resource) => {
     let path = `/${resource}`;
     const resourceToLoad = resource.toLowerCase();
@@ -86,7 +86,7 @@ export function getFHIRResourcePaths(patientId, options) {
     }
     if (resourceToLoad === "questionnaire") {
       if (options) {
-        if (options.questionnaireList) {
+        if (options.questionnaireList && options.questionnaireList.length) {
           paramsObj[options.exactMatch ? "_id" : "name:contains"] =
             options.questionnaireList.join(",");
         }
