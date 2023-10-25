@@ -17,62 +17,67 @@ export default function Observations(props) {
       : "#FFF";
   const { data } = props;
   const getItemValue = (item) => {
-    if (!item) return "--";
-    if (item.valueQuantity && item.valueQuantity.value) {
+    if (!item) return null;
+    if (hasValue(item.valueQuantity)) {
       if (item.valueQuantity.unit) {
         return [item.valueQuantity.value, item.valueQuantity.unit].join(" ");
       }
       return item.valueQuantity.value;
     }
-    if (item.valueString) {
+    if (hasValue(item.valueString)) {
+      if (hasValue(item.valueString.value)) return String(item.valueString.value);
       return item.valueString;
     }
-    if (item.valueBoolean != null) {
-      if (item.valueBoolean.value) return String(item.valueBoolean.value);
+    if (hasValue(item.valueBoolean)) {
+      if (hasValue(item.valueBoolean.value))
+        return String(item.valueBoolean.value);
       return String(item.valueBoolean);
     }
-    if (item.valueInteger != null) {
-      if (item.valueInteger.value) return item.valueInteger.value;
+    if (hasValue(item.valueInteger)) {
+      if (hasValue(item.valueInteger.value)) return item.valueInteger.value;
       return item.valueInteger;
     }
-    if (item.valueDecimal != null) {
-      if (item.valueDecimal.value) return item.valueDecimal.value;
+    if (hasValue(item.valueDecimal)) {
+      if (hasValue(item.valueDecimal.value)) return item.valueDecimal.value;
       return item.valueDecimal;
     }
     if (item.valueDate) {
-      if (item.valueDate.value) return item.valueDate.value;
+      if (hasValue(item.valueDate.value)) return item.valueDate.value;
       return item.valueDate;
     }
-    if (item.valueDateTime) {
+    if (hasValue(item.valueDateTime)) {
       if (item.valueDateTime.value) return item.valueDateTime.value;
       return item.valueDateTime;
     }
-    if (item.valueCodeableConcept && item.valueCodeableConcept.text) {
-      return item.valueCodeableConcept.text;
-    }
-    // need to handle date/time value
-
-    return "--";
-  };
-  const getComponentDisplays = (item) => {
-    let displayText = "";
     if (item.valueCodeableConcept) {
-      if (item.valueCodeableConcept.text)
-        displayText = item.valueCodeableConcept.text;
-      else if (
+      if (item.valueCodeableConcept.text) {
+        return item.valueCodeableConcept.text;
+      } else if (
         item.valueCodeableConcept.coding &&
         Array.isArray(item.valueCodeableConcept.coding) &&
         item.valueCodeableConcept.coding.length
       ) {
-        displayText = item.valueCodeableConcept.coding[0].display;
+        return item.valueCodeableConcept.coding[0].display;
       }
+      return null;
     }
-    if (!item || !item.component || !item.component.length) return displayText || "--";
+    // need to handle date/time value
+
+    return null;
+  };
+  const hasValue = (value) => value != null && value !== "" && (typeof value !== "undefined");
+  const getComponentDisplays = (item) => {
+    let displayText = getItemValue(item);
+    if (!item || !item.component || !item.component.length) return displayText;
     const componentDisplay = item.component
       .map((o) => {
-        const textDisplay = o.code && o.code.text ? o.code.text : "";
+        const textDisplay = o.code && o.code.text ? o.code.text : null;
         const valueDisplay = getItemValue(o);
-        return [textDisplay, valueDisplay].join(": ");
+        if (hasValue(valueDisplay))
+          return textDisplay
+            ? [textDisplay, valueDisplay].join(": ")
+            : valueDisplay;
+        return "";
       })
       .join(", ");
     if (displayText && componentDisplay) {
@@ -80,6 +85,7 @@ export default function Observations(props) {
     }
     if (componentDisplay) return componentDisplay;
     if (displayText) return displayText;
+    return null;
   };
   const getData = (data) => {
     if (!data) return null;
@@ -120,6 +126,12 @@ export default function Observations(props) {
         item.value = item.component
           ? getComponentDisplays(item)
           : getItemValue(item);
+        if (
+          item.value == null ||
+          item.value === "" ||
+          typeof item.value === "undefined"
+        )
+          item.value = "--";
         return item;
       })
       .sort((a, b) => {
