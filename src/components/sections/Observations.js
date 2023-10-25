@@ -24,23 +24,28 @@ export default function Observations(props) {
       }
       return item.valueQuantity.value;
     }
-    if (item.valueString && item.valueString.value) {
-      return item.valueString.value;
+    if (item.valueString) {
+      return item.valueString;
     }
-    if (item.valueBoolean && item.valueBoolean.value) {
-      return String(item.valueBoolean.value);
+    if (item.valueBoolean != null) {
+      if (item.valueBoolean.value) return String(item.valueBoolean.value);
+      return String(item.valueBoolean);
     }
-    if (item.valueInteger && item.valueInteger.value) {
-      return item.valueInteger.value;
+    if (item.valueInteger) {
+      if (item.valueInteger.value) return item.valueInteger.value;
+      return item.valueInteger;
     }
-    if (item.valueDecimal && item.valueDecimal.value) {
-      return item.valueDecimal.value;
+    if (item.valueDecimal) {
+      if (item.valueDecimal.value) return item.valueDecimal.value;
+      return item.valueDecimal;
     }
-    if (item.valueDate && item.valueDate.value) {
-      return item.valueDate.value;
+    if (item.valueDate) {
+      if (item.valueDate.value) return item.valueDate.value;
+      return item.valueDate;
     }
-    if (item.valueDateTime && item.valueDateTime.value) {
-      return item.valueDate.value;
+    if (item.valueDateTime) {
+      if (item.valueDateTime.value) return item.valueDateTime.value;
+      return item.valueDateTime;
     }
     if (item.valueCodeableConcept && item.valueCodeableConcept.text) {
       return item.valueCodeableConcept.text;
