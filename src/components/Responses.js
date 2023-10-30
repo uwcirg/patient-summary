@@ -297,18 +297,21 @@ export default function Responses(props) {
         columns={columns}
         data={getData()}
         icons={{
-          ViewColumn: forwardRef((props, ref) => (
-            <Button
-              variant="outlined"
-              color="secondary"
-              startIcon={<ListAltIcon />}
-              {...props}
-              ref={ref}
-              className="print-hidden"
-            >
-              +/- Columns
-            </Button>
-          )),
+          ViewColumn: forwardRef((props, ref) => {
+            if (!hasData() || (hasData() && data.length < 2)) return null;
+            return (
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<ListAltIcon />}
+                {...props}
+                ref={ref}
+                className="print-hidden"
+              >
+                +/- Columns
+              </Button>
+            );
+          }),
         }}
         options={{
           search: false,
