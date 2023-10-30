@@ -16,21 +16,22 @@ export default function QuestionnaireListProvider({ children }) {
   const { client, patient } = useContext(FhirClientContext);
 
   useEffect(() => {
-    if (!client || !patient) {
-      setError("No FHIR client provided");
-      return;
-    }
-    if (loadComplete || error) return;
-    const envQList = getEnvQuestionnaireList();
-    if (envQList.length) {
-      setQuestionnaireList(envQList);
-      loadComplete = true;
-      return;
-    }
     const handleErrorCallback = (message) => {
       setError(message);
       loadComplete = true;
     };
+    if (!client || !patient) {
+      handleErrorCallback("No FHIR client or patient provided");
+      return;
+    }
+    if (loadComplete) return;
+    const envQList = getEnvQuestionnaireList();
+    if (envQList.length) {
+      setQuestionnaireList(envQList);
+      console.log("questionnaire list to load from environment variable ", envQList);
+      loadComplete = true;
+      return;
+    }
     // load questionnaires based on questionnaire responses
     client
       .request(
@@ -38,12 +39,11 @@ export default function QuestionnaireListProvider({ children }) {
           patient.id
       )
       .then((results) => {
-        // if (envQList.length) {
-        //   setQuestionnaireList(envQList);
-        //   console.log("questionnaire list to load from env var: ", envQList);
-        //   } else {
         const matchedResults =
-          results && results.entry && results.entry.length
+          results &&
+          results.entry &&
+          Array.isArray(results.entry) &&
+          results.entry.length
             ? results.entry.filter(
                 (item) =>
                   item.resource &&
@@ -51,10 +51,9 @@ export default function QuestionnaireListProvider({ children }) {
                   item.resource.questionnaire.split("/")[1]
               )
             : null;
-
-        //console.log("matched results ", matchedResults)
+        console.log("matched results for questionnaire from QuestionnaireResponse ", matchedResults);
         if (!matchedResults || !matchedResults.length) {
-          setError("No questionnaire list set");
+          handleErrorCallback("No questionnaire list set");
           return;
         }
         const qIds = matchedResults.map(
@@ -67,13 +66,12 @@ export default function QuestionnaireListProvider({ children }) {
         );
         setExactMatch(true);
         setQuestionnaireList(uniqueQIds);
-        //  }
         loadComplete = true;
       })
       .catch((e) => {
         handleErrorCallback(e);
       });
-  }, [client, patient, error]);
+  }, [client, patient]);
 
   return (
     <QuestionnaireListContext.Provider

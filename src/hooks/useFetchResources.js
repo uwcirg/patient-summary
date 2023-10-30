@@ -40,11 +40,13 @@ export default function useFetchResources() {
   const getResourcesToLoad = () => {
     let resources = getFHIRResourcesToLoad();
     if (!questionnaireList || !questionnaireList.length) {
-      const qIndex = resources.indexOf("Questionnaire");
+      const qIndex = resources
+        .map((resource) => String(resource).toLowerCase())
+        .indexOf("questionnaire");
       if (qIndex !== -1) resources.splice(qIndex, 1);
     }
     return resources;
-  }
+  };
 
   const resourcesToLoad = getResourcesToLoad();
 
@@ -103,7 +105,6 @@ export default function useFetchResources() {
   };
 
   const gatherSummaryDataByQuestionnaireId = (
-    client,
     patientBundle,
     questionnaireId,
     exactMatch
@@ -120,16 +121,15 @@ export default function useFetchResources() {
         );
         console.log("patient Bundle ", patientBundle);
         console.log("questionnaireResources ", questionnaireResources);
-        const returnResult =
-          questionnaireResources
-            ? questionnaireResources.filter((resource) => {
-                if (!exactMatch)
-                  return String(resource.name)
-                    .toLowerCase()
-                    .includes(String(questionnaireId).toLowerCase());
-                return resource.id === questionnaireId;
-              })
-            : null;
+        const returnResult = questionnaireResources
+          ? questionnaireResources.filter((resource) => {
+              if (!exactMatch)
+                return String(resource.name)
+                  .toLowerCase()
+                  .includes(String(questionnaireId).toLowerCase());
+              return resource.id === questionnaireId;
+            })
+          : null;
         // const fhirSearchOptions = { pageLimit: 0 };
         // const requests = [
         //   client.request(
@@ -171,10 +171,7 @@ export default function useFetchResources() {
         const questionaireKey = String(questionnaireId).toLowerCase();
         const matchedKeys = Object.keys(QuestionnaireConfig).filter((id) => {
           const match = String(id).toLowerCase();
-          return (
-            String(questionnaireJson.name).toLowerCase().includes(match) ||
-            String(questionnaireJson.title).toLowerCase().includes(match)
-          );
+          return String(questionnaireJson.name).toLowerCase().includes(match);
         });
         const targetQId = matchedKeys.length ? matchedKeys[0] : questionaireKey;
         console.log("matched item from qConfig ", matchedKeys);
@@ -345,7 +342,6 @@ export default function useFetchResources() {
           (async () => {
             let error = "";
             let results = await gatherSummaryDataByQuestionnaireId(
-              client,
               patientBundle.current.entry,
               qid,
               exactMatch
