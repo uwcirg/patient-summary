@@ -73,6 +73,47 @@ export default function Responses(props) {
   };
   const data = getFormattedData(props.data) || [];
   const dates = data.map((item) => ({ date: item.date, id: item.id }));
+  const summaryHeaderProps = {
+    variant: "subtitle1",
+    component: "h2",
+    color: "secondary",
+    sx: {
+      width: "100%",
+      textAlign: "center",
+      borderBottom: `1px solid ${
+        theme &&
+        theme.palette &&
+        theme.palette.lighter &&
+        theme.palette.lighter.main
+          ? theme.palette.lighter.main
+          : "#ececec"
+      }`,
+    },
+  };
+  const summaryColumnProps = {
+    direction: "column",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    spacing: 1,
+    sx : {
+      alignSelf: "stretch",
+      flex: 1,
+      border: `1px solid ${
+        theme &&
+        theme.palette &&
+        theme.palette.lighter &&
+        theme.palette.lighter.main
+          ? theme.palette.lighter.main
+          : "#ececec"
+      }`,
+      "&:first-of-type": {
+        borderRight: 0
+      },
+      "&:last-of-type": {
+        borderLeft: 0
+      }
+    }
+  };
   const columns = [
     {
       title: "Questions",
@@ -123,6 +164,9 @@ export default function Responses(props) {
       },
     })),
   ];
+
+  const getLastAssessedDateTime = () =>
+    dates && dates.length ? getLocaleDateStringFromDate(dates[0].date) : "--";
 
   const hasData = () =>
     data &&
@@ -194,19 +238,13 @@ export default function Responses(props) {
     paddingTop: theme.spacing(1),
   }));
 
-  const renderTitle = () => (
-    <Typography variant="subtitle1" component="h2" color="secondary">
-      Questionnaire Responses
-    </Typography>
-  );
-
   const renderPrintOnlyResponseTable = () => {
     if (!hasData()) return null;
     const arrDates = dates.filter((item, index) => index < 2);
     const arrData = data.filter((item, index) => index < 2);
     // this will render the current and the previous response(s) for print
     return (
-      <Box className="print-only">
+      <Box className="print-only" sx={{marginTop: theme.spacing(2)}}>
         <Table
           aria-label="responses table"
           size="small"
@@ -337,15 +375,40 @@ export default function Responses(props) {
     </Box>
   );
 
-  const renderOpenIcon = () => (
-    <IconButton
-      color="primary"
-      title="View"
-      size="small"
-      className="print-hidden"
-    >
-      <OutlinedIcon fontSize="medium"></OutlinedIcon>
-    </IconButton>
+  const renderNumberOfResponses = () => (
+    <Stack {...summaryColumnProps}>
+      <Typography
+        {...summaryHeaderProps}
+      >
+        Responses Completed
+      </Typography>
+      <div>{data.length}</div>
+    </Stack>
+  );
+
+  const renderLastAssessed = () => (
+    <Stack {...summaryColumnProps}>
+      <Typography {...summaryHeaderProps}>
+        Last on
+      </Typography>
+      <div>{getLastAssessedDateTime()}</div>
+    </Stack>
+  );
+
+  const renderViewResponses = () => (
+    <Stack {...summaryColumnProps}>
+      <Typography {...summaryHeaderProps}>Responses</Typography>
+        <Button
+          color="primary"
+          title="View"
+          size="small"
+          className="print-hidden"
+          endIcon={<OutlinedIcon fontSize="medium"></OutlinedIcon>}
+          onClick={() => handleClickOpen()}
+        >
+          View
+        </Button>
+    </Stack>
   );
 
   const renderDialog = () => (
@@ -389,13 +452,12 @@ export default function Responses(props) {
         <Root>
           <Stack
             direction="row"
-            onClick={() => handleClickOpen()}
             alignItems="center"
-            spacing={1}
+            spacing={0}
           >
-            {renderTitle()}
-            <div className="print-hidden">( {data.length} )</div>
-            {renderOpenIcon()}
+            {renderNumberOfResponses()}
+            {renderLastAssessed()}
+            {renderViewResponses()}
           </Stack>
           {renderDialog()}
           {renderPrintOnlyResponseTable()}

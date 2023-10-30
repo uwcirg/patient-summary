@@ -88,7 +88,7 @@ export default function Summary(props) {
       variant="h6"
       component="h3"
       color="accent"
-      sx={{ marginBottom: 2 }}
+      sx={{ marginBottom: 1 }}
       className="questionnaire-title"
     >
       {getQuestionnaireTitle()}
@@ -98,9 +98,10 @@ export default function Summary(props) {
     shouldDisplayResponses() && (
       <Stack
         direction="column"
-        spacing={2}
+        spacing={1}
         alignItems="flex-start"
         className="response-summary"
+        flexWrap={"wrap"}
       >
         {hasChart && (
           <Chart
