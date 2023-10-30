@@ -74,30 +74,24 @@ export default function Responses(props) {
   const data = getFormattedData(props.data) || [];
   const dates = data.map((item) => ({ date: item.date, id: item.id }));
   const summaryHeaderProps = {
-    variant: "subtitle1",
+    variant: "subtitle2",
     component: "h2",
     color: "secondary",
     sx: {
       width: "100%",
-      textAlign: "center",
-      borderBottom: `1px solid ${
-        theme &&
-        theme.palette &&
-        theme.palette.lighter &&
-        theme.palette.lighter.main
-          ? theme.palette.lighter.main
-          : "#ececec"
-      }`,
+      textAlign: "left",
+      whiteSpace: "nowrap",
     },
   };
   const summaryColumnProps = {
     direction: "column",
     justifyContent: "flex-start",
     alignItems: "center",
-    spacing: 1,
-    sx : {
+    sx: {
       alignSelf: "stretch",
       flex: 1,
+      whiteSpace: "nowrap",
+      width: "100%",
       border: `1px solid ${
         theme &&
         theme.palette &&
@@ -107,12 +101,12 @@ export default function Responses(props) {
           : "#ececec"
       }`,
       "&:first-of-type": {
-        borderRight: 0
+        borderRight: 0,
       },
       "&:last-of-type": {
-        borderLeft: 0
-      }
-    }
+        borderLeft: 0,
+      },
+    },
   };
   const columns = [
     {
@@ -233,18 +227,13 @@ export default function Responses(props) {
     return getAnswer(answerItem[0]);
   };
 
-  const Root = styled("div")(({ theme }) => ({
-    width: "100%",
-    paddingTop: theme.spacing(1),
-  }));
-
   const renderPrintOnlyResponseTable = () => {
     if (!hasData()) return null;
     const arrDates = dates.filter((item, index) => index < 2);
     const arrData = data.filter((item, index) => index < 2);
     // this will render the current and the previous response(s) for print
     return (
-      <Box className="print-only" sx={{marginTop: theme.spacing(2)}}>
+      <Box className="print-only" sx={{ marginTop: theme.spacing(2) }}>
         <Table
           aria-label="responses table"
           size="small"
@@ -377,27 +366,28 @@ export default function Responses(props) {
 
   const renderNumberOfResponses = () => (
     <Stack {...summaryColumnProps}>
-      <Typography
-        {...summaryHeaderProps}
-      >
-        Responses Completed
-      </Typography>
-      <div>{data.length}</div>
+      <SummaryHeaderCell>
+        <Typography {...summaryHeaderProps}>Responses Completed</Typography>
+      </SummaryHeaderCell>
+      <SummaryBodyCell>{data.length}</SummaryBodyCell>
     </Stack>
   );
 
   const renderLastAssessed = () => (
     <Stack {...summaryColumnProps}>
-      <Typography {...summaryHeaderProps}>
-        Last on
-      </Typography>
-      <div>{getLastAssessedDateTime()}</div>
+      <SummaryHeaderCell>
+        <Typography {...summaryHeaderProps}>Last on</Typography>
+      </SummaryHeaderCell>
+      <SummaryBodyCell>{getLastAssessedDateTime()}</SummaryBodyCell>
     </Stack>
   );
 
   const renderViewResponses = () => (
     <Stack {...summaryColumnProps}>
-      <Typography {...summaryHeaderProps}>Responses</Typography>
+      <SummaryHeaderCell>
+        <Typography {...summaryHeaderProps}>Responses</Typography>
+      </SummaryHeaderCell>
+      <SummaryBodyCell>
         <Button
           color="primary"
           title="View"
@@ -408,8 +398,31 @@ export default function Responses(props) {
         >
           View
         </Button>
+      </SummaryBodyCell>
     </Stack>
   );
+
+  const Root = styled("div")(({ theme }) => ({
+    width: "100%",
+  }));
+
+  const SummaryHeaderCell = styled("div")(({ theme }) => ({
+    borderBottom: `1px solid ${
+      theme &&
+      theme.palette &&
+      theme.palette.lighter &&
+      theme.palette.lighter.main
+        ? theme.palette.lighter.main
+        : "#ececec"
+    }`,
+    padding: theme.spacing(1, 2),
+    width: "100%",
+  }));
+  const SummaryBodyCell = styled("div")(({ theme }) => ({
+    padding: theme.spacing(1, 2),
+    width: "100%",
+    textAlign: "left"
+  }));
 
   const renderDialog = () => (
     <Dialog
@@ -450,11 +463,7 @@ export default function Responses(props) {
       {!hasData() && <Alert severity="warning">No recorded response</Alert>}
       {hasData() && (
         <Root>
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={0}
-          >
+          <Stack direction="row" alignItems="center" spacing={0}>
             {renderNumberOfResponses()}
             {renderLastAssessed()}
             {renderViewResponses()}

@@ -22,7 +22,6 @@ export default function LineCharts(props) {
     xsChartWidth,
     chartWidth,
     lgChartWidth,
-    chartHeight,
     legendType,
     strokeWidth,
     xDomain,
@@ -49,7 +48,7 @@ export default function LineCharts(props) {
   const renderTitle = () => (
     <Typography
       variant="subtitle1"
-      component="h3"
+      component="h4"
       color="secondary"
       sx={{ textAlign: "center", marginTop: 2 }}
     >
@@ -241,7 +240,7 @@ export default function LineCharts(props) {
             sm: chartWidth,
             lg: lgChartWidth ? lgChartWidth : chartWidth,
           },
-          height: chartHeight,
+          height: "calc(100% - 40px)"
         }}
       >
         <ResponsiveContainer width="100%" height="100%">
