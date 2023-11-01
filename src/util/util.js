@@ -1,14 +1,11 @@
 import dayjs from "dayjs";
 import ChartConfig from "../config/chart_config.js";
-// import QuestionnaireConfig from "../config/questionnaire_config";
 import {
   QUESTIONNAIRE_ANCHOR_ID_PREFIX,
   queryNeedPatientBanner,
 } from "../consts/consts";
 import commonLibrary from "../cql/InterventionLogic_Common.json";
-// import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
 import valueSetJson from "../cql/valueset-db.json";
-// import { initialzieCqlWorker } from "cql-worker";
 import defaultSections from "../config/sections_config.js";
 import {
   DEFAULT_OBSERVATION_CATEGORIES,
