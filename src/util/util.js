@@ -411,18 +411,30 @@ export function getEnvDashboardURL() {
 
 export function getIntroTextFromQuestionnaire(questionnaireJson) {
   if (!questionnaireJson) return "";
-  const targetItem = questionnaireJson.item
-    ? questionnaireJson.item.filter(
+  const commonmark = require("commonmark");
+  const reader = new commonmark.Parser({ smart: true });
+  const writer = new commonmark.HtmlRenderer({
+    linebreak: "<br />",
+    softbreak: "<br />",
+  });
+  const parsedObj = reader.parse(questionnaireJson.description);
+  const description = questionnaireJson.description
+    ? writer.render(parsedObj)
+    : "";
+  if (description)
+    return description;
+  const introductionItem = questionnaireJson.item
+    ? questionnaireJson.item.find(
         (item) => String(item.linkId).toLowerCase() === "introduction"
       )
     : null;
-  if (targetItem && targetItem.length) {
-    const textElement = targetItem[0]._text;
+  if (introductionItem) {
+    const textElement = introductionItem._text;
     if (!textElement || !textElement.extension || !textElement.extension[0])
       return "";
     return textElement.extension[0].valueString;
   }
-  return questionnaireJson.description;
+  return "";
 }
 
 export function isNumber(target) {

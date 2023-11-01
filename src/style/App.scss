@@ -31,6 +31,10 @@ main {
   background-color: $summary-container-background-color;
 }
 
+a {
+  word-wrap: break-word;
+}
+
 p {
   line-height: 1.5;
 }

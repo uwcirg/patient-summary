@@ -13,6 +13,7 @@
     "@testing-library/react": "^13.3.0",
     "@testing-library/user-event": "^13.5.0",
     "buffer": "^6.0.3",
+    "commonmark": "^0.30.0",
     "cql-exec-fhir": "^2.0.2",
     "cql-exec-vsac": "^1.2.2",
     "cql-worker": "^1.1.4",
