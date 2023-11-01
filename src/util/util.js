@@ -10,7 +10,10 @@ import commonLibrary from "../cql/InterventionLogic_Common.json";
 import valueSetJson from "../cql/valueset-db.json";
 // import { initialzieCqlWorker } from "cql-worker";
 import defaultSections from "../config/sections_config.js";
-import { DEFAULT_TOOLBAR_HEIGHT } from "../consts/consts";
+import {
+  DEFAULT_OBSERVATION_CATEGORIES,
+  DEFAULT_TOOLBAR_HEIGHT,
+} from "../consts/consts";
 
 export function getCorrectedISODate(dateString) {
   if (!dateString || dateString instanceof Date) return dateString;
@@ -70,44 +73,67 @@ export function getFHIRResourcesToLoad() {
   return resources;
 }
 
-export function getFHIRResourcePaths(patientId, resourcesToLoad, options) {
-  if (!patientId) return [];
-  const resources = resourcesToLoad
-    ? resourcesToLoad
-    : getFHIRResourcesToLoad();
-  return resources.map((resource) => {
-    let path = `/${resource}`;
-    const resourceToLoad = resource.toLowerCase();
-    let paramsObj = {
-      _sort: "-_lastUpdated",
-      _count: 200,
-    };
-    if (resourceToLoad === "careplan") {
+export function getFHIRResourceQueryParams(resourceType, options) {
+  if (!resourceType) return null;
+  let paramsObj = {
+    _sort: "-_lastUpdated",
+    _count: 200,
+  };
+  const queryOptions = options ? options : {};
+  switch (String(resourceType).toLowerCase()) {
+    case "careplan":
       const envCategory = getEnv("REACT_APP_FHIR_CAREPLAN_CATEGORY");
-      paramsObj["subject"] = `Patient/${patientId}`;
-      paramsObj["category:text"] = envCategory ? envCategory : "Questionnaire";
-    } else {
-      if (resourceToLoad !== "questionnaire") {
-        paramsObj["patient"] = patientId;
+      if (queryOptions.patientId) {
+        paramsObj["subject"] = `Patient/${queryOptions.patientId}`;
       }
-    }
-    if (resourceToLoad === "questionnaire") {
-      if (options) {
-        if (options.questionnaireList && options.questionnaireList.length) {
-          paramsObj[options.exactMatch ? "_id" : "name:contains"] =
-            options.questionnaireList.join(",");
-        }
+      if (envCategory) {
+        paramsObj["category:text"] = envCategory;
       }
-    }
-    if (resourceToLoad === "observation") {
+      break;
+    case "questionnaire":
+      if (
+        queryOptions.questionnaireList &&
+        Array.isArray(queryOptions.questionnaireList) &&
+        queryOptions.questionnaireList.length
+      ) {
+        paramsObj[queryOptions.exactMatch ? "_id" : "name:contains"] =
+          queryOptions.questionnaireList.join(",");
+      }
+      break;
+    case "observation":
       const envObCategories = getEnv("REACT_APP_FHIR_OBSERVATION_CATEGORIES");
       const observationCategories = envObCategories
         ? envObCategories
-        : "social-history,vital-signs,imaging,laboratory,procedure,survey,exam,therapy,activity,smartdata";
+        : DEFAULT_OBSERVATION_CATEGORIES;
       paramsObj["category"] = observationCategories;
+      if (queryOptions.patientId) {
+        paramsObj["patient"] = `Patient/${queryOptions.patientId}`;
+      }
+      break;
+    default:
+      if (queryOptions.patientId) {
+        paramsObj["patient"] = `Patient/${queryOptions.patientId}`;
+      }
+  }
+  return paramsObj;
+}
+
+export function getFHIRResourcePaths(patientId, resourcesToLoad, options) {
+  if (!patientId) return [];
+  const resources =
+    resourcesToLoad && Array.isArray(resourcesToLoad) && resourcesToLoad.length
+      ? resourcesToLoad
+      : getFHIRResourcesToLoad();
+  return resources.map((resource) => {
+    let path = `/${resource}`;
+    const paramsObj = getFHIRResourceQueryParams(resource, {
+      ...(options ? options : {}),
+      patientId: patientId,
+    });
+    if (paramsObj) {
+      const searchParams = new URLSearchParams(paramsObj);
+      path = path + "?" + searchParams.toString();
     }
-    const searchParams = new URLSearchParams(paramsObj);
-    path = path + "?" + searchParams.toString();
     return {
       resourceType: resource,
       resourcePath: path,
