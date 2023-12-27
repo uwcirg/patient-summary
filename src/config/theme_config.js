@@ -40,7 +40,7 @@ export const themes = {
         main: blue[700],
       },
       muted: {
-        main: grey[500],
+        main: grey[700],
       },
       border: {
         main: "#ececec",

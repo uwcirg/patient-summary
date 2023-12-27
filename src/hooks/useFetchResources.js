@@ -105,9 +105,9 @@ export default function useFetchResources() {
   };
 
   const gatherSummaryDataByQuestionnaireId = (
-    patientBundle,
     questionnaireId,
-    exactMatch
+    exactMatch,
+    patientBundle
   ) => {
     return new Promise((resolve, reject) => {
       // search for matching questionnaire
@@ -123,39 +123,17 @@ export default function useFetchResources() {
         console.log("questionnaireResources ", questionnaireResources);
         const returnResult = questionnaireResources
           ? questionnaireResources.filter((resource) => {
-              if (!exactMatch)
-                return String(resource.name)
-                  .toLowerCase()
-                  .includes(String(questionnaireId).toLowerCase());
+              if (!exactMatch) {
+                const arrMatches = [String(resource.name).toLowerCase()];
+                const toMatch = String(questionnaireId).toLowerCase();
+                return (
+                  String(resource.id).toLowerCase() === toMatch ||
+                  arrMatches.find((key) => key.includes(toMatch))
+                );
+              }
               return resource.id === questionnaireId;
             })
           : null;
-        // const fhirSearchOptions = { pageLimit: 0 };
-        // const requests = [
-        //   client.request(
-        //     {
-        //       url: "Questionnaire/" + questionnaireId,
-        //     },
-        //     fhirSearchOptions
-        //   ),
-        // ];
-        // if (!exactMatch) {
-        //   requests.push(
-        //     client.request(
-        //       {
-        //         url: "Questionnaire?name:contains=" + questionnaireId,
-        //       },
-        //       fhirSearchOptions
-        //     )
-        //   );
-        // }
-        // // query by id and name
-        // const qResult = await Promise.allSettled(requests).catch((e) => {
-        //   throw new Error(e);
-        // });
-        // const returnResult = qResult.find(
-        //   (result) => result.status !== "rejected" && result.value
-        // );
         if (returnResult && returnResult.length) {
           sessionStorage.setItem(storageKey, JSON.stringify(returnResult[0]));
           return returnResult[0];
@@ -171,7 +149,10 @@ export default function useFetchResources() {
         const questionaireKey = String(questionnaireId).toLowerCase();
         const matchedKeys = Object.keys(QuestionnaireConfig).filter((id) => {
           const match = String(id).toLowerCase();
-          return String(questionnaireJson.name).toLowerCase().includes(match);
+          return (
+            String(questionnaireJson.id).toLowerCase() === match ||
+            String(questionnaireJson.name).toLowerCase().includes(match)
+          );
         });
         const targetQId = matchedKeys.length ? matchedKeys[0] : questionaireKey;
         console.log("matched item from qConfig ", matchedKeys);
@@ -342,9 +323,9 @@ export default function useFetchResources() {
           (async () => {
             let error = "";
             let results = await gatherSummaryDataByQuestionnaireId(
-              patientBundle.current.entry,
               qid,
-              exactMatch
+              exactMatch,
+              patientBundle.current.entry
             ).catch((e) => (error = e));
             if (error) handleResourceError(qid);
             else handleResourceComplete(qid);

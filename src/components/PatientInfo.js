@@ -42,7 +42,7 @@ export default function PatientInfo(props) {
   // };
   const renderDOB = () => (
     <Box>
-      <Typography component="span" sx={{ color: mutecColor }}>
+      <Typography component="span" sx={{ color: mutecColor }} variant="body2">
         dob:{" "}
       </Typography>
       <Typography component="span">{getPatientDob()}</Typography>
@@ -55,6 +55,7 @@ export default function PatientInfo(props) {
         sx={{
           color: mutecColor,
         }}
+        variant="body2"
       >
         age:{" "}
       </Typography>

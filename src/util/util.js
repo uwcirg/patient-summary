@@ -139,7 +139,8 @@ export function getFHIRResourcePaths(patientId, resourcesToLoad, options) {
 }
 
 export function getResourcesByResourceType(patientBundle, resourceType) {
-  if (!patientBundle || !patientBundle.length) return null;
+  if (!patientBundle || !Array.isArray(patientBundle) || !patientBundle.length)
+    return null;
   return patientBundle
     .filter((item) => {
       return (
@@ -210,8 +211,7 @@ export function getChartConfig(questionnaire) {
 
 export function getEnvQuestionnaireList() {
   const configList = getEnv("REACT_APP_QUESTIONNAIRES");
-  if (configList)
-    return configList.split(",").map((item) => item.replace(/_/g, "-").trim());
+  if (configList) return configList.split(",").map((item) => item.trim());
   return [];
 }
 
@@ -417,12 +417,14 @@ export function getIntroTextFromQuestionnaire(questionnaireJson) {
     linebreak: "<br />",
     softbreak: "<br />",
   });
-  const parsedObj = reader.parse(questionnaireJson.description);
-  const description = questionnaireJson.description
-    ? writer.render(parsedObj)
-    : "";
-  if (description)
-    return description;
+  let description = "";
+  if (questionnaireJson.description) {
+    const parsedObj = reader.parse(questionnaireJson.description);
+    description = questionnaireJson.description
+      ? writer.render(parsedObj)
+      : "";
+  }
+  if (description) return description;
   const introductionItem = questionnaireJson.item
     ? questionnaireJson.item.find(
         (item) => String(item.linkId).toLowerCase() === "introduction"

@@ -9,7 +9,9 @@ let loadComplete = false;
 
 export default function QuestionnaireListProvider({ children }) {
   const [error, setError] = useState();
-  const [questionnaireList, setQuestionnaireList] = useState([]);
+  const [questionnaireList, setQuestionnaireList] = useState(
+    getEnvQuestionnaireList()
+  );
   const [exactMatch, setExactMatch] = useState(
     getEnv("REACT_APP_MATCH_QUESTIONNAIRE_BY_ID")
   );
@@ -25,10 +27,11 @@ export default function QuestionnaireListProvider({ children }) {
       return;
     }
     if (loadComplete) return;
-    const envQList = getEnvQuestionnaireList();
-    if (envQList.length) {
-      setQuestionnaireList(envQList);
-      console.log("questionnaire list to load from environment variable ", envQList);
+    if (questionnaireList && questionnaireList.length) {
+      console.log(
+        "questionnaire list to load from environment variable ",
+        questionnaireList
+      );
       loadComplete = true;
       return;
     }
@@ -51,7 +54,10 @@ export default function QuestionnaireListProvider({ children }) {
                   item.resource.questionnaire.split("/")[1]
               )
             : null;
-        console.log("matched results for questionnaire from QuestionnaireResponse ", matchedResults);
+        console.log(
+          "matched results for questionnaire from QuestionnaireResponse ",
+          matchedResults
+        );
         if (!matchedResults || !matchedResults.length) {
           handleErrorCallback("No questionnaire list set");
           return;
@@ -71,7 +77,7 @@ export default function QuestionnaireListProvider({ children }) {
       .catch((e) => {
         handleErrorCallback(e);
       });
-  }, [client, patient]);
+  }, [client, patient, questionnaireList]);
 
   return (
     <QuestionnaireListContext.Provider

@@ -4,11 +4,7 @@ import { useTheme } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
 import MaterialTable from "@material-table/core";
 import TableContainer from "@mui/material/TableContainer";
-import {
-  getCorrectedISODate,
-  getFhirItemValue,
-  getFhirComponentDisplays,
-} from "../../util/util";
+import Observation from "../../models/Observation";
 
 export default function Observations(props) {
   const theme = useTheme();
@@ -22,49 +18,16 @@ export default function Observations(props) {
   const { data } = props;
   const getData = (data) => {
     if (!data) return null;
-    const goodData = data.filter(
-      (item) =>
-        String(item.resourceType).toLowerCase() === "observation" &&
-        item.code &&
-        item.code.coding &&
-        item.code.coding.length > 0
-    );
+    const goodData = Observation.getGoodData(data);
     return goodData
       .map((item, index) => {
+        const o = new Observation(item);
         item.id = item.id + "_" + index;
-        item.category =
-          item.category && Array.isArray(item.category) && item.category.length
-            ? item.category
-                .map((o) =>
-                  o.text
-                    ? o.text
-                    : o.coding && o.coding.length && o.coding[0].display
-                    ? o.coding[0].display
-                    : "--"
-                )
-                .join(", ")
-            : item.category
-            ? item.category
-            : "--";
-        const joinedDisplays = item.code.coding
-          .filter((o) => o.display)
-          .map((o) => o.display)
-          .join(", ");
-        item.text = joinedDisplays || "--";
-        item.date = getCorrectedISODate(item.issued);
-        item.provider =
-          item.performer && item.performer.length
-            ? item.performer[0].display
-            : "--";
-        item.value = item.component
-          ? getFhirComponentDisplays(item)
-          : getFhirItemValue(item);
-        if (
-          item.value == null ||
-          item.value === "" ||
-          typeof item.value === "undefined"
-        )
-          item.value = "--";
+        item.category = o.category || "--";
+        item.text = o.displayText || "--";
+        item.date = o.dateText;
+        item.provider = o.providerText || "--";
+        item.value = o.valueText || "--";
         return item;
       })
       .sort((a, b) => {

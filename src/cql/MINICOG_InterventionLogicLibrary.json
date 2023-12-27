@@ -186,8 +186,15 @@
                   "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
                   "type" : "Retrieve"
                }, {
-                  "name" : "CurrentQuestionnaire",
-                  "type" : "ExpressionRef"
+                  "asType" : "{urn:hl7-org:elm-types:r1}String",
+                  "type" : "As",
+                  "operand" : {
+                     "name" : "QuestionnaireID",
+                     "type" : "ParameterRef"
+                  }
+               }, {
+                  "name" : "QuestionnaireName",
+                  "type" : "ParameterRef"
                } ]
             }
          }, {

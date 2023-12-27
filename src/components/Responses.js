@@ -28,7 +28,9 @@ import Score from "./Score";
 import {
   getLocaleDateStringFromDate,
   getQuestionnaireName,
+  isNumber
 } from "../util/util";
+import Response from "../models/Response";
 
 const Transition = forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -121,7 +123,12 @@ export default function Responses(props) {
       render: (rowData) => {
         if (String(rowData["question"]).toLowerCase() === "score")
           return <b>{rowData["question"]}</b>;
-        else return rowData["question"];
+        else
+          return (
+            <span
+              dangerouslySetInnerHTML={{ __html: rowData["question"] }}
+            ></span>
+          );
       },
     },
     ...dates.map((item) => ({
@@ -144,7 +151,7 @@ export default function Responses(props) {
       ),
       render: (rowData) => {
         if (rowData[item.id].hasOwnProperty("score")) {
-          if (!isNaN(rowData[item.id].score)) {
+          if (isNumber(rowData[item.id].score)) {
             return (
               <Score
                 instrumentId={questionnaireId}
@@ -167,7 +174,7 @@ export default function Responses(props) {
     data.length > 0 &&
     data.filter((item) => item.responses && item.responses.length).length > 0;
   const hasScores = () =>
-    data.filter((item) => item.hasOwnProperty("score") && !isNaN(item.score))
+    data.filter((item) => item.hasOwnProperty("score") && isNumber(item.score))
       .length > 0;
 
   const getData = () => {
@@ -200,16 +207,12 @@ export default function Responses(props) {
     setOpen(false);
   };
   const getAnswer = (response) => {
-    if (!response) return "--";
-    return response.value &&
-      (parseInt(response.value.value) === 0 || response.value.value)
-      ? response.value.value
-      : response.answer
-      ? String(response.answer)
-      : "---";
+    const o = new Response(response);
+    return o.answerText || "--";
   };
   const getQuestion = (item) => {
-    return item.question || item.text || item.id;
+    const o = new Response(item);
+    return o.questionText;
   };
 
   const getMatchedAnswerByLinkIdDateId = (
@@ -284,14 +287,14 @@ export default function Responses(props) {
                 </TableCell>
                 {arrData.map((item, index) => (
                   <TableCell key={`score_cell_${index}`}>
-                    {!isNaN(item.score) && (
+                    {isNumber(item.score) && (
                       <Score
                         instrumentId={questionnaireId}
                         score={item.score}
                         scoreParams={item}
                       ></Score>
                     )}
-                    {isNaN(item.score) && <span>--</span>}
+                    {!isNumber(item.score) && <span>--</span>}
                   </TableCell>
                 ))}
               </TableRow>
@@ -421,7 +424,7 @@ export default function Responses(props) {
   const SummaryBodyCell = styled("div")(({ theme }) => ({
     padding: theme.spacing(1, 2),
     width: "100%",
-    textAlign: "left"
+    textAlign: "left",
   }));
 
   const renderDialog = () => (

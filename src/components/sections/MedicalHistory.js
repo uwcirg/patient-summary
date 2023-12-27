@@ -4,7 +4,7 @@ import { useTheme } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
 import MaterialTable from "@material-table/core";
 import TableContainer from "@mui/material/TableContainer";
-import { getCorrectedISODate } from "../../util/util";
+import Condition from "../../models/Condition";
 
 export default function MedicalHistory(props) {
   const theme = useTheme();
@@ -18,40 +18,15 @@ export default function MedicalHistory(props) {
   const { data } = props;
   const getData = (data) => {
     if (!data) return null;
-    const goodData = data.filter(
-      (item) =>
-        item.resourceType === "Condition" &&
-        item.code &&
-        ((item.code.coding &&
-          Array.isArray(item.code.coding) &&
-          item.code.coding.length > 0 &&
-          item.code.coding.find((o) => o.display)) ||
-          item.code.text)
-    );
+    const goodData = Condition.getGoodData(data);
     return goodData
       .map((item, index) => {
         item.id = item.id + "_" + index;
-        const displayText = item.code.text
-          ? item.code.text
-          : item.code.coding.map((o) => o.display).join(", ");
-        item.condition = displayText || "--";
-        item.onsetDateTime = item.onsetDateTime
-          ? getCorrectedISODate(item.onsetDateTime)
-          : "";
-        item.recordedDate = item.recordedDate
-          ? getCorrectedISODate(item.recordedDate)
-          : "";
-        item.status = item.verificationStatus
-          ? item.verificationStatus.text
-            ? item.verificationStatus.text
-            : item.verificationStatus.coding &&
-              Array.isArray(item.verificationStatus.coding) &&
-              item.verificationStatus.coding.length
-            ? item.verificationStatus.coding[0].display
-              ? item.verificationStatus.coding[0].display
-              : item.verificationStatus.coding[0].code
-            : "--"
-          : "--";
+        const o = new Condition(item);
+        item.condition = o.displayText || "--";
+        item.onsetDateTime = o.onsetDateTimeDisplayText;
+        item.recordedDate = o.recordedDateTimeDisplayText;
+        item.status = o.status || "--";
         return item;
       })
       .sort((a, b) => {
