@@ -133,7 +133,7 @@ define function getAnswerOptionExtensionValue(extList List<FHIR.Extension>):
  * @return the value as Integer
  */
 define function getAnswerValueByExtension(questionnaire FHIR.Questionnaire, code String):
-  (singleton from ((questionnaire.item.answerOption) Q where Q.value.code = code)) a
+  (First((questionnaire.item.answerOption) Q where Q.value.code = code)) a
   let 
     extensionItem: a.extension
   return if extensionItem is not null 
@@ -149,7 +149,7 @@ define function getAnswerValueByExtension(questionnaire FHIR.Questionnaire, code
  * @return score in Integer
  */
 define function getScoringByResponseItem(questionnaire FHIR.Questionnaire, responses List<FHIR.QuestionnaireResponse.Item>, linkId String):
-   (singleton from ((responses) o where PositionOf(linkId, o.linkId.value) != -1 or PositionOf(o.linkId.value, linkId) != -1)) I
+   (First((responses) o where PositionOf(linkId, o.linkId.value) != -1 or PositionOf(o.linkId.value, linkId) != -1)) I
       let answerCode: if I.answer[0].value is Coding then I.answer[0].value.code.value else null
       return 
         if answerCode is null then I.answer[0].value.value as Integer
@@ -168,7 +168,7 @@ define function getScoringByResponseItem(questionnaire FHIR.Questionnaire, respo
     
 //function for debugging answer code
 define function getAnswerCodeForResponse(responses List<FHIR.QuestionnaireResponse.Item>, linkId String):
-    (singleton from ((responses) o where PositionOf(o.linkId.value, linkId) != -1 or PositionOf(linkId, o.linkId.value) != -1)) I
+    (First((responses) o where PositionOf(o.linkId.value, linkId) != -1 or PositionOf(linkId, o.linkId.value) != -1)) I
       let answerCode: I.answer[0].value.code.value
       return answerCode
     
@@ -181,7 +181,7 @@ define function getAnswerCodeForResponse(responses List<FHIR.QuestionnaireRespon
  */
 define function FormattedResponses(questionnaireItems List<FHIR.Questionnaire.Item>, responses List<FHIR.QuestionnaireResponse.Item>, scoringQuestionId String):
   if questionnaireItems is not null then
-    ((questionnaireItems) O where O.linkId.value != 'introduction' and (PositionOf(O.linkId.value, scoringQuestionId) != -1 or PositionOf(scoringQuestionId, O.linkId.value) != -1)) Q
+    ((questionnaireItems) O where O.linkId.value != 'introduction' and (PositionOf(O.linkId.value, scoringQuestionId) = -1 or PositionOf(scoringQuestionId, O.linkId.value) = -1)) Q
       let
         answerValue: GetResponseValueByLinkId(Q.linkId.value, responses)
 

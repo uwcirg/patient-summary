@@ -38,7 +38,9 @@
             "name" : "QuestionnaireID",
             "accessLevel" : "Public",
             "default" : {
-               "type" : "Null"
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "CIRG-C-IDAS",
+               "type" : "Literal"
             }
          }, {
             "name" : "QuestionnaireName",
@@ -278,12 +280,8 @@
                "libraryName" : "LogicHelpers",
                "type" : "FunctionRef",
                "operand" : [ {
-                  "asType" : "{urn:hl7-org:elm-types:r1}String",
-                  "type" : "As",
-                  "operand" : {
-                     "name" : "QuestionnaireID",
-                     "type" : "ParameterRef"
-                  }
+                  "name" : "QuestionnaireID",
+                  "type" : "ParameterRef"
                }, {
                   "name" : "QuestionnaireName",
                   "type" : "ParameterRef"
@@ -338,8 +336,11 @@
                   "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
                   "type" : "Retrieve"
                }, {
-                  "name" : "CurrentQuestionnaire",
-                  "type" : "ExpressionRef"
+                  "name" : "QuestionnaireID",
+                  "type" : "ParameterRef"
+               }, {
+                  "name" : "QuestionnaireName",
+                  "type" : "ParameterRef"
                } ]
             }
          }, {
@@ -968,6 +969,11 @@
                            "type" : "Null"
                         }
                      }
+                  }
+               }, {
+                  "identifier" : "suicideScore",
+                  "expression" : {
+                     "type" : "Null"
                   }
                }, {
                   "identifier" : "suicideScore",

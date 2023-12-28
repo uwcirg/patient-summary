@@ -9,7 +9,7 @@ include "InterventionLogic_Common" version '1.0.0' called LogicHelpers
 // -----------------------------------------------------------------------------
 // PARAMETERS
 // -----------------------------------------------------------------------------
-parameter QuestionnaireID default null
+parameter QuestionnaireID default 'CIRG-C-IDAS'
 parameter QuestionnaireName default 'c-idas'
 parameter QuestionnaireURL default 'http://www.cdc.gov/ncbddd/fasd/c-idas'
 parameter ScoringQuestionId default 'c-ids-score'
@@ -57,7 +57,7 @@ define QuestionnaireItems:
 
 // Load Questionnaire responses
 define QuestionnaireResponses:
-  LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], CurrentQuestionnaire)
+  LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], QuestionnaireID, QuestionnaireName)
 
 define ResponsesSummary:
   (QuestionnaireResponses) I
@@ -84,6 +84,7 @@ define ResponsesSummary:
             Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question17LinkId)), 0) +
             Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question18LinkId)), 0)
           else null,
+          suicideScore: null,
       suicideScore: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, suicideQuestionLinkId)), 0),
       scoreSeverity: if score > 18 or (suicideScore >= 1) then 'high' else 'low'
       return {
