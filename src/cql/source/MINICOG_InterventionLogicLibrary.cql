@@ -9,7 +9,7 @@ include "InterventionLogic_Common" version '1.0.0' called LogicHelpers
 // -----------------------------------------------------------------------------
 // PARAMETERS
 // -----------------------------------------------------------------------------
-parameter QuestionnaireID default null
+parameter QuestionnaireID default 'CIRG-MINICOG'
 parameter QuestionnaireName default 'MINICOG'
 parameter QuestionnaireURL default 'http://www.cdc.gov/ncbddd/fasd/minicog'
 

@@ -6,7 +6,7 @@ include "FHIRHelpers" version '4.0.1' called FHIRHelpers
 
 include "InterventionLogic_Common" version '1.0.0' called LogicHelpers
 
-parameter QuestionnaireID default null
+parameter QuestionnaireID default 'CIRG-GAD7'
 parameter QuestionnaireName default 'gad7'
 parameter QuestionnaireURL default 'http://www.cdc.gov/ncbddd/fasd/gad7'
 parameter ScoringQuestionId default '/70274-6'

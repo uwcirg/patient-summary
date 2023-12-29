@@ -9,7 +9,7 @@ include "InterventionLogic_Common" version '1.0.0' called LogicHelpers
 // -----------------------------------------------------------------------------
 // PARAMETERS
 // -----------------------------------------------------------------------------
-parameter QuestionnaireID default null
+parameter QuestionnaireID default 'CIRG-ECOG12'
 parameter QuestionnaireName default 'ecog12'
 parameter QuestionnaireURL default 'http://www.cdc.gov/ncbddd/fasd/ecog12'
 parameter ScoringQuestionId default 'ecog12-total-score'

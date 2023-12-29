@@ -119,8 +119,8 @@ export default function ScoringSummary(props) {
       sx: { verticalAlign: "middle" },
     };
     //console.log("current score ", currentScore, " prev score ", prevScore);
-    if (isNaN(prevScore) || isNaN(currentScore)) return "--";
-    if (!isNaN(prevScore)) {
+    if (!isNumber(prevScore) || !isNumber(currentScore)) return "--";
+    if (isNumber(prevScore)) {
       if (comparisonToAlert === "lower") {
         if (currentScore < prevScore)
           return <SouthIcon color="error" {...iconProps}></SouthIcon>;
@@ -135,7 +135,7 @@ export default function ScoringSummary(props) {
         return <HorizontalRuleIcon {...iconProps}></HorizontalRuleIcon>;
       }
     } else {
-      if (!isNaN(currentScore))
+      if (isNumber(currentScore))
         return (
           <HorizontalRuleIcon color="info" {...iconProps}></HorizontalRuleIcon>
         );

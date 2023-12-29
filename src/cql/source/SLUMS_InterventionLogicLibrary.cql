@@ -9,7 +9,7 @@ include "InterventionLogic_Common" version '1.0.0' called LogicHelpers
 // -----------------------------------------------------------------------------
 // PARAMETERS
 // -----------------------------------------------------------------------------
-parameter QuestionnaireID default null
+parameter QuestionnaireID default 'CIRG-SLUMS'
 parameter QuestionnaireName default 'slums'
 parameter QuestionnaireURL default 'http://www.cdc.gov/ncbddd/fasd/slums'
 parameter ScoringQuestionId default '71492-3'

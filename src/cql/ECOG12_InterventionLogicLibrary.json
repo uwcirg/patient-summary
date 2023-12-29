@@ -38,7 +38,9 @@
             "name" : "QuestionnaireID",
             "accessLevel" : "Public",
             "default" : {
-               "type" : "Null"
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "CIRG-ECOG12",
+               "type" : "Literal"
             }
          }, {
             "name" : "QuestionnaireName",
@@ -215,12 +217,8 @@
                "libraryName" : "LogicHelpers",
                "type" : "FunctionRef",
                "operand" : [ {
-                  "asType" : "{urn:hl7-org:elm-types:r1}String",
-                  "type" : "As",
-                  "operand" : {
-                     "name" : "QuestionnaireID",
-                     "type" : "ParameterRef"
-                  }
+                  "name" : "QuestionnaireID",
+                  "type" : "ParameterRef"
                }, {
                   "name" : "QuestionnaireName",
                   "type" : "ParameterRef"
@@ -275,12 +273,8 @@
                   "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
                   "type" : "Retrieve"
                }, {
-                  "asType" : "{urn:hl7-org:elm-types:r1}String",
-                  "type" : "As",
-                  "operand" : {
-                     "name" : "QuestionnaireID",
-                     "type" : "ParameterRef"
-                  }
+                  "name" : "QuestionnaireID",
+                  "type" : "ParameterRef"
                }, {
                   "name" : "QuestionnaireName",
                   "type" : "ParameterRef"

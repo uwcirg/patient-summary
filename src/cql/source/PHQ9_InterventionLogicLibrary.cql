@@ -9,7 +9,7 @@ include "InterventionLogic_Common" version '1.0.0' called LogicHelpers
 // -----------------------------------------------------------------------------
 // PARAMETERS
 // -----------------------------------------------------------------------------
-parameter QuestionnaireID default null
+parameter QuestionnaireID default 'CIRG-PHQ9'
 parameter QuestionnaireName default 'phq9'
 parameter QuestionnaireURL default 'http://www.cdc.gov/ncbddd/fasd/phq9'
 parameter ScoringQuestionId default '/44261-6'
