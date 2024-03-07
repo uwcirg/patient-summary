@@ -27,7 +27,7 @@ import {
   imageOK,
   scrollToElement,
 } from "../util/util";
-import PatientInfo from "./PatientInfo";
+import PatientInfo from "../components/PatientInfo";
 import { FhirClientContext } from "../context/FhirClientContext";
 import { Divider } from "@mui/material";
 

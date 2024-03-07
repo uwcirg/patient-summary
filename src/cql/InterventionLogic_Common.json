@@ -709,20 +709,16 @@
                      "path" : "value",
                      "type" : "Property",
                      "source" : {
-                        "path" : "value",
-                        "type" : "Property",
-                        "source" : {
-                           "type" : "Indexer",
-                           "operand" : [ {
-                              "path" : "answer",
-                              "scope" : "I",
-                              "type" : "Property"
-                           }, {
-                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                              "value" : "0",
-                              "type" : "Literal"
-                           } ]
-                        }
+                        "type" : "Indexer",
+                        "operand" : [ {
+                           "path" : "answer",
+                           "scope" : "I",
+                           "type" : "Property"
+                        }, {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        } ]
                      }
                   }
                } ],
@@ -734,20 +730,8 @@
                         "when" : {
                            "type" : "Is",
                            "operand" : {
-                              "path" : "value",
-                              "type" : "Property",
-                              "source" : {
-                                 "type" : "Indexer",
-                                 "operand" : [ {
-                                    "path" : "answer",
-                                    "scope" : "I",
-                                    "type" : "Property"
-                                 }, {
-                                    "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                    "value" : "0",
-                                    "type" : "Literal"
-                                 } ]
-                              }
+                              "name" : "value",
+                              "type" : "QueryLetRef"
                            },
                            "isTypeSpecifier" : {
                               "name" : "{http://hl7.org/fhir}Coding",
@@ -761,20 +745,8 @@
                               "path" : "display",
                               "type" : "Property",
                               "source" : {
-                                 "path" : "value",
-                                 "type" : "Property",
-                                 "source" : {
-                                    "type" : "Indexer",
-                                    "operand" : [ {
-                                       "path" : "answer",
-                                       "scope" : "I",
-                                       "type" : "Property"
-                                    }, {
-                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                       "value" : "0",
-                                       "type" : "Literal"
-                                    } ]
-                                 }
+                                 "name" : "value",
+                                 "type" : "QueryLetRef"
                               }
                            }
                         }
@@ -788,8 +760,12 @@
                               "when" : {
                                  "type" : "Is",
                                  "operand" : {
-                                    "name" : "value",
-                                    "type" : "QueryLetRef"
+                                    "path" : "value",
+                                    "type" : "Property",
+                                    "source" : {
+                                       "name" : "value",
+                                       "type" : "QueryLetRef"
+                                    }
                                  },
                                  "isTypeSpecifier" : {
                                     "name" : "{urn:hl7-org:elm-types:r1}String",
@@ -797,15 +773,23 @@
                                  }
                               },
                               "then" : {
-                                 "name" : "value",
-                                 "type" : "QueryLetRef"
+                                 "path" : "value",
+                                 "type" : "Property",
+                                 "source" : {
+                                    "name" : "value",
+                                    "type" : "QueryLetRef"
+                                 }
                               }
                            }, {
                               "when" : {
                                  "type" : "Is",
                                  "operand" : {
-                                    "name" : "value",
-                                    "type" : "QueryLetRef"
+                                    "path" : "value",
+                                    "type" : "Property",
+                                    "source" : {
+                                       "name" : "value",
+                                       "type" : "QueryLetRef"
+                                    }
                                  },
                                  "isTypeSpecifier" : {
                                     "name" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -820,8 +804,12 @@
                                        "strict" : false,
                                        "type" : "As",
                                        "operand" : {
-                                          "name" : "value",
-                                          "type" : "QueryLetRef"
+                                          "path" : "value",
+                                          "type" : "Property",
+                                          "source" : {
+                                             "name" : "value",
+                                             "type" : "QueryLetRef"
+                                          }
                                        },
                                        "asTypeSpecifier" : {
                                           "name" : "{urn:hl7-org:elm-types:r1}Integer",
@@ -862,8 +850,12 @@
                               "when" : {
                                  "type" : "Is",
                                  "operand" : {
-                                    "name" : "value",
-                                    "type" : "QueryLetRef"
+                                    "path" : "value",
+                                    "type" : "Property",
+                                    "source" : {
+                                       "name" : "value",
+                                       "type" : "QueryLetRef"
+                                    }
                                  },
                                  "isTypeSpecifier" : {
                                     "name" : "{urn:hl7-org:elm-types:r1}Decimal",
@@ -878,8 +870,12 @@
                                        "strict" : false,
                                        "type" : "As",
                                        "operand" : {
-                                          "name" : "value",
-                                          "type" : "QueryLetRef"
+                                          "path" : "value",
+                                          "type" : "Property",
+                                          "source" : {
+                                             "name" : "value",
+                                             "type" : "QueryLetRef"
+                                          }
                                        },
                                        "asTypeSpecifier" : {
                                           "name" : "{urn:hl7-org:elm-types:r1}Decimal",
@@ -920,8 +916,12 @@
                               "when" : {
                                  "type" : "Is",
                                  "operand" : {
-                                    "name" : "value",
-                                    "type" : "QueryLetRef"
+                                    "path" : "value",
+                                    "type" : "Property",
+                                    "source" : {
+                                       "name" : "value",
+                                       "type" : "QueryLetRef"
+                                    }
                                  },
                                  "isTypeSpecifier" : {
                                     "name" : "{urn:hl7-org:elm-types:r1}Date",
@@ -936,8 +936,12 @@
                                        "strict" : false,
                                        "type" : "As",
                                        "operand" : {
-                                          "name" : "value",
-                                          "type" : "QueryLetRef"
+                                          "path" : "value",
+                                          "type" : "Property",
+                                          "source" : {
+                                             "name" : "value",
+                                             "type" : "QueryLetRef"
+                                          }
                                        },
                                        "asTypeSpecifier" : {
                                           "name" : "{urn:hl7-org:elm-types:r1}Date",
@@ -978,8 +982,12 @@
                               "when" : {
                                  "type" : "Is",
                                  "operand" : {
-                                    "name" : "value",
-                                    "type" : "QueryLetRef"
+                                    "path" : "value",
+                                    "type" : "Property",
+                                    "source" : {
+                                       "name" : "value",
+                                       "type" : "QueryLetRef"
+                                    }
                                  },
                                  "isTypeSpecifier" : {
                                     "name" : "{urn:hl7-org:elm-types:r1}DateTime",
@@ -994,8 +1002,12 @@
                                        "strict" : false,
                                        "type" : "As",
                                        "operand" : {
-                                          "name" : "value",
-                                          "type" : "QueryLetRef"
+                                          "path" : "value",
+                                          "type" : "Property",
+                                          "source" : {
+                                             "name" : "value",
+                                             "type" : "QueryLetRef"
+                                          }
                                        },
                                        "asTypeSpecifier" : {
                                           "name" : "{urn:hl7-org:elm-types:r1}DateTime",
@@ -1036,8 +1048,12 @@
                               "when" : {
                                  "type" : "Is",
                                  "operand" : {
-                                    "name" : "value",
-                                    "type" : "QueryLetRef"
+                                    "path" : "value",
+                                    "type" : "Property",
+                                    "source" : {
+                                       "name" : "value",
+                                       "type" : "QueryLetRef"
+                                    }
                                  },
                                  "isTypeSpecifier" : {
                                     "name" : "{urn:hl7-org:elm-types:r1}Boolean",
@@ -1052,8 +1068,12 @@
                                        "strict" : false,
                                        "type" : "As",
                                        "operand" : {
-                                          "name" : "value",
-                                          "type" : "QueryLetRef"
+                                          "path" : "value",
+                                          "type" : "Property",
+                                          "source" : {
+                                             "name" : "value",
+                                             "type" : "QueryLetRef"
+                                          }
                                        },
                                        "asTypeSpecifier" : {
                                           "name" : "{urn:hl7-org:elm-types:r1}Boolean",
@@ -1092,8 +1112,12 @@
                               }
                            } ],
                            "else" : {
-                              "name" : "value",
-                              "type" : "QueryLetRef"
+                              "path" : "value",
+                              "type" : "Property",
+                              "source" : {
+                                 "name" : "value",
+                                 "type" : "QueryLetRef"
+                              }
                            }
                         }
                      }

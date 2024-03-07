@@ -379,7 +379,7 @@ export default function Responses(props) {
   const renderLastAssessed = () => (
     <Stack {...summaryColumnProps}>
       <SummaryHeaderCell>
-        <Typography {...summaryHeaderProps}>Last on</Typography>
+        <Typography {...summaryHeaderProps}>Last answered on</Typography>
       </SummaryHeaderCell>
       <SummaryBodyCell>{getLastAssessedDateTime()}</SummaryBodyCell>
     </Stack>

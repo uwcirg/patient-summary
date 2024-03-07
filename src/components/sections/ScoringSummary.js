@@ -50,11 +50,6 @@ export default function ScoringSummary(props) {
     if (qConfig[key] && qConfig[key].shortTitle) {
       return qConfig[key].shortTitle;
     }
-    // const matchedQuestionnaire = questionnaireList
-    //   ? questionnaireList
-    //       .filter((q) => q.id === id && q.questionnaireJson)
-    //       .map((q) => q.questionnaireJson)
-    //   : null;
     const matchedQuestionnaire =
       summaryData[id] && summaryData[id].questionnaire
         ? summaryData[id].questionnaire
@@ -216,19 +211,10 @@ export default function ScoringSummary(props) {
   const fixedCellStyle = {
     ...cellStyle,
     ...{
-      position: {
-        xs: "absolute",
-        sm: "inherit",
-      },
-      width: {
-        xs: theme.spacing(29.75),
-        sm: "auto",
-      },
-      minHeight: {
-        xs: "34px",
-        sm: "auto",
-      },
-      left: theme.spacing(1.75),
+      position: "sticky",
+      left: 0,
+      zIndex: 1,
+      backgroundColor: "#FFF",
       ...{ whiteSpace: { xs: "nowrap", sm: "normal" } },
     },
   };
@@ -237,7 +223,7 @@ export default function ScoringSummary(props) {
       <TableRow sx={{ backgroundColor: bgColor }}>
         <TableCell
           sx={{
-            ...fixedCellStyle,
+           ...fixedCellStyle,
             ...{
               minHeight: {
                 xs: theme.spacing(4),
@@ -380,7 +366,7 @@ export default function ScoringSummary(props) {
           paddingTop: 0,
           marginBottom: 1,
           maxWidth: {
-            xs: "204px",
+            xs: "420px",
             sm: "100%",
           },
           position: {
@@ -388,7 +374,7 @@ export default function ScoringSummary(props) {
             sm: "relative",
           },
           marginLeft: {
-            xs: theme.spacing(29.5),
+       //     xs: theme.spacing(29.5),
             sm: 0,
           },
           borderRadius: 0,

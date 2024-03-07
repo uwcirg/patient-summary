@@ -61,8 +61,8 @@ export default function useFetchResources() {
       id: qid,
       title:
         qConfig[qid] && qConfig[qid].shortTitle
-          ? `Summary data for Questionnaire ${qConfig[qid].shortTitle}`
-          : `Summary data for Questionnaire ${qid}`,
+          ? `Data for Questionnaire ${qConfig[qid].shortTitle}`
+          : `Data for Questionnaire ${qid}`,
       complete: false,
       error: false,
     })),
@@ -111,7 +111,7 @@ export default function useFetchResources() {
   ) => {
     return new Promise((resolve, reject) => {
       // search for matching questionnaire
-      const searchMatchingResources = async () => {
+      const searchMatchingQuestionnaireResources = async () => {
         const storageKey = `questionnaire_${questionnaireId}`;
         const storageQuestionnaire = sessionStorage.getItem(storageKey);
         if (storageQuestionnaire) return JSON.parse(storageQuestionnaire);
@@ -155,9 +155,9 @@ export default function useFetchResources() {
           );
         });
         const targetQId = matchedKeys.length ? matchedKeys[0] : questionaireKey;
-        console.log("matched item from qConfig ", matchedKeys);
-        console.log("questionnaireJSON ", questionnaireJson);
-        console.log("matched target  ", targetQId);
+        // console.log("matched item from qConfig ", matchedKeys);
+        // console.log("questionnaireJSON ", questionnaireJson);
+        // console.log("matched target  ", targetQId);
         const chartConfig = getChartConfig(targetQId);
         const questionnaireConfig = QuestionnaireConfig[targetQId] || {};
 
@@ -246,7 +246,7 @@ export default function useFetchResources() {
       };
 
       // find matching questionnaire & questionnaire response(s)
-      searchMatchingResources()
+      searchMatchingQuestionnaireResources()
         .then((result) => {
           if (!result) {
             reject("No questionnaire results found.");

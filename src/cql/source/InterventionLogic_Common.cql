@@ -93,19 +93,20 @@ define function GetAnswerLinkIdsByQuestionnaire(currentQuestionnaire FHIR.Questi
  */
 define function GetResponseValueByLinkId(linkId String, responses List<FHIR.QuestionnaireResponse.Item>):
   (responses r where PositionOf(r.linkId.value, linkId) != -1 or PositionOf(linkId, r.linkId.value) != -1) I
-  let value: I.answer[0].value.value
+  //let value: I.answer[0].value.value
+  let value: I.answer[0].value
   return case
       //answer in FHIR coding format 
-      when I.answer[0].value is FHIR.Coding then I.answer[0].value.display.value
+      when value is FHIR.Coding then value.display.value
       else
          case
-          when value is String then value
-          when value is Integer then ToString(value as Integer)
-          when value is Decimal then ToString(value as Decimal)
-          when value is Date then ToString(value as Date)
-          when value is DateTime then ToString(value as DateTime)
-          when value is Boolean then ToString(value as Boolean)
-          else value
+          when value.value is String then value.value
+          when value.value is Integer then ToString(value.value as Integer)
+          when value.value is Decimal then ToString(value.value as Decimal)
+          when value.value is Date then ToString(value.value as Date)
+          when value.value is DateTime then ToString(value.value as DateTime)
+          when value.value is Boolean then ToString(value.value as Boolean)
+          else value.value
         end
     end
 
