@@ -57,8 +57,14 @@ export default function MedicalHistory(props) {
     },
     {
       title: "Status",
-      field: "status"
-    }
+      field: "status",
+      render: (rowData) =>
+        rowData.status === "confirmed" ? (
+          <span className="text-success">{rowData.status}</span>
+        ) : (
+          <span className="text-error">{rowData.status}</span>
+        ),
+    },
   ];
   const renderPrintView = (data) => {
     const displayColumns = columns.filter((column) => !column.hidden);

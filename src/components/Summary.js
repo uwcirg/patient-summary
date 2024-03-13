@@ -146,6 +146,8 @@ export default function Summary(props) {
         direction="column"
         sx={{
           paddingBottom: 4,
+          paddingLeft: (theme) => theme.spacing(2),
+          paddingRight: (theme) => theme.spacing(2)
         }}
       >
         <Stack direction="row" spacing={1} alignItems="flex-start">

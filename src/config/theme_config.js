@@ -19,7 +19,7 @@ export const themes = {
         main: "#f7f6f9",
       },
       lightest: {
-        main: "#FFF",
+        main: "#f7f7f8",
       },
       lighter: {
         main: indigo[50],

@@ -77,7 +77,7 @@ export default function Section({ section, data }) {
         >
           {renderSectionTitle()}
         </AccordionSummary>
-        <AccordionDetails sx={{ padding: theme.spacing(1, 2) }}>
+        <AccordionDetails sx={{ padding: theme.spacing(1, 0.5) }}>
           {section.component && section.component(data)}
           {!section.component && (
             <ErrorComponent message="no section component to render"></ErrorComponent>

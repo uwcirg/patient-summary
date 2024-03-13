@@ -26,17 +26,7 @@ class Observation {
       : "";
   }
   get status() {
-    return this.data.verificationStatus
-      ? this.data.verificationStatus.text
-        ? this.data.verificationStatus.text
-        : this.data.verificationStatus.coding &&
-          Array.isArray(this.data.verificationStatus.coding) &&
-          this.data.verificationStatus.coding.length
-        ? this.data.verificationStatus.coding[0].display
-          ? this.data.verificationStatus.coding[0].display
-          : this.data.verificationStatus.coding[0].code
-        : ""
-      : "";
+    return this.data.status;
   }
   get displayText() {
     if (
@@ -67,6 +57,7 @@ class Observation {
       return "";
     return value;
   }
+ 
   static getGoodData(bundledData) {
     return bundledData.filter(
       (item) =>

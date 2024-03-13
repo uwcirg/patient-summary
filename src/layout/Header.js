@@ -318,7 +318,7 @@ export default function Header(props) {
             spacing={{
               xs: 1,
               sm: 1,
-              md: 1.5,
+              md: 1.25,
             }}
             alignItems="center"
             sx={{ width: "100%" }}

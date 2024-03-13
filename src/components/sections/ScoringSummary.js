@@ -20,6 +20,7 @@ import {
   getDisplayQTitle,
   scrollToAnchor,
   getLocaleDateStringFromDate,
+  getQuestionnaireName
 } from "../../util/util";
 
 export default function ScoringSummary(props) {
@@ -55,10 +56,7 @@ export default function ScoringSummary(props) {
         ? summaryData[id].questionnaire
         : null;
     if (matchedQuestionnaire) {
-      const { id, name, title } = matchedQuestionnaire;
-      if (name) return name;
-      if (title) return title;
-      return id;
+       return getQuestionnaireName(matchedQuestionnaire);
     }
     return String(key).toUpperCase();
   };
@@ -229,6 +227,7 @@ export default function ScoringSummary(props) {
                 xs: theme.spacing(4),
                 sm: "auto",
               },
+              backgroundColor: bgColor
             },
           }}
           {...defaultHeaderCellProps}
@@ -361,10 +360,9 @@ export default function ScoringSummary(props) {
         sx={{
           padding: {
             xs: 0,
-            sm: theme.spacing(1, 0.5),
+            sm: theme.spacing(0, 0.5),
           },
           paddingTop: 0,
-          marginBottom: 1,
           maxWidth: {
             xs: "420px",
             sm: "100%",
@@ -374,7 +372,6 @@ export default function ScoringSummary(props) {
             sm: "relative",
           },
           marginLeft: {
-       //     xs: theme.spacing(29.5),
             sm: 0,
           },
           borderRadius: 0,

@@ -28,6 +28,7 @@ export default function Observations(props) {
         item.date = o.dateText;
         item.provider = o.providerText || "--";
         item.value = o.valueText || "--";
+        item.status = o.status || "--"
         return item;
       })
       .sort((a, b) => {
@@ -42,11 +43,11 @@ export default function Observations(props) {
       hidden: true,
     },
     {
-      title: "Name",
+      title: "Type",
       field: "text",
     },
     {
-      title: "Value / Text",
+      title: "Result",
       field: "value",
     },
     {
@@ -57,6 +58,16 @@ export default function Observations(props) {
       title: "Category",
       field: "category",
     },
+    {
+      title: "Status",
+      field: "status",
+      render: (rowData) =>
+        rowData.status === "final" ? (
+          <span className="text-success">{rowData.status}</span>
+        ) : (
+          <span className="text-warning">{rowData.status}</span>
+        ),
+    }
     // {
     //   title: "Provider",
     //   field: "provider",

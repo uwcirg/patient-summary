@@ -53,7 +53,7 @@ export default function Dashboard() {
 
   const mainStackStyleProps = {
     position: "relative",
-    maxWidth: "1100px",
+    maxWidth: "1160px",
     minHeight: getAppHeight(),
     margin: "auto",
   };

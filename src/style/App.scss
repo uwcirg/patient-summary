@@ -1,10 +1,11 @@
 $chart-background-color: #f4f6f6;
 $muted-text-color: #4f4d4d;
 $border-color: #ececec;
-$app-background-color: #f4f3f4;
+$app-background-color: #faf9fa;
 $summary-container-background-color: #fff;
 $default-print-background-color: #FFF;
 $default-print-color: #444;
+$success-color: #1d771d;
 
 html,
 body {
@@ -82,15 +83,26 @@ p {
 .text-right {
   text-align: right;
 }
-.MuiButton-contained,
-.MuiButton-outlined {
-  border-radius: 24px !important;
+.text-success {
+  color: $success-color;
+}
+.text-warning {
+  color: rgb(114, 77, 9);
+}
+.text-error {
+  color: rgb(133, 7, 7);
 }
 .recharts-xAxis {
   .recharts-cartesian-axis-tick:first-of-type {
     display: none;
   }
 }
+
+.MuiButton-contained,
+.MuiButton-outlined {
+  border-radius: 24px !important;
+}
+
 @media print {
   @page {
     margin: 5mm 5mm 5mm 5mm;
