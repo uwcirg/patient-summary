@@ -27,10 +27,10 @@ import ListAltIcon from "@mui/icons-material/ListAlt";
 import Score from "./Score";
 import {
   getLocaleDateStringFromDate,
-  getQuestionnaireName,
   isNumber
 } from "../util/util";
 import Response from "../models/Response";
+import Questionnaire from "../models/Questionnaire";
 
 const Transition = forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -47,6 +47,7 @@ export default function Responses(props) {
     theme.palette.lightest.main
       ? theme.palette.lightest.main
       : "#FFF";
+  const questionnaireTitle = (new Questionnaire(questionnaireJson)).displayName();
   const getFormattedData = (data) => {
     if (!data || !data.length) return null;
     let copyData = JSON.parse(JSON.stringify(data));
@@ -450,7 +451,7 @@ export default function Responses(props) {
           </IconButton>
           <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
             Questionnaire Responses for{" "}
-            {getQuestionnaireName(questionnaireJson)}
+            {questionnaireTitle}
           </Typography>
           <Button autoFocus color="inherit" onClick={handleClose}>
             Close

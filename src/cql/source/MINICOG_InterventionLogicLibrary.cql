@@ -60,7 +60,7 @@ define ResponsesSummary:
     word_recall_score: Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question1Id)), 0),
     clock_draw_score:  Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question2Id)), 0),
     score: word_recall_score + clock_draw_score,
-    scoreSeverity: if score between 0 and 3 then 'high' else 'low'
+    scoreSeverity: if score between 0 and 5 then 'high' else 'low'
     return {
       id: I.id.value,
       date: LogicHelpers.DateTimeText(I.authored),

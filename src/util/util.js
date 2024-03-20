@@ -409,35 +409,35 @@ export function getEnvDashboardURL() {
   return getEnv("REACT_APP_DASHBOARD_URL");
 }
 
-export function getIntroTextFromQuestionnaire(questionnaireJson) {
-  if (!questionnaireJson) return "";
-  const commonmark = require("commonmark");
-  const reader = new commonmark.Parser({ smart: true });
-  const writer = new commonmark.HtmlRenderer({
-    linebreak: "<br />",
-    softbreak: "<br />",
-  });
-  let description = "";
-  if (questionnaireJson.description) {
-    const parsedObj = reader.parse(questionnaireJson.description);
-    description = questionnaireJson.description
-      ? writer.render(parsedObj)
-      : "";
-  }
-  if (description) return description;
-  const introductionItem = questionnaireJson.item
-    ? questionnaireJson.item.find(
-        (item) => String(item.linkId).toLowerCase() === "introduction"
-      )
-    : null;
-  if (introductionItem) {
-    const textElement = introductionItem._text;
-    if (!textElement || !textElement.extension || !textElement.extension[0])
-      return "";
-    return textElement.extension[0].valueString;
-  }
-  return "";
-}
+// export function getIntroTextFromQuestionnaire(questionnaireJson) {
+//   if (!questionnaireJson) return "";
+//   const commonmark = require("commonmark");
+//   const reader = new commonmark.Parser({ smart: true });
+//   const writer = new commonmark.HtmlRenderer({
+//     linebreak: "<br />",
+//     softbreak: "<br />",
+//   });
+//   let description = "";
+//   if (questionnaireJson.description) {
+//     const parsedObj = reader.parse(questionnaireJson.description);
+//     description = questionnaireJson.description
+//       ? writer.render(parsedObj)
+//       : "";
+//   }
+//   if (description) return description;
+//   const introductionItem = questionnaireJson.item
+//     ? questionnaireJson.item.find(
+//         (item) => String(item.linkId).toLowerCase() === "introduction"
+//       )
+//     : null;
+//   if (introductionItem) {
+//     const textElement = introductionItem._text;
+//     if (!textElement || !textElement.extension || !textElement.extension[0])
+//       return "";
+//     return textElement.extension[0].valueString;
+//   }
+//   return "";
+// }
 
 export function isNumber(target) {
   if (isNaN(target)) return false;
@@ -511,13 +511,13 @@ export function addMamotoTracking(userId) {
   headElement.appendChild(g);
 }
 
-export function getQuestionnaireName(questionnaireJson) {
-  if (!questionnaireJson) return "";
-  const { id, title, name } = questionnaireJson;
-  if (name) return name;
-  if (title) return title;
-  return `Questionnaire ${id}`;
-}
+// export function getQuestionnaireName(questionnaireJson) {
+//   if (!questionnaireJson) return "";
+//   const { id, title, name } = questionnaireJson;
+//   if (name) return name;
+//   if (title) return title;
+//   return `Questionnaire ${id}`;
+// }
 
 export function getLocaleDateStringFromDate(dateString, format) {
   if (!dateString) return "";

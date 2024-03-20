@@ -14,13 +14,11 @@ import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import Scoring from "../Score";
-import qConfig from "../../config/questionnaire_config";
+import Questionnaire from "../../models/Questionnaire";
 import {
   isNumber,
-  getDisplayQTitle,
   scrollToAnchor,
   getLocaleDateStringFromDate,
-  getQuestionnaireName
 } from "../../util/util";
 
 export default function ScoringSummary(props) {
@@ -47,18 +45,12 @@ export default function ScoringSummary(props) {
     return responses.some((result) => isNumber(result.score));
   };
   const getInstrumentShortName = (id) => {
-    const key = getDisplayQTitle(id).toLowerCase();
-    if (qConfig[key] && qConfig[key].shortTitle) {
-      return qConfig[key].shortTitle;
-    }
     const matchedQuestionnaire =
       summaryData[id] && summaryData[id].questionnaire
         ? summaryData[id].questionnaire
         : null;
-    if (matchedQuestionnaire) {
-       return getQuestionnaireName(matchedQuestionnaire);
-    }
-    return String(key).toUpperCase();
+    const qo = new Questionnaire(matchedQuestionnaire, id);
+    return qo.shortName() ?? qo.displayName();
   };
   const hasList = () =>
     summaryData &&
@@ -221,13 +213,13 @@ export default function ScoringSummary(props) {
       <TableRow sx={{ backgroundColor: bgColor }}>
         <TableCell
           sx={{
-           ...fixedCellStyle,
+            ...fixedCellStyle,
             ...{
               minHeight: {
                 xs: theme.spacing(4),
                 sm: "auto",
               },
-              backgroundColor: bgColor
+              backgroundColor: bgColor,
             },
           }}
           {...defaultHeaderCellProps}

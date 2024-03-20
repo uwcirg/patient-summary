@@ -15,6 +15,7 @@ cidas_reusable_resources:
 - &questionnaireResource # skeleton
   resourceType: Questionnaire
   id: CIRG-C-IDAS
+  name: C-IDAS
 
 # questionnaire responses
 - &questionnaireResponses # skeleton
