@@ -13,11 +13,7 @@ export default function QuestionnaireListProvider({ children }) {
     getEnvQuestionnaireList()
   );
   const [exactMatch, setExactMatch] = useState(
-<<<<<<< HEAD
-    getEnv("REACT_APP_MATCH_QUESTIONNAIRE_BY_ID")
-=======
     getEnv("REACT_APP_EPIC_QUERIES")
->>>>>>> c6e2b0cd0ad0abc60fa0ee9a65744574da22ccc4
   );
   const { client, patient } = useContext(FhirClientContext);
 
