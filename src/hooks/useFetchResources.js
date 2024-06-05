@@ -63,8 +63,8 @@ export default function useFetchResources() {
       id: qid,
       title:
         qConfig[qid] && qConfig[qid].shortTitle
-          ? `Data for Questionnaire ${qConfig[qid].shortTitle}`
-          : `Data for Questionnaire ${qid}`,
+          ? `Resources for ${qConfig[qid].shortTitle}`
+          : `Resources for ${qid}`,
       complete: false,
       error: false,
     })),
