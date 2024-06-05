@@ -9,6 +9,7 @@ include "InterventionLogic_Common" version '1.0.0' called LogicHelpers
 // -----------------------------------------------------------------------------
 // PARAMETERS
 // -----------------------------------------------------------------------------
+parameter QuestionnaireID default 'CIRG-CP-ECOG'
 parameter QuestionnaireName default 'cp-ecog'
 parameter QuestionnaireURL default 'http://www.cdc.gov/ncbddd/fasd/cp-ecog'
 parameter ScoringQuestionId default 'cp-ecog-total-score'
@@ -36,7 +37,7 @@ define scoringParams: {
 }
 
 define Questionnaires:
-  LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
+  LogicHelpers.GetMatchQuestionnaire(QuestionnaireID, QuestionnaireName, QuestionnaireURL)
 
 // Load Questionnaire
 define CurrentQuestionnaire:
@@ -48,7 +49,7 @@ define QuestionnaireItems:
 
 // Load Questionnaire responses
 define QuestionnaireResponses:
-  LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], CurrentQuestionnaire)
+  LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], QuestionnaireID, QuestionnaireName)
 
 define ResponsesSummary:
   (QuestionnaireResponses) I

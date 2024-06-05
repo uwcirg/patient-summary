@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import BallotIcon from "@mui/icons-material/Ballot";
 import MedicalInformationIcon from "@mui/icons-material/MedicalInformation";
+import FactCheckIcon from '@mui/icons-material/FactCheck';
 import SummarizeIcon from "@mui/icons-material/Summarize";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -45,8 +46,20 @@ const renderMedicalHistory = (props) => {
   return (
     <Suspense fallback={renderLoader()}>
       <MedicalHistory
-        data={getResourcesByResourceType(props.patientBundle)}
+        data={getResourcesByResourceType(props.patientBundle, "Condition")}
       ></MedicalHistory>
+    </Suspense>
+  );
+};
+const renderObservations = (props) => {
+  const Procedure = lazy(() =>
+    import("../components/sections/Observations")
+  );
+  return (
+    <Suspense fallback={renderLoader()}>
+      <Procedure
+        data={getResourcesByResourceType(props.patientBundle, "Observation")}
+      ></Procedure>
     </Suspense>
   );
 };
@@ -82,6 +95,7 @@ const DEFAULT_SECTIONS = [
     id: "medicalHistory",
     title: "Pertinent Medical History",
     anchorElementId: `anchor_medicalhistory`,
+    resources: ["Condition"],
     icon: (props) => (
       <MedicalInformationIcon
         fontSize="large"
@@ -90,6 +104,20 @@ const DEFAULT_SECTIONS = [
       ></MedicalInformationIcon>
     ),
     component: (props) => renderMedicalHistory(props),
+  },
+  {
+    id: "observations",
+    title: "Observations",
+    anchorElementId: `anchor_observations`,
+    resources: ["Observation"],
+    icon: (props) => (
+      <FactCheckIcon
+        fontSize="large"
+        color="primary"
+        {...props}
+      ></FactCheckIcon>
+    ),
+    component: (props) => renderObservations(props),
   },
   {
     id: "responses",

@@ -1,16 +1,16 @@
 import dayjs from "dayjs";
 import ChartConfig from "../config/chart_config.js";
-import QuestionnaireConfig from "../config/questionnaire_config";
 import {
   QUESTIONNAIRE_ANCHOR_ID_PREFIX,
   queryNeedPatientBanner,
 } from "../consts/consts";
 import commonLibrary from "../cql/InterventionLogic_Common.json";
-import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
 import valueSetJson from "../cql/valueset-db.json";
-import { initialzieCqlWorker } from "cql-worker";
 import defaultSections from "../config/sections_config.js";
-import { DEFAULT_TOOLBAR_HEIGHT } from "../consts/consts";
+import {
+  DEFAULT_OBSERVATION_CATEGORIES,
+  DEFAULT_TOOLBAR_HEIGHT,
+} from "../consts/consts";
 
 export function getCorrectedISODate(dateString) {
   if (!dateString || dateString instanceof Date) return dateString;
@@ -43,51 +43,93 @@ export async function getInterventionLogicLib(interventionId) {
 }
 
 export function getFHIRResourcesToLoad() {
-  const defaultList = ["Condition"];
+  const defaultList = [
+    "Condition",
+    "Observation",
+    "Questionnaire",
+    "QuestionnaireResponse",
+  ];
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
-  let resources = resourcesToLoad ? resourcesToLoad.split(",") : defaultList;
-  defaultList.forEach((item) => {
-    let inList =
-      resources.filter((r) => r.toLowerCase() === item.toLowerCase()).length >
-      0;
-    if (!inList) {
-      resources.push(item);
-    }
-  });
+  const sections = getSectionsToShow();
+  const envResourcesToLoad = resourcesToLoad ? resourcesToLoad.split(",") : [];
+  let resourcesForSection = [];
+  if (sections && sections.length) {
+    sections.forEach((section) => {
+      if (section.resources && section.resources.length) {
+        resourcesForSection = [...resourcesForSection, ...section.resources];
+      }
+    });
+  }
+  const combinedResources = [...envResourcesToLoad, ...resourcesForSection];
+  const allResources = [...new Set(combinedResources)];
+  const resources = allResources.length
+    ? [...new Set([...allResources, ...defaultList])]
+    : defaultList;
+
+  //console.log("Resources to load : ", resources);
   return resources;
 }
 
-export function getFHIRResourcePaths(patientId) {
+export function getFHIRResourceQueryParams(resourceType, options) {
+  if (!resourceType) return null;
+  let paramsObj = {
+    _sort: "-_lastUpdated",
+    _count: 200,
+  };
+  const queryOptions = options ? options : {};
+  switch (String(resourceType).toLowerCase()) {
+    case "careplan":
+      const envCategory = getEnv("REACT_APP_FHIR_CAREPLAN_CATEGORY");
+      if (queryOptions.patientId) {
+        paramsObj["subject"] = `Patient/${queryOptions.patientId}`;
+      }
+      if (envCategory) {
+        paramsObj["category:text"] = envCategory;
+      }
+      break;
+    case "questionnaire":
+      if (
+        queryOptions.questionnaireList &&
+        Array.isArray(queryOptions.questionnaireList) &&
+        queryOptions.questionnaireList.length
+      ) {
+        paramsObj[queryOptions.exactMatch ? "_id" : "name:contains"] =
+          queryOptions.questionnaireList.join(",");
+      }
+      break;
+    case "observation":
+      const envObCategories = getEnv("REACT_APP_FHIR_OBSERVATION_CATEGORIES");
+      const observationCategories = envObCategories
+        ? envObCategories
+        : DEFAULT_OBSERVATION_CATEGORIES;
+      paramsObj["category"] = observationCategories;
+      if (queryOptions.patientId) {
+        paramsObj["patient"] = `Patient/${queryOptions.patientId}`;
+      }
+      break;
+    default:
+      if (queryOptions.patientId) {
+        paramsObj["patient"] = `Patient/${queryOptions.patientId}`;
+      }
+  }
+  return paramsObj;
+}
+
+export function getFHIRResourcePaths(patientId, resourcesToLoad, options) {
   if (!patientId) return [];
-  const resources = getFHIRResourcesToLoad();
+  const resources =
+    resourcesToLoad && Array.isArray(resourcesToLoad) && resourcesToLoad.length
+      ? resourcesToLoad
+      : getFHIRResourcesToLoad();
   return resources.map((resource) => {
     let path = `/${resource}`;
-    const observationCategories = getEnv(
-      "REACT_APP_FHIR_OBSERVATION_CATEGORIES"
-    );
-    const qList = getEnvQuestionnaireList().join(",");
-    if (resource.toLowerCase() === "questionnaire") {
-      const params = qList;
-      if (params) path = path + `?name:contains:${params}`;
-    }
-    if (resource.toLowerCase() === "careplan") {
-      path =
-        path +
-        `?subject=Patient/${patientId}&_sort=-_lastUpdated&category:text=Questionnaire`;
-    } else {
-      path =
-        path +
-        (resource.toLowerCase() !== "questionnaire"
-          ? `?patient=${patientId}&_sort=-_lastUpdated`
-          : "");
-    }
-    if (resource.toLowerCase() === "observation" && observationCategories) {
-      let categories = observationCategories.split(",");
-      path +=
-        "&" +
-        encodeURIComponent(
-          categories.map((cat) => "category=" + cat).join("&")
-        );
+    const paramsObj = getFHIRResourceQueryParams(resource, {
+      ...(options ? options : {}),
+      patientId: patientId,
+    });
+    if (paramsObj) {
+      const searchParams = new URLSearchParams(paramsObj);
+      path = path + "?" + searchParams.toString();
     }
     return {
       resourceType: resource,
@@ -96,11 +138,16 @@ export function getFHIRResourcePaths(patientId) {
   });
 }
 
-export function getResourcesByResourceType(patientBundle) {
-  if (!patientBundle || !patientBundle.length) return null;
+export function getResourcesByResourceType(patientBundle, resourceType) {
+  if (!patientBundle || !Array.isArray(patientBundle) || !patientBundle.length)
+    return null;
   return patientBundle
     .filter((item) => {
-      return item.resource && item.resource.resourceType === "Condition";
+      return (
+        item.resource &&
+        String(item.resource.resourceType).toLowerCase() ===
+          String(resourceType).toLowerCase()
+      );
     })
     .map((item) => item.resource);
 }
@@ -164,8 +211,7 @@ export function getChartConfig(questionnaire) {
 
 export function getEnvQuestionnaireList() {
   const configList = getEnv("REACT_APP_QUESTIONNAIRES");
-  if (configList)
-    return configList.split(",").map((item) => item.replace(/_/g, "-").trim());
+  if (configList) return configList.split(",").map((item) => item.trim());
   return [];
 }
 
@@ -342,167 +388,6 @@ export function range(start, end) {
   return new Array(end - start + 1).fill(undefined).map((_, i) => i + start);
 }
 
-export function gatherSummaryDataByQuestionnaireId(
-  client,
-  patientBundle,
-  questionnaireId,
-  exactMatch
-) {
-  return new Promise((resolve, reject) => {
-    // search for matching questionnaire
-    const searchMatchingResources = async () => {
-      const storageKey = `questionnaire_${questionnaireId}`;
-      const storageQuestionnaire = sessionStorage.getItem(storageKey);
-      if (storageQuestionnaire) return JSON.parse(storageQuestionnaire);
-      const fhirSearchOptions = { pageLimit: 0 };
-      const qResult = await client
-        .request(
-          {
-            url: exactMatch
-              ? "Questionnaire/" + questionnaireId
-              : "Questionnaire?name:contains=" + questionnaireId,
-          },
-          fhirSearchOptions
-        )
-        .catch((e) => {
-          throw new Error(e);
-        });
-      if (qResult) sessionStorage.setItem(storageKey, JSON.stringify(qResult));
-      return qResult;
-    };
-    const gatherSummaryData = async (questionnaireJson) => {
-      // Define a web worker for evaluating CQL expressions
-      const cqlWorker = new Worker();
-      // Initialize the cql-worker
-      const [setupExecution, sendPatientBundle, evaluateExpression] =
-        initialzieCqlWorker(cqlWorker);
-      const questionaireKey = String(questionnaireId).toLowerCase();
-      const matchedKeys = Object.keys(QuestionnaireConfig).filter((id) => {
-        const match = String(id).toLowerCase();
-        return (
-          String(questionnaireJson.name).toLowerCase().includes(match) ||
-          String(questionnaireJson.title).toLowerCase().includes(match) ||
-          String(questionnaireJson.id).toLowerCase().includes(match)
-        );
-      });
-      const targetQId = matchedKeys.length ? matchedKeys[0] : questionaireKey;
-      const chartConfig = getChartConfig(targetQId);
-      const questionnaireConfig = QuestionnaireConfig[targetQId] || {};
-
-      /* get CQL expressions */
-      const [elmJson, valueSetJson] = await getInterventionLogicLib(
-        questionnaireConfig.customCQL ? targetQId : ""
-      ).catch((e) => {
-        console.log("Error retrieving ELM lib son for " + questionnaireId, e);
-        throw new Error("Error retrieving ELM lib son for " + questionnaireId);
-      });
-
-      setupExecution(
-        elmJson,
-        valueSetJson,
-        {
-          QuestionnaireName: questionnaireJson.name,
-          QuestionnaireURL: questionnaireJson.url,
-        },
-        getElmDependencies()
-      );
-
-      // Send patient info to CQL worker to process
-      sendPatientBundle(patientBundle);
-
-      // get formatted questionnaire responses
-      const cqlData = await evaluateExpression("ResponsesSummary").catch(
-        (e) => {
-          console.log(e);
-          throw new Error(
-            "CQL evaluation expression, ResponsesSummary, error "
-          );
-        }
-      );
-      const scoringData =
-        cqlData && cqlData.length
-          ? cqlData.filter((item) => {
-              return (
-                item && item.responses && isNumber(item.score) && item.date
-              );
-            })
-          : null;
-      const chartData =
-        scoringData && scoringData.length
-          ? scoringData.map((item) => ({
-              ...item,
-              ...item.scoringParams?item.scoringParams:{},
-              date: item.date,
-              total: item.score,
-            }))
-          : null;
-      const scoringParams =
-        cqlData && cqlData.length ? cqlData[0].scoringParams : {};
-
-      const returnResult = {
-        chartConfig: { ...chartConfig, ...scoringParams },
-        chartData: chartData,
-        responses: cqlData,
-        questionnaire: questionnaireJson,
-      };
-      console.log(
-        "return result from CQL execution for " + questionnaireId,
-        returnResult
-      );
-      cqlWorker.terminate();
-      return returnResult;
-    };
-
-    // find matching questionnaire & questionnaire response(s)
-    searchMatchingResources()
-      .then((result) => {
-        if (!result) {
-          reject("No questionnaire results found.");
-          return;
-        }
-        let bundles = [];
-        if (Array.isArray(result)) {
-          result.forEach((item) => {
-            bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];
-          });
-        } else
-          bundles = [...bundles, ...getFhirResourcesFromQueryResult(result)];
-        const arrQuestionnaires = bundles.filter(
-          (entry) =>
-            entry.resource &&
-            String(entry.resource.resourceType).toLowerCase() ===
-              "questionnaire"
-        );
-        const questionnaireJson = arrQuestionnaires.length
-          ? arrQuestionnaires[0].resource
-          : null;
-        if (!questionnaireJson) {
-          reject("No matching questionnaire found");
-          return;
-        }
-        patientBundle = {
-          ...patientBundle,
-          entry: [...patientBundle.entry, ...bundles],
-          questionnaire: questionnaireJson,
-        };
-        gatherSummaryData(questionnaireJson)
-          .then((data) => {
-            resolve(data);
-          })
-          .catch((e) => {
-            reject(
-              "Error occurred gathering summary data.  See console for detail."
-            );
-            console.log("Error occurred gathering summary data: ", e);
-          });
-      })
-      .catch((e) => {
-        reject("Error occurred retrieving matching resources");
-        console.log("Error occurred retrieving matching resources: ", e);
-      });
-  }); // end promise
-}
-
 /*
  * @param client is a SoF frontend client
  * return the state key property of the client
@@ -524,24 +409,40 @@ export function getEnvDashboardURL() {
   return getEnv("REACT_APP_DASHBOARD_URL");
 }
 
-export function getIntroTextFromQuestionnaire(questionnaireJson) {
-  if (!questionnaireJson) return "";
-  const targetItem = questionnaireJson.item
-    ? questionnaireJson.item.filter(
-        (item) => String(item.linkId).toLowerCase() === "introduction"
-      )
-    : null;
-  if (!targetItem || !targetItem.length) return "";
-  const textElement = targetItem[0]._text;
-  if (!textElement || !textElement.extension || !textElement.extension[0])
-    return "";
-  return textElement.extension[0].valueString;
-}
+// export function getIntroTextFromQuestionnaire(questionnaireJson) {
+//   if (!questionnaireJson) return "";
+//   const commonmark = require("commonmark");
+//   const reader = new commonmark.Parser({ smart: true });
+//   const writer = new commonmark.HtmlRenderer({
+//     linebreak: "<br />",
+//     softbreak: "<br />",
+//   });
+//   let description = "";
+//   if (questionnaireJson.description) {
+//     const parsedObj = reader.parse(questionnaireJson.description);
+//     description = questionnaireJson.description
+//       ? writer.render(parsedObj)
+//       : "";
+//   }
+//   if (description) return description;
+//   const introductionItem = questionnaireJson.item
+//     ? questionnaireJson.item.find(
+//         (item) => String(item.linkId).toLowerCase() === "introduction"
+//       )
+//     : null;
+//   if (introductionItem) {
+//     const textElement = introductionItem._text;
+//     if (!textElement || !textElement.extension || !textElement.extension[0])
+//       return "";
+//     return textElement.extension[0].valueString;
+//   }
+//   return "";
+// }
 
 export function isNumber(target) {
   if (isNaN(target)) return false;
   if (typeof target === "number") return true;
-  return target !== null;
+  return target != null;
 }
 
 export function shouldShowPatientInfo(client) {
@@ -610,14 +511,92 @@ export function addMamotoTracking(userId) {
   headElement.appendChild(g);
 }
 
-export function getQuestionnaireName(questionnaireJson) {
-  if (!questionnaireJson) return "";
-  const { id, title, name } = questionnaireJson;
-  return title || name || `Questionnaire ${id}`;
-}
+// export function getQuestionnaireName(questionnaireJson) {
+//   if (!questionnaireJson) return "";
+//   const { id, title, name } = questionnaireJson;
+//   if (name) return name;
+//   if (title) return title;
+//   return `Questionnaire ${id}`;
+// }
 
 export function getLocaleDateStringFromDate(dateString, format) {
   if (!dateString) return "";
   const dateFormat = format ? format : "YYYY-MM-DD hh:mm";
+  if (!dayjs(dateString).isValid()) return dateString;
   return dayjs(dateString).format(dateFormat);
+}
+
+export function getFhirItemValue(item) {
+  if (!item) return null;
+  if (hasValue(item.valueQuantity)) {
+    if (item.valueQuantity.unit) {
+      return [item.valueQuantity.value, item.valueQuantity.unit].join(" ");
+    }
+    return item.valueQuantity.value;
+  }
+  if (hasValue(item.valueString)) {
+    if (hasValue(item.valueString.value)) return String(item.valueString.value);
+    return item.valueString;
+  }
+  if (hasValue(item.valueBoolean)) {
+    if (hasValue(item.valueBoolean.value))
+      return String(item.valueBoolean.value);
+    return String(item.valueBoolean);
+  }
+  if (hasValue(item.valueInteger)) {
+    if (hasValue(item.valueInteger.value)) return item.valueInteger.value;
+    return item.valueInteger;
+  }
+  if (hasValue(item.valueDecimal)) {
+    if (hasValue(item.valueDecimal.value)) return item.valueDecimal.value;
+    return item.valueDecimal;
+  }
+  if (item.valueDate) {
+    if (hasValue(item.valueDate.value)) return item.valueDate.value;
+    return item.valueDate;
+  }
+  if (hasValue(item.valueDateTime)) {
+    if (item.valueDateTime.value) return item.valueDateTime.value;
+    return item.valueDateTime;
+  }
+  if (item.valueCodeableConcept) {
+    if (item.valueCodeableConcept.text) {
+      return item.valueCodeableConcept.text;
+    } else if (
+      item.valueCodeableConcept.coding &&
+      Array.isArray(item.valueCodeableConcept.coding) &&
+      item.valueCodeableConcept.coding.length
+    ) {
+      return item.valueCodeableConcept.coding[0].display;
+    }
+    return null;
+  }
+  // need to handle date/time value
+
+  return null;
+}
+export function getFhirComponentDisplays(item) {
+  let displayText = getFhirItemValue(item);
+  if (!item || !item.component || !item.component.length) return displayText;
+  const componentDisplay = item.component
+    .map((o) => {
+      const textDisplay = o.code && o.code.text ? o.code.text : null;
+      const valueDisplay = getFhirItemValue(o);
+      if (hasValue(valueDisplay))
+        return textDisplay
+          ? [textDisplay, valueDisplay].join(": ")
+          : valueDisplay;
+      return "";
+    })
+    .join(", ");
+  if (displayText && componentDisplay) {
+    return [displayText, componentDisplay].join(", ");
+  }
+  if (componentDisplay) return componentDisplay;
+  if (displayText) return displayText;
+  return null;
+}
+
+export function hasValue(value) {
+  return value != null && value !== "" && typeof value !== "undefined";
 }

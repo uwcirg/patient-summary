@@ -27,8 +27,10 @@ import ListAltIcon from "@mui/icons-material/ListAlt";
 import Score from "./Score";
 import {
   getLocaleDateStringFromDate,
-  getQuestionnaireName,
+  isNumber
 } from "../util/util";
+import Response from "../models/Response";
+import Questionnaire from "../models/Questionnaire";
 
 const Transition = forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -45,8 +47,70 @@ export default function Responses(props) {
     theme.palette.lightest.main
       ? theme.palette.lightest.main
       : "#FFF";
-  const data = props.data || [];
+  const questionnaireTitle = (new Questionnaire(questionnaireJson)).displayName();
+  const getFormattedData = (data) => {
+    if (!data || !data.length) return null;
+    let copyData = JSON.parse(JSON.stringify(data));
+    const maxResponsesLength = Math.max(
+      ...copyData.map((d) => (d.responses ? d.responses.length : 0))
+    );
+    const dataForQuestions = copyData.find(
+      (d) => d.responses && d.responses.length === maxResponsesLength
+    );
+    if (!dataForQuestions) return null;
+    copyData.forEach((d) => {
+      if (d.id === dataForQuestions.id) return true;
+      if (!d.responses || !d.responses.length) return true;
+      dataForQuestions.responses.forEach((item) => {
+        const matched = d.responses.find((o) => o.id === item.id);
+        if (!matched) {
+          d.responses.push({
+            id: item.id,
+            question: item.question,
+            answer: "",
+          });
+        }
+      });
+    });
+    return copyData;
+  };
+  const data = getFormattedData(props.data) || [];
   const dates = data.map((item) => ({ date: item.date, id: item.id }));
+  const summaryHeaderProps = {
+    variant: "subtitle2",
+    component: "h2",
+    color: "secondary",
+    sx: {
+      width: "100%",
+      textAlign: "left",
+      whiteSpace: "nowrap",
+    },
+  };
+  const summaryColumnProps = {
+    direction: "column",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    sx: {
+      alignSelf: "stretch",
+      flex: 1,
+      whiteSpace: "nowrap",
+      width: "100%",
+      border: `1px solid ${
+        theme &&
+        theme.palette &&
+        theme.palette.lighter &&
+        theme.palette.lighter.main
+          ? theme.palette.lighter.main
+          : "#ececec"
+      }`,
+      "&:first-of-type": {
+        borderRight: 0,
+      },
+      "&:last-of-type": {
+        borderLeft: 0,
+      },
+    },
+  };
   const columns = [
     {
       title: "Questions",
@@ -60,11 +124,16 @@ export default function Responses(props) {
       render: (rowData) => {
         if (String(rowData["question"]).toLowerCase() === "score")
           return <b>{rowData["question"]}</b>;
-        else return rowData["question"];
+        else
+          return (
+            <span
+              dangerouslySetInnerHTML={{ __html: rowData["question"] }}
+            ></span>
+          );
       },
     },
     ...dates.map((item) => ({
-      title: item.date,
+      title: getLocaleDateStringFromDate(item.date),
       field: item.id,
       filterComponent: ({ columnDef, onFilterChanged }) => (
         <Input
@@ -83,7 +152,7 @@ export default function Responses(props) {
       ),
       render: (rowData) => {
         if (rowData[item.id].hasOwnProperty("score")) {
-          if (!isNaN(rowData[item.id].score)) {
+          if (isNumber(rowData[item.id].score)) {
             return (
               <Score
                 instrumentId={questionnaireId}
@@ -98,12 +167,15 @@ export default function Responses(props) {
     })),
   ];
 
+  const getLastAssessedDateTime = () =>
+    dates && dates.length ? getLocaleDateStringFromDate(dates[0].date) : "--";
+
   const hasData = () =>
     data &&
     data.length > 0 &&
     data.filter((item) => item.responses && item.responses.length).length > 0;
   const hasScores = () =>
-    data.filter((item) => item.hasOwnProperty("score") && !isNaN(item.score))
+    data.filter((item) => item.hasOwnProperty("score") && isNumber(item.score))
       .length > 0;
 
   const getData = () => {
@@ -136,16 +208,12 @@ export default function Responses(props) {
     setOpen(false);
   };
   const getAnswer = (response) => {
-    if (!response) return "--";
-    return response.value &&
-      (parseInt(response.value.value) === 0 || response.value.value)
-      ? response.value.value
-      : response.answer
-      ? response.answer
-      : "---";
+    const o = new Response(response);
+    return o.answerText || "--";
   };
   const getQuestion = (item) => {
-    return item.question || item.text || item.id;
+    const o = new Response(item);
+    return o.questionText;
   };
 
   const getMatchedAnswerByLinkIdDateId = (
@@ -163,24 +231,13 @@ export default function Responses(props) {
     return getAnswer(answerItem[0]);
   };
 
-  const Root = styled("div")(({ theme }) => ({
-    width: "100%",
-    paddingTop: theme.spacing(1),
-  }));
-
-  const renderTitle = () => (
-    <Typography variant="subtitle1" component="h2" color="secondary">
-      Questionnaire Responses
-    </Typography>
-  );
-
   const renderPrintOnlyResponseTable = () => {
     if (!hasData()) return null;
     const arrDates = dates.filter((item, index) => index < 2);
     const arrData = data.filter((item, index) => index < 2);
     // this will render the current and the previous response(s) for print
     return (
-      <Box className="print-only">
+      <Box className="print-only" sx={{ marginTop: theme.spacing(2) }}>
         <Table
           aria-label="responses table"
           size="small"
@@ -231,13 +288,14 @@ export default function Responses(props) {
                 </TableCell>
                 {arrData.map((item, index) => (
                   <TableCell key={`score_cell_${index}`}>
-                    {!isNaN(item.score) && (
+                    {isNumber(item.score) && (
                       <Score
                         instrumentId={questionnaireId}
                         score={item.score}
                         scoreParams={item}
                       ></Score>
                     )}
+                    {!isNumber(item.score) && <span>--</span>}
                   </TableCell>
                 ))}
               </TableRow>
@@ -270,18 +328,21 @@ export default function Responses(props) {
         columns={columns}
         data={getData()}
         icons={{
-          ViewColumn: forwardRef((props, ref) => (
-            <Button
-              variant="outlined"
-              color="secondary"
-              startIcon={<ListAltIcon />}
-              {...props}
-              ref={ref}
-              className="print-hidden"
-            >
-              +/- Columns
-            </Button>
-          )),
+          ViewColumn: forwardRef((props, ref) => {
+            if (!hasData() || (hasData() && data.length < 2)) return null;
+            return (
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<ListAltIcon />}
+                {...props}
+                ref={ref}
+                className="print-hidden"
+              >
+                +/- Columns
+              </Button>
+            );
+          }),
         }}
         options={{
           search: false,
@@ -307,16 +368,65 @@ export default function Responses(props) {
     </Box>
   );
 
-  const renderOpenIcon = () => (
-    <IconButton
-      color="primary"
-      title="View"
-      size="small"
-      className="print-hidden"
-    >
-      <OutlinedIcon fontSize="medium"></OutlinedIcon>
-    </IconButton>
+  const renderNumberOfResponses = () => (
+    <Stack {...summaryColumnProps}>
+      <SummaryHeaderCell>
+        <Typography {...summaryHeaderProps}>Responses Completed</Typography>
+      </SummaryHeaderCell>
+      <SummaryBodyCell>{data.length}</SummaryBodyCell>
+    </Stack>
   );
+
+  const renderLastAssessed = () => (
+    <Stack {...summaryColumnProps}>
+      <SummaryHeaderCell>
+        <Typography {...summaryHeaderProps}>Last answered on</Typography>
+      </SummaryHeaderCell>
+      <SummaryBodyCell>{getLastAssessedDateTime()}</SummaryBodyCell>
+    </Stack>
+  );
+
+  const renderViewResponses = () => (
+    <Stack {...summaryColumnProps}>
+      <SummaryHeaderCell>
+        <Typography {...summaryHeaderProps}>Responses</Typography>
+      </SummaryHeaderCell>
+      <SummaryBodyCell>
+        <Button
+          color="primary"
+          title="View"
+          size="small"
+          className="print-hidden"
+          endIcon={<OutlinedIcon fontSize="medium"></OutlinedIcon>}
+          onClick={() => handleClickOpen()}
+        >
+          View
+        </Button>
+      </SummaryBodyCell>
+    </Stack>
+  );
+
+  const Root = styled("div")(({ theme }) => ({
+    width: "100%",
+  }));
+
+  const SummaryHeaderCell = styled("div")(({ theme }) => ({
+    borderBottom: `1px solid ${
+      theme &&
+      theme.palette &&
+      theme.palette.lighter &&
+      theme.palette.lighter.main
+        ? theme.palette.lighter.main
+        : "#ececec"
+    }`,
+    padding: theme.spacing(1, 2),
+    width: "100%",
+  }));
+  const SummaryBodyCell = styled("div")(({ theme }) => ({
+    padding: theme.spacing(1, 2),
+    width: "100%",
+    textAlign: "left",
+  }));
 
   const renderDialog = () => (
     <Dialog
@@ -341,7 +451,7 @@ export default function Responses(props) {
           </IconButton>
           <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
             Questionnaire Responses for{" "}
-            {getQuestionnaireName(questionnaireJson)}
+            {questionnaireTitle}
           </Typography>
           <Button autoFocus color="inherit" onClick={handleClose}>
             Close
@@ -357,15 +467,10 @@ export default function Responses(props) {
       {!hasData() && <Alert severity="warning">No recorded response</Alert>}
       {hasData() && (
         <Root>
-          <Stack
-            direction="row"
-            onClick={() => handleClickOpen()}
-            alignItems="center"
-            spacing={1}
-          >
-            {renderTitle()}
-            <div className="print-hidden">( {data.length} )</div>
-            {renderOpenIcon()}
+          <Stack direction="row" alignItems="center" spacing={0}>
+            {renderNumberOfResponses()}
+            {renderLastAssessed()}
+            {renderViewResponses()}
           </Stack>
           {renderDialog()}
           {renderPrintOnlyResponseTable()}

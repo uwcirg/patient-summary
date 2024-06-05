@@ -54,7 +54,7 @@ data:
 results:
   QuestionnaireResponses: $should exist  # make sure questionnaire responses are returned
   ResponsesOnly: $should have length 2
-  FirstResponsesScoreSeverity: 'low'
+  FirstResponsesScoreSeverity: 'high'
   #FirstResponsesScoreMeaning: null
   
   

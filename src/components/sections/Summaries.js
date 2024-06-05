@@ -4,15 +4,13 @@ import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import Summary from "../Summary";
 
-export default function Summaries(props) {
-  const questionnaireKeys =
-    props.questionnaireKeys && props.questionnaireKeys.length
-      ? props.questionnaireKeys
-      : [];
-  if (!questionnaireKeys.length) {
+export default function Summaries({questionnaireKeys, summaryData}) {
+  if (!questionnaireKeys || !questionnaireKeys.length) {
     return <Alert severity="error">No matching data found.</Alert>;
   }
-  const summaryData = props.summaryData || {};
+  if (!summaryData) {
+    return <Alert severity="warning">No data found.</Alert>
+  }
   return (
     <Box>
       {questionnaireKeys.map((questionnaireId, index) => {

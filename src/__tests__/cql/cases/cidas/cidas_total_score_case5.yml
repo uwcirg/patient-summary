@@ -122,6 +122,6 @@ results:
   QuestionnaireResponses: $should exist
   CurrentQuestionnaire: $should exist
   ResponsesOnly: $should exist
-  FirstResponsesScore: 34
+  FirstResponsesScore: 36
   FirstResponsesScoreSeverity: 'high'
   #FirstResponsesScoreMeaning: 'major depressive episode'

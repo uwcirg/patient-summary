@@ -14,8 +14,12 @@ import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import Scoring from "../Score";
-import qConfig from "../../config/questionnaire_config";
-import { isNumber, getDisplayQTitle, scrollToAnchor } from "../../util/util";
+import Questionnaire from "../../models/Questionnaire";
+import {
+  isNumber,
+  scrollToAnchor,
+  getLocaleDateStringFromDate,
+} from "../../util/util";
 
 export default function ScoringSummary(props) {
   const theme = useTheme();
@@ -34,27 +38,19 @@ export default function ScoringSummary(props) {
     theme && theme.palette && theme.palette.border && theme.palette.border.main
       ? theme.palette.border.main
       : "#FFF";
-  const { summaryData, questionnaireList } = props;
+  const { summaryData } = props;
   const hasNoResponses = (responses) => !responses || !responses.length;
   const responsesHasScore = (responses) => {
     if (hasNoResponses(responses)) return false;
     return responses.some((result) => isNumber(result.score));
   };
   const getInstrumentShortName = (id) => {
-    const key = getDisplayQTitle(id).toLowerCase();
-    if (qConfig[key] && qConfig[key].shortTitle) {
-      return qConfig[key].shortTitle;
-    }
-    const matchedQuestionnaire = questionnaireList
-      ? questionnaireList
-          .filter((q) => q.id === id && q.questionnaireJson)
-          .map((q) => q.questionnaireJson)
-      : null;
-    if (matchedQuestionnaire && matchedQuestionnaire.length) {
-      const { id, name, title } = matchedQuestionnaire[0];
-      return name || title || id;
-    }
-    return String(key).toUpperCase();
+    const matchedQuestionnaire =
+      summaryData[id] && summaryData[id].questionnaire
+        ? summaryData[id].questionnaire
+        : null;
+    const qo = new Questionnaire(matchedQuestionnaire, id);
+    return qo.shortName() ?? qo.displayName();
   };
   const hasList = () =>
     summaryData &&
@@ -64,13 +60,11 @@ export default function ScoringSummary(props) {
     });
   const getSortedResponses = (rdata) => {
     if (hasNoResponses(rdata)) return [];
-    return rdata.sort(
-      (a, b) => {
-        const aTime = new Date(a.date).getTime();
-        const bTime = new Date(b.date).getTime();
-        return bTime - aTime;
-      }
-    );
+    return rdata.sort((a, b) => {
+      const aTime = new Date(a.date).getTime();
+      const bTime = new Date(b.date).getTime();
+      return bTime - aTime;
+    });
   };
   const getResponsesByIndex = (rdata, index) => {
     const sortedResponses = getSortedResponses(rdata);
@@ -84,7 +78,7 @@ export default function ScoringSummary(props) {
 
   const getPrevResponses = (rdata) => {
     return getResponsesByIndex(rdata, 1);
-  }
+  };
 
   const getPrevScoreByInstrument = (rdata) => {
     const responses = getPrevResponses(rdata);
@@ -100,7 +94,9 @@ export default function ScoringSummary(props) {
   };
   const getDisplayIcon = (rdata) => {
     const currentResponses = getCurrentResponses(rdata);
-    const comparisonToAlert = currentResponses ? currentResponses.comparisonToAlert : ""; // display alert if score is lower/higher than previous
+    const comparisonToAlert = currentResponses
+      ? currentResponses.comparisonToAlert
+      : ""; // display alert if score is lower/higher than previous
     const currentScore = getCurrentScoreByInstrument(rdata);
     const prevScore = getPrevScoreByInstrument(rdata);
     const iconProps = {
@@ -108,8 +104,8 @@ export default function ScoringSummary(props) {
       sx: { verticalAlign: "middle" },
     };
     //console.log("current score ", currentScore, " prev score ", prevScore);
-    if (isNaN(prevScore) || isNaN(currentScore)) return "--";
-    if (!isNaN(prevScore)) {
+    if (!isNumber(prevScore) || !isNumber(currentScore)) return "--";
+    if (isNumber(prevScore)) {
       if (comparisonToAlert === "lower") {
         if (currentScore < prevScore)
           return <SouthIcon color="error" {...iconProps}></SouthIcon>;
@@ -124,7 +120,7 @@ export default function ScoringSummary(props) {
         return <HorizontalRuleIcon {...iconProps}></HorizontalRuleIcon>;
       }
     } else {
-      if (!isNaN(currentScore))
+      if (isNumber(currentScore))
         return (
           <HorizontalRuleIcon color="info" {...iconProps}></HorizontalRuleIcon>
         );
@@ -161,7 +157,7 @@ export default function ScoringSummary(props) {
     const mostRecentEntry = getMostRecentEntry(summaryData);
     if (!mostRecentEntry) return "--";
     if (!mostRecentEntry.date) return "--";
-    return mostRecentEntry.date;
+    return getLocaleDateStringFromDate(mostRecentEntry.date);
   };
 
   const displayNumAnswered = (summaryData) => {
@@ -205,20 +201,11 @@ export default function ScoringSummary(props) {
   const fixedCellStyle = {
     ...cellStyle,
     ...{
-      position: {
-        xs: "absolute",
-        sm: "inherit",
-      },
-      width: {
-        xs: theme.spacing(29.75),
-        sm: "auto",
-      },
-      minHeight: {
-        xs: "34px",
-        sm: "auto",
-      }, 
-      left: theme.spacing(1.75),
-      ...{whiteSpace: { xs: "nowrap", sm: "normal" }},
+      position: "sticky",
+      left: 0,
+      zIndex: 1,
+      backgroundColor: "#FFF",
+      ...{ whiteSpace: { xs: "nowrap", sm: "normal" } },
     },
   };
   const renderTableHeaderRow = () => (
@@ -232,14 +219,12 @@ export default function ScoringSummary(props) {
                 xs: theme.spacing(4),
                 sm: "auto",
               },
+              backgroundColor: bgColor,
             },
           }}
           {...defaultHeaderCellProps}
         ></TableCell>
-        <TableCell
-          sx={cellStyle}
-          {...defaultHeaderCellProps}
-        >
+        <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
           Last assessed
         </TableCell>
         <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
@@ -367,12 +352,11 @@ export default function ScoringSummary(props) {
         sx={{
           padding: {
             xs: 0,
-            sm: theme.spacing(1, 0.5),
+            sm: theme.spacing(0, 0.5),
           },
           paddingTop: 0,
-          marginBottom: 1,
           maxWidth: {
-            xs: "204px",
+            xs: "420px",
             sm: "100%",
           },
           position: {
@@ -380,7 +364,6 @@ export default function ScoringSummary(props) {
             sm: "relative",
           },
           marginLeft: {
-            xs: theme.spacing(29.5),
             sm: 0,
           },
           borderRadius: 0,

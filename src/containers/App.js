@@ -1,6 +1,6 @@
 import Dashboard from "../components/Dashboard";
 import TimeoutModal from "../components/TimeoutModal";
-import Base from "../layout/Base";
+import Base from "../layout";
 
 export default function App() {
   return (

@@ -9,6 +9,7 @@ include "InterventionLogic_Common" version '1.0.0' called LogicHelpers
 // -----------------------------------------------------------------------------
 // PARAMETERS
 // -----------------------------------------------------------------------------
+parameter QuestionnaireID default 'CIRG-GDS'
 parameter QuestionnaireName default 'gds'
 parameter QuestionnaireURL default 'http://www.cdc.gov/ncbddd/fasd/gds'
 parameter ScoringQuestionId default '/48545-8'
@@ -39,7 +40,7 @@ define scoringParams: {
 }
 
 define Questionnaires:
-  LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
+  LogicHelpers.GetMatchQuestionnaire(QuestionnaireID, QuestionnaireName, QuestionnaireURL)
 
 // Load Questionnaire
 define CurrentQuestionnaire:
@@ -51,7 +52,7 @@ define QuestionnaireItems:
 
 // Load Questionnaire responses
 define QuestionnaireResponses:
-  LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], CurrentQuestionnaire)
+  LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], QuestionnaireID, QuestionnaireName)
 
 define ResponsesSummary:
   (QuestionnaireResponses) I

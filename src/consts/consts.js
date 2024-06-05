@@ -10,3 +10,5 @@ export const DEFAULT_DRAWER_WIDTH = 280;
 export const MOBILE_DRAWER_WIDTH = 232;
 export const DEFAULT_ACCORDION_HEADER_HEIGHT = 64;
 export const DEFAULT_TOOLBAR_HEIGHT = 48;
+export const DEFAULT_OBSERVATION_CATEGORIES =
+  "social-history,vital-signs,imaging,laboratory,procedure,survey,exam,therapy,activity,smartdata";

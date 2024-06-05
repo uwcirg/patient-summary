@@ -7,10 +7,11 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Error from "./ErrorComponent";
 import QuestionnaireInfo from "./QuestionnaireInfo";
-import { getDisplayQTitle, getQuestionnaireName, hasData } from "../util/util";
+import { hasData } from "../util/util";
 import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts/consts";
 import Responses from "./Responses";
 import Chart from "./Chart";
+import Questionnaire from "../models/Questionnaire";
 
 export default function Summary(props) {
   const { questionnaireId, data } = props;
@@ -35,7 +36,6 @@ export default function Summary(props) {
     chartData: [],
     chartConfig: [],
   });
-  const [questionnaireTitle, setQuestionnaireTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [hasChart, setHasChart] = useState(false);
   const [error, setError] = useState("");
@@ -79,28 +79,32 @@ export default function Summary(props) {
       style={anchorElementStyle}
     ></div>
   );
-  const getQuestionnaireTitle = () => {
-    if (questionnaireTitle) return questionnaireTitle;
-    return getDisplayQTitle(questionnaireId);
+  const renderTitle = () => {
+    let questionnaireTitle = questionnaireId;
+    if (data) {
+      const qo = new Questionnaire(data.questionnaire, questionnaireId);
+      questionnaireTitle = qo.displayName();
+    }
+    return (
+      <Typography
+        variant="h6"
+        component="h3"
+        color="accent"
+        sx={{ marginBottom: 1 }}
+        className="questionnaire-title"
+      >
+        {questionnaireTitle}
+      </Typography>
+    );
   };
-  const renderTitle = () => (
-    <Typography
-      variant="h6"
-      component="h3"
-      color="accent"
-      sx={{ marginBottom: 2 }}
-      className="questionnaire-title"
-    >
-      {getQuestionnaireTitle()}
-    </Typography>
-  );
   const renderSummary = () =>
     shouldDisplayResponses() && (
       <Stack
         direction="column"
-        spacing={2}
+        spacing={1}
         alignItems="flex-start"
         className="response-summary"
+        flexWrap={"wrap"}
       >
         {hasChart && (
           <Chart
@@ -128,9 +132,8 @@ export default function Summary(props) {
     if (!loading) return;
     dispatch({ type: "update", payload: data });
     setHasChart(hasData(data ? data.chartData : null));
-    if (data) {
-      setQuestionnaireTitle(getQuestionnaireName(data.questionnaire));
-      if (data.error) setError(data.error);
+    if (data && data.error) {
+      setError(data.error);
     }
     setLoading(false);
   }, [data, loading]);
@@ -145,6 +148,8 @@ export default function Summary(props) {
         direction="column"
         sx={{
           paddingBottom: 4,
+          paddingLeft: (theme) => theme.spacing(2),
+          paddingRight: (theme) => theme.spacing(2),
         }}
       >
         <Stack direction="row" spacing={1} alignItems="flex-start">

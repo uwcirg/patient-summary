@@ -8,13 +8,15 @@ import { isNumber } from "../util/util";
 
 export default function Scoring(props) {
   const { score, justifyContent, alignItems, scoreParams } = props;
-  const scoreSeverity =
+  const getScoreSeverity = () =>
     scoreParams && scoreParams.scoreSeverity
       ? String(scoreParams.scoreSeverity).toLowerCase()
       : null;
-  const arrSeverityLevelToAlert = ["high", "moderate", "moderately high"];
-  const alertNote =
+  const getAlertNote = () =>
     scoreParams && scoreParams.alertNote ? scoreParams.alertNote : null;
+  const scoreSeverity = getScoreSeverity();
+  const arrSeverityLevelToAlert = ["high", "moderate", "moderately high"];
+  const alertNote = getAlertNote();
   const isHighAlert = scoreSeverity === "high";
   const isModerateAlert =
     scoreSeverity === "moderate" || scoreSeverity === "moderately high";

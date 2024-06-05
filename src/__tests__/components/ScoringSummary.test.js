@@ -4,7 +4,7 @@
 // learn more: https://github.com/testing-library/jest-dom
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
-import ScoringSummary from "../../components/ScoringSummary";
+import ScoringSummary from "../../components/sections/ScoringSummary";
 import summaryData from "../mockfiles/MockSummaryData.json";
 import summaryData2 from "../mockfiles/MockSummaryData2.json";
 

@@ -9,6 +9,7 @@ include "InterventionLogic_Common" version '1.0.0' called LogicHelpers
 // -----------------------------------------------------------------------------
 // PARAMETERS
 // -----------------------------------------------------------------------------
+parameter QuestionnaireID default ''
 parameter QuestionnaireName default ''
 parameter QuestionnaireURL default ''
 parameter ScoringQuestionId default ''
@@ -23,7 +24,7 @@ context Patient
 //------------------------------------------------------------------------------
 
 define Questionnaires:
-  LogicHelpers.GetMatchQuestionnaire(QuestionnaireName, QuestionnaireURL)
+  LogicHelpers.GetMatchQuestionnaire(QuestionnaireID, QuestionnaireName, QuestionnaireURL)
 
 // Load Questionnaire
 define CurrentQuestionnaire:
@@ -33,9 +34,9 @@ define QuestionnaireItems:
   CurrentQuestionnaire Q
   return Q.item
 
-// Load Questionnaire responses
+//Load Questionnaire responses
 define QuestionnaireResponses:
-  LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], CurrentQuestionnaire)
+  LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], QuestionnaireID, QuestionnaireName)
 
 define ResponsesSummary:
   (QuestionnaireResponses) I
@@ -43,8 +44,12 @@ define ResponsesSummary:
     id: I.id.value,
     date: LogicHelpers.DateTimeText(I.authored),
     responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
-    totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
-    totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
+    totalAnsweredItems: Length((I.item) O where PositionOf(O.linkId, ScoringQuestionId) = -1 or PositionOf(ScoringQuestionId, O.linkId) = -1),
+    totalItems: 
+      if QuestionnaireItems is not null then
+        Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId))
+      else
+        Length(I.item),
     authoredDate: I.authored.value,
     lastUpdated: I.meta.lastUpdated.value
   }

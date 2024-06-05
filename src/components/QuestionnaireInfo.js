@@ -9,12 +9,14 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import { IconButton } from "@mui/material";
 import HelpIcon from "@mui/icons-material/Help";
-import { getIntroTextFromQuestionnaire } from "../util/util";
+import Questionnaire from "../models/Questionnaire";
 
 export default function QuestionnaireInfo(props) {
   const { questionnaireJson } = props;
   const theme = useTheme();
-  const introText = getIntroTextFromQuestionnaire(questionnaireJson);
+  const qo = new Questionnaire(questionnaireJson);
+  const questionnaireTitle = qo.displayName();
+  const introText = qo.introText();
   const [open, setOpen] = useState(false);
 
   const handleDialogOpen = () => {
@@ -25,12 +27,6 @@ export default function QuestionnaireInfo(props) {
     setOpen(false);
   };
 
-  const getQuestionnaireTitle = () => {
-    return questionnaireJson.title
-      ? questionnaireJson.title
-      : questionnaireJson.name;
-  };
-
   if (!introText) return false;
   return (
     <>
@@ -39,7 +35,7 @@ export default function QuestionnaireInfo(props) {
         size="small"
         className="info-button print-hidden"
         aria-label="information link"
-        title={`click to learn more about ${getQuestionnaireTitle()}`}
+        title={`click to learn more about ${questionnaireTitle}`}
         edge="end"
       >
         <HelpIcon color="info"></HelpIcon>
@@ -53,7 +49,7 @@ export default function QuestionnaireInfo(props) {
             color: "#FFF",
           }}
         >
-          About {getQuestionnaireTitle()}
+          About {questionnaireTitle}
         </DialogTitle>
         <DialogContent>
           <DialogContentText

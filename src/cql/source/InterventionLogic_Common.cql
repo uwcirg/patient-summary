@@ -28,13 +28,18 @@ define function DateTimeText(d FHIR.dateTime):
   ToString(d.value)
 
 
-
-define function GetMatchQuestionnaire(QuestionnaireName String, QuestionnaireURL String):
+/*
+ * retrieve questionnaire matched by questionnaire ID, name or url
+ * @param QuestionnaireID 
+ * @param QuestionnaireName
+ * @param QuestionnaireURL
+ */
+define function GetMatchQuestionnaire(QuestionnaireID String, QuestionnaireName String, QuestionnaireURL String):
   ([Questionnaire] Q
-    where 
-    Q.url.value = QuestionnaireURL or 
+    where
+    Q.id = QuestionnaireID or
+    (Q.url.value = QuestionnaireURL) or 
     Lower(Q.name) = Lower(QuestionnaireName) or
-    PositionOf(Lower(QuestionnaireName), Lower(Q.id)) != -1 or
     PositionOf(Lower(QuestionnaireName), Lower(Q.name)) != -1 or
     PositionOf(Lower(Q.name), Lower(QuestionnaireName)) != -1
   )
@@ -44,13 +49,31 @@ define function GetMatchQuestionnaire(QuestionnaireName String, QuestionnaireURL
  * @param responses as FHIR.QuestionnaireResponse
  * @param questionnaire as FHIR.Questionnaire to match against
  */
-define function MatchedReponsesByQuestionnaire(responses List<FHIR.QuestionnaireResponse>, currentQuestionnaire FHIR.Questionnaire):
+// define function MatchedReponsesByQuestionnaire(responses List<FHIR.QuestionnaireResponse>, currentQuestionnaire FHIR.Questionnaire):
+//   ((responses) Q
+//     where 
+//     (
+//       (
+//         PositionOf(Lower(currentQuestionnaire.name), Lower(Q.questionnaire.value)) != -1 or
+//         PositionOf(Lower(currentQuestionnaire.id), Lower(Q.questionnaire.value)) != -1
+//       ) and 
+//       Q.status.value = 'completed')
+//       sort by authored desc, meta.lastUpdated desc
+//   )
+
+/*
+ * retrieve questionnaire responses matched by keyward for the questionnaire element
+ * @param responses as FHIR.QuestionnaireResponse
+ * @param questionnaireName as String to match against
+ * @param questionnaireID as String to match against
+ */
+define function MatchedReponsesByQuestionnaire(responses List<FHIR.QuestionnaireResponse>, QuestionnaireID String, QuestionnaireName String):
   ((responses) Q
     where 
     (
       (
-        PositionOf(Lower(currentQuestionnaire.name), Lower(Q.questionnaire.value)) != -1 or
-        PositionOf(Lower(currentQuestionnaire.id), Lower(Q.questionnaire.value)) != -1
+        PositionOf(Lower(QuestionnaireID), Lower(Q.questionnaire.value)) != -1 or
+        PositionOf(Lower(QuestionnaireName), Lower(Q.questionnaire.value)) != -1
       ) and 
       Q.status.value = 'completed')
       sort by authored desc, meta.lastUpdated desc
@@ -60,7 +83,7 @@ define function MatchedReponsesByQuestionnaire(responses List<FHIR.Questionnaire
 define function GetAnswerLinkIdsByQuestionnaire(currentQuestionnaire FHIR.Questionnaire, scoringQuestionId String):
   (currentQuestionnaire C) O
   let
-    responseItems: ((O.item) I where IndexOf(AnswerQuestionTypes, I.type.value) != -1 and I.linkId.value != scoringQuestionId)
+    responseItems: ((O.item) I where  I is not null and I.type is not null and I.linkId is not null and IndexOf(AnswerQuestionTypes, I.type.value) != -1 and I.linkId.value != scoringQuestionId)
     return responseItems.linkId.value
 
 /*
@@ -68,12 +91,23 @@ define function GetAnswerLinkIdsByQuestionnaire(currentQuestionnaire FHIR.Questi
  * @param linkId as String
  * @param responses as a list of FHIR.QuestionnaireResponse.Item
  */
-define function GetResponseAnswerByLinkId(linkId String, responses List<FHIR.QuestionnaireResponse.Item>):
-  (responses r where r.linkId.value = linkId) I
+define function GetResponseValueByLinkId(linkId String, responses List<FHIR.QuestionnaireResponse.Item>):
+  (responses r where PositionOf(r.linkId.value, linkId) != -1 or PositionOf(linkId, r.linkId.value) != -1) I
+  //let value: I.answer[0].value.value
+  let value: I.answer[0].value
   return case
       //answer in FHIR coding format 
-      when I.answer[0].value is FHIR.Coding then I.answer[0].value.display.value
-      else I.answer[0].value.value
+      when value is FHIR.Coding then value.display.value
+      else
+         case
+          when value.value is String then value.value
+          when value.value is Integer then ToString(value.value as Integer)
+          when value.value is Decimal then ToString(value.value as Decimal)
+          when value.value is Date then ToString(value.value as Date)
+          when value.value is DateTime then ToString(value.value as DateTime)
+          when value.value is Boolean then ToString(value.value as Boolean)
+          else value.value
+        end
     end
 
 /*
@@ -81,8 +115,8 @@ define function GetResponseAnswerByLinkId(linkId String, responses List<FHIR.Que
  * @param linkId as String
  * @param responses as a list of FHIR.QuestionnaireResponse.Item
  */
-define function GetResponseValueByLinkId(linkId String, responses List<FHIR.QuestionnaireResponse.Item>):
-  (responses r where r.linkId.value = linkId) I
+define function GetAnswerValueByLinkId(linkId String, responses List<FHIR.QuestionnaireResponse.Item>):
+  (responses r where PositionOf(r.linkId.value, linkId) != -1 or PositionOf(linkId, r.linkId.value) != -1) I
   return I.answer[0].value
 
 /*
@@ -94,16 +128,19 @@ define function getAnswerOptionExtensionValue(extList List<FHIR.Extension>):
   (extList e where e.url ~ 'http://hl7.org/fhir/StructureDefinition/ordinalValue')[0].value.value as Integer
 
 /*
- * retrieve the numeric value for the answer based on value code
- * @param questionnaire as FHIR.Questionnaire where code in question is queried
+ * retrieve the numeric value for the answer based on code value in extension element
+ * @param questionnaire as FHIR.Questionnaire
  * @param code as String
  * @return the value as Integer
  */
-define function getAnswerValueByCode(questionnaire FHIR.Questionnaire, code String):
-  (singleton from ((questionnaire.item.answerOption) Q where Q.value.code = code)) a
+define function getAnswerValueByExtension(questionnaire FHIR.Questionnaire, code String):
+  (First((questionnaire.item.answerOption) Q where Q.value.code = code)) a
   let 
     extensionItem: a.extension
-  return if extensionItem is not null then getAnswerOptionExtensionValue(extensionItem) else (0 as Integer)
+  return if extensionItem is not null 
+         then 
+            getAnswerOptionExtensionValue(extensionItem)
+         else null
 
 /*
  * retrieve the numeric value for the score for an questionnaire response item
@@ -113,11 +150,29 @@ define function getAnswerValueByCode(questionnaire FHIR.Questionnaire, code Stri
  * @return score in Integer
  */
 define function getScoringByResponseItem(questionnaire FHIR.Questionnaire, responses List<FHIR.QuestionnaireResponse.Item>, linkId String):
-  (singleton from (((responses) o where o.linkId.value = linkId) I
-  return 
-    if I is null then ({null as Integer})
-    else
-      if I.answer[0].value.code is not null then getAnswerValueByCode(questionnaire, I.answer[0].value.code.value) else 0 as Integer))
+   (First((responses) o where PositionOf(linkId, o.linkId.value) != -1 or PositionOf(o.linkId.value, linkId) != -1)) I
+      let answerCode: if I.answer[0].value is Coding then I.answer[0].value.code.value else null
+      return 
+        if answerCode is null then I.answer[0].value.value as Integer
+        else
+          case 
+            when questionnaire is not null and questionnaire.item is not null then getAnswerValueByExtension(questionnaire, answerCode) 
+            else
+                case
+                  when answerCode as String  = 'LA6568-5' then 0
+                  when answerCode as String = 'LA6569-3' then 1
+                  when answerCode as String = 'LA6570-1' then 2
+                  when answerCode as String = 'LA6571-9' then 3
+                  else null
+                end
+          end
+    
+//function for debugging answer code
+define function getAnswerCodeForResponse(responses List<FHIR.QuestionnaireResponse.Item>, linkId String):
+    (First((responses) o where PositionOf(o.linkId.value, linkId) != -1 or PositionOf(linkId, o.linkId.value) != -1)) I
+      let answerCode: I.answer[0].value.code.value
+      return answerCode
+    
 
 /* 
  * retrieve responses in a list of Tuple of formatted question and answer
@@ -126,18 +181,43 @@ define function getScoringByResponseItem(questionnaire FHIR.Questionnaire, respo
  * @param scoringQuestionId as String
  */
 define function FormattedResponses(questionnaireItems List<FHIR.Questionnaire.Item>, responses List<FHIR.QuestionnaireResponse.Item>, scoringQuestionId String):
-  ((questionnaireItems) O where O.linkId.value != 'introduction' and O.linkId.value != scoringQuestionId) Q
-    let
-      answerText: GetResponseAnswerByLinkId(Q.linkId.value, responses),
-      answerValue: GetResponseValueByLinkId(Q.linkId.value, responses)
+  if questionnaireItems is not null then
+    ((questionnaireItems) O where O.linkId.value != 'introduction' and (PositionOf(O.linkId.value, scoringQuestionId) = -1 or PositionOf(scoringQuestionId, O.linkId.value) = -1)) Q
+      let
+        answerValue: GetResponseValueByLinkId(Q.linkId.value, responses)
 
-    return {
-      id: Q.linkId.value,
-      answer: if answerText is not null then First(answerText) else null,
-      value: if answerValue is not null then First(answerValue) else null,
-      question: if Q.linkId.value = scoringQuestionId then '<b>' + Q.text.value + '</b>' else Q.text.value,
-      text: Q.text.value
-    }
+      return {
+        id: Q.linkId.value,
+        answer: if answerValue is not null then First(answerValue) else null,
+        question: if Q.linkId.value = scoringQuestionId then '<b>' + Q.text.value + '</b>' else Q.text.value,
+        text: Q.text.value
+      }
+  else
+    ResponsesOnly(responses)
+//return responses from QuestionnaireResponse
+// @param responsesItems of type FHIR.QuestionnaireResponse.Item
+define function ResponsesOnly(responseItems List<FHIR.QuestionnaireResponse.Item>):
+  (responseItems) I
+  let
+    value: if I.answer[0].value is Coding then null else I.answer[0].value.value
+  return {
+      id: I.linkId.value,
+      answer: 
+        case
+          when I.answer[0].value is Coding then 
+            if I.answer[0].value.display.value is not null then I.answer[0].value.display.value else null
+          when value is String then value
+          when value is Integer then ToString(value as Integer)
+          when value is Decimal then ToString(value as Decimal)
+          when value is Date then ToString(value as Date)
+          when value is DateTime then ToString(value as DateTime)
+          when value is Boolean then ToString(value as Boolean)
+          else value
+        end,
+    //  value: null,
+      question: I.text.value,
+      text: I.text.value
+  }
 
 
 define function ResponsesSummary (
@@ -152,7 +232,7 @@ define function ResponsesSummary (
     currentQ: currentQuestionnaire,
     responses: FormattedResponses(currentQuestionnaire.item, I.item, scoringQuestionId),
     items: I.item,
-    totalAnsweredItems: Length((I.item) O where O.linkId.value != scoringQuestionId),
+    totalAnsweredItems: Length((I.item) O where PositionOf(O.linkId.value, scoringQuestionId) != -1 or PositionOf(scoringQuestionId, O.linkId.value) != -1),
     totalItems: Length(GetAnswerLinkIdsByQuestionnaire(currentQuestionnaire, scoringQuestionId)),
     authoredDate: I.authored,
     lastUpdated: I.meta.lastUpdated.value

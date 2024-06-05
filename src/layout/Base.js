@@ -1,53 +1,37 @@
 import PropTypes from "prop-types";
-import { useLayoutEffect} from "react";
-import { ErrorBoundary } from "react-error-boundary";
-import { QueryClient, QueryClientProvider } from "react-query";
-import CssBaseline from "@mui/material/CssBaseline";
-import { ThemeProvider } from "@mui/material/styles";
-import Content from "./Content";
-import Alert from "@mui/material/Alert";
-import AlertTitle from "@mui/material/AlertTitle";
+import { useContext } from "react";
+import Box from "@mui/material/Box";
+import Toolbar from "@mui/material/Toolbar";
+import Header from "./Header";
+import SideNav from "./SideNav";
 import {
-  injectFaviconByProject,
-  fetchEnvData,
+  getEnvDashboardURL,
+  getSectionsToShow,
+  shouldShowPatientInfo,
+  shouldShowNav,
 } from "../util/util";
-import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
-import FhirClientProvider from "../context/FhirClientProvider";
-import QuestionnaireListProvider from "../context/QuestionnaireListProvider";
+import { FhirClientContext } from "../context/FhirClientContext";
 
-function ErrorFallBack({ error }) {
+export default function Content({ children }) {
+  const sections = getSectionsToShow();
+  const { client } = useContext(FhirClientContext);
+  const showPatientInfo = shouldShowPatientInfo(client);
   return (
-    <Alert severity="error">
-      <AlertTitle>Something went wrong:</AlertTitle>
-      <pre>{error.message}</pre>
-      <p>Refresh page and try again</p>
-    </Alert>
+    client && (
+      <Box sx={{ display: "flex" }}>
+        <Header returnURL={getEnvDashboardURL()} inEHR={!showPatientInfo} />
+        {shouldShowNav() && <SideNav sections={sections}></SideNav>}
+        <Box component="main" sx={{ flexGrow: 1 }}>
+          <Toolbar variant="dense" />
+          {children}
+          {/* add other components as needed */}
+        </Box>
+      </Box>
+    )
   );
 }
-const queryClient = new QueryClient();
 
-export default function Base({ children }) {
-  fetchEnvData();
-  const theme = getTheme();
-  useLayoutEffect(() => {
-    injectFaviconByProject();
-  }, []);
-  return (
-    <ErrorBoundary FallbackComponent={ErrorFallBack}>
-      <ThemeProvider theme={theme}>
-        <QueryClientProvider client={queryClient}>
-          <FhirClientProvider>
-            <CssBaseline />
-            <QuestionnaireListProvider>
-                <Content>{children}</Content>
-            </QuestionnaireListProvider>
-          </FhirClientProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
-  );
-}
-Base.propTypes = {
+Content.propTypes = {
   children: PropTypes.oneOfType([PropTypes.element, PropTypes.array]),
 };

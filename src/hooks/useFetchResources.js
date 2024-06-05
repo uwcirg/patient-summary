@@ -2,23 +2,26 @@ import { useContext, useReducer, useState, useRef } from "react";
 import { useQuery } from "react-query";
 import { FhirClientContext } from "../context/FhirClientContext";
 import { QuestionnaireListContext } from "../context/QuestionnaireListContext";
+import QuestionnaireConfig from "../config/questionnaire_config";
+import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
+import { initialzieCqlWorker } from "cql-worker";
 import {
-  gatherSummaryDataByQuestionnaireId,
+  getChartConfig,
+  getElmDependencies,
+  getInterventionLogicLib,
+  getResourcesByResourceType,
   getFhirResourcesFromQueryResult,
   getFHIRResourcesToLoad,
   getFHIRResourcePaths,
+  isNumber,
 } from "../util/util";
 import qConfig from "../config/questionnaire_config";
 
 export default function useFetchResources() {
   const { client, patient } = useContext(FhirClientContext);
-  let { questionnaireList, questionnaireResponses } = useContext(
-    QuestionnaireListContext
-  );
+  let { questionnaireList, exactMatch } = useContext(QuestionnaireListContext);
   const questionnareKeys =
-    questionnaireList && questionnaireList.length
-      ? questionnaireList.filter((o) => o.id).map((o) => o.id)
-      : [];
+    questionnaireList && questionnaireList.length ? questionnaireList : [];
   const [summaryData, setSummaryData] = useState({
     data: questionnareKeys.map((qid) => {
       return { [qid]: null };
@@ -29,14 +32,27 @@ export default function useFetchResources() {
     resourceType: "Bundle",
     id: "resource-bundle",
     type: "collection",
-    entry: [{ resource: patient }, ...questionnaireResponses],
+    entry: [{ resource: patient }],
     loadComplete: false,
   });
   const [error, setError] = useState(null);
 
+  const getResourcesToLoad = () => {
+    let resources = getFHIRResourcesToLoad();
+    if (!questionnaireList || !questionnaireList.length) {
+      const qIndex = resources
+        .map((resource) => String(resource).toLowerCase())
+        .indexOf("questionnaire");
+      if (qIndex !== -1) resources.splice(qIndex, 1);
+    }
+    return resources;
+  };
+
+  const resourcesToLoad = getResourcesToLoad();
+
   // all the resources that will be loaded
   const initialResourcesToLoad = [
-    ...getFHIRResourcesToLoad().map((resource) => ({
+    ...resourcesToLoad.map((resource) => ({
       id: resource,
       complete: false,
       error: false,
@@ -45,8 +61,8 @@ export default function useFetchResources() {
       id: qid,
       title:
         qConfig[qid] && qConfig[qid].shortTitle
-          ? `Questionnaire ${qConfig[qid].shortTitle}`
-          : `Questionnaire ${qid}`,
+          ? `Data for Questionnaire ${qConfig[qid].shortTitle}`
+          : `Data for Questionnaire ${qid}`,
       complete: false,
       error: false,
     })),
@@ -88,6 +104,197 @@ export default function useFetchResources() {
     dispatch({ type: "ERROR", id: resource });
   };
 
+  const gatherSummaryDataByQuestionnaireId = (
+    questionnaireId,
+    exactMatch,
+    patientBundle
+  ) => {
+    return new Promise((resolve, reject) => {
+      // search for matching questionnaire
+      const searchMatchingQuestionnaireResources = async () => {
+        const storageKey = `questionnaire_${questionnaireId}`;
+        const storageQuestionnaire = sessionStorage.getItem(storageKey);
+        if (storageQuestionnaire) return JSON.parse(storageQuestionnaire);
+        const questionnaireResources = getResourcesByResourceType(
+          patientBundle,
+          "Questionnaire"
+        );
+        console.log("patient Bundle ", patientBundle);
+        console.log("questionnaireResources ", questionnaireResources);
+        const returnResult = questionnaireResources
+          ? questionnaireResources.filter((resource) => {
+              if (!exactMatch) {
+                const arrMatches = [String(resource.name).toLowerCase()];
+                const toMatch = String(questionnaireId).toLowerCase();
+                return (
+                  String(resource.id).toLowerCase() === toMatch ||
+                  arrMatches.find((key) => key.includes(toMatch))
+                );
+              }
+              return resource.id === questionnaireId;
+            })
+          : null;
+        if (returnResult && returnResult.length) {
+          sessionStorage.setItem(storageKey, JSON.stringify(returnResult[0]));
+          return returnResult[0];
+        }
+        return null;
+      };
+      const gatherSummaryData = async (questionnaireJson) => {
+        // Define a web worker for evaluating CQL expressions
+        const cqlWorker = new Worker();
+        // Initialize the cql-worker
+        const [setupExecution, sendPatientBundle, evaluateExpression] =
+          initialzieCqlWorker(cqlWorker);
+        const questionaireKey = String(questionnaireId).toLowerCase();
+        const matchedKeys = Object.keys(QuestionnaireConfig).filter((id) => {
+          const match = String(id).toLowerCase();
+          return (
+            String(questionnaireJson.id).toLowerCase() === match ||
+            String(questionnaireJson.name).toLowerCase().includes(match)
+          );
+        });
+        const targetQId = matchedKeys.length ? matchedKeys[0] : questionaireKey;
+        // console.log("matched item from qConfig ", matchedKeys);
+        // console.log("questionnaireJSON ", questionnaireJson);
+        // console.log("matched target  ", targetQId);
+        const chartConfig = getChartConfig(targetQId);
+        const questionnaireConfig = QuestionnaireConfig[targetQId] || {};
+
+        /* get CQL expressions */
+        const [elmJson, valueSetJson] = await getInterventionLogicLib(
+          questionnaireConfig.customCQL ? targetQId : ""
+        ).catch((e) => {
+          console.log("Error retrieving ELM lib son for " + questionnaireId, e);
+          throw new Error(
+            "Error retrieving ELM lib son for " + questionnaireId
+          );
+        });
+        setupExecution(
+          elmJson,
+          valueSetJson,
+          {
+            QuestionnaireID: questionnaireJson.id,
+            QuestionnaireName: questionnaireJson.name,
+          },
+          getElmDependencies()
+        );
+
+        // Send patient info to CQL worker to process
+        sendPatientBundle(patientBundle);
+
+        //debug
+        // const cqlResponses = await evaluateExpression("QuestionnaireResponses");
+        // console.log("responses from CQL? ", cqlResponses);
+        // const cqlQuestionnaireName = await evaluateExpression(
+        //   "CurrentQuestionnaireName"
+        // ).catch((e) => {
+        //   console.log("CurrentQuestionnaireName expression error ", e);
+        // });
+        // console.log("responses from CQL? ", cqlQuestionnaireName);
+        // const cqlQuestionnairID = await evaluateExpression(
+        //   "CurrentQuestionnaireID"
+        // ).catch((e) => {
+        //   console.log("CurrentQuestionnaireID expression error ", e);
+        // });
+        // console.log("responses from CQL? ", cqlQuestionnairID);
+
+        // get formatted questionnaire responses
+        let cqlData = null;
+        try {
+          cqlData = await evaluateExpression("ResponsesSummary").catch((e) => {
+            console.log(e);
+            throw new Error(
+              "CQL evaluation expression, ResponsesSummary, error "
+            );
+          });
+        } catch (e) {
+          console.log("Error executing CQL expression: ", e);
+        }
+        const scoringData =
+          cqlData && Array.isArray(cqlData) && cqlData.length
+            ? cqlData.filter((item) => {
+                return (
+                  item && item.responses && isNumber(item.score) && item.date
+                );
+              })
+            : null;
+        const chartData =
+          scoringData && scoringData.length
+            ? scoringData.map((item) => ({
+                ...item,
+                ...(item.scoringParams ? item.scoringParams : {}),
+                date: item.date,
+                total: item.score,
+              }))
+            : null;
+        const scoringParams =
+          cqlData && cqlData.length ? cqlData[0].scoringParams : {};
+
+        const returnResult = {
+          chartConfig: { ...chartConfig, ...scoringParams },
+          chartData: chartData,
+          responses: cqlData,
+          questionnaire: questionnaireJson,
+        };
+        console.log(
+          "return result from CQL execution for " + questionnaireId,
+          returnResult
+        );
+        cqlWorker.terminate();
+        return returnResult;
+      };
+
+      // find matching questionnaire & questionnaire response(s)
+      searchMatchingQuestionnaireResources()
+        .then((result) => {
+          if (!result) {
+            reject("No questionnaire results found.");
+            return;
+          }
+          let bundles = [];
+          if (Array.isArray(result)) {
+            result.forEach((item) => {
+              bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];
+            });
+          } else
+            bundles = [...bundles, ...getFhirResourcesFromQueryResult(result)];
+          const arrQuestionnaires = bundles.filter(
+            (entry) =>
+              entry.resource &&
+              String(entry.resource.resourceType).toLowerCase() ===
+                "questionnaire"
+          );
+          const questionnaireJson = arrQuestionnaires.length
+            ? arrQuestionnaires[0].resource
+            : null;
+          if (!questionnaireJson) {
+            reject("No matching questionnaire found");
+            return;
+          }
+          patientBundle = {
+            ...patientBundle,
+            entry: [...patientBundle, ...bundles],
+            questionnaire: questionnaireJson,
+          };
+          gatherSummaryData(questionnaireJson)
+            .then((data) => {
+              resolve(data);
+            })
+            .catch((e) => {
+              reject(
+                "Error occurred gathering summary data.  See console for detail."
+              );
+              console.log("Error occurred gathering summary data: ", e);
+            });
+        })
+        .catch((e) => {
+          reject("Error occurred retrieving matching resources");
+          console.log("Error occurred retrieving matching resources: ", e);
+        });
+    }); // end promise
+  };
+
   useQuery(
     "fhirResources",
     async () => {
@@ -103,22 +310,22 @@ export default function useFetchResources() {
           entry: [...patientBundle.current.entry, ...fhirData],
           loadComplete: true,
         };
-        if (!questionnaireList.length) {
-          onErrorCallback();
-          return;
-        }
+        // if (!questionnaireList.length) {
+        //   onErrorCallback();
+        //   return;
+        // }
         if (summaryData.loadComplete) return;
         console.log("patient bundle ", patientBundle.current);
         console.log("fhirData", fhirData);
-        const requests = questionnaireList.map((o) =>
+        console.log("questionnaire list to load ", questionnaireList);
+        console.log("exact match ", exactMatch);
+        const requests = questionnaireList.map((qid) =>
           (async () => {
             let error = "";
-            const qid = o.id;
             let results = await gatherSummaryDataByQuestionnaireId(
-              client,
-              patientBundle.current,
-              o.id,
-              o.exactMatch
+              qid,
+              exactMatch,
+              patientBundle.current.entry
             ).catch((e) => (error = e));
             if (error) handleResourceError(qid);
             else handleResourceComplete(qid);
@@ -183,10 +390,15 @@ export default function useFetchResources() {
   const getFhirResources = async () => {
     if (!client || !patient || !patient.id)
       throw new Error("Client or patient missing.");
-    const resources = getFHIRResourcePaths(patient.id);
+    const resources = getFHIRResourcePaths(patient.id, resourcesToLoad, {
+      questionnaireList: questionnaireList,
+      exactMatch: exactMatch,
+    });
     const requests = resources.map((resource) =>
       client
-        .request(resource.resourcePath)
+        .request(resource.resourcePath, {
+          "Cache-Control": "no-cache, no-store, max-age=0",
+        })
         .then((result) => {
           handleResourceComplete(resource.resourceType);
           return result;
@@ -201,7 +413,7 @@ export default function useFetchResources() {
       return [];
     }
     let bundle = [];
-   // bundle.push({ resource: patient });
+    // bundle.push({ resource: patient });
     return Promise.allSettled(requests).then(
       (results) => {
         results.forEach((item) => {
@@ -226,7 +438,7 @@ export default function useFetchResources() {
     toBeLoadedResources: toBeLoadedResources,
     patientBundle: patientBundle.current.entry,
     summaryData: summaryData,
-    questionnareKeys: questionnaireList.map((q) => q.id),
+    questionnareKeys: questionnaireList,
     questionnaireList: questionnaireList,
   };
 }

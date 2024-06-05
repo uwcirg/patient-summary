@@ -4,9 +4,9 @@ import { useTheme } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
 import MaterialTable from "@material-table/core";
 import TableContainer from "@mui/material/TableContainer";
-import Condition from "../../models/Condition";
+import Observation from "../../models/Observation";
 
-export default function MedicalHistory(props) {
+export default function Observations(props) {
   const theme = useTheme();
   const bgColor =
     theme &&
@@ -18,22 +18,21 @@ export default function MedicalHistory(props) {
   const { data } = props;
   const getData = (data) => {
     if (!data) return null;
-    const goodData = Condition.getGoodData(data);
+    const goodData = Observation.getGoodData(data);
     return goodData
       .map((item, index) => {
+        const o = new Observation(item);
         item.id = item.id + "_" + index;
-        const o = new Condition(item);
-        item.condition = o.displayText || "--";
-        item.onsetDateTime = o.onsetDateTimeDisplayText;
-        item.recordedDate = o.recordedDateTimeDisplayText;
-        item.status = o.status || "--";
+        item.category = o.category || "--";
+        item.text = o.displayText || "--";
+        item.date = o.dateText;
+        item.provider = o.providerText || "--";
+        item.value = o.valueText || "--";
+        item.status = o.status || "--"
         return item;
       })
       .sort((a, b) => {
-        return (
-          new Date(b.onsetDateTime).getTime() -
-          new Date(a.onsetDateTime).getTime()
-        );
+        return new Date(b.issued).getTime() - new Date(a.issued).getTime();
       });
   };
   const results = getData(data);
@@ -44,27 +43,35 @@ export default function MedicalHistory(props) {
       hidden: true,
     },
     {
-      title: "Condition",
-      field: "condition",
+      title: "Type",
+      field: "text",
     },
     {
-      title: "Onset Date",
-      field: "onsetDateTime",
+      title: "Result",
+      field: "value",
     },
     {
-      title: "Recorded Date",
-      field: "recordedDate",
+      title: "Issued Date",
+      field: "date",
+    },
+    {
+      title: "Category",
+      field: "category",
     },
     {
       title: "Status",
       field: "status",
       render: (rowData) =>
-        rowData.status === "confirmed" ? (
+        rowData.status === "final" ? (
           <span className="text-success">{rowData.status}</span>
         ) : (
-          <span className="text-error">{rowData.status}</span>
+          <span className="text-warning">{rowData.status}</span>
         ),
-    },
+    }
+    // {
+    //   title: "Provider",
+    //   field: "provider",
+    // },
   ];
   const renderPrintView = (data) => {
     const displayColumns = columns.filter((column) => !column.hidden);
@@ -94,7 +101,7 @@ export default function MedicalHistory(props) {
   if (!results || !results.length)
     return (
       <Alert severity="warning" className="condition-no-data">
-        No recorded condition
+        No recorded observation
       </Alert>
     );
   return (
@@ -127,6 +134,6 @@ export default function MedicalHistory(props) {
   );
 }
 
-MedicalHistory.propTypes = {
+Observations.propTypes = {
   data: PropTypes.array,
 };

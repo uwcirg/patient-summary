@@ -35,6 +35,14 @@
       },
       "parameters" : {
          "def" : [ {
+            "name" : "QuestionnaireID",
+            "accessLevel" : "Public",
+            "default" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "",
+               "type" : "Literal"
+            }
+         }, {
             "name" : "QuestionnaireName",
             "accessLevel" : "Public",
             "default" : {
@@ -86,6 +94,9 @@
                "libraryName" : "LogicHelpers",
                "type" : "FunctionRef",
                "operand" : [ {
+                  "name" : "QuestionnaireID",
+                  "type" : "ParameterRef"
+               }, {
                   "name" : "QuestionnaireName",
                   "type" : "ParameterRef"
                }, {
@@ -139,8 +150,11 @@
                   "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
                   "type" : "Retrieve"
                }, {
-                  "name" : "CurrentQuestionnaire",
-                  "type" : "ExpressionRef"
+                  "name" : "QuestionnaireID",
+                  "type" : "ParameterRef"
+               }, {
+                  "name" : "QuestionnaireName",
+                  "type" : "ParameterRef"
                } ]
             }
          }, {
@@ -217,48 +231,111 @@
                               } ],
                               "relationship" : [ ],
                               "where" : {
-                                 "type" : "Not",
-                                 "operand" : {
+                                 "type" : "Or",
+                                 "operand" : [ {
                                     "type" : "Equal",
                                     "operand" : [ {
-                                       "path" : "value",
-                                       "type" : "Property",
-                                       "source" : {
-                                          "path" : "linkId",
-                                          "scope" : "O",
-                                          "type" : "Property"
+                                       "type" : "PositionOf",
+                                       "pattern" : {
+                                          "name" : "ToString",
+                                          "libraryName" : "FHIRHelpers",
+                                          "type" : "FunctionRef",
+                                          "operand" : [ {
+                                             "path" : "linkId",
+                                             "scope" : "O",
+                                             "type" : "Property"
+                                          } ]
+                                       },
+                                       "string" : {
+                                          "name" : "ScoringQuestionId",
+                                          "type" : "ParameterRef"
                                        }
                                     }, {
-                                       "name" : "ScoringQuestionId",
-                                       "type" : "ParameterRef"
+                                       "type" : "Negate",
+                                       "operand" : {
+                                          "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                          "value" : "1",
+                                          "type" : "Literal"
+                                       }
                                     } ]
-                                 }
+                                 }, {
+                                    "type" : "Equal",
+                                    "operand" : [ {
+                                       "type" : "PositionOf",
+                                       "pattern" : {
+                                          "name" : "ScoringQuestionId",
+                                          "type" : "ParameterRef"
+                                       },
+                                       "string" : {
+                                          "name" : "ToString",
+                                          "libraryName" : "FHIRHelpers",
+                                          "type" : "FunctionRef",
+                                          "operand" : [ {
+                                             "path" : "linkId",
+                                             "scope" : "O",
+                                             "type" : "Property"
+                                          } ]
+                                       }
+                                    }, {
+                                       "type" : "Negate",
+                                       "operand" : {
+                                          "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                                          "value" : "1",
+                                          "type" : "Literal"
+                                       }
+                                    } ]
+                                 } ]
                               }
                            }
                         }
                      }, {
                         "name" : "totalItems",
                         "value" : {
-                           "type" : "Length",
-                           "operand" : {
-                              "name" : "GetAnswerLinkIdsByQuestionnaire",
-                              "libraryName" : "LogicHelpers",
-                              "type" : "FunctionRef",
-                              "operand" : [ {
-                                 "name" : "CurrentQuestionnaire",
-                                 "type" : "ExpressionRef"
-                              }, {
-                                 "name" : "ScoringQuestionId",
-                                 "type" : "ParameterRef"
-                              } ]
+                           "type" : "If",
+                           "condition" : {
+                              "type" : "Not",
+                              "operand" : {
+                                 "type" : "IsNull",
+                                 "operand" : {
+                                    "name" : "QuestionnaireItems",
+                                    "type" : "ExpressionRef"
+                                 }
+                              }
+                           },
+                           "then" : {
+                              "type" : "Length",
+                              "operand" : {
+                                 "name" : "GetAnswerLinkIdsByQuestionnaire",
+                                 "libraryName" : "LogicHelpers",
+                                 "type" : "FunctionRef",
+                                 "operand" : [ {
+                                    "name" : "CurrentQuestionnaire",
+                                    "type" : "ExpressionRef"
+                                 }, {
+                                    "name" : "ScoringQuestionId",
+                                    "type" : "ParameterRef"
+                                 } ]
+                              }
+                           },
+                           "else" : {
+                              "type" : "Length",
+                              "operand" : {
+                                 "path" : "item",
+                                 "scope" : "I",
+                                 "type" : "Property"
+                              }
                            }
                         }
                      }, {
                         "name" : "authoredDate",
                         "value" : {
-                           "path" : "authored",
-                           "scope" : "I",
-                           "type" : "Property"
+                           "path" : "value",
+                           "type" : "Property",
+                           "source" : {
+                              "path" : "authored",
+                              "scope" : "I",
+                              "type" : "Property"
+                           }
                         }
                      }, {
                         "name" : "lastUpdated",

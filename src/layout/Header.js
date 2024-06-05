@@ -27,7 +27,7 @@ import {
   imageOK,
   scrollToElement,
 } from "../util/util";
-import PatientInfo from "./PatientInfo";
+import PatientInfo from "../components/PatientInfo";
 import { FhirClientContext } from "../context/FhirClientContext";
 import { Divider } from "@mui/material";
 
@@ -318,7 +318,7 @@ export default function Header(props) {
             spacing={{
               xs: 1,
               sm: 1,
-              md: 1.5,
+              md: 1.25,
             }}
             alignItems="center"
             sx={{ width: "100%" }}

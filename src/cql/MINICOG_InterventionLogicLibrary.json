@@ -35,6 +35,14 @@
       },
       "parameters" : {
          "def" : [ {
+            "name" : "QuestionnaireID",
+            "accessLevel" : "Public",
+            "default" : {
+               "valueType" : "{urn:hl7-org:elm-types:r1}String",
+               "value" : "CIRG-MINICOG",
+               "type" : "Literal"
+            }
+         }, {
             "name" : "QuestionnaireName",
             "accessLevel" : "Public",
             "default" : {
@@ -120,6 +128,9 @@
                "libraryName" : "LogicHelpers",
                "type" : "FunctionRef",
                "operand" : [ {
+                  "name" : "QuestionnaireID",
+                  "type" : "ParameterRef"
+               }, {
                   "name" : "QuestionnaireName",
                   "type" : "ParameterRef"
                }, {
@@ -173,8 +184,11 @@
                   "templateId" : "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
                   "type" : "Retrieve"
                }, {
-                  "name" : "CurrentQuestionnaire",
-                  "type" : "ExpressionRef"
+                  "name" : "QuestionnaireID",
+                  "type" : "ParameterRef"
+               }, {
+                  "name" : "QuestionnaireName",
+                  "type" : "ParameterRef"
                } ]
             }
          }, {
@@ -408,42 +422,24 @@
                   "expression" : {
                      "type" : "Coalesce",
                      "operand" : [ {
-                        "asType" : "{urn:hl7-org:elm-types:r1}Integer",
-                        "type" : "As",
-                        "operand" : {
-                           "type" : "First",
-                           "source" : {
-                              "type" : "Query",
-                              "source" : [ {
-                                 "alias" : "I",
-                                 "expression" : {
-                                    "name" : "responses",
-                                    "type" : "QueryLetRef"
-                                 }
-                              } ],
-                              "relationship" : [ ],
-                              "where" : {
-                                 "type" : "Equal",
-                                 "operand" : [ {
-                                    "path" : "id",
-                                    "scope" : "I",
-                                    "type" : "Property"
-                                 }, {
-                                    "name" : "question1Id",
-                                    "type" : "ExpressionRef"
-                                 } ]
-                              },
-                              "return" : {
-                                 "expression" : {
-                                    "path" : "value",
-                                    "type" : "Property",
-                                    "source" : {
-                                       "path" : "value",
-                                       "scope" : "I",
-                                       "type" : "Property"
-                                    }
-                                 }
-                              }
+                        "type" : "First",
+                        "source" : {
+                           "type" : "ToList",
+                           "operand" : {
+                              "name" : "getScoringByResponseItem",
+                              "libraryName" : "LogicHelpers",
+                              "type" : "FunctionRef",
+                              "operand" : [ {
+                                 "name" : "CurrentQuestionnaire",
+                                 "type" : "ExpressionRef"
+                              }, {
+                                 "path" : "item",
+                                 "scope" : "I",
+                                 "type" : "Property"
+                              }, {
+                                 "name" : "question1Id",
+                                 "type" : "ExpressionRef"
+                              } ]
                            }
                         }
                      }, {
@@ -457,42 +453,24 @@
                   "expression" : {
                      "type" : "Coalesce",
                      "operand" : [ {
-                        "asType" : "{urn:hl7-org:elm-types:r1}Integer",
-                        "type" : "As",
-                        "operand" : {
-                           "type" : "First",
-                           "source" : {
-                              "type" : "Query",
-                              "source" : [ {
-                                 "alias" : "I",
-                                 "expression" : {
-                                    "name" : "responses",
-                                    "type" : "QueryLetRef"
-                                 }
-                              } ],
-                              "relationship" : [ ],
-                              "where" : {
-                                 "type" : "Equal",
-                                 "operand" : [ {
-                                    "path" : "id",
-                                    "scope" : "I",
-                                    "type" : "Property"
-                                 }, {
-                                    "name" : "question2Id",
-                                    "type" : "ExpressionRef"
-                                 } ]
-                              },
-                              "return" : {
-                                 "expression" : {
-                                    "path" : "value",
-                                    "type" : "Property",
-                                    "source" : {
-                                       "path" : "value",
-                                       "scope" : "I",
-                                       "type" : "Property"
-                                    }
-                                 }
-                              }
+                        "type" : "First",
+                        "source" : {
+                           "type" : "ToList",
+                           "operand" : {
+                              "name" : "getScoringByResponseItem",
+                              "libraryName" : "LogicHelpers",
+                              "type" : "FunctionRef",
+                              "operand" : [ {
+                                 "name" : "CurrentQuestionnaire",
+                                 "type" : "ExpressionRef"
+                              }, {
+                                 "path" : "item",
+                                 "scope" : "I",
+                                 "type" : "Property"
+                              }, {
+                                 "name" : "question2Id",
+                                 "type" : "ExpressionRef"
+                              } ]
                            }
                         }
                      }, {
@@ -506,27 +484,11 @@
                   "expression" : {
                      "type" : "Add",
                      "operand" : [ {
-                        "strict" : false,
-                        "type" : "As",
-                        "operand" : {
-                           "name" : "word_recall_score",
-                           "type" : "QueryLetRef"
-                        },
-                        "asTypeSpecifier" : {
-                           "name" : "{urn:hl7-org:elm-types:r1}Integer",
-                           "type" : "NamedTypeSpecifier"
-                        }
+                        "name" : "word_recall_score",
+                        "type" : "QueryLetRef"
                      }, {
-                        "strict" : false,
-                        "type" : "As",
-                        "operand" : {
-                           "name" : "clock_draw_score",
-                           "type" : "QueryLetRef"
-                        },
-                        "asTypeSpecifier" : {
-                           "name" : "{urn:hl7-org:elm-types:r1}Integer",
-                           "type" : "NamedTypeSpecifier"
-                        }
+                        "name" : "clock_draw_score",
+                        "type" : "QueryLetRef"
                      } ]
                   }
                }, {
@@ -552,7 +514,7 @@
                               "type" : "QueryLetRef"
                            }, {
                               "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                              "value" : "3",
+                              "value" : "5",
                               "type" : "Literal"
                            } ]
                         } ]

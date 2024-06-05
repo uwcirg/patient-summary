@@ -8,7 +8,7 @@ import IconButton from "@mui/material/IconButton";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import Divider from "@mui/material/Divider";
-import SectionList from "./SectionList";
+import SectionList from "../components/SectionList";
 import { MOBILE_DRAWER_WIDTH, DEFAULT_DRAWER_WIDTH } from "../consts/consts";
 
 const openedMixin = (theme) => ({
