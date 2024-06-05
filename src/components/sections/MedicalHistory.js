@@ -26,7 +26,7 @@ export default function MedicalHistory(props) {
         item.condition = o.displayText || "--";
         item.onsetDateTime = o.onsetDateTimeDisplayText;
         item.recordedDate = o.recordedDateTimeDisplayText;
-        item.status = o.status || "--";
+        item.status = o.status ? String(o.status).toLowerCase() : "--";
         return item;
       })
       .sort((a, b) => {

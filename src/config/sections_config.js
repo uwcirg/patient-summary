@@ -6,7 +6,7 @@ import SummarizeIcon from "@mui/icons-material/Summarize";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
-import { getResourcesByResourceType } from "../util/util";
+import { getResourcesByResourceType } from "../util/fhirUtil";
 
 const renderLoader = () => (
   <Stack
