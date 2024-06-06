@@ -7,9 +7,7 @@ import {
 import commonLibrary from "../cql/InterventionLogic_Common.json";
 import valueSetJson from "../cql/valueset-db.json";
 import defaultSections from "../config/sections_config.js";
-import {
-  DEFAULT_TOOLBAR_HEIGHT,
-} from "../consts/consts";
+import { DEFAULT_TOOLBAR_HEIGHT } from "../consts/consts";
 
 export function getCorrectedISODate(dateString) {
   if (!dateString || dateString instanceof Date) return dateString;
@@ -61,7 +59,11 @@ export function getChartConfig(questionnaire) {
 
 export function getEnvQuestionnaireList() {
   const configList = getEnv("REACT_APP_QUESTIONNAIRES");
-  if (configList) return configList.split(",").map((item) => item.trim());
+  if (configList)
+    return configList
+      .split(",")
+      .filter((item) => item)
+      .map((item) => item.trim());
   return [];
 }
 
