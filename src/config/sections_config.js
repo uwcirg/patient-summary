@@ -93,7 +93,7 @@ const DEFAULT_SECTIONS = [
   },
   {
     id: "medicalHistory",
-    title: "Pertinent Medical History",
+    title: "Medical History",
     anchorElementId: `anchor_medicalhistory`,
     resources: ["Condition"],
     icon: (props) => (
@@ -107,7 +107,7 @@ const DEFAULT_SECTIONS = [
   },
   {
     id: "observations",
-    title: "Observations",
+    title: "Clinical Findings / Social History",
     anchorElementId: `anchor_observations`,
     resources: ["Observation"],
     icon: (props) => (
