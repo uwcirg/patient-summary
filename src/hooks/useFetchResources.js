@@ -9,12 +9,14 @@ import {
   getChartConfig,
   getElmDependencies,
   getInterventionLogicLib,
+  isNumber,
+} from "../util/util";
+import {
   getResourcesByResourceType,
   getFhirResourcesFromQueryResult,
   getFHIRResourcesToLoad,
   getFHIRResourcePaths,
-  isNumber,
-} from "../util/util";
+} from "../util/fhirUtil";
 import qConfig from "../config/questionnaire_config";
 
 export default function useFetchResources() {
@@ -61,8 +63,8 @@ export default function useFetchResources() {
       id: qid,
       title:
         qConfig[qid] && qConfig[qid].shortTitle
-          ? `Data for Questionnaire ${qConfig[qid].shortTitle}`
-          : `Data for Questionnaire ${qid}`,
+          ? `Resources for ${qConfig[qid].shortTitle}`
+          : `Resources for ${qid}`,
       complete: false,
       error: false,
     })),

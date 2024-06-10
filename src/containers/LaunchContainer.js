@@ -32,7 +32,7 @@ const fetchContextJson = async (authURL) => {
 
   if (!response.ok) {
     console.log(response.status, response.statusText);
-    throw new Error(response.status.toString());
+    throw new Error(`Error launch application: Server returned status ${response.status.toString()}`);
   }
 
   const contextJson = await response.json().catch((e) => {

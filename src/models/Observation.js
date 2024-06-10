@@ -1,8 +1,10 @@
 import {
-  getCorrectedISODate,
   getFhirItemValue,
   getFhirComponentDisplays,
-} from "../util/util";
+} from "../util/fhirUtil";
+import {
+  getCorrectedISODate,
+} from "../util/util"
 
 class Observation {
   constructor(dataObj) {

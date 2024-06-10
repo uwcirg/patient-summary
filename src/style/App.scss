@@ -98,6 +98,11 @@ p {
   }
 }
 
+.MuiTable-root {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
 .MuiButton-contained,
 .MuiButton-outlined {
   border-radius: 24px !important;

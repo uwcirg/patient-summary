@@ -18,8 +18,8 @@ import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MoreIcon from "@mui/icons-material/MoreVert";
-import SummarizeIcon from "@mui/icons-material/Summarize";
 import PrintIcon from "@mui/icons-material/Print";
+import DashboardIcon from "@mui/icons-material/Dashboard";
 import {
   getEnv,
   getEnvProjectId,
@@ -79,7 +79,7 @@ export default function Header(props) {
   const renderLogo = () => {
     const projectID = getEnvProjectId();
     if (!projectID)
-      return <SummarizeIcon fontSize="large" color="primary"></SummarizeIcon>;
+      return <DashboardIcon fontSize="large" color="primary"></DashboardIcon>;
     else
       return (
         <>

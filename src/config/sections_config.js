@@ -6,7 +6,7 @@ import SummarizeIcon from "@mui/icons-material/Summarize";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
-import { getResourcesByResourceType } from "../util/util";
+import { getResourcesByResourceType } from "../util/fhirUtil";
 
 const renderLoader = () => (
   <Stack
@@ -93,7 +93,7 @@ const DEFAULT_SECTIONS = [
   },
   {
     id: "medicalHistory",
-    title: "Pertinent Medical History",
+    title: "Medical History",
     anchorElementId: `anchor_medicalhistory`,
     resources: ["Condition"],
     icon: (props) => (
@@ -107,7 +107,7 @@ const DEFAULT_SECTIONS = [
   },
   {
     id: "observations",
-    title: "Observations",
+    title: "Clinical Findings / Social History",
     anchorElementId: `anchor_observations`,
     resources: ["Observation"],
     icon: (props) => (

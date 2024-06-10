@@ -77,7 +77,7 @@ Parameters for the app are stored in [environmental variables](http://man7.org/l
 | `REACT_APP_DISABLE_HEADER` | Define whether the header element should appear, default is `false` |`true`, `false`
 | `REACT_APP_DISABLE_NAV` | Define whether the navigation menu element should appear, default is `false` |`true`, `false`
 | `REACT_APP_MATOMO_SITE_ID` | Define the site id used to for tracking via MATOMO | Example: `24`
-
+| `REACT_APP_EPIC_QUERIES` | Define whether the site is quering data from EPIC | example: `true`, default is `false` | [`true`, `false`]
 ### Using with Public SMART Sandbox
 A public [SMART<sup>&reg;</sup> App Launcher](https://launch.smarthealthit.org/index.html) is available for sandbox tesing of SMART on FHIR apps with synthetic data.
 

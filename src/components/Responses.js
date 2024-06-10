@@ -120,6 +120,8 @@ export default function Responses(props) {
       cellStyle: {
         position: "sticky",
         left: 0,
+        backgroundColor: "#FFF",
+        borderRight: "1px solid #bdb7b7"
       },
       render: (rowData) => {
         if (String(rowData["question"]).toLowerCase() === "score")
@@ -349,7 +351,11 @@ export default function Responses(props) {
           showTitle: false,
           padding: "dense",
           columnsButton: true,
-          filtering: true,
+         // filtering: true,
+          style: {
+            borderCollapse: "separate",
+            borderSpacing: 0
+          },
           paging: false,
           thirdSortClick: false,
           filterCellStyle: {
