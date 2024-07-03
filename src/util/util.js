@@ -335,7 +335,7 @@ export function addMamotoTracking(userId) {
 
 export function getLocaleDateStringFromDate(dateString, format) {
   if (!dateString) return "";
-  const dateFormat = format ? format : "YYYY-MM-DD hh:mm";
+  const dateFormat = format ? format : "YYYY-MM-DD";
   if (!dayjs(dateString).isValid()) return dateString;
   return dayjs(dateString).format(dateFormat);
 }

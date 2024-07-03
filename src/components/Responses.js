@@ -11,6 +11,7 @@ import Dialog from "@mui/material/Dialog";
 import IconButton from "@mui/material/IconButton";
 import Input from "@mui/material/Input";
 import InputAdornment from "@mui/material/InputAdornment";
+import Paper from "@mui/material/Paper";
 import Slide from "@mui/material/Slide";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
@@ -23,7 +24,7 @@ import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import Filter from "@mui/icons-material/FilterAlt";
 import OutlinedIcon from "@mui/icons-material/WysiwygOutlined";
-import ListAltIcon from "@mui/icons-material/ListAlt";
+//import ListAltIcon from "@mui/icons-material/ListAlt";
 import Score from "./Score";
 import {
   getLocaleDateStringFromDate,
@@ -115,13 +116,14 @@ export default function Responses(props) {
     {
       title: "Questions",
       field: "question",
-      hiddenByColumnsButton: true,
+      // hiddenByColumnsButton: false,
       filtering: false,
       cellStyle: {
         position: "sticky",
         left: 0,
         backgroundColor: "#FFF",
-        borderRight: "1px solid #bdb7b7"
+        borderRight: "1px solid #bdb7b7",
+        minWidth: "200px"
       },
       render: (rowData) => {
         if (String(rowData["question"]).toLowerCase() === "score")
@@ -137,6 +139,9 @@ export default function Responses(props) {
     ...dates.map((item) => ({
       title: getLocaleDateStringFromDate(item.date),
       field: item.id,
+      cellStyle: {
+        minWidth: "148px"
+      },
       filterComponent: ({ columnDef, onFilterChanged }) => (
         <Input
           className="print-hidden"
@@ -310,6 +315,7 @@ export default function Responses(props) {
 
   const renderResponseTable = () => (
     <Box
+      className="responses-container"
       sx={{
         borderRadius: 0,
         marginTop: theme.spacing(2),
@@ -324,46 +330,52 @@ export default function Responses(props) {
           width: "80%",
         },
         overflowX: "auto",
+        position: "relative"
       }}
     >
       <MaterialTable
+        components={{
+            Container: props => (
+              <Paper className="table-root" elevation={1} {...props} />
+            )
+        }}
         columns={columns}
         data={getData()}
-        icons={{
-          ViewColumn: forwardRef((props, ref) => {
-            if (!hasData() || (hasData() && data.length < 2)) return null;
-            return (
-              <Button
-                variant="outlined"
-                color="secondary"
-                startIcon={<ListAltIcon />}
-                {...props}
-                ref={ref}
-                className="print-hidden"
-              >
-                +/- Columns
-              </Button>
-            );
-          }),
-        }}
+        // icons={{
+        //   ViewColumn: forwardRef((props, ref) => {
+        //     if (!hasData() || (hasData() && data.length <= 3)) return null;
+        //     return (
+        //       <Button
+        //         variant="outlined"
+        //         color="secondary"
+        //         startIcon={<ListAltIcon />}
+        //         {...props}
+        //         ref={ref}
+        //         className="print-hidden"
+        //       >
+        //         +/- Columns
+        //       </Button>
+        //     );
+        //   }),
+        // }}
         options={{
           search: false,
           showTitle: false,
           padding: "dense",
-          columnsButton: true,
+          toolbar: false,
+         // columnsButton: dates.length > 3,
          // filtering: true,
-          style: {
-            borderCollapse: "separate",
-            borderSpacing: 0
-          },
           paging: false,
           thirdSortClick: false,
-          filterCellStyle: {
-            padding: theme.spacing(1),
-            borderRadius: 0,
-          },
+          // filterCellStyle: {
+          //   padding: theme.spacing(1),
+          //   borderRadius: 0,
+          // },
           headerStyle: {
             backgroundColor: headerBgColor,
+            position: "sticky",
+            top: 0,
+            zIndex: 9999,
           },
           rowStyle: (rowData) => ({
             backgroundColor:
