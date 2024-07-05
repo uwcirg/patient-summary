@@ -1,8 +1,4 @@
-import {
-  getEnv,
-  getSectionsToShow,
-  hasValue,
-} from "./util";
+import { getEnv, getSectionsToShow, hasValue } from "./util";
 import { DEFAULT_OBSERVATION_CATEGORIES } from "../consts/consts";
 
 export function getFHIRResourcesToLoad() {
@@ -157,10 +153,10 @@ export function getFhirResourcesFromQueryResult(result) {
 export function getFhirItemValue(item) {
   if (!item) return null;
   if (hasValue(item.valueQuantity)) {
-    if (item.valueQuantity.unit) {
-      return [item.valueQuantity.value, item.valueQuantity.unit].join(" ");
-    }
-    return item.valueQuantity.value;
+    const unit = item.valueQuantity.unit ?? "";
+    const value = item.valueQuantity.value ?? "";
+    const comparator = item.valueQuantity.comparator ?? "";
+    return [value, comparator, unit].join(" ");
   }
   if (hasValue(item.valueString)) {
     if (hasValue(item.valueString.value)) return String(item.valueString.value);
@@ -183,6 +179,31 @@ export function getFhirItemValue(item) {
     if (hasValue(item.valueDate.value)) return item.valueDate.value;
     return item.valueDate;
   }
+  if (item.valueRatio) {
+    if (
+      item.valueRatio.numerator &&
+      item.valueRatio.numerator.value &&
+      item.valueRatio.denominator &&
+      item.valueRatio.denominator.value
+    ) {
+      return `${item.valueRatio.numerator.value} / ${item.valueRatio.denominator.value}`;
+    }
+    return "";
+  }
+  if (item.valueRange) {
+    let rangeText = "";
+    if (item.valueRange.low && item.valueRange.low.value) {
+      rangeText += `low: ${item.valueRange.low.value} ${
+        item.valueRange.low.unit ?? ""
+      } `;
+    }
+    if (item.valueRange.high && item.valueRange.high.value) {
+      rangeText += `high: ${item.valueRange.high.value} ${
+        item.valueRange.high.unit ?? ""
+      } `;
+    }
+    return rangeText;
+  }
   if (hasValue(item.valueDateTime)) {
     if (item.valueDateTime.value) return item.valueDateTime.value;
     return item.valueDateTime;
@@ -195,7 +216,9 @@ export function getFhirItemValue(item) {
       Array.isArray(item.valueCodeableConcept.coding) &&
       item.valueCodeableConcept.coding.length
     ) {
-      return item.valueCodeableConcept.coding[0].display;
+      return item.valueCodeableConcept.coding
+        .map((item) => item.display)
+        .join(", ");
     }
     return null;
   }
@@ -205,7 +228,13 @@ export function getFhirItemValue(item) {
 }
 export function getFhirComponentDisplays(item) {
   let displayText = getFhirItemValue(item);
-  if (!item || !item.component || !item.component.length) return displayText;
+  if (
+    !item ||
+    !item.component ||
+    !Array.isArray(item.component) ||
+    !item.component.length
+  )
+    return displayText;
   const componentDisplay = item.component
     .map((o) => {
       const textDisplay = o.code && o.code.text ? o.code.text : null;
@@ -221,6 +250,5 @@ export function getFhirComponentDisplays(item) {
     return [displayText, componentDisplay].join(", ");
   }
   if (componentDisplay) return componentDisplay;
-  if (displayText) return displayText;
-  return null;
+  return displayText;
 }
