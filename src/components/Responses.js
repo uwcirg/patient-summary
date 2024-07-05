@@ -122,7 +122,7 @@ export default function Responses(props) {
         position: "sticky",
         left: 0,
         backgroundColor: "#FFF",
-        borderRight: "1px solid #bdb7b7",
+        borderRight: "1px solid #ececec",
         minWidth: "200px"
       },
       render: (rowData) => {
@@ -140,7 +140,8 @@ export default function Responses(props) {
       title: getLocaleDateStringFromDate(item.date),
       field: item.id,
       cellStyle: {
-        minWidth: "148px"
+        minWidth: "148px",
+        borderRight: "1px solid #ececec",
       },
       filterComponent: ({ columnDef, onFilterChanged }) => (
         <Input
@@ -376,6 +377,7 @@ export default function Responses(props) {
             position: "sticky",
             top: 0,
             zIndex: 9999,
+            borderRight: "1px solid #ececec"
           },
           rowStyle: (rowData) => ({
             backgroundColor:
