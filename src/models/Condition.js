@@ -1,20 +1,23 @@
-import { getCorrectedISODate } from "../util/util";
+import { getCorrectedISODate, isEmptyArray } from "../util/util";
 class Condition {
   constructor(dataObj) {
-    this.data = dataObj;
+    this.data = Object.assign({}, dataObj);
+  }
+  get id() {
+    return this.data.id;
   }
   get displayText() {
     return this.data.code.text
       ? this.data.code.text
-      : this.data.code.coding.map((o) => o.display).join(", ");
+      : !isEmptyArray(this.data.code?.coding)
+      ? this.data.code.coding.map((o) => o.display).join(", ")
+      : "";
   }
   get status() {
     return this.data.verificationStatus
       ? this.data.verificationStatus.text
         ? this.data.verificationStatus.text
-        : this.data.verificationStatus.coding &&
-          Array.isArray(this.data.verificationStatus.coding) &&
-          this.data.verificationStatus.coding.length
+        : !isEmptyArray(this.data.verificationStatus.coding)
         ? this.data.verificationStatus.coding[0].display
           ? this.data.verificationStatus.coding[0].display
           : this.data.verificationStatus.coding[0].code
@@ -31,14 +34,21 @@ class Condition {
       ? getCorrectedISODate(this.data.recordedDate)
       : "";
   }
+  toObj() {
+    return {
+      id: this.id,
+      condition: this.displayText,
+      onsetDateTime: this.onsetDateTimeDisplayText,
+      recordedDate: this.recordedDateTimeDisplayText,
+      status: this.status ? String(this.status).toLowerCase() : "",
+    };
+  }
   static getGoodData(bundledData) {
     return bundledData.filter(
       (item) =>
         String(item.resourceType).toLowerCase() === "condition" &&
         item.code &&
-        ((item.code.coding &&
-          Array.isArray(item.code.coding) &&
-          item.code.coding.length > 0 &&
+        ((!isEmptyArray(item.code.codin) &&
           item.code.coding.find((o) => o.display)) ||
           item.code.text)
     );

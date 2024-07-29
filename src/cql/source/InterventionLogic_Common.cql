@@ -78,6 +78,21 @@ define function MatchedReponsesByQuestionnaire(responses List<FHIR.Questionnaire
       Q.status.value = 'completed')
       sort by authored desc, meta.lastUpdated desc
   )
+
+
+/*
+ * retrieve questionnaire responses matched by questionnaireID for the questionnaire element
+ * @param responses as FHIR.QuestionnaireResponse
+ * @param questionnaireID as String to match against
+ */
+define function MatchedReponsesByQuestionnaireId(responses List<FHIR.QuestionnaireResponse>, QuestionnaireID String):
+  ((responses) Q
+    where 
+    (
+      PositionOf(Lower(QuestionnaireID), Lower(Q.questionnaire.value)) != -1 and 
+      Q.status.value = 'completed')
+      sort by authored desc, meta.lastUpdated desc
+  )
   
 
 define function GetAnswerLinkIdsByQuestionnaire(currentQuestionnaire FHIR.Questionnaire, scoringQuestionId String):

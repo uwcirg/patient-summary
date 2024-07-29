@@ -4,6 +4,7 @@ import Stack from "@mui/material/Stack";
 import {
   getAppHeight,
   getSectionsToShow,
+  isEmptyArray,
 } from "../util/util";
 import ErrorComponent from "./ErrorComponent";
 import ProgressIndicator from "./ProgressIndicator";
@@ -25,7 +26,7 @@ export default function Dashboard() {
   const sectionsToShow = getSectionsToShow();
   
   const renderSections = () => {
-    if (!sectionsToShow || !sectionsToShow.length)
+    if (isEmptyArray(sectionsToShow))
       return <Alert severity="warning">No section to show.</Alert>;
     return sectionsToShow.map((section) => {
       return (

@@ -57,6 +57,7 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/preset-env": "^7.20.2",
     "@rescripts/cli": "0.0.16",
     "@rescripts/utilities": "0.0.8",

@@ -15,8 +15,8 @@ export default function QuestionnaireInfo(props) {
   const { questionnaireJson } = props;
   const theme = useTheme();
   const qo = new Questionnaire(questionnaireJson);
-  const questionnaireTitle = qo.displayName();
-  const introText = qo.introText();
+  const questionnaireTitle = qo.displayName;
+  const introText = qo.introText;
   const [open, setOpen] = useState(false);
 
   const handleDialogOpen = () => {

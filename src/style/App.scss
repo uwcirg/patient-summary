@@ -101,6 +101,12 @@ p {
 .MuiTable-root {
   border-collapse: separate !important;
   border-spacing: 0 !important;
+  thead {
+    th:first-of-type {
+      z-index: 99999 !important;
+      left: 0;
+    }
+  }
 }
 .responses-container {
   position: relative;

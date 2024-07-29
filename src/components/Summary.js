@@ -7,7 +7,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Error from "./ErrorComponent";
 import QuestionnaireInfo from "./QuestionnaireInfo";
-import { hasData } from "../util/util";
+import { hasData, isEmptyArray } from "../util/util";
 import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts/consts";
 import Responses from "./Responses";
 import Chart from "./Chart";
@@ -54,7 +54,7 @@ export default function Summary(props) {
   };
 
   const getAnchorElementId = () => QUESTIONNAIRE_ANCHOR_ID_PREFIX;
-  const hasResponses = () => summary.responses && summary.responses.length > 0;
+  const hasResponses = () => !isEmptyArray(summary.responses);
 
   const renderLoader = () =>
     loading && (
@@ -83,7 +83,7 @@ export default function Summary(props) {
     let questionnaireTitle = questionnaireId;
     if (data) {
       const qo = new Questionnaire(data.questionnaire, questionnaireId);
-      questionnaireTitle = qo.displayName();
+      questionnaireTitle = qo.displayName;
     }
     return (
       <Typography

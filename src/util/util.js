@@ -30,7 +30,7 @@ export async function getInterventionLogicLib(interventionId) {
       elmJson = await import(`../cql/${fileName}`).then(
         (module) => module.default
       );
-      if (elmJson)
+      if (interventionId && elmJson)
         sessionStorage.setItem(`lib_${fileName}`, JSON.stringify(elmJson));
     } catch (e) {
       throw new Error("Error loading Cql ELM library " + e);
@@ -52,8 +52,9 @@ export function isValidDate(date) {
   );
 }
 
-export function getChartConfig(questionnaire) {
-  const qChartConfig = ChartConfig[questionnaire.toLowerCase()] || {};
+export function getChartConfig(questionnaireKey) {
+  if (!questionnaireKey) return ChartConfig["default"];
+  const qChartConfig = ChartConfig[questionnaireKey.toLowerCase()] || {};
   return { ...ChartConfig["default"], ...qChartConfig };
 }
 
@@ -342,4 +343,8 @@ export function getLocaleDateStringFromDate(dateString, format) {
 
 export function hasValue(value) {
   return value != null && value !== "" && typeof value !== "undefined";
+}
+
+export function isEmptyArray(o) {
+  return !o || !Array.isArray(o) || !o.length;
 }

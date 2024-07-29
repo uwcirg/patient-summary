@@ -22,14 +22,15 @@ export default function Observations(props) {
     return goodData
       .map((item, index) => {
         const o = new Observation(item);
-        item.id = item.id + "_" + index;
-        item.category = o.category || "--";
-        item.text = o.displayText || "--";
-        item.date = o.dateText;
-        item.provider = o.providerText || "--";
-        item.value = o.valueText || "--";
-        item.status = o.status || "--"
-        return item;
+        // let newItem = Object.assign({}, item);
+        // newItem.id = o.id + "_" + index;
+        // newItem.category = o.category || "--";
+        // newItem.displayText = o.displayText || "--";
+        // newItem.dateText = o.dateText;
+        // newItem.providerText = o.providerText || "--";
+        // newItem.valueText = o.valueText || "--";
+        // newItem.status = o.status || "--"
+        return o.toObj();
       })
       .sort((a, b) => {
         return new Date(b.issued).getTime() - new Date(a.issued).getTime();
@@ -44,23 +45,27 @@ export default function Observations(props) {
     },
     {
       title: "Type",
-      field: "text",
+      field: "displayText",
+      emptyValue: "--"
     },
     {
       title: "Result",
-      field: "value",
+      field: "valueText",
+      emptyValue: "--"
     },
     {
       title: "Issued Date",
-      field: "date",
+      field: "dateText",
     },
     {
       title: "Category",
       field: "category",
+      emptyValue: "--"
     },
     {
       title: "Status",
       field: "status",
+      emptyValue: "--",
       render: (rowData) =>
         rowData.status === "final" ? (
           <span className="text-success">{rowData.status}</span>
@@ -70,7 +75,7 @@ export default function Observations(props) {
     }
     // {
     //   title: "Provider",
-    //   field: "provider",
+    //   field: "providerText",
     // },
   ];
   const renderPrintView = (data) => {

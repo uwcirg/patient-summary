@@ -36,7 +36,7 @@ define QuestionnaireItems:
 
 //Load Questionnaire responses
 define QuestionnaireResponses:
-  LogicHelpers.MatchedReponsesByQuestionnaire([QuestionnaireResponse], QuestionnaireID, QuestionnaireName)
+  LogicHelpers.MatchedReponsesByQuestionnaireId([QuestionnaireResponse], QuestionnaireID)
 
 define ResponsesSummary:
   (QuestionnaireResponses) I

@@ -28,6 +28,7 @@ import OutlinedIcon from "@mui/icons-material/WysiwygOutlined";
 import Score from "./Score";
 import {
   getLocaleDateStringFromDate,
+  isEmptyArray,
   isNumber
 } from "../util/util";
 import Response from "../models/Response";
@@ -48,9 +49,9 @@ export default function Responses(props) {
     theme.palette.lightest.main
       ? theme.palette.lightest.main
       : "#FFF";
-  const questionnaireTitle = (new Questionnaire(questionnaireJson)).displayName();
+  const questionnaireTitle = (new Questionnaire(questionnaireJson)).displayName;
   const getFormattedData = (data) => {
-    if (!data || !data.length) return null;
+    if (isEmptyArray(data)) return null;
     let copyData = JSON.parse(JSON.stringify(data));
     const maxResponsesLength = Math.max(
       ...copyData.map((d) => (d.responses ? d.responses.length : 0))
@@ -241,8 +242,8 @@ export default function Responses(props) {
 
   const renderPrintOnlyResponseTable = () => {
     if (!hasData()) return null;
-    const arrDates = dates.filter((item, index) => index < 2);
-    const arrData = data.filter((item, index) => index < 2);
+    const arrDates = dates.filter((item, index) => index === 0);
+    const arrData = data.filter((item, index) => index === 0);
     // this will render the current and the previous response(s) for print
     return (
       <Box className="print-only" sx={{ marginTop: theme.spacing(2) }}>
@@ -342,36 +343,13 @@ export default function Responses(props) {
         }}
         columns={columns}
         data={getData()}
-        // icons={{
-        //   ViewColumn: forwardRef((props, ref) => {
-        //     if (!hasData() || (hasData() && data.length <= 3)) return null;
-        //     return (
-        //       <Button
-        //         variant="outlined"
-        //         color="secondary"
-        //         startIcon={<ListAltIcon />}
-        //         {...props}
-        //         ref={ref}
-        //         className="print-hidden"
-        //       >
-        //         +/- Columns
-        //       </Button>
-        //     );
-        //   }),
-        // }}
         options={{
           search: false,
           showTitle: false,
           padding: "dense",
           toolbar: false,
-         // columnsButton: dates.length > 3,
-         // filtering: true,
           paging: false,
           thirdSortClick: false,
-          // filterCellStyle: {
-          //   padding: theme.spacing(1),
-          //   borderRadius: 0,
-          // },
           headerStyle: {
             backgroundColor: headerBgColor,
             position: "sticky",

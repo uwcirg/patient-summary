@@ -1,42 +1,53 @@
-const qConfig = {
-  "adl-iadl": {
+const qConfig = [
+  {
     shortTitle: "Functional Impairments (ADL/IADLs)",
-    customCQL: true,
+    keys: ["CIRG-ADL-IADL", "ADL-IADL"],
+    interventionLibId: "ADL-IADL"
   },
-  behav5: {
+  {
     shortTitle: "BEHAV+5",
-    customCQL: true,
+    keys: ["CIRG-BEHAV5"],
+    interventionLibId: "BEHAV5"
   },
-  "c-idas": {
+  {
     shortTitle: "Cornell Scale of Depression",
-    customCQL: true,
+    keys: ["CIRG-C-IDAS"],
+    interventionLibId: "C-IDAS"
   },
-  "cp-ecog": {
+  {
     shortTitle: "ECOG-12 (for Care Partner)",
-    customCQL: true,
+    keys: ["CIRG-ECOG12"],
+    interventionLibId: "CP-ECOG"
   },
-  ecog12: {
+  {
     shortTitle: "ECOG-12",
-    customCQL: true,
+    keys: ["CIRG-ECOG12"],
+    interventionLibId: "ECOG12"
   },
-  gad7: {
+  {
     shortTitle: "Anxiety (GAD-7)",
-    customCQL: true,
+    keys: ["CIRG-GAD7", "GAD7"],
+    interventionLibId: "GAD7"
   },
-  gds: {
+  {
     shortTitle: "Geriatric Depression Scale",
-    customCQL: true,
+    keys: ["CIRG-GDS"],
+    interventionLibId: "GDS"
   },
-  minicog: {
+  {
     shortTitle: "MINI COG",
-    customCQL: true,
+    keys: ["CIRG-MINICOG"],
+    interventionLibId: "MINICOG"
   },
-  phq9: {
+  {
     shortTitle: "Depression (PHQ-9)",
-    customCQL: true,
+    keys: ["phq9", "CIRG-PHQ9"],
+    interventionLibId: "PHQ9"
   },
-  slums: {
+  {
     customCQL: true,
+    keys: ["CIRG-SLUMS"],
+    interventionLibId: "SLUMS"
   },
-};
+];
 export default qConfig;

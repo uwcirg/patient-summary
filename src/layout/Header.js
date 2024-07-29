@@ -229,19 +229,20 @@ export default function Header(props) {
                   onKeyDown={handleListKeyDown}
                 >
                   {!shouldHideReturnButton() && (
-                    <>
+                    <Box>
                       <MenuItem>
                         {renderReturnButton({
                           variant: "text",
                         })}
                       </MenuItem>
                       <Divider></Divider>
-                    </>
+                    </Box>
                   )}
                   {hasSections &&
-                    sections.map((section) => (
+                    sections.map((section, index) => (
                       <MenuItem
                         onClick={() => scrollToElement(section.anchorElementId)}
+                        key={`${section.anchorElementId}_item`}
                       >
                         <ListItemIcon>
                           {section.icon({ fontSize: "small" })}
