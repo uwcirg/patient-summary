@@ -22,14 +22,6 @@ export default function Observations(props) {
     return goodData
       .map((item, index) => {
         const o = new Observation(item);
-        // let newItem = Object.assign({}, item);
-        // newItem.id = o.id + "_" + index;
-        // newItem.category = o.category || "--";
-        // newItem.displayText = o.displayText || "--";
-        // newItem.dateText = o.dateText;
-        // newItem.providerText = o.providerText || "--";
-        // newItem.valueText = o.valueText || "--";
-        // newItem.status = o.status || "--"
         return o.toObj();
       })
       .sort((a, b) => {
