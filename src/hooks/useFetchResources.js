@@ -121,13 +121,18 @@ export default function useFetchResources() {
           patientBundle,
           "Questionnaire"
         );
-        console.log("patient Bundle ", patientBundle);
-        console.log("questionnaireResources ", questionnaireResources);
+        console.log(
+          `questionnaireResources for ${questionnaireId}`,
+          questionnaireResources
+        );
         const returnResult = questionnaireResources
-          ? questionnaireResources.filter((resource) => {
+          ? questionnaireResources.find((resource) => {
               if (!exactMatch) {
-                const arrMatches = [String(resource.name).toLowerCase()];
                 const toMatch = String(questionnaireId).toLowerCase();
+                const arrMatches = [
+                  String(resource.name).toLowerCase(),
+                  String(resource.id).toLowerCase(),
+                ];
                 return (
                   String(resource.id).toLowerCase() === toMatch ||
                   arrMatches.find((key) => key.includes(toMatch))
@@ -136,9 +141,9 @@ export default function useFetchResources() {
               return resource.id === questionnaireId;
             })
           : null;
-        if (returnResult && returnResult.length) {
-          sessionStorage.setItem(storageKey, JSON.stringify(returnResult[0]));
-          return returnResult[0];
+        if (returnResult) {
+          sessionStorage.setItem(storageKey, JSON.stringify(returnResult));
+          return returnResult;
         }
         return null;
       };
@@ -150,7 +155,7 @@ export default function useFetchResources() {
           initialzieCqlWorker(cqlWorker);
         const questionnaireObject = new Questionnaire(questionnaireJson);
         const interventionLibId = questionnaireObject.interventionLibId;
-        const chartConfig = getChartConfig(interventionLibId);
+        const chartConfig = getChartConfig(questionnaireObject.id);
         /* get CQL expressions */
         const [elmJson, valueSetJson] = await getInterventionLogicLib(
           interventionLibId
@@ -204,7 +209,10 @@ export default function useFetchResources() {
         const scoringData = !isEmptyArray(cqlData)
           ? cqlData.filter((item) => {
               return (
-                item && item.responses && isNumber(item.score) && item.date
+                item &&
+                !isEmptyArray(item.responses) &&
+                isNumber(item.score) &&
+                item.date
               );
             })
           : null;

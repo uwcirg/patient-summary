@@ -55,7 +55,7 @@ export default function MedicalHistory(props) {
       field: "status",
       emptyText: "--",
       render: (rowData) =>
-        rowData.status === "confirmed" ? (
+        String(rowData.status).toLowerCase() === "confirmed" ? (
           <span className="text-success">{rowData.status}</span>
         ) : (
           <span className="text-error">{rowData.status}</span>

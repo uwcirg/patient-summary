@@ -1,4 +1,3 @@
-import questionnaireConfig from "../config/questionnaire_config";
 import { getDisplayQTitle, isEmptyArray } from "../util/util";
 class Questionnaire {
   constructor(dataObj = null, key) {
@@ -12,19 +11,19 @@ class Questionnaire {
     return this.data.name;
   }
   get shortName() {
-    if (!this.key) return "";
+    if (!this.key) return this.id;
     const key = getDisplayQTitle(this.key).toUpperCase();
-    if (questionnaireConfig[key] && questionnaireConfig[key].shortTitle) {
-      return questionnaireConfig[key].shortTitle;
-    }
-    return String(key).toUpperCase();
+    if (key) return String(key).toUpperCase();
+    return this.key;
   }
   get displayName() {
     if (!this.data) return this.shortName();
     const { id, title, name } = this.data;
     if (title) return title;
     if (name) return name;
-    return `Questionnaire ${getDisplayQTitle(id)}`;
+    return `Questionnaire ${
+      id ? getDisplayQTitle(id) : String(this.key).toUpperCase()
+    }`;
   }
   get introText() {
     if (!this.data) return "";
@@ -53,15 +52,7 @@ class Questionnaire {
     return "";
   }
   get interventionLibId() {
-    const match = questionnaireConfig.find((o) => {
-      return o.keys.find(
-        (key) =>
-          String(this.data?.id).toLowerCase() === key ||
-          String(this.data?.name).toLowerCase().includes(key)
-          //String(this.data?.name).toLowerCase().includes(key)
-      );
-    });
-    return match ? match.interventionLibId : "";
+    return this.id;
   }
 }
 export default Questionnaire;

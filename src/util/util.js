@@ -18,7 +18,8 @@ export function getCorrectedISODate(dateString) {
 }
 
 export async function getInterventionLogicLib(interventionId) {
-  let fileName = "InterventionLogicLibrary.json";
+  const DEFAULT_FILENAME = "InterventionLogicLibrary.json";
+  let fileName = DEFAULT_FILENAME;
   if (interventionId) {
     // load questionnaire specific CQL
     fileName = `${interventionId.toUpperCase()}_InterventionLogicLibrary.json`;
@@ -33,7 +34,10 @@ export async function getInterventionLogicLib(interventionId) {
       if (interventionId && elmJson)
         sessionStorage.setItem(`lib_${fileName}`, JSON.stringify(elmJson));
     } catch (e) {
-      throw new Error("Error loading Cql ELM library " + e);
+      elmJson = await import(`../cql/${DEFAULT_FILENAME}`).then(
+        (module) => module.default
+      );
+      console.log("Error loading Cql ELM library " + e);
     }
   }
   return [elmJson, valueSetJson];
@@ -52,10 +56,18 @@ export function isValidDate(date) {
   );
 }
 
-export function getChartConfig(questionnaireKey) {
-  if (!questionnaireKey) return ChartConfig["default"];
-  const qChartConfig = ChartConfig[questionnaireKey.toLowerCase()] || {};
-  return { ...ChartConfig["default"], ...qChartConfig };
+export function getChartConfig(questionnaireId) {
+  const qChartConfig = ChartConfig[questionnaireId.toLowerCase()];
+  if (qChartConfig) return { ...ChartConfig["default"], ...qChartConfig };
+  const matchItems = Object.values(ChartConfig);
+  const matchConfig = matchItems.find((item) => {
+    if (!item.keys || isEmptyArray(item.keys)) return false;
+    const arrMatches = item.keys.map((key) => key.toLowerCase());
+    console.log("arr matches ", arrMatches);
+    return arrMatches.indexOf(questionnaireId.toLowerCase()) !== -1;
+  });
+  if (matchConfig) return { ...ChartConfig["default"], ...matchConfig };
+  return ChartConfig["default"];
 }
 
 export function getEnvQuestionnaireList() {

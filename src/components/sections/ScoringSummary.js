@@ -50,8 +50,7 @@ export default function ScoringSummary(props) {
         ? summaryData[id].questionnaire
         : null;
     const qo = new Questionnaire(matchedQuestionnaire, id);
-    const displayName = qo.displayName;
-    return qo.shortName ?? (displayName??id);
+    return qo.shortName ?? qo.displayName;
   };
   const hasList = () =>
     summaryData &&

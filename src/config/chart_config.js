@@ -67,6 +67,7 @@ const CHART_CONFIG = {
   //specific graph config for each questionnaire here
   minicog: {
     id: "minicog",
+    keys: ["CIRG-MINICOG", "MINICOG"],
     title: "Scores by Date",
     type: "linechart",
     // applicable only to line graph
