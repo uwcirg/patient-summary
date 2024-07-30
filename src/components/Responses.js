@@ -11,6 +11,7 @@ import Dialog from "@mui/material/Dialog";
 import IconButton from "@mui/material/IconButton";
 import Input from "@mui/material/Input";
 import InputAdornment from "@mui/material/InputAdornment";
+import Paper from "@mui/material/Paper";
 import Slide from "@mui/material/Slide";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
@@ -23,10 +24,11 @@ import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import Filter from "@mui/icons-material/FilterAlt";
 import OutlinedIcon from "@mui/icons-material/WysiwygOutlined";
-import ListAltIcon from "@mui/icons-material/ListAlt";
+//import ListAltIcon from "@mui/icons-material/ListAlt";
 import Score from "./Score";
 import {
   getLocaleDateStringFromDate,
+  isEmptyArray,
   isNumber
 } from "../util/util";
 import Response from "../models/Response";
@@ -47,9 +49,9 @@ export default function Responses(props) {
     theme.palette.lightest.main
       ? theme.palette.lightest.main
       : "#FFF";
-  const questionnaireTitle = (new Questionnaire(questionnaireJson)).displayName();
+  const questionnaireTitle = (new Questionnaire(questionnaireJson)).displayName;
   const getFormattedData = (data) => {
-    if (!data || !data.length) return null;
+    if (isEmptyArray(data)) return null;
     let copyData = JSON.parse(JSON.stringify(data));
     const maxResponsesLength = Math.max(
       ...copyData.map((d) => (d.responses ? d.responses.length : 0))
@@ -115,11 +117,14 @@ export default function Responses(props) {
     {
       title: "Questions",
       field: "question",
-      hiddenByColumnsButton: true,
+      // hiddenByColumnsButton: false,
       filtering: false,
       cellStyle: {
         position: "sticky",
         left: 0,
+        backgroundColor: "#FFF",
+        borderRight: "1px solid #ececec",
+        minWidth: "200px"
       },
       render: (rowData) => {
         if (String(rowData["question"]).toLowerCase() === "score")
@@ -135,6 +140,10 @@ export default function Responses(props) {
     ...dates.map((item) => ({
       title: getLocaleDateStringFromDate(item.date),
       field: item.id,
+      cellStyle: {
+        minWidth: "148px",
+        borderRight: "1px solid #ececec",
+      },
       filterComponent: ({ columnDef, onFilterChanged }) => (
         <Input
           className="print-hidden"
@@ -233,8 +242,8 @@ export default function Responses(props) {
 
   const renderPrintOnlyResponseTable = () => {
     if (!hasData()) return null;
-    const arrDates = dates.filter((item, index) => index < 2);
-    const arrData = data.filter((item, index) => index < 2);
+    const arrDates = dates.filter((item, index) => index === 0);
+    const arrData = data.filter((item, index) => index === 0);
     // this will render the current and the previous response(s) for print
     return (
       <Box className="print-only" sx={{ marginTop: theme.spacing(2) }}>
@@ -308,6 +317,7 @@ export default function Responses(props) {
 
   const renderResponseTable = () => (
     <Box
+      className="responses-container"
       sx={{
         borderRadius: 0,
         marginTop: theme.spacing(2),
@@ -322,42 +332,30 @@ export default function Responses(props) {
           width: "80%",
         },
         overflowX: "auto",
+        position: "relative"
       }}
     >
       <MaterialTable
+        components={{
+            Container: props => (
+              <Paper className="table-root" elevation={1} {...props} />
+            )
+        }}
         columns={columns}
         data={getData()}
-        icons={{
-          ViewColumn: forwardRef((props, ref) => {
-            if (!hasData() || (hasData() && data.length < 2)) return null;
-            return (
-              <Button
-                variant="outlined"
-                color="secondary"
-                startIcon={<ListAltIcon />}
-                {...props}
-                ref={ref}
-                className="print-hidden"
-              >
-                +/- Columns
-              </Button>
-            );
-          }),
-        }}
         options={{
           search: false,
           showTitle: false,
           padding: "dense",
-          columnsButton: true,
-          filtering: true,
+          toolbar: false,
           paging: false,
           thirdSortClick: false,
-          filterCellStyle: {
-            padding: theme.spacing(1),
-            borderRadius: 0,
-          },
           headerStyle: {
             backgroundColor: headerBgColor,
+            position: "sticky",
+            top: 0,
+            zIndex: 9999,
+            borderRight: "1px solid #ececec"
           },
           rowStyle: (rowData) => ({
             backgroundColor:

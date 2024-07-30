@@ -142,7 +142,7 @@
             "context" : "Patient",
             "accessLevel" : "Public",
             "expression" : {
-               "name" : "MatchedReponsesByQuestionnaire",
+               "name" : "MatchedReponsesByQuestionnaireId",
                "libraryName" : "LogicHelpers",
                "type" : "FunctionRef",
                "operand" : [ {
@@ -151,9 +151,6 @@
                   "type" : "Retrieve"
                }, {
                   "name" : "QuestionnaireID",
-                  "type" : "ParameterRef"
-               }, {
-                  "name" : "QuestionnaireName",
                   "type" : "ParameterRef"
                } ]
             }

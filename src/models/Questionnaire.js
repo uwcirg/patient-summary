@@ -1,26 +1,31 @@
-import questionnaireConfig from "../config/questionnaire_config";
-import { getDisplayQTitle } from "../util/util";
+import { getDisplayQTitle, isEmptyArray } from "../util/util";
 class Questionnaire {
-  constructor(dataObj, key) {
-    this.data = dataObj;
+  constructor(dataObj = null, key) {
+    this.data = Object.assign({}, dataObj);
     this.key = key;
   }
-  shortName() {
-    if (!this.key) return "";
-    const key = getDisplayQTitle(this.key).toUpperCase();
-    if (questionnaireConfig[key] && questionnaireConfig[key].shortTitle) {
-      return questionnaireConfig[key].shortTitle;
-    }
-    return String(key).toUpperCase();
+  get id() {
+    return this.data.id;
   }
-  displayName() {
+  get name() {
+    return this.data.name;
+  }
+  get shortName() {
+    if (!this.key) return this.id;
+    const key = getDisplayQTitle(this.key).toUpperCase();
+    if (key) return String(key).toUpperCase();
+    return this.key;
+  }
+  get displayName() {
     if (!this.data) return this.shortName();
     const { id, title, name } = this.data;
     if (title) return title;
     if (name) return name;
-    return `Questionnaire ${getDisplayQTitle(id)}`;
+    return `Questionnaire ${
+      id ? getDisplayQTitle(id) : String(this.key).toUpperCase()
+    }`;
   }
-  introText() {
+  get introText() {
     if (!this.data) return "";
     const commonmark = require("commonmark");
     const reader = new commonmark.Parser({ smart: true });
@@ -41,11 +46,13 @@ class Questionnaire {
       : null;
     if (introductionItem) {
       const textElement = introductionItem._text;
-      if (!textElement || !textElement.extension || !textElement.extension[0])
-        return "";
+      if (isEmptyArray(textElement.extension)) return "";
       return textElement.extension[0].valueString;
     }
     return "";
+  }
+  get interventionLibId() {
+    return this.id;
   }
 }
 export default Questionnaire;
