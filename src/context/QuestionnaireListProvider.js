@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
-import { getEnvQuestionnaireList, getEnv } from "../util/util";
+import { getEnvQuestionnaireList, getEnv, isEmptyArray } from "../util/util";
 import { QuestionnaireListContext } from "./QuestionnaireListContext";
 import { FhirClientContext } from "../context/FhirClientContext";
 
@@ -13,7 +13,7 @@ export default function QuestionnaireListProvider({ children }) {
     getEnvQuestionnaireList()
   );
   const [exactMatch, setExactMatch] = useState(
-    !!getEnv("REACT_APP_EPIC_QUERIES")
+    String(getEnv("REACT_APP_EPIC_QUERIES")) === "true"
   );
   const { client, patient } = useContext(FhirClientContext);
 
@@ -27,7 +27,7 @@ export default function QuestionnaireListProvider({ children }) {
       return;
     }
     if (loadComplete) return;
-    if (questionnaireList && questionnaireList.length) {
+    if (!isEmptyArray(questionnaireList)) {
       console.log(
         "questionnaire list to load from environment variable ",
         questionnaireList
@@ -43,10 +43,7 @@ export default function QuestionnaireListProvider({ children }) {
       )
       .then((results) => {
         const matchedResults =
-          results &&
-          results.entry &&
-          Array.isArray(results.entry) &&
-          results.entry.length
+          results && !isEmptyArray(results.entry)
             ? results.entry.filter(
                 (item) =>
                   item.resource &&
@@ -58,7 +55,7 @@ export default function QuestionnaireListProvider({ children }) {
           "matched results for questionnaire from QuestionnaireResponse ",
           matchedResults
         );
-        if (!matchedResults || !matchedResults.length) {
+        if (isEmptyArray(matchedResults)) {
           handleErrorCallback("No questionnaire list set");
           return;
         }

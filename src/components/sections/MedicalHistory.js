@@ -21,13 +21,8 @@ export default function MedicalHistory(props) {
     const goodData = Condition.getGoodData(data);
     return goodData
       .map((item, index) => {
-        item.id = item.id + "_" + index;
         const o = new Condition(item);
-        item.condition = o.displayText || "--";
-        item.onsetDateTime = o.onsetDateTimeDisplayText;
-        item.recordedDate = o.recordedDateTimeDisplayText;
-        item.status = o.status || "--";
-        return item;
+        return o.toObj();
       })
       .sort((a, b) => {
         return (
@@ -58,6 +53,7 @@ export default function MedicalHistory(props) {
     {
       title: "Status",
       field: "status",
+      emptyText: "--",
       render: (rowData) =>
         String(rowData.status).toLowerCase() === "confirmed" ? (
           <span className="text-success">{rowData.status}</span>

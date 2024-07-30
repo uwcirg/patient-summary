@@ -18,8 +18,8 @@ import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MoreIcon from "@mui/icons-material/MoreVert";
-import SummarizeIcon from "@mui/icons-material/Summarize";
 import PrintIcon from "@mui/icons-material/Print";
+import DashboardIcon from "@mui/icons-material/Dashboard";
 import {
   getEnv,
   getEnvProjectId,
@@ -79,7 +79,7 @@ export default function Header(props) {
   const renderLogo = () => {
     const projectID = getEnvProjectId();
     if (!projectID)
-      return <SummarizeIcon fontSize="large" color="primary"></SummarizeIcon>;
+      return <DashboardIcon fontSize="large" color="primary"></DashboardIcon>;
     else
       return (
         <>
@@ -229,19 +229,20 @@ export default function Header(props) {
                   onKeyDown={handleListKeyDown}
                 >
                   {!shouldHideReturnButton() && (
-                    <>
+                    <Box>
                       <MenuItem>
                         {renderReturnButton({
                           variant: "text",
                         })}
                       </MenuItem>
                       <Divider></Divider>
-                    </>
+                    </Box>
                   )}
                   {hasSections &&
-                    sections.map((section) => (
+                    sections.map((section, index) => (
                       <MenuItem
                         onClick={() => scrollToElement(section.anchorElementId)}
+                        key={`${section.anchorElementId}_item`}
                       >
                         <ListItemIcon>
                           {section.icon({ fontSize: "small" })}

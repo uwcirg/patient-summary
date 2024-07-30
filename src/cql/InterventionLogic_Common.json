@@ -1166,35 +1166,22 @@
                               "then" : {
                                  "type" : "As",
                                  "operand" : {
-                                    "type" : "If",
-                                    "condition" : {
-                                       "type" : "Equal",
-                                       "operand" : [ {
-                                          "asType" : "{urn:hl7-org:elm-types:r1}Boolean",
-                                          "type" : "As",
-                                          "operand" : {
-                                             "path" : "value",
-                                             "type" : "Property",
-                                             "source" : {
-                                                "name" : "value",
-                                                "type" : "QueryLetRef"
-                                             }
+                                    "type" : "ToString",
+                                    "operand" : {
+                                       "strict" : false,
+                                       "type" : "As",
+                                       "operand" : {
+                                          "path" : "value",
+                                          "type" : "Property",
+                                          "source" : {
+                                             "name" : "value",
+                                             "type" : "QueryLetRef"
                                           }
-                                       }, {
-                                          "valueType" : "{urn:hl7-org:elm-types:r1}Boolean",
-                                          "value" : "true",
-                                          "type" : "Literal"
-                                       } ]
-                                    },
-                                    "then" : {
-                                       "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                       "value" : "true",
-                                       "type" : "Literal"
-                                    },
-                                    "else" : {
-                                       "valueType" : "{urn:hl7-org:elm-types:r1}String",
-                                       "value" : "false",
-                                       "type" : "Literal"
+                                       },
+                                       "asTypeSpecifier" : {
+                                          "name" : "{urn:hl7-org:elm-types:r1}Boolean",
+                                          "type" : "NamedTypeSpecifier"
+                                       }
                                     }
                                  },
                                  "asTypeSpecifier" : {

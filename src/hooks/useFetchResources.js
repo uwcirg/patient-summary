@@ -8,13 +8,15 @@ import {
   getChartConfig,
   getElmDependencies,
   getInterventionLogicLib,
+  isEmptyArray,
+  isNumber,
+} from "../util/util";
+import {
   getResourcesByResourceType,
   getFhirResourcesFromQueryResult,
   getFHIRResourcesToLoad,
   getFHIRResourcePaths,
-  isNumber,
-  isEmptyArray,
-} from "../util/util";
+} from "../util/fhirUtil";
 import Questionnaire from "../models/Questionnaire";
 
 export default function useFetchResources() {
@@ -152,7 +154,6 @@ export default function useFetchResources() {
         const [setupExecution, sendPatientBundle, evaluateExpression] =
           initialzieCqlWorker(cqlWorker);
         const questionnaireObject = new Questionnaire(questionnaireJson);
-        console.log("q object ", questionnaireObject);
         const interventionLibId = questionnaireObject.interventionLibId;
         const chartConfig = getChartConfig(questionnaireObject.id);
         /* get CQL expressions */
@@ -164,6 +165,7 @@ export default function useFetchResources() {
             "Error retrieving ELM lib son for " + questionnaireId
           );
         });
+        console.log("id ? ", questionnaireObject.id, " name ", questionnaireObject.name)
         setupExecution(
           elmJson,
           valueSetJson,
@@ -335,7 +337,7 @@ export default function useFetchResources() {
           })()
         );
         Promise.allSettled(requests).then((results) => {
-          if (!results || !results.length) {
+          if (isEmptyArray(results)) {
             onErrorCallback();
             return;
           }

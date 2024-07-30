@@ -5,13 +5,13 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import { scrollToElement } from "../util/util";
+import { isEmptyArray, scrollToElement } from "../util/util";
 
 export default function SectionList(props) {
   const theme = useTheme();
   const { list, onClickEvent, expanded } = props;
-  const renderList = list && list.length ? list : null;
-  if (!renderList || !renderList.length) return false;
+  const renderList = !isEmptyArray(list) ? list : null;
+  if (isEmptyArray(renderList)) return false;
   return (
     <List className="sections-list" sx={{ marginTop: theme.spacing(3) }}>
       {renderList.map((section) => (
@@ -46,6 +46,7 @@ export default function SectionList(props) {
                   sx: {
                     fontWeight: 500,
                     whiteSpace: "normal",
+                    textWrap: "balance"
                   },
                 }}
               />
