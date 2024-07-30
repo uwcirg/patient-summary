@@ -81,10 +81,8 @@ export default function Summary(props) {
   );
   const renderTitle = () => {
     let questionnaireTitle = questionnaireId;
-    if (data) {
-      const qo = new Questionnaire(data.questionnaire, questionnaireId);
-      questionnaireTitle = qo.displayName();
-    }
+    const qo = new Questionnaire(data?.questionnaire, questionnaireId);
+    questionnaireTitle = qo.displayName;
     return (
       <Typography
         variant="h6"

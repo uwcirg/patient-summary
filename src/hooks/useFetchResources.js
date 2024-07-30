@@ -2,7 +2,6 @@ import { useContext, useReducer, useState, useRef } from "react";
 import { useQuery } from "react-query";
 import { FhirClientContext } from "../context/FhirClientContext";
 import { QuestionnaireListContext } from "../context/QuestionnaireListContext";
-import QuestionnaireConfig from "../config/questionnaire_config";
 import Worker from "cql-worker/src/cql.worker.js"; // https://github.com/webpack-contrib/worker-loader
 import { initialzieCqlWorker } from "cql-worker";
 import {
@@ -14,8 +13,9 @@ import {
   getFHIRResourcesToLoad,
   getFHIRResourcePaths,
   isNumber,
+  isEmptyArray,
 } from "../util/util";
-import qConfig from "../config/questionnaire_config";
+import Questionnaire from "../models/Questionnaire";
 
 export default function useFetchResources() {
   const { client, patient } = useContext(FhirClientContext);
@@ -57,15 +57,15 @@ export default function useFetchResources() {
       complete: false,
       error: false,
     })),
-    ...questionnareKeys.map((qid) => ({
-      id: qid,
-      title:
-        qConfig[qid] && qConfig[qid].shortTitle
-          ? `Data for Questionnaire ${qConfig[qid].shortTitle}`
-          : `Data for Questionnaire ${qid}`,
-      complete: false,
-      error: false,
-    })),
+    ...questionnareKeys.map((qid) => {
+      const qObject = new Questionnaire("", qid);
+      return {
+        id: qid,
+        title: `Resources for ${qObject.shortName}`,
+        complete: false,
+        error: false,
+      };
+    }),
   ];
   // hook for tracking resource load state
   const resourceReducer = (state, action) => {
@@ -119,13 +119,18 @@ export default function useFetchResources() {
           patientBundle,
           "Questionnaire"
         );
-        console.log("patient Bundle ", patientBundle);
-        console.log("questionnaireResources ", questionnaireResources);
+        console.log(
+          `questionnaireResources for ${questionnaireId}`,
+          questionnaireResources
+        );
         const returnResult = questionnaireResources
-          ? questionnaireResources.filter((resource) => {
+          ? questionnaireResources.find((resource) => {
               if (!exactMatch) {
-                const arrMatches = [String(resource.name).toLowerCase()];
                 const toMatch = String(questionnaireId).toLowerCase();
+                const arrMatches = [
+                  String(resource.name).toLowerCase(),
+                  String(resource.id).toLowerCase(),
+                ];
                 return (
                   String(resource.id).toLowerCase() === toMatch ||
                   arrMatches.find((key) => key.includes(toMatch))
@@ -134,9 +139,9 @@ export default function useFetchResources() {
               return resource.id === questionnaireId;
             })
           : null;
-        if (returnResult && returnResult.length) {
-          sessionStorage.setItem(storageKey, JSON.stringify(returnResult[0]));
-          return returnResult[0];
+        if (returnResult) {
+          sessionStorage.setItem(storageKey, JSON.stringify(returnResult));
+          return returnResult;
         }
         return null;
       };
@@ -146,24 +151,13 @@ export default function useFetchResources() {
         // Initialize the cql-worker
         const [setupExecution, sendPatientBundle, evaluateExpression] =
           initialzieCqlWorker(cqlWorker);
-        const questionaireKey = String(questionnaireId).toLowerCase();
-        const matchedKeys = Object.keys(QuestionnaireConfig).filter((id) => {
-          const match = String(id).toLowerCase();
-          return (
-            String(questionnaireJson.id).toLowerCase() === match ||
-            String(questionnaireJson.name).toLowerCase().includes(match)
-          );
-        });
-        const targetQId = matchedKeys.length ? matchedKeys[0] : questionaireKey;
-        // console.log("matched item from qConfig ", matchedKeys);
-        // console.log("questionnaireJSON ", questionnaireJson);
-        // console.log("matched target  ", targetQId);
-        const chartConfig = getChartConfig(targetQId);
-        const questionnaireConfig = QuestionnaireConfig[targetQId] || {};
-
+        const questionnaireObject = new Questionnaire(questionnaireJson);
+        console.log("q object ", questionnaireObject);
+        const interventionLibId = questionnaireObject.interventionLibId;
+        const chartConfig = getChartConfig(questionnaireObject.id);
         /* get CQL expressions */
         const [elmJson, valueSetJson] = await getInterventionLogicLib(
-          questionnaireConfig.customCQL ? targetQId : ""
+          interventionLibId
         ).catch((e) => {
           console.log("Error retrieving ELM lib son for " + questionnaireId, e);
           throw new Error(
@@ -174,12 +168,11 @@ export default function useFetchResources() {
           elmJson,
           valueSetJson,
           {
-            QuestionnaireID: questionnaireJson.id,
-            QuestionnaireName: questionnaireJson.name,
+            QuestionnaireID: questionnaireObject.id,
+            QuestionnaireName: questionnaireObject.name,
           },
           getElmDependencies()
         );
-
         // Send patient info to CQL worker to process
         sendPatientBundle(patientBundle);
 
@@ -211,29 +204,32 @@ export default function useFetchResources() {
         } catch (e) {
           console.log("Error executing CQL expression: ", e);
         }
-        const scoringData =
-          cqlData && Array.isArray(cqlData) && cqlData.length
-            ? cqlData.filter((item) => {
-                return (
-                  item && item.responses && isNumber(item.score) && item.date
-                );
-              })
-            : null;
-        const chartData =
-          scoringData && scoringData.length
-            ? scoringData.map((item) => ({
-                ...item,
-                ...(item.scoringParams ? item.scoringParams : {}),
-                date: item.date,
-                total: item.score,
-              }))
-            : null;
-        const scoringParams =
-          cqlData && cqlData.length ? cqlData[0].scoringParams : {};
+        const scoringData = !isEmptyArray(cqlData)
+          ? cqlData.filter((item) => {
+              return (
+                item &&
+                !isEmptyArray(item.responses) &&
+                isNumber(item.score) &&
+                item.date
+              );
+            })
+          : null;
+        const chartData = !isEmptyArray(scoringData)
+          ? scoringData.map((item) => ({
+              ...item,
+              ...(item.scoringParams ?? {}),
+              date: item.date,
+              total: item.score,
+            }))
+          : null;
+        const scoringParams = !isEmptyArray(cqlData)
+          ? cqlData[0].scoringParams
+          : {};
 
         const returnResult = {
           chartConfig: { ...chartConfig, ...scoringParams },
           chartData: chartData,
+          scoringData: scoringData,
           responses: cqlData,
           questionnaire: questionnaireJson,
         };

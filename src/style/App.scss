@@ -98,6 +98,25 @@ p {
   }
 }
 
+.MuiTable-root {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  thead {
+    th:first-of-type {
+      z-index: 99999 !important;
+      left: 0;
+    }
+  }
+}
+.responses-container {
+  position: relative;
+  .table-root {
+    div div div {
+      max-height: calc(100vh - 120px);
+    }
+  }
+}
+
 .MuiButton-contained,
 .MuiButton-outlined {
   border-radius: 24px !important;

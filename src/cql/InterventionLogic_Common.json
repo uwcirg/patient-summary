@@ -417,6 +417,109 @@
                }
             } ]
          }, {
+            "name" : "MatchedReponsesByQuestionnaireId",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "type" : "FunctionDef",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "Q",
+                  "expression" : {
+                     "name" : "responses",
+                     "type" : "OperandRef"
+                  }
+               } ],
+               "relationship" : [ ],
+               "where" : {
+                  "type" : "And",
+                  "operand" : [ {
+                     "type" : "Not",
+                     "operand" : {
+                        "type" : "Equal",
+                        "operand" : [ {
+                           "type" : "PositionOf",
+                           "pattern" : {
+                              "type" : "Lower",
+                              "operand" : {
+                                 "name" : "QuestionnaireID",
+                                 "type" : "OperandRef"
+                              }
+                           },
+                           "string" : {
+                              "type" : "Lower",
+                              "operand" : {
+                                 "path" : "value",
+                                 "type" : "Property",
+                                 "source" : {
+                                    "path" : "questionnaire",
+                                    "scope" : "Q",
+                                    "type" : "Property"
+                                 }
+                              }
+                           }
+                        }, {
+                           "type" : "Negate",
+                           "operand" : {
+                              "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                              "value" : "1",
+                              "type" : "Literal"
+                           }
+                        } ]
+                     }
+                  }, {
+                     "type" : "Equal",
+                     "operand" : [ {
+                        "path" : "value",
+                        "type" : "Property",
+                        "source" : {
+                           "path" : "status",
+                           "scope" : "Q",
+                           "type" : "Property"
+                        }
+                     }, {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                        "value" : "completed",
+                        "type" : "Literal"
+                     } ]
+                  } ]
+               },
+               "sort" : {
+                  "by" : [ {
+                     "direction" : "desc",
+                     "path" : "authored",
+                     "type" : "ByColumn"
+                  }, {
+                     "direction" : "desc",
+                     "type" : "ByExpression",
+                     "expression" : {
+                        "path" : "lastUpdated",
+                        "type" : "Property",
+                        "source" : {
+                           "name" : "meta",
+                           "type" : "IdentifierRef"
+                        }
+                     }
+                  } ]
+               }
+            },
+            "operand" : [ {
+               "name" : "responses",
+               "operandTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}QuestionnaireResponse",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               }
+            }, {
+               "name" : "QuestionnaireID",
+               "operandTypeSpecifier" : {
+                  "name" : "{urn:hl7-org:elm-types:r1}String",
+                  "type" : "NamedTypeSpecifier"
+               }
+            } ]
+         }, {
             "name" : "GetAnswerLinkIdsByQuestionnaire",
             "context" : "Patient",
             "accessLevel" : "Public",
@@ -1063,22 +1166,35 @@
                               "then" : {
                                  "type" : "As",
                                  "operand" : {
-                                    "type" : "ToString",
-                                    "operand" : {
-                                       "strict" : false,
-                                       "type" : "As",
-                                       "operand" : {
-                                          "path" : "value",
-                                          "type" : "Property",
-                                          "source" : {
-                                             "name" : "value",
-                                             "type" : "QueryLetRef"
+                                    "type" : "If",
+                                    "condition" : {
+                                       "type" : "Equal",
+                                       "operand" : [ {
+                                          "asType" : "{urn:hl7-org:elm-types:r1}Boolean",
+                                          "type" : "As",
+                                          "operand" : {
+                                             "path" : "value",
+                                             "type" : "Property",
+                                             "source" : {
+                                                "name" : "value",
+                                                "type" : "QueryLetRef"
+                                             }
                                           }
-                                       },
-                                       "asTypeSpecifier" : {
-                                          "name" : "{urn:hl7-org:elm-types:r1}Boolean",
-                                          "type" : "NamedTypeSpecifier"
-                                       }
+                                       }, {
+                                          "valueType" : "{urn:hl7-org:elm-types:r1}Boolean",
+                                          "value" : "true",
+                                          "type" : "Literal"
+                                       } ]
+                                    },
+                                    "then" : {
+                                       "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                       "value" : "true",
+                                       "type" : "Literal"
+                                    },
+                                    "else" : {
+                                       "valueType" : "{urn:hl7-org:elm-types:r1}String",
+                                       "value" : "false",
+                                       "type" : "Literal"
                                     }
                                  },
                                  "asTypeSpecifier" : {
