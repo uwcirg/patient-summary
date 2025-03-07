@@ -4,7 +4,7 @@ class Response {
    * cql/source/InterventionLogic_Common.cql
    */
   constructor(dataObj) {
-    this.data = dataObj;
+    this.data = Object.assign({}, dataObj);
   }
   get questionText() {
     const data = this.data;
