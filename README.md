@@ -15,9 +15,6 @@ The app can be launched via the [SMART<sup>&reg;</sup> app launch framework](htt
 ### CQL Execution Engine
 All CQL calculations are executed using the [CQL Execution Engine](https://github.com/cqframework/cql-execution), an open source library that implements the CQL standard.
 
-### Web Workers
-All CQL calculations are executed within the context of a [Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers), thereby offloading them to a separate thread. This greatly improves the responsiveness of the application.
-
 ### React Material UI
 [Material UI](https://mui.com/) is a library of React UI components that implements Google's Material Design.
 

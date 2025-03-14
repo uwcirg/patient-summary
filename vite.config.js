@@ -9,7 +9,6 @@ import eslintPlugin from "vite-plugin-eslint";
 export default defineConfig({
   // Specify the path at which the application will be deployed on a server. The path MUST end with "/".
   // To deploy at the root path, use "/" or remove the "base" property entirely.
-  base: "/",
   envPrefix: "REACT_",
   plugins: [
     react(),
@@ -29,11 +28,6 @@ export default defineConfig({
       },
     }),
   ],
-  resolve: {
-    alias: {
-      "@": resolve(__dirname, "./src"),
-    },
-  },
   build: {
     // default chunk size limit is 500, but that's nearly impossible due to large JSON files
     chunkSizeWarningLimit: 1500,
@@ -61,7 +55,12 @@ export default defineConfig({
     coverage: {
       reporter: ["text", "json", "html"],
       include: ["src/**/*"],
-      exclude: [],
+      exclude: ["src/__tests__/cql/*.js"],
+    },
+  },
+  esbuild: {
+    supported: {
+      'top-level-await': true //browsers can handle top-level-await features
     },
   },
 });
