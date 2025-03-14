@@ -1,4 +1,5 @@
 import { getDisplayQTitle, isEmptyArray } from "../util/util";
+// source Questionnaire FHIR resource
 class Questionnaire {
   constructor(dataObj = null, key) {
     this.data = Object.assign({}, dataObj);
@@ -27,6 +28,7 @@ class Questionnaire {
   }
   get introText() {
     if (!this.data) return "";
+    // eslint-disable-next-line no-undef
     const commonmark = require("commonmark");
     const reader = new commonmark.Parser({ smart: true });
     const writer = new commonmark.HtmlRenderer({

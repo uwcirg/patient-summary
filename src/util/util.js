@@ -1,12 +1,15 @@
 import dayjs from "dayjs";
-import ChartConfig from "../config/chart_config.js";
+import cql from "cql-execution";
+import cqlfhir from "cql-exec-fhir";
+import ChartConfig from "../config/chart_config";
 import {
   QUESTIONNAIRE_ANCHOR_ID_PREFIX,
   queryNeedPatientBanner,
 } from "../consts/consts";
 import commonLibrary from "../cql/InterventionLogic_Common.json";
 import valueSetJson from "../cql/valueset-db.json";
-import defaultSections from "../config/sections_config.js";
+import r4HelpersELM from "../cql/FHIRHelpers-4.0.1.json";
+import defaultSections from "../config/sections_config";
 import { DEFAULT_TOOLBAR_HEIGHT } from "../consts/consts";
 
 export function getCorrectedISODate(dateString) {
@@ -17,27 +20,146 @@ export function getCorrectedISODate(dateString) {
   return correctedDate.toISOString().split("T")[0]; // just the date portion
 }
 
+class VSACAwareCodeService extends cql.CodeService {
+  // Override findValueSetsByOid to extract OID from VSAC URLS
+  findValueSetsByOid(id) {
+    const [oid] = this.extractOidAndVersion(id);
+    return super.findValueSetsByOid(oid);
+  }
+
+  // Override findValueSet to extract OID from VSAC URLS
+  findValueSet(id, version) {
+    const [oid, embeddedVersion] = this.extractOidAndVersion(id);
+    return super.findValueSet(oid, version != null ? version : embeddedVersion);
+  }
+
+  /**
+   * Extracts the oid and version from a url, urn, or oid. Only url supports an embedded version
+   * (separately by |); urn and oid will never return a version. If the input value is not a valid
+   * urn or VSAC URL, it is assumed to be an oid and returned as-is.
+   * Borrowed from: https://github.com/cqframework/cql-exec-vsac/blob/master/lib/extractOidAndVersion.js
+   * @param {string} id - the urn, url, or oid
+   * @returns {[string,string]} the oid and optional version as a pair
+   */
+  extractOidAndVersion(id) {
+    if (id == null) return [];
+
+    // first check for VSAC FHIR URL (ideally https is preferred but support http just in case)
+    // if there is a | at the end, it indicates that a version string follows
+    let m = id.match(
+      /^https?:\/\/cts\.nlm\.nih\.gov\/fhir\/ValueSet\/([^|]+)(\|(.+))?$/
+    );
+    if (m) return m[3] == null ? [m[1]] : [m[1], m[3]];
+
+    // then check for urn:oid
+    m = id.match(/^urn:oid:(.+)$/);
+    if (m) return [m[1]];
+
+    // finally just return as-is
+    return [id];
+  }
+}
+
+export async function evalExpressionForIntervention(
+  expression,
+  elm,
+  elmDependencies,
+  valueSetDB,
+  bundle,
+  params
+) {
+  if (!elm) return null;
+  let evalResult = null;
+  let lib = new cql.Library(
+    elm,
+    new cql.Repository({
+      FHIRHelpers: r4HelpersELM,
+      ...elmDependencies,
+    })
+  );
+  const executor = new cql.Executor(
+    lib,
+    new VSACAwareCodeService(valueSetDB),
+    params ?? {}
+  );
+  const interventionPatientSource = cqlfhir.PatientSource.FHIRv401();
+  interventionPatientSource.loadBundles([bundle]);
+ // console.log("bundle to be loaded ", bundle)
+  try {
+    evalResult = await executor.exec_expression(
+      expression,
+      interventionPatientSource
+    );
+  } catch (e) {
+    evalResult = null;
+    console.log(`Error executing CQL `, e);
+  }
+  if (evalResult) {
+    if (evalResult.patientResults) {
+      const values = Object.values(evalResult.patientResults);
+      if (values.length) return values[0][expression];
+      return null;
+    }
+    return null;
+  }
+  return evalResult;
+}
+
+export async function getResourceLogicLib(resourceId) {
+  if (!resourceId) return null;
+  const storageLib = sessionStorage.getItem(`lib_${resourceId}ResourceLibrary`);
+  let elmJson = storageLib ? JSON.parse(storageLib) : null;
+  const cqlModules = import.meta.glob(`../cql/*ResourceLibrary.json`);
+  if (!elmJson) {
+    try {
+      if (cqlModules[`../cql/${resourceId}ResourceLibrary.json`]) {
+        elmJson = await cqlModules[`../cql/${resourceId}ResourceLibrary.json`]()
+          .then((module) => module.default)
+          .catch((e) => {
+            throw new Error(e);
+          });
+      }
+      if (elmJson)
+        sessionStorage.setItem(`lib_${resourceId}ResourceLibrary`, JSON.stringify(elmJson));
+    } catch (e) {
+      console.log("Error loading Cql ELM library for " + resourceId, e);
+      throw new Error(e);
+    }
+    // console.log("ElM json ", elmJson);
+  }
+  return [elmJson, valueSetJson];
+}
+
 export async function getInterventionLogicLib(interventionId) {
-  const DEFAULT_FILENAME = "InterventionLogicLibrary.json";
+  const DEFAULT_FILENAME = "InterventionLogicLibrary";
   let fileName = DEFAULT_FILENAME;
   if (interventionId) {
     // load questionnaire specific CQL
-    fileName = `${interventionId.toUpperCase()}_InterventionLogicLibrary.json`;
+    fileName = `${interventionId.toUpperCase()}_InterventionLogicLibrary`;
   }
   const storageLib = sessionStorage.getItem(`lib_${fileName}`);
   let elmJson = storageLib ? JSON.parse(storageLib) : null;
+  const cqlModules = import.meta.glob("../cql/*InterventionLogic*.json");
   if (!elmJson) {
     try {
-      elmJson = await import(`../cql/${fileName}`).then(
-        (module) => module.default
-      );
+      if (cqlModules[`../cql/${fileName}.json`]) {
+        elmJson = await cqlModules[`../cql/${fileName}.json`]()
+          .then((module) => module.default)
+          .catch((e) => {
+            throw new Error(e);
+          });
+      } else {
+        elmJson = await cqlModules[`../cql/${DEFAULT_FILENAME}.json`]()
+          .then((module) => module.default)
+          .catch((e) => {
+            throw new Error(e);
+          });
+      }
       if (interventionId && elmJson)
         sessionStorage.setItem(`lib_${fileName}`, JSON.stringify(elmJson));
     } catch (e) {
-      elmJson = await import(`../cql/${DEFAULT_FILENAME}`).then(
-        (module) => module.default
-      );
-      console.log("Error loading Cql ELM library " + e);
+      console.log("Error loading Cql ELM library for " + fileName, e);
+      throw new Error(e);
     }
   }
   return [elmJson, valueSetJson];
@@ -63,7 +185,6 @@ export function getChartConfig(questionnaireId) {
   const matchConfig = matchItems.find((item) => {
     if (!item.keys || isEmptyArray(item.keys)) return false;
     const arrMatches = item.keys.map((key) => key.toLowerCase());
-    console.log("arr matches ", arrMatches);
     return arrMatches.indexOf(questionnaireId.toLowerCase()) !== -1;
   });
   if (matchConfig) return { ...ChartConfig["default"], ...matchConfig };
@@ -198,15 +319,18 @@ export function getEnv(key) {
   //window application global variables
   if (window["appConfig"] && window["appConfig"][key])
     return window["appConfig"][key];
-  const envDefined = typeof process !== "undefined" && process.env;
+  const envDefined = typeof import.meta.env !== "undefined" && import.meta.env;
   //enviroment variables as defined in Node
-  if (envDefined && process.env[key]) return process.env[key];
+  if (envDefined && import.meta.env[key]) return import.meta.env[key];
   return "";
 }
 
 export function getEnvs() {
   const appConfig = window["appConfig"] ? window["appConfig"] : {};
-  const processEnvs = process.env ? process.env : {};
+  const processEnvs =
+    typeof import.meta.env !== "undefined" && import.meta.env
+      ? import.meta.env
+      : {};
   return {
     ...appConfig,
     ...processEnvs,
@@ -288,7 +412,7 @@ export function shouldShowPatientInfo(client) {
   // check token response,
   const tokenResponse = client ? client.getState("tokenResponse") : null;
   //check need_patient_banner launch context parameter
-  if (tokenResponse && tokenResponse.hasOwnProperty("need_patient_banner"))
+  if (tokenResponse && tokenResponse["need_patient_banner"])
     return tokenResponse["need_patient_banner"];
   return String(getEnv("REACT_APP_DISABLE_HEADER")) !== "true";
 }

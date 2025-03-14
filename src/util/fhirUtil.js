@@ -36,9 +36,13 @@ export function getFHIRResourceQueryParams(resourceType, options) {
     _count: 200,
   };
   const queryOptions = options ? options : {};
+  const envCategory = getEnv("REACT_APP_FHIR_CAREPLAN_CATEGORY");
+  const envObCategories = getEnv("REACT_APP_FHIR_OBSERVATION_CATEGORIES");
+  const observationCategories = envObCategories
+    ? envObCategories
+    : DEFAULT_OBSERVATION_CATEGORIES;
   switch (String(resourceType).toLowerCase()) {
     case "careplan":
-      const envCategory = getEnv("REACT_APP_FHIR_CAREPLAN_CATEGORY");
       if (queryOptions.patientId) {
         paramsObj["subject"] = `Patient/${queryOptions.patientId}`;
       }
@@ -52,15 +56,11 @@ export function getFHIRResourceQueryParams(resourceType, options) {
         Array.isArray(queryOptions.questionnaireList) &&
         queryOptions.questionnaireList.length
       ) {
-        paramsObj[queryOptions.exactMatch ? "_id" : "name:contains"] =
-          queryOptions.questionnaireList.join(",");
+        let qList = queryOptions.questionnaireList.join(",");
+        paramsObj[queryOptions.exactMatch ? "_id" : "name:contains"] = qList;
       }
       break;
     case "observation":
-      const envObCategories = getEnv("REACT_APP_FHIR_OBSERVATION_CATEGORIES");
-      const observationCategories = envObCategories
-        ? envObCategories
-        : DEFAULT_OBSERVATION_CATEGORIES;
       paramsObj["category"] = observationCategories;
       if (queryOptions.patientId) {
         paramsObj["patient"] = `Patient/${queryOptions.patientId}`;
