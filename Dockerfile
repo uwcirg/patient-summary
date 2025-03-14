@@ -33,4 +33,4 @@ COPY docker-entrypoint-override.sh /usr/bin/docker-entrypoint-override.sh
 ENTRYPOINT ["/usr/bin/docker-entrypoint-override.sh", "/docker-entrypoint.sh"]
 CMD ["nginx","-g","daemon off;"]
 
-COPY --from=node-prod /opt/node/app/build /usr/share/nginx/html
+COPY --from=node-prod /opt/node/app/dist /usr/share/nginx/html

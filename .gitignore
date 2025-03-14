@@ -10,7 +10,7 @@
 /src/__tests__/cql/dump_files
 
 # production
-/build
+/dist
 
 # misc
 .DS_Store
