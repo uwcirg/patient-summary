@@ -1,17 +1,16 @@
 import React, { lazy, Suspense } from "react";
-import BallotIcon from "@mui/icons-material/Ballot";
-import MedicalInformationIcon from "@mui/icons-material/MedicalInformation";
-import FactCheckIcon from '@mui/icons-material/FactCheck';
-import SummarizeIcon from "@mui/icons-material/Summarize";
+import BallotIcon from "@mui/icons-material/BallotOutlined";
+import MedicalInformationIcon from "@mui/icons-material/MedicalInformationOutlined";
+import FactCheckIcon from "@mui/icons-material/FactCheckOutlined";
+import SummarizeIcon from "@mui/icons-material/SummarizeOutlined";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 
-
 const renderLoader = () => (
   <Stack
     direction="row"
-    spacing={2}
+    spacing={1}
     alignItems="center"
     sx={{
       marginTop: (theme) => theme.spacing(1),
@@ -24,40 +23,44 @@ const renderLoader = () => (
 );
 
 const renderScoringSummary = (props) => {
-  const summaryData = props.summaryData || {};
-  const ScoreSummary = lazy(() =>
-    import("../components/sections/ScoringSummary")
+  const summaryData = props.summaryData?.data || {};
+  const ScoreSummary = lazy(
+    () => import("../components/sections/ScoringSummary")
   );
+  const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
+  const chartData = props.allChartData;
+  const chartKeys = [... new Set(chartData?.map(o => o.key))];
   return (
     <Suspense fallback={renderLoader()}>
-      <ScoreSummary
-        summaryData={summaryData.data}
-      ></ScoreSummary>
+      <Stack spacing={1} direction={"column"} sx={{
+         marginLeft: (theme) => theme.spacing(1),
+         marginRight: (theme) => theme.spacing(1)
+      }}>
+        <ChartSummary
+          data={chartData}
+          keys={chartKeys}
+        ></ChartSummary>
+        <ScoreSummary summaryData={summaryData}></ScoreSummary>
+      </Stack>
     </Suspense>
   );
 };
 
 const renderMedicalHistory = (props) => {
-  const MedicalHistory = lazy(() =>
-    import("../components/sections/MedicalHistory")
+  const MedicalHistory = lazy(
+    () => import("../components/sections/MedicalHistory")
   );
   return (
     <Suspense fallback={renderLoader()}>
-      <MedicalHistory
-        data={props.evalData?.Condition}
-      ></MedicalHistory>
+      <MedicalHistory data={props.evalData?.Condition}></MedicalHistory>
     </Suspense>
   );
 };
 const renderObservations = (props) => {
-  const Observation = lazy(() =>
-    import("../components/sections/Observations")
-  );
+  const Observation = lazy(() => import("../components/sections/Observations"));
   return (
     <Suspense fallback={renderLoader()}>
-      <Observation
-       data={props.evalData?.Observation}
-      ></Observation>
+      <Observation data={props.evalData?.Observation}></Observation>
     </Suspense>
   );
 };
@@ -82,7 +85,7 @@ const DEFAULT_SECTIONS = [
     anchorElementId: "anchor_scoresummary",
     icon: (props) => (
       <SummarizeIcon
-        fontSize="large"
+        fontSize="medium"
         color="primary"
         {...props}
       ></SummarizeIcon>
@@ -96,7 +99,7 @@ const DEFAULT_SECTIONS = [
     resources: ["Condition"],
     icon: (props) => (
       <MedicalInformationIcon
-        fontSize="large"
+        fontSize="medium"
         color="primary"
         {...props}
       ></MedicalInformationIcon>
@@ -110,7 +113,7 @@ const DEFAULT_SECTIONS = [
     resources: ["Observation"],
     icon: (props) => (
       <FactCheckIcon
-        fontSize="large"
+        fontSize="medium"
         color="primary"
         {...props}
       ></FactCheckIcon>
@@ -122,7 +125,7 @@ const DEFAULT_SECTIONS = [
     title: "Questionnaire Responses",
     anchorElementId: `anchor_responses`,
     icon: (props) => (
-      <BallotIcon fontSize="large" color="primary" {...props}></BallotIcon>
+      <BallotIcon fontSize="medium" color="primary" {...props}></BallotIcon>
     ),
     component: (props) => renderSummaries(props),
   },

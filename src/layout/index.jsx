@@ -4,7 +4,6 @@ import { ErrorBoundary } from "react-error-boundary";
 import { QueryClient, QueryClientProvider } from "react-query";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
-import Base from "./Base";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 import { injectFaviconByProject, fetchEnvData } from "../util/util";
@@ -12,6 +11,7 @@ import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
 import FhirClientProvider from "../context/FhirClientProvider";
 import QuestionnaireListProvider from "../context/QuestionnaireListProvider";
+import Base from "./Base";
 
 function ErrorFallBack({ error }) {
   if (!error.message) return null;

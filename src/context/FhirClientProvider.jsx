@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useReducer } from "react";
 import PropTypes from "prop-types";
 import FHIR from "fhirclient";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
-import { FhirClientContext } from "./FhirClientContext";
 import { queryPatientIdKey } from "../consts/consts";
 import ErrorComponent from "../components/ErrorComponent";
 import {
@@ -14,11 +13,21 @@ import {
   getUserId,
 } from "../util/util";
 import { writeToLog } from "../util/log";
+import { FhirClientContext } from "./FhirClientContext";
 
 export default function FhirClientProvider(props) {
-  const [client, setClient] = useState(null);
-  const [patient, setPatient] = useState(null);
-  const [error, setError] = useState(null);
+  const reducer = (state, action) => {
+    return {
+      ...state,
+      ...action,
+    };
+  };
+
+  const [state, dispatch] = useReducer(reducer, {
+    client: null,
+    patient: null,
+    error: null,
+  });
 
   const getPatient = async (client) => {
     if (!client) return;
@@ -55,12 +64,9 @@ export default function FhirClientProvider(props) {
     FHIR.oauth2.ready().then(
       (client) => {
         console.log("Auth complete, client ready.");
-        setClient(client);
         getPatient(client)
           .then((result) => {
             console.log("Patient loaded.");
-            setPatient(result);
-            setError(null);
             addMamotoTracking(getUserId(client));
             writeToLog(
               "info",
@@ -73,24 +79,30 @@ export default function FhirClientProvider(props) {
                 text: "auth session started",
               }
             );
+            dispatch({
+              client: client,
+              patient: result,
+            });
           })
           .catch((e) => {
-            setError(e);
+            dispatch({
+              error: e,
+            });
           });
       },
       (error) => {
         console.log("Auth error: ", error);
-        setError(error);
+        dispatch({
+          error: error,
+        });
       }
     );
   }, []);
 
   return (
-    <FhirClientContext.Provider
-      value={{ client: client, patient: patient, error: error }}
-    >
+    <FhirClientContext.Provider value={state}>
       <FhirClientContext.Consumer>
-        {({ client, error }) => {
+        {({ client, patient, error }) => {
           // any auth error that may have been rejected with
           if (error) {
             return (

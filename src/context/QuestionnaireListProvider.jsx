@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useReducer } from "react";
 import PropTypes from "prop-types";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -6,34 +6,58 @@ import { getEnvQuestionnaireList, getEnv, isEmptyArray } from "../util/util";
 import { QuestionnaireListContext } from "./QuestionnaireListContext";
 import { FhirClientContext } from "./FhirClientContext";
 
-let loadComplete = false;
+// let loadComplete = false;
 
 export default function QuestionnaireListProvider({ children }) {
-  const [error, setError] = useState();
-  const [questionnaireList, setQuestionnaireList] = useState(
-    getEnvQuestionnaireList()
-  );
-  const [exactMatch, setExactMatch] = useState(
-    String(getEnv("REACT_APP_EPIC_QUERIES")) === "true"
-  );
+  const isFromEpic = String(getEnv("REACT_APP_EPIC_QUERIES")) === "true";
+  // hook for tracking state
+  const resourceReducer = (state, action) => {
+    switch (action.type) {
+      case "LIST":
+        return {
+          ...state,
+          questionnaireList: action.questionnaireList,
+          exactMatch: !!action.exactMatch,
+          complete: true,
+        };
+      case "ERROR":
+        return {
+          ...state,
+          error: true,
+          errorMessage: action.message,
+          complete: true,
+        };
+      default:
+        return state;
+    }
+  };
+  const [state, dispatch] = useReducer(resourceReducer, {
+    questionnaireList: [],
+    exactMatch: isFromEpic,
+    error: false,
+    errorMessage: "",
+  });
   const { client, patient } = useContext(FhirClientContext);
 
   useEffect(() => {
-    const handleErrorCallback = (message) => {
-      setError(message);
-      loadComplete = true;
-    };
+    const preloadQuestionnaireList = getEnvQuestionnaireList();
     if (!client || !patient) {
-      handleErrorCallback("No FHIR client or patient provided");
+      dispatch({
+        type: "ERROR",
+        errorMessage: "No FHIR client or patient provided",
+      });
       return;
     }
-    if (loadComplete) return;
-    if (!isEmptyArray(questionnaireList)) {
+    if (state.complete) return;
+    if (!isEmptyArray(preloadQuestionnaireList)) {
       console.log(
         "questionnaire list to load from environment variable ",
-        questionnaireList
+        preloadQuestionnaireList
       );
-      loadComplete = true;
+      dispatch({
+        type: "LIST",
+        questionnaireList: preloadQuestionnaireList,
+      });
       return;
     }
     // load questionnaires based on questionnaire responses
@@ -57,7 +81,10 @@ export default function QuestionnaireListProvider({ children }) {
           matchedResults
         );
         if (isEmptyArray(matchedResults)) {
-          handleErrorCallback("No questionnaire list set");
+          dispatch({
+            type: "ERROR",
+            errorMessage: "No questionnaire list set",
+          });
           return;
         }
         const qIds = matchedResults.map(
@@ -68,23 +95,22 @@ export default function QuestionnaireListProvider({ children }) {
           "questionnaire list from questionnaire responses to load ",
           uniqueQIds
         );
-        setExactMatch(true);
-        setQuestionnaireList(uniqueQIds);
-        loadComplete = true;
+        dispatch({
+          type: "LIST",
+          questionnaireList: uniqueQIds,
+          exactMatch: true,
+        });
       })
       .catch((e) => {
-        handleErrorCallback(e);
+        dispatch({
+          type: "ERROR",
+          errorMessage: e,
+        });
       });
-  }, [client, patient, questionnaireList]);
+  }, [client, patient, state.complete]);
 
   return (
-    <QuestionnaireListContext.Provider
-      value={{
-        questionnaireList: questionnaireList,
-        exactMatch: exactMatch,
-        error: error,
-      }}
-    >
+    <QuestionnaireListContext.Provider value={state}>
       <QuestionnaireListContext.Consumer>
         {({ questionnaireList, error }) => {
           // if client and patient are available render the children component(s)

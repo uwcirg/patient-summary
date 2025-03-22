@@ -1,6 +1,5 @@
 import React, { forwardRef, useState } from "react";
-import { useTheme } from "@mui/material/styles";
-import { styled } from "@mui/material/styles";
+import {  styled, useTheme } from "@mui/material/styles";
 import PropTypes from "prop-types";
 import MaterialTable from "@material-table/core";
 import Alert from "@mui/material/Alert";
@@ -24,8 +23,6 @@ import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import Filter from "@mui/icons-material/FilterAlt";
 import OutlinedIcon from "@mui/icons-material/WysiwygOutlined";
-//import ListAltIcon from "@mui/icons-material/ListAlt";
-import Score from "./Score";
 import {
   getLocaleDateStringFromDate,
   isEmptyArray,
@@ -33,6 +30,7 @@ import {
 } from "../util/util";
 import Response from "../models/Response";
 import Questionnaire from "../models/Questionnaire";
+import Score from "./Score";
 
 const Transition = forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -247,7 +245,7 @@ export default function Responses(props) {
     const arrData = data.filter((item, index) => index === 0);
     // this will render the current and the previous response(s) for print
     return (
-      <Box className="print-only" sx={{ marginTop: theme.spacing(2) }}>
+      <Box className="print-only responses-table-container" sx={{ marginTop: theme.spacing(2) }}>
         <Table
           aria-label="responses table"
           size="small"
@@ -406,8 +404,10 @@ export default function Responses(props) {
     </Stack>
   );
 
-  const Root = styled("div")(() => ({
-    width: "100%",
+  const Root = styled("div")(({theme}) => ({
+    [theme.breakpoints.up("md")]: {
+      minWidth: "600px",
+    },
   }));
 
   const SummaryHeaderCell = styled("div")(({ theme }) => ({
@@ -453,7 +453,7 @@ export default function Responses(props) {
             Questionnaire Responses for{" "}
             {questionnaireTitle}
           </Typography>
-          <Button autoFocus color="inherit" onClick={handleClose}>
+          <Button color="inherit" onClick={handleClose}>
             Close
           </Button>
         </Toolbar>

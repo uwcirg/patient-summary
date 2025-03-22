@@ -2,16 +2,16 @@ import PropTypes from "prop-types";
 import React, { useContext } from "react";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
-import Header from "./Header";
-import SideNav from "./SideNav";
+import "../style/App.scss";
+import { FhirClientContext } from "../context/FhirClientContext";
 import {
   getEnvDashboardURL,
   getSectionsToShow,
   shouldShowPatientInfo,
   shouldShowNav,
 } from "../util/util";
-import "../style/App.scss";
-import { FhirClientContext } from "../context/FhirClientContext";
+import Header from "./Header";
+import SideNav from "./SideNav";
 
 export default function Content({ children }) {
   const sections = getSectionsToShow();

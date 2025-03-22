@@ -1,5 +1,5 @@
-import { getEnv, getSectionsToShow, hasValue } from "./util";
 import { DEFAULT_OBSERVATION_CATEGORIES } from "../consts/consts";
+import { getEnv, getSectionsToShow, hasValue } from "./util";
 
 export function getFHIRResourcesToLoad() {
   const defaultList = [
@@ -25,7 +25,6 @@ export function getFHIRResourcesToLoad() {
     ? [...new Set([...allResources, ...defaultList])]
     : defaultList;
 
-  //console.log("Resources to load : ", resources);
   return resources;
 }
 

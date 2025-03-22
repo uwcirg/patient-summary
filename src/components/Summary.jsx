@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useReducer } from "react";
+import React, { useEffect, useReducer } from "react";
 import PropTypes from "prop-types";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts/consts";
+import Questionnaire from "../models/Questionnaire";
+import { hasData, isEmptyArray } from "../util/util";
 import Error from "./ErrorComponent";
 import QuestionnaireInfo from "./QuestionnaireInfo";
-import { hasData, isEmptyArray } from "../util/util";
-import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts/consts";
 import Responses from "./Responses";
 import Chart from "./Chart";
-import Questionnaire from "../models/Questionnaire";
 
 export default function Summary(props) {
   const { questionnaireId, data } = props;
@@ -21,10 +21,22 @@ export default function Summary(props) {
         responses: [],
         chartConfig: [],
         chartData: [],
+        error: "",
+        loading: false,
       };
     }
     if (action.type === "update") {
-      return action.payload;
+      return {
+        ...action.payload,
+        loading: false,
+      };
+    }
+    if (action.type === "error") {
+      return {
+        ...summary,
+        loading: false,
+        [action.type]: action.payload,
+      };
     }
     return {
       ...summary,
@@ -35,21 +47,20 @@ export default function Summary(props) {
     responses: [],
     chartData: [],
     chartConfig: [],
+    error: "",
+    loading: true,
   });
-  const [loading, setLoading] = useState(true);
-  const [hasChart, setHasChart] = useState(false);
-  const [error, setError] = useState("");
+  const hasChart = hasData(summary.chartData);
   const anchorElementStyle = {
     position: "relative",
     top: -64,
     height: 2,
     width: 2,
   };
-  const shouldDisplayResponses = () => !loading && !error;
+  const shouldDisplayResponses = () => !summary.loading && !summary.error;
 
   const formatChartData = (data) => {
-    if (summary.chartConfig && summary.chartConfig.dataFormatter)
-      return summary.chartConfig.dataFormatter(data);
+    if (summary.chartConfig && summary.chartConfig.dataFormatter) return summary.chartConfig.dataFormatter(data);
     return data;
   };
 
@@ -57,53 +68,31 @@ export default function Summary(props) {
   const hasResponses = () => !isEmptyArray(summary.responses);
 
   const renderLoader = () =>
-    loading && (
-      <Stack
-        alignItems={"center"}
-        direction="row"
-        justifyContent={"flex-start"}
-        spacing={2}
-      >
+    summary.loading && (
+      <Stack alignItems={"center"} direction="row" justifyContent={"flex-start"} spacing={2}>
         <LinearProgress sx={{ width: "300px", marginTop: 6 }}></LinearProgress>
       </Stack>
     );
   const renderError = () =>
-    error && (
+    !!summary.error && (
       <Box sx={{ marginBottom: 1 }}>
-        <Error message={error}></Error>
+        <Error message={summary.error}></Error>
       </Box>
     );
-  const renderAnchor = () => (
-    <div
-      id={`${getAnchorElementId()}_${questionnaireId}`}
-      style={anchorElementStyle}
-    ></div>
-  );
+  const renderAnchor = () => <div id={`${getAnchorElementId()}_${questionnaireId}`} style={anchorElementStyle}></div>;
   const renderTitle = () => {
     let questionnaireTitle = questionnaireId;
     const qo = new Questionnaire(data?.questionnaire, questionnaireId);
     questionnaireTitle = qo.displayName;
     return (
-      <Typography
-        variant="h6"
-        component="h3"
-        color="accent"
-        sx={{ marginBottom: 1 }}
-        className="questionnaire-title"
-      >
+      <Typography variant="h6" component="h3" color="accent" sx={{ marginBottom: 1 }} className="questionnaire-title">
         {questionnaireTitle}
       </Typography>
     );
   };
   const renderSummary = () =>
     shouldDisplayResponses() && (
-      <Stack
-        direction="column"
-        spacing={1}
-        alignItems="flex-start"
-        className="response-summary"
-        flexWrap={"wrap"}
-      >
+      <Stack direction="column" spacing={1} alignItems="flex-start" className="response-summary" flexWrap={"wrap"}>
         {hasChart && (
           <Chart
             type={summary.chartConfig.type}
@@ -113,9 +102,7 @@ export default function Summary(props) {
             }}
           ></Chart>
         )}
-        {!hasResponses() && (
-          <Alert severity="warning">No recorded responses</Alert>
-        )}
+        {!hasResponses() && <Alert severity="warning">No recorded responses</Alert>}
         {hasResponses() && (
           <Responses
             data={summary.responses}
@@ -127,14 +114,16 @@ export default function Summary(props) {
     );
 
   useEffect(() => {
-    if (!loading) return;
-    dispatch({ type: "update", payload: data });
-    setHasChart(hasData(data ? data.chartData : null));
+    if (!summary.loading) return;
     if (data && data.error) {
-      setError(data.error);
+      dispatch({
+        type: "error",
+        payload: data.error,
+      });
+      return;
     }
-    setLoading(false);
-  }, [data, loading]);
+    dispatch({ type: "update", payload: data });
+  }, [data, summary.loading]);
 
   return (
     <>
@@ -153,9 +142,7 @@ export default function Summary(props) {
         <Stack direction="row" spacing={1} alignItems="flex-start">
           {/* questionnaire title */}
           <div>{renderTitle()}</div>
-          <QuestionnaireInfo
-            questionnaireJson={data.questionnaire}
-          ></QuestionnaireInfo>
+          <QuestionnaireInfo questionnaireJson={data.questionnaire}></QuestionnaireInfo>
         </Stack>
         {/* error message */}
         {renderError()}
@@ -170,5 +157,5 @@ export default function Summary(props) {
 Summary.propTypes = {
   questionnaireId: PropTypes.string.isRequired,
   patientBundle: PropTypes.object,
-  data: PropTypes.object
+  data: PropTypes.object,
 };

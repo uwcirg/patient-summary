@@ -14,7 +14,7 @@ export default function SectionList(props) {
   const renderList = !isEmptyArray(list) ? list : null;
   if (isEmptyArray(renderList)) return false;
   return (
-    <List className="sections-list" sx={{ marginTop: theme.spacing(3) }}>
+    <List className="sections-list" sx={{ marginTop: theme.spacing(2) }}>
       {renderList.map((section) => (
         <ListItem
           key={`listItem_${section.id}`}
@@ -31,7 +31,7 @@ export default function SectionList(props) {
               <ListItemIcon
                 title={section.title}
                 sx={{
-                  minWidth: theme.spacing(6),
+                  minWidth: theme.spacing(4),
                 }}
               >
                 {section.icon()}
@@ -42,7 +42,7 @@ export default function SectionList(props) {
               <ListItemText
                 primary={section.title}
                 primaryTypographyProps={{
-                  variant: "body1",
+                  variant: "subtitle",
                   component: "h3",
                   sx: {
                     fontWeight: 500,

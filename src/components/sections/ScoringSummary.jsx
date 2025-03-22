@@ -351,11 +351,7 @@ export default function ScoringSummary(props) {
       <TableContainer
         className="table-container"
         sx={{
-          padding: {
-            xs: 0,
-            sm: theme.spacing(0, 0.5),
-          },
-          paddingTop: 0,
+          padding: 0,
           maxWidth: {
             xs: "420px",
             sm: "100%",

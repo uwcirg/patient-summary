@@ -10,12 +10,11 @@
     "@mui/lab": "^5.0.0-alpha.88",
     "@mui/material": "^5.8.6",
     "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^13.3.0",
     "@testing-library/user-event": "^13.5.0",
     "buffer": "^6.0.3",
     "commonmark": "^0.30.0",
     "cql-exec-fhir": "^2.0.2",
-    "cql-exec-vsac": "^1.2.2",
+    "cql-exec-vsac": "^2.2.0",
     "cql-execution": "^3.1.0",
     "dayjs": "^1.11.6",
     "dompurify": "^3.2.4",
@@ -54,12 +53,17 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/preset-env": "^7.20.2",
     "@eslint/js": "^9.22.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.2.0",
     "@vitejs/plugin-react": "^4.3.4",
     "cql-testing": "^2.5.2",
     "eslint": "^9.22.0",
     "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-prettier": "^5.2.3",
     "eslint-plugin-react": "^7.37.4",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^16.0.0",
     "jsdom": "^26.0.0",
     "mocha": "^10.0.0",
@@ -76,12 +80,6 @@
   "jest": {
     "transform": {
       "^.+\\.[t|j]sx?$": "babel-jest"
-    },
-    "transformIgnorePatterns": [
-      "cql-worker/"
-    ],
-    "moduleNameMapper": {
-      "^cql*": "<rootDir>/src/__tests__/mockfiles/Worker.js"
     },
     "testMatch": [
       "<rootDir>/src/__tests__/components/*.js"

@@ -6,6 +6,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
+import { Divider } from "@mui/material";
 import Grow from "@mui/material/Grow";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
@@ -18,18 +19,12 @@ import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MoreIcon from "@mui/icons-material/MoreVert";
-import PrintIcon from "@mui/icons-material/Print";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import {
-  getEnv,
-  getEnvProjectId,
-  getSectionsToShow,
-  imageOK,
-  scrollToElement,
-} from "../util/util";
+import PrintIcon from "@mui/icons-material/LocalPrintshopOutlined";
+import DashboardIcon from "@mui/icons-material/DashboardOutlined";
+import { getEnv, getEnvProjectId, getSectionsToShow, imageOK, scrollToElement } from "../util/util";
 import PatientInfo from "../components/PatientInfo";
 import { FhirClientContext } from "../context/FhirClientContext";
-import { Divider } from "@mui/material";
+
 
 export default function Header(props) {
   const theme = useTheme();
@@ -78,8 +73,7 @@ export default function Header(props) {
 
   const renderLogo = () => {
     const projectID = getEnvProjectId();
-    if (!projectID)
-      return <DashboardIcon fontSize="large" color="primary"></DashboardIcon>;
+    if (!projectID) return <DashboardIcon fontSize="large" color="primary"></DashboardIcon>;
     else
       return (
         <>
@@ -92,18 +86,25 @@ export default function Header(props) {
               },
             }}
           >
-            <img
-              className="header-logo"
-              src={`/assets/${getEnvProjectId()}/img/logo.png`}
-              alt={"project logo"}
+            <button
+              onClick={() => (window.location = returnURL + "/clear_session")}
               style={{
-                width: 152,
-                cursor: "pointer"
+                background: "none",
+                border: 0,
               }}
-              onLoad={handleImageLoaded}
-              onError={handleImageLoaded}
-              onClick={() => window.location = returnURL + "/clear_session"}
-            ></img>
+            >
+              <img
+                className="header-logo"
+                src={`/assets/${getEnvProjectId()}/img/logo.png`}
+                alt={"project logo"}
+                style={{
+                  width: 152,
+                  cursor: "pointer",
+                }}
+                onLoad={handleImageLoaded}
+                onError={handleImageLoaded}
+              ></img>
+            </button>
           </Box>
           <Box
             sx={{
@@ -114,16 +115,23 @@ export default function Header(props) {
               },
             }}
           >
-            <img
-              src={`/assets/${getEnvProjectId()}/img/logo_mobile.png`}
-              alt={"project logo"}
-              onLoad={handleImageLoaded}
-              onError={handleImageLoaded}
+            <button
+              onClick={() => (window.location = returnURL + "/clear_session")}
               style={{
-                cursor: "pointer"
+                background: "none",
+                border: 0,
               }}
-              onClick={() => window.location = returnURL + "/clear_session"}
-            ></img>
+            >
+              <img
+                src={`/assets/${getEnvProjectId()}/img/logo_mobile.png`}
+                alt={"project logo"}
+                onLoad={handleImageLoaded}
+                onError={handleImageLoaded}
+                style={{
+                  cursor: "pointer",
+                }}
+              ></img>
+            </button>
           </Box>
         </>
       );
@@ -175,7 +183,7 @@ export default function Header(props) {
           display: {
             xs: "none",
             sm: "none",
-            md: "inline-flex"
+            md: "inline-flex",
           },
         }}
       >
@@ -191,7 +199,7 @@ export default function Header(props) {
           display: {
             sx: "inline-flex",
             sm: "inline-flex",
-            md: "none"
+            md: "none",
           },
         }}
         ref={anchorRef}
@@ -216,8 +224,7 @@ export default function Header(props) {
           <Grow
             {...TransitionProps}
             style={{
-              transformOrigin:
-                placement === "bottom-start" ? "left top" : "left bottom",
+              transformOrigin: placement === "bottom-start" ? "left top" : "left bottom",
             }}
           >
             <Paper>
@@ -244,9 +251,7 @@ export default function Header(props) {
                         onClick={() => scrollToElement(section.anchorElementId)}
                         key={`${section.anchorElementId}_item`}
                       >
-                        <ListItemIcon>
-                          {section.icon({ fontSize: "small" })}
-                        </ListItemIcon>
+                        <ListItemIcon>{section.icon({ fontSize: "small" })}</ListItemIcon>
                         <ListItemText>{section.title}</ListItemText>
                       </MenuItem>
                     ))}
@@ -294,19 +299,11 @@ export default function Header(props) {
 
   return (
     <>
-      <AppBar
-        position="fixed"
-        elevation={1}
-        sx={{ paddingRight: "0 !important", paddingLeft: "0 !important" }}
-      >
+      <AppBar position="fixed" elevation={1} sx={{ paddingRight: "0 !important", paddingLeft: "0 !important" }}>
         <Toolbar
           sx={{
-            backgroundColor: theme.palette.lighter
-              ? theme.palette.lighter.main
-              : "#FFF",
-            color: theme.palette.secondary
-              ? theme.palette.secondary.main
-              : "#444",
+            backgroundColor: theme.palette.lighter ? theme.palette.lighter.main : "#FFF",
+            color: theme.palette.secondary ? theme.palette.secondary.main : "#444",
             zIndex: (theme) => theme.zIndex.drawer + 1,
             paddingLeft: theme.spacing(2),
             paddingRight: theme.spacing(2),

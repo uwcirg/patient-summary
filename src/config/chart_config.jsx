@@ -34,27 +34,28 @@ const CHART_CONFIG = {
     xLabel: "date",
     legendType: "none",
     dataFormatter: (data) => {
-      data = data.map((item) => {
+      let dataTOUse = JSON.parse(JSON.stringify((data??[])));
+      dataTOUse = dataTOUse.map((item) => {
         item.date = new Date(item.date);
         return item;
       });
-      data = data.sort((a, b) => a.date.getTime() - b.date.getTime());
+      dataTOUse = dataTOUse.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-      let startDate = data.length
-        ? new Date(data[0].date.valueOf())
+      let startDate = dataTOUse.length
+        ? new Date(dataTOUse[0].date.valueOf())
         : new Date();
       startDate.setMonth(0);
       startDate.setDate(0);
       startDate.setFullYear(startDate.getFullYear() - 1);
-      data.unshift({
+      dataTOUse.unshift({
         total: null,
         date: startDate.valueOf(),
       });
-      data.push({
+      dataTOUse.push({
         total: null,
         date: getTomorrow().valueOf(),
       });
-      return data.map((item) => {
+      return dataTOUse.map((item) => {
         item.date = item.date.valueOf();
         return item;
       });
@@ -81,7 +82,7 @@ const CHART_CONFIG = {
         strokeDasharray: "4 2",
         legendType: "square",
         dot: (props) => {
-          const { key, otherProps } = props;
+          const {key, ...otherProps} = props;
           return <Rect key={key} {...otherProps} color="#6d4c41"></Rect>;
         },
       },
@@ -92,7 +93,7 @@ const CHART_CONFIG = {
         strokeDasharray: "6 2",
         legendType: "square",
         dot: (props) => {
-          const { key, otherProps } = props;
+          const {key, ...otherProps} = props;
           return <Rect key={key} {...otherProps} color="#5c6bc0"></Rect>;
         },
       },
@@ -110,6 +111,50 @@ const CHART_CONFIG = {
   },
 };
 export default CHART_CONFIG;
+
+
+export const COLORS = [
+  "#78281F",
+  "#a387dd",
+  "#e65100",
+  "#5E9CBC",
+  "#BC5EA6",
+  "#304ffe",
+  "#3f51b5",
+  "#673ab7",
+  "#D68C72",
+  "#880e4f",
+  "#B404AE",
+  "#2196f3",
+  "#fb8c00",
+  "#6200ea",
+  "#009688",
+  "#880e4f",
+  "#96008B",
+  "#9e9d24",
+  "#ff9800",
+  "#ffeb3b",
+  "#795548",
+  "#607d8b",
+  "#006064",
+  "#ff8a80",
+  "#00bcd4",
+  "#757575",
+  "#455a64",
+  "#c0ca33",
+  "#B633CA",
+  "#33AACA",
+];
+
+export const LEGEND_ICON_TYPES = [
+  "square",
+  "rect",
+  "circle",
+  "triangle",
+  "cross",
+  "diamond",
+  "star",
+];
 
 Rect.propTypes = {
   cx: PropTypes.number,

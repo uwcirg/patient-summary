@@ -23,15 +23,7 @@ export default function useFetchResources() {
   const SUMMARY_DATA_KEY = "summaryData";
   const { client, patient } = useContext(FhirClientContext);
   let { questionnaireList, exactMatch } = useContext(QuestionnaireListContext);
-  const questionnareKeys = !isEmptyArray(questionnaireList)
-    ? questionnaireList
-    : [];
-  const [summaryData, setSummaryData] = useState({
-    data: questionnareKeys.map((qid) => {
-      return { [qid]: null };
-    }),
-    loadComplete: false,
-  });
+  const questionnareKeys = questionnaireList ? questionnaireList : [];
   const [error, setError] = useState(null);
   const patientBundle = useRef({
     resourceType: "Bundle",
@@ -39,7 +31,6 @@ export default function useFetchResources() {
     type: "collection",
     entry: [{ resource: patient }],
     evalResults: {},
-    loadComplete: false,
   });
 
   const getResourcesToLoad = () => {
@@ -56,7 +47,7 @@ export default function useFetchResources() {
   const getResourcesToTrack = (resourcesToLoad, questionnareKeys) => {
     // all the resources that will be loaded
     let initialResourcesToLoad = [
-      ...(resourcesToLoad ?? []).map((resource) => ({
+      ...(resourcesToLoad ? resourcesToLoad : []).map((resource) => ({
         id: resource,
         complete: false,
         error: false,
@@ -68,6 +59,7 @@ export default function useFetchResources() {
         title: `Resources for summary data`,
         complete: false,
         error: false,
+        data: null,
       });
 
     return initialResourcesToLoad;
@@ -87,7 +79,7 @@ export default function useFetchResources() {
       case "COMPLETE":
         return state.map((resource) => {
           if (resource.id === action.id) {
-            return { ...resource, complete: true };
+            return { ...resource, data: action.data, complete: true };
           } else {
             return resource;
           }
@@ -110,8 +102,13 @@ export default function useFetchResources() {
     initialResourcesToLoad
   );
 
-  const handleResourceComplete = (resource) => {
-    dispatch({ type: "COMPLETE", id: resource });
+  const isReady = () =>
+    isEmptyArray(toBeLoadedResources) ||
+    !toBeLoadedResources.find((o) => !o.complete) ||
+    error;
+
+  const handleResourceComplete = (resource, params) => {
+    dispatch({ type: "COMPLETE", id: resource, ...params });
   };
 
   const handleResourceError = (resource) => {
@@ -275,14 +272,14 @@ export default function useFetchResources() {
       return results;
     },
     {
-      disabled: patientBundle.current.loadComplete || error,
+      disabled: isReady(),
       refetchOnWindowFocus: false,
       onSettled: (fhirData) => {
         patientBundle.current = {
           ...patientBundle.current,
           entry: [...patientBundle.current.entry, ...fhirData],
         };
-        if (summaryData.loadComplete) {
+        if (isReady()) {
           return;
         }
         console.log("fhirData", fhirData);
@@ -384,43 +381,23 @@ export default function useFetchResources() {
               }
             }
           });
-          patientBundle.current = {
-            ...patientBundle.current,
-            loadComplete: true,
-          };
           console.log("patient bundle ", patientBundle.current);
           console.log("Summary data ", summaries);
-          handleResourceComplete(SUMMARY_DATA_KEY);
           setTimeout(
             () =>
-              setSummaryData({
+              handleResourceComplete(SUMMARY_DATA_KEY, {
                 data: summaries,
-                loadComplete: true,
               }),
-            250
+            50
           );
         });
       },
       onError: (e) => {
-        onErrorCallback(
-          "Error fetching FHIR resources. See console for detail."
-        );
+        setError("Error fetching FHIR resources. See console for detail.");
         console.log("FHIR resources fetching error: ", e);
       },
     }
   );
-
-  const onErrorCallback = (message) => {
-    if (message) setError(message);
-    setSummaryData({
-      data: null,
-      loadComplete: true,
-    });
-    handleResourceError(SUMMARY_DATA_KEY);
-  };
-
-  const isReady = () =>
-    (patientBundle.current.loadComplete && summaryData.loadComplete) || error;
 
   const getFhirResources = async () => {
     if (!client || !patient || !patient.id)
@@ -466,6 +443,37 @@ export default function useFetchResources() {
     );
   };
 
+  const getAllChartData = (summaryData) => {
+    if (!isReady() || !summaryData || !summaryData.data) return null;
+    const dataToUse = Object.assign(
+      {},
+      JSON.parse(JSON.stringify(summaryData.data))
+    );
+    const keys = Object.keys(dataToUse);
+    const formattedData = keys.map((key) => {
+      const data = dataToUse[key];
+      if (!data || !data.chartData) return [];
+      let dataToReturn = [];
+      if (data.chartConfig && data.chartConfig.dataFormatter) {
+        dataToReturn = data.chartConfig.dataFormatter(data.chartData);
+      } else dataToReturn = data.chartData;
+      {
+        return dataToReturn.map((o) => {
+          o.key = key;
+          o[key] = o["score"];
+          return o;
+        });
+      }
+    });
+    return formattedData
+      .flat()
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  };
+
+  const summaryData = toBeLoadedResources.find(
+    (resource) => resource.id === SUMMARY_DATA_KEY
+  );
+
   return {
     isReady: isReady(),
     error: error,
@@ -473,6 +481,7 @@ export default function useFetchResources() {
     patientBundle: patientBundle.current.entry,
     evalData: patientBundle.current.evalResults,
     summaryData: summaryData,
+    allChartData: getAllChartData(summaryData),
     questionnareKeys: questionnaireList,
     questionnaireList: questionnaireList,
   };

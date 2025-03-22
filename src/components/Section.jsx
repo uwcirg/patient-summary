@@ -8,8 +8,9 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ErrorComponent from "./ErrorComponent";
 import { DEFAULT_ACCORDION_HEADER_HEIGHT } from "../consts/consts";
+import ErrorComponent from "./ErrorComponent";
+
 
 export default function Section({ section, data }) {
   const theme = useTheme();

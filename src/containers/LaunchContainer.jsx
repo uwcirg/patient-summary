@@ -13,7 +13,7 @@ const fetchContextJson = async (authURL) => {
   if (!authURL) {
     // default, if no auth url provided
     return {
-      clientId: "hello_world_client",
+      clientId: "patient_summary_client",
       scope: "profile roles email patient/*.read",
       // default to not show patient banner, can be overridden
       // cannot seem to override this when testing against SMART healthIT launcher though
@@ -32,7 +32,9 @@ const fetchContextJson = async (authURL) => {
 
   if (!response.ok) {
     console.log(response.status, response.statusText);
-    throw new Error(`Error launch application: Server returned status ${response.status.toString()}`);
+    throw new Error(
+      `Error launch application: Server returned status ${response.status.toString()}`
+    );
   }
 
   const contextJson = await response.json().catch((e) => {
@@ -60,8 +62,8 @@ export default function Launch() {
       needPatientBanner
     );
     console.log("Auth url ", authURL);
-    fetchContextJson(authURL).then(
-      (json) => {
+    fetchContextJson(authURL)
+      .then((json) => {
         if (!json) {
           setError("No valid context json specified");
           return;
@@ -93,9 +95,8 @@ export default function Launch() {
           console.log("FHIR auth error ", e);
           setError("Fhir auth error. see console for detail.");
         });
-      },
-      (error) => setError(error.message)
-    );
+      })
+      .catch((error) => setError(error.message));
   }, []);
 
   return (

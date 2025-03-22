@@ -3,6 +3,7 @@ import cql from "cql-execution";
 import cqlfhir from "cql-exec-fhir";
 import ChartConfig from "../config/chart_config";
 import {
+  DEFAULT_TOOLBAR_HEIGHT,
   QUESTIONNAIRE_ANCHOR_ID_PREFIX,
   queryNeedPatientBanner,
 } from "../consts/consts";
@@ -10,7 +11,6 @@ import commonLibrary from "../cql/InterventionLogic_Common.json";
 import valueSetJson from "../cql/valueset-db.json";
 import r4HelpersELM from "../cql/FHIRHelpers-4.0.1.json";
 import defaultSections from "../config/sections_config";
-import { DEFAULT_TOOLBAR_HEIGHT } from "../consts/consts";
 
 export function getCorrectedISODate(dateString) {
   if (!dateString || dateString instanceof Date) return dateString;
@@ -80,11 +80,11 @@ export async function evalExpressionForIntervention(
   const executor = new cql.Executor(
     lib,
     new VSACAwareCodeService(valueSetDB),
-    params ?? {}
+    params ? params : {}
   );
   const interventionPatientSource = cqlfhir.PatientSource.FHIRv401();
   interventionPatientSource.loadBundles([bundle]);
- // console.log("bundle to be loaded ", bundle)
+  // console.log("bundle to be loaded ", bundle)
   try {
     evalResult = await executor.exec_expression(
       expression,
@@ -120,7 +120,10 @@ export async function getResourceLogicLib(resourceId) {
           });
       }
       if (elmJson)
-        sessionStorage.setItem(`lib_${resourceId}ResourceLibrary`, JSON.stringify(elmJson));
+        sessionStorage.setItem(
+          `lib_${resourceId}ResourceLibrary`,
+          JSON.stringify(elmJson)
+        );
     } catch (e) {
       console.log("Error loading Cql ELM library for " + resourceId, e);
       throw new Error(e);
@@ -252,7 +255,7 @@ export function isInViewport(element) {
 }
 
 export function hasData(arrObj) {
-  return arrObj && arrObj.length > 0;
+  return !isEmptyArray(arrObj);
 }
 
 export function getTomorrow() {
@@ -265,24 +268,17 @@ export function callback(callbackFunc, params) {
 }
 
 export function fetchEnvData() {
-  if (window["appConfig"] && Object.keys(window["appConfig"]).length) {
+  if (
+    window &&
+    window["appConfig"] &&
+    !isEmptyArray(Object.keys(window["appConfig"]))
+  ) {
     console.log("Window config variables added. ");
     return;
   }
-  const setConfig = function () {
-    if (!xhr.readyState === xhr.DONE) {
-      return;
-    }
-    if (xhr.status !== 200) {
-      console.log("Request failed! ");
-      return;
-    }
-    let envObj;
-    try {
-      envObj = JSON.parse(xhr.responseText);
-    } catch (e) {
-      console.log("Error parsing response text into json ", e);
-    }
+  const setConfig = function (envObj) {
+    if (!envObj) return;
+    if (!window) return;
     window["appConfig"] = {};
     //assign window process env variables for access by app
     //won't be overridden when Node initializing env variables
@@ -291,18 +287,27 @@ export function fetchEnvData() {
         window["appConfig"][key] = envObj[key];
       }
     }
+    console.log("environment variables set ", window["appConfig"]);
   };
   var xhr = new XMLHttpRequest();
   xhr.open("GET", "/env.json", false);
   xhr.onreadystatechange = function () {
-    //in the event of a communication error (such as the server going down),
-    //or error happens when parsing data
-    //an exception will be thrown in the onreadystatechange method when accessing the response properties, e.g. status.
-    try {
-      setConfig();
-    } catch (e) {
-      console.log("Caught exception " + e);
+    if (!xhr.readyState === xhr.DONE) {
+      return;
     }
+    if (xhr.status !== 200) {
+      console.log("Request failed! ");
+      return;
+    }
+    let envObj;
+    if (xhr.readyState === xhr.DONE) {
+      try {
+        envObj = JSON.parse(xhr.responseText);
+      } catch (e) {
+        console.log("Error parsing response text into json ", e);
+      }
+    }
+    setConfig(envObj);
   };
   try {
     xhr.send();
@@ -317,7 +322,7 @@ export function fetchEnvData() {
 
 export function getEnv(key) {
   //window application global variables
-  if (window["appConfig"] && window["appConfig"][key])
+  if (window && window["appConfig"] && window["appConfig"][key])
     return window["appConfig"][key];
   const envDefined = typeof import.meta.env !== "undefined" && import.meta.env;
   //enviroment variables as defined in Node
@@ -326,7 +331,7 @@ export function getEnv(key) {
 }
 
 export function getEnvs() {
-  const appConfig = window["appConfig"] ? window["appConfig"] : {};
+  const appConfig = window && window["appConfig"] ? window["appConfig"] : {};
   const processEnvs =
     typeof import.meta.env !== "undefined" && import.meta.env
       ? import.meta.env

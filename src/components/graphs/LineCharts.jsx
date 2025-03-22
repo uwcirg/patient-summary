@@ -128,6 +128,7 @@ export default function LineCharts(props) {
       <Line
         {...defaultOptions}
         key={`line_${id}_${index}`}
+        name={item.key}
         type="monotone"
         dataKey={item.key}
         stroke={item.color}
@@ -245,24 +246,29 @@ export default function LineCharts(props) {
           height: "calc(100% - 40px)",
         }}
       >
-        <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          minWidth={100}
+          minHeight={30}
+        >
           <LineChart
             data={data}
             margin={{
               top: 30,
-              right: 60,
-              left: 20,
-              bottom: 20,
+              right: 80,
+              left: 40,
+              bottom: 40,
             }}
             id={`lineChart_${id}`}
           >
             <CartesianGrid strokeDasharray="2 2" />
             {renderXAxis()}
             {renderYAxis()}
-            {renderToolTip()}
-            {renderLegend()}
             {renderScoreSeverityCutoffLine()}
             {renderScoreSeverityArea()}
+            {renderToolTip()}
+            {renderLegend()}
             {hasYFields() && renderMultipleLines()}
             {!hasYFields() && renderSingleLine()}
             {renderMaxScoreMeaningLabel()}

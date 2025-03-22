@@ -7,12 +7,12 @@ import {
   getSectionsToShow,
   isEmptyArray,
 } from "../util/util";
+import useFetchResources from "../hooks/useFetchResources";
 import ErrorComponent from "./ErrorComponent";
 import ProgressIndicator from "./ProgressIndicator";
 import Section from "./Section";
 import Version from "./Version";
 import FloatingNavButton from "./FloatingNavButton";
-import useFetchResources from "../hooks/useFetchResources";
 
 export default function Dashboard() {
   const {
@@ -23,6 +23,7 @@ export default function Dashboard() {
     summaryData,
     evalData,
     toBeLoadedResources,
+    allChartData
   } = useFetchResources();
   const sectionsToShow = getSectionsToShow();
   
@@ -37,7 +38,8 @@ export default function Dashboard() {
             patientBundle: patientBundle,
             summaryData: summaryData,
             questionnaireKeys: questionnareKeys,
-            evalData: evalData
+            evalData: evalData,
+            allChartData: allChartData
           }}
           key={`section_${section.id}`}
         ></Section>
