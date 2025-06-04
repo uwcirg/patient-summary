@@ -16,40 +16,27 @@ import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import Scoring from "../Score";
 import Questionnaire from "../../models/Questionnaire";
-import {
-  isNumber,
-  scrollToAnchor,
-  getLocaleDateStringFromDate,
-} from "../../util/util";
+import { isEmptyArray, isNumber, scrollToAnchor, getLocaleDateStringFromDate } from "../../util/util";
 
 export default function ScoringSummary(props) {
   const theme = useTheme();
   const bgColor =
-    theme &&
-    theme.palette &&
-    theme.palette.lightest &&
-    theme.palette.lightest.main
+    theme && theme.palette && theme.palette.lightest && theme.palette.lightest.main
       ? theme.palette.lightest.main
       : "#FFF";
   const linkColor =
-    theme && theme.palette && theme.palette.link && theme.palette.link.main
-      ? theme.palette.link.main
-      : "blue";
+    theme && theme.palette && theme.palette.link && theme.palette.link.main ? theme.palette.link.main : "blue";
   const borderColor =
-    theme && theme.palette && theme.palette.border && theme.palette.border.main
-      ? theme.palette.border.main
-      : "#FFF";
+    theme && theme.palette && theme.palette.border && theme.palette.border.main ? theme.palette.border.main : "#FFF";
   const { summaryData } = props;
-  const hasNoResponses = (responses) => !responses || !responses.length;
+  const hasNoResponses = (responses) => isEmptyArray(responses);
   const responsesHasScore = (responses) => {
     if (hasNoResponses(responses)) return false;
     return responses.some((result) => isNumber(result.score));
   };
   const getInstrumentShortName = (id) => {
     const matchedQuestionnaire =
-      summaryData[id] && summaryData[id].questionnaire
-        ? summaryData[id].questionnaire
-        : null;
+      summaryData[id] && summaryData[id].questionnaire ? summaryData[id].questionnaire : null;
     const qo = new Questionnaire(matchedQuestionnaire, id);
     return qo.shortName ?? qo.displayName;
   };
@@ -95,9 +82,7 @@ export default function ScoringSummary(props) {
   };
   const getDisplayIcon = (rdata) => {
     const currentResponses = getCurrentResponses(rdata);
-    const comparisonToAlert = currentResponses
-      ? currentResponses.comparisonToAlert
-      : ""; // display alert if score is lower/higher than previous
+    const comparisonToAlert = currentResponses ? currentResponses.comparisonToAlert : ""; // display alert if score is lower/higher than previous
     const currentScore = getCurrentScoreByInstrument(rdata);
     const prevScore = getPrevScoreByInstrument(rdata);
     const iconProps = {
@@ -108,23 +93,16 @@ export default function ScoringSummary(props) {
     if (!isNumber(prevScore) || !isNumber(currentScore)) return "--";
     if (isNumber(prevScore)) {
       if (comparisonToAlert === "lower") {
-        if (currentScore < prevScore)
-          return <SouthIcon color="error" {...iconProps}></SouthIcon>;
-        if (currentScore > prevScore)
-          return <NorthIcon color="success" {...iconProps}></NorthIcon>;
+        if (currentScore < prevScore) return <SouthIcon color="error" {...iconProps}></SouthIcon>;
+        if (currentScore > prevScore) return <NorthIcon color="success" {...iconProps}></NorthIcon>;
         return <HorizontalRuleIcon {...iconProps}></HorizontalRuleIcon>;
       } else {
-        if (currentScore > prevScore)
-          return <NorthIcon color="error" {...iconProps}></NorthIcon>;
-        if (currentScore < prevScore)
-          return <SouthIcon color="success" {...iconProps}></SouthIcon>;
+        if (currentScore > prevScore) return <NorthIcon color="error" {...iconProps}></NorthIcon>;
+        if (currentScore < prevScore) return <SouthIcon color="success" {...iconProps}></SouthIcon>;
         return <HorizontalRuleIcon {...iconProps}></HorizontalRuleIcon>;
       }
     } else {
-      if (isNumber(currentScore))
-        return (
-          <HorizontalRuleIcon color="info" {...iconProps}></HorizontalRuleIcon>
-        );
+      if (isNumber(currentScore)) return <HorizontalRuleIcon color="info" {...iconProps}></HorizontalRuleIcon>;
       return null;
     }
   };
@@ -147,9 +125,7 @@ export default function ScoringSummary(props) {
     const scoringParams = mostRecentEntry.scoringParams;
     if (!scoringParams) return null;
     if (!scoringParams.maximumScore) return null;
-    const minScore = scoringParams.minimumScore
-      ? scoringParams.minimumScore
-      : 0;
+    const minScore = scoringParams.minimumScore ? scoringParams.minimumScore : 0;
     const maxScore = scoringParams.maximumScore;
     return `( ${minScore} - ${maxScore} )`;
   };
@@ -186,17 +162,15 @@ export default function ScoringSummary(props) {
     variant: "head",
   };
   const cellWhiteSpaceStyle = {
-    whiteSpace: "nowrap",
-    textOverflow: "ellipsis",
-    overflow: "hidden",
+    wordBreak: "break-word",
+    whiteSpace: "normal",
   };
   const cellStyle = {
     borderRight: `1px solid ${borderColor}`,
     whiteSpace: "nowrap",
-    padding: {
-      xs: theme.spacing(0.5, 1),
-      sm: theme.spacing(0.5, 2),
-    },
+    lineHeight: 1.4,
+    fontSize: "0.8rem",
+    padding: theme.spacing(0.5, 1),
     ...cellWhiteSpaceStyle,
   };
   const fixedCellStyle = {
@@ -206,7 +180,6 @@ export default function ScoringSummary(props) {
       left: 0,
       zIndex: 1,
       backgroundColor: "#FFF",
-      ...{ whiteSpace: { xs: "nowrap", sm: "normal" } },
     },
   };
   const renderTableHeaderRow = () => (
@@ -226,23 +199,20 @@ export default function ScoringSummary(props) {
           {...defaultHeaderCellProps}
         ></TableCell>
         <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
-          Last assessed
+          Date
         </TableCell>
         <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
           Score
         </TableCell>
         <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
-          # Answered
+          # <br /> Answered
         </TableCell>
         <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
           Meaning
         </TableCell>
-        <TableCell
-          variant="head"
-          sx={{ ...cellStyle, borderRightWidth: 0 }}
-          {...defaultTableCellProps}
-        >
-          Compared to Last
+        <TableCell variant="head" sx={{ ...cellStyle, borderRightWidth: 0 }} {...defaultTableCellProps}>
+          Compared <br /> to <br />
+          Last
         </TableCell>
       </TableRow>
     </TableHead>
@@ -254,6 +224,7 @@ export default function ScoringSummary(props) {
         ...fixedCellStyle,
         ...{
           fontWeight: 500,
+          borderBottom: `2px solid ${borderColor}`,
         },
       }}
       size="small"
@@ -263,6 +234,7 @@ export default function ScoringSummary(props) {
         underline="none"
         sx={{ color: linkColor, cursor: "pointer" }}
         href={`#${key}`}
+        className="instrument-link"
       >
         {getInstrumentShortName(key)}
       </Link>
@@ -272,7 +244,7 @@ export default function ScoringSummary(props) {
   const renderScoreCell = (key) => (
     <TableCell align="left" size="small" className="score-cell" sx={cellStyle}>
       <Stack
-        direction={"row"}
+        direction={"column"}
         spacing={1}
         justifyContent={"space-between"}
         alignItems={"center"}
@@ -303,22 +275,13 @@ export default function ScoringSummary(props) {
   );
 
   const renderScoreMeaningCell = (key) => (
-    <TableCell
-      align="center"
-      size="small"
-      className="capitalized-text"
-      sx={cellStyle}
-    >
+    <TableCell align="center" size="small" className="capitalized-text" sx={cellStyle}>
       {displayScoreMeaning(summaryData[key])}
     </TableCell>
   );
 
   const renderComparedToLastCell = (key) => (
-    <TableCell
-      align="center"
-      size="small"
-      sx={{ ...cellStyle, borderRightWidth: 0 }}
-    >
+    <TableCell align="center" size="small" sx={{ ...cellStyle, borderRightWidth: 0 }}>
       {getDisplayIcon(summaryData[key].responses)}
     </TableCell>
   );
@@ -344,7 +307,7 @@ export default function ScoringSummary(props) {
     if (!hasList())
       return (
         <Box sx={{ padding: theme.spacing(1, 0.5) }}>
-          <Alert severity="warning">No summary available</Alert>
+          <Alert severity="warning">No score summary available</Alert>
         </Box>
       );
     return (
@@ -367,7 +330,7 @@ export default function ScoringSummary(props) {
         }}
       >
         <Table
-          sx={{ border: `1px solid ${borderColor}` }}
+          sx={{ border: `1px solid ${borderColor}`, tableLayout: "fixed", width: "100%" }}
           size="small"
           aria-label="scoring summary table"
           className="scoring-summary-table"

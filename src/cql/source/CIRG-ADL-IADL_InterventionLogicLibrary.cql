@@ -68,7 +68,20 @@ define ResponsesSummary:
           Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question9LinkId)), 0) + 
           Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question10LinkId)), 0) +
           Coalesce(First(LogicHelpers.getScoringByResponseItem(CurrentQuestionnaire, I.item, question11LinkId)), 0),
-    totalAnsweredItems: Length((I.item) O where O.linkId.value != ScoringQuestionId),
+    totalAnsweredItems: Length((I.item) O where 
+    (
+      O.linkId.value = question1LinkId or
+      O.linkId.value = question2LinkId or
+      O.linkId.value = question3LinkId or
+      O.linkId.value = question4LinkId or
+      O.linkId.value = question5LinkId or
+      O.linkId.value = question6LinkId or
+      O.linkId.value = question7LinkId or
+      O.linkId.value = question8LinkId or
+      O.linkId.value = question9LinkId or
+      O.linkId.value = question10LinkId or
+      O.linkId.value = question11LinkId
+    ) and O.answer is not null),
     totalItems: Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId)),
     scoringParams: scoringParams,
     authoredDate: I.authored.value,

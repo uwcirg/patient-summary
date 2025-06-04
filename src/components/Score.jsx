@@ -2,59 +2,30 @@ import React from "react";
 import PropTypes from "prop-types";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
 import ErrorIcon from "@mui/icons-material/Error";
 import WarningIcon from "@mui/icons-material/ReportProblem";
 import { isNumber } from "../util/util";
+import ScoreSeverity from "../models/ScoreSeverity";
 
 export default function Scoring(props) {
   const { score, justifyContent, alignItems, scoreParams } = props;
   const getScoreSeverity = () =>
-    scoreParams && scoreParams.scoreSeverity
-      ? String(scoreParams.scoreSeverity).toLowerCase()
-      : null;
-  const getAlertNote = () =>
-    scoreParams && scoreParams.alertNote ? scoreParams.alertNote : null;
+    scoreParams && scoreParams.scoreSeverity ? String(scoreParams.scoreSeverity).toLowerCase() : null;
+  const getAlertNote = () => (scoreParams && scoreParams.alertNote ? scoreParams.alertNote : null);
   const scoreSeverity = getScoreSeverity();
-  const arrSeverityLevelToAlert = ["high", "moderate", "moderately high"];
+  const oSeverity = new ScoreSeverity(scoreSeverity);
   const alertNote = getAlertNote();
-  const isHighAlert = scoreSeverity === "high";
-  const isModerateAlert =
-    scoreSeverity === "moderate" || scoreSeverity === "moderately high";
-  const getScoreDisplay = () => (
-    <span data-testid="score">{isNumber(score) ? score : "--"}</span>
-  );
+  const getScoreDisplay = () => <span data-testid="score">{isNumber(score) ? score : "--"}</span>;
 
   // display alert icon for score that has high severity
-  if (arrSeverityLevelToAlert.indexOf(scoreSeverity) !== -1) {
-    const iconColor = isHighAlert
-      ? "error"
-      : isModerateAlert
-      ? "warning"
-      : "inherit";
-    const textColor = isHighAlert
-      ? "error.main"
-      : isModerateAlert
-      ? "warning.main"
-      : "inherit";
-
-    const iconClass = isHighAlert ? "alert-icon" : "";
-
+  if (oSeverity.isInRange()) {
     const renderIcon = () => {
-      if (isHighAlert)
+      if (oSeverity.isHigh())
         return (
-          <ErrorIcon
-            color={iconColor}
-            fontSize="small"
-            className={iconClass}
-          ></ErrorIcon>
+          <ErrorIcon color={oSeverity.iconColorClass} fontSize="small" className={oSeverity.iconClass}></ErrorIcon>
         );
       return (
-        <WarningIcon
-          color={iconColor}
-          fontSize="small"
-          className={iconClass}
-        ></WarningIcon>
+        <WarningIcon color={oSeverity.iconColorClass} fontSize="small" className={oSeverity.iconClass}></WarningIcon>
       );
     };
     return (
@@ -64,9 +35,7 @@ export default function Scoring(props) {
         justifyContent={justifyContent || "flex-start"}
         alignItems={alignItems || "center"}
       >
-        <Typography variant="body1" color={textColor}>
-          {getScoreDisplay()}
-        </Typography>
+        <div className={`${oSeverity.textColorClass}`}>{getScoreDisplay()}</div>
         {alertNote && (
           <Tooltip title={alertNote} placement="top" arrow>
             {renderIcon()}
@@ -77,11 +46,7 @@ export default function Scoring(props) {
     );
   }
 
-  return (
-    <Typography variant="body1" color="secondary">
-      {getScoreDisplay()}
-    </Typography>
-  );
+  return getScoreDisplay();
 }
 
 Scoring.propTypes = {

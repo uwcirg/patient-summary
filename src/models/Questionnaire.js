@@ -12,7 +12,7 @@ class Questionnaire {
     return this.data.name;
   }
   get shortName() {
-    if (!this.key) return this.id;
+    if (!this.key) return this.data.id;
     const key = getDisplayQTitle(this.key).toUpperCase();
     if (key) return String(key).toUpperCase();
     return this.key;

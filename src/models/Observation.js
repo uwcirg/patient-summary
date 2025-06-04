@@ -18,7 +18,6 @@ class Observation {
     return this.data.displayText;
   }
   get dateText() {
-    //return getCorrectedISODate(this.data.issued);
     return getCorrectedISODate(this.data.dateText);
   }
   get valueText() {

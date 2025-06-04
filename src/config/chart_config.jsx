@@ -1,6 +1,5 @@
-import React from "react";
 import PropTypes from "prop-types";
-import { getTomorrow } from "../util/util";
+import { isEmptyArray, getTomorrow, getDateObjectInLocalDateTime } from "../util/util";
 
 const Rect = (props) => {
   const { cx, cy, color, value } = props;
@@ -34,16 +33,17 @@ const CHART_CONFIG = {
     xLabel: "date",
     legendType: "none",
     dataFormatter: (data) => {
-      let dataTOUse = JSON.parse(JSON.stringify((data??[])));
-      dataTOUse = dataTOUse.map((item) => {
-        item.date = new Date(item.date);
-        return item;
-      });
+      if (isEmptyArray(data)) return data;
+      let dataTOUse = JSON.parse(JSON.stringify(data));
+      dataTOUse = dataTOUse
+        .filter((item) => !!item.date)
+        .map((item) => {
+          item.date = getDateObjectInLocalDateTime(item.date);
+          return item;
+        });
       dataTOUse = dataTOUse.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-      let startDate = dataTOUse.length
-        ? new Date(dataTOUse[0].date.valueOf())
-        : new Date();
+      let startDate = !isEmptyArray(dataTOUse) ? new Date(dataTOUse[0].date.valueOf()) : new Date();
       startDate.setMonth(0);
       startDate.setDate(0);
       startDate.setFullYear(startDate.getFullYear() - 1);
@@ -62,8 +62,7 @@ const CHART_CONFIG = {
     },
     xTickFormatter: (item) => new Date(item).toISOString().substring(0, 10),
     tooltipLabelFormatter: (value, data) => {
-      if (data && data.length && value > 0)
-        return new Date(value).toISOString().substring(0, 10);
+      if (!isEmptyArray(data) && value > 0) return new Date(value).toISOString().substring(0, 10);
       return "";
     },
   },
@@ -82,7 +81,7 @@ const CHART_CONFIG = {
         strokeDasharray: "4 2",
         legendType: "square",
         dot: (props) => {
-          const {key, ...otherProps} = props;
+          const { key, ...otherProps } = props;
           return <Rect key={key} {...otherProps} color="#6d4c41"></Rect>;
         },
       },
@@ -93,7 +92,7 @@ const CHART_CONFIG = {
         strokeDasharray: "6 2",
         legendType: "square",
         dot: (props) => {
-          const {key, ...otherProps} = props;
+          const { key, ...otherProps } = props;
           return <Rect key={key} {...otherProps} color="#5c6bc0"></Rect>;
         },
       },
@@ -104,17 +103,23 @@ const CHART_CONFIG = {
       },
     ],
     tooltipLabelFormatter: (value, data) => {
-      if (data && data.length && value > 0)
-        return new Date(value).toISOString().substring(0, 10);
+      if (!isEmptyArray(data) && value > 0) return new Date(value).toISOString().substring(0, 10);
       return "";
     },
   },
 };
 export default CHART_CONFIG;
 
-
 export const COLORS = [
+  "#3E517A", 
+  "#6564DB",
   "#78281F",
+  "#F0386B",
+  "#19647E",
+  "#232C33",
+  "#9F6BA0",
+  "#B36A5E",
+  "#5C5D8D",
   "#a387dd",
   "#e65100",
   "#5E9CBC",
@@ -146,15 +151,7 @@ export const COLORS = [
   "#33AACA",
 ];
 
-export const LEGEND_ICON_TYPES = [
-  "square",
-  "rect",
-  "circle",
-  "triangle",
-  "cross",
-  "diamond",
-  "star",
-];
+export const LEGEND_ICON_TYPES = ["square", "rect", "circle", "triangle", "cross", "diamond", "star"];
 
 Rect.propTypes = {
   cx: PropTypes.number,

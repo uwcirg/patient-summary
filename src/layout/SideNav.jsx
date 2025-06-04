@@ -13,7 +13,7 @@ import { MOBILE_DRAWER_WIDTH, DEFAULT_DRAWER_WIDTH } from "../consts/consts";
 
 const openedMixin = (theme) => ({
   width: MOBILE_DRAWER_WIDTH,
-  [theme.breakpoints.up("lg")]: {
+  [theme.breakpoints.up("xl")]: {
     width: DEFAULT_DRAWER_WIDTH,
   },
   transition: theme.transitions.create("width", {
@@ -91,13 +91,15 @@ export default function SideNav (props) {
     return (
       <Drawer
         variant="permanent"
-        className="print-hidden"
+        className={`side-drawer print-hidden`}
         open={open}
         sx={{
           display: {
             xs: "none",
             sm: "none",
-            md: "block",
+            md: "none",
+            lg: "none",
+            xl: "block"
           },
         }}
         PaperProps={{

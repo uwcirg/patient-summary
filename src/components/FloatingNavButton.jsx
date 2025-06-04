@@ -8,6 +8,7 @@ import { DEFAULT_TOOLBAR_HEIGHT } from "../consts/consts";
 let scrollIntervalId = 0;
 
 export default function FloatingNavButton() {
+
   const fabRef = createRef();
   const anchorRef = createRef();
   const BoxRef = forwardRef((props, ref) => (
@@ -17,7 +18,7 @@ export default function FloatingNavButton() {
   ));
   BoxRef.displayName = "BoxRef";
   const FabRef = forwardRef((props, ref) => (
-    <Fab ref={ref} {...props}>
+    <Fab ref={ref} {...props} className="back-to-top">
       {props.children}
     </Fab>
   ));
@@ -49,6 +50,9 @@ export default function FloatingNavButton() {
         bottom: "8px",
         right: "24px",
         zIndex: (theme) => theme.zIndex.drawer - 1,
+        borderColor: (theme) => theme.palette.primary.main,
+        borderWidth: "2px",
+        borderStyle: "solid"
       }}
       onClick={(e) => {
         e.stopPropagation();
@@ -57,7 +61,7 @@ export default function FloatingNavButton() {
       }}
       title="Back to Top"
     >
-      <ArrowUpwardIcon aria-label="Back to Top" />
+      <ArrowUpwardIcon aria-label="Back to Top" color="primary" />
     </FabRef>
   );
 

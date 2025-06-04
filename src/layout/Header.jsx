@@ -25,7 +25,6 @@ import { getEnv, getEnvProjectId, getSectionsToShow, imageOK, scrollToElement } 
 import PatientInfo from "../components/PatientInfo";
 import { FhirClientContext } from "../context/FhirClientContext";
 
-
 export default function Header(props) {
   const theme = useTheme();
   const { patient } = useContext(FhirClientContext);
@@ -183,7 +182,9 @@ export default function Header(props) {
           display: {
             xs: "none",
             sm: "none",
-            md: "inline-flex",
+            md: "none",
+            lg: "none",
+            xl: "inline-flex",
           },
         }}
       >
@@ -199,7 +200,9 @@ export default function Header(props) {
           display: {
             sx: "inline-flex",
             sm: "inline-flex",
-            md: "none",
+            md: "inline-flex",
+            lg: "inline-flex",
+            xl: "none",
           },
         }}
         ref={anchorRef}

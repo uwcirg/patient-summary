@@ -8,15 +8,36 @@ import {
   queryNeedPatientBanner,
 } from "../consts/consts";
 import commonLibrary from "../cql/InterventionLogic_Common.json";
+import defaultInterventionLibrary from "../cql/InterventionLogicLibrary.json";
+import resourcesLogicLibrary from "../cql/ResourcesLogicLibrary.json";
 import valueSetJson from "../cql/valueset-db.json";
 import r4HelpersELM from "../cql/FHIRHelpers-4.0.1.json";
 import defaultSections from "../config/sections_config";
 
+export const shortDateRE = /^\d{4}-\d{2}-\d{2}$/; // matches '2012-04-05'
+export const dateREZ = /^(?:(?:19|20)\d{2}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|02-(?:0[1-9]|1\d|2[0-8]))|(?:(?:19|20)(?:[02468][048]|[13579][26])-02-29))T([01]\d|2[0-3]):[0-5]\d:[0-5]\dZ$/; //match '2023-11-10T18:30:49Z' with required UTC
+
+/*
+ * return Date object for a given input date string
+ * @params input date string to be converted
+ */
+export function getDateObjectInLocalDateTime(input) {
+  if (!input) return null;
+  if (shortDateRE.test(input)) {
+    // If input is in short ISO date (YYYY-MM-DD), appending "T00:00:00" to allow correct conversion to local date/time
+    return new Date(input + "T00:00:00");
+  }
+  if (dateREZ.test(input)) {
+    // If input is already a full ISO 8601 timestamp, pass it as-is
+    // a date string with a Z designator will result in a local date/time when passed to Date object
+    return new Date(input);
+  }
+  return new Date(input);
+}
+
 export function getCorrectedISODate(dateString) {
   if (!dateString || dateString instanceof Date) return dateString;
-  let dateObj = new Date(dateString); // Date.now() returns [millisecods]
-  let timeZoneCorrection = dateObj.getTimezoneOffset() * 60 * 1000; // [minutes] * [seconds/minutes] * [milliseconds/second]
-  let correctedDate = new Date(dateObj.getTime() - timeZoneCorrection);
+  let correctedDate = getDateObjectInLocalDateTime(dateString);
   return correctedDate.toISOString().split("T")[0]; // just the date portion
 }
 
@@ -105,33 +126,11 @@ export async function evalExpressionForIntervention(
   return evalResult;
 }
 
-export async function getResourceLogicLib(resourceId) {
-  if (!resourceId) return null;
-  const storageLib = sessionStorage.getItem(`lib_${resourceId}ResourceLibrary`);
-  let elmJson = storageLib ? JSON.parse(storageLib) : null;
-  const cqlModules = import.meta.glob(`../cql/*ResourceLibrary.json`);
-  if (!elmJson) {
-    try {
-      if (cqlModules[`../cql/${resourceId}ResourceLibrary.json`]) {
-        elmJson = await cqlModules[`../cql/${resourceId}ResourceLibrary.json`]()
-          .then((module) => module.default)
-          .catch((e) => {
-            throw new Error(e);
-          });
-      }
-      if (elmJson)
-        sessionStorage.setItem(
-          `lib_${resourceId}ResourceLibrary`,
-          JSON.stringify(elmJson)
-        );
-    } catch (e) {
-      console.log("Error loading Cql ELM library for " + resourceId, e);
-      throw new Error(e);
-    }
-    // console.log("ElM json ", elmJson);
-  }
-  return [elmJson, valueSetJson];
+export async function getResourceLogicLib() {
+  return [resourcesLogicLibrary, valueSetJson];
 }
+
+const cqlModules = import.meta.glob("../cql/*InterventionLogic*.json");
 
 export async function getInterventionLogicLib(interventionId) {
   const DEFAULT_FILENAME = "InterventionLogicLibrary";
@@ -142,7 +141,6 @@ export async function getInterventionLogicLib(interventionId) {
   }
   const storageLib = sessionStorage.getItem(`lib_${fileName}`);
   let elmJson = storageLib ? JSON.parse(storageLib) : null;
-  const cqlModules = import.meta.glob("../cql/*InterventionLogic*.json");
   if (!elmJson) {
     try {
       if (cqlModules[`../cql/${fileName}.json`]) {
@@ -152,11 +150,7 @@ export async function getInterventionLogicLib(interventionId) {
             throw new Error(e);
           });
       } else {
-        elmJson = await cqlModules[`../cql/${DEFAULT_FILENAME}.json`]()
-          .then((module) => module.default)
-          .catch((e) => {
-            throw new Error(e);
-          });
+        elmJson = defaultInterventionLibrary;
       }
       if (interventionId && elmJson)
         sessionStorage.setItem(`lib_${fileName}`, JSON.stringify(elmJson));

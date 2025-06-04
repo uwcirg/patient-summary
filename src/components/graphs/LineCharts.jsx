@@ -62,9 +62,10 @@ export default function LineCharts(props) {
       dataKey={xFieldKey}
       height={64}
       domain={xDomain}
-      tick={{ style: { fontSize: "12px" } }}
+      tick={{ style: { fontSize: "12px", fontWeight: 500 } }}
       tickFormatter={xTickFormatter}
       tickMargin={12}
+      interval="preserveStartEnd"
     >
       <Label value={xLabel} offset={8} position="insideBottom" />
     </XAxis>
@@ -97,6 +98,7 @@ export default function LineCharts(props) {
         }
         e["fill"] = color;
         e["fontSize"] = "12px";
+        e["fontWeight"] = 500;
         return <Text {...e}>{value}</Text>;
       }}
       tickFormatter={yTickFormatter}

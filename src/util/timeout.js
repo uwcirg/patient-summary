@@ -15,10 +15,7 @@ var Timeout = function (options) {
    * check if the system type is production
    */
   function isProduction() {
-    return (
-      dashboardURL &&
-      String(getEnv("REACT_APP_SYSTEM_TYPE")).toLowerCase() !== "development"
-    );
+    return dashboardURL && String(getEnv("REACT_APP_SYSTEM_TYPE")).toLowerCase() !== "development";
   }
 
   /*
@@ -34,9 +31,7 @@ var Timeout = function (options) {
    */
   function setLogoutLocation() {
     if (!dashboardURL) {
-      printDebugStatement(
-        "No environment variable available. logout location " + logoutLocation
-      );
+      printDebugStatement("No environment variable available. logout location " + logoutLocation);
       return;
     }
     var loc = dashboardURL + "/logout?timeout=true";
@@ -57,7 +52,7 @@ var Timeout = function (options) {
         .map(function (c) {
           return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
         })
-        .join("")
+        .join(""),
     );
     return JSON.parse(jsonPayload);
   }
@@ -79,9 +74,7 @@ var Timeout = function (options) {
         tokenInfo = parseJwt(obj["tokenResponse"]["access_token"]);
       }
     });
-    printDebugStatement(
-      "token info? " + (tokenInfo ? JSON.stringify(tokenInfo) : "no token")
-    );
+    printDebugStatement("token info? " + (tokenInfo ? JSON.stringify(tokenInfo) : "no token"));
   }
 
   /*
@@ -102,7 +95,7 @@ var Timeout = function (options) {
     }
     sessionLifetime = totalTime / 1000; //in seconds
 
-  //  sessionLifetime = 90; //debugging, change this to test
+    //  sessionLifetime = 90; //debugging, change this to test
     printDebugStatement("Session lifetime " + sessionLifetime);
   }
 
@@ -111,9 +104,8 @@ var Timeout = function (options) {
    */
   function initTimeoutIdentifier() {
     var jti = tokenInfo && tokenInfo.jti ? tokenInfo.jti : null;
-    var client_id =
-      tokenInfo && tokenInfo.client_id ? tokenInfo.client_id : null;
-    var tokenId = jti ? jti : client_id;
+    var tokenKey = tokenInfo && tokenInfo.client_id ? tokenInfo.client_id + (tokenInfo.iat ? tokenInfo.iat : "") : null;
+    var tokenId = jti ? jti : tokenKey;
     //set unique timeout countdown tracking interval id
     timeoutGUID = tokenId ? tokenId : _createUUID();
     printDebugStatement("identifier ? " + timeoutGUID);
@@ -170,10 +162,7 @@ var Timeout = function (options) {
           window.location = dashboardURL + "/clear_session";
         }, 3000);
       }
-      printDebugStatement(
-        "Session about to expire. Time elapsed since first visiting " +
-          timeElapsed
-      );
+      printDebugStatement("Session about to expire. Time elapsed since first visiting " + timeElapsed);
       return;
     }
   }
@@ -205,14 +194,11 @@ var Timeout = function (options) {
   }
 
   function _createUUID() {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
-      /[xy]/g,
-      function (c) {
-        var r = (Math.random() * 16) | 0,
-          v = c === "x" ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-      }
-    );
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+      var r = (Math.random() * 16) | 0,
+        v = c === "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
   }
   function hasNoToken() {
     return !tokenInfo || !Object.keys(tokenInfo).length;

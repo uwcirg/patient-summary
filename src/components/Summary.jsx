@@ -70,7 +70,7 @@ export default function Summary(props) {
   const renderLoader = () =>
     summary.loading && (
       <Stack alignItems={"center"} direction="row" justifyContent={"flex-start"} spacing={2}>
-        <LinearProgress sx={{ width: "300px", marginTop: 6 }}></LinearProgress>
+        <LinearProgress sx={{ width: "300px", marginTop: 6, paddingLeft: 4, paddingRight: 4 }}></LinearProgress>
       </Stack>
     );
   const renderError = () =>

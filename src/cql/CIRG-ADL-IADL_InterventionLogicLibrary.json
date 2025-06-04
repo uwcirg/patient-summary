@@ -686,22 +686,202 @@
                               } ],
                               "relationship" : [ ],
                               "where" : {
-                                 "type" : "Not",
-                                 "operand" : {
-                                    "type" : "Equal",
+                                 "type" : "And",
+                                 "operand" : [ {
+                                    "type" : "Or",
                                     "operand" : [ {
-                                       "path" : "value",
-                                       "type" : "Property",
-                                       "source" : {
-                                          "path" : "linkId",
+                                       "type" : "Or",
+                                       "operand" : [ {
+                                          "type" : "Or",
+                                          "operand" : [ {
+                                             "type" : "Or",
+                                             "operand" : [ {
+                                                "type" : "Or",
+                                                "operand" : [ {
+                                                   "type" : "Or",
+                                                   "operand" : [ {
+                                                      "type" : "Or",
+                                                      "operand" : [ {
+                                                         "type" : "Or",
+                                                         "operand" : [ {
+                                                            "type" : "Or",
+                                                            "operand" : [ {
+                                                               "type" : "Or",
+                                                               "operand" : [ {
+                                                                  "type" : "Equal",
+                                                                  "operand" : [ {
+                                                                     "path" : "value",
+                                                                     "type" : "Property",
+                                                                     "source" : {
+                                                                        "path" : "linkId",
+                                                                        "scope" : "O",
+                                                                        "type" : "Property"
+                                                                     }
+                                                                  }, {
+                                                                     "name" : "question1LinkId",
+                                                                     "type" : "ExpressionRef"
+                                                                  } ]
+                                                               }, {
+                                                                  "type" : "Equal",
+                                                                  "operand" : [ {
+                                                                     "path" : "value",
+                                                                     "type" : "Property",
+                                                                     "source" : {
+                                                                        "path" : "linkId",
+                                                                        "scope" : "O",
+                                                                        "type" : "Property"
+                                                                     }
+                                                                  }, {
+                                                                     "name" : "question2LinkId",
+                                                                     "type" : "ExpressionRef"
+                                                                  } ]
+                                                               } ]
+                                                            }, {
+                                                               "type" : "Equal",
+                                                               "operand" : [ {
+                                                                  "path" : "value",
+                                                                  "type" : "Property",
+                                                                  "source" : {
+                                                                     "path" : "linkId",
+                                                                     "scope" : "O",
+                                                                     "type" : "Property"
+                                                                  }
+                                                               }, {
+                                                                  "name" : "question3LinkId",
+                                                                  "type" : "ExpressionRef"
+                                                               } ]
+                                                            } ]
+                                                         }, {
+                                                            "type" : "Equal",
+                                                            "operand" : [ {
+                                                               "path" : "value",
+                                                               "type" : "Property",
+                                                               "source" : {
+                                                                  "path" : "linkId",
+                                                                  "scope" : "O",
+                                                                  "type" : "Property"
+                                                               }
+                                                            }, {
+                                                               "name" : "question4LinkId",
+                                                               "type" : "ExpressionRef"
+                                                            } ]
+                                                         } ]
+                                                      }, {
+                                                         "type" : "Equal",
+                                                         "operand" : [ {
+                                                            "path" : "value",
+                                                            "type" : "Property",
+                                                            "source" : {
+                                                               "path" : "linkId",
+                                                               "scope" : "O",
+                                                               "type" : "Property"
+                                                            }
+                                                         }, {
+                                                            "name" : "question5LinkId",
+                                                            "type" : "ExpressionRef"
+                                                         } ]
+                                                      } ]
+                                                   }, {
+                                                      "type" : "Equal",
+                                                      "operand" : [ {
+                                                         "path" : "value",
+                                                         "type" : "Property",
+                                                         "source" : {
+                                                            "path" : "linkId",
+                                                            "scope" : "O",
+                                                            "type" : "Property"
+                                                         }
+                                                      }, {
+                                                         "name" : "question6LinkId",
+                                                         "type" : "ExpressionRef"
+                                                      } ]
+                                                   } ]
+                                                }, {
+                                                   "type" : "Equal",
+                                                   "operand" : [ {
+                                                      "path" : "value",
+                                                      "type" : "Property",
+                                                      "source" : {
+                                                         "path" : "linkId",
+                                                         "scope" : "O",
+                                                         "type" : "Property"
+                                                      }
+                                                   }, {
+                                                      "name" : "question7LinkId",
+                                                      "type" : "ExpressionRef"
+                                                   } ]
+                                                } ]
+                                             }, {
+                                                "type" : "Equal",
+                                                "operand" : [ {
+                                                   "path" : "value",
+                                                   "type" : "Property",
+                                                   "source" : {
+                                                      "path" : "linkId",
+                                                      "scope" : "O",
+                                                      "type" : "Property"
+                                                   }
+                                                }, {
+                                                   "name" : "question8LinkId",
+                                                   "type" : "ExpressionRef"
+                                                } ]
+                                             } ]
+                                          }, {
+                                             "type" : "Equal",
+                                             "operand" : [ {
+                                                "path" : "value",
+                                                "type" : "Property",
+                                                "source" : {
+                                                   "path" : "linkId",
+                                                   "scope" : "O",
+                                                   "type" : "Property"
+                                                }
+                                             }, {
+                                                "name" : "question9LinkId",
+                                                "type" : "ExpressionRef"
+                                             } ]
+                                          } ]
+                                       }, {
+                                          "type" : "Equal",
+                                          "operand" : [ {
+                                             "path" : "value",
+                                             "type" : "Property",
+                                             "source" : {
+                                                "path" : "linkId",
+                                                "scope" : "O",
+                                                "type" : "Property"
+                                             }
+                                          }, {
+                                             "name" : "question10LinkId",
+                                             "type" : "ExpressionRef"
+                                          } ]
+                                       } ]
+                                    }, {
+                                       "type" : "Equal",
+                                       "operand" : [ {
+                                          "path" : "value",
+                                          "type" : "Property",
+                                          "source" : {
+                                             "path" : "linkId",
+                                             "scope" : "O",
+                                             "type" : "Property"
+                                          }
+                                       }, {
+                                          "name" : "question11LinkId",
+                                          "type" : "ExpressionRef"
+                                       } ]
+                                    } ]
+                                 }, {
+                                    "type" : "Not",
+                                    "operand" : {
+                                       "type" : "IsNull",
+                                       "operand" : {
+                                          "path" : "answer",
                                           "scope" : "O",
                                           "type" : "Property"
                                        }
-                                    }, {
-                                       "name" : "ScoringQuestionId",
-                                       "type" : "ParameterRef"
-                                    } ]
-                                 }
+                                    }
+                                 } ]
                               }
                            }
                         }

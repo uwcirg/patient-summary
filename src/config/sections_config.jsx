@@ -24,32 +24,46 @@ const renderLoader = () => (
 
 const renderScoringSummary = (props) => {
   const summaryData = props.summaryData?.data || {};
-  const ScoreSummary = lazy(
-    () => import("../components/sections/ScoringSummary")
-  );
+  const ScoreSummary = lazy(() => import("../components/sections/ScoringSummary"));
   const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
   const chartData = props.allChartData;
-  const chartKeys = [... new Set(chartData?.map(o => o.key))];
+  const chartKeys = [...new Set(chartData?.map((o) => o.key))];
   return (
     <Suspense fallback={renderLoader()}>
-      <Stack spacing={1} direction={"column"} sx={{
-         marginLeft: (theme) => theme.spacing(1),
-         marginRight: (theme) => theme.spacing(1)
-      }}>
-        <ChartSummary
-          data={chartData}
-          keys={chartKeys}
-        ></ChartSummary>
-        <ScoreSummary summaryData={summaryData}></ScoreSummary>
+      <Stack
+        spacing={1}
+        direction={"row"}
+        alignItems={"center"}
+        sx={{
+          marginLeft: (theme) => theme.spacing(1),
+          marginRight: (theme) => theme.spacing(1),
+          gap: (theme) => theme.spacing(1)
+        }}
+        flexWrap={"wrap"}
+      >
+        <Box sx={{flex: {
+            xs: "auto",
+            sm: "auto",
+            md: "auto",
+            lg: 2
+          }}}>
+          <ChartSummary data={chartData} keys={chartKeys}></ChartSummary>
+        </Box>
+        <Box sx={{flex: {
+            xs: "auto",
+            sm: "auto",
+            md: "auto",
+            lg: 2.5
+          }}}>
+          <ScoreSummary summaryData={summaryData}></ScoreSummary>
+        </Box>
       </Stack>
     </Suspense>
   );
 };
 
 const renderMedicalHistory = (props) => {
-  const MedicalHistory = lazy(
-    () => import("../components/sections/MedicalHistory")
-  );
+  const MedicalHistory = lazy(() => import("../components/sections/MedicalHistory"));
   return (
     <Suspense fallback={renderLoader()}>
       <MedicalHistory data={props.evalData?.Condition}></MedicalHistory>
@@ -68,12 +82,7 @@ const renderSummaries = ({ questionnaireKeys, summaryData }) => {
   const Summaries = lazy(() => import("../components/sections/Summaries"));
   return (
     <Suspense fallback={renderLoader()}>
-      {
-        <Summaries
-          questionnaireKeys={questionnaireKeys}
-          summaryData={summaryData}
-        ></Summaries>
-      }
+      {<Summaries questionnaireKeys={questionnaireKeys} summaryData={summaryData}></Summaries>}
     </Suspense>
   );
 };
@@ -83,13 +92,7 @@ const DEFAULT_SECTIONS = [
     id: "scoreSummary",
     title: "Score Summary",
     anchorElementId: "anchor_scoresummary",
-    icon: (props) => (
-      <SummarizeIcon
-        fontSize="medium"
-        color="primary"
-        {...props}
-      ></SummarizeIcon>
-    ),
+    icon: (props) => <SummarizeIcon fontSize="medium" color="primary" {...props}></SummarizeIcon>,
     component: (props) => renderScoringSummary(props),
   },
   {
@@ -97,13 +100,7 @@ const DEFAULT_SECTIONS = [
     title: "Medical History",
     anchorElementId: `anchor_medicalhistory`,
     resources: ["Condition"],
-    icon: (props) => (
-      <MedicalInformationIcon
-        fontSize="medium"
-        color="primary"
-        {...props}
-      ></MedicalInformationIcon>
-    ),
+    icon: (props) => <MedicalInformationIcon fontSize="medium" color="primary" {...props}></MedicalInformationIcon>,
     component: (props) => renderMedicalHistory(props),
   },
   {
@@ -111,22 +108,14 @@ const DEFAULT_SECTIONS = [
     title: "Clinical / Social History",
     anchorElementId: `anchor_observations`,
     resources: ["Observation"],
-    icon: (props) => (
-      <FactCheckIcon
-        fontSize="medium"
-        color="primary"
-        {...props}
-      ></FactCheckIcon>
-    ),
+    icon: (props) => <FactCheckIcon fontSize="medium" color="primary" {...props}></FactCheckIcon>,
     component: (props) => renderObservations(props),
   },
   {
     id: "responses",
     title: "Questionnaire Responses",
     anchorElementId: `anchor_responses`,
-    icon: (props) => (
-      <BallotIcon fontSize="medium" color="primary" {...props}></BallotIcon>
-    ),
+    icon: (props) => <BallotIcon fontSize="medium" color="primary" {...props}></BallotIcon>,
     component: (props) => renderSummaries(props),
   },
 ];

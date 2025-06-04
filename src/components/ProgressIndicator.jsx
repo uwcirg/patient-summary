@@ -6,9 +6,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import { shouldShowNav } from "../util/util";
 
-import { DEFAULT_DRAWER_WIDTH, MOBILE_DRAWER_WIDTH } from "../consts/consts";
 
 export default function ProgressIndicator({ resources }) {
   const total = resources?.length;
@@ -23,13 +21,9 @@ export default function ProgressIndicator({ resources }) {
         width: "100%",
         height: "100%",
         backgroundColor: "#FFF",
-        marginLeft: shouldShowNav()
-          ? {
-              md: -1 * parseInt(MOBILE_DRAWER_WIDTH) + "px",
-              lg: -1 * parseInt(DEFAULT_DRAWER_WIDTH) + "px",
-            }
-          : "auto",
+        marginLeft: "auto",
         marginRight: "auto",
+        left: 0,
         zIndex: (theme) => theme.zIndex.drawer + 1,
         padding: (theme) => theme.spacing(2, 2),
       }}
@@ -47,6 +41,7 @@ export default function ProgressIndicator({ resources }) {
         justifyContent="center"
         direction="column"
         spacing={2}
+        className="progress-container"
       >
         <Stack
           direction="row"

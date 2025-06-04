@@ -13,32 +13,44 @@ import {
 } from "../util/util";
 import {
   getResourcesByResourceType,
+  getResourceTypesFromResources,
   getFhirResourcesFromQueryResult,
   getFHIRResourcesToLoad,
   getFHIRResourcePaths,
+  processPage,
 } from "../util/fhirUtil";
 import Questionnaire from "../models/Questionnaire";
+import { NO_CACHE_HEADER } from "../consts/consts";
 
 export default function useFetchResources() {
   const SUMMARY_DATA_KEY = "summaryData";
+  const commonDependencies = getElmDependencies();
+  let loadedFHIRData = [];
   const { client, patient } = useContext(FhirClientContext);
-  let { questionnaireList, exactMatch } = useContext(QuestionnaireListContext);
+  let {
+    questionnaireList,
+    exactMatchById,
+    questionnaireResponses: ctxQuestionnaireResources,
+  } = useContext(QuestionnaireListContext);
   const questionnareKeys = questionnaireList ? questionnaireList : [];
   const [error, setError] = useState(null);
   const patientBundle = useRef({
     resourceType: "Bundle",
     id: "resource-bundle",
     type: "collection",
-    entry: [{ resource: patient }],
+    entry: [{ resource: patient }, ...(ctxQuestionnaireResources ?? [])],
     evalResults: {},
   });
 
   const getResourcesToLoad = () => {
-    let resources = getFHIRResourcesToLoad();
-    if (!questionnaireList || !questionnaireList.length) {
-      const qIndex = resources
-        .map((resource) => String(resource).toLowerCase())
-        .indexOf("questionnaire");
+    let resources = getFHIRResourcesToLoad().filter((r) => {
+      const existingResources = getResourceTypesFromResources(ctxQuestionnaireResources).map((r) =>
+        String(r).toLowerCase(),
+      );
+      return existingResources.indexOf(String(r).toLowerCase()) === -1;
+    });
+    if (isEmptyArray(questionnaireList)) {
+      const qIndex = resources.map((resource) => String(resource).toLowerCase()).indexOf("questionnaire");
       if (qIndex !== -1) resources.splice(qIndex, 1);
     }
     return resources;
@@ -68,10 +80,7 @@ export default function useFetchResources() {
   const resourcesToLoad = getResourcesToLoad();
 
   // all the resources that will be loaded
-  const initialResourcesToLoad = getResourcesToTrack(
-    resourcesToLoad,
-    questionnareKeys
-  );
+  const initialResourcesToLoad = getResourcesToTrack(resourcesToLoad, questionnareKeys);
 
   // hook for tracking resource load state
   const resourceReducer = (state, action) => {
@@ -97,15 +106,9 @@ export default function useFetchResources() {
     }
   };
 
-  const [toBeLoadedResources, dispatch] = useReducer(
-    resourceReducer,
-    initialResourcesToLoad
-  );
+  const [toBeLoadedResources, dispatch] = useReducer(resourceReducer, initialResourcesToLoad);
 
-  const isReady = () =>
-    isEmptyArray(toBeLoadedResources) ||
-    !toBeLoadedResources.find((o) => !o.complete) ||
-    error;
+  const isReady = () => isEmptyArray(toBeLoadedResources) || !toBeLoadedResources.find((o) => !o.complete) || error;
 
   const handleResourceComplete = (resource, params) => {
     dispatch({ type: "COMPLETE", id: resource, ...params });
@@ -115,154 +118,113 @@ export default function useFetchResources() {
     dispatch({ type: "ERROR", id: resource });
   };
 
-  const gatherSummaryDataByQuestionnaireId = async (
-    questionnaireId,
-    exactMatch,
-    patientBundle
-  ) => {
-    // search for matching questionnaire
-    const searchMatchingQuestionnaireResources = async () => {
-      const storageKey = `questionnaire_${questionnaireId}`;
-      const storageQuestionnaire = sessionStorage.getItem(storageKey);
-      if (storageQuestionnaire) return JSON.parse(storageQuestionnaire);
-      const questionnaireResources = getResourcesByResourceType(
-        patientBundle,
-        "Questionnaire"
-      );
-      console.log(
-        `questionnaireResources for ${questionnaireId}`,
-        questionnaireResources
-      );
-      const returnResult = questionnaireResources
-        ? questionnaireResources.find((resource) => {
-            if (!exactMatch) {
-              const toMatch = String(questionnaireId).toLowerCase();
-              const arrMatches = [
-                String(resource.name).toLowerCase(),
-                String(resource.id).toLowerCase(),
-              ];
-              return (
-                String(resource.id).toLowerCase() === toMatch ||
-                arrMatches.find((key) => key.includes(toMatch))
-              );
-            }
-            return resource.id === questionnaireId;
-          })
-        : null;
-      if (returnResult) {
-        sessionStorage.setItem(storageKey, JSON.stringify(returnResult));
-        return returnResult;
-      }
-      return null;
-    };
-    const gatherSummaryData = async (questionnaireJson) => {
-      const questionnaireObject = new Questionnaire(questionnaireJson);
-      const interventionLibId = questionnaireObject.interventionLibId;
-      const chartConfig = getChartConfig(questionnaireObject.id);
-      /* get CQL expressions */
-      const [elmJson, valueSetJson] = await getInterventionLogicLib(
-        interventionLibId
-      ).catch((e) => {
-        console.log("Error retrieving ELM lib son for " + questionnaireId, e);
-        throw new Error("Error retrieving ELM lib son for " + questionnaireId);
-      });
-      // get formatted questionnaire responses
-      let cqlData = null;
-      try {
-        const evalResult = await evalExpressionForIntervention(
-          "ResponsesSummary",
-          elmJson,
-          getElmDependencies(),
-          valueSetJson,
-          patientBundle,
-          {
-            QuestionnaireID: questionnaireObject.id,
-            QuestionnaireName: questionnaireObject.name,
+  // search for matching questionnaire
+  const searchMatchingQuestionnaireResources = async (questionnaireId, paramPatientBundle, exactMatchById) => {
+    if (!questionnaireId || isEmptyArray(paramPatientBundle)) return null;
+    const questionnaireResources = getResourcesByResourceType(paramPatientBundle, "Questionnaire");
+    const returnResult = questionnaireResources
+      ? questionnaireResources.find((resource) => {
+          if (!exactMatchById) {
+            const toMatch = String(questionnaireId).toLowerCase();
+            const arrMatches = [String(resource.name).toLowerCase(), String(resource.id).toLowerCase()];
+            return String(resource.id).toLowerCase() === toMatch || arrMatches.find((key) => key.includes(toMatch));
           }
-        ).catch((e) => {
-          console.log(e);
-          throw new Error(
-            "CQL evaluation expression, ResponsesSummary, error "
-          );
-        });
-        if (evalResult) {
-          cqlData = await evalResult;
-        }
-      } catch (e) {
-        console.log("Error executing CQL expression: ", e);
-        throw new Error(e);
-      }
-      const scoringData = !isEmptyArray(cqlData)
-        ? cqlData.filter((item) => {
-            return (
-              item &&
-              !isEmptyArray(item.responses) &&
-              isNumber(item.score) &&
-              item.date
-            );
-          })
-        : null;
-      const chartData = !isEmptyArray(scoringData)
-        ? scoringData.map((item) => ({
-            ...item,
-            ...(item.scoringParams ?? {}),
-            date: item.date,
-            total: item.score,
-          }))
-        : null;
-      const scoringParams = !isEmptyArray(cqlData)
-        ? cqlData[0].scoringParams
-        : {};
-
-      const returnResult = {
-        chartConfig: { ...chartConfig, ...scoringParams },
-        chartData: chartData,
-        scoringData: scoringData,
-        responses: cqlData,
-        questionnaire: questionnaireJson,
-      };
-      console.log(
-        "return result from CQL execution for " + questionnaireId,
-        returnResult
-      );
+          return resource.id === questionnaireId;
+        })
+      : null;
+    if (returnResult) {
       return returnResult;
-    };
+    }
+    return null;
+  };
 
-    // find matching questionnaire & questionnaire response(s)
-    const result = await searchMatchingQuestionnaireResources().catch((e) => {
-      throw new Error(e);
+  const gatherSummaryData = async (questionnaireJson, paramPatientBundle) => {
+    if (!questionnaireJson) return null;
+    const questionnaireObject = new Questionnaire(questionnaireJson);
+    const questionnaireId = questionnaireObject.id;
+    const interventionLibId = questionnaireObject.interventionLibId;
+    const chartConfig = getChartConfig(questionnaireObject.id);
+    /* get CQL expressions */
+    const [elmJson, valueSetJson] = await getInterventionLogicLib(interventionLibId).catch((e) => {
+      console.log("Error retrieving ELM lib son for " + questionnaireObject.id, e);
+      throw new Error("Error retrieving ELM lib son for " + questionnaireId);
     });
 
-    let bundles = [];
-    if (Array.isArray(result)) {
-      result.forEach((item) => {
-        bundles = [...bundles, ...getFhirResourcesFromQueryResult(item)];
+    const patientBundleToUse = !isEmptyArray(paramPatientBundle) ? JSON.parse(JSON.stringify(paramPatientBundle)) : [];
+    // get formatted questionnaire responses
+    let cqlData = null;
+    try {
+      const evalResult = await evalExpressionForIntervention(
+        "ResponsesSummary",
+        elmJson,
+        commonDependencies,
+        valueSetJson,
+        { entry: patientBundleToUse },
+        {
+          QuestionnaireID: questionnaireObject.id,
+          QuestionnaireName: questionnaireObject.name,
+        },
+      ).catch((e) => {
+        console.log(e);
+        throw new Error("CQL evaluation expression, ResponsesSummary, error ");
       });
-    } else bundles = [...bundles, ...getFhirResourcesFromQueryResult(result)];
-    const arrQuestionnaires = bundles.filter(
-      (entry) =>
-        entry.resource &&
-        String(entry.resource.resourceType).toLowerCase() === "questionnaire"
-    );
-    const questionnaireJson = !isEmptyArray(arrQuestionnaires)
-      ? arrQuestionnaires[0].resource
-      : null;
-    if (!questionnaireJson) {
-      throw new Error("No matching questionnaire found");
+      if (evalResult) {
+        cqlData = await evalResult;
+      }
+    } catch (e) {
+      console.log("Error executing CQL expression: ", e);
+      throw new Error(e);
     }
-    patientBundle = {
-      ...patientBundle,
-      entry: [...patientBundle, ...bundles],
+    const scoringData = !isEmptyArray(cqlData)
+      ? cqlData.filter((item) => {
+          return item && !isEmptyArray(item.responses) && isNumber(item.score) && item.date;
+        })
+      : null;
+    const chartData = !isEmptyArray(scoringData)
+      ? scoringData.map((item) => ({
+          ...item,
+          ...(item.scoringParams ?? {}),
+          date: item.date,
+          total: item.score,
+        }))
+      : null;
+    const scoringParams = !isEmptyArray(cqlData) ? cqlData[0].scoringParams : {};
+
+    const returnResult = {
+      chartConfig: { ...chartConfig, ...scoringParams },
+      chartData: chartData,
+      scoringData: scoringData,
+      responses: cqlData,
       questionnaire: questionnaireJson,
     };
-    const data = await gatherSummaryData(questionnaireJson).catch((e) => {
+    console.log("return result from CQL execution for " + questionnaireId, returnResult);
+    return returnResult;
+  };
+
+  const gatherSummaryDataByQuestionnaireId = async (questionnaireId, exactMatchById, paramPatientBundle) => {
+    // find matching questionnaire & questionnaire response(s)
+    const result = await searchMatchingQuestionnaireResources(
+      questionnaireId,
+      paramPatientBundle,
+      exactMatchById,
+    ).catch((e) => {
+      throw new Error(e);
+    });
+    const bundles = getFhirResourcesFromQueryResult(result);
+    const arrQuestionnaires = getResourcesByResourceType(bundles, "Questionnaire");
+    const questionnaireJson = !isEmptyArray(arrQuestionnaires) ? arrQuestionnaires[0] : null;
+    if (!questionnaireJson) {
+      throw new Error("No matching questionnaire found.");
+    }
+    const data = await gatherSummaryData(questionnaireJson, paramPatientBundle).catch((e) => {
       console.log("Error occurred gathering summary data: ", e);
-      throw new Error(
-        "Error occurred gathering summary data.  See console for detail."
-      );
+      throw new Error("Error occurred gathering summary data.  See console for detail.");
     });
 
-    return data;
+    return {
+      data: data,
+      questionnaire: questionnaireJson,
+    };
   };
 
   useQuery(
@@ -286,7 +248,7 @@ export default function useFetchResources() {
         console.log("questionnaire list to load ", questionnaireList);
         const promiseEvals = resourcesToLoad.map((resource) => {
           return new Promise((resolve) => {
-            getResourceLogicLib(resource)
+            getResourceLogicLib()
               .then((libResult) => {
                 const [elmJson, valueSetJson] = libResult;
                 if (!elmJson) {
@@ -296,11 +258,11 @@ export default function useFetchResources() {
                   return;
                 }
                 evalExpressionForIntervention(
-                  "Results",
+                  `${resource}_Results`,
                   elmJson,
-                  getElmDependencies(),
+                  commonDependencies,
                   valueSetJson,
-                  patientBundle.current
+                  patientBundle.current,
                 )
                   .then((evalResult) => {
                     resolve({
@@ -308,10 +270,7 @@ export default function useFetchResources() {
                     });
                   })
                   .catch((e) => {
-                    console.log(
-                      "Error evaluating expression for " + resource,
-                      e
-                    );
+                    console.log("Error evaluating expression for " + resource, e);
                     resolve({
                       [resource]: {
                         error: e,
@@ -333,12 +292,17 @@ export default function useFetchResources() {
           return new Promise((resolve) => {
             gatherSummaryDataByQuestionnaireId(
               qid,
-              exactMatch,
-              patientBundle.current.entry
+              exactMatchById,
+              JSON.parse(JSON.stringify(patientBundle.current.entry)),
             )
               .then((results) => {
+                const { data, questionnaire } = results;
+                patientBundle.current = {
+                  ...patientBundle.current,
+                  questionnaire: questionnaire,
+                };
                 resolve({
-                  [qid]: results,
+                  [qid]: data,
                 });
               })
               .catch((e) => {
@@ -357,6 +321,7 @@ export default function useFetchResources() {
             const key = o[0];
             const value = o[1];
             if (value?.error) {
+              summaries[key] = value;
               handleResourceError(key);
               return true;
             }
@@ -370,7 +335,7 @@ export default function useFetchResources() {
                 },
               };
             } else {
-              if (summaries[key]) return true;
+              //if (summaries[key]) return true;
               summaries[key] = o[1];
               if (o[1]?.questionnaire) {
                 questionnaireList.forEach((q) => {
@@ -388,7 +353,7 @@ export default function useFetchResources() {
               handleResourceComplete(SUMMARY_DATA_KEY, {
                 data: summaries,
               }),
-            50
+            50,
           );
         });
       },
@@ -396,29 +361,32 @@ export default function useFetchResources() {
         setError("Error fetching FHIR resources. See console for detail.");
         console.log("FHIR resources fetching error: ", e);
       },
-    }
+    },
   );
 
   const getFhirResources = async () => {
-    if (!client || !patient || !patient.id)
-      throw new Error("Client or patient missing.");
+    if (!client || !patient || !patient.id) throw new Error("Client or patient missing.");
     const resources = getFHIRResourcePaths(patient.id, resourcesToLoad, {
       questionnaireList: questionnaireList,
-      exactMatch: exactMatch,
+      exactMatchById: exactMatchById,
     });
     const requests = resources.map((resource) =>
       client
-        .request(resource.resourcePath, {
-          "Cache-Control": "no-cache, no-store, max-age=0",
-        })
-        .then((result) => {
+        .request(
+          { url: resource.resourcePath, header: NO_CACHE_HEADER },
+          {
+            pageLimit: 0, // unlimited pages
+            onPage: processPage(client, loadedFHIRData),
+          },
+        )
+        .then(() => {
           handleResourceComplete(resource.resourceType);
-          return result;
+          return loadedFHIRData;
         })
         .catch((e) => {
           handleResourceError(resource.resourceType);
           throw new Error(e);
-        })
+        }),
     );
     if (!requests.length) {
       console.log("No FHIR resource(s) specified.");
@@ -439,16 +407,13 @@ export default function useFetchResources() {
       },
       (e) => {
         throw new Error(e);
-      }
+      },
     );
   };
 
   const getAllChartData = (summaryData) => {
     if (!isReady() || !summaryData || !summaryData.data) return null;
-    const dataToUse = Object.assign(
-      {},
-      JSON.parse(JSON.stringify(summaryData.data))
-    );
+    const dataToUse = Object.assign({}, JSON.parse(JSON.stringify(summaryData.data)));
     const keys = Object.keys(dataToUse);
     const formattedData = keys.map((key) => {
       const data = dataToUse[key];
@@ -465,14 +430,10 @@ export default function useFetchResources() {
         });
       }
     });
-    return formattedData
-      .flat()
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return formattedData.flat().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   };
 
-  const summaryData = toBeLoadedResources.find(
-    (resource) => resource.id === SUMMARY_DATA_KEY
-  );
+  const summaryData = toBeLoadedResources.find((resource) => resource.id === SUMMARY_DATA_KEY);
 
   return {
     isReady: isReady(),

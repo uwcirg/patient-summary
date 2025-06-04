@@ -5,7 +5,7 @@
          "type" : "CqlToElmInfo"
       } ],
       "identifier" : {
-         "id" : "ObservationResourceLibrary",
+         "id" : "ConditionResourceLibrary",
          "version" : "1.0.0"
       },
       "schemaIdentifier" : {
@@ -92,6 +92,34 @@
                         }
                      }
                   } ]
+               }, {
+                  "type" : "Coalesce",
+                  "operand" : [ {
+                     "type" : "Query",
+                     "source" : [ {
+                        "alias" : "c2",
+                        "expression" : {
+                           "path" : "coding",
+                           "type" : "Property",
+                           "source" : {
+                              "name" : "c",
+                              "type" : "OperandRef"
+                           }
+                        }
+                     } ],
+                     "relationship" : [ ],
+                     "return" : {
+                        "expression" : {
+                           "path" : "value",
+                           "type" : "Property",
+                           "source" : {
+                              "path" : "code",
+                              "scope" : "c2",
+                              "type" : "Property"
+                           }
+                        }
+                     }
+                  } ]
                } ]
             },
             "operand" : [ {
@@ -124,6 +152,165 @@
                   "type" : "NamedTypeSpecifier"
                }
             } ]
+         }, {
+            "name" : "Condition_Results",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "type" : "Query",
+               "source" : [ {
+                  "alias" : "C",
+                  "expression" : {
+                     "dataType" : "{http://hl7.org/fhir}Condition",
+                     "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
+                     "type" : "Retrieve"
+                  }
+               } ],
+               "let" : [ {
+                  "identifier" : "oDate",
+                  "expression" : {
+                     "type" : "Coalesce",
+                     "operand" : [ {
+                        "path" : "value",
+                        "type" : "Property",
+                        "source" : {
+                           "strict" : false,
+                           "type" : "As",
+                           "operand" : {
+                              "path" : "onset",
+                              "scope" : "C",
+                              "type" : "Property"
+                           },
+                           "asTypeSpecifier" : {
+                              "name" : "{http://hl7.org/fhir}dateTime",
+                              "type" : "NamedTypeSpecifier"
+                           }
+                        }
+                     }, {
+                        "path" : "value",
+                        "type" : "Property",
+                        "source" : {
+                           "path" : "end",
+                           "type" : "Property",
+                           "source" : {
+                              "strict" : false,
+                              "type" : "As",
+                              "operand" : {
+                                 "path" : "onset",
+                                 "scope" : "C",
+                                 "type" : "Property"
+                              },
+                              "asTypeSpecifier" : {
+                                 "name" : "{http://hl7.org/fhir}Period",
+                                 "type" : "NamedTypeSpecifier"
+                              }
+                           }
+                        }
+                     }, {
+                        "path" : "value",
+                        "type" : "Property",
+                        "source" : {
+                           "path" : "start",
+                           "type" : "Property",
+                           "source" : {
+                              "strict" : false,
+                              "type" : "As",
+                              "operand" : {
+                                 "path" : "onset",
+                                 "scope" : "C",
+                                 "type" : "Property"
+                              },
+                              "asTypeSpecifier" : {
+                                 "name" : "{http://hl7.org/fhir}Period",
+                                 "type" : "NamedTypeSpecifier"
+                              }
+                           }
+                        }
+                     }, {
+                        "path" : "value",
+                        "type" : "Property",
+                        "source" : {
+                           "path" : "recordedDate",
+                           "scope" : "C",
+                           "type" : "Property"
+                        }
+                     } ]
+                  }
+               } ],
+               "relationship" : [ ],
+               "return" : {
+                  "expression" : {
+                     "type" : "Tuple",
+                     "element" : [ {
+                        "name" : "id",
+                        "value" : {
+                           "path" : "value",
+                           "type" : "Property",
+                           "source" : {
+                              "path" : "id",
+                              "scope" : "C",
+                              "type" : "Property"
+                           }
+                        }
+                     }, {
+                        "name" : "condition",
+                        "value" : {
+                           "name" : "ConceptText",
+                           "type" : "FunctionRef",
+                           "operand" : [ {
+                              "path" : "code",
+                              "scope" : "C",
+                              "type" : "Property"
+                           } ]
+                        }
+                     }, {
+                        "name" : "status",
+                        "value" : {
+                           "name" : "ConceptText",
+                           "type" : "FunctionRef",
+                           "operand" : [ {
+                              "path" : "verificationStatus",
+                              "scope" : "C",
+                              "type" : "Property"
+                           } ]
+                        }
+                     }, {
+                        "name" : "recordedDate",
+                        "value" : {
+                           "name" : "DateTimeText",
+                           "type" : "FunctionRef",
+                           "operand" : [ {
+                              "path" : "recordedDate",
+                              "scope" : "C",
+                              "type" : "Property"
+                           } ]
+                        }
+                     }, {
+                        "name" : "onsetDateTime",
+                        "value" : {
+                           "type" : "ToString",
+                           "operand" : {
+                              "name" : "oDate",
+                              "type" : "QueryLetRef"
+                           }
+                        }
+                     }, {
+                        "name" : "date",
+                        "value" : {
+                           "name" : "oDate",
+                           "type" : "QueryLetRef"
+                        }
+                     } ]
+                  }
+               },
+               "sort" : {
+                  "by" : [ {
+                     "direction" : "desc",
+                     "path" : "date",
+                     "type" : "ByColumn"
+                  } ]
+               }
+            }
          }, {
             "name" : "GetComponentValues",
             "context" : "Patient",
@@ -583,7 +770,7 @@
                }
             } ]
          }, {
-            "name" : "Results",
+            "name" : "Observation_Results",
             "context" : "Patient",
             "accessLevel" : "Public",
             "expression" : {

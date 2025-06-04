@@ -6,8 +6,11 @@ export default function Error(props) {
   const {message} = props;
   const getMessage = () => {
     if (!message) return "";
+    if (typeof message !== "string" && message?.message) {
+      return message.message;
+    }
     if (typeof message !== "string") {
-      console.log("Error ", message);
+      console.log("Error: ", message);
       return "Error occurred. See console for detail.";
     }
     return message;

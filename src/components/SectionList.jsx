@@ -42,7 +42,7 @@ export default function SectionList(props) {
               <ListItemText
                 primary={section.title}
                 primaryTypographyProps={{
-                  variant: "subtitle",
+                  variant: "subtitle2",
                   component: "h3",
                   sx: {
                     fontWeight: 500,

@@ -2,6 +2,8 @@ import React, { useContext, useEffect, useReducer } from "react";
 import PropTypes from "prop-types";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
+import { NO_CACHE_HEADER } from "../consts/consts";
+import { getFhirResourcesFromQueryResult, processPage } from "../util/fhirUtil";
 import { getEnvQuestionnaireList, getEnv, isEmptyArray } from "../util/util";
 import { QuestionnaireListContext } from "./QuestionnaireListContext";
 import { FhirClientContext } from "./FhirClientContext";
@@ -13,11 +15,12 @@ export default function QuestionnaireListProvider({ children }) {
   // hook for tracking state
   const resourceReducer = (state, action) => {
     switch (action.type) {
-      case "LIST":
+      case "RESULTS":
         return {
           ...state,
           questionnaireList: action.questionnaireList,
-          exactMatch: !!action.exactMatch,
+          questionnaireResponses: action.questionnaireResponses,
+          exactMatchById: !!action.exactMatchById,
           complete: true,
         };
       case "ERROR":
@@ -33,14 +36,14 @@ export default function QuestionnaireListProvider({ children }) {
   };
   const [state, dispatch] = useReducer(resourceReducer, {
     questionnaireList: [],
-    exactMatch: isFromEpic,
+    questionnaireResponses: [],
+    exactMatchById: isFromEpic,
     error: false,
     errorMessage: "",
   });
   const { client, patient } = useContext(FhirClientContext);
 
   useEffect(() => {
-    const preloadQuestionnaireList = getEnvQuestionnaireList();
     if (!client || !patient) {
       dispatch({
         type: "ERROR",
@@ -49,56 +52,50 @@ export default function QuestionnaireListProvider({ children }) {
       return;
     }
     if (state.complete) return;
-    if (!isEmptyArray(preloadQuestionnaireList)) {
-      console.log(
-        "questionnaire list to load from environment variable ",
-        preloadQuestionnaireList
-      );
-      dispatch({
-        type: "LIST",
-        questionnaireList: preloadQuestionnaireList,
-      });
-      return;
-    }
+
+    const preloadQuestionnaireList = getEnvQuestionnaireList();
+    let resources = [];
     // load questionnaires based on questionnaire responses
     client
       .request(
-        "QuestionnaireResponse?_sort=-_lastUpdated&_count=500&patient=" +
-          patient.id
+        {
+          url: "QuestionnaireResponse?_count=200&patient=" + patient.id,
+          header: NO_CACHE_HEADER,
+        },
+        {
+          pageLimit: 0, // unlimited pages
+          onPage: processPage(client, resources),
+        },
       )
-      .then((results) => {
-        const matchedResults =
-          results && !isEmptyArray(results.entry)
-            ? results.entry.filter(
-                (item) =>
-                  item.resource &&
-                  item.resource.questionnaire &&
-                  item.resource.questionnaire.split("/")[1]
-              )
-            : null;
-        console.log(
-          "matched results for questionnaire from QuestionnaireResponse ",
-          matchedResults
-        );
-        if (isEmptyArray(matchedResults)) {
+      .then(() => {
+        const matchedResults = !isEmptyArray(resources)
+          ? resources.filter((item) => item && item.questionnaire && item.questionnaire.split("/")[1])
+          : null;
+        console.log("matched results for questionnaire from QuestionnaireResponse ", matchedResults);
+        if (!isEmptyArray(preloadQuestionnaireList)) {
+          console.log("questionnaire list to load from environment variable ", preloadQuestionnaireList);
           dispatch({
-            type: "ERROR",
-            errorMessage: "No questionnaire list set",
+            type: "RESULTS",
+            questionnaireList: preloadQuestionnaireList,
+            questionnaireResponses: getFhirResourcesFromQueryResult(matchedResults),
           });
           return;
         }
-        const qIds = matchedResults.map(
-          (item) => item.resource.questionnaire.split("/")[1]
-        );
+        if (isEmptyArray(matchedResults)) {
+          dispatch({
+            type: "ERROR",
+            errorMessage: "No questionnaire list set.",
+          });
+          return;
+        }
+        const qIds = matchedResults.map((item) => item.questionnaire.split("/")[1]);
         let uniqueQIds = [...new Set(qIds)];
-        console.log(
-          "questionnaire list from questionnaire responses to load ",
-          uniqueQIds
-        );
+        console.log("questionnaire list from questionnaire responses to load ", uniqueQIds);
         dispatch({
-          type: "LIST",
+          type: "RESULTS",
           questionnaireList: uniqueQIds,
-          exactMatch: true,
+          questionnaireResponses: getFhirResourcesFromQueryResult(matchedResults),
+          exactMatchById: true,
         });
       })
       .catch((e) => {
