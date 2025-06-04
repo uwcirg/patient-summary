@@ -10,7 +10,9 @@ export default function Summaries({ questionnaireKeys, summaryData }) {
   const hasSummaryData = () => {
     if (!summaryData || !summaryData.data) return false;
     const keys = Object.keys(summaryData.data);
-    return keys.find((key) => summaryData.data[key] && !isEmptyArray(summaryData.data[key].responses));
+    return keys.find(
+      (key) => summaryData.data[key] && (summaryData.data[key].error || !isEmptyArray(summaryData.data[key].responses)),
+    );
   };
   if (!questionnaireKeys || !questionnaireKeys.length) {
     return <Alert severity="error">No matching data found.</Alert>;

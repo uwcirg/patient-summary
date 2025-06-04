@@ -203,6 +203,7 @@ export default function useFetchResources() {
 
   const gatherSummaryDataByQuestionnaireId = async (questionnaireId, exactMatchById, paramPatientBundle) => {
     // find matching questionnaire & questionnaire response(s)
+    console.log("questionnaire Id ", questionnaireId);
     const result = await searchMatchingQuestionnaireResources(
       questionnaireId,
       paramPatientBundle,

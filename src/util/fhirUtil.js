@@ -96,7 +96,7 @@ export function getFHIRResourceQueryParams(resourceType, options) {
     case "questionnaire":
       if (!isEmptyArray(queryOptions.questionnaireList)) {
         let qList = queryOptions.questionnaireList.join(",");
-        paramsObj[queryOptions.exactMatch ? "_id" : "name:contains"] = qList;
+        paramsObj[queryOptions.exactMatchById ? "_id" : "name:contains"] = qList;
       }
       break;
     case "observation":
