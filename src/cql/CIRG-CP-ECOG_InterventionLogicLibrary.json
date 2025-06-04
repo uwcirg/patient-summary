@@ -5,7 +5,7 @@
          "type" : "CqlToElmInfo"
       } ],
       "identifier" : {
-         "id" : "ECOG12_InterventionLogicLibrary",
+         "id" : "CP_ECOG_InterventionLogicLibrary",
          "version" : "1.0.0"
       },
       "schemaIdentifier" : {
@@ -39,7 +39,7 @@
             "accessLevel" : "Public",
             "default" : {
                "valueType" : "{urn:hl7-org:elm-types:r1}String",
-               "value" : "CIRG-ECOG12",
+               "value" : "CIRG-CP-ECOG",
                "type" : "Literal"
             }
          }, {
@@ -47,7 +47,7 @@
             "accessLevel" : "Public",
             "default" : {
                "valueType" : "{urn:hl7-org:elm-types:r1}String",
-               "value" : "ecog12",
+               "value" : "cp-ecog",
                "type" : "Literal"
             }
          }, {
@@ -55,7 +55,7 @@
             "accessLevel" : "Public",
             "default" : {
                "valueType" : "{urn:hl7-org:elm-types:r1}String",
-               "value" : "http://www.cdc.gov/ncbddd/fasd/ecog12",
+               "value" : "http://www.cdc.gov/ncbddd/fasd/cp-ecog",
                "type" : "Literal"
             }
          }, {
@@ -63,7 +63,7 @@
             "accessLevel" : "Public",
             "default" : {
                "valueType" : "{urn:hl7-org:elm-types:r1}String",
-               "value" : "ecog12-total-score",
+               "value" : "cp-ecog-total-score",
                "type" : "Literal"
             }
          } ]
@@ -1089,41 +1089,228 @@
                               } ],
                               "relationship" : [ ],
                               "where" : {
-                                 "type" : "Not",
-                                 "operand" : {
-                                    "type" : "Equal",
+                                 "type" : "And",
+                                 "operand" : [ {
+                                    "type" : "Or",
                                     "operand" : [ {
-                                       "path" : "value",
-                                       "type" : "Property",
-                                       "source" : {
-                                          "path" : "linkId",
+                                       "type" : "Or",
+                                       "operand" : [ {
+                                          "type" : "Or",
+                                          "operand" : [ {
+                                             "type" : "Or",
+                                             "operand" : [ {
+                                                "type" : "Or",
+                                                "operand" : [ {
+                                                   "type" : "Or",
+                                                   "operand" : [ {
+                                                      "type" : "Or",
+                                                      "operand" : [ {
+                                                         "type" : "Or",
+                                                         "operand" : [ {
+                                                            "type" : "Or",
+                                                            "operand" : [ {
+                                                               "type" : "Or",
+                                                               "operand" : [ {
+                                                                  "type" : "Or",
+                                                                  "operand" : [ {
+                                                                     "type" : "Equal",
+                                                                     "operand" : [ {
+                                                                        "path" : "value",
+                                                                        "type" : "Property",
+                                                                        "source" : {
+                                                                           "path" : "linkId",
+                                                                           "scope" : "O",
+                                                                           "type" : "Property"
+                                                                        }
+                                                                     }, {
+                                                                        "name" : "question1LinkId",
+                                                                        "type" : "ExpressionRef"
+                                                                     } ]
+                                                                  }, {
+                                                                     "type" : "Equal",
+                                                                     "operand" : [ {
+                                                                        "path" : "value",
+                                                                        "type" : "Property",
+                                                                        "source" : {
+                                                                           "path" : "linkId",
+                                                                           "scope" : "O",
+                                                                           "type" : "Property"
+                                                                        }
+                                                                     }, {
+                                                                        "name" : "question2LinkId",
+                                                                        "type" : "ExpressionRef"
+                                                                     } ]
+                                                                  } ]
+                                                               }, {
+                                                                  "type" : "Equal",
+                                                                  "operand" : [ {
+                                                                     "path" : "value",
+                                                                     "type" : "Property",
+                                                                     "source" : {
+                                                                        "path" : "linkId",
+                                                                        "scope" : "O",
+                                                                        "type" : "Property"
+                                                                     }
+                                                                  }, {
+                                                                     "name" : "question3LinkId",
+                                                                     "type" : "ExpressionRef"
+                                                                  } ]
+                                                               } ]
+                                                            }, {
+                                                               "type" : "Equal",
+                                                               "operand" : [ {
+                                                                  "path" : "value",
+                                                                  "type" : "Property",
+                                                                  "source" : {
+                                                                     "path" : "linkId",
+                                                                     "scope" : "O",
+                                                                     "type" : "Property"
+                                                                  }
+                                                               }, {
+                                                                  "name" : "question4LinkId",
+                                                                  "type" : "ExpressionRef"
+                                                               } ]
+                                                            } ]
+                                                         }, {
+                                                            "type" : "Equal",
+                                                            "operand" : [ {
+                                                               "path" : "value",
+                                                               "type" : "Property",
+                                                               "source" : {
+                                                                  "path" : "linkId",
+                                                                  "scope" : "O",
+                                                                  "type" : "Property"
+                                                               }
+                                                            }, {
+                                                               "name" : "question5LinkId",
+                                                               "type" : "ExpressionRef"
+                                                            } ]
+                                                         } ]
+                                                      }, {
+                                                         "type" : "Equal",
+                                                         "operand" : [ {
+                                                            "path" : "value",
+                                                            "type" : "Property",
+                                                            "source" : {
+                                                               "path" : "linkId",
+                                                               "scope" : "O",
+                                                               "type" : "Property"
+                                                            }
+                                                         }, {
+                                                            "name" : "question6LinkId",
+                                                            "type" : "ExpressionRef"
+                                                         } ]
+                                                      } ]
+                                                   }, {
+                                                      "type" : "Equal",
+                                                      "operand" : [ {
+                                                         "path" : "value",
+                                                         "type" : "Property",
+                                                         "source" : {
+                                                            "path" : "linkId",
+                                                            "scope" : "O",
+                                                            "type" : "Property"
+                                                         }
+                                                      }, {
+                                                         "name" : "question7LinkId",
+                                                         "type" : "ExpressionRef"
+                                                      } ]
+                                                   } ]
+                                                }, {
+                                                   "type" : "Equal",
+                                                   "operand" : [ {
+                                                      "path" : "value",
+                                                      "type" : "Property",
+                                                      "source" : {
+                                                         "path" : "linkId",
+                                                         "scope" : "O",
+                                                         "type" : "Property"
+                                                      }
+                                                   }, {
+                                                      "name" : "question8LinkId",
+                                                      "type" : "ExpressionRef"
+                                                   } ]
+                                                } ]
+                                             }, {
+                                                "type" : "Equal",
+                                                "operand" : [ {
+                                                   "path" : "value",
+                                                   "type" : "Property",
+                                                   "source" : {
+                                                      "path" : "linkId",
+                                                      "scope" : "O",
+                                                      "type" : "Property"
+                                                   }
+                                                }, {
+                                                   "name" : "question9LinkId",
+                                                   "type" : "ExpressionRef"
+                                                } ]
+                                             } ]
+                                          }, {
+                                             "type" : "Equal",
+                                             "operand" : [ {
+                                                "path" : "value",
+                                                "type" : "Property",
+                                                "source" : {
+                                                   "path" : "linkId",
+                                                   "scope" : "O",
+                                                   "type" : "Property"
+                                                }
+                                             }, {
+                                                "name" : "question10LinkId",
+                                                "type" : "ExpressionRef"
+                                             } ]
+                                          } ]
+                                       }, {
+                                          "type" : "Equal",
+                                          "operand" : [ {
+                                             "path" : "value",
+                                             "type" : "Property",
+                                             "source" : {
+                                                "path" : "linkId",
+                                                "scope" : "O",
+                                                "type" : "Property"
+                                             }
+                                          }, {
+                                             "name" : "question11LinkId",
+                                             "type" : "ExpressionRef"
+                                          } ]
+                                       } ]
+                                    }, {
+                                       "type" : "Equal",
+                                       "operand" : [ {
+                                          "path" : "value",
+                                          "type" : "Property",
+                                          "source" : {
+                                             "path" : "linkId",
+                                             "scope" : "O",
+                                             "type" : "Property"
+                                          }
+                                       }, {
+                                          "name" : "question12LinkId",
+                                          "type" : "ExpressionRef"
+                                       } ]
+                                    } ]
+                                 }, {
+                                    "type" : "Not",
+                                    "operand" : {
+                                       "type" : "IsNull",
+                                       "operand" : {
+                                          "path" : "answer",
                                           "scope" : "O",
                                           "type" : "Property"
                                        }
-                                    }, {
-                                       "name" : "ScoringQuestionId",
-                                       "type" : "ParameterRef"
-                                    } ]
-                                 }
+                                    }
+                                 } ]
                               }
                            }
                         }
                      }, {
                         "name" : "totalItems",
                         "value" : {
-                           "type" : "Length",
-                           "operand" : {
-                              "name" : "GetAnswerLinkIdsByQuestionnaire",
-                              "libraryName" : "LogicHelpers",
-                              "type" : "FunctionRef",
-                              "operand" : [ {
-                                 "name" : "CurrentQuestionnaire",
-                                 "type" : "ExpressionRef"
-                              }, {
-                                 "name" : "ScoringQuestionId",
-                                 "type" : "ParameterRef"
-                              } ]
-                           }
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "12",
+                           "type" : "Literal"
                         }
                      }, {
                         "name" : "authoredDate",

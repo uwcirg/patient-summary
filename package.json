@@ -1,48 +1,35 @@
 {
   "name": "patient-summary",
-  "version": "1.0.0",
-  "private": true,
+  "version": "2.0.0",
   "dependencies": {
     "@emotion/react": "^11.9.3",
     "@emotion/styled": "^11.9.3",
-    "@material-table/core": "^0.2.53",
+    "@material-table/core": "^6.4.4",
     "@mui/icons-material": "^5.8.4",
     "@mui/lab": "^5.0.0-alpha.88",
     "@mui/material": "^5.8.6",
-    "@testing-library/jest-dom": "^5.16.4",
-    "@testing-library/react": "^13.3.0",
-    "@testing-library/user-event": "^13.5.0",
-    "buffer": "^6.0.3",
     "commonmark": "^0.30.0",
     "cql-exec-fhir": "^2.0.2",
-    "cql-exec-vsac": "^1.2.2",
-    "cql-worker": "^1.1.4",
+    "cql-exec-vsac": "^2.2.0",
+    "cql-execution": "^3.1.0",
     "dayjs": "^1.11.6",
-    "dompurify": "^2.3.10",
+    "dompurify": "^3.2.4",
     "fhirclient": "^2.4.0",
-    "fs": "0.0.1-security",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^3.1.4",
     "react-query": "^3.39.2",
     "react-router-dom": "^6.3.0",
-    "react-scripts": "4.0.3",
-    "recharts": "^2.1.13",
-    "sass": "^1.53.0"
+    "recharts": "^2.1.13"
   },
+  "type": "module",
   "scripts": {
-    "start": "rescripts start",
-    "build": "rescripts build",
-    "test": "rescripts test --testPathIgnorePatterns=./src/__tests__/cql --watchAll=false",
+    "start": "vite --mode=development",
+    "build": "vite build",
+    "serve": "vite preview",
+    "test": "vitest",
     "test:watch": "rescripts test --testPathIgnorePatterns=./src/__tests__/cql",
-    "cql-test": "./node_modules/.bin/mocha ./src/__tests__/cql/*.js --recursive",
-    "eject": "rescripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "cql-test": "./node_modules/.bin/mocha ./src/__tests__/cql/*.cjs --recursive"
   },
   "browserslist": {
     "production": [
@@ -59,26 +46,32 @@
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/preset-env": "^7.20.2",
-    "@rescripts/cli": "0.0.16",
-    "@rescripts/utilities": "0.0.8",
-    "cql-execution": "^2.4.1",
+    "@eslint/js": "^9.22.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitejs/plugin-react": "^4.3.4",
     "cql-testing": "^2.5.2",
+    "eslint": "^9.22.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-prettier": "^5.2.3",
+    "eslint-plugin-react": "^7.37.4",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.0.0",
+    "jsdom": "^26.0.0",
     "mocha": "^10.0.0",
     "node-fetch": "^2.6.7",
-    "worker-loader": "^3.0.8"
-  },
-  "jest": {
-    "transform": {
-      "^.+\\.[t|j]sx?$": "babel-jest"
-    },
-    "transformIgnorePatterns": [
-      "cql-worker/"
-    ],
-    "moduleNameMapper": {
-      "^cql*": "<rootDir>/src/__tests__/mockfiles/Worker.js"
-    },
-    "testMatch": [
-      "<rootDir>/src/__tests__/components/*.js"
-    ]
+    "prettier": "^3.5.3",
+    "sass": "^1.89.1",
+    "vite": "^6.2.1",
+    "vite-plugin-babel": "^1.3.0",
+    "vite-plugin-commonjs": "^0.10.4",
+    "vite-plugin-dynamic-import": "^1.6.0",
+    "vite-plugin-eslint": "^1.8.1",
+    "vite-plugin-node-polyfills": "^0.23.0",
+    "vitest": "^3.0.8"
   }
 }

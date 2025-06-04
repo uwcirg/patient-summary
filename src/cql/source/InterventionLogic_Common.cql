@@ -112,7 +112,7 @@ define function GetResponseValueByLinkId(linkId String, responses List<FHIR.Ques
   let value: I.answer[0].value
   return case
       //answer in FHIR coding format 
-      when value is FHIR.Coding then value.display.value
+      when value is Coding then value.display.value
       else
          case
           when value.value is String then value.value

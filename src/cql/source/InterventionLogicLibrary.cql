@@ -43,7 +43,7 @@ define ResponsesSummary:
   return {
     id: I.id.value,
     date: LogicHelpers.DateTimeText(I.authored),
-    responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
+    responses: LogicHelpers.ResponsesOnly(I.item),
     totalAnsweredItems: Length((I.item) O where PositionOf(O.linkId, ScoringQuestionId) = -1 or PositionOf(ScoringQuestionId, O.linkId) = -1),
     totalItems: 
       if QuestionnaireItems is not null then
