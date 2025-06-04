@@ -39,6 +39,12 @@ export default defineConfig({
       },
       output: {
         manualChunks: (id) => {
+          if (id.includes("cql-exec")) {
+            return "cqlExec";
+          }
+          if (id.includes("mui") || id.includes("material")) {
+            return "materialUI";
+          }
           if (id.includes("node_modules")) {
             return "vendor";
           }
