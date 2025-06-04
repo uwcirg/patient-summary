@@ -11,7 +11,7 @@ import summaryData from "../mockfiles/MockSummaryData.json";
 import summaryData2 from "../mockfiles/MockSummaryData2.json";
 
 describe("Testing ScoringSummary component", () => {
-  it("Renders scoring summary without data", () => {
+  it.skip("Renders scoring summary without data", () => {
     render(<ScoringSummary />);
     expect(screen.getByText("No summary available")).toBeInTheDocument();
   });

@@ -76,13 +76,5 @@
     "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-node-polyfills": "^0.23.0",
     "vitest": "^3.0.8"
-  },
-  "jest": {
-    "transform": {
-      "^.+\\.[t|j]sx?$": "babel-jest"
-    },
-    "testMatch": [
-      "<rootDir>/src/__tests__/components/*.js"
-    ]
   }
 }
