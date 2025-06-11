@@ -151,7 +151,7 @@ export const COLORS = [
   "#33AACA",
 ];
 
-export const LEGEND_ICON_TYPES = ["square", "rect", "circle", "triangle", "cross", "diamond", "star"];
+export const LEGEND_ICON_TYPES = ["square", "circle", "rect", "triangle", "cross", "diamond", "star"];
 
 Rect.propTypes = {
   cx: PropTypes.number,
