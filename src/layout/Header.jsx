@@ -97,7 +97,7 @@ export default function Header(props) {
                 src={`/assets/${getEnvProjectId()}/img/logo.png`}
                 alt={"project logo"}
                 style={{
-                  width: 152,
+                  height: 48,
                   cursor: "pointer",
                 }}
                 onLoad={handleImageLoaded}
@@ -128,6 +128,7 @@ export default function Header(props) {
                 onError={handleImageLoaded}
                 style={{
                   cursor: "pointer",
+                  height: 48
                 }}
               ></img>
             </button>
