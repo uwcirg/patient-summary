@@ -30,7 +30,7 @@ export default defineConfig({
   ],
   build: {
     // default chunk size limit is 500, but that's nearly impossible due to large JSON files
-    chunkSizeWarningLimit: 1500,
+    chunkSizeWarningLimit: 2000,
     // specify rollup options to enable multiple entry points and break chunks up to smaller sizes
     rollupOptions: {
       input: {
@@ -39,12 +39,12 @@ export default defineConfig({
       },
       output: {
         manualChunks: (id) => {
-          if (id.includes("cql-exec")) {
-            return "cqlExec";
-          }
-          if (id.includes("mui") || id.includes("material")) {
-            return "materialUI";
-          }
+          // if (id.includes("cql-exec")) {
+          //   return "cqlExec";
+          // }
+          // if (id.includes("mui") || id.includes("material")) {
+          //   return "materialUI";
+          // }
           if (id.includes("node_modules")) {
             return "vendor";
           }
