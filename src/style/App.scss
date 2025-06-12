@@ -211,7 +211,8 @@ p {
     background-color: $default-print-background-color !important;
     box-shadow: none !important;
   }
-  .MuiTablePagination-toolbar {
+  .MuiTablePagination-toolbar,
+  .MuiPopper-root {
     display: none !important;
   }
   .MuiAccordion-root {
