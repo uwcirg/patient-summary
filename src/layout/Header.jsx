@@ -21,7 +21,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MoreIcon from "@mui/icons-material/MoreVert";
 import PrintIcon from "@mui/icons-material/LocalPrintshopOutlined";
 import DashboardIcon from "@mui/icons-material/DashboardOutlined";
-import { getEnv, getEnvProjectId, getSectionsToShow, imageOK, scrollToElement } from "../util/util";
+import { isImagefileExist, getEnv, getEnvProjectId, getSectionsToShow, imageOK, scrollToElement } from "../util/util";
 import PatientInfo from "../components/PatientInfo";
 import { FhirClientContext } from "../context/FhirClientContext";
 
@@ -30,10 +30,24 @@ export default function Header(props) {
   const { patient } = useContext(FhirClientContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const anchorRef = useRef(null);
+  const desktopImgRef = useRef(null);
+  const mobileImgRef = useRef(null);
   const sections = getSectionsToShow();
   const hasSections = sections && sections.length > 0;
 
   const { returnURL, inEHR } = props;
+  const getDesktopImgSrc = async () => {
+    const url = `/assets/${getEnvProjectId()}/img/logo.png`;
+    const isOkay = await isImagefileExist(url);
+    if (isOkay) return url;
+    return `/assets/default/img/logo.png`;
+  };
+  const getMobileImgSrc = async () => {
+    const url = `/assets/${getEnvProjectId()}/img/logo_mobile.png`;
+    const isOkay = await isImagefileExist(url);
+    if (isOkay) return url;
+    return `/assets/default/img/logo_mobile.png`;
+  };
   const handleImageLoaded = (e) => {
     if (!e.target) {
       return false;
@@ -94,7 +108,7 @@ export default function Header(props) {
             >
               <img
                 className="header-logo"
-                src={`/assets/${getEnvProjectId()}/img/logo.png`}
+                ref={desktopImgRef}
                 alt={"project logo"}
                 style={{
                   height: 48,
@@ -122,13 +136,13 @@ export default function Header(props) {
               }}
             >
               <img
-                src={`/assets/${getEnvProjectId()}/img/logo_mobile.png`}
+                ref={mobileImgRef}
                 alt={"project logo"}
                 onLoad={handleImageLoaded}
                 onError={handleImageLoaded}
                 style={{
                   cursor: "pointer",
-                  height: 48
+                  height: 48,
                 }}
               ></img>
             </button>
@@ -299,6 +313,16 @@ export default function Header(props) {
   useEffect(() => {
     window.addEventListener("resize", () => handleWindowResize());
     return window.removeEventListener("resize", handleWindowResize, true);
+  }, []);
+
+  useEffect(() => {
+    if (!desktopImgRef.current) return;
+    getDesktopImgSrc().then((url) => (desktopImgRef.current.src = url));
+  }, []);
+
+  useEffect(() => {
+    if (!mobileImgRef.current) return;
+    getMobileImgSrc().then((url) => (mobileImgRef.current.src = url));
   }, []);
 
   return (

@@ -2,11 +2,7 @@ import dayjs from "dayjs";
 import cql from "cql-execution";
 import cqlfhir from "cql-exec-fhir";
 import ChartConfig from "../config/chart_config";
-import {
-  DEFAULT_TOOLBAR_HEIGHT,
-  QUESTIONNAIRE_ANCHOR_ID_PREFIX,
-  queryNeedPatientBanner,
-} from "../consts/consts";
+import { DEFAULT_TOOLBAR_HEIGHT, QUESTIONNAIRE_ANCHOR_ID_PREFIX, queryNeedPatientBanner } from "../consts/consts";
 import commonLibrary from "../cql/InterventionLogic_Common.json";
 import defaultInterventionLibrary from "../cql/InterventionLogicLibrary.json";
 import resourcesLogicLibrary from "../cql/ResourcesLogicLibrary.json";
@@ -15,7 +11,8 @@ import r4HelpersELM from "../cql/FHIRHelpers-4.0.1.json";
 import defaultSections from "../config/sections_config";
 
 export const shortDateRE = /^\d{4}-\d{2}-\d{2}$/; // matches '2012-04-05'
-export const dateREZ = /^(?:(?:19|20)\d{2}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|02-(?:0[1-9]|1\d|2[0-8]))|(?:(?:19|20)(?:[02468][048]|[13579][26])-02-29))T([01]\d|2[0-3]):[0-5]\d:[0-5]\dZ$/; //match '2023-11-10T18:30:49Z' with required UTC
+export const dateREZ =
+  /^(?:(?:19|20)\d{2}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|02-(?:0[1-9]|1\d|2[0-8]))|(?:(?:19|20)(?:[02468][048]|[13579][26])-02-29))T([01]\d|2[0-3]):[0-5]\d:[0-5]\dZ$/; //match '2023-11-10T18:30:49Z' with required UTC
 
 /*
  * return Date object for a given input date string
@@ -67,9 +64,7 @@ class VSACAwareCodeService extends cql.CodeService {
 
     // first check for VSAC FHIR URL (ideally https is preferred but support http just in case)
     // if there is a | at the end, it indicates that a version string follows
-    let m = id.match(
-      /^https?:\/\/cts\.nlm\.nih\.gov\/fhir\/ValueSet\/([^|]+)(\|(.+))?$/
-    );
+    let m = id.match(/^https?:\/\/cts\.nlm\.nih\.gov\/fhir\/ValueSet\/([^|]+)(\|(.+))?$/);
     if (m) return m[3] == null ? [m[1]] : [m[1], m[3]];
 
     // then check for urn:oid
@@ -81,14 +76,7 @@ class VSACAwareCodeService extends cql.CodeService {
   }
 }
 
-export async function evalExpressionForIntervention(
-  expression,
-  elm,
-  elmDependencies,
-  valueSetDB,
-  bundle,
-  params
-) {
+export async function evalExpressionForIntervention(expression, elm, elmDependencies, valueSetDB, bundle, params) {
   if (!elm) return null;
   let evalResult = null;
   let lib = new cql.Library(
@@ -96,21 +84,14 @@ export async function evalExpressionForIntervention(
     new cql.Repository({
       FHIRHelpers: r4HelpersELM,
       ...elmDependencies,
-    })
+    }),
   );
-  const executor = new cql.Executor(
-    lib,
-    new VSACAwareCodeService(valueSetDB),
-    params ? params : {}
-  );
+  const executor = new cql.Executor(lib, new VSACAwareCodeService(valueSetDB), params ? params : {});
   const interventionPatientSource = cqlfhir.PatientSource.FHIRv401();
   interventionPatientSource.loadBundles([bundle]);
   // console.log("bundle to be loaded ", bundle)
   try {
-    evalResult = await executor.exec_expression(
-      expression,
-      interventionPatientSource
-    );
+    evalResult = await executor.exec_expression(expression, interventionPatientSource);
   } catch (e) {
     evalResult = null;
     console.log(`Error executing CQL `, e);
@@ -152,8 +133,7 @@ export async function getInterventionLogicLib(interventionId) {
       } else {
         elmJson = defaultInterventionLibrary;
       }
-      if (interventionId && elmJson)
-        sessionStorage.setItem(`lib_${fileName}`, JSON.stringify(elmJson));
+      if (interventionId && elmJson) sessionStorage.setItem(`lib_${fileName}`, JSON.stringify(elmJson));
     } catch (e) {
       console.log("Error loading Cql ELM library for " + fileName, e);
       throw new Error(e);
@@ -168,11 +148,7 @@ export function getDisplayQTitle(questionnaireId) {
 }
 
 export function isValidDate(date) {
-  return (
-    date &&
-    Object.prototype.toString.call(date) === "[object Date]" &&
-    !isNaN(date)
-  );
+  return date && Object.prototype.toString.call(date) === "[object Date]" && !isNaN(date);
 }
 
 export function getChartConfig(questionnaireId) {
@@ -207,8 +183,7 @@ export function getSectionsToShow() {
     return item;
   });
   defaultSections.forEach((section) => {
-    if (targetSections.indexOf(section.id.toLowerCase()) !== -1)
-      sectionsToShow.push(section);
+    if (targetSections.indexOf(section.id.toLowerCase()) !== -1) sectionsToShow.push(section);
   });
   return sectionsToShow;
 }
@@ -242,8 +217,7 @@ export function isInViewport(element) {
   return (
     rect.top >= 0 &&
     rect.left >= 0 &&
-    rect.bottom <=
-      (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
     rect.right <= (window.innerWidth || document.documentElement.clientWidth)
   );
 }
@@ -262,11 +236,7 @@ export function callback(callbackFunc, params) {
 }
 
 export function fetchEnvData() {
-  if (
-    window &&
-    window["appConfig"] &&
-    !isEmptyArray(Object.keys(window["appConfig"]))
-  ) {
+  if (window && window["appConfig"] && !isEmptyArray(Object.keys(window["appConfig"]))) {
     console.log("Window config variables added. ");
     return;
   }
@@ -316,8 +286,7 @@ export function fetchEnvData() {
 
 export function getEnv(key) {
   //window application global variables
-  if (window && window["appConfig"] && window["appConfig"][key])
-    return window["appConfig"][key];
+  if (window && window["appConfig"] && window["appConfig"][key]) return window["appConfig"][key];
   const envDefined = typeof import.meta.env !== "undefined" && import.meta.env;
   //enviroment variables as defined in Node
   if (envDefined && import.meta.env[key]) return import.meta.env[key];
@@ -326,10 +295,7 @@ export function getEnv(key) {
 
 export function getEnvs() {
   const appConfig = window && window["appConfig"] ? window["appConfig"] : {};
-  const processEnvs =
-    typeof import.meta.env !== "undefined" && import.meta.env
-      ? import.meta.env
-      : {};
+  const processEnvs = typeof import.meta.env !== "undefined" && import.meta.env ? import.meta.env : {};
   return {
     ...appConfig,
     ...processEnvs,
@@ -337,9 +303,7 @@ export function getEnvs() {
 }
 
 export function scrollToAnchor(anchorElementId) {
-  const targetElement = document.querySelector(
-    `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${anchorElementId}`
-  );
+  const targetElement = document.querySelector(`#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${anchorElementId}`);
   if (!targetElement) return;
   targetElement.scrollIntoView();
 }
@@ -411,8 +375,7 @@ export function shouldShowPatientInfo(client) {
   // check token response,
   const tokenResponse = client ? client.getState("tokenResponse") : null;
   //check need_patient_banner launch context parameter
-  if (tokenResponse && tokenResponse["need_patient_banner"])
-    return tokenResponse["need_patient_banner"];
+  if (tokenResponse && tokenResponse["need_patient_banner"]) return tokenResponse["need_patient_banner"];
   return String(getEnv("REACT_APP_DISABLE_HEADER")) !== "true";
 }
 export function shouldShowNav() {
@@ -438,7 +401,7 @@ export function parseJwt(token) {
       .map(function (c) {
         return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
       })
-      .join("")
+      .join(""),
   );
   return JSON.parse(jsonPayload);
 }
@@ -482,4 +445,15 @@ export function hasValue(value) {
 
 export function isEmptyArray(o) {
   return !o || !Array.isArray(o) || !o.length;
+}
+
+export async function isImagefileExist(url) {
+  try {
+    const response = await fetch(url);
+    const contentType = response.headers.get("content-type");
+    return response.ok && contentType && contentType.startsWith("image/"); // Returns true if status is 200-299
+  } catch (error) {
+    console.log(error);
+    return false; // Request failed or URL is invalid
+  }
 }
