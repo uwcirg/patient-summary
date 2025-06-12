@@ -1,7 +1,16 @@
 import { createTheme } from "@mui/material/styles";
-import { grey, deepPurple, blue, indigo} from "@mui/material/colors";
+import { grey, deepPurple, blue, indigo, orange} from "@mui/material/colors";
 import { getEnvProjectId } from "../util/util";
 const defaultOptions = {
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 900,
+      lg: 1200,
+      xl: 1400,
+    },
+  },
   zIndex: {
     drawer: 100,
   },
@@ -29,6 +38,9 @@ export const themes = {
       },
       primary: {
         main: indigo[800],
+      },
+      accent: {
+        main: orange[900]
       },
       dark: {
         main: indigo[900],

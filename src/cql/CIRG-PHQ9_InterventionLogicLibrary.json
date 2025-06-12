@@ -324,202 +324,6 @@
                      }
                   }
                }, {
-                  "identifier" : "totalItems",
-                  "expression" : {
-                     "type" : "If",
-                     "condition" : {
-                        "type" : "Not",
-                        "operand" : {
-                           "type" : "IsNull",
-                           "operand" : {
-                              "name" : "QuestionnaireItems",
-                              "type" : "ExpressionRef"
-                           }
-                        }
-                     },
-                     "then" : {
-                        "type" : "Length",
-                        "operand" : {
-                           "name" : "GetAnswerLinkIdsByQuestionnaire",
-                           "libraryName" : "LogicHelpers",
-                           "type" : "FunctionRef",
-                           "operand" : [ {
-                              "name" : "CurrentQuestionnaire",
-                              "type" : "ExpressionRef"
-                           }, {
-                              "name" : "ScoringQuestionId",
-                              "type" : "ParameterRef"
-                           } ]
-                        }
-                     },
-                     "else" : {
-                        "type" : "Length",
-                        "operand" : {
-                           "type" : "Query",
-                           "source" : [ {
-                              "alias" : "O",
-                              "expression" : {
-                                 "path" : "item",
-                                 "scope" : "I",
-                                 "type" : "Property"
-                              }
-                           } ],
-                           "relationship" : [ ],
-                           "where" : {
-                              "type" : "Or",
-                              "operand" : [ {
-                                 "type" : "Equal",
-                                 "operand" : [ {
-                                    "type" : "PositionOf",
-                                    "pattern" : {
-                                       "name" : "ToString",
-                                       "libraryName" : "FHIRHelpers",
-                                       "type" : "FunctionRef",
-                                       "operand" : [ {
-                                          "path" : "linkId",
-                                          "scope" : "O",
-                                          "type" : "Property"
-                                       } ]
-                                    },
-                                    "string" : {
-                                       "name" : "ScoringQuestionId",
-                                       "type" : "ParameterRef"
-                                    }
-                                 }, {
-                                    "type" : "Negate",
-                                    "operand" : {
-                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                       "value" : "1",
-                                       "type" : "Literal"
-                                    }
-                                 } ]
-                              }, {
-                                 "type" : "Equal",
-                                 "operand" : [ {
-                                    "type" : "PositionOf",
-                                    "pattern" : {
-                                       "name" : "ScoringQuestionId",
-                                       "type" : "ParameterRef"
-                                    },
-                                    "string" : {
-                                       "name" : "ToString",
-                                       "libraryName" : "FHIRHelpers",
-                                       "type" : "FunctionRef",
-                                       "operand" : [ {
-                                          "path" : "linkId",
-                                          "scope" : "O",
-                                          "type" : "Property"
-                                       } ]
-                                    }
-                                 }, {
-                                    "type" : "Negate",
-                                    "operand" : {
-                                       "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                       "value" : "1",
-                                       "type" : "Literal"
-                                    }
-                                 } ]
-                              } ]
-                           }
-                        }
-                     }
-                  }
-               }, {
-                  "identifier" : "totalAnsweredItems",
-                  "expression" : {
-                     "type" : "Min",
-                     "source" : {
-                        "type" : "List",
-                        "element" : [ {
-                           "type" : "Length",
-                           "operand" : {
-                              "type" : "Query",
-                              "source" : [ {
-                                 "alias" : "O",
-                                 "expression" : {
-                                    "path" : "item",
-                                    "scope" : "I",
-                                    "type" : "Property"
-                                 }
-                              } ],
-                              "relationship" : [ ],
-                              "where" : {
-                                 "type" : "And",
-                                 "operand" : [ {
-                                    "type" : "Or",
-                                    "operand" : [ {
-                                       "type" : "Equal",
-                                       "operand" : [ {
-                                          "type" : "PositionOf",
-                                          "pattern" : {
-                                             "name" : "ToString",
-                                             "libraryName" : "FHIRHelpers",
-                                             "type" : "FunctionRef",
-                                             "operand" : [ {
-                                                "path" : "linkId",
-                                                "scope" : "O",
-                                                "type" : "Property"
-                                             } ]
-                                          },
-                                          "string" : {
-                                             "name" : "ScoringQuestionId",
-                                             "type" : "ParameterRef"
-                                          }
-                                       }, {
-                                          "type" : "Negate",
-                                          "operand" : {
-                                             "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                             "value" : "1",
-                                             "type" : "Literal"
-                                          }
-                                       } ]
-                                    }, {
-                                       "type" : "Equal",
-                                       "operand" : [ {
-                                          "type" : "PositionOf",
-                                          "pattern" : {
-                                             "name" : "ScoringQuestionId",
-                                             "type" : "ParameterRef"
-                                          },
-                                          "string" : {
-                                             "name" : "ToString",
-                                             "libraryName" : "FHIRHelpers",
-                                             "type" : "FunctionRef",
-                                             "operand" : [ {
-                                                "path" : "linkId",
-                                                "scope" : "O",
-                                                "type" : "Property"
-                                             } ]
-                                          }
-                                       }, {
-                                          "type" : "Negate",
-                                          "operand" : {
-                                             "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                                             "value" : "1",
-                                             "type" : "Literal"
-                                          }
-                                       } ]
-                                    } ]
-                                 }, {
-                                    "type" : "Not",
-                                    "operand" : {
-                                       "type" : "IsNull",
-                                       "operand" : {
-                                          "path" : "answer",
-                                          "scope" : "O",
-                                          "type" : "Property"
-                                       }
-                                    }
-                                 } ]
-                              }
-                           }
-                        }, {
-                           "name" : "totalItems",
-                           "type" : "QueryLetRef"
-                        } ]
-                     }
-                  }
-               }, {
                   "identifier" : "scoringQuestionScore",
                   "expression" : {
                      "type" : "If",
@@ -1324,14 +1128,190 @@
                      }, {
                         "name" : "totalItems",
                         "value" : {
-                           "name" : "totalItems",
-                           "type" : "QueryLetRef"
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "9",
+                           "type" : "Literal"
                         }
                      }, {
                         "name" : "totalAnsweredItems",
                         "value" : {
-                           "name" : "totalAnsweredItems",
-                           "type" : "QueryLetRef"
+                           "type" : "Length",
+                           "operand" : {
+                              "type" : "Query",
+                              "source" : [ {
+                                 "alias" : "O",
+                                 "expression" : {
+                                    "path" : "item",
+                                    "scope" : "I",
+                                    "type" : "Property"
+                                 }
+                              } ],
+                              "relationship" : [ ],
+                              "where" : {
+                                 "type" : "And",
+                                 "operand" : [ {
+                                    "type" : "Or",
+                                    "operand" : [ {
+                                       "type" : "Or",
+                                       "operand" : [ {
+                                          "type" : "Or",
+                                          "operand" : [ {
+                                             "type" : "Or",
+                                             "operand" : [ {
+                                                "type" : "Or",
+                                                "operand" : [ {
+                                                   "type" : "Or",
+                                                   "operand" : [ {
+                                                      "type" : "Or",
+                                                      "operand" : [ {
+                                                         "type" : "Or",
+                                                         "operand" : [ {
+                                                            "type" : "Equal",
+                                                            "operand" : [ {
+                                                               "path" : "value",
+                                                               "type" : "Property",
+                                                               "source" : {
+                                                                  "path" : "linkId",
+                                                                  "scope" : "O",
+                                                                  "type" : "Property"
+                                                               }
+                                                            }, {
+                                                               "name" : "question1LinkId",
+                                                               "type" : "ExpressionRef"
+                                                            } ]
+                                                         }, {
+                                                            "type" : "Equal",
+                                                            "operand" : [ {
+                                                               "path" : "value",
+                                                               "type" : "Property",
+                                                               "source" : {
+                                                                  "path" : "linkId",
+                                                                  "scope" : "O",
+                                                                  "type" : "Property"
+                                                               }
+                                                            }, {
+                                                               "name" : "question2LinkId",
+                                                               "type" : "ExpressionRef"
+                                                            } ]
+                                                         } ]
+                                                      }, {
+                                                         "type" : "Equal",
+                                                         "operand" : [ {
+                                                            "path" : "value",
+                                                            "type" : "Property",
+                                                            "source" : {
+                                                               "path" : "linkId",
+                                                               "scope" : "O",
+                                                               "type" : "Property"
+                                                            }
+                                                         }, {
+                                                            "name" : "question3LinkId",
+                                                            "type" : "ExpressionRef"
+                                                         } ]
+                                                      } ]
+                                                   }, {
+                                                      "type" : "Equal",
+                                                      "operand" : [ {
+                                                         "path" : "value",
+                                                         "type" : "Property",
+                                                         "source" : {
+                                                            "path" : "linkId",
+                                                            "scope" : "O",
+                                                            "type" : "Property"
+                                                         }
+                                                      }, {
+                                                         "name" : "question4LinkId",
+                                                         "type" : "ExpressionRef"
+                                                      } ]
+                                                   } ]
+                                                }, {
+                                                   "type" : "Equal",
+                                                   "operand" : [ {
+                                                      "path" : "value",
+                                                      "type" : "Property",
+                                                      "source" : {
+                                                         "path" : "linkId",
+                                                         "scope" : "O",
+                                                         "type" : "Property"
+                                                      }
+                                                   }, {
+                                                      "name" : "question5LinkId",
+                                                      "type" : "ExpressionRef"
+                                                   } ]
+                                                } ]
+                                             }, {
+                                                "type" : "Equal",
+                                                "operand" : [ {
+                                                   "path" : "value",
+                                                   "type" : "Property",
+                                                   "source" : {
+                                                      "path" : "linkId",
+                                                      "scope" : "O",
+                                                      "type" : "Property"
+                                                   }
+                                                }, {
+                                                   "name" : "question6LinkId",
+                                                   "type" : "ExpressionRef"
+                                                } ]
+                                             } ]
+                                          }, {
+                                             "type" : "Equal",
+                                             "operand" : [ {
+                                                "path" : "value",
+                                                "type" : "Property",
+                                                "source" : {
+                                                   "path" : "linkId",
+                                                   "scope" : "O",
+                                                   "type" : "Property"
+                                                }
+                                             }, {
+                                                "name" : "question7LinkId",
+                                                "type" : "ExpressionRef"
+                                             } ]
+                                          } ]
+                                       }, {
+                                          "type" : "Equal",
+                                          "operand" : [ {
+                                             "path" : "value",
+                                             "type" : "Property",
+                                             "source" : {
+                                                "path" : "linkId",
+                                                "scope" : "O",
+                                                "type" : "Property"
+                                             }
+                                          }, {
+                                             "name" : "question8LinkId",
+                                             "type" : "ExpressionRef"
+                                          } ]
+                                       } ]
+                                    }, {
+                                       "type" : "Equal",
+                                       "operand" : [ {
+                                          "path" : "value",
+                                          "type" : "Property",
+                                          "source" : {
+                                             "path" : "linkId",
+                                             "scope" : "O",
+                                             "type" : "Property"
+                                          }
+                                       }, {
+                                          "name" : "question9LinkId",
+                                          "type" : "ExpressionRef"
+                                       } ]
+                                    } ]
+                                 }, {
+                                    "type" : "Not",
+                                    "operand" : {
+                                       "type" : "IsNull",
+                                       "operand" : {
+                                          "path" : "answer",
+                                          "scope" : "O",
+                                          "type" : "Property"
+                                       }
+                                    }
+                                 } ]
+                              }
+                           }
                         }
                      }, {
                         "name" : "authoredDate",

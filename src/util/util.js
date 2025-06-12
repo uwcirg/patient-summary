@@ -1,43 +1,142 @@
 import dayjs from "dayjs";
-import ChartConfig from "../config/chart_config.js";
-import {
-  QUESTIONNAIRE_ANCHOR_ID_PREFIX,
-  queryNeedPatientBanner,
-} from "../consts/consts";
+import cql from "cql-execution";
+import cqlfhir from "cql-exec-fhir";
+import ChartConfig from "../config/chart_config";
+import { DEFAULT_TOOLBAR_HEIGHT, QUESTIONNAIRE_ANCHOR_ID_PREFIX, queryNeedPatientBanner } from "../consts/consts";
 import commonLibrary from "../cql/InterventionLogic_Common.json";
+import defaultInterventionLibrary from "../cql/InterventionLogicLibrary.json";
+import resourcesLogicLibrary from "../cql/ResourcesLogicLibrary.json";
 import valueSetJson from "../cql/valueset-db.json";
-import defaultSections from "../config/sections_config.js";
-import { DEFAULT_TOOLBAR_HEIGHT } from "../consts/consts";
+import r4HelpersELM from "../cql/FHIRHelpers-4.0.1.json";
+import defaultSections from "../config/sections_config";
+
+export const shortDateRE = /^\d{4}-\d{2}-\d{2}$/; // matches '2012-04-05'
+export const dateREZ =
+  /^(?:(?:19|20)\d{2}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|02-(?:0[1-9]|1\d|2[0-8]))|(?:(?:19|20)(?:[02468][048]|[13579][26])-02-29))T([01]\d|2[0-3]):[0-5]\d:[0-5]\dZ$/; //match '2023-11-10T18:30:49Z' with required UTC
+
+/*
+ * return Date object for a given input date string
+ * @params input date string to be converted
+ */
+export function getDateObjectInLocalDateTime(input) {
+  if (!input) return null;
+  if (shortDateRE.test(input)) {
+    // If input is in short ISO date (YYYY-MM-DD), appending "T00:00:00" to allow correct conversion to local date/time
+    return new Date(input + "T00:00:00");
+  }
+  if (dateREZ.test(input)) {
+    // If input is already a full ISO 8601 timestamp, pass it as-is
+    // a date string with a Z designator will result in a local date/time when passed to Date object
+    return new Date(input);
+  }
+  return new Date(input);
+}
 
 export function getCorrectedISODate(dateString) {
   if (!dateString || dateString instanceof Date) return dateString;
-  let dateObj = new Date(dateString); // Date.now() returns [millisecods]
-  let timeZoneCorrection = dateObj.getTimezoneOffset() * 60 * 1000; // [minutes] * [seconds/minutes] * [milliseconds/second]
-  let correctedDate = new Date(dateObj.getTime() - timeZoneCorrection);
+  let correctedDate = getDateObjectInLocalDateTime(dateString);
   return correctedDate.toISOString().split("T")[0]; // just the date portion
 }
 
+class VSACAwareCodeService extends cql.CodeService {
+  // Override findValueSetsByOid to extract OID from VSAC URLS
+  findValueSetsByOid(id) {
+    const [oid] = this.extractOidAndVersion(id);
+    return super.findValueSetsByOid(oid);
+  }
+
+  // Override findValueSet to extract OID from VSAC URLS
+  findValueSet(id, version) {
+    const [oid, embeddedVersion] = this.extractOidAndVersion(id);
+    return super.findValueSet(oid, version != null ? version : embeddedVersion);
+  }
+
+  /**
+   * Extracts the oid and version from a url, urn, or oid. Only url supports an embedded version
+   * (separately by |); urn and oid will never return a version. If the input value is not a valid
+   * urn or VSAC URL, it is assumed to be an oid and returned as-is.
+   * Borrowed from: https://github.com/cqframework/cql-exec-vsac/blob/master/lib/extractOidAndVersion.js
+   * @param {string} id - the urn, url, or oid
+   * @returns {[string,string]} the oid and optional version as a pair
+   */
+  extractOidAndVersion(id) {
+    if (id == null) return [];
+
+    // first check for VSAC FHIR URL (ideally https is preferred but support http just in case)
+    // if there is a | at the end, it indicates that a version string follows
+    let m = id.match(/^https?:\/\/cts\.nlm\.nih\.gov\/fhir\/ValueSet\/([^|]+)(\|(.+))?$/);
+    if (m) return m[3] == null ? [m[1]] : [m[1], m[3]];
+
+    // then check for urn:oid
+    m = id.match(/^urn:oid:(.+)$/);
+    if (m) return [m[1]];
+
+    // finally just return as-is
+    return [id];
+  }
+}
+
+export async function evalExpressionForIntervention(expression, elm, elmDependencies, valueSetDB, bundle, params) {
+  if (!elm) return null;
+  let evalResult = null;
+  let lib = new cql.Library(
+    elm,
+    new cql.Repository({
+      FHIRHelpers: r4HelpersELM,
+      ...elmDependencies,
+    }),
+  );
+  const executor = new cql.Executor(lib, new VSACAwareCodeService(valueSetDB), params ? params : {});
+  const interventionPatientSource = cqlfhir.PatientSource.FHIRv401();
+  interventionPatientSource.loadBundles([bundle]);
+  // console.log("bundle to be loaded ", bundle)
+  try {
+    evalResult = await executor.exec_expression(expression, interventionPatientSource);
+  } catch (e) {
+    evalResult = null;
+    console.log(`Error executing CQL `, e);
+  }
+  if (evalResult) {
+    if (evalResult.patientResults) {
+      const values = Object.values(evalResult.patientResults);
+      if (values.length) return values[0][expression];
+      return null;
+    }
+    return null;
+  }
+  return evalResult;
+}
+
+export async function getResourceLogicLib() {
+  return [resourcesLogicLibrary, valueSetJson];
+}
+
+const cqlModules = import.meta.glob("../cql/*InterventionLogic*.json");
+
 export async function getInterventionLogicLib(interventionId) {
-  const DEFAULT_FILENAME = "InterventionLogicLibrary.json";
+  const DEFAULT_FILENAME = "InterventionLogicLibrary";
   let fileName = DEFAULT_FILENAME;
   if (interventionId) {
     // load questionnaire specific CQL
-    fileName = `${interventionId.toUpperCase()}_InterventionLogicLibrary.json`;
+    fileName = `${interventionId.toUpperCase()}_InterventionLogicLibrary`;
   }
   const storageLib = sessionStorage.getItem(`lib_${fileName}`);
   let elmJson = storageLib ? JSON.parse(storageLib) : null;
   if (!elmJson) {
     try {
-      elmJson = await import(`../cql/${fileName}`).then(
-        (module) => module.default
-      );
-      if (interventionId && elmJson)
-        sessionStorage.setItem(`lib_${fileName}`, JSON.stringify(elmJson));
+      if (cqlModules[`../cql/${fileName}.json`]) {
+        elmJson = await cqlModules[`../cql/${fileName}.json`]()
+          .then((module) => module.default)
+          .catch((e) => {
+            throw new Error(e);
+          });
+      } else {
+        elmJson = defaultInterventionLibrary;
+      }
+      if (interventionId && elmJson) sessionStorage.setItem(`lib_${fileName}`, JSON.stringify(elmJson));
     } catch (e) {
-      elmJson = await import(`../cql/${DEFAULT_FILENAME}`).then(
-        (module) => module.default
-      );
-      console.log("Error loading Cql ELM library " + e);
+      console.log("Error loading Cql ELM library for " + fileName, e);
+      throw new Error(e);
     }
   }
   return [elmJson, valueSetJson];
@@ -49,11 +148,7 @@ export function getDisplayQTitle(questionnaireId) {
 }
 
 export function isValidDate(date) {
-  return (
-    date &&
-    Object.prototype.toString.call(date) === "[object Date]" &&
-    !isNaN(date)
-  );
+  return date && Object.prototype.toString.call(date) === "[object Date]" && !isNaN(date);
 }
 
 export function getChartConfig(questionnaireId) {
@@ -63,7 +158,6 @@ export function getChartConfig(questionnaireId) {
   const matchConfig = matchItems.find((item) => {
     if (!item.keys || isEmptyArray(item.keys)) return false;
     const arrMatches = item.keys.map((key) => key.toLowerCase());
-    console.log("arr matches ", arrMatches);
     return arrMatches.indexOf(questionnaireId.toLowerCase()) !== -1;
   });
   if (matchConfig) return { ...ChartConfig["default"], ...matchConfig };
@@ -89,8 +183,7 @@ export function getSectionsToShow() {
     return item;
   });
   defaultSections.forEach((section) => {
-    if (targetSections.indexOf(section.id.toLowerCase()) !== -1)
-      sectionsToShow.push(section);
+    if (targetSections.indexOf(section.id.toLowerCase()) !== -1) sectionsToShow.push(section);
   });
   return sectionsToShow;
 }
@@ -124,14 +217,13 @@ export function isInViewport(element) {
   return (
     rect.top >= 0 &&
     rect.left >= 0 &&
-    rect.bottom <=
-      (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
     rect.right <= (window.innerWidth || document.documentElement.clientWidth)
   );
 }
 
 export function hasData(arrObj) {
-  return arrObj && arrObj.length > 0;
+  return !isEmptyArray(arrObj);
 }
 
 export function getTomorrow() {
@@ -144,24 +236,13 @@ export function callback(callbackFunc, params) {
 }
 
 export function fetchEnvData() {
-  if (window["appConfig"] && Object.keys(window["appConfig"]).length) {
+  if (window && window["appConfig"] && !isEmptyArray(Object.keys(window["appConfig"]))) {
     console.log("Window config variables added. ");
     return;
   }
-  const setConfig = function () {
-    if (!xhr.readyState === xhr.DONE) {
-      return;
-    }
-    if (xhr.status !== 200) {
-      console.log("Request failed! ");
-      return;
-    }
-    let envObj;
-    try {
-      envObj = JSON.parse(xhr.responseText);
-    } catch (e) {
-      console.log("Error parsing response text into json ", e);
-    }
+  const setConfig = function (envObj) {
+    if (!envObj) return;
+    if (!window) return;
     window["appConfig"] = {};
     //assign window process env variables for access by app
     //won't be overridden when Node initializing env variables
@@ -170,18 +251,27 @@ export function fetchEnvData() {
         window["appConfig"][key] = envObj[key];
       }
     }
+    console.log("environment variables set ", window["appConfig"]);
   };
   var xhr = new XMLHttpRequest();
   xhr.open("GET", "/env.json", false);
   xhr.onreadystatechange = function () {
-    //in the event of a communication error (such as the server going down),
-    //or error happens when parsing data
-    //an exception will be thrown in the onreadystatechange method when accessing the response properties, e.g. status.
-    try {
-      setConfig();
-    } catch (e) {
-      console.log("Caught exception " + e);
+    if (!xhr.readyState === xhr.DONE) {
+      return;
     }
+    if (xhr.status !== 200) {
+      console.log("Request failed! ");
+      return;
+    }
+    let envObj;
+    if (xhr.readyState === xhr.DONE) {
+      try {
+        envObj = JSON.parse(xhr.responseText);
+      } catch (e) {
+        console.log("Error parsing response text into json ", e);
+      }
+    }
+    setConfig(envObj);
   };
   try {
     xhr.send();
@@ -196,17 +286,16 @@ export function fetchEnvData() {
 
 export function getEnv(key) {
   //window application global variables
-  if (window["appConfig"] && window["appConfig"][key])
-    return window["appConfig"][key];
-  const envDefined = typeof process !== "undefined" && process.env;
+  if (window && window["appConfig"] && window["appConfig"][key]) return window["appConfig"][key];
+  const envDefined = typeof import.meta.env !== "undefined" && import.meta.env;
   //enviroment variables as defined in Node
-  if (envDefined && process.env[key]) return process.env[key];
+  if (envDefined && import.meta.env[key]) return import.meta.env[key];
   return "";
 }
 
 export function getEnvs() {
-  const appConfig = window["appConfig"] ? window["appConfig"] : {};
-  const processEnvs = process.env ? process.env : {};
+  const appConfig = window && window["appConfig"] ? window["appConfig"] : {};
+  const processEnvs = typeof import.meta.env !== "undefined" && import.meta.env ? import.meta.env : {};
   return {
     ...appConfig,
     ...processEnvs,
@@ -214,9 +303,7 @@ export function getEnvs() {
 }
 
 export function scrollToAnchor(anchorElementId) {
-  const targetElement = document.querySelector(
-    `#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${anchorElementId}`
-  );
+  const targetElement = document.querySelector(`#${QUESTIONNAIRE_ANCHOR_ID_PREFIX}_${anchorElementId}`);
   if (!targetElement) return;
   targetElement.scrollIntoView();
 }
@@ -288,8 +375,7 @@ export function shouldShowPatientInfo(client) {
   // check token response,
   const tokenResponse = client ? client.getState("tokenResponse") : null;
   //check need_patient_banner launch context parameter
-  if (tokenResponse && tokenResponse.hasOwnProperty("need_patient_banner"))
-    return tokenResponse["need_patient_banner"];
+  if (tokenResponse && tokenResponse["need_patient_banner"]) return tokenResponse["need_patient_banner"];
   return String(getEnv("REACT_APP_DISABLE_HEADER")) !== "true";
 }
 export function shouldShowNav() {
@@ -315,7 +401,7 @@ export function parseJwt(token) {
       .map(function (c) {
         return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
       })
-      .join("")
+      .join(""),
   );
   return JSON.parse(jsonPayload);
 }
@@ -359,4 +445,15 @@ export function hasValue(value) {
 
 export function isEmptyArray(o) {
   return !o || !Array.isArray(o) || !o.length;
+}
+
+export async function isImagefileExist(url) {
+  try {
+    const response = await fetch(url);
+    const contentType = response.headers.get("content-type");
+    return response.ok && contentType && contentType.startsWith("image/"); // Returns true if status is 200-299
+  } catch (error) {
+    console.log(error);
+    return false; // Request failed or URL is invalid
+  }
 }
