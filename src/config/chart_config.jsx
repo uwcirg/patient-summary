@@ -111,7 +111,8 @@ const CHART_CONFIG = {
 export default CHART_CONFIG;
 
 export const COLORS = [
-  "#3E517A", 
+  "#3E517A",
+  "#998FC7",
   "#6564DB",
   "#78281F",
   "#F0386B",

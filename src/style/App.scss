@@ -122,6 +122,13 @@ p {
   border-radius: 24px !important;
 }
 
+.MuiTablePagination-toolbar {
+  .MuiTablePagination-input {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
 .recharts-xAxis {
   .recharts-cartesian-axis-tick:first-of-type {
     display: none;

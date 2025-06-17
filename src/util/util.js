@@ -309,6 +309,7 @@ export function scrollToAnchor(anchorElementId) {
 }
 
 export function scrollToElement(elementId) {
+  if (!elementId) return;
   const targetElement = document.querySelector(`#${elementId}`);
   if (!targetElement) return;
   targetElement.scrollIntoView();

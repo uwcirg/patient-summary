@@ -19,7 +19,7 @@ export default function Dashboard() {
     error,
     isReady,
     patientBundle,
-    questionnareKeys,
+    questionnaireList,
     summaryData,
     evalData,
     toBeLoadedResources,
@@ -37,7 +37,7 @@ export default function Dashboard() {
           data={{
             patientBundle: patientBundle,
             summaryData: summaryData,
-            questionnaireKeys: questionnareKeys,
+            questionnaireKeys: questionnaireList,
             evalData: evalData,
             allChartData: allChartData
           }}

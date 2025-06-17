@@ -1,5 +1,5 @@
 import React, { forwardRef, useState } from "react";
-import {  styled, useTheme } from "@mui/material/styles";
+import { styled, useTheme } from "@mui/material/styles";
 import PropTypes from "prop-types";
 import MaterialTable from "@material-table/core";
 import Alert from "@mui/material/Alert";
@@ -23,11 +23,7 @@ import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import Filter from "@mui/icons-material/FilterAlt";
 import OutlinedIcon from "@mui/icons-material/WysiwygOutlined";
-import {
-  getLocaleDateStringFromDate,
-  isEmptyArray,
-  isNumber
-} from "../util/util";
+import { getLocaleDateStringFromDate, isEmptyArray, isNumber } from "../util/util";
 import Response from "../models/Response";
 import Questionnaire from "../models/Questionnaire";
 import Score from "./Score";
@@ -41,22 +37,15 @@ export default function Responses(props) {
   const [open, setOpen] = useState(false);
   const theme = useTheme();
   const headerBgColor =
-    theme &&
-    theme.palette &&
-    theme.palette.lightest &&
-    theme.palette.lightest.main
+    theme && theme.palette && theme.palette.lightest && theme.palette.lightest.main
       ? theme.palette.lightest.main
       : "#FFF";
-  const questionnaireTitle = (new Questionnaire(questionnaireJson)).displayName;
+  const questionnaireTitle = new Questionnaire(questionnaireJson).displayName;
   const getFormattedData = (data) => {
     if (isEmptyArray(data)) return null;
     let copyData = JSON.parse(JSON.stringify(data));
-    const maxResponsesLength = Math.max(
-      ...copyData.map((d) => (d.responses ? d.responses.length : 0))
-    );
-    const dataForQuestions = copyData.find(
-      (d) => d.responses && d.responses.length === maxResponsesLength
-    );
+    const maxResponsesLength = Math.max(...copyData.map((d) => (d.responses ? d.responses.length : 0)));
+    const dataForQuestions = copyData.find((d) => d.responses && d.responses.length === maxResponsesLength);
     if (!dataForQuestions) return null;
     copyData.forEach((d) => {
       if (d.id === dataForQuestions.id) return true;
@@ -96,10 +85,7 @@ export default function Responses(props) {
       whiteSpace: "nowrap",
       width: "100%",
       border: `1px solid ${
-        theme &&
-        theme.palette &&
-        theme.palette.lighter &&
-        theme.palette.lighter.main
+        theme && theme.palette && theme.palette.lighter && theme.palette.lighter.main
           ? theme.palette.lighter.main
           : "#ececec"
       }`,
@@ -122,17 +108,11 @@ export default function Responses(props) {
         left: 0,
         backgroundColor: "#FFF",
         borderRight: "1px solid #ececec",
-        minWidth: "200px"
+        minWidth: "200px",
       },
       render: (rowData) => {
-        if (String(rowData["question"]).toLowerCase() === "score")
-          return <b>{rowData["question"]}</b>;
-        else
-          return (
-            <span
-              dangerouslySetInnerHTML={{ __html: rowData["question"] }}
-            ></span>
-          );
+        if (String(rowData["question"]).toLowerCase() === "score") return <b>{rowData["question"]}</b>;
+        else return <span dangerouslySetInnerHTML={{ __html: rowData["question"] }}></span>;
       },
     },
     ...dates.map((item) => ({
@@ -175,16 +155,11 @@ export default function Responses(props) {
     })),
   ];
 
-  const getLastAssessedDateTime = () =>
-    dates && dates.length ? getLocaleDateStringFromDate(dates[0].date) : "--";
+  const getLastAssessedDateTime = () => (dates && dates.length ? getLocaleDateStringFromDate(dates[0].date) : "--");
 
   const hasData = () =>
-    data &&
-    data.length > 0 &&
-    data.filter((item) => item.responses && item.responses.length).length > 0;
-  const hasScores = () =>
-    data.filter((item) => isNumber(item.score))
-      .length > 0;
+    data && data.length > 0 && data.filter((item) => item.responses && item.responses.length).length > 0;
+  const hasScores = () => data.filter((item) => isNumber(item.score)).length > 0;
 
   const getData = () => {
     if (!hasData()) return null;
@@ -200,9 +175,7 @@ export default function Responses(props) {
       let scoringResult = {
         question: "Score",
       };
-      data.forEach(
-        (item) => (scoringResult[item.id] = { score: item.score, ...item })
-      );
+      data.forEach((item) => (scoringResult[item.id] = { score: item.score, ...item }));
       result.push(scoringResult);
     }
     return result;
@@ -217,21 +190,15 @@ export default function Responses(props) {
   };
   const getAnswer = (response) => {
     const o = new Response(response);
-    return o.answerText ? o.answerText :  "--";
+    return o.answerText ? o.answerText : "--";
   };
   const getQuestion = (item) => {
     const o = new Response(item);
     return o.questionText;
   };
 
-  const getMatchedAnswerByLinkIdDateId = (
-    question_linkId,
-    responses_date,
-    responses_id
-  ) => {
-    const matchItem = data.filter(
-      (item) => item.id === responses_id && item.date === responses_date
-    );
+  const getMatchedAnswerByLinkIdDateId = (question_linkId, responses_date, responses_id) => {
+    const matchItem = data.filter((item) => item.id === responses_id && item.date === responses_date);
     if (!matchItem.length) return "--";
     const responses = matchItem[0].responses;
     const answerItem = responses.filter((o) => o.id === question_linkId);
@@ -246,26 +213,16 @@ export default function Responses(props) {
     // this will render the current and the previous response(s) for print
     return (
       <Box className="print-only responses-table-container" sx={{ marginTop: theme.spacing(2) }}>
-        <Table
-          aria-label="responses table"
-          size="small"
-          role="table"
-          sx={{ tableLayout: "fixed", width: "100%" }}
-        >
+        <Table aria-label="responses table" size="small" role="table" sx={{ tableLayout: "fixed", width: "100%" }}>
           <TableHead
             sx={{
-              backgroundColor:
-                theme && theme.palette.dark ? theme.palette.dark.main : "#444",
+              backgroundColor: theme && theme.palette.dark ? theme.palette.dark.main : "#444",
             }}
           >
             <TableRow>
-              {["Questions", ...arrDates.map((item) => item.date)].map(
-                (item, index) => (
-                  <TableCell key={`header_${index}`}>
-                    {getLocaleDateStringFromDate(item)}
-                  </TableCell>
-                )
-              )}
+              {["Questions", ...arrDates.map((item) => item.date)].map((item, index) => (
+                <TableCell key={`header_${index}`}>{getLocaleDateStringFromDate(item)}</TableCell>
+              ))}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -298,11 +255,7 @@ export default function Responses(props) {
                 {arrData.map((item, index) => (
                   <TableCell key={`score_cell_${index}`}>
                     {isNumber(item.score) && (
-                      <Score
-                        instrumentId={questionnaireId}
-                        score={item.score}
-                        scoreParams={item}
-                      ></Score>
+                      <Score instrumentId={questionnaireId} score={item.score} scoreParams={item}></Score>
                     )}
                     {!isNumber(item.score) && <span>--</span>}
                   </TableCell>
@@ -332,14 +285,12 @@ export default function Responses(props) {
           width: "80%",
         },
         overflowX: "auto",
-        position: "relative"
+        position: "relative",
       }}
     >
       <MaterialTable
         components={{
-            Container: props => (
-              <Paper className="table-root" elevation={1} {...props} />
-            )
+          Container: (props) => <Paper className="table-root" elevation={1} {...props} />,
         }}
         columns={columns}
         data={getData()}
@@ -355,11 +306,10 @@ export default function Responses(props) {
             position: "sticky",
             top: 0,
             zIndex: 999,
-            borderRight: "1px solid #ececec"
+            borderRight: "1px solid #ececec",
           },
           rowStyle: (rowData) => ({
-            backgroundColor:
-              rowData.tableData.index % 2 === 0 ? "#f4f4f6" : "#fff",
+            backgroundColor: rowData.tableData.index % 2 === 0 ? "#f4f4f6" : "#fff",
           }),
         }}
       ></MaterialTable>
@@ -404,7 +354,7 @@ export default function Responses(props) {
     </Stack>
   );
 
-  const Root = styled("div")(({theme}) => ({
+  const Root = styled("div")(({ theme }) => ({
     [theme.breakpoints.up("md")]: {
       minWidth: "600px",
     },
@@ -412,13 +362,14 @@ export default function Responses(props) {
 
   const SummaryHeaderCell = styled("div")(({ theme }) => ({
     borderBottom: `1px solid ${
-      theme &&
-      theme.palette &&
-      theme.palette.lighter &&
-      theme.palette.lighter.main
+      theme && theme.palette && theme.palette.lighter && theme.palette.lighter.main
         ? theme.palette.lighter.main
         : "#ececec"
     }`,
+    backgroundColor:
+      theme && theme.palette && theme.palette.lightest && theme.palette.lightest.main
+        ? theme.palette.lightest.main
+        : "#FFF",
     padding: theme.spacing(1, 2),
     width: "100%",
   }));
@@ -441,17 +392,11 @@ export default function Responses(props) {
     >
       <AppBar sx={{ position: "relative" }}>
         <Toolbar>
-          <IconButton
-            edge="start"
-            color="inherit"
-            onClick={handleClose}
-            aria-label="close"
-          >
+          <IconButton edge="start" color="inherit" onClick={handleClose} aria-label="close">
             <CloseIcon />
           </IconButton>
           <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-            Questionnaire Responses for{" "}
-            {questionnaireTitle}
+            Questionnaire Responses for {questionnaireTitle}
           </Typography>
           <Button color="inherit" onClick={handleClose}>
             Close
@@ -486,6 +431,6 @@ Responses.propTypes = {
     PropTypes.shape({
       date: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
       responses: PropTypes.array,
-    })
+    }),
   ),
 };

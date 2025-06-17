@@ -54,13 +54,13 @@ export function processPage(client, resources = []) {
   };
 }
 
-export function getFHIRResourcesToLoad() {
+export function getFHIRResourceTypesToLoad() {
   const defaultList = ["Condition", "Observation", "Questionnaire", "QuestionnaireResponse"];
   const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
   const sections = getSectionsToShow();
   const envResourcesToLoad = resourcesToLoad ? resourcesToLoad.split(",") : [];
   let resourcesForSection = [];
-  if (sections && sections.length) {
+  if (!isEmptyArray(sections)) {
     sections.forEach((section) => {
       if (section.resources && section.resources.length) {
         resourcesForSection = [...resourcesForSection, ...section.resources];
@@ -113,12 +113,9 @@ export function getFHIRResourceQueryParams(resourceType, options) {
   return paramsObj;
 }
 
-export function getFHIRResourcePaths(patientId, resourcesToLoad, options) {
+export function getFHIRResourcePaths(patientId, resourceTypesToLoad, options) {
   if (!patientId) return [];
-  const resources =
-    resourcesToLoad && Array.isArray(resourcesToLoad) && resourcesToLoad.length
-      ? resourcesToLoad
-      : getFHIRResourcesToLoad();
+  const resources = !isEmptyArray(resourceTypesToLoad) ? resourceTypesToLoad : getFHIRResourceTypesToLoad();
   return resources.map((resource) => {
     let path = `/${resource}`;
     const paramsObj = getFHIRResourceQueryParams(resource, {

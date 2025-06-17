@@ -15,7 +15,7 @@ import {
   getResourcesByResourceType,
   getResourceTypesFromResources,
   getFhirResourcesFromQueryResult,
-  getFHIRResourcesToLoad,
+  getFHIRResourceTypesToLoad,
   getFHIRResourcePaths,
   processPage,
 } from "../util/fhirUtil";
@@ -42,11 +42,11 @@ export default function useFetchResources() {
     evalResults: {},
   });
 
-  const getResourcesToLoad = () => {
-    let resources = getFHIRResourcesToLoad().filter((r) => {
-      const existingResources = getResourceTypesFromResources(ctxQuestionnaireResources).map((r) =>
-        String(r).toLowerCase(),
-      );
+  const getResourceTypesToLoad = () => {
+    const existingResources = [
+      ...new Set(getResourceTypesFromResources(ctxQuestionnaireResources).map((r) => String(r).toLowerCase())),
+    ];
+    let resources = getFHIRResourceTypesToLoad().filter((r) => {
       return existingResources.indexOf(String(r).toLowerCase()) === -1;
     });
     if (isEmptyArray(questionnaireList)) {
@@ -56,11 +56,11 @@ export default function useFetchResources() {
     return resources;
   };
 
-  const getResourcesToTrack = (resourcesToLoad, questionnareKeys) => {
+  const getResourcesToTrack = (resourceTypesToLoad, questionnareKeys) => {
     // all the resources that will be loaded
     let initialResourcesToLoad = [
-      ...(resourcesToLoad ? resourcesToLoad : []).map((resource) => ({
-        id: resource,
+      ...(resourceTypesToLoad ? resourceTypesToLoad : []).map((type) => ({
+        id: type,
         complete: false,
         error: false,
       })),
@@ -68,7 +68,7 @@ export default function useFetchResources() {
     if (!isEmptyArray(questionnareKeys))
       initialResourcesToLoad.push({
         id: SUMMARY_DATA_KEY,
-        title: `Resources for summary data`,
+        title: `Resources for PRO data`,
         complete: false,
         error: false,
         data: null,
@@ -77,10 +77,10 @@ export default function useFetchResources() {
     return initialResourcesToLoad;
   };
 
-  const resourcesToLoad = getResourcesToLoad();
+  const resourceTypesToLoad = getResourceTypesToLoad();
 
   // all the resources that will be loaded
-  const initialResourcesToLoad = getResourcesToTrack(resourcesToLoad, questionnareKeys);
+  const initialResourcesToLoad = getResourcesToTrack(resourceTypesToLoad, questionnareKeys);
 
   // hook for tracking resource load state
   const resourceReducer = (state, action) => {
@@ -119,10 +119,10 @@ export default function useFetchResources() {
   };
 
   // search for matching questionnaire
-  const searchMatchingQuestionnaireResources = async (questionnaireId, paramPatientBundle, exactMatchById) => {
+  const searchMatchingQuestionnaireResources = (questionnaireId, paramPatientBundle, exactMatchById) => {
     if (!questionnaireId || isEmptyArray(paramPatientBundle)) return null;
     const questionnaireResources = getResourcesByResourceType(paramPatientBundle, "Questionnaire");
-    const returnResult = questionnaireResources
+    const returnResult = !isEmptyArray(questionnaireResources)
       ? questionnaireResources.find((resource) => {
           if (!exactMatchById) {
             const toMatch = String(questionnaireId).toLowerCase();
@@ -203,14 +203,7 @@ export default function useFetchResources() {
 
   const gatherSummaryDataByQuestionnaireId = async (questionnaireId, exactMatchById, paramPatientBundle) => {
     // find matching questionnaire & questionnaire response(s)
-    console.log("questionnaire Id ", questionnaireId);
-    const result = await searchMatchingQuestionnaireResources(
-      questionnaireId,
-      paramPatientBundle,
-      exactMatchById,
-    ).catch((e) => {
-      throw new Error(e);
-    });
+    const result = searchMatchingQuestionnaireResources(questionnaireId, paramPatientBundle, exactMatchById);
     const bundles = getFhirResourcesFromQueryResult(result);
     const arrQuestionnaires = getResourcesByResourceType(bundles, "Questionnaire");
     const questionnaireJson = !isEmptyArray(arrQuestionnaires) ? arrQuestionnaires[0] : null;
@@ -247,7 +240,7 @@ export default function useFetchResources() {
         }
         console.log("fhirData", fhirData);
         console.log("questionnaire list to load ", questionnaireList);
-        const promiseEvals = resourcesToLoad.map((resource) => {
+        const promiseEvals = resourceTypesToLoad.map((resource) => {
           return new Promise((resolve) => {
             getResourceLogicLib()
               .then((libResult) => {
@@ -327,7 +320,7 @@ export default function useFetchResources() {
               return true;
             }
 
-            if (resourcesToLoad.indexOf(key) !== -1) {
+            if (resourceTypesToLoad.indexOf(key) !== -1) {
               patientBundle.current = {
                 ...patientBundle.current,
                 evalResults: {
@@ -367,7 +360,7 @@ export default function useFetchResources() {
 
   const getFhirResources = async () => {
     if (!client || !patient || !patient.id) throw new Error("Client or patient missing.");
-    const resources = getFHIRResourcePaths(patient.id, resourcesToLoad, {
+    const resources = getFHIRResourcePaths(patient.id, resourceTypesToLoad, {
       questionnaireList: questionnaireList,
       exactMatchById: exactMatchById,
     });
@@ -418,7 +411,7 @@ export default function useFetchResources() {
     const keys = Object.keys(dataToUse);
     const formattedData = keys.map((key) => {
       const data = dataToUse[key];
-      if (!data || !data.chartData) return [];
+      if (!data || isEmptyArray(data.chartData)) return [];
       let dataToReturn = [];
       if (data.chartConfig && data.chartConfig.dataFormatter) {
         dataToReturn = data.chartConfig.dataFormatter(data.chartData);
@@ -444,7 +437,6 @@ export default function useFetchResources() {
     evalData: patientBundle.current.evalResults,
     summaryData: summaryData,
     allChartData: getAllChartData(summaryData),
-    questionnareKeys: questionnaireList,
     questionnaireList: questionnaireList,
   };
 }
