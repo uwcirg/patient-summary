@@ -138,7 +138,7 @@ export default function useFetchResources() {
     return null;
   };
 
-  const gatherSummaryData = async (questionnaireJson, paramPatientBundle) => {
+  const getEvalResultsForQuestionnaire = async (questionnaireJson, paramPatientBundle) => {
     if (!questionnaireJson) return null;
     const questionnaireObject = new Questionnaire(questionnaireJson);
     const questionnaireId = questionnaireObject.id;
@@ -210,7 +210,7 @@ export default function useFetchResources() {
     if (!questionnaireJson) {
       throw new Error("No matching questionnaire found.");
     }
-    const data = await gatherSummaryData(questionnaireJson, paramPatientBundle).catch((e) => {
+    const data = await getEvalResultsForQuestionnaire(questionnaireJson, paramPatientBundle).catch((e) => {
       console.log("Error occurred gathering summary data: ", e);
       throw new Error("Error occurred gathering summary data.  See console for detail.");
     });
@@ -240,7 +240,7 @@ export default function useFetchResources() {
         }
         console.log("fhirData", fhirData);
         console.log("questionnaire list to load ", questionnaireList);
-        const promiseEvals = resourceTypesToLoad.map((resource) => {
+        const resourceEvalResults = resourceTypesToLoad.map((resource) => {
           return new Promise((resolve) => {
             getResourceLogicLib()
               .then((libResult) => {
@@ -282,7 +282,7 @@ export default function useFetchResources() {
               });
           });
         });
-        const qlRequests = questionnaireList.map((qid) => {
+        const qListRequests = questionnaireList.map((qid) => {
           return new Promise((resolve) => {
             gatherSummaryDataByQuestionnaireId(
               qid,
@@ -308,10 +308,11 @@ export default function useFetchResources() {
               });
           });
         });
-        Promise.allSettled([...qlRequests, ...promiseEvals]).then((results) => {
+        Promise.allSettled([...qListRequests, ...resourceEvalResults]).then((results) => {
           let summaries = {};
           results.forEach((result) => {
-            const o = Object.entries(result.value ?? {})[0];
+            const resultValue = result.value ? result.value : {};
+            const o = Object.entries(resultValue)[0];
             const key = o[0];
             const value = o[1];
             if (value?.error) {
@@ -325,19 +326,11 @@ export default function useFetchResources() {
                 ...patientBundle.current,
                 evalResults: {
                   ...patientBundle.current.evalResults,
-                  ...(result.value ?? {}),
+                  ...resultValue,
                 },
               };
             } else {
-              //if (summaries[key]) return true;
               summaries[key] = o[1];
-              if (o[1]?.questionnaire) {
-                questionnaireList.forEach((q) => {
-                  if (q.id === key) {
-                    q.questionnaireJson = o[1].questionnaire;
-                  }
-                });
-              }
             }
           });
           console.log("patient bundle ", patientBundle.current);

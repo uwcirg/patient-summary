@@ -111,7 +111,7 @@ export default function Header(props) {
                 ref={desktopImgRef}
                 alt={"project logo"}
                 style={{
-                  height: 48,
+                  height: 40,
                   cursor: "pointer",
                 }}
                 onLoad={handleImageLoaded}
@@ -142,7 +142,7 @@ export default function Header(props) {
                 onError={handleImageLoaded}
                 style={{
                   cursor: "pointer",
-                  height: 48,
+                  height: 40,
                 }}
               ></img>
             </button>
