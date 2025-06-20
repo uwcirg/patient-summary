@@ -61,14 +61,13 @@ Parameters for the app are stored in [environmental variables](http://man7.org/l
 #### Parameters
 | Parameter | Description | Allowed Values |
 | --- | --- | --- |
-| `REACT_APP_FHIR_RESOURCES` | Define the FHIR resource(s) to load for the patient | `Condition,Procedure,Observation` |
 | `REACT_APP_FHIR_OBSERVATION_CATEGORIES` | Define what categor(ies) of FHIR observations to load for the patient | `social-history,vital-signs,imaging,laboratory,procedure,survey,exam,therapy,activity,smartdata` |
 | `REACT_APP_AUTH_SCOPES` | For allowing the app to specify the delegation of a specific set of access rights via launch context. see [App Launch: Scopes and Launch Context](https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html) | `profile roles email patient/*.read openid fhirUser patient/QuestionnaireResponse.write` |
 | `REACT_APP_QUESTIONNAIRES` | Define the id(s) for questionnaire(s) for which responses and graph should be rendered. NOTE: querying from EPIC requires exact Id for each questionnaire. If not provided, the app will extract Id(s) from `questionnaire` of each QuestionnaireResponse resource. | example: `minicog` or `minicog,phq9` |
 | `REACT_APP_DASHBOARD_URL`| Define the (f)EMR URL to which the app can return to | example: https://dashboard.acc.dev.cosri.cirg.washington.edu | 
 | `REACT_APP_PROJECT_ID` | Definition of which will allow project-specific theme, logo, etc. | example: `DCW`|
 | `REACT_APP_CLIENT_ID` | Define unique client id for when launching as a confidential client | example: `summary_openid_client`
-| `REACT_APP_SECTIONS` | Definition of which sections in app. | `scoreSummary,medicalHistory,observations,responses`, `scoreSummary`, `medicalHistory`, `responses`, `observations`
+| `REACT_APP_SECTIONS` | Definition of which sections in app. | default: `scoreSummary,conditions,observations,questionnaireResponses`
 | `REACT_APP_CONF_API_URL` | Define the backend auth URL for launching as a confidential client | 
 | `REACT_APP_SYSTEM_TYPE` | Define the system type of the app | example: `development` | [`development`, `stage`, `demo`, `production`]
 | `REACT_APP_DISABLE_HEADER` | Define whether the header element should appear, default is `false` |`true`, `false`

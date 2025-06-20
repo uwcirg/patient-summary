@@ -5,14 +5,12 @@ import Alert from "@mui/material/Alert";
 import MaterialTable from "@material-table/core";
 import TableContainer from "@mui/material/TableContainer";
 import Observation from "../../models/Observation";
-
+import { isEmptyArray } from "../../util/util";
+import Error from "../ErrorComponent";
 export default function Observations(props) {
   const theme = useTheme();
   const bgColor =
-    theme &&
-    theme.palette &&
-    theme.palette.lightest &&
-    theme.palette.lightest.main
+    theme && theme.palette && theme.palette.lightest && theme.palette.lightest.main
       ? theme.palette.lightest.main
       : "#FFF";
   const { data } = props;
@@ -38,12 +36,12 @@ export default function Observations(props) {
     {
       title: "Type",
       field: "displayText",
-      emptyValue: "--"
+      emptyValue: "--",
     },
     {
       title: "Result",
       field: "valueText",
-      emptyValue: "--"
+      emptyValue: "--",
     },
     {
       title: "Issued Date",
@@ -52,7 +50,7 @@ export default function Observations(props) {
     {
       title: "Category",
       field: "category",
-      emptyValue: "--"
+      emptyValue: "--",
     },
     {
       title: "Status",
@@ -64,7 +62,7 @@ export default function Observations(props) {
         ) : (
           <span className="text-warning">{rowData.status}</span>
         ),
-    }
+    },
     // {
     //   title: "Provider",
     //   field: "providerText",
@@ -95,7 +93,10 @@ export default function Observations(props) {
       </table>
     );
   };
-  if (!results || !results.length)
+  if (data?.error) {
+    return <Error message={data.error}></Error>;
+  }
+  if (isEmptyArray(results))
     return (
       <Alert severity="warning" className="condition-no-data">
         No recorded observation

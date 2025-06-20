@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import { NO_CACHE_HEADER } from "../consts/consts";
-import { getFhirResourcesFromQueryResult, processPage } from "../util/fhirUtil";
+import { getFHIRResourceTypesToLoad, getFhirResourcesFromQueryResult, processPage } from "../util/fhirUtil";
 import { getEnvQuestionnaireList, getEnv, isEmptyArray } from "../util/util";
 import { QuestionnaireListContext } from "./QuestionnaireListContext";
 import { FhirClientContext } from "./FhirClientContext";
@@ -42,6 +42,8 @@ export default function QuestionnaireListProvider({ children }) {
     errorMessage: "",
   });
   const { client, patient } = useContext(FhirClientContext);
+  const resourceTypesToBeLoaded = getFHIRResourceTypesToLoad();
+  const notConfigured = resourceTypesToBeLoaded.indexOf("Questionnaire") === -1;
 
   useEffect(() => {
     if (!client || !patient) {
@@ -52,6 +54,10 @@ export default function QuestionnaireListProvider({ children }) {
       return;
     }
     if (state.complete) return;
+
+    if (notConfigured) {
+      return;
+    }
 
     const preloadQuestionnaireList = getEnvQuestionnaireList();
     let resources = [];
@@ -104,17 +110,16 @@ export default function QuestionnaireListProvider({ children }) {
           errorMessage: e,
         });
       });
-  }, [client, patient, state.complete]);
+  }, [client, patient, state.complete, resourceTypesToBeLoaded, notConfigured]);
 
   return (
     <QuestionnaireListContext.Provider value={state}>
       <QuestionnaireListContext.Consumer>
         {({ questionnaireList, error }) => {
           // if client and patient are available render the children component(s)
-          if (questionnaireList.length || error) {
+          if (notConfigured || !isEmptyArray(questionnaireList) || error) {
             return children;
           }
-
           // loading
           return (
             <Stack spacing={2} direction="row" style={{ padding: "24px" }}>

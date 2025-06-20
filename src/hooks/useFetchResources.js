@@ -282,7 +282,7 @@ export default function useFetchResources() {
               });
           });
         });
-        const qListRequests = questionnaireList.map((qid) => {
+        const qListRequests = questionnaireList?.map((qid) => {
           return new Promise((resolve) => {
             gatherSummaryDataByQuestionnaireId(
               qid,
@@ -315,13 +315,8 @@ export default function useFetchResources() {
             const o = Object.entries(resultValue)[0];
             const key = o[0];
             const value = o[1];
-            if (value?.error) {
-              summaries[key] = value;
-              handleResourceError(key);
-              return true;
-            }
-
-            if (resourceTypesToLoad.indexOf(key) !== -1) {
+            const isFHIRType = resourceTypesToLoad.indexOf(key) !== -1;
+            if (isFHIRType) {
               patientBundle.current = {
                 ...patientBundle.current,
                 evalResults: {
@@ -330,7 +325,11 @@ export default function useFetchResources() {
                 },
               };
             } else {
-              summaries[key] = o[1];
+              summaries[key] = value;
+            }
+            if (value?.error) {
+              handleResourceError(key);
+              return true;
             }
           });
           console.log("patient bundle ", patientBundle.current);

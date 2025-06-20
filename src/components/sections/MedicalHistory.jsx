@@ -5,14 +5,13 @@ import Alert from "@mui/material/Alert";
 import MaterialTable from "@material-table/core";
 import TableContainer from "@mui/material/TableContainer";
 import Condition from "../../models/Condition";
+import Error from "../ErrorComponent";
+import { isEmptyArray } from "../../util/util";
 
 export default function MedicalHistory(props) {
   const theme = useTheme();
   const bgColor =
-    theme &&
-    theme.palette &&
-    theme.palette.lightest &&
-    theme.palette.lightest.main
+    theme && theme.palette && theme.palette.lightest && theme.palette.lightest.main
       ? theme.palette.lightest.main
       : "#FFF";
   const { data } = props;
@@ -25,10 +24,7 @@ export default function MedicalHistory(props) {
         return o.toObj();
       })
       .sort((a, b) => {
-        return (
-          new Date(b.onsetDateTime).getTime() -
-          new Date(a.onsetDateTime).getTime()
-        );
+        return new Date(b.onsetDateTime).getTime() - new Date(a.onsetDateTime).getTime();
       });
   };
   const results = getData(data);
@@ -87,7 +83,10 @@ export default function MedicalHistory(props) {
       </table>
     );
   };
-  if (!results || !results.length)
+  if (data?.error) {
+    return <Error message={data.error}></Error>;
+  }
+  if (isEmptyArray(results))
     return (
       <Alert severity="warning" className="condition-no-data">
         No recorded condition
