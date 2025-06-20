@@ -6,7 +6,7 @@ import {
   getAppHeight,
   getSectionsToShow,
   isEmptyArray,
-} from "../util/util";
+} from "../util";
 import useFetchResources from "../hooks/useFetchResources";
 import ErrorComponent from "./ErrorComponent";
 import ProgressIndicator from "./ProgressIndicator";

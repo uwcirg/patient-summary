@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import { isInViewport } from "../util/util";
+import { isInViewport } from "../util";
 import { DEFAULT_TOOLBAR_HEIGHT } from "../consts/consts";
 let scrollIntervalId = 0;
 

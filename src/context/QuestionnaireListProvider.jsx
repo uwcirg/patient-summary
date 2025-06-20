@@ -4,7 +4,7 @@ import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import { NO_CACHE_HEADER } from "../consts/consts";
 import { getFHIRResourceTypesToLoad, getFhirResourcesFromQueryResult, processPage } from "../util/fhirUtil";
-import { getEnvQuestionnaireList, getEnv, isEmptyArray } from "../util/util";
+import { getEnvQuestionnaireList, getEnv, isEmptyArray } from "../util";
 import { QuestionnaireListContext } from "./QuestionnaireListContext";
 import { FhirClientContext } from "./FhirClientContext";
 

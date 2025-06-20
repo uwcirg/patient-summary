@@ -11,7 +11,7 @@ import {
   getClientSessionKey,
   getEnv,
   getUserId,
-} from "../util/util";
+} from "../util";
 import { writeToLog } from "../util/log";
 import { FhirClientContext } from "./FhirClientContext";
 

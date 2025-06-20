@@ -16,7 +16,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { range } from "../../util/util";
+import { range } from "../../util";
 export default function LineCharts(props) {
   const {
     id,

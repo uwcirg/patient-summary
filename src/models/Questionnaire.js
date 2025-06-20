@@ -1,4 +1,4 @@
-import { getDisplayQTitle, isEmptyArray } from "../util/util";
+import { getDisplayQTitle, isEmptyArray } from "../util";
 // source Questionnaire FHIR resource
 class Questionnaire {
   constructor(dataObj = null, key) {

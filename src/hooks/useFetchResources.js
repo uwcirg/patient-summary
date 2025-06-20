@@ -4,13 +4,15 @@ import { FhirClientContext } from "../context/FhirClientContext";
 import { QuestionnaireListContext } from "../context/QuestionnaireListContext";
 import {
   evalExpressionForIntervention,
-  getChartConfig,
   getElmDependencies,
   getResourceLogicLib,
   getInterventionLogicLib,
+} from "../util/elmUtil"
+import {
+  getChartConfig,
   isEmptyArray,
   isNumber,
-} from "../util/util";
+} from "../util";
 import {
   getResourcesByResourceType,
   getResourceTypesFromResources,
@@ -53,7 +55,8 @@ export default function useFetchResources() {
       const qIndex = resources.map((resource) => String(resource).toLowerCase()).indexOf("questionnaire");
       if (qIndex !== -1) resources.splice(qIndex, 1);
     }
-    return resources;
+    // patient resource is loaded already
+    return resources.filter(resource => resource !== "Patient");
   };
 
   const getResourcesToTrack = (resourceTypesToLoad, questionnareKeys) => {
@@ -242,38 +245,28 @@ export default function useFetchResources() {
         console.log("questionnaire list to load ", questionnaireList);
         const resourceEvalResults = resourceTypesToLoad.map((resource) => {
           return new Promise((resolve) => {
-            getResourceLogicLib()
-              .then((libResult) => {
-                const [elmJson, valueSetJson] = libResult;
-                if (!elmJson) {
-                  resolve({
-                    [resource]: null,
-                  });
-                  return;
-                }
-                evalExpressionForIntervention(
-                  `${resource}_Results`,
-                  elmJson,
-                  commonDependencies,
-                  valueSetJson,
-                  patientBundle.current,
-                )
-                  .then((evalResult) => {
-                    resolve({
-                      [resource]: evalResult,
-                    });
-                  })
-                  .catch((e) => {
-                    console.log("Error evaluating expression for " + resource, e);
-                    resolve({
-                      [resource]: {
-                        error: e,
-                      },
-                    });
-                  });
+            const libResult = getResourceLogicLib();
+            const [elmJson, valueSetJson] = libResult;
+            if (!elmJson) {
+              resolve({
+                [resource]: null,
+              });
+              return;
+            }
+            evalExpressionForIntervention(
+              `${resource}_Results`,
+              elmJson,
+              commonDependencies,
+              valueSetJson,
+              patientBundle.current,
+            )
+              .then((evalResult) => {
+                resolve({
+                  [resource]: evalResult,
+                });
               })
               .catch((e) => {
-                console.log("Error retrieving ELM lib son for " + resource, e);
+                console.log("Error evaluating expression for " + resource, e);
                 resolve({
                   [resource]: {
                     error: e,

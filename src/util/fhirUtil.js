@@ -1,5 +1,6 @@
 import { DEFAULT_OBSERVATION_CATEGORIES } from "../consts/consts";
-import { getEnv, getSectionsToShow, hasValue, isEmptyArray } from "./util";
+import { extractResourcesFromELM } from "./elmUtil.js";
+import { getEnv, getSectionsToShow, hasValue, isEmptyArray } from "./index.js";
 
 /*
  * @param client, FHIR client object
@@ -55,19 +56,10 @@ export function processPage(client, resources = []) {
 }
 
 export function getFHIRResourceTypesToLoad() {
-  const defaultList = ["Condition", "Observation", "Questionnaire", "QuestionnaireResponse"];
   const sections = getSectionsToShow();
-  let resourcesForSection = [];
-  if (!isEmptyArray(sections)) {
-    sections.forEach((section) => {
-      if (!isEmptyArray(section.resources)) {
-        resourcesForSection = [...resourcesForSection, ...section.resources];
-      }
-    });
-  }
-  const allResources = [...new Set(resourcesForSection)];
-  const resources = allResources.length ? [...new Set([...allResources])] : defaultList;
-  return resources;
+  const libraries = [...new Set(sections.map((section) => section.library))];
+  const resourceTypes = libraries.map((item) => extractResourcesFromELM(item)).flat();
+  return [...new Set(resourceTypes)];
 }
 
 export function getFHIRResourceQueryParams(resourceType, options) {

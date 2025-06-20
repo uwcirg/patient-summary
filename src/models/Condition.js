@@ -1,4 +1,4 @@
-import { getCorrectedISODate } from "../util/util";
+import { getCorrectedISODate } from "../util";
 
 // source: Results in cql/source/src/cql/ConditionResourceLibrary.json
 class Condition {

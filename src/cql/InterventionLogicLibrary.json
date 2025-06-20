@@ -105,6 +105,15 @@
                } ]
             }
          }, {
+            "name" : "QuestionnaresList",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "dataType" : "{http://hl7.org/fhir}Questionnaire",
+               "templateId" : "http://hl7.org/fhir/StructureDefinition/Questionnaire",
+               "type" : "Retrieve"
+            }
+         }, {
             "name" : "CurrentQuestionnaire",
             "context" : "Patient",
             "accessLevel" : "Public",

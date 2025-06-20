@@ -1,5 +1,5 @@
 import { Dot } from "recharts";
-import { isNumber } from "../../../util/util";
+import { isNumber } from "../../../util";
 import Square from "./Square";
 import Rectangle from "./Rectangle";
 import Cross from "./Cross";

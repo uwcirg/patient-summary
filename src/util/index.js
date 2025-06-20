@@ -1,13 +1,6 @@
 import dayjs from "dayjs";
-import cql from "cql-execution";
-import cqlfhir from "cql-exec-fhir";
 import ChartConfig from "../config/chart_config";
 import { DEFAULT_TOOLBAR_HEIGHT, QUESTIONNAIRE_ANCHOR_ID_PREFIX, queryNeedPatientBanner } from "../consts/consts";
-import commonLibrary from "../cql/InterventionLogic_Common.json";
-import defaultInterventionLibrary from "../cql/InterventionLogicLibrary.json";
-import resourcesLogicLibrary from "../cql/ResourcesLogicLibrary.json";
-import valueSetJson from "../cql/valueset-db.json";
-import r4HelpersELM from "../cql/FHIRHelpers-4.0.1.json";
 import defaultSections from "../config/sections_config";
 
 export const shortDateRE = /^\d{4}-\d{2}-\d{2}$/; // matches '2012-04-05'
@@ -36,110 +29,6 @@ export function getCorrectedISODate(dateString) {
   if (!dateString || dateString instanceof Date) return dateString;
   let correctedDate = getDateObjectInLocalDateTime(dateString);
   return correctedDate.toISOString().split("T")[0]; // just the date portion
-}
-
-class VSACAwareCodeService extends cql.CodeService {
-  // Override findValueSetsByOid to extract OID from VSAC URLS
-  findValueSetsByOid(id) {
-    const [oid] = this.extractOidAndVersion(id);
-    return super.findValueSetsByOid(oid);
-  }
-
-  // Override findValueSet to extract OID from VSAC URLS
-  findValueSet(id, version) {
-    const [oid, embeddedVersion] = this.extractOidAndVersion(id);
-    return super.findValueSet(oid, version != null ? version : embeddedVersion);
-  }
-
-  /**
-   * Extracts the oid and version from a url, urn, or oid. Only url supports an embedded version
-   * (separately by |); urn and oid will never return a version. If the input value is not a valid
-   * urn or VSAC URL, it is assumed to be an oid and returned as-is.
-   * Borrowed from: https://github.com/cqframework/cql-exec-vsac/blob/master/lib/extractOidAndVersion.js
-   * @param {string} id - the urn, url, or oid
-   * @returns {[string,string]} the oid and optional version as a pair
-   */
-  extractOidAndVersion(id) {
-    if (id == null) return [];
-
-    // first check for VSAC FHIR URL (ideally https is preferred but support http just in case)
-    // if there is a | at the end, it indicates that a version string follows
-    let m = id.match(/^https?:\/\/cts\.nlm\.nih\.gov\/fhir\/ValueSet\/([^|]+)(\|(.+))?$/);
-    if (m) return m[3] == null ? [m[1]] : [m[1], m[3]];
-
-    // then check for urn:oid
-    m = id.match(/^urn:oid:(.+)$/);
-    if (m) return [m[1]];
-
-    // finally just return as-is
-    return [id];
-  }
-}
-
-export async function evalExpressionForIntervention(expression, elm, elmDependencies, valueSetDB, bundle, params) {
-  if (!elm) return null;
-  let evalResult = null;
-  let lib = new cql.Library(
-    elm,
-    new cql.Repository({
-      FHIRHelpers: r4HelpersELM,
-      ...elmDependencies,
-    }),
-  );
-  const executor = new cql.Executor(lib, new VSACAwareCodeService(valueSetDB), params ? params : {});
-  const interventionPatientSource = cqlfhir.PatientSource.FHIRv401();
-  interventionPatientSource.loadBundles([bundle]);
-  // console.log("bundle to be loaded ", bundle)
-  try {
-    evalResult = await executor.exec_expression(expression, interventionPatientSource);
-  } catch (e) {
-    evalResult = null;
-    console.log(`Error executing CQL `, e);
-  }
-  if (evalResult) {
-    if (evalResult.patientResults) {
-      const values = Object.values(evalResult.patientResults);
-      if (values.length) return values[0][expression];
-      return null;
-    }
-    return null;
-  }
-  return evalResult;
-}
-
-export async function getResourceLogicLib() {
-  return [resourcesLogicLibrary, valueSetJson];
-}
-
-const cqlModules = import.meta.glob("../cql/*InterventionLogic*.json");
-
-export async function getInterventionLogicLib(interventionId) {
-  const DEFAULT_FILENAME = "InterventionLogicLibrary";
-  let fileName = DEFAULT_FILENAME;
-  if (interventionId) {
-    // load questionnaire specific CQL
-    fileName = `${interventionId.toUpperCase()}_InterventionLogicLibrary`;
-  }
-  const storageLib = sessionStorage.getItem(`lib_${fileName}`);
-  let elmJson = storageLib ? JSON.parse(storageLib) : null;
-  if (!elmJson) {
-    try {
-      if (cqlModules[`../cql/${fileName}.json`]) {
-        elmJson = await cqlModules[`../cql/${fileName}.json`]()
-          .then((module) => module.default)
-          .catch((e) => {
-            throw new Error(e);
-          });
-      } else {
-        elmJson = defaultInterventionLibrary;
-      }
-      if (interventionId && elmJson) sessionStorage.setItem(`lib_${fileName}`, JSON.stringify(elmJson));
-    } catch (e) {
-      console.log("Error loading Cql ELM library for " + fileName, e);
-      throw new Error(e);
-    }
-  }
-  return [elmJson, valueSetJson];
 }
 
 export function getDisplayQTitle(questionnaireId) {
@@ -313,28 +202,6 @@ export function scrollToElement(elementId) {
   const targetElement = document.querySelector(`#${elementId}`);
   if (!targetElement) return;
   targetElement.scrollIntoView();
-}
-
-export function getElmDependencies() {
-  const elmJsonDependencyArray = [commonLibrary];
-  // Reformat ELM JSON value set references to match what is expected by the
-  // code service built into the cql execution engine
-  return elmJsonDependencyArray.reduce((acc, elm) => {
-    let refs = elm?.library?.valueSets?.def;
-    if (refs) {
-      refs = refs.map((r) => {
-        return {
-          ...r,
-          id: r.id.split("/").pop(),
-        };
-      });
-      elm.library.valueSets.def = refs;
-    }
-    return {
-      ...acc,
-      [elm.library.identifier.id]: elm,
-    };
-  }, {});
 }
 
 export function range(start, end) {

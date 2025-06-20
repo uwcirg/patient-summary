@@ -4,7 +4,7 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import ErrorIcon from "@mui/icons-material/Error";
 import WarningIcon from "@mui/icons-material/ReportProblem";
-import { isNumber } from "../util/util";
+import { isNumber } from "../util";
 import ScoreSeverity from "../models/ScoreSeverity";
 
 export default function Scoring(props) {

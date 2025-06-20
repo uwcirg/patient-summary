@@ -6,7 +6,7 @@ import MaterialTable from "@material-table/core";
 import TableContainer from "@mui/material/TableContainer";
 import Condition from "../../models/Condition";
 import Error from "../ErrorComponent";
-import { isEmptyArray } from "../../util/util";
+import { isEmptyArray } from "../../util";
 
 export default function MedicalHistory(props) {
   const theme = useTheme();

@@ -6,7 +6,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import { isEmptyArray, scrollToElement } from "../util/util";
+import { isEmptyArray, scrollToElement } from "../util";
 
 export default function SectionList(props) {
   const theme = useTheme();

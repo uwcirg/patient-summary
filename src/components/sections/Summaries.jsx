@@ -4,7 +4,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import Summary from "../Summary";
-import { isEmptyArray } from "../../util/util";
+import { isEmptyArray } from "../../util";
 
 export default function Summaries({ questionnaireKeys, summaryData }) {
   const hasSummaryData = () => {

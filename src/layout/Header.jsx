@@ -21,7 +21,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MoreIcon from "@mui/icons-material/MoreVert";
 import PrintIcon from "@mui/icons-material/LocalPrintshopOutlined";
 import DashboardIcon from "@mui/icons-material/DashboardOutlined";
-import { isImagefileExist, getEnv, getEnvProjectId, getSectionsToShow, imageOK, scrollToElement } from "../util/util";
+import { isImagefileExist, getEnv, getEnvProjectId, getSectionsToShow, imageOK, scrollToElement } from "../util";
 import PatientInfo from "../components/PatientInfo";
 import { FhirClientContext } from "../context/FhirClientContext";
 

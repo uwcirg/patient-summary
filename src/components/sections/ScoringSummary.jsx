@@ -16,7 +16,7 @@ import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import Scoring from "../Score";
 import Questionnaire from "../../models/Questionnaire";
-import { isEmptyArray, isNumber, scrollToAnchor, getLocaleDateStringFromDate } from "../../util/util";
+import { isEmptyArray, isNumber, scrollToAnchor, getLocaleDateStringFromDate } from "../../util";
 
 export default function ScoringSummary(props) {
   const theme = useTheme();

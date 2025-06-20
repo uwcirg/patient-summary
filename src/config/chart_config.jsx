@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { isEmptyArray, getTomorrow, getDateObjectInLocalDateTime } from "../util/util";
+import { isEmptyArray, getTomorrow, getDateObjectInLocalDateTime } from "../util";
 
 const Rect = (props) => {
   const { cx, cy, color, value } = props;

@@ -9,7 +9,7 @@ import {
   getSectionsToShow,
   shouldShowPatientInfo,
   shouldShowNav,
-} from "../util/util";
+} from "../util";
 import Header from "./Header";
 import SideNav from "./SideNav";
 

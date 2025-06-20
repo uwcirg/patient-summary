@@ -1,4 +1,4 @@
-import { getEnv, getEnvDashboardURL, fetchEnvData } from "./util";
+import { getEnv, getEnvDashboardURL, fetchEnvData } from ".";
 
 var Timeout = function (options) {
   options = options || {};

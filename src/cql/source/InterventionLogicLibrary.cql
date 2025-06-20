@@ -26,6 +26,10 @@ context Patient
 define Questionnaires:
   LogicHelpers.GetMatchQuestionnaire(QuestionnaireID, QuestionnaireName, QuestionnaireURL)
 
+
+define QuestionnaresList: 
+  [Questionnaire]
+
 // Load Questionnaire
 define CurrentQuestionnaire:
   First(Questionnaires)

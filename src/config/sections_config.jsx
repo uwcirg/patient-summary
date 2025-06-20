@@ -6,6 +6,10 @@ import SummarizeIcon from "@mui/icons-material/SummarizeOutlined";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
+import { getDefaultInterventionLogicLib, getResourceLogicLib} from "../util/elmUtil";
+
+const resourceLogicLibrary = getResourceLogicLib()[0];
+const defaultInterventionLibrary = getDefaultInterventionLogicLib();
 
 const renderLoader = () => (
   <Stack
@@ -92,7 +96,7 @@ const DEFAULT_SECTIONS = [
     id: "scoreSummary",
     title: "Score Summary",
     anchorElementId: "anchor_scoresummary",
-    resources: ["Questionnaire", "QuestionnaireResponse"],
+    library: defaultInterventionLibrary,
     icon: (props) => <SummarizeIcon fontSize="medium" color="primary" {...props}></SummarizeIcon>,
     component: (props) => renderScoringSummary(props),
   },
@@ -100,7 +104,7 @@ const DEFAULT_SECTIONS = [
     id: "conditions",
     title: "Medical History",
     anchorElementId: `anchor_medicalhistory`,
-    resources: ["Condition"],
+    library: resourceLogicLibrary,
     icon: (props) => <MedicalInformationIcon fontSize="medium" color="primary" {...props}></MedicalInformationIcon>,
     component: (props) => renderMedicalHistory(props),
   },
@@ -108,7 +112,7 @@ const DEFAULT_SECTIONS = [
     id: "observations",
     title: "Clinical / Social History",
     anchorElementId: `anchor_observations`,
-    resources: ["Observation"],
+    library: resourceLogicLibrary,
     icon: (props) => <FactCheckIcon fontSize="medium" color="primary" {...props}></FactCheckIcon>,
     component: (props) => renderObservations(props),
   },
@@ -116,7 +120,7 @@ const DEFAULT_SECTIONS = [
     id: "questionnaireResponses",
     title: "Questionnaire Responses",
     anchorElementId: `anchor_responses`,
-    resources: ["Questionnaire", "QuestionnaireResponse"],
+    library: defaultInterventionLibrary,
     icon: (props) => <BallotIcon fontSize="medium" color="primary" {...props}></BallotIcon>,
     component: (props) => renderSummaries(props),
   },

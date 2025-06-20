@@ -23,7 +23,7 @@ import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import Filter from "@mui/icons-material/FilterAlt";
 import OutlinedIcon from "@mui/icons-material/WysiwygOutlined";
-import { getLocaleDateStringFromDate, isEmptyArray, isNumber } from "../util/util";
+import { getLocaleDateStringFromDate, isEmptyArray, isNumber } from "../util";
 import Response from "../models/Response";
 import Questionnaire from "../models/Questionnaire";
 import Score from "./Score";

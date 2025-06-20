@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import Alert from "@mui/material/Alert";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { isEmptyArray } from "../../util/util";
+import { isEmptyArray } from "../../util";
 import { COLORS, LEGEND_ICON_TYPES } from "../../config/chart_config";
 import { getShape } from "./shapes";
 

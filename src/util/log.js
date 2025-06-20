@@ -1,4 +1,4 @@
-import { getEnv, getEnvProjectId, getEnvSystemType } from "./util";
+import { getEnv, getEnvProjectId, getEnvSystemType } from ".";
 
 function getDefaultLogObject() {
   return {

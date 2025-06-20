@@ -1,6 +1,6 @@
 import { createTheme } from "@mui/material/styles";
 import { grey, deepPurple, blue, indigo, orange} from "@mui/material/colors";
-import { getEnvProjectId } from "../util/util";
+import { getEnvProjectId } from "../util";
 const defaultOptions = {
   breakpoints: {
     values: {

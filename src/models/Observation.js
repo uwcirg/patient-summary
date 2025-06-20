@@ -1,4 +1,4 @@
-import { getCorrectedISODate, isEmptyArray } from "../util/util";
+import { getCorrectedISODate, isEmptyArray } from "../util";
 
 // source: Results in cql/source/src/cql/ObservationResourceLibrary.json
 class Observation {
