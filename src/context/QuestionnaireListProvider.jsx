@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useReducer } from "react";
 import PropTypes from "prop-types";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
-import { NO_CACHE_HEADER } from "../consts/consts";
+import { NO_CACHE_HEADER } from "../consts";
 import { getFHIRResourceTypesToLoad, getFhirResourcesFromQueryResult, processPage } from "../util/fhirUtil";
 import { getEnvQuestionnaireList, getEnv, isEmptyArray } from "../util";
 import { QuestionnaireListContext } from "./QuestionnaireListContext";
@@ -44,6 +44,7 @@ export default function QuestionnaireListProvider({ children }) {
   const { client, patient } = useContext(FhirClientContext);
   const resourceTypesToBeLoaded = getFHIRResourceTypesToLoad();
   const notConfigured = resourceTypesToBeLoaded.indexOf("Questionnaire") === -1;
+
 
   useEffect(() => {
     if (!client || !patient) {

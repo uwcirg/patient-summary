@@ -1,4 +1,4 @@
-import { DEFAULT_OBSERVATION_CATEGORIES } from "../consts/consts";
+import { DEFAULT_OBSERVATION_CATEGORIES } from "../consts/index.js";
 import { extractResourcesFromELM } from "./elmUtil.js";
 import { getEnv, getSectionsToShow, hasValue, isEmptyArray } from "./index.js";
 

@@ -22,7 +22,7 @@ import {
   processPage,
 } from "../util/fhirUtil";
 import Questionnaire from "../models/Questionnaire";
-import { NO_CACHE_HEADER } from "../consts/consts";
+import { NO_CACHE_HEADER } from "../consts";
 
 export default function useFetchResources() {
   const SUMMARY_DATA_KEY = "summaryData";

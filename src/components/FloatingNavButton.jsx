@@ -4,7 +4,7 @@ import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import { isInViewport } from "../util";
-import { DEFAULT_TOOLBAR_HEIGHT } from "../consts/consts";
+import { DEFAULT_TOOLBAR_HEIGHT } from "../consts";
 let scrollIntervalId = 0;
 
 export default function FloatingNavButton() {
@@ -35,7 +35,7 @@ export default function FloatingNavButton() {
       }
       fabElement.classList.add("flex");
       fabElement.classList.remove("hide");
-    }, 150);
+    }, 250);
   }, [fabRef, anchorRef]);
 
   const renderNavButton = () => (
@@ -47,8 +47,8 @@ export default function FloatingNavButton() {
       size="medium"
       sx={{
         position: "fixed",
-        bottom: "8px",
-        right: "24px",
+        bottom: (theme) => theme.spacing(1),
+        right: (theme) => theme.spacing(3),
         zIndex: (theme) => theme.zIndex.drawer - 1,
         borderColor: (theme) => theme.palette.primary.main,
         borderWidth: "2px",

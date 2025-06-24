@@ -4,7 +4,7 @@ import FHIR from "fhirclient";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
-import { queryPatientIdKey } from "../consts/consts";
+import { queryPatientIdKey } from "../consts";
 import ErrorComponent from "../components/ErrorComponent";
 import {
   addMamotoTracking,

@@ -65,6 +65,7 @@ export default function Responses(props) {
   };
   const data = getFormattedData(props.data) || [];
   const dates = data.map((item) => ({ date: item.date, id: item.id }));
+  const lighterThemeMainColor = theme && theme.palette && theme.palette.lighter && theme.palette.lighter.main;
   const summaryHeaderProps = {
     variant: "subtitle2",
     component: "h2",
@@ -84,11 +85,7 @@ export default function Responses(props) {
       flex: 1,
       whiteSpace: "nowrap",
       width: "100%",
-      border: `1px solid ${
-        theme && theme.palette && theme.palette.lighter && theme.palette.lighter.main
-          ? theme.palette.lighter.main
-          : "#ececec"
-      }`,
+      border: `1px solid ${lighterThemeMainColor ? lighterThemeMainColor : "#ececec"}`,
       "&:first-of-type": {
         borderRight: 0,
       },
@@ -139,18 +136,11 @@ export default function Responses(props) {
         />
       ),
       render: (rowData) => {
-        if (rowData[item.id]) {
-          if (isNumber(rowData[item.id].score)) {
-            return (
-              <Score
-                instrumentId={questionnaireId}
-                score={rowData[item.id].score}
-                scoreParams={rowData[item.id]}
-              ></Score>
-            );
-          } else return rowData[item.id];
-        }
-        return "--";
+        const rowDataItem = rowData[item.id];
+        if (!rowDataItem) return;
+        if (isNumber(rowDataItem.score)) {
+          return <Score instrumentId={questionnaireId} score={rowDataItem.score} scoreParams={rowDataItem}></Score>;
+        } else return "--";
       },
     })),
   ];
@@ -361,11 +351,7 @@ export default function Responses(props) {
   }));
 
   const SummaryHeaderCell = styled("div")(({ theme }) => ({
-    borderBottom: `1px solid ${
-      theme && theme.palette && theme.palette.lighter && theme.palette.lighter.main
-        ? theme.palette.lighter.main
-        : "#ececec"
-    }`,
+    borderBottom: `1px solid ${lighterThemeMainColor ? lighterThemeMainColor : "#ececec"}`,
     backgroundColor:
       theme && theme.palette && theme.palette.lightest && theme.palette.lightest.main
         ? theme.palette.lightest.main

@@ -9,7 +9,7 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import Divider from "@mui/material/Divider";
 import SectionList from "../components/SectionList";
-import { MOBILE_DRAWER_WIDTH, DEFAULT_DRAWER_WIDTH } from "../consts/consts";
+import { MOBILE_DRAWER_WIDTH, DEFAULT_DRAWER_WIDTH } from "../consts";
 
 const openedMixin = (theme) => ({
   width: MOBILE_DRAWER_WIDTH,

@@ -4,7 +4,7 @@ import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import { ThemeProvider } from "@mui/material/styles";
 import ErrorComponent from "../components/ErrorComponent";
-import { queryNeedPatientBanner, queryPatientIdKey } from "../consts/consts";
+import { queryNeedPatientBanner, queryPatientIdKey } from "../consts";
 import { fetchEnvData, getEnv } from "../util";
 import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
@@ -96,7 +96,7 @@ export default function Launch() {
           setError("Fhir auth error. see console for detail.");
         });
       })
-      .catch((error) => setError(error.message));
+      .catch((error) => setError(error?.message));
   }, []);
 
   return (

@@ -5,7 +5,7 @@ import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts/consts";
+import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts";
 import Questionnaire from "../models/Questionnaire";
 import { hasData, isEmptyArray } from "../util";
 import Error from "./ErrorComponent";
