@@ -95,7 +95,6 @@ const DEFAULT_SECTIONS = [
   {
     id: "scoreSummary",
     title: "Score Summary",
-    anchorElementId: "anchor_scoresummary",
     library: defaultInterventionLibrary,
     icon: (props) => <SummarizeIcon fontSize="medium" color="primary" {...props}></SummarizeIcon>,
     component: (props) => renderScoringSummary(props),
@@ -103,7 +102,6 @@ const DEFAULT_SECTIONS = [
   {
     id: "conditions",
     title: "Medical History",
-    anchorElementId: `anchor_medicalhistory`,
     library: resourceLogicLibrary,
     icon: (props) => <MedicalInformationIcon fontSize="medium" color="primary" {...props}></MedicalInformationIcon>,
     component: (props) => renderMedicalHistory(props),
@@ -111,7 +109,6 @@ const DEFAULT_SECTIONS = [
   {
     id: "observations",
     title: "Clinical / Social History",
-    anchorElementId: `anchor_observations`,
     library: resourceLogicLibrary,
     icon: (props) => <FactCheckIcon fontSize="medium" color="primary" {...props}></FactCheckIcon>,
     component: (props) => renderObservations(props),
@@ -119,7 +116,6 @@ const DEFAULT_SECTIONS = [
   {
     id: "questionnaireResponses",
     title: "Questionnaire Responses",
-    anchorElementId: `anchor_responses`,
     library: defaultInterventionLibrary,
     icon: (props) => <BallotIcon fontSize="medium" color="primary" {...props}></BallotIcon>,
     component: (props) => renderSummaries(props),

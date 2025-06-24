@@ -18,8 +18,8 @@ export default function Section({ section, data }) {
   const sectionId = section.id.toLowerCase();
   const renderAnchorElement = () => (
     <Box
-      id={section.anchorElementId}
-      key={section.anchorElementId}
+      id={`anchor_${section.id.toLowerCase()}`}
+      key={`${section.id}_anchorContainer`}
       sx={{
         position: "relative",
         top: -1 * parseInt(DEFAULT_ACCORDION_HEADER_HEIGHT),
