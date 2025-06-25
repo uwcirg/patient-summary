@@ -8,7 +8,6 @@ import { DEFAULT_TOOLBAR_HEIGHT } from "../consts";
 let scrollIntervalId = 0;
 
 export default function FloatingNavButton() {
-
   const fabRef = createRef();
   const anchorRef = createRef();
   const BoxRef = forwardRef((props, ref) => (
@@ -61,7 +60,10 @@ export default function FloatingNavButton() {
       }}
       title="Back to Top"
     >
-      <ArrowUpwardIcon aria-label="Back to Top" color="primary" />
+      <ArrowUpwardIcon
+        aria-label="Back to Top"
+        color="primary"
+      />
     </FabRef>
   );
 

@@ -49,7 +49,7 @@ export default function Responses(props) {
     if (!dataForQuestions) return null;
     copyData.forEach((d) => {
       if (d.id === dataForQuestions.id) return true;
-      if (!d.responses || !d.responses.length) return true;
+      if (isEmptyArray(d.responses)) return true;
       dataForQuestions.responses.forEach((item) => {
         const matched = d.responses.find((o) => o.id === item.id);
         if (!matched) {
@@ -140,7 +140,7 @@ export default function Responses(props) {
         if (!rowDataItem) return;
         if (isNumber(rowDataItem.score)) {
           return <Score instrumentId={questionnaireId} score={rowDataItem.score} scoreParams={rowDataItem}></Score>;
-        } else return "--";
+        } else return rowDataItem??"--";
       },
     })),
   ];
@@ -191,9 +191,9 @@ export default function Responses(props) {
     const matchItem = data.filter((item) => item.id === responses_id && item.date === responses_date);
     if (!matchItem.length) return "--";
     const responses = matchItem[0].responses;
-    const answerItem = responses.filter((o) => o.id === question_linkId);
-    if (!answerItem.length) return "--";
-    return getAnswer(answerItem[0]);
+    const answerItem = responses.find((o) => o.id === question_linkId);
+    if (!answerItem) return "--";
+    return getAnswer(answerItem);
   };
 
   const renderPrintOnlyResponseTable = () => {

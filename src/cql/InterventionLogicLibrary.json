@@ -176,6 +176,101 @@
                      "type" : "ExpressionRef"
                   }
                } ],
+               "let" : [ {
+                  "identifier" : "items",
+                  "expression" : {
+                     "type" : "If",
+                     "condition" : {
+                        "type" : "Not",
+                        "operand" : {
+                           "type" : "IsNull",
+                           "operand" : {
+                              "type" : "Flatten",
+                              "operand" : {
+                                 "type" : "Query",
+                                 "source" : [ {
+                                    "alias" : "$this",
+                                    "expression" : {
+                                       "path" : "item",
+                                       "scope" : "I",
+                                       "type" : "Property"
+                                    }
+                                 } ],
+                                 "where" : {
+                                    "type" : "Not",
+                                    "operand" : {
+                                       "type" : "IsNull",
+                                       "operand" : {
+                                          "path" : "item",
+                                          "type" : "Property",
+                                          "source" : {
+                                             "name" : "$this",
+                                             "type" : "AliasRef"
+                                          }
+                                       }
+                                    }
+                                 },
+                                 "return" : {
+                                    "distinct" : false,
+                                    "expression" : {
+                                       "path" : "item",
+                                       "type" : "Property",
+                                       "source" : {
+                                          "name" : "$this",
+                                          "type" : "AliasRef"
+                                       }
+                                    }
+                                 }
+                              }
+                           }
+                        }
+                     },
+                     "then" : {
+                        "type" : "Flatten",
+                        "operand" : {
+                           "type" : "Query",
+                           "source" : [ {
+                              "alias" : "$this",
+                              "expression" : {
+                                 "path" : "item",
+                                 "scope" : "I",
+                                 "type" : "Property"
+                              }
+                           } ],
+                           "where" : {
+                              "type" : "Not",
+                              "operand" : {
+                                 "type" : "IsNull",
+                                 "operand" : {
+                                    "path" : "item",
+                                    "type" : "Property",
+                                    "source" : {
+                                       "name" : "$this",
+                                       "type" : "AliasRef"
+                                    }
+                                 }
+                              }
+                           },
+                           "return" : {
+                              "distinct" : false,
+                              "expression" : {
+                                 "path" : "item",
+                                 "type" : "Property",
+                                 "source" : {
+                                    "name" : "$this",
+                                    "type" : "AliasRef"
+                                 }
+                              }
+                           }
+                        }
+                     },
+                     "else" : {
+                        "path" : "item",
+                        "scope" : "I",
+                        "type" : "Property"
+                     }
+                  }
+               } ],
                "relationship" : [ ],
                "return" : {
                   "expression" : {
@@ -210,9 +305,8 @@
                            "libraryName" : "LogicHelpers",
                            "type" : "FunctionRef",
                            "operand" : [ {
-                              "path" : "item",
-                              "scope" : "I",
-                              "type" : "Property"
+                              "name" : "items",
+                              "type" : "QueryLetRef"
                            } ]
                         }
                      }, {
@@ -224,9 +318,8 @@
                               "source" : [ {
                                  "alias" : "O",
                                  "expression" : {
-                                    "path" : "item",
-                                    "scope" : "I",
-                                    "type" : "Property"
+                                    "name" : "items",
+                                    "type" : "QueryLetRef"
                                  }
                               } ],
                               "relationship" : [ ],
@@ -320,9 +413,8 @@
                            "else" : {
                               "type" : "Length",
                               "operand" : {
-                                 "path" : "item",
-                                 "scope" : "I",
-                                 "type" : "Property"
+                                 "name" : "items",
+                                 "type" : "QueryLetRef"
                               }
                            }
                         }
