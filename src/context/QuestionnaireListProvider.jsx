@@ -1,9 +1,15 @@
 import React, { useContext, useEffect, useReducer } from "react";
 import PropTypes from "prop-types";
 import Stack from "@mui/material/Stack";
+import CheckIcon from "@mui/icons-material/Check";
 import CircularProgress from "@mui/material/CircularProgress";
 import { NO_CACHE_HEADER } from "../consts";
-import { getFHIRResourceTypesToLoad, getFhirResourcesFromQueryResult, processPage } from "../util/fhirUtil";
+import {
+  getFHIRResourcePath,
+  getFHIRResourceTypesToLoad,
+  getFhirResourcesFromQueryResult,
+  processPage,
+} from "../util/fhirUtil";
 import { getEnvQuestionnaireList, getEnv, isEmptyArray } from "../util";
 import { QuestionnaireListContext } from "./QuestionnaireListContext";
 import { FhirClientContext } from "./FhirClientContext";
@@ -15,12 +21,33 @@ export default function QuestionnaireListProvider({ children }) {
   // hook for tracking state
   const resourceReducer = (state, action) => {
     switch (action.type) {
+      case "QUESTIONNAIRE_LOADED":
+        return {
+          ...state,
+          loadedStatus: {
+            ...state.loadedStatus,
+            questionnaire: true,
+          },
+        };
+      case "QUESTIONNAIRE_RESPONSE_LOADED":
+        return {
+          ...state,
+          loadedStatus: {
+            ...state.loadedStatus,
+            questionnaireResponse: true,
+          },
+        };
       case "RESULTS":
         return {
           ...state,
           questionnaireList: action.questionnaireList,
           questionnaireResponses: action.questionnaireResponses,
+          questionnaires: action.questionnaires,
           exactMatchById: !!action.exactMatchById,
+          loadedStatus: {
+            questionnaire: false,
+            questionnaireResponse: true,
+          },
           complete: true,
         };
       case "ERROR":
@@ -36,15 +63,19 @@ export default function QuestionnaireListProvider({ children }) {
   };
   const [state, dispatch] = useReducer(resourceReducer, {
     questionnaireList: [],
+    questionnaires: [],
     questionnaireResponses: [],
     exactMatchById: isFromEpic,
+    loadedStatus: {
+      questionnaire: false,
+      questionnaireResponse: false,
+    },
     error: false,
     errorMessage: "",
   });
   const { client, patient } = useContext(FhirClientContext);
   const resourceTypesToBeLoaded = getFHIRResourceTypesToLoad();
   const notConfigured = resourceTypesToBeLoaded.indexOf("Questionnaire") === -1;
-
 
   useEffect(() => {
     if (!client || !patient) {
@@ -57,11 +88,16 @@ export default function QuestionnaireListProvider({ children }) {
     if (state.complete) return;
 
     if (notConfigured) {
+      dispatch({
+        type: "RESULTS",
+        complete: true,
+      });
       return;
     }
 
     const preloadQuestionnaireList = getEnvQuestionnaireList();
-    let resources = [];
+    let qrResources = [];
+    let qResources = [];
     // load questionnaires based on questionnaire responses
     client
       .request(
@@ -71,39 +107,54 @@ export default function QuestionnaireListProvider({ children }) {
         },
         {
           pageLimit: 0, // unlimited pages
-          onPage: processPage(client, resources),
+          onPage: processPage(client, qrResources),
         },
       )
       .then(() => {
-        const matchedResults = !isEmptyArray(resources)
-          ? resources.filter((item) => item && item.questionnaire && item.questionnaire.split("/")[1])
+        const matchedResults = !isEmptyArray(qrResources)
+          ? qrResources.filter((item) => item && item.questionnaire && item.questionnaire.split("/")[1])
           : null;
-        console.log("matched results for questionnaire from QuestionnaireResponse ", matchedResults);
-        if (!isEmptyArray(preloadQuestionnaireList)) {
-          console.log("questionnaire list to load from environment variable ", preloadQuestionnaireList);
-          dispatch({
-            type: "RESULTS",
-            questionnaireList: preloadQuestionnaireList,
-            questionnaireResponses: getFhirResourcesFromQueryResult(matchedResults),
-          });
-          return;
-        }
-        if (isEmptyArray(matchedResults)) {
+        const hasPreloadQList = !isEmptyArray(preloadQuestionnaireList);
+        if (!hasPreloadQList && isEmptyArray(matchedResults)) {
           dispatch({
             type: "ERROR",
             errorMessage: "No questionnaire list set.",
           });
           return;
         }
+        dispatch({
+          type: "QUESTIONNAIRE_RESPONSE_LOADED",
+        });
         const qIds = matchedResults.map((item) => item.questionnaire.split("/")[1]);
         let uniqueQIds = [...new Set(qIds)];
-        console.log("questionnaire list from questionnaire responses to load ", uniqueQIds);
-        dispatch({
-          type: "RESULTS",
-          questionnaireList: uniqueQIds,
-          questionnaireResponses: getFhirResourcesFromQueryResult(matchedResults),
-          exactMatchById: true,
+        const qListToLoad = hasPreloadQList ? preloadQuestionnaireList : uniqueQIds;
+        const questionnaireResourcePath = getFHIRResourcePath(patient.id, ["Questionnaire"], {
+          questionnaireList: qListToLoad,
+          exactMatchById: !hasPreloadQList,
         });
+        client
+          .request(
+            { url: questionnaireResourcePath, header: NO_CACHE_HEADER },
+            {
+              pageLimit: 0, // unlimited pages
+              onPage: processPage(client, qResources),
+            },
+          )
+          .then(() => {
+            dispatch({
+              type: "RESULTS",
+              questionnaireList: qListToLoad,
+              questionnaires: getFhirResourcesFromQueryResult(qResources),
+              questionnaireResponses: getFhirResourcesFromQueryResult(matchedResults),
+              exactMatchById: true,
+            });
+          })
+          .catch((e) => {
+            dispatch({
+              type: "ERROR",
+              errorMessage: e,
+            });
+          });
       })
       .catch((e) => {
         dispatch({
@@ -113,21 +164,41 @@ export default function QuestionnaireListProvider({ children }) {
       });
   }, [client, patient, state.complete, resourceTypesToBeLoaded, notConfigured]);
 
+  const renderLoading = () => {
+    const questionnaireLoaded = state.loadedStatus["questionnaire"];
+    const questionnaireResponseLoaded = state.loadedStatus["questionnaireResponse"];
+    return (
+      <Stack
+        spacing={2}
+        direction="row"
+        style={{ marginTop: "56px", padding: "24px", fontSize: "0.95rem" }}
+        justifyContent={"center"}
+        alignItems={"center"}
+      >
+        <CircularProgress></CircularProgress>
+        <Stack direction="column" spacing={1} justifyContent="center">
+          <div>First Loading ...</div>
+          <div className={questionnaireLoaded ? "text-success" : "text-warning"}>
+            QUESTIONNAIRES {questionnaireLoaded && <CheckIcon color="success"></CheckIcon>}
+          </div>
+          <div className={state.loadedStatus["questionnaireResponse"] ? "text-success" : "text-warning"}>
+            QUESTIONNAIRE RESPONSES {questionnaireResponseLoaded && <CheckIcon color="success"></CheckIcon>}
+          </div>
+        </Stack>
+      </Stack>
+    );
+  };
+
   return (
     <QuestionnaireListContext.Provider value={state}>
       <QuestionnaireListContext.Consumer>
-        {({ questionnaireList, error }) => {
+        {({ complete, error }) => {
           // if client and patient are available render the children component(s)
-          if (notConfigured || !isEmptyArray(questionnaireList) || error) {
+          if (complete || error) {
             return children;
           }
           // loading
-          return (
-            <Stack spacing={2} direction="row" style={{ padding: "24px" }}>
-              <CircularProgress></CircularProgress>
-              <div>Loading...</div>
-            </Stack>
-          );
+          return renderLoading();
         }}
       </QuestionnaireListContext.Consumer>
     </QuestionnaireListContext.Provider>

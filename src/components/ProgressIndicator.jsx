@@ -38,7 +38,6 @@ export default function ProgressIndicator({ resources }) {
           xs: "flex-start",
           sm: "center",
         }}
-        justifyContent="center"
         direction="column"
         spacing={2}
         className="progress-container"
@@ -46,10 +45,11 @@ export default function ProgressIndicator({ resources }) {
         <Stack
           direction="row"
           spacing={2}
+          justifyContent="center"
           alignItems="center"
           sx={{ fontSize: "1.1rem", marginBottom: 1.25 }}
         >
-          <div>Loading Data ...</div>
+          <div>Loading ...</div>
           <div>
             <b>{Math.ceil((loaded / total) * 100)} %</b>
           </div>

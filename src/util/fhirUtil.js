@@ -101,6 +101,11 @@ export function getFHIRResourceQueryParams(resourceType, options) {
   return paramsObj;
 }
 
+export function getFHIRResourcePath(patientId, resourceType, options) {
+  const { resourcePath } = getFHIRResourcePaths(patientId, resourceType, options)[0];
+  return resourcePath;
+}
+
 export function getFHIRResourcePaths(patientId, resourceTypesToLoad, options) {
   if (!patientId) return [];
   const resources = !isEmptyArray(resourceTypesToLoad) ? resourceTypesToLoad : getFHIRResourceTypesToLoad();

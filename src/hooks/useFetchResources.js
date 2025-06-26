@@ -7,12 +7,8 @@ import {
   getElmDependencies,
   getResourceLogicLib,
   getInterventionLogicLib,
-} from "../util/elmUtil"
-import {
-  getChartConfig,
-  isEmptyArray,
-  isNumber,
-} from "../util";
+} from "../util/elmUtil";
+import { getChartConfig, isEmptyArray, isNumber } from "../util";
 import {
   getResourcesByResourceType,
   getResourceTypesFromResources,
@@ -32,7 +28,8 @@ export default function useFetchResources() {
   let {
     questionnaireList,
     exactMatchById,
-    questionnaireResponses: ctxQuestionnaireResources,
+    questionnaireResponses: ctxQuestionnaireResponseResources,
+    questionnaires: ctxQuestionnaireResources,
   } = useContext(QuestionnaireListContext);
   const questionnareKeys = questionnaireList ? questionnaireList : [];
   const [error, setError] = useState(null);
@@ -40,13 +37,14 @@ export default function useFetchResources() {
     resourceType: "Bundle",
     id: "resource-bundle",
     type: "collection",
-    entry: [{ resource: patient }, ...(ctxQuestionnaireResources ?? [])],
+    entry: [{ resource: patient }, ...(ctxQuestionnaireResponseResources ?? []), ...(ctxQuestionnaireResources ?? [])],
     evalResults: {},
   });
 
   const getResourceTypesToLoad = () => {
     const existingResources = [
       ...new Set(getResourceTypesFromResources(ctxQuestionnaireResources).map((r) => String(r).toLowerCase())),
+      ...new Set(getResourceTypesFromResources(ctxQuestionnaireResponseResources).map((r) => String(r).toLowerCase())),
     ];
     let resources = getFHIRResourceTypesToLoad().filter((r) => {
       return existingResources.indexOf(String(r).toLowerCase()) === -1;
@@ -56,7 +54,7 @@ export default function useFetchResources() {
       if (qIndex !== -1) resources.splice(qIndex, 1);
     }
     // patient resource is loaded already
-    return resources.filter(resource => resource !== "Patient");
+    return resources.filter((resource) => resource !== "Patient");
   };
 
   const getResourcesToTrack = (resourceTypesToLoad, questionnareKeys) => {
