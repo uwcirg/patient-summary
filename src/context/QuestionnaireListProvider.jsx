@@ -171,19 +171,31 @@ export default function QuestionnaireListProvider({ children }) {
       <Stack
         spacing={2}
         direction="row"
-        style={{ marginTop: "56px", padding: "24px", fontSize: "0.95rem" }}
+        style={{ marginTop: "56px", padding: "24px" }}
         justifyContent={"center"}
         alignItems={"center"}
       >
         <CircularProgress></CircularProgress>
         <Stack direction="column" spacing={1} justifyContent="center">
-          <div>First Loading ...</div>
-          <div className={questionnaireLoaded ? "text-success" : "text-warning"}>
-            QUESTIONNAIRES {questionnaireLoaded && <CheckIcon color="success"></CheckIcon>}
-          </div>
-          <div className={state.loadedStatus["questionnaireResponse"] ? "text-success" : "text-warning"}>
-            QUESTIONNAIRE RESPONSES {questionnaireResponseLoaded && <CheckIcon color="success"></CheckIcon>}
-          </div>
+          <div>Loading first ...</div>
+          <Stack
+            className={questionnaireLoaded ? "text-success" : "text-warning"}
+            direction={"row"}
+            spacing={1}
+            alignItems={"center"}
+          >
+            <span>QUESTIONNAIRES</span>
+            {questionnaireLoaded && <CheckIcon color="success"></CheckIcon>}
+          </Stack>
+          <Stack
+            className={state.loadedStatus["questionnaireResponse"] ? "text-success" : "text-warning"}
+            direction={"row"}
+            spacing={1}
+            alignItems={"center"}
+          >
+            <span>QUESTIONNAIRE RESPONSES </span>
+            {questionnaireResponseLoaded && <CheckIcon color="success"></CheckIcon>}
+          </Stack>
         </Stack>
       </Stack>
     );
