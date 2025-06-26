@@ -299,7 +299,7 @@ export default function useFetchResources() {
               });
           });
         });
-        Promise.allSettled([...qListRequests, ...resourceEvalResults]).then((results) => {
+        Promise.allSettled([...(qListRequests??[]), ...(resourceEvalResults??[])]).then((results) => {
           let summaries = {};
           results.forEach((result) => {
             const resultValue = result.value ? result.value : {};

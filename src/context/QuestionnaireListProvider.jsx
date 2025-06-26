@@ -61,6 +61,9 @@ export default function QuestionnaireListProvider({ children }) {
         return state;
     }
   };
+  const { client, patient } = useContext(FhirClientContext);
+  const resourceTypesToBeLoaded = getFHIRResourceTypesToLoad();
+  const notConfigured = resourceTypesToBeLoaded.indexOf("Questionnaire") === -1;
   const [state, dispatch] = useReducer(resourceReducer, {
     questionnaireList: [],
     questionnaires: [],
@@ -70,13 +73,10 @@ export default function QuestionnaireListProvider({ children }) {
       questionnaire: false,
       questionnaireResponse: false,
     },
+    complete: notConfigured,
     error: false,
     errorMessage: "",
   });
-  const { client, patient } = useContext(FhirClientContext);
-  const resourceTypesToBeLoaded = getFHIRResourceTypesToLoad();
-  const notConfigured = resourceTypesToBeLoaded.indexOf("Questionnaire") === -1;
-
   useEffect(() => {
     if (!client || !patient) {
       dispatch({
@@ -86,14 +86,6 @@ export default function QuestionnaireListProvider({ children }) {
       return;
     }
     if (state.complete) return;
-
-    if (notConfigured) {
-      dispatch({
-        type: "RESULTS",
-        complete: true,
-      });
-      return;
-    }
 
     const preloadQuestionnaireList = getEnvQuestionnaireList();
     let qrResources = [];
