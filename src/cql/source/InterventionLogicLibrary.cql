@@ -26,6 +26,10 @@ context Patient
 define Questionnaires:
   LogicHelpers.GetMatchQuestionnaire(QuestionnaireID, QuestionnaireName, QuestionnaireURL)
 
+
+define QuestionnaresList: 
+  [Questionnaire]
+
 // Load Questionnaire
 define CurrentQuestionnaire:
   First(Questionnaires)
@@ -40,16 +44,18 @@ define QuestionnaireResponses:
 
 define ResponsesSummary:
   (QuestionnaireResponses) I
+  let 
+    items: if I.item.item is not null then I.item.item else I.item
   return {
     id: I.id.value,
     date: LogicHelpers.DateTimeText(I.authored),
-    responses: LogicHelpers.FormattedResponses(QuestionnaireItems, I.item, ScoringQuestionId),
-    totalAnsweredItems: Length((I.item) O where PositionOf(O.linkId, ScoringQuestionId) = -1 or PositionOf(ScoringQuestionId, O.linkId) = -1),
+    responses: LogicHelpers.ResponsesOnly(items),
+    totalAnsweredItems: Length((items) O where PositionOf(O.linkId, ScoringQuestionId) = -1 or PositionOf(ScoringQuestionId, O.linkId) = -1),
     totalItems: 
       if QuestionnaireItems is not null then
         Length(LogicHelpers.GetAnswerLinkIdsByQuestionnaire(CurrentQuestionnaire, ScoringQuestionId))
       else
-        Length(I.item),
+        Length(items),
     authoredDate: I.authored.value,
     lastUpdated: I.meta.lastUpdated.value
   }

@@ -1,5 +1,5 @@
 # TODO update to newer version: Active LTS or Current
-FROM node:14 as dev
+FROM node:20 as dev
 
 # cache hack (very fragile): initially only copy list of project dependencies
 COPY --chown=node:node package.json package-lock.json /opt/node/
@@ -33,4 +33,4 @@ COPY docker-entrypoint-override.sh /usr/bin/docker-entrypoint-override.sh
 ENTRYPOINT ["/usr/bin/docker-entrypoint-override.sh", "/docker-entrypoint.sh"]
 CMD ["nginx","-g","daemon off;"]
 
-COPY --from=node-prod /opt/node/app/build /usr/share/nginx/html
+COPY --from=node-prod /opt/node/app/dist /usr/share/nginx/html

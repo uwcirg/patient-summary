@@ -1,44 +1,79 @@
-import { getEnv, getSectionsToShow, hasValue } from "./util";
-import { DEFAULT_OBSERVATION_CATEGORIES } from "../consts/consts";
+import { DEFAULT_OBSERVATION_CATEGORIES } from "../consts/index.js";
+import { extractResourcesFromELM } from "./elmUtil.js";
+import { getEnv, getSectionsToShow, hasValue, isEmptyArray } from "./index.js";
 
-export function getFHIRResourcesToLoad() {
-  const defaultList = [
-    "Condition",
-    "Observation",
-    "Questionnaire",
-    "QuestionnaireResponse",
-  ];
-  const resourcesToLoad = getEnv("REACT_APP_FHIR_RESOURCES");
-  const sections = getSectionsToShow();
-  const envResourcesToLoad = resourcesToLoad ? resourcesToLoad.split(",") : [];
-  let resourcesForSection = [];
-  if (sections && sections.length) {
-    sections.forEach((section) => {
-      if (section.resources && section.resources.length) {
-        resourcesForSection = [...resourcesForSection, ...section.resources];
-      }
-    });
+/*
+ * @param client, FHIR client object
+ * @param uri, path including search parameters if applicable, e.g. Patient?_sort=_lastUpdated
+ * return re-constructed URL string including server url if applicable
+ */
+function getRequestURL(client, uri = "") {
+  if (!client) return uri;
+  let serverURL = "";
+  if (client && client.state) {
+    //e.g. https://backend.uwmedicine.cosri.app/fhir-router/4bc20310-8963-4440-b6aa-627ce6def3b9/
+    //e.g. https://launch.smarthealthit.org/v/r4/fhir
+    serverURL = client.state.serverUrl;
   }
-  const combinedResources = [...envResourcesToLoad, ...resourcesForSection];
-  const allResources = [...new Set(combinedResources)];
-  const resources = allResources.length
-    ? [...new Set([...allResources, ...defaultList])]
-    : defaultList;
+  if (!serverURL) return "";
+  let uriToUse = uri;
+  if (uriToUse.startsWith("/")) uriToUse = uri.slice(1);
+  return serverURL + (!serverURL.endsWith("/") ? "/" : "") + uriToUse;
+}
 
-  //console.log("Resources to load : ", resources);
-  return resources;
+export function processPage(client, resources = []) {
+  return (bundle) => {
+    if (bundle && bundle.link && bundle.link.some((l) => l.relation === "self" && l.url != null)) {
+      bundle.link = bundle.link.map((o) => {
+        if (!o.url) return o;
+        let reuseURL = null;
+        try {
+          reuseURL = new URL(o.url);
+        } catch (e) {
+          console.log(`Unable to create URL object for ${o.url}`, e);
+          reuseURL = null;
+        }
+        if (reuseURL) {
+          const requestURL = getRequestURL(client, reuseURL.search);
+          if (requestURL) o.url = requestURL;
+        }
+        // if (o.relation === "next")
+        //   console.log("Next URL ", o.url)
+        return o;
+      });
+    }
+    // Add to the resources
+    if (bundle.entry) {
+      //prevent addition of null entry
+      //each entry is not always wrapped in resource node
+      bundle.entry.forEach((e) => {
+        if (!e) return true;
+        let resource = e.resource ? e.resource : e;
+        resources.push(resource);
+      });
+    }
+  };
+}
+
+export function getFHIRResourceTypesToLoad() {
+  const sections = getSectionsToShow();
+  const libraries = [...new Set(sections.map((section) => section.library))];
+  const resourceTypes = libraries.map((item) => extractResourcesFromELM(item)).flat();
+  return [...new Set(resourceTypes)];
 }
 
 export function getFHIRResourceQueryParams(resourceType, options) {
   if (!resourceType) return null;
   let paramsObj = {
     _sort: "-_lastUpdated",
-    _count: 200,
+    _count: 100,
   };
   const queryOptions = options ? options : {};
+  const envCategory = getEnv("REACT_APP_FHIR_CAREPLAN_CATEGORY");
+  const envObCategories = getEnv("REACT_APP_FHIR_OBSERVATION_CATEGORIES");
+  const observationCategories = envObCategories ? envObCategories : DEFAULT_OBSERVATION_CATEGORIES;
   switch (String(resourceType).toLowerCase()) {
     case "careplan":
-      const envCategory = getEnv("REACT_APP_FHIR_CAREPLAN_CATEGORY");
       if (queryOptions.patientId) {
         paramsObj["subject"] = `Patient/${queryOptions.patientId}`;
       }
@@ -47,20 +82,12 @@ export function getFHIRResourceQueryParams(resourceType, options) {
       }
       break;
     case "questionnaire":
-      if (
-        queryOptions.questionnaireList &&
-        Array.isArray(queryOptions.questionnaireList) &&
-        queryOptions.questionnaireList.length
-      ) {
-        paramsObj[queryOptions.exactMatch ? "_id" : "name:contains"] =
-          queryOptions.questionnaireList.join(",");
+      if (!isEmptyArray(queryOptions.questionnaireList)) {
+        let qList = queryOptions.questionnaireList.join(",");
+        paramsObj[queryOptions.exactMatchById ? "_id" : "name:contains"] = qList;
       }
       break;
     case "observation":
-      const envObCategories = getEnv("REACT_APP_FHIR_OBSERVATION_CATEGORIES");
-      const observationCategories = envObCategories
-        ? envObCategories
-        : DEFAULT_OBSERVATION_CATEGORIES;
       paramsObj["category"] = observationCategories;
       if (queryOptions.patientId) {
         paramsObj["patient"] = `Patient/${queryOptions.patientId}`;
@@ -74,12 +101,14 @@ export function getFHIRResourceQueryParams(resourceType, options) {
   return paramsObj;
 }
 
-export function getFHIRResourcePaths(patientId, resourcesToLoad, options) {
+export function getFHIRResourcePath(patientId, resourceType, options) {
+  const { resourcePath } = getFHIRResourcePaths(patientId, resourceType, options)[0];
+  return resourcePath;
+}
+
+export function getFHIRResourcePaths(patientId, resourceTypesToLoad, options) {
   if (!patientId) return [];
-  const resources =
-    resourcesToLoad && Array.isArray(resourcesToLoad) && resourcesToLoad.length
-      ? resourcesToLoad
-      : getFHIRResourcesToLoad();
+  const resources = !isEmptyArray(resourceTypesToLoad) ? resourceTypesToLoad : getFHIRResourceTypesToLoad();
   return resources.map((resource) => {
     let path = `/${resource}`;
     const paramsObj = getFHIRResourceQueryParams(resource, {
@@ -98,17 +127,18 @@ export function getFHIRResourcePaths(patientId, resourcesToLoad, options) {
 }
 
 export function getResourcesByResourceType(patientBundle, resourceType) {
-  if (!patientBundle || !Array.isArray(patientBundle) || !patientBundle.length)
-    return null;
+  if (isEmptyArray(patientBundle)) return null;
+  if (!resourceType) return patientBundle;
   return patientBundle
     .filter((item) => {
-      return (
-        item.resource &&
-        String(item.resource.resourceType).toLowerCase() ===
-          String(resourceType).toLowerCase()
-      );
+      return item.resource && String(item.resource.resourceType).toLowerCase() === String(resourceType).toLowerCase();
     })
     .map((item) => item.resource);
+}
+
+export function getResourceTypesFromResources(resources) {
+  if (!resources) return [];
+  return [...new Set(resources.map((o) => (o.resource ? o.resource.resourceType : o.resourceType)))];
 }
 
 export function getQuestionnairesByCarePlan(arrCarePlans) {
@@ -121,11 +151,7 @@ export function getQuestionnairesByCarePlan(arrCarePlans) {
   });
   let qList = [];
   activities.forEach((a) => {
-    if (
-      a.detail &&
-      a.detail.instantiatesCanonical &&
-      a.detail.instantiatesCanonical.length
-    ) {
+    if (a.detail && a.detail.instantiatesCanonical && a.detail.instantiatesCanonical.length) {
       const qId = a.detail.instantiatesCanonical[0].split("/")[1];
       if (qId && qList.indexOf(qId) === -1) qList.push(qId);
     }
@@ -163,8 +189,7 @@ export function getFhirItemValue(item) {
     return item.valueString;
   }
   if (hasValue(item.valueBoolean)) {
-    if (hasValue(item.valueBoolean.value))
-      return String(item.valueBoolean.value);
+    if (hasValue(item.valueBoolean.value)) return String(item.valueBoolean.value);
     return String(item.valueBoolean);
   }
   if (hasValue(item.valueInteger)) {
@@ -193,14 +218,10 @@ export function getFhirItemValue(item) {
   if (item.valueRange) {
     let rangeText = "";
     if (item.valueRange.low && item.valueRange.low.value) {
-      rangeText += `low: ${item.valueRange.low.value} ${
-        item.valueRange.low.unit ?? ""
-      } `;
+      rangeText += `low: ${item.valueRange.low.value} ${item.valueRange.low.unit ?? ""} `;
     }
     if (item.valueRange.high && item.valueRange.high.value) {
-      rangeText += `high: ${item.valueRange.high.value} ${
-        item.valueRange.high.unit ?? ""
-      } `;
+      rangeText += `high: ${item.valueRange.high.value} ${item.valueRange.high.unit ?? ""} `;
     }
     return rangeText;
   }
@@ -216,9 +237,7 @@ export function getFhirItemValue(item) {
       Array.isArray(item.valueCodeableConcept.coding) &&
       item.valueCodeableConcept.coding.length
     ) {
-      return item.valueCodeableConcept.coding
-        .map((item) => item.display)
-        .join(", ");
+      return item.valueCodeableConcept.coding.map((item) => item.display).join(", ");
     }
     return null;
   }
@@ -228,21 +247,12 @@ export function getFhirItemValue(item) {
 }
 export function getFhirComponentDisplays(item) {
   let displayText = getFhirItemValue(item);
-  if (
-    !item ||
-    !item.component ||
-    !Array.isArray(item.component) ||
-    !item.component.length
-  )
-    return displayText;
+  if (!item || !item.component || !Array.isArray(item.component) || !item.component.length) return displayText;
   const componentDisplay = item.component
     .map((o) => {
       const textDisplay = o.code && o.code.text ? o.code.text : null;
       const valueDisplay = getFhirItemValue(o);
-      if (hasValue(valueDisplay))
-        return textDisplay
-          ? [textDisplay, valueDisplay].join(": ")
-          : valueDisplay;
+      if (hasValue(valueDisplay)) return textDisplay ? [textDisplay, valueDisplay].join(": ") : valueDisplay;
       return "";
     })
     .join(", ");

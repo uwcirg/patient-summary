@@ -105,6 +105,15 @@
                } ]
             }
          }, {
+            "name" : "QuestionnaresList",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "dataType" : "{http://hl7.org/fhir}Questionnaire",
+               "templateId" : "http://hl7.org/fhir/StructureDefinition/Questionnaire",
+               "type" : "Retrieve"
+            }
+         }, {
             "name" : "CurrentQuestionnaire",
             "context" : "Patient",
             "accessLevel" : "Public",
@@ -167,6 +176,101 @@
                      "type" : "ExpressionRef"
                   }
                } ],
+               "let" : [ {
+                  "identifier" : "items",
+                  "expression" : {
+                     "type" : "If",
+                     "condition" : {
+                        "type" : "Not",
+                        "operand" : {
+                           "type" : "IsNull",
+                           "operand" : {
+                              "type" : "Flatten",
+                              "operand" : {
+                                 "type" : "Query",
+                                 "source" : [ {
+                                    "alias" : "$this",
+                                    "expression" : {
+                                       "path" : "item",
+                                       "scope" : "I",
+                                       "type" : "Property"
+                                    }
+                                 } ],
+                                 "where" : {
+                                    "type" : "Not",
+                                    "operand" : {
+                                       "type" : "IsNull",
+                                       "operand" : {
+                                          "path" : "item",
+                                          "type" : "Property",
+                                          "source" : {
+                                             "name" : "$this",
+                                             "type" : "AliasRef"
+                                          }
+                                       }
+                                    }
+                                 },
+                                 "return" : {
+                                    "distinct" : false,
+                                    "expression" : {
+                                       "path" : "item",
+                                       "type" : "Property",
+                                       "source" : {
+                                          "name" : "$this",
+                                          "type" : "AliasRef"
+                                       }
+                                    }
+                                 }
+                              }
+                           }
+                        }
+                     },
+                     "then" : {
+                        "type" : "Flatten",
+                        "operand" : {
+                           "type" : "Query",
+                           "source" : [ {
+                              "alias" : "$this",
+                              "expression" : {
+                                 "path" : "item",
+                                 "scope" : "I",
+                                 "type" : "Property"
+                              }
+                           } ],
+                           "where" : {
+                              "type" : "Not",
+                              "operand" : {
+                                 "type" : "IsNull",
+                                 "operand" : {
+                                    "path" : "item",
+                                    "type" : "Property",
+                                    "source" : {
+                                       "name" : "$this",
+                                       "type" : "AliasRef"
+                                    }
+                                 }
+                              }
+                           },
+                           "return" : {
+                              "distinct" : false,
+                              "expression" : {
+                                 "path" : "item",
+                                 "type" : "Property",
+                                 "source" : {
+                                    "name" : "$this",
+                                    "type" : "AliasRef"
+                                 }
+                              }
+                           }
+                        }
+                     },
+                     "else" : {
+                        "path" : "item",
+                        "scope" : "I",
+                        "type" : "Property"
+                     }
+                  }
+               } ],
                "relationship" : [ ],
                "return" : {
                   "expression" : {
@@ -197,19 +301,12 @@
                      }, {
                         "name" : "responses",
                         "value" : {
-                           "name" : "FormattedResponses",
+                           "name" : "ResponsesOnly",
                            "libraryName" : "LogicHelpers",
                            "type" : "FunctionRef",
                            "operand" : [ {
-                              "name" : "QuestionnaireItems",
-                              "type" : "ExpressionRef"
-                           }, {
-                              "path" : "item",
-                              "scope" : "I",
-                              "type" : "Property"
-                           }, {
-                              "name" : "ScoringQuestionId",
-                              "type" : "ParameterRef"
+                              "name" : "items",
+                              "type" : "QueryLetRef"
                            } ]
                         }
                      }, {
@@ -221,9 +318,8 @@
                               "source" : [ {
                                  "alias" : "O",
                                  "expression" : {
-                                    "path" : "item",
-                                    "scope" : "I",
-                                    "type" : "Property"
+                                    "name" : "items",
+                                    "type" : "QueryLetRef"
                                  }
                               } ],
                               "relationship" : [ ],
@@ -317,9 +413,8 @@
                            "else" : {
                               "type" : "Length",
                               "operand" : {
-                                 "path" : "item",
-                                 "scope" : "I",
-                                 "type" : "Property"
+                                 "name" : "items",
+                                 "type" : "QueryLetRef"
                               }
                            }
                         }

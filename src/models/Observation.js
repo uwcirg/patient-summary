@@ -1,6 +1,6 @@
-import { getFhirItemValue, getFhirComponentDisplays } from "../util/fhirUtil";
-import { getCorrectedISODate, hasValue, isEmptyArray } from "../util/util";
+import { getCorrectedISODate, isEmptyArray } from "../util";
 
+// source: Results in cql/source/src/cql/ObservationResourceLibrary.json
 class Observation {
   constructor(dataObj) {
     this.data = Object.assign({}, dataObj);
@@ -9,36 +9,31 @@ class Observation {
     return this.data.id;
   }
   get category() {
-    if (isEmptyArray(this.data.category)) return "";
-    return this.data.category
-      .map((o) =>
-        o.text ? o.text : !isEmptyArray(o.coding) ? o.coding[0].display : ""
-      )
-      .join(", ");
+    return this.data.category;
   }
   get status() {
     return this.data.status;
   }
   get displayText() {
-    if (isEmptyArray(this.data.code?.coding)) return "";
-    return this.data.code.coding
-      .filter((o) => o.display)
-      .map((o) => o.display)
-      .join(", ");
+    return this.data.displayText;
   }
   get dateText() {
-    return getCorrectedISODate(this.data.issued);
-  }
-  get providerText() {
-    if (isEmptyArray(this.data.performer)) return "";
-    return this.data.performer.map((item) => item.display).join(", ");
+    return getCorrectedISODate(this.data.dateText);
   }
   get valueText() {
-    const value = this.data.component
-      ? getFhirComponentDisplays(this.data)
-      : getFhirItemValue(this.data);
-    if (!hasValue(value)) return "";
-    return value;
+    if (!isEmptyArray(this.data.componentValues)) {
+      return this.data.componentValues
+        .map((o) => {
+          const displayValue = (o.value ?? "") + " " + (o.unit ?? "");
+          return o.text ? o.text + ": " + displayValue : displayValue;
+        })
+        .join("; ");
+    }
+    if (this.data.valueText) return this.data.valueText;
+    if (this.data.value && this.data.value.value) {
+      return [this.data.value.value, this.data.value.unit ?? ""].join(" ");
+    }
+    return "";
   }
 
   toObj() {
@@ -49,15 +44,15 @@ class Observation {
       displayText: this.displayText,
       valueText: this.valueText,
       dateText: this.dateText,
-      providerText: this.providerText,
     };
   }
 
-  static getGoodData(bundledData) {
-    return bundledData.filter(
+  static getGoodData(data) {
+    return data.filter(
       (item) =>
-        String(item.resourceType).toLowerCase() === "observation" &&
-        !isEmptyArray(item.code.coding)
+        item.componentValues ||
+        (item.value && item.value.value) ||
+        item.valueText
     );
   }
 }

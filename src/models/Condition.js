@@ -1,4 +1,6 @@
-import { getCorrectedISODate, isEmptyArray } from "../util/util";
+import { getCorrectedISODate } from "../util";
+
+// source: Results in cql/source/src/cql/ConditionResourceLibrary.json
 class Condition {
   constructor(dataObj) {
     this.data = Object.assign({}, dataObj);
@@ -7,22 +9,10 @@ class Condition {
     return this.data.id;
   }
   get displayText() {
-    return this.data.code.text
-      ? this.data.code.text
-      : !isEmptyArray(this.data.code?.coding)
-      ? this.data.code.coding.map((o) => o.display).join(", ")
-      : "";
+    return this.data.condition;
   }
   get status() {
-    return this.data.verificationStatus
-      ? this.data.verificationStatus.text
-        ? this.data.verificationStatus.text
-        : !isEmptyArray(this.data.verificationStatus.coding)
-        ? this.data.verificationStatus.coding[0].display
-          ? this.data.verificationStatus.coding[0].display
-          : this.data.verificationStatus.coding[0].code
-        : ""
-      : "";
+    return this.data.status;
   }
   get onsetDateTimeDisplayText() {
     return this.data.onsetDateTime
@@ -43,15 +33,8 @@ class Condition {
       status: this.status ? String(this.status).toLowerCase() : "",
     };
   }
-  static getGoodData(bundledData) {
-    return bundledData.filter(
-      (item) =>
-        String(item.resourceType).toLowerCase() === "condition" &&
-        item.code &&
-        ((!isEmptyArray(item.code.codin) &&
-          item.code.coding.find((o) => o.display)) ||
-          item.code.text)
-    );
+  static getGoodData(data) {
+    return data.filter((item) => !!item.condition);
   }
 }
 export default Condition;
