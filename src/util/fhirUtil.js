@@ -65,8 +65,7 @@ export function getFHIRResourceTypesToLoad() {
 export function getFHIRResourceQueryParams(resourceType, options) {
   if (!resourceType) return null;
   let paramsObj = {
-    _sort: "-_lastUpdated",
-    _count: 100,
+    _sort: "-_lastUpdated"
   };
   const queryOptions = options ? options : {};
   const envCategory = getEnv("REACT_APP_FHIR_CAREPLAN_CATEGORY");
