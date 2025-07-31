@@ -1,6 +1,7 @@
 # run test suite
 ---
 name: Test
+# trigger event is push and workflow_dispatch (trigger manually): gh workflow run test.yaml --ref feature/add-test-workflow  -R uwcirg/patient-summary
 on: [push, workflow_dispatch]
 jobs:
   test:
