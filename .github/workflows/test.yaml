@@ -1,7 +1,7 @@
 # run test suite
 ---
 name: Test
-on: [push]
+on: push
 jobs:
   test:
     runs-on: ubuntu-latest
