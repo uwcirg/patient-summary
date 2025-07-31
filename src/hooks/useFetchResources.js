@@ -1,4 +1,4 @@
-import { useContext, useReducer, useState, useRef } from "react";
+import { useCallback, useContext, useMemo, useReducer, useState, useRef } from "react";
 import { useQuery } from "react-query";
 import { FhirClientContext } from "../context/FhirClientContext";
 import { QuestionnaireListContext } from "../context/QuestionnaireListContext";
@@ -109,7 +109,10 @@ export default function useFetchResources() {
 
   const [toBeLoadedResources, dispatch] = useReducer(resourceReducer, initialResourcesToLoad);
 
-  const isReady = () => isEmptyArray(toBeLoadedResources) || !toBeLoadedResources.find((o) => !o.complete) || error;
+  const isReady = useCallback(
+    () => isEmptyArray(toBeLoadedResources) || !toBeLoadedResources.find((o) => !o.complete) || error,
+    [error, toBeLoadedResources],
+  );
 
   const handleResourceComplete = (resource, params) => {
     dispatch({ type: "COMPLETE", id: resource, ...params });
@@ -273,6 +276,7 @@ export default function useFetchResources() {
               });
           });
         });
+        
         const qListRequests = questionnaireList?.map((qid) => {
           return new Promise((resolve) => {
             gatherSummaryDataByQuestionnaireId(
@@ -299,7 +303,7 @@ export default function useFetchResources() {
               });
           });
         });
-        Promise.allSettled([...(qListRequests??[]), ...(resourceEvalResults??[])]).then((results) => {
+        Promise.allSettled([...(qListRequests ?? []), ...(resourceEvalResults ?? [])]).then((results) => {
           let summaries = {};
           results.forEach((result) => {
             const resultValue = result.value ? result.value : {};
@@ -332,6 +336,9 @@ export default function useFetchResources() {
               }),
             50,
           );
+          handleResourceComplete(SUMMARY_DATA_KEY, {
+            data: summaries,
+          });
         });
       },
       onError: (e) => {
@@ -388,29 +395,33 @@ export default function useFetchResources() {
     );
   };
 
-  const getAllChartData = (summaryData) => {
-    if (!isReady() || !summaryData || !summaryData.data) return null;
-    const dataToUse = Object.assign({}, JSON.parse(JSON.stringify(summaryData.data)));
-    const keys = Object.keys(dataToUse);
-    const formattedData = keys.map((key) => {
-      const data = dataToUse[key];
-      if (!data || isEmptyArray(data.chartData)) return [];
-      let dataToReturn = [];
-      if (data.chartConfig && data.chartConfig.dataFormatter) {
-        dataToReturn = data.chartConfig.dataFormatter(data.chartData);
-      } else dataToReturn = data.chartData;
-      {
-        return dataToReturn.map((o) => {
-          o.key = key;
-          o[key] = o["score"];
-          return o;
-        });
-      }
-    });
-    return formattedData.flat().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  };
+  const getAllChartData = useCallback(
+    (summaryData) => {
+      if (!isReady() || !summaryData || !summaryData.data) return null;
+      const dataToUse = Object.assign({}, JSON.parse(JSON.stringify(summaryData.data)));
+      const keys = Object.keys(dataToUse);
+      const formattedData = keys.map((key) => {
+        const data = dataToUse[key];
+        if (!data || isEmptyArray(data.chartData)) return [];
+        let dataToReturn = [];
+        if (data.chartConfig && data.chartConfig.dataFormatter) {
+          dataToReturn = data.chartConfig.dataFormatter(data.chartData);
+        } else dataToReturn = data.chartData;
+        {
+          return dataToReturn.map((o) => {
+            o.key = key;
+            o[key] = o["score"];
+            return o;
+          });
+        }
+      });
+      return formattedData.flat().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    },
+    [isReady],
+  );
 
   const summaryData = toBeLoadedResources.find((resource) => resource.id === SUMMARY_DATA_KEY);
+  const allChartData = useMemo(() => getAllChartData(summaryData), [summaryData, getAllChartData]);
 
   return {
     isReady: isReady(),
@@ -419,7 +430,7 @@ export default function useFetchResources() {
     patientBundle: patientBundle.current.entry,
     evalData: patientBundle.current.evalResults,
     summaryData: summaryData,
-    allChartData: getAllChartData(summaryData),
+    allChartData: allChartData,
     questionnaireList: questionnaireList,
   };
 }

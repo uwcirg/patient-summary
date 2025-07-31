@@ -14,8 +14,6 @@ import { getEnvQuestionnaireList, getEnv, isEmptyArray } from "../util";
 import { QuestionnaireListContext } from "./QuestionnaireListContext";
 import { FhirClientContext } from "./FhirClientContext";
 
-// let loadComplete = false;
-
 export default function QuestionnaireListProvider({ children }) {
   const isFromEpic = String(getEnv("REACT_APP_EPIC_QUERIES")) === "true";
   // hook for tracking state
@@ -139,6 +137,7 @@ export default function QuestionnaireListProvider({ children }) {
               questionnaires: getFhirResourcesFromQueryResult(qResources),
               questionnaireResponses: getFhirResourcesFromQueryResult(matchedResults),
               exactMatchById: true,
+              complete: true
             });
           })
           .catch((e) => {
@@ -154,7 +153,7 @@ export default function QuestionnaireListProvider({ children }) {
           errorMessage: e,
         });
       });
-  }, [client, patient, state.complete, resourceTypesToBeLoaded, notConfigured]);
+  }, [client, patient, state.complete]);
 
   const renderLoading = () => {
     const questionnaireLoaded = state.loadedStatus["questionnaire"];
