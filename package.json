@@ -27,8 +27,8 @@
     "start": "vite --mode=development",
     "build": "vite build",
     "serve": "vite preview",
-    "test": "vitest",
-    "test:watch": "rescripts test --testPathIgnorePatterns=./src/__tests__/cql",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "cql-test": "./node_modules/.bin/mocha ./src/__tests__/cql/*.cjs --recursive"
   },
   "browserslist": {
