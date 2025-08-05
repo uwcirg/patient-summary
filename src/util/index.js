@@ -124,53 +124,43 @@ export function callback(callbackFunc, params) {
   callbackFunc(params);
 }
 
-export function fetchEnvData() {
-  if (window && window["appConfig"] && !isEmptyArray(Object.keys(window["appConfig"]))) {
-    console.log("Window config variables added. ");
-    return;
-  }
-  const setConfig = function (envObj) {
-    if (!envObj) return;
-    if (!window) return;
-    window["appConfig"] = {};
-    //assign window process env variables for access by app
-    //won't be overridden when Node initializing env variables
-    for (var key in envObj) {
-      if (!window["appConfig"][key]) {
-        window["appConfig"][key] = envObj[key];
-      }
+export async function fetchEnvData() {
+  return new Promise((resolve) => {
+    const nodeEnvs = getNodeProcessEnvs();
+    if (window && window["appConfig"] && !isEmptyArray(Object.keys(window["appConfig"]))) {
+      console.log("Window config variables added. ");
+      resolve({
+        ...window["appConfig"],
+        ...nodeEnvs,
+      });
     }
-    console.log("environment variables set ", window["appConfig"]);
-  };
-  var xhr = new XMLHttpRequest();
-  xhr.open("GET", "/env.json", false);
-  xhr.onreadystatechange = function () {
-    if (!xhr.readyState === xhr.DONE) {
-      return;
-    }
-    if (xhr.status !== 200) {
-      console.log("Request failed! ");
-      return;
-    }
-    let envObj;
-    if (xhr.readyState === xhr.DONE) {
-      try {
-        envObj = JSON.parse(xhr.responseText);
-      } catch (e) {
-        console.log("Error parsing response text into json ", e);
-      }
-    }
-    setConfig(envObj);
-  };
-  try {
-    xhr.send();
-  } catch (e) {
-    console.log("Request failed to send.  Error: ", e);
-  }
-  xhr.ontimeout = function (e) {
-    // XMLHttpRequest timed out.
-    console.log("request to fetch env.json file timed out ", e);
-  };
+    const url = "/env.json";
+    if (window) window["appConfig"] = {};
+    fetch(url)
+      .then((response) => response.json())
+      .catch((e) => {
+        console.log(e);
+        resolve(nodeEnvs);
+      })
+      .then((results) => {
+        // assign window process env variables for access by app
+        // won't be overridden when Node initializing env variables
+        const envObj = results ? results : {};
+        if (window) {
+          for (let key in envObj) {
+            window["appConfig"][key] = envObj[key];
+          }
+        }
+        resolve({
+          ...envObj,
+          ...nodeEnvs,
+        });
+      })
+      .catch((e) => {
+        console.log(e);
+        resolve(nodeEnvs);
+      });
+  });
 }
 
 export function getEnv(key) {
@@ -182,12 +172,15 @@ export function getEnv(key) {
   return "";
 }
 
+export function getNodeProcessEnvs() {
+  return typeof import.meta.env !== "undefined" && import.meta.env ? import.meta.env : {};
+}
+
 export function getEnvs() {
   const appConfig = window && window["appConfig"] ? window["appConfig"] : {};
-  const processEnvs = typeof import.meta.env !== "undefined" && import.meta.env ? import.meta.env : {};
   return {
     ...appConfig,
-    ...processEnvs,
+    ...getNodeProcessEnvs(),
   };
 }
 

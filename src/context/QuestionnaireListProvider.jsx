@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import Stack from "@mui/material/Stack";
 import CheckIcon from "@mui/icons-material/Check";
 import CircularProgress from "@mui/material/CircularProgress";
+import { Typography } from "@mui/material";
 import { NO_CACHE_HEADER } from "../consts";
 import {
   getFHIRResourcePath,
@@ -168,7 +169,7 @@ export default function QuestionnaireListProvider({ children }) {
       >
         <CircularProgress></CircularProgress>
         <Stack direction="column" spacing={1} justifyContent="center">
-          <div>Loading first ...</div>
+          <Typography variant="body1">Loading ...</Typography>
           <Stack
             className={questionnaireLoaded ? "text-success" : "text-warning"}
             direction={"row"}
