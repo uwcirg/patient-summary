@@ -137,7 +137,7 @@ export default function QuestionnaireListProvider({ children }) {
               questionnaireList: qListToLoad,
               questionnaires: getFhirResourcesFromQueryResult(qResources),
               questionnaireResponses: getFhirResourcesFromQueryResult(matchedResults),
-              exactMatchById: true,
+              exactMatchById: !hasPreloadQList,
               complete: true
             });
           })
