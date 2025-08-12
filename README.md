@@ -2,23 +2,15 @@
 
 This application was built via [Vite](https://github.com/vitejs/vite).
 You can learn more in the [Vite documentation](https://vite.dev/).
-To learn React, check out the [React documentation](https://reactjs.org/).
-The app can be launched via the [SMART<sup>&reg;</sup> app launch framework](http://hl7.org/fhir/smart-app-launch/index.html).
-
-
-## Other Underlying Technologies
-
-### CQL Execution Engine
-All CQL calculations are executed using the [CQL Execution Engine](https://github.com/cqframework/cql-execution), an open source library that implements the CQL standard.
-
-### React Material UI
-[Material UI](https://mui.com/) is a library of React UI components that implements Google's Material Design.
+To learn about React, check out the [React documentation](https://reactjs.org/).
+The UI components are imported from [Material UI](https://mui.com/), a library of React UI components that implements Google's Material Design. 
+The application can be launched via the [SMART<sup>&reg;</sup> app launch framework](http://hl7.org/fhir/smart-app-launch/index.html).
 
 ## Usage
 A number of options are available for local usage to support testing with synthetic data.
 
 ### Setup
-This project manages dependencies using the [NPM package manager](https://www.npmjs.com/) in the [Node environment](https://nodejs.dev/) (Node version <= 16 is recommended for this application). Make sure to have both NPM and Node installed before proceeding. The dependencies for the application can be installed locally by typing `npm install` at the command line. A local version of the app can be launched by typing `npm start` at the command line and the page will reload when you make changes. A copy suitable for distribution can be built using the `npm run build` command (see the `build` folder).
+This project manages dependencies using the [NPM package manager](https://www.npmjs.com/) in the [Node environment](https://nodejs.dev/) (Node version >= 20 is recommended for this application). Make sure to have both NPM and Node installed before proceeding. The dependencies for the application can be installed locally by typing `npm install` at the command line. A local version of the app can be launched by typing `npm start` at the command line and the page will reload when you make changes. A copy suitable for distribution can be built using the `npm run build` command (see the `build` folder).
 
 ### Docker
 To start services via docker, first copy the default configuration files and modify as necessary:
@@ -34,7 +26,7 @@ To start all services, run the below command:
     docker-compose up
 
 ### Configuration
-Parameters for the app are stored in [environmental variables](http://man7.org/linux/man-pages/man7/environ.7.html) that are stored in an `.env` file (run `cp frontend.env.default .env` at command line to create the .env file) and it allows the environment variables thus specified to be read by the application at build time. The [dotenv package](https://www.npmjs.com/package/dotenv) is used to store the default variable values, which can be overwritten by defining a more specific env (e.g., `.env.local`) file or by setting the variables in the deployment system. For more information, see the [React documentation](https://create-react-app.dev/docs/adding-custom-environment-variables/).  **Note**: for setting up environment file for a docker instance, please read under Docker
+Parameters for the app are stored in [environmental variables](http://man7.org/linux/man-pages/man7/environ.7.html) that are stored in an `.env` file (run `cp frontend.env.default .env` at command line to create the .env file) and it allows the environment variables thus specified to be read by the application at build time. The [dotenv package](https://www.npmjs.com/package/dotenv) is used to store the default variable values, which can be overwritten by defining a more specific env (e.g., `.env.local`) file or by setting the variables in the deployment system. For more information, see the [React documentation](https://create-react-app.dev/docs/adding-custom-environment-variables/).  **Note**: for setting up environment file for a docker instance, please see example [here](https://github.com/uwcirg/cosri-pain-management-summary/blob/develop/docker-entrypoint.sh)
 
 #### Parameters
 | Parameter | Description | Allowed Values |
