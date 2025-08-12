@@ -9,7 +9,7 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import { IconButton } from "@mui/material";
 import HelpIcon from "@mui/icons-material/Help";
-import Questionnaire from "../models/Questionnaire";
+import Questionnaire from "@models/Questionnaire";
 
 export default function QuestionnaireInfo(props) {
   const { questionnaireJson } = props;

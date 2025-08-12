@@ -7,7 +7,7 @@ import { Typography } from "@mui/material";
 import { NO_CACHE_HEADER } from "../consts";
 import {
   getFHIRResourcePath,
-  getFHIRResourceTypesToLoad,
+  //getFHIRResourceTypesToLoad,
   getFhirResourcesFromQueryResult,
   processPage,
 } from "../util/fhirUtil";
@@ -61,8 +61,8 @@ export default function QuestionnaireListProvider({ children }) {
     }
   };
   const { client, patient } = useContext(FhirClientContext);
-  const resourceTypesToBeLoaded = getFHIRResourceTypesToLoad();
-  const notConfigured = resourceTypesToBeLoaded.indexOf("Questionnaire") === -1;
+  // const resourceTypesToBeLoaded = getFHIRResourceTypesToLoad();
+  // const notConfigured = resourceTypesToBeLoaded.indexOf("Questionnaire") === -1;
   const [state, dispatch] = useReducer(resourceReducer, {
     questionnaireList: [],
     questionnaires: [],
@@ -72,7 +72,7 @@ export default function QuestionnaireListProvider({ children }) {
       questionnaire: false,
       questionnaireResponse: false,
     },
-    complete: notConfigured,
+    complete: false,
     error: false,
     errorMessage: "",
   });

@@ -1,8 +1,0 @@
-library:
-  name: BEHAV5_InterventionLogicLibrary
-  paths: ../../cql
-tests:
-  path: cases/behav5
-options:
-  dumpFiles:
-    enabled: true

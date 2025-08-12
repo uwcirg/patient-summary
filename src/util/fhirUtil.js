@@ -1,6 +1,5 @@
 import { DEFAULT_OBSERVATION_CATEGORIES } from "../consts/index.js";
-import { extractResourcesFromELM } from "./elmUtil.js";
-import { getEnv, getSectionsToShow, hasValue, isEmptyArray } from "./index.js";
+import { getEnv, getSectionsToShow, isEmptyArray } from "./index.js";
 
 /*
  * @param client, FHIR client object
@@ -57,15 +56,15 @@ export function processPage(client, resources = []) {
 
 export function getFHIRResourceTypesToLoad() {
   const sections = getSectionsToShow();
-  const libraries = [...new Set(sections.map((section) => section.library))];
-  const resourceTypes = libraries.map((item) => extractResourcesFromELM(item)).flat();
+  const resourceTypes = sections.map((section) => section.resources).flat();
+  if (isEmptyArray(resourceTypes)) return ["Questionnaire", "QuestionnaireResponse"];
   return [...new Set(resourceTypes)];
 }
 
 export function getFHIRResourceQueryParams(resourceType, options) {
   if (!resourceType) return null;
   let paramsObj = {
-    _sort: "-_lastUpdated"
+    _sort: "-_lastUpdated",
   };
   const queryOptions = options ? options : {};
   const envCategory = getEnv("REACT_APP_FHIR_CAREPLAN_CATEGORY");
@@ -107,8 +106,8 @@ export function getFHIRResourcePath(patientId, resourceType, options) {
 
 export function getFHIRResourcePaths(patientId, resourceTypesToLoad, options) {
   if (!patientId) return [];
-  const resources = !isEmptyArray(resourceTypesToLoad) ? resourceTypesToLoad : getFHIRResourceTypesToLoad();
-  return resources.map((resource) => {
+  if (isEmptyArray(resourceTypesToLoad)) return [];
+  return resourceTypesToLoad.map((resource) => {
     let path = `/${resource}`;
     const paramsObj = getFHIRResourceQueryParams(resource, {
       ...(options ? options : {}),
@@ -130,9 +129,10 @@ export function getResourcesByResourceType(patientBundle, resourceType) {
   if (!resourceType) return patientBundle;
   return patientBundle
     .filter((item) => {
-      return item.resource && String(item.resource.resourceType).toLowerCase() === String(resourceType).toLowerCase();
+      if (item.resource) return String(item.resource.resourceType).toLowerCase() === String(resourceType).toLowerCase();
+      return String(item.resourceType).toLowerCase() === String(resourceType).toLowerCase();
     })
-    .map((item) => item.resource);
+    .map((item) => (item.resource ? item.resource : item));
 }
 
 export function getResourceTypesFromResources(resources) {
@@ -173,91 +173,4 @@ export function getFhirResourcesFromQueryResult(result) {
     bundle.push({ resource: result });
   }
   return bundle;
-}
-
-export function getFhirItemValue(item) {
-  if (!item) return null;
-  if (hasValue(item.valueQuantity)) {
-    const unit = item.valueQuantity.unit ?? "";
-    const value = item.valueQuantity.value ?? "";
-    const comparator = item.valueQuantity.comparator ?? "";
-    return [value, comparator, unit].join(" ");
-  }
-  if (hasValue(item.valueString)) {
-    if (hasValue(item.valueString.value)) return String(item.valueString.value);
-    return item.valueString;
-  }
-  if (hasValue(item.valueBoolean)) {
-    if (hasValue(item.valueBoolean.value)) return String(item.valueBoolean.value);
-    return String(item.valueBoolean);
-  }
-  if (hasValue(item.valueInteger)) {
-    if (hasValue(item.valueInteger.value)) return item.valueInteger.value;
-    return item.valueInteger;
-  }
-  if (hasValue(item.valueDecimal)) {
-    if (hasValue(item.valueDecimal.value)) return item.valueDecimal.value;
-    return item.valueDecimal;
-  }
-  if (item.valueDate) {
-    if (hasValue(item.valueDate.value)) return item.valueDate.value;
-    return item.valueDate;
-  }
-  if (item.valueRatio) {
-    if (
-      item.valueRatio.numerator &&
-      item.valueRatio.numerator.value &&
-      item.valueRatio.denominator &&
-      item.valueRatio.denominator.value
-    ) {
-      return `${item.valueRatio.numerator.value} / ${item.valueRatio.denominator.value}`;
-    }
-    return "";
-  }
-  if (item.valueRange) {
-    let rangeText = "";
-    if (item.valueRange.low && item.valueRange.low.value) {
-      rangeText += `low: ${item.valueRange.low.value} ${item.valueRange.low.unit ?? ""} `;
-    }
-    if (item.valueRange.high && item.valueRange.high.value) {
-      rangeText += `high: ${item.valueRange.high.value} ${item.valueRange.high.unit ?? ""} `;
-    }
-    return rangeText;
-  }
-  if (hasValue(item.valueDateTime)) {
-    if (item.valueDateTime.value) return item.valueDateTime.value;
-    return item.valueDateTime;
-  }
-  if (item.valueCodeableConcept) {
-    if (item.valueCodeableConcept.text) {
-      return item.valueCodeableConcept.text;
-    } else if (
-      item.valueCodeableConcept.coding &&
-      Array.isArray(item.valueCodeableConcept.coding) &&
-      item.valueCodeableConcept.coding.length
-    ) {
-      return item.valueCodeableConcept.coding.map((item) => item.display).join(", ");
-    }
-    return null;
-  }
-  // need to handle date/time value
-
-  return null;
-}
-export function getFhirComponentDisplays(item) {
-  let displayText = getFhirItemValue(item);
-  if (!item || !item.component || !Array.isArray(item.component) || !item.component.length) return displayText;
-  const componentDisplay = item.component
-    .map((o) => {
-      const textDisplay = o.code && o.code.text ? o.code.text : null;
-      const valueDisplay = getFhirItemValue(o);
-      if (hasValue(valueDisplay)) return textDisplay ? [textDisplay, valueDisplay].join(": ") : valueDisplay;
-      return "";
-    })
-    .join(", ");
-  if (displayText && componentDisplay) {
-    return [displayText, componentDisplay].join(", ");
-  }
-  if (componentDisplay) return componentDisplay;
-  return displayText;
 }

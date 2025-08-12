@@ -1,8 +1,0 @@
-library:
-  name: CIDAS_InterventionLogicLibrary
-  paths: ../../cql
-tests:
-  path: cases/cidas
-options:
-  dumpFiles:
-    enabled: true

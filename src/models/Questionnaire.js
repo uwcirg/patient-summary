@@ -1,9 +1,27 @@
-import { getDisplayQTitle, isEmptyArray } from "../util";
+// import { getResourcesByResourceType } from "../util/fhirUtil";
+import QuestionnaireScoringBuilder from "./resultBuilders/QuestionnaireScoringBuilder";
+import { getDisplayQTitle, isEmptyArray } from "@/util";
+import { getConfigForQuestionnaire } from "@/config/questionnaire_config";
+
+// const getScoreQuestionIdById = (id) => {
+//   return {
+//     "cirg-phq9": "/44261-6",
+//     "cirg-gad7": "/70274-6",
+//     "cirg-peg": "91147-9",
+//     "cirg-phq-4": "/70272-0",
+//   }[String(id).toLowerCase()];
+// };
 // source Questionnaire FHIR resource
 class Questionnaire {
-  constructor(dataObj = null, key) {
+  constructor(dataObj = null, key, patientBundle = []) {
     this.data = Object.assign({}, dataObj);
     this.key = key;
+    this.summaryConfig = getConfigForQuestionnaire(this.data?.id) ?? {
+      questionnaireId: this.id,
+      questionnaireName: this.displayName,
+      scoringQuestionId: this.scoreQuestionnId,
+    };
+    this.patientBundle = patientBundle;
   }
   get id() {
     return this.data.id;
@@ -22,9 +40,7 @@ class Questionnaire {
     const { id, title, name } = this.data;
     if (title) return title;
     if (name) return name;
-    return `Questionnaire ${
-      id ? getDisplayQTitle(id) : String(this.key).toUpperCase()
-    }`;
+    return `Questionnaire ${id ? getDisplayQTitle(id) : String(this.key).toUpperCase()}`;
   }
   get introText() {
     if (!this.data) return "";
@@ -42,9 +58,7 @@ class Questionnaire {
     }
     if (description) return description;
     const introductionItem = this.data.item
-      ? this.data.item.find(
-          (item) => String(item.linkId).toLowerCase() === "introduction"
-        )
+      ? this.data.item.find((item) => String(item.linkId).toLowerCase() === "introduction")
       : null;
     if (introductionItem) {
       const textElement = introductionItem._text;
@@ -55,6 +69,16 @@ class Questionnaire {
   }
   get interventionLibId() {
     return this.id;
+  }
+  get scoreQuestionnId() {
+    return this.summaryConfig?.scoringQuestionId;
+  }
+  get summaryBuilder() {
+    return new QuestionnaireScoringBuilder(this.summaryConfig, this.patientBundle);
+  }
+
+  summary(bundle) {
+    return this.summaryBuilder.summariesFromBundle(this.data, {}, this.patientBundle ?? bundle);
   }
 }
 export default Questionnaire;

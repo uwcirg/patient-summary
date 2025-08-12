@@ -4,11 +4,11 @@ import { useTheme } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
 import MaterialTable from "@material-table/core";
 import TableContainer from "@mui/material/TableContainer";
-import Condition from "../../models/Condition";
-import Error from "../ErrorComponent";
-import { isEmptyArray } from "../../util";
+import Condition from "@/models/Condition";
+import Error from "@/components/ErrorComponent";
+import { isEmptyArray } from "@/util";
 
-export default function MedicalHistory(props) {
+export default function Conditions(props) {
   const theme = useTheme();
   const bgColor =
     theme && theme.palette && theme.palette.lightest && theme.palette.lightest.main
@@ -122,6 +122,6 @@ export default function MedicalHistory(props) {
   );
 }
 
-MedicalHistory.propTypes = {
+Conditions.propTypes = {
   data: PropTypes.array,
 };

@@ -16,7 +16,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { range } from "../../util";
+import { range } from "@/util";
 export default function LineCharts(props) {
   const {
     id,
@@ -48,26 +48,23 @@ export default function LineCharts(props) {
     legendType: legendType || "line",
   };
   const renderTitle = () => (
-    <Typography
-      variant="subtitle1"
-      component="h4"
-      color="secondary"
-      sx={{ textAlign: "center", marginTop: 2 }}
-    >
+    <Typography variant="subtitle1" component="h4" color="secondary" sx={{ textAlign: "center", marginTop: 2 }}>
       {title}
     </Typography>
   );
   const renderXAxis = () => (
     <XAxis
       dataKey={xFieldKey}
-      height={64}
+      height={100}
       domain={xDomain}
-      tick={{ style: { fontSize: "12px", fontWeight: 500 } }}
+      textAnchor="end"
+      tick={{ style: { fontSize: "12px", fontWeight: 500 }, dy: -2, dx: -4}}
       tickFormatter={xTickFormatter}
       tickMargin={12}
       interval="preserveStartEnd"
+      angle={270}
     >
-      <Label value={xLabel} offset={8} position="insideBottom" />
+      <Label value={xLabel} offset={-2} position="insideBottom" />
     </XAxis>
   );
   const yDomain = maximumScore ? [0, maximumScore] : [0, "auto"];
@@ -77,7 +74,7 @@ export default function LineCharts(props) {
     <YAxis
       domain={yDomain}
       label={{ value: yLabel, angle: -90, position: "insideLeft" }}
-      interval={maximumScore > 40 ? "preserveEnd" : 0}
+      interval={maximumScore > 40 ? "preserveEnd" : 1}
       minTickGap={8}
       tick={(e) => {
         const configData = data.find((item) => item.highSeverityScoreCutoff);
@@ -117,11 +114,7 @@ export default function LineCharts(props) {
   );
   const renderLegend = () => (
     <Legend
-      formatter={(value) => (
-        <span style={{ marginRight: "8px", fontSize: "14px" }}>
-          {value.replace(/_/g, " ")}
-        </span>
-      )}
+      formatter={(value) => <span style={{ marginRight: "8px", fontSize: "14px" }}>{value.replace(/_/g, " ")}</span>}
       iconSize={12}
     />
   );
@@ -153,14 +146,9 @@ export default function LineCharts(props) {
     if (!maximumScore) return null;
     if (!data || !data.length) return null;
     if (!data.find((item) => item.scoreSeverity)) return null;
-    const configData =
-      data.find((item) => item && item.comparisonToAlert) ?? {};
+    const configData = data.find((item) => item && item.comparisonToAlert) ?? {};
     return (
-      <ReferenceLine
-        y={0}
-        stroke={configData.comparisonToAlert === "lower" ? "red" : "green"}
-        strokeWidth={0}
-      >
+      <ReferenceLine y={0} stroke={configData.comparisonToAlert === "lower" ? "red" : "green"} strokeWidth={0}>
         <Label
           value={configData.comparisonToAlert === "lower" ? "Worst" : "Best"}
           fontSize="12px"
@@ -175,8 +163,7 @@ export default function LineCharts(props) {
     if (!maximumScore) return null;
     if (!data || !data.length) return null;
     if (!data.find((item) => item.scoreSeverity)) return null;
-    const configData =
-      data.find((item) => item && item.comparisonToAlert) ?? {};
+    const configData = data.find((item) => item && item.comparisonToAlert) ?? {};
     return (
       <ReferenceLine
         y={maximumScore}
@@ -197,9 +184,7 @@ export default function LineCharts(props) {
   const renderScoreSeverityCutoffLine = () => {
     if (!maximumScore) return null;
     if (!data || !data.length) return null;
-    const configData = data.find(
-      (item) => item && item.highSeverityScoreCutoff
-    );
+    const configData = data.find((item) => item && item.highSeverityScoreCutoff);
     if (!configData) return null;
     return (
       <ReferenceLine
@@ -213,26 +198,12 @@ export default function LineCharts(props) {
   const renderScoreSeverityArea = () => {
     if (!maximumScore) return null;
     if (!data || !data.length) return null;
-    const configData = data.find(
-      (item) => item && item.highSeverityScoreCutoff
-    );
+    const configData = data.find((item) => item && item.highSeverityScoreCutoff);
     if (!configData) return null;
     if (configData.comparisonToAlert === "lower") {
-      return (
-        <ReferenceArea
-          y2={configData.highSeverityScoreCutoff}
-          fill="#FCE3DA"
-          fillOpacity={0.3}
-        />
-      );
+      return <ReferenceArea y2={configData.highSeverityScoreCutoff} fill="#FCE3DA" fillOpacity={0.3} />;
     }
-    return (
-      <ReferenceArea
-        y1={configData.highSeverityScoreCutoff}
-        fill="#FCE3DA"
-        fillOpacity={0.3}
-      />
-    );
+    return <ReferenceArea y1={configData.highSeverityScoreCutoff} fill="#FCE3DA" fillOpacity={0.3} />;
   };
   const MIN_CHART_WIDTH = xsChartWidth ? xsChartWidth : 400;
   return (
@@ -248,12 +219,7 @@ export default function LineCharts(props) {
           height: "calc(100% - 40px)",
         }}
       >
-        <ResponsiveContainer
-          width="100%"
-          height="100%"
-          minWidth={100}
-          minHeight={30}
-        >
+        <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
           <LineChart
             data={data}
             margin={{

@@ -1,8 +1,8 @@
 import React, {useState} from "react";
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
-import Timeout from "../util/timeout";
-import { getEnvDashboardURL } from "../util";
+import Timeout from "@util/timeout";
+import { getEnvDashboardURL } from "@util";
 
 const style = {
   position: 'absolute',

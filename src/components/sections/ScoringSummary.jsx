@@ -14,9 +14,9 @@ import Stack from "@mui/material/Stack";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
-import Scoring from "../Score";
-import Questionnaire from "../../models/Questionnaire";
-import { isEmptyArray, isNumber, scrollToAnchor, getLocaleDateStringFromDate } from "../../util";
+import Scoring from "@components/Score";
+import Questionnaire from "@models/Questionnaire";
+import { isEmptyArray, isNumber, scrollToAnchor, getLocaleDateStringFromDate } from "@util";
 
 export default function ScoringSummary(props) {
   const theme = useTheme();
@@ -171,6 +171,7 @@ export default function ScoringSummary(props) {
     lineHeight: 1.4,
     fontSize: "0.8rem",
     padding: theme.spacing(0.5, 1),
+    verticalAlign: "top",
     ...cellWhiteSpaceStyle,
   };
   const fixedCellStyle = {
@@ -315,6 +316,7 @@ export default function ScoringSummary(props) {
         className="table-container"
         sx={{
           padding: 0,
+          height: "100%",
           maxWidth: {
             xs: "420px",
             sm: "100%",
@@ -330,7 +332,7 @@ export default function ScoringSummary(props) {
         }}
       >
         <Table
-          sx={{ border: `1px solid ${borderColor}`, tableLayout: "fixed", width: "100%" }}
+          sx={{ border: `1px solid ${borderColor}`, tableLayout: "fixed", width: "100%", height: "100%" }}
           size="small"
           aria-label="scoring summary table"
           className="scoring-summary-table"
@@ -343,7 +345,15 @@ export default function ScoringSummary(props) {
   };
 
   return (
-    <Stack className="scoring-summary-container" spacing={1} direction="column">
+    <Stack
+      className="scoring-summary-container"
+      spacing={1}
+      direction="column"
+      sx={{
+        alignSelf: "stretch",
+        height: "100%",
+      }}
+    >
       {renderSummary()}
     </Stack>
   );

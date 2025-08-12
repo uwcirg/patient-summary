@@ -1,8 +1,0 @@
-library:
-  name: SLUMS_InterventionLogicLibrary
-  paths: ../../cql
-tests:
-  path: cases/slums
-options:
-  dumpFiles:
-    enabled: true

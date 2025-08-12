@@ -58,6 +58,10 @@ p {
   }
 }
 
+.ghost {
+  visibility: hidden;
+}
+
 .invisible {
   display: none;
   width: 0;
@@ -129,11 +133,11 @@ p {
   }
 }
 
-.recharts-xAxis {
-  .recharts-cartesian-axis-tick:first-of-type {
-    display: none;
-  }
-}
+// .recharts-xAxis {
+//   .recharts-cartesian-axis-tick:first-of-type {
+//     display: none;
+//   }
+// }
 .recharts-legend-item-text {
   white-space: nowrap;
   color: rgb(120, 40, 31);

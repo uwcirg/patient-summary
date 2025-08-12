@@ -1,6 +1,7 @@
 class ScoreSeverity {
-  constructor(severity) {
+  constructor(severity, scoreParams = {}) {
     this.severity = severity ? String(severity).toLowerCase() : "";
+    this.scoreParams = scoreParams;
   }
   static range = ["high", "moderate", "moderately high"];
   isHigh() {

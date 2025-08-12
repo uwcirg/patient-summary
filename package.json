@@ -9,9 +9,6 @@
     "@mui/lab": "^5.0.0-alpha.88",
     "@mui/material": "^5.8.6",
     "commonmark": "^0.30.0",
-    "cql-exec-fhir": "^2.0.2",
-    "cql-exec-vsac": "^2.2.0",
-    "cql-execution": "^3.1.0",
     "dayjs": "^1.11.6",
     "dompurify": "^3.2.4",
     "fhirclient": "^2.4.0",
@@ -27,9 +24,8 @@
     "start": "vite --mode=development",
     "build": "vite build",
     "serve": "vite preview",
-    "test": "vitest",
-    "test:watch": "rescripts test --testPathIgnorePatterns=./src/__tests__/cql",
-    "cql-test": "./node_modules/.bin/mocha ./src/__tests__/cql/*.cjs --recursive"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "browserslist": {
     "production": [

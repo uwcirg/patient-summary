@@ -1,8 +1,4 @@
 class Response {
-  /*
-   * assume data in format returned by FormattedResponses in
-   * cql/source/InterventionLogic_Common.cql
-   */
   constructor(dataObj) {
     this.data = Object.assign({}, dataObj);
   }

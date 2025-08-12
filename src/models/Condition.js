@@ -1,6 +1,5 @@
-import { getCorrectedISODate } from "../util";
-
-// source: Results in cql/source/src/cql/ConditionResourceLibrary.json
+import { ConditionResultsBuilder } from "./resultBuilders/FhirResultBuilder";
+import { getCorrectedISODate } from "@/util";
 class Condition {
   constructor(dataObj) {
     this.data = Object.assign({}, dataObj);
@@ -32,6 +31,9 @@ class Condition {
       recordedDate: this.recordedDateTimeDisplayText,
       status: this.status ? String(this.status).toLowerCase() : "",
     };
+  }
+  static build(bundle) {
+    return (new ConditionResultsBuilder()).build(bundle);
   }
   static getGoodData(data) {
     return data.filter((item) => !!item.condition);

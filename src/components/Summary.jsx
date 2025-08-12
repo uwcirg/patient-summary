@@ -5,13 +5,13 @@ import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "../consts";
-import Questionnaire from "../models/Questionnaire";
-import { hasData, isEmptyArray } from "../util";
+import Questionnaire from "@models/Questionnaire";
+import { hasData, isEmptyArray } from "@util";
 import Error from "./ErrorComponent";
 import QuestionnaireInfo from "./QuestionnaireInfo";
 import Responses from "./Responses";
 import Chart from "./Chart";
+import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "@/consts";
 
 export default function Summary(props) {
   const { questionnaireId, data } = props;

@@ -4,9 +4,9 @@ import { useTheme } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
 import MaterialTable from "@material-table/core";
 import TableContainer from "@mui/material/TableContainer";
-import Observation from "../../models/Observation";
-import { isEmptyArray } from "../../util";
-import Error from "../ErrorComponent";
+import Error from "@components/ErrorComponent";
+import Observation from "@models/Observation";
+import { isEmptyArray } from "@/util";
 export default function Observations(props) {
   const theme = useTheme();
   const bgColor =

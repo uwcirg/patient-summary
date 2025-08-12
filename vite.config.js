@@ -28,6 +28,16 @@ export default defineConfig({
       },
     }),
   ],
+  resolve: {
+    alias: {
+      "@": resolve(__dirname, "./src"),
+      "@components": resolve(__dirname, "./src/components"),
+      "@config": resolve(__dirname, "./src/config"),
+      "@context": resolve(__dirname, "./src/context"),
+      "@models": resolve(__dirname, "./src/models"),
+      "@util": resolve(__dirname, "./src/util"),
+    },
+  },
   build: {
     // default chunk size limit is 500, but that's nearly impossible due to large JSON files
     chunkSizeWarningLimit: 2000,
@@ -39,12 +49,6 @@ export default defineConfig({
       },
       output: {
         manualChunks: (id) => {
-          // if (id.includes("cql-exec")) {
-          //   return "cqlExec";
-          // }
-          // if (id.includes("mui") || id.includes("material")) {
-          //   return "materialUI";
-          // }
           if (id.includes("node_modules")) {
             return "vendor";
           }
@@ -61,7 +65,6 @@ export default defineConfig({
     coverage: {
       reporter: ["text", "json", "html"],
       include: ["src/**/*"],
-      exclude: ["src/__tests__/cql/*.js"],
     },
   },
   esbuild: {

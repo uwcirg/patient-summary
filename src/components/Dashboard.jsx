@@ -6,13 +6,13 @@ import {
   getAppHeight,
   getSectionsToShow,
   isEmptyArray,
-} from "../util";
-import useFetchResources from "../hooks/useFetchResources";
+} from "@util";
 import ErrorComponent from "./ErrorComponent";
 import ProgressIndicator from "./ProgressIndicator";
 import Section from "./Section";
 import Version from "./Version";
 import FloatingNavButton from "./FloatingNavButton";
+import useFetchResources from "@/hooks/useFetchResources";
 
 export default function Dashboard() {
   const {

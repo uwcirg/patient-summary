@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
-import ChartConfig from "../config/chart_config";
-import { DEFAULT_TOOLBAR_HEIGHT, QUESTIONNAIRE_ANCHOR_ID_PREFIX, queryNeedPatientBanner } from "../consts";
-import defaultSections from "../config/sections_config";
+import ChartConfig from "@config/chart_config";
+import defaultSections from "@config/sections_config";
+import { DEFAULT_TOOLBAR_HEIGHT, QUESTIONNAIRE_ANCHOR_ID_PREFIX, queryNeedPatientBanner } from "@/consts";
 
 export const shortDateRE = /^\d{4}-\d{2}-\d{2}$/; // matches '2012-04-05'
 export const dateREZ =
@@ -68,7 +68,7 @@ export function getSectionsToShow() {
   if (!configSections) return defaultSections;
   let sectionsToShow = [];
   const targetSections = configSections.split(",").map((item) => {
-    item = item.toLowerCase();
+    item = String(item).trim().toLowerCase();
     return item;
   });
   defaultSections.forEach((section) => {
@@ -236,11 +236,13 @@ export function shouldShowPatientInfo(client) {
   // check token response,
   const tokenResponse = client ? client.getState("tokenResponse") : null;
   //check need_patient_banner launch context parameter
-  if (tokenResponse && tokenResponse["need_patient_banner"]) return tokenResponse["need_patient_banner"];
-  return String(getEnv("REACT_APP_DISABLE_HEADER")) !== "true";
+  if (tokenResponse && tokenResponse["need_patient_banner"]) {
+    return String(tokenResponse["need_patient_banner"]).toLowerCase() === "true";
+  }
+  return String(getEnv("REACT_APP_DISABLE_HEADER")).toLowerCase() !== "true";
 }
 export function shouldShowNav() {
-  return String(getEnv("REACT_APP_DISABLE_NAV")) !== "true";
+  return String(getEnv("REACT_APP_DISABLE_NAV")).toLowerCase() !== "true";
 }
 export function getAppHeight() {
   return `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT}px)`;

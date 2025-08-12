@@ -5,8 +5,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { ThemeProvider } from "@mui/material/styles";
 import ErrorComponent from "../components/ErrorComponent";
 import { queryNeedPatientBanner, queryPatientIdKey } from "../consts";
-import { fetchEnvData, getEnv } from "../util";
-import { getTheme } from "../config/theme_config";
+import { fetchEnvData, getEnv } from "@/util";
+import { getTheme } from "@/config/theme_config";
 import "../style/App.scss";
 
 const fetchContextJson = async (authURL) => {

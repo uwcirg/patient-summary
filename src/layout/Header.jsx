@@ -54,10 +54,10 @@ export default function Header(props) {
     }
     let imageLoaded = imageOK(e.target);
     if (!imageLoaded) {
-      e.target.classList.add("invisible");
+      e.target.classList.add("ghost");
       return;
     }
-    e.target.classList.remove("invisible");
+    e.target.classList.remove("ghost");
   };
   const shouldHideReturnButton = () => !returnURL || inEHR;
 
@@ -107,7 +107,7 @@ export default function Header(props) {
               }}
             >
               <img
-                className="header-logo"
+                className="header-logo ghost"
                 ref={desktopImgRef}
                 alt={"project logo"}
                 style={{
@@ -140,6 +140,7 @@ export default function Header(props) {
                 alt={"project logo"}
                 onLoad={handleImageLoaded}
                 onError={handleImageLoaded}
+                className="ghost"
                 style={{
                   cursor: "pointer",
                   height: 40,

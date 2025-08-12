@@ -4,16 +4,17 @@ import FHIR from "fhirclient";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
-import { queryPatientIdKey } from "../consts";
-import ErrorComponent from "../components/ErrorComponent";
+import { FhirClientContext } from "./FhirClientContext";
+import { queryPatientIdKey } from "@/consts";
+import ErrorComponent from "@/components/ErrorComponent";
 import {
   addMamotoTracking,
   getClientSessionKey,
   getEnv,
   getUserId,
-} from "../util";
-import { writeToLog } from "../util/log";
-import { FhirClientContext } from "./FhirClientContext";
+} from "@/util";
+import { writeToLog } from "@/util/log";
+
 
 export default function FhirClientProvider(props) {
   const reducer = (state, action) => {

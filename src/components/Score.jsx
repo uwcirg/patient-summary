@@ -4,8 +4,8 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import ErrorIcon from "@mui/icons-material/Error";
 import WarningIcon from "@mui/icons-material/ReportProblem";
-import { isNumber } from "../util";
-import ScoreSeverity from "../models/ScoreSeverity";
+import { isNumber } from "@util";
+import ScoreSeverity from "@models/ScoreSeverity";
 
 export default function Scoring(props) {
   const { score, justifyContent, alignItems, scoreParams } = props;
@@ -13,7 +13,7 @@ export default function Scoring(props) {
     scoreParams && scoreParams.scoreSeverity ? String(scoreParams.scoreSeverity).toLowerCase() : null;
   const getAlertNote = () => (scoreParams && scoreParams.alertNote ? scoreParams.alertNote : null);
   const scoreSeverity = getScoreSeverity();
-  const oSeverity = new ScoreSeverity(scoreSeverity);
+  const oSeverity = new ScoreSeverity(scoreSeverity, scoreParams);
   const alertNote = getAlertNote();
   const getScoreDisplay = () => <span data-testid="score">{isNumber(score) ? score : "--"}</span>;
 

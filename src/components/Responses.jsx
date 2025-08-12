@@ -23,9 +23,9 @@ import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import Filter from "@mui/icons-material/FilterAlt";
 import OutlinedIcon from "@mui/icons-material/WysiwygOutlined";
-import { getLocaleDateStringFromDate, isEmptyArray, isNumber } from "../util";
-import Response from "../models/Response";
-import Questionnaire from "../models/Questionnaire";
+import { getLocaleDateStringFromDate, isEmptyArray, isNumber } from "@util";
+import Response from "@models/Response";
+import Questionnaire from "@models/Questionnaire";
 import Score from "./Score";
 
 const Transition = forwardRef(function Transition(props, ref) {
@@ -140,7 +140,7 @@ export default function Responses(props) {
         if (!rowDataItem) return;
         if (isNumber(rowDataItem.score)) {
           return <Score instrumentId={questionnaireId} score={rowDataItem.score} scoreParams={rowDataItem}></Score>;
-        } else return rowDataItem??"--";
+        } else return (typeof rowDataItem === "string" ? rowDataItem : "--");
       },
     })),
   ];

@@ -1,6 +1,6 @@
-import { getCorrectedISODate, isEmptyArray } from "../util";
+import { ObservationResultsBuilder } from "./resultBuilders/FhirResultBuilder";
+import { getCorrectedISODate, isEmptyArray } from "@/util";
 
-// source: Results in cql/source/src/cql/ObservationResourceLibrary.json
 class Observation {
   constructor(dataObj) {
     this.data = Object.assign({}, dataObj);
@@ -47,13 +47,13 @@ class Observation {
     };
   }
 
+  static build(bundle) {
+    return new ObservationResultsBuilder().build(bundle);
+  }
+
   static getGoodData(data) {
-    return data.filter(
-      (item) =>
-        item.componentValues ||
-        (item.value && item.value.value) ||
-        item.valueText
-    );
+    if (isEmptyArray(data)) return [];
+    return data?.filter((item) => item.componentValues || (item.value && item.value.value) || item.valueText);
   }
 }
 export default Observation;
