@@ -4,16 +4,15 @@ import Stack from "@mui/material/Stack";
 import CheckIcon from "@mui/icons-material/Check";
 import CircularProgress from "@mui/material/CircularProgress";
 import { Typography } from "@mui/material";
-import { NO_CACHE_HEADER } from "../consts";
 import {
   getFHIRResourcePath,
-  //getFHIRResourceTypesToLoad,
   getFhirResourcesFromQueryResult,
   processPage,
-} from "../util/fhirUtil";
-import { getEnvQuestionnaireList, getEnv, isEmptyArray } from "../util";
+} from "@util/fhirUtil";
+import { getEnvQuestionnaireList, getEnv, isEmptyArray } from "@util";
 import { QuestionnaireListContext } from "./QuestionnaireListContext";
 import { FhirClientContext } from "./FhirClientContext";
+import { NO_CACHE_HEADER } from "@/consts";
 
 export default function QuestionnaireListProvider({ children }) {
   const isFromEpic = String(getEnv("REACT_APP_EPIC_QUERIES")) === "true";
@@ -61,8 +60,6 @@ export default function QuestionnaireListProvider({ children }) {
     }
   };
   const { client, patient } = useContext(FhirClientContext);
-  // const resourceTypesToBeLoaded = getFHIRResourceTypesToLoad();
-  // const notConfigured = resourceTypesToBeLoaded.indexOf("Questionnaire") === -1;
   const [state, dispatch] = useReducer(resourceReducer, {
     questionnaireList: [],
     questionnaires: [],

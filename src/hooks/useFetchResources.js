@@ -57,14 +57,24 @@ export default function useFetchResources() {
         error: false,
       })),
     ];
-    if (!isEmptyArray(questionnareKeys))
+    if (!isEmptyArray(questionnareKeys)) {
+      questionnareKeys.map((key) => {
+        initialResourcesToLoad.push({
+          id: key,
+          title: `Summarizing ${key}`,
+          complete: false,
+          error: false,
+          data: null,
+        });
+      });
       initialResourcesToLoad.push({
         id: SUMMARY_DATA_KEY,
-        title: `Resources for PRO data`,
+        title: `Waiting for all summary data ...`,
         complete: false,
         error: false,
         data: null,
       });
+    }
 
     return initialResourcesToLoad;
   };
@@ -114,14 +124,18 @@ export default function useFetchResources() {
   };
 
   // search for matching questionnaire
-  const searchMatchingQuestionnaireResources = (questionnaireId, paramPatientBundle, exactMatchById) => {
+  const searchMatchingQuestionnaire = (questionnaireId, paramPatientBundle, exactMatchById) => {
     if (!questionnaireId || isEmptyArray(paramPatientBundle)) return null;
     const questionnaireResources = getResourcesByResourceType(paramPatientBundle, "Questionnaire");
     const returnResult = !isEmptyArray(questionnaireResources)
       ? questionnaireResources.find((resource) => {
           if (!exactMatchById) {
             const toMatch = String(questionnaireId).toLowerCase();
-            const arrMatches = [String(resource.name).toLowerCase(), String(resource.id).toLowerCase()];
+            const arrMatches = [
+              String(resource.name).toLowerCase(),
+              String(resource.id).toLowerCase(),
+              String(resource.url).toLowerCase(),
+            ];
             return String(resource.id).toLowerCase() === toMatch || arrMatches.find((key) => key.includes(toMatch));
           }
           return resource.id === questionnaireId;
@@ -135,7 +149,7 @@ export default function useFetchResources() {
 
   const getEvalResultsForQuestionnaire = (questionnaireJson, paramPatientBundle) => {
     if (!questionnaireJson) return null;
-    const patientBundleToUse = !isEmptyArray(paramPatientBundle) ? JSON.parse(JSON.stringify(paramPatientBundle)) : [];
+    const patientBundleToUse = !isEmptyArray(paramPatientBundle) ? paramPatientBundle : [];
     const questionnaireObject = new Questionnaire(questionnaireJson, null, patientBundleToUse);
     const questionnaireId = questionnaireObject.id;
     const chartConfig = getChartConfig(questionnaireObject.id);
@@ -159,10 +173,11 @@ export default function useFetchResources() {
           total: item.score,
         }))
       : null;
-    const scoringParams = !isEmptyArray(evalData) ? evalData[0].scoringParams : {};
+    const config = questionnaireObject.summaryConfig;
+    const scoringParams = config?.scoringParams;
 
     const returnResult = {
-      config: questionnaireObject.summaryConfig,
+      config: config,
       chartConfig: { ...chartConfig, ...scoringParams },
       chartData: chartData,
       scoringData: scoringData,
@@ -172,12 +187,9 @@ export default function useFetchResources() {
     return returnResult;
   };
 
-  const gatherSummaryDataByQuestionnaireId = async (questionnaireId, exactMatchById, paramPatientBundle) => {
+  const gatherSummaryDataByQuestionnaireId = (questionnaireId, exactMatchById, paramPatientBundle) => {
     // find matching questionnaire & questionnaire response(s)
-    const result = searchMatchingQuestionnaireResources(questionnaireId, paramPatientBundle, exactMatchById);
-    const bundles = getFhirResourcesFromQueryResult(result);
-    const arrQuestionnaires = getResourcesByResourceType(bundles, "Questionnaire");
-    const questionnaireJson = !isEmptyArray(arrQuestionnaires) ? arrQuestionnaires[0] : null;
+    const questionnaireJson = searchMatchingQuestionnaire(questionnaireId, paramPatientBundle, exactMatchById);
     if (!questionnaireJson) {
       throw new Error("No matching questionnaire found.");
     }
@@ -205,77 +217,51 @@ export default function useFetchResources() {
         if (isReady()) {
           return;
         }
-        console.log("fhirData", fhirData);
-        console.log("questionnaire list to load ", questionnaireList);
         const resourceEvalResults = resourceTypesToLoad.map((resource) => {
           return {
             [resource]: new FhirResultBuilder(fhirData).build(resource),
           };
         });
 
-        const qListRequests = questionnaireList?.map((qid) => {
-          return new Promise((resolve) => {
-            gatherSummaryDataByQuestionnaireId(
+        patientBundle.current = {
+          ...patientBundle.current,
+          evalResults: {
+            ...patientBundle.current.evalResults,
+            ...resourceEvalResults,
+          },
+        };
+        let summaries = {};
+        const bundle = JSON.parse(JSON.stringify(patientBundle.current.entry));
+        questionnaireList?.map((qid) => {
+          try {
+            const results = gatherSummaryDataByQuestionnaireId(
               qid,
               exactMatchById,
-              JSON.parse(JSON.stringify(patientBundle.current.entry)),
-            )
-              .then((results) => {
-                const { data, questionnaire } = results;
-                patientBundle.current = {
-                  ...patientBundle.current,
-                  questionnaire: questionnaire,
-                };
-                resolve({
-                  [qid]: data,
-                });
-              })
-              .catch((e) => {
-                resolve({
-                  [qid]: {
-                    error: e,
-                  },
-                });
-              });
-          });
+              bundle,
+            );
+            const { data, questionnaire } = results;
+            patientBundle.current = {
+              ...patientBundle.current,
+              questionnaire: questionnaire,
+            };
+            summaries[qid] = data;
+            handleResourceComplete(qid, {
+              data: data,
+            });
+          } catch (e) {
+            console.log(e);
+            handleResourceError(qid);
+          }
         });
-        Promise.allSettled([...(qListRequests ?? []), ...(resourceEvalResults ?? [])]).then((results) => {
-          let summaries = {};
-          results.forEach((result) => {
-            const resultValue = result.value ? result.value : {};
-            const o = Object.entries(resultValue)[0];
-            const key = o[0];
-            const value = o[1];
-            const isFHIRType = resourceTypesToLoad.indexOf(key) !== -1;
-            if (isFHIRType) {
-              patientBundle.current = {
-                ...patientBundle.current,
-                evalResults: {
-                  ...patientBundle.current.evalResults,
-                  ...resultValue,
-                },
-              };
-            } else {
-              summaries[key] = value;
-            }
-            if (value?.error) {
-              handleResourceError(key);
-              return true;
-            }
-          });
-          console.log("patient bundle ", patientBundle.current);
-          console.log("Summary data ", summaries);
-          setTimeout(
-            () =>
-              handleResourceComplete(SUMMARY_DATA_KEY, {
-                data: summaries,
-              }),
-            50,
-          );
-          handleResourceComplete(SUMMARY_DATA_KEY, {
-            data: summaries,
-          });
-        });
+        console.log("patient bundle ", patientBundle.current);
+        console.log("Summary data ", summaries);
+        setTimeout(
+          () =>
+            handleResourceComplete(SUMMARY_DATA_KEY, {
+              data: summaries,
+            }),
+          150,
+        );
       },
       onError: (e) => {
         setError("Error fetching FHIR resources. See console for detail.");
