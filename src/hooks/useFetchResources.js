@@ -187,17 +187,13 @@ export default function useFetchResources() {
     return returnResult;
   };
 
-  const gatherSummaryDataByQuestionnaireId = (questionnaireId, exactMatchById, paramPatientBundle) => {
+  const getSummaryDataByQuestionnaireId = (questionnaireId, exactMatchById, paramPatientBundle) => {
     // find matching questionnaire & questionnaire response(s)
     const questionnaireJson = searchMatchingQuestionnaire(questionnaireId, paramPatientBundle, exactMatchById);
     if (!questionnaireJson) {
       throw new Error("No matching questionnaire found.");
     }
-    const data = getEvalResultsForQuestionnaire(questionnaireJson, paramPatientBundle);
-    return {
-      data: data,
-      questionnaire: questionnaireJson,
-    };
+    return getEvalResultsForQuestionnaire(questionnaireJson, paramPatientBundle);
   };
 
   useQuery(
@@ -210,10 +206,7 @@ export default function useFetchResources() {
       disabled: isReady(),
       refetchOnWindowFocus: false,
       onSettled: (fhirData) => {
-        patientBundle.current = {
-          ...patientBundle.current,
-          entry: [...patientBundle.current.entry, ...fhirData],
-        };
+        console.log("FHIR data ", fhirData);
         if (isReady()) {
           return;
         }
@@ -225,25 +218,17 @@ export default function useFetchResources() {
 
         patientBundle.current = {
           ...patientBundle.current,
+          entry: [...patientBundle.current.entry, ...fhirData],
           evalResults: {
             ...patientBundle.current.evalResults,
-            ...resourceEvalResults,
+            ...Object.assign({}, ...(resourceEvalResults ?? [])),
           },
         };
         let summaries = {};
         const bundle = JSON.parse(JSON.stringify(patientBundle.current.entry));
         questionnaireList?.map((qid) => {
           try {
-            const results = gatherSummaryDataByQuestionnaireId(
-              qid,
-              exactMatchById,
-              bundle,
-            );
-            const { data, questionnaire } = results;
-            patientBundle.current = {
-              ...patientBundle.current,
-              questionnaire: questionnaire,
-            };
+            const data = getSummaryDataByQuestionnaireId(qid, exactMatchById, bundle);
             summaries[qid] = data;
             handleResourceComplete(qid, {
               data: data,
