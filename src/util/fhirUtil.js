@@ -1,5 +1,5 @@
-import { DEFAULT_OBSERVATION_CATEGORIES } from "../consts/index.js";
-import { getEnv, getSectionsToShow, isEmptyArray } from "./index.js";
+import { getEnv, getSectionsToShow, isEmptyArray, isNil } from "./index.js";
+import { DEFAULT_OBSERVATION_CATEGORIES } from "@/consts/index.js";
 
 /*
  * @param client, FHIR client object
@@ -173,4 +173,129 @@ export function getFhirResourcesFromQueryResult(result) {
     bundle.push({ resource: result });
   }
   return bundle;
+}
+
+export function normalizeLinkId(id) {
+  return (id ?? "").toString().trim().replace(/^\//, "");
+}
+export function conceptCode(c) {
+  if (!c || isEmptyArray(c.coding)) return null;
+  const codings = c.coding;
+  for (let i = 0; i < codings.length; i++) {
+    const code = codings[i]?.code ?? (codings[i]?.code?.value ? codings[i]?.code?.value : codings[i]?.code);
+    if (code) return code;
+  }
+  return null;
+}
+export function conceptText(c) {
+  if (!c) return null;
+  if (typeof c.text === "string" && c.text.trim()) return c.text;
+  if (c.text?.value) return c.text.value;
+  const codings = !isEmptyArray(c.coding) ? c.coding : [];
+  for (let i = 0; i < codings.length; i++) {
+    const d = codings[i]?.display ?? (codings[i]?.display?.value ? codings[i]?.display?.value : codings[i]?.display);
+    if (d) return d;
+  }
+  for (let i = 0; i < codings.length; i++) {
+    const code = codings[i]?.code ?? (codings[i]?.code?.value ? codings[i]?.code?.value : codings[i]?.code);
+    if (code) return code;
+  }
+  return null;
+}
+
+/**
+ * linkId equality with optional matching mode
+ * @param {'strict'|'fuzzy'} mode
+ */
+export function linkIdEquals(a, b, mode = "fuzzy") {
+  const A = normalizeLinkId(a);
+  const B = normalizeLinkId(b);
+  if (mode === "strict") return A === B;
+  return A && B && (A.includes(B) || B.includes(A));
+}
+
+// ---------- ranges / display ----------
+export function getReferenceRangeDisplay(ranges = []) {
+  if (isEmptyArray(ranges)) return null;
+  const r = ranges[0];
+  const low = r?.low,
+    high = r?.high;
+  if (low?.value != null && high?.value != null) {
+    const unit = low.unit ?? low.code ?? high.unit ?? high.code ?? "";
+    return `${low.value}–${high.value} ${unit}`.trim();
+  }
+  if (low?.value != null) return `≥${low.value} ${low.unit ?? low.code ?? ""}`.trim();
+  if (high?.value != null) return `≤${high.value} ${high.unit ?? high.code ?? ""}`.trim();
+  return r?.text ?? null;
+}
+
+export function formatValueQuantity({ value, unit }, fallbackText) {
+  if (!isNil(value)) return unit ? `${value} ${unit}` : String(value);
+  return !isNil(fallbackText) ? String(fallbackText) : null;
+}
+
+export function getValueText(O) {
+  if (!O) return null;
+  if (O.valueCodeableConcept) return conceptText(O.valueCodeableConcept);
+  if (!isNil(O.valueString)) return String(O.valueString);
+  if (!isNil(O.valueDecimal)) return String(O.valueDecimal);
+  if (!isNil(O.valueInteger)) return String(O.valueInteger);
+  if (!isNil(O.valueDateTime)) return String(O.valueDateTime);
+  if (!isNil(O.valueBoolean)) return String(O.valueBoolean);
+  if (O.value && typeof O.value === "object" && "value" in O.value && typeof O.value.value !== "object") {
+    return String(O.value.value);
+  }
+  return null;
+}
+export function getValueBlockFromQuantity(O) {
+  if (!O) {
+    return {
+      value: null,
+      unit: null,
+    };
+  }
+  const q = O.valueQuantity ?? (O.value && typeof O.value === "object" && "value" in O.value ? O.value : null);
+  if (!q) return { value: null, unit: O.valueCodeableConcept ? null : null };
+  return { value: q.value ?? null, unit: O.valueCodeableConcept ? null : (q.unit ?? q.code ?? null) };
+}
+
+export function getValueDisplayWithRef(valueStr, rangeSummary) {
+  if (!valueStr && rangeSummary) return `(ref ${rangeSummary})`;
+  if (valueStr && rangeSummary) return `${valueStr} (ref ${rangeSummary})`;
+  return valueStr ?? null;
+}
+
+export function getComponentValues(components = []) {
+  const list = !isEmptyArray(components) ? components : [];
+  return list.map((c) => {
+    const text = conceptText(c.code);
+
+    const q = c.valueQuantity ?? (c.value && typeof c.value === "object" && "value" in c.value ? c.value : null);
+    const value = q?.value ?? null;
+    const unit = c.valueCodeableConcept ? null : q ? (q.unit ?? q.code ?? null) : null;
+
+    let valueText = null;
+    if (c.valueCodeableConcept) valueText = conceptText(c.valueCodeableConcept);
+    else {
+      valueText = getValueText(c);
+    }
+
+    const referenceRange = c.referenceRange ?? [];
+    const referenceRangeSummary = getReferenceRangeDisplay(referenceRange);
+    const displayValue = formatValueQuantity({ value, unit }, valueText);
+    const displayValueWithRef = getValueDisplayWithRef(displayValue, referenceRangeSummary);
+
+    return {
+      text,
+      value,
+      valueText,
+      unit,
+      interpretation: conceptText(c.interpretation?.[0]) ?? null,
+      interpretationCode: conceptCode(c.interpretation?.[0]) ?? null,
+      referenceRange,
+      referenceRangeSummary,
+      displayValue,
+      displayValueWithRef,
+    };
+  });
 }

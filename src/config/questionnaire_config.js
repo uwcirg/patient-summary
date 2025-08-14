@@ -189,7 +189,7 @@ const questionnaireConfigs = {
     ],
     matchMode: "fuzzy",
     highSeverityScoreCutoff: 20,
-     severityBands: [
+    severityBands: [
       { min: 20, label: "high", meaning: "severe depression" },
       { min: 15, label: "moderately high", meaning: "moderately severe depression" },
       { min: 10, label: "moderate", meaning: "moderate depression" },

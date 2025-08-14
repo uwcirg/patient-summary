@@ -310,6 +310,36 @@ export function isEmptyArray(o) {
   return !o || !Array.isArray(o) || !o.length;
 }
 
+export function isNil(v) {
+  return v == null || v === "";
+}
+
+export function coalesce(...vals) {
+  return vals.find((v) => !isNil(v));
+}
+
+export function toMaybeDate(s) {
+  if (!s) return null;
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+export function toMillis(s) {
+  if (!s) return 0;
+  const t = Date.parse(s);
+  return Number.isFinite(t) ? t : 0;
+}
+
+export function normalizeStr(s) {
+  return (s ?? "").toString().trim().toLowerCase();
+}
+
+export function fuzzyMatch(a, b) {
+  const A = normalizeStr(a);
+  const B = normalizeStr(b);
+  return A && B ? A.includes(B) || B.includes(A) : false;
+}
+
 export async function isImagefileExist(url) {
   try {
     const response = await fetch(url);

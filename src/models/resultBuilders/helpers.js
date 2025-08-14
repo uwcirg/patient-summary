@@ -1,5 +1,9 @@
-import { isEmptyArray } from "@/util";
-import { getResourcesByResourceType } from "@/util/fhirUtil";
+import {
+  getResourcesByResourceType,
+  linkIdEquals
+} from "@util/fhirUtil";
+import { isEmptyArray } from "@util";
+ 
 /* ---------------------------------------------
  * External helpers
  * Each helper receives a `ctx` (the builder instance)
@@ -34,7 +38,7 @@ export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, 
     }
 
     const totalItems = ctx.getAnswerLinkIdsByQuestionnaire(questionnaire).length;
-    const totalAnsweredItems = flat.filter((it) => !ctx.linkIdEquals(it.linkId, SCORING_QID)).length;
+    const totalAnsweredItems = flat.filter((it) => !linkIdEquals(it.linkId, SCORING_QID)).length;
 
     let responses = ctx.formattedResponses(questionnaire?.item ?? null, flat);
     if (!responses.length) responses = ctx.responsesOnly(flat);
@@ -88,7 +92,7 @@ export function summarizeCIDASHelper(
 
     const responses = ctx.formattedResponses(questionnaire?.item ?? [], flat);
     const totalItems = ctx.getAnswerLinkIdsByQuestionnaire(questionnaire).length;
-    const totalAnsweredItems = flat.filter((it) => !ctx.linkIdEquals(it.linkId, scoringQuestionId)).length;
+    const totalAnsweredItems = flat.filter((it) => !linkIdEquals(it.linkId, scoringQuestionId)).length;
 
     return {
       id: qr.id,
@@ -172,7 +176,7 @@ export function summarizeMiniCogHelper(
     if (!responses.length) responses = ctx.responsesOnly(flat);
 
     const totalItems = ctx.getAnswerLinkIdsByQuestionnaire(questionnaire).length;
-    const totalAnsweredItems = flat.filter((it) => !ctx.linkIdEquals(it.linkId, totalLinkId)).length;
+    const totalAnsweredItems = flat.filter((it) => !linkIdEquals(it.linkId, totalLinkId)).length;
 
     return {
       id: qr.id,

@@ -215,20 +215,24 @@ export default function useFetchResources() {
             [resource]: new FhirResultBuilder(fhirData).build(resource),
           };
         });
-
+        
         patientBundle.current = {
           ...patientBundle.current,
           entry: [...patientBundle.current.entry, ...fhirData],
           evalResults: {
             ...patientBundle.current.evalResults,
-            ...Object.assign({}, ...(resourceEvalResults ?? [])),
+            ...Object.assign({}, ...resourceEvalResults??[]),
           },
         };
         let summaries = {};
         const bundle = JSON.parse(JSON.stringify(patientBundle.current.entry));
         questionnaireList?.map((qid) => {
           try {
-            const data = getSummaryDataByQuestionnaireId(qid, exactMatchById, bundle);
+            const data = getSummaryDataByQuestionnaireId(
+              qid,
+              exactMatchById,
+              bundle,
+            );
             summaries[qid] = data;
             handleResourceComplete(qid, {
               data: data,
