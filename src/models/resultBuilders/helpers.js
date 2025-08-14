@@ -1,9 +1,14 @@
 import {
+  conceptText,
+  defaultItemText,
+  getFlowsheetId,
+  getLinkIdByFromFlowsheetId,
+  getValueFromItem,
   getResourcesByResourceType,
-  linkIdEquals
 } from "@util/fhirUtil";
 import { isEmptyArray } from "@util";
- 
+import { DEFAULT_ANSWER_OPTIONS } from "@/consts";
+
 /* ---------------------------------------------
  * External helpers
  * Each helper receives a `ctx` (the builder instance)
@@ -203,4 +208,168 @@ export function summarizeMiniCogHelper(
   });
 
   return ctx.sortByNewestAuthoredOrUpdated(rows);
+}
+
+export function severityFromScore(score, bands) {
+  if (!bands || !bands.length) return null;
+  const sorted = [...bands].sort((a, b) => b.min - a.min);
+  return sorted.find((b) => score >= b.min) || sorted[sorted.length - 1] || null;
+}
+
+//const clamp = (n, lo, hi) => Math.min(Math.max(Number(n ?? 0), lo), hi);
+
+/** Group obs by effectiveDateTime (fallback to issued or "unknown") */
+function groupByEffectiveTime(observations) {
+  const byTime = new Map();
+  for (const o of observations || []) {
+    const key = o.effectiveDateTime || o.issued || "unknown";
+    if (!byTime.has(key)) byTime.set(key, []);
+    byTime.get(key).push(o);
+  }
+  return byTime;
+}
+
+/* --------------------------- Questionnaire --------------------------- */
+
+function makeQuestionItem(linkId, text, answerOptions) {
+  return {
+    linkId,
+    type: answerOptions?.length ? detectItemType(answerOptions[0]) : "choice",
+    text: text || "",
+    code: [{ system: "http://loinc.org", code: linkId }], // you can change the system if desired
+    ...(answerOptions?.length ? { answerOption: answerOptions } : {}),
+    // If not a "choice" with predefined options, omit answerOption
+  };
+}
+
+// infer a sensible FHIR item.type from one example answer option
+function detectItemType(answerOption) {
+  if ("valueCoding" in answerOption) return "choice";
+  if ("valueInteger" in answerOption) return "integer";
+  if ("valueDecimal" in answerOption) return "decimal";
+  if ("valueString" in answerOption) return "string";
+  // fallback
+  return "choice";
+}
+
+export function buildQuestionnaire(config /** @type {QConfig} */) {
+  const items = (config.questionLinkIds || []).map((lid, idx) => {
+    const opts = config.answerOptionsByLinkId?.[lid] ?? DEFAULT_ANSWER_OPTIONS;
+    return makeQuestionItem(lid, config.itemTextByLinkId?.[lid] ?? defaultItemText(lid, idx), opts);
+  });
+
+  // optional total score item (readOnly)
+  if (config.scoringQuestionId) {
+    items.push({
+      linkId: config.scoringQuestionId,
+      type: "integer",
+      text: "Total score",
+      readOnly: true,
+      code: [{ system: "http://loinc.org", code: config.scoringQuestionId }],
+    });
+  }
+
+  return {
+    resourceType: "Questionnaire",
+    id: config.questionnaireId,
+    url: config.questionnaireUrl,
+    questionnaire: `Questionnaire/${config.questionnaireId}`,
+    name: (config.questionnaireName || "").toUpperCase(),
+    title: config.title || config.questionnaireName || "Questionnaire",
+    status: "active",
+    date: new Date().toISOString().slice(0, 10),
+    item: items,
+  };
+}
+
+/* -------------------- Observations → QuestionnaireResponse -------------------- */
+
+export function observationsToQuestionnaireResponse(group, config /** @type {QConfig} */) {
+  if (!group?.length) return null;
+
+  const subject = config.getSubject?.(group) || group[0]?.subject || undefined;
+
+  const authored =
+    config.getAuthored?.(group) || group[0]?.effectiveDateTime || group[0]?.issued || new Date().toISOString();
+
+  // map answers
+  const answersByLinkId = new Map();
+  const textByLinkId = new Map();
+  for (const obs of group) {
+    const lid = config.getLinkId ? config.getLinkId(obs) : getLinkIdByFromFlowsheetId(getFlowsheetId(obs));
+    if (!lid) continue;
+    const ans = config.answerMapper ? config.answerMapper(obs) : getValueFromItem(obs);
+    console.log("answer ", ans);
+    if (!ans) continue;
+    // last-wins if duplicates; adjust if you need something else
+    answersByLinkId.set(lid, ans);
+    textByLinkId.set(lid, conceptText(obs));
+  }
+
+  const items = (config.questionLinkIds || []).map((lid) => {
+    const ans = answersByLinkId.get(lid);
+    //TODO check type of ans
+    return ans ? { linkId: lid, text: textByLinkId.get(lid), answer: [{ valueInteger: ans }] } : { linkId: lid };
+    // return {
+    //   valueInteger: ans,
+    // };
+  });
+
+  // // scoring (optional)
+  // let score = null;
+  // if (config.scoring?.scoreFromAnswer) {
+  //   score = 0;
+  //   for (const [lid, ans] of answersByLinkId) {
+  //     score += Number(config.scoring.scoreFromAnswer(ans) || 0);
+  //   }
+  //   // clamp if a max was provided
+  //   if (typeof config.scoring.maximumScore === "number") {
+  //     score = clamp(score, 0, config.scoring.maximumScore);
+  //   }
+  //   // if score item is part of the Questionnaire, add it here too
+  //   if (config.scoring.includeScoreItem && config.scoring.scoreLinkId) {
+  //     items.push({
+  //       linkId: config.scoring.scoreLinkId,
+  //       answer: [{ valueInteger: score }],
+  //     });
+  //   }
+  // }
+
+  // const severity = (score != null && config.severityBands?.length)
+  //   ? severityFromScore(score, config.severityBands)
+  //   : null;
+
+  // const extensions = [];
+  // if (score != null) {
+  //   extensions.push({ url: "urn:questionnaire:score", valueInteger: score });
+  // }
+  // if (severity) {
+  //   extensions.push({
+  //     url: "urn:questionnaire:severity",
+  //     valueCodeableConcept: {
+  //       coding: [{ system: "urn:questionnaire:severity", code: severity.label }],
+  //       text: severity.meaning || severity.label,
+  //     },
+  //   });
+  // }
+
+  return {
+    resourceType: "QuestionnaireResponse",
+    status: "completed",
+    questionnaire: `Questionnaire/${config.questionnaireId}`,
+    subject,
+    authored,
+    item: items,
+    // ...(extensions.length ? { extension: extensions } : {}),
+  };
+}
+
+export function observationsToQuestionnaireResponses(observations, config /** @type {QConfig} */) {
+  const byTime = groupByEffectiveTime(observations || []);
+  const out = [];
+  for (const [, group] of byTime.entries()) {
+    const qr = observationsToQuestionnaireResponse(group, config);
+    if (qr) out.push(qr);
+  }
+  return out.sort((a, b) => String(a.authored).localeCompare(String(b.authored)));
 }

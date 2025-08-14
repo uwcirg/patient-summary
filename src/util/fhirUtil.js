@@ -1,5 +1,10 @@
 import { getEnv, getSectionsToShow, isEmptyArray, isNil } from "./index.js";
-import { DEFAULT_OBSERVATION_CATEGORIES } from "@/consts/index.js";
+import {
+  DEFAULT_OBSERVATION_CATEGORIES,
+  DEFAULT_VAL_TO_LOIN_CODE,
+  FLOWSHEET_SYSTEM,
+  FLOWSHEET_ID_LINK_ID_MAPPINGS,
+} from "@/consts/index.js";
 
 /*
  * @param client, FHIR client object
@@ -187,6 +192,35 @@ export function conceptCode(c) {
   }
   return null;
 }
+export const getValueFromItem = (answerItem) => {
+  // epic stores numeric in valueQuantity.value
+  const n = Number(answerItem?.valueQuantity?.value);
+  if (Number.isFinite(n)) return n;
+  if (answerItem?.valueString) return answerItem.valueString;
+  if (answerItem?.valueDateTime) return answerItem.valueDateTime;
+  if (answerItem?.valueBoolean) return answerItem.valueBoolean;
+  if (answerItem?.valueQuantity && answerItem?.valueQuantity.value) return answerItem?.valueQuantity.value;
+  const coding = DEFAULT_VAL_TO_LOIN_CODE;
+  return coding ? { valueCoding: coding } : null;
+};
+
+export function defaultItemText(linkId, index) {
+  const codeBit = String(linkId).match(/(\d+-\d)$/)?.[1]; // grabs "44250-9" if present
+  return `Question ${index + 1}${codeBit ? ` (${codeBit})` : ""}`;
+}
+
+export const getFlowsheetId = (item) => item?.code?.coding?.find((c) => c.system === FLOWSHEET_SYSTEM)?.code || null;
+
+export const getLinkIdByFromFlowsheetId = (id) => {
+  if (id && FLOWSHEET_ID_LINK_ID_MAPPINGS[id] && FLOWSHEET_ID_LINK_ID_MAPPINGS[id] !== "/44261-6") {
+    return FLOWSHEET_ID_LINK_ID_MAPPINGS[id];
+  }
+  return null;
+};
+export function getFlowsheetIds() {
+  return Object.keys(FLOWSHEET_ID_LINK_ID_MAPPINGS);
+}
+
 export function conceptText(c) {
   if (!c) return null;
   if (typeof c.text === "string" && c.text.trim()) return c.text;

@@ -7,9 +7,15 @@ import { Typography } from "@mui/material";
 import {
   getFHIRResourcePath,
   getFhirResourcesFromQueryResult,
+  getFlowsheetId,
+  getFlowsheetIds,
+  getLinkIdByFromFlowsheetId,
+  normalizeLinkId,
   processPage,
 } from "@util/fhirUtil";
 import { getEnvQuestionnaireList, getEnv, isEmptyArray } from "@util";
+import questionnaireConfigs from "@config/questionnaire_config";
+import { buildQuestionnaire, observationsToQuestionnaireResponses } from "@models/resultBuilders/helpers";
 import { QuestionnaireListContext } from "./QuestionnaireListContext";
 import { FhirClientContext } from "./FhirClientContext";
 import { NO_CACHE_HEADER } from "@/consts";
@@ -86,9 +92,11 @@ export default function QuestionnaireListProvider({ children }) {
     const preloadQuestionnaireList = getEnvQuestionnaireList();
     let qrResources = [];
     let qResources = [];
+    let obResources = [];
+    let qAllResources = [];
     // load questionnaires based on questionnaire responses
-    client
-      .request(
+    Promise.allSettled([
+      client.request(
         {
           url: "QuestionnaireResponse?_count=200&patient=" + patient.id,
           header: NO_CACHE_HEADER,
@@ -97,22 +105,77 @@ export default function QuestionnaireListProvider({ children }) {
           pageLimit: 0, // unlimited pages
           onPage: processPage(client, qrResources),
         },
-      )
+      ),
+      client.request(
+        {
+          url: "Observation?_count=200&patient=" + patient.id + "&code=" + getFlowsheetIds().join(","),
+          header: NO_CACHE_HEADER,
+        },
+        {
+          pageLimit: 0, // unlimited pages
+          onPage: processPage(client, obResources),
+        },
+      ),
+    ])
       .then(() => {
-        const matchedResults = !isEmptyArray(qrResources)
+        let matchedResults = !isEmptyArray(qrResources)
           ? qrResources.filter((item) => item && item.questionnaire && item.questionnaire.split("/")[1])
-          : null;
+          : [];
+        console.log("WTF ", matchedResults);
         const hasPreloadQList = !isEmptyArray(preloadQuestionnaireList);
-        if (!hasPreloadQList && isEmptyArray(matchedResults)) {
+        if (!hasPreloadQList && isEmptyArray(matchedResults) && isEmptyArray(obResources)) {
           dispatch({
             type: "ERROR",
             errorMessage: "No questionnaire list set.",
           });
           return;
         }
+        // let qIds = [];
+        if (!isEmptyArray(obResources)) {
+          console.log("o resources ", obResources);
+          let obsLinkIds = obResources
+            .filter((item) => getLinkIdByFromFlowsheetId(getFlowsheetId(item)))
+            .map((item) => normalizeLinkId(getLinkIdByFromFlowsheetId(getFlowsheetId(item))));
+          obsLinkIds = [...new Set(obsLinkIds)];
+          console.log("oblinks ", obsLinkIds);
+          if (!isEmptyArray(obsLinkIds)) {
+            for (let config in questionnaireConfigs) {
+              if (
+                questionnaireConfigs[config].questionLinkIds?.find(
+                  (linkId) => obsLinkIds.indexOf(normalizeLinkId(linkId)) !== -1,
+                )
+              ) {
+                const builtQuestionnaire = buildQuestionnaire(questionnaireConfigs[config]);
+                const builtQrs = observationsToQuestionnaireResponses(obResources, questionnaireConfigs[config]);
+                console.log("builtQ ", builtQuestionnaire);
+                console.log("builtQRs ", builtQrs);
+                qAllResources = [...qAllResources, builtQuestionnaire];
+                console.log("qAll? ", qAllResources)
+                matchedResults = [...matchedResults, ...builtQrs];
+                //   console.log("match ");
+                //         console.log("built questionnaires ", buildQuestionnaire(questionnaireConfigs[config]));
+                //   console.log("built qrs ", observationsToQuestionnaireResponses(obResources, questionnaireConfigs[config]))
+                // }
+              }
+            }
+          }
+          // if (!isEmptyArray(obsLinkIds)) {
+          //   console.log("linkIds ", obsLinkIds);
+          //   for (let config in questionnaireConfigs) {
+          //     if (config.questionLinkIds.find((linkId) => obsLinkIds.indexOf(normalizeLinkId(linkId)) !== -1)) {
+          //       console.log("built questionnaires ", buildQuestionnaire(config));
+          //       console.log("built qrs ", observationsToQuestionnaireResponses(obResources, config))
+          //       // qAllResources = [...qAllResources, ...buildQuestionnaire(config)];
+          //      // matchedResults = [...matchedResults, ...observationsToQuestionnaireResponses(obResources, config)];
+          //     }
+          //   }
+          // }
+        }
         dispatch({
           type: "QUESTIONNAIRE_RESPONSE_LOADED",
         });
+        // qIds = [...qIds, ...matchedResults.map((item) => item.questionnaire.split("/")[1])];
+        console.log("matched results ", matchedResults);
         const qIds = matchedResults.map((item) => item.questionnaire.split("/")[1]);
         let uniqueQIds = [...new Set(qIds)];
         const qListToLoad = hasPreloadQList ? preloadQuestionnaireList : uniqueQIds;
@@ -132,10 +195,10 @@ export default function QuestionnaireListProvider({ children }) {
             dispatch({
               type: "RESULTS",
               questionnaireList: qListToLoad,
-              questionnaires: getFhirResourcesFromQueryResult(qResources),
+              questionnaires: [...qAllResources, ...getFhirResourcesFromQueryResult(qResources)],
               questionnaireResponses: getFhirResourcesFromQueryResult(matchedResults),
               exactMatchById: !hasPreloadQList,
-              complete: true
+              complete: true,
             });
           })
           .catch((e) => {

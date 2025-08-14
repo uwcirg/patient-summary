@@ -4,6 +4,7 @@ class Response {
   }
   get questionText() {
     const data = this.data;
+    console.log("data ", data)
     return data.text || data.question || data.id;
   }
   get answerText() {

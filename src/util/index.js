@@ -350,3 +350,7 @@ export async function isImagefileExist(url) {
     return false; // Request failed or URL is invalid
   }
 }
+
+export function normalizeStr(s) {
+  return (s ?? "").toString().trim().toLowerCase();
+}
