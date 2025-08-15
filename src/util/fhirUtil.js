@@ -263,12 +263,14 @@ export const getValueFromResource = (resourceItem) => {
   }
   const key = [
     "valueCodeableConcept",
+    "valueCoding",
     "valueString",
     "valueDecimal",
     "valueInteger",
     "valueDate",
     "valueDateTime",
     "valueBoolean",
+    "valueReference",
     "valueQuantity",
   ].find((k) => !isNil(resourceItem?.[k]));
 
@@ -357,14 +359,7 @@ export function makeQuestionItem(linkId, text, answerOptions) {
 
 // infer a sensible FHIR item.type from one example answer option
 export function getQuestionItemType(answerOption) {
-  if ("valueBoolean" in answerOption) return "boolean";
-  if ("valueCoding" in answerOption) return "coding";
-  if ("valueDate" in answerOption) return "date";
-  if ("valueDateTime" in answerOption) return "dateTIme";
-  if ("valueDecimal" in answerOption) return "decimal";
-  if ("valueInteger" in answerOption) return "integer";
-  if ("valueQuantity" in answerOption) return "quantity";
-  if ("valueString" in answerOption) return "string";
-  // fallback
-  return "string";
+  if (!answerOption) return "string";
+  const key = Object.keys(answerOption).find((k) => k.startsWith("value"));
+  return key ? key.slice(5).replace(/^[A-Z]/, (c) => c.toLowerCase()) : "string";
 }

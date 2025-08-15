@@ -1,4 +1,4 @@
-import { getChartConfig, isEmptyArray, isNil, isNumber, fuzzyMatch, normalizeStr } from "@util";
+import { getChartConfig, isEmptyArray, isNil, isNumber, fuzzyMatch, normalizeStr, objectToString } from "@util";
 import FhirResultBuilder from "./FhirResultBuilder";
 import { summarizeCIDASHelper, summarizeMiniCogHelper, summarizeSLUMHelper } from "./helpers";
 import { DEFAULT_FALLBACK_SCORE_MAPS } from "@/consts";
@@ -297,8 +297,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (!ans) return null;
 
     const prim = this.answerPrimitive(ans);
-    if (!isNil(prim)) return prim;
-
+    if (!isNil(prim) && !isNaN(parseInt(prim))) return prim;
     const coding = this.answerCoding(ans);
     if (coding?.code) {
       const fromExt = this.getAnswerValueByExtension(questionnaire, coding.code);
@@ -308,6 +307,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     }
 
     return null;
+  }
+
+  getAnswerItemValue(answerItem) {
+    if (isNumber(answerItem?.value)) return answerItem.value;
+    if (answerItem?.display) return answerItem.display;
+    const coding = this.answerCoding(answerItem);
+    const primitive = this.answerPrimitive(answerItem);
+    return coding ? (coding.display ?? coding.code ?? null) : (primitive ?? objectToString(answerItem));
   }
 
   // -------------------- formatting --------------------
@@ -325,16 +332,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return list.map((q) => {
       const resp = this.findResponseItemByLinkId(responseItemsFlat, q.linkId);
       const ans = this.firstAnswer(resp);
-      const coding = this.answerCoding(ans);
-      const primitive = this.answerPrimitive(ans);
-      const value = coding ? (coding.display ?? coding.code ?? null) : primitive;
-
       return {
         id: q.linkId,
-        answer: value ?? null,
+        answer: this.getAnswerItemValue(ans),
         question: q.linkId === this.cfg.scoringQuestionId ? `<b>${q.text}</b>` : q.text,
         text: resp?.text ? resp?.text : q.text,
-        type: q.type
+        type: q.type,
       };
     });
   }
@@ -342,10 +345,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   responsesOnly(responseItemsFlat = []) {
     return (responseItemsFlat || []).map((item) => {
       const ans = this.firstAnswer(item);
-      const coding = this.answerCoding(ans);
-      const primitive = this.answerPrimitive(ans);
-      const value = coding ? (coding.display ?? coding.code ?? null) : primitive;
-      return { id: item.linkId, answer: value ?? null, question: item.text, text: item.text };
+      return { id: item.linkId, answer: this.getAnswerItemValue(ans) ?? null, question: item.text, text: item.text };
     });
   }
 

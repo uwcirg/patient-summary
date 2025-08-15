@@ -232,6 +232,19 @@ export function isNumber(target) {
   return target != null;
 }
 
+export function objectToString(value) {
+  if (typeof value === "object" && value !== null) {
+    // If it's a plain object, stringify it
+    if (Object.prototype.toString.call(value) === "[object Object]") {
+      return JSON.stringify(value);
+    } else {
+      // Handle other object types (e.g., Array, Date) if needed
+      return value.toString(); // Fallback to default toString for other objects
+    }
+  }
+  return null;
+}
+
 export function shouldShowPatientInfo(client) {
   // from query string
   if (sessionStorage.getItem(queryNeedPatientBanner) !== null) {

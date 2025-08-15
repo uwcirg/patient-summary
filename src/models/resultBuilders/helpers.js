@@ -212,8 +212,8 @@ export function summarizeMiniCogHelper(
   return ctx.sortByNewestAuthoredOrUpdated(rows);
 }
 
-/* --------------------------- Questionnaire --------------------------- */
-export function buildQuestionnaire(config /** @type {QConfig} */ = {}) {
+/* --------------------------- build questionnaire based on config/params --------------------------- */
+export function buildQuestionnaire(config = {}) {
   const items = (config.questionLinkIds || []).map((lid, idx) => {
     const opts = config.answerOptionsByLinkId?.[lid] ?? DEFAULT_ANSWER_OPTIONS;
     return makeQuestionItem(lid, config.itemTextByLinkId?.[lid] ?? getDefaultQuestionItemText(lid, idx), opts);
@@ -243,8 +243,8 @@ export function buildQuestionnaire(config /** @type {QConfig} */ = {}) {
   };
 }
 
-/* -------------------- Observations → QuestionnaireResponse -------------------- */
-export function observationsToQuestionnaireResponse(group, config /** @type {QConfig} */) {
+/* -------------------- Observations to QuestionnaireResponse -------------------- */
+export function observationsToQuestionnaireResponse(group, config = {}) {
   if (isEmptyArray(group)) return null;
   const subject = config.getSubject?.(group) || group[0]?.subject || undefined;
   const authored =
@@ -283,7 +283,7 @@ export function observationsToQuestionnaireResponse(group, config /** @type {QCo
   };
 }
 
-export function observationsToQuestionnaireResponses(observations, config /** @type {QConfig} */) {
+export function observationsToQuestionnaireResponses(observations, config = {}) {
   /** Group obs by effectiveDateTime (fallback to issued or "unknown") */
   const groupByEffectiveTime = (observations) => {
     const byTime = new Map();
