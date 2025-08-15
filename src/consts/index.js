@@ -19,6 +19,15 @@ export const DEFAULT_VAL_TO_LOIN_CODE = {
   2: { system: "http://loinc.org", code: "LA6570-1", display: "More than half the days" },
   3: { system: "http://loinc.org", code: "LA6571-9", display: "Nearly every day" },
 };
+// --- questionnaire response answer code -> value maps ---
+export const DEFAULT_FALLBACK_SCORE_MAPS = {
+  default: {
+    "LA6568-5": 0,
+    "LA6569-3": 1,
+    "LA6570-1": 2,
+    "LA6571-9": 3,
+  },
+};
 // defaultAnswerOptions are what get rendered into the Questionnaire item.answerOption
 export const DEFAULT_ANSWER_OPTIONS = [0, 1, 2, 3].map((n) => ({ valueCoding: DEFAULT_VAL_TO_LOIN_CODE[n] }));
 // Epic flowsheet -> question linkId mapping

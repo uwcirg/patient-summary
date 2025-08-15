@@ -121,7 +121,6 @@ export default function QuestionnaireListProvider({ children }) {
         let matchedResults = !isEmptyArray(qrResources)
           ? qrResources.filter((item) => item && item.questionnaire && item.questionnaire.split("/")[1])
           : [];
-        console.log("WTF ", matchedResults);
         const hasPreloadQList = !isEmptyArray(preloadQuestionnaireList);
         if (!hasPreloadQList && isEmptyArray(matchedResults) && isEmptyArray(obResources)) {
           dispatch({
@@ -130,14 +129,12 @@ export default function QuestionnaireListProvider({ children }) {
           });
           return;
         }
-        // let qIds = [];
+        let qIds = [...preloadQuestionnaireList];
         if (!isEmptyArray(obResources)) {
-          console.log("o resources ", obResources);
           let obsLinkIds = obResources
             .filter((item) => getLinkIdByFromFlowsheetId(getFlowsheetId(item)))
             .map((item) => normalizeLinkId(getLinkIdByFromFlowsheetId(getFlowsheetId(item))));
           obsLinkIds = [...new Set(obsLinkIds)];
-          console.log("oblinks ", obsLinkIds);
           if (!isEmptyArray(obsLinkIds)) {
             for (let config in questionnaireConfigs) {
               if (
@@ -147,36 +144,21 @@ export default function QuestionnaireListProvider({ children }) {
               ) {
                 const builtQuestionnaire = buildQuestionnaire(questionnaireConfigs[config]);
                 const builtQrs = observationsToQuestionnaireResponses(obResources, questionnaireConfigs[config]);
-                console.log("builtQ ", builtQuestionnaire);
-                console.log("builtQRs ", builtQrs);
+                if (config.questionnaireId) {
+                  qIds = [...qIds, config.questionnaireId];
+                }
+                console.log("built questionnaire ", builtQuestionnaire);
+                console.log("built Qrs ", builtQrs);
                 qAllResources = [...qAllResources, builtQuestionnaire];
-                console.log("qAll? ", qAllResources)
                 matchedResults = [...matchedResults, ...builtQrs];
-                //   console.log("match ");
-                //         console.log("built questionnaires ", buildQuestionnaire(questionnaireConfigs[config]));
-                //   console.log("built qrs ", observationsToQuestionnaireResponses(obResources, questionnaireConfigs[config]))
-                // }
               }
             }
           }
-          // if (!isEmptyArray(obsLinkIds)) {
-          //   console.log("linkIds ", obsLinkIds);
-          //   for (let config in questionnaireConfigs) {
-          //     if (config.questionLinkIds.find((linkId) => obsLinkIds.indexOf(normalizeLinkId(linkId)) !== -1)) {
-          //       console.log("built questionnaires ", buildQuestionnaire(config));
-          //       console.log("built qrs ", observationsToQuestionnaireResponses(obResources, config))
-          //       // qAllResources = [...qAllResources, ...buildQuestionnaire(config)];
-          //      // matchedResults = [...matchedResults, ...observationsToQuestionnaireResponses(obResources, config)];
-          //     }
-          //   }
-          // }
         }
         dispatch({
           type: "QUESTIONNAIRE_RESPONSE_LOADED",
         });
-        // qIds = [...qIds, ...matchedResults.map((item) => item.questionnaire.split("/")[1])];
-        console.log("matched results ", matchedResults);
-        const qIds = matchedResults.map((item) => item.questionnaire.split("/")[1]);
+        qIds = [...qIds, ...(matchedResults?.map((item) => item.questionnaire?.split("/")[1]) ?? [])];
         let uniqueQIds = [...new Set(qIds)];
         const qListToLoad = hasPreloadQList ? preloadQuestionnaireList : uniqueQIds;
         const questionnaireResourcePath = getFHIRResourcePath(patient.id, ["Questionnaire"], {
@@ -209,6 +191,7 @@ export default function QuestionnaireListProvider({ children }) {
           });
       })
       .catch((e) => {
+        console.log("Error in retrieving results in questionnaire provider ? ", e);
         dispatch({
           type: "ERROR",
           errorMessage: e,

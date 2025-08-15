@@ -192,34 +192,6 @@ export function conceptCode(c) {
   }
   return null;
 }
-export const getValueFromItem = (answerItem) => {
-  // epic stores numeric in valueQuantity.value
-  const n = Number(answerItem?.valueQuantity?.value);
-  if (Number.isFinite(n)) return n;
-  if (answerItem?.valueString) return answerItem.valueString;
-  if (answerItem?.valueDateTime) return answerItem.valueDateTime;
-  if (answerItem?.valueBoolean) return answerItem.valueBoolean;
-  if (answerItem?.valueQuantity && answerItem?.valueQuantity.value) return answerItem?.valueQuantity.value;
-  const coding = DEFAULT_VAL_TO_LOIN_CODE;
-  return coding ? { valueCoding: coding } : null;
-};
-
-export function defaultItemText(linkId, index) {
-  const codeBit = String(linkId).match(/(\d+-\d)$/)?.[1]; // grabs "44250-9" if present
-  return `Question ${index + 1}${codeBit ? ` (${codeBit})` : ""}`;
-}
-
-export const getFlowsheetId = (item) => item?.code?.coding?.find((c) => c.system === FLOWSHEET_SYSTEM)?.code || null;
-
-export const getLinkIdByFromFlowsheetId = (id) => {
-  if (id && FLOWSHEET_ID_LINK_ID_MAPPINGS[id] && FLOWSHEET_ID_LINK_ID_MAPPINGS[id] !== "/44261-6") {
-    return FLOWSHEET_ID_LINK_ID_MAPPINGS[id];
-  }
-  return null;
-};
-export function getFlowsheetIds() {
-  return Object.keys(FLOWSHEET_ID_LINK_ID_MAPPINGS);
-}
 
 export function conceptText(c) {
   if (!c) return null;
@@ -270,17 +242,39 @@ export function formatValueQuantity({ value, unit }, fallbackText) {
 
 export function getValueText(O) {
   if (!O) return null;
-  if (O.valueCodeableConcept) return conceptText(O.valueCodeableConcept);
+  if (!isNil(O.code)) return conceptText(O.code);
+  if (!isNil(O.valueCodeableConcept)) return conceptCode(O.valueCodeableConcept);
   if (!isNil(O.valueString)) return String(O.valueString);
   if (!isNil(O.valueDecimal)) return String(O.valueDecimal);
   if (!isNil(O.valueInteger)) return String(O.valueInteger);
+  if (!isNil(O.valueDate)) return String(O.valueDate);
   if (!isNil(O.valueDateTime)) return String(O.valueDateTime);
   if (!isNil(O.valueBoolean)) return String(O.valueBoolean);
-  if (O.value && typeof O.value === "object" && "value" in O.value && typeof O.value.value !== "object") {
-    return String(O.value.value);
+  if (O.value && typeof O.value !== "object") {
+    return String(O.value);
   }
   return null;
 }
+export const getValueFromResource = (resourceItem) => {
+  const n = Number(resourceItem?.valueQuantity?.value);
+  if (Number.isFinite(n)) {
+    const coding = DEFAULT_VAL_TO_LOIN_CODE[n];
+    if (coding) return { valueCoding: coding };
+  }
+  const key = [
+    "valueCodeableConcept",
+    "valueString",
+    "valueDecimal",
+    "valueInteger",
+    "valueDate",
+    "valueDateTime",
+    "valueBoolean",
+    "valueQuantity",
+  ].find((k) => !isNil(resourceItem?.[k]));
+
+  return key ? { [key]: resourceItem[key] } : undefined;
+};
+
 export function getValueBlockFromQuantity(O) {
   if (!O) {
     return {
@@ -289,8 +283,8 @@ export function getValueBlockFromQuantity(O) {
     };
   }
   const q = O.valueQuantity ?? (O.value && typeof O.value === "object" && "value" in O.value ? O.value : null);
-  if (!q) return { value: null, unit: O.valueCodeableConcept ? null : null };
-  return { value: q.value ?? null, unit: O.valueCodeableConcept ? null : (q.unit ?? q.code ?? null) };
+  if (!q) return { value: null, unit: O.code ? null : null };
+  return { value: q.value ?? null, unit: O.code ? null : (q.unit ?? null) };
 }
 
 export function getValueDisplayWithRef(valueStr, rangeSummary) {
@@ -332,4 +326,45 @@ export function getComponentValues(components = []) {
       displayValueWithRef,
     };
   });
+}
+
+export function getDefaultQuestionItemText(linkId, index) {
+  const codeBit = String(linkId).match(/(\d+-\d)$/)?.[1]; // grabs "44250-9" if present
+  return `Question ${index + 1}${codeBit ? ` (${codeBit})` : ""}`;
+}
+
+export const getFlowsheetId = (item) => item?.code?.coding?.find((c) => c.system === FLOWSHEET_SYSTEM)?.code || null;
+
+export const getLinkIdByFromFlowsheetId = (id) => {
+  if (id && FLOWSHEET_ID_LINK_ID_MAPPINGS[id]) {
+    return FLOWSHEET_ID_LINK_ID_MAPPINGS[id];
+  }
+  return null;
+};
+
+export function getFlowsheetIds() {
+  return Object.keys(FLOWSHEET_ID_LINK_ID_MAPPINGS);
+}
+
+export function makeQuestionItem(linkId, text, answerOptions) {
+  return {
+    linkId,
+    type: !isEmptyArray(answerOptions) ? getQuestionItemType(answerOptions[0]) : "string",
+    text: text || "",
+    ...(!isEmptyArray(answerOptions) ? { answerOption: answerOptions } : {}),
+  };
+}
+
+// infer a sensible FHIR item.type from one example answer option
+export function getQuestionItemType(answerOption) {
+  if ("valueBoolean" in answerOption) return "boolean";
+  if ("valueCoding" in answerOption) return "coding";
+  if ("valueDate" in answerOption) return "date";
+  if ("valueDateTime" in answerOption) return "dateTIme";
+  if ("valueDecimal" in answerOption) return "decimal";
+  if ("valueInteger" in answerOption) return "integer";
+  if ("valueQuantity" in answerOption) return "quantity";
+  if ("valueString" in answerOption) return "string";
+  // fallback
+  return "string";
 }
