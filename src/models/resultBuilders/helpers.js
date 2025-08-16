@@ -1,9 +1,16 @@
 import {
+  conceptText,
+  getDefaultQuestionItemText,
+  getFlowsheetId,
+  getLinkIdByFromFlowsheetId,
+  getValueFromResource,
   getResourcesByResourceType,
-  linkIdEquals
+  linkIdEquals,
+  makeQuestionItem,
 } from "@util/fhirUtil";
-import { isEmptyArray } from "@util";
- 
+import { generateUUID, isEmptyArray } from "@util";
+import { DEFAULT_ANSWER_OPTIONS } from "@/consts";
+
 /* ---------------------------------------------
  * External helpers
  * Each helper receives a `ctx` (the builder instance)
@@ -203,4 +210,96 @@ export function summarizeMiniCogHelper(
   });
 
   return ctx.sortByNewestAuthoredOrUpdated(rows);
+}
+
+/* --------------------------- build questionnaire based on config/params --------------------------- */
+export function buildQuestionnaire(config = {}) {
+  const items = (config.questionLinkIds || []).map((lid, idx) => {
+    const opts = config.answerOptionsByLinkId?.[lid] ?? DEFAULT_ANSWER_OPTIONS;
+    return makeQuestionItem(lid, config.itemTextByLinkId?.[lid] ?? getDefaultQuestionItemText(lid, idx), opts);
+  });
+
+  // optional total score item (readOnly)
+  if (config.scoringQuestionId) {
+    items.push({
+      linkId: config.scoringQuestionId,
+      type: "decimal",
+      text: "Total score",
+      readOnly: true,
+      code: [{ system: "http://loinc.org", code: config.scoringQuestionId }],
+    });
+  }
+
+  return {
+    resourceType: "Questionnaire",
+    id: config.questionnaireId || generateUUID(),
+    url: config.questionnaireUrl,
+    questionnaire: `Questionnaire/${config.questionnaireId}`,
+    name: (config.questionnaireName || "").toUpperCase(),
+    title: config.title || config.questionnaireName || "Questionnaire",
+    status: "active",
+    date: new Date().toISOString().slice(0, 10),
+    item: items,
+  };
+}
+
+/* -------------------- Observations to QuestionnaireResponse -------------------- */
+export function observationsToQuestionnaireResponse(group, config = {}) {
+  if (isEmptyArray(group)) return null;
+  console.log("group ", group)
+  const subject = config.getSubject?.(group) || group[0]?.subject || undefined;
+  const authored =
+    config.getAuthored?.(group) || group[0]?.effectiveDateTime || group[0]?.issued || new Date().toISOString();
+
+  // map answers
+  const answersByLinkId = new Map();
+  const textByLinkId = new Map();
+  for (const obs of group) {
+    const lid = config.getLinkId ? config.getLinkId(obs) : getLinkIdByFromFlowsheetId(getFlowsheetId(obs));
+    if (!lid) continue;
+    const ans = config.answerMapper ? config.answerMapper(obs) : getValueFromResource(obs);
+    if (!ans) continue;
+    answersByLinkId.set(lid, ans);
+    textByLinkId.set(lid, conceptText(obs.code));
+  }
+
+  let qLinkIds = config?.questionLinkIds || [];
+  if (config?.scoringQuestionId) {
+    qLinkIds.push(config.scoringQuestionId)
+  }
+
+  const items = [...new Set(qLinkIds)].map((lid) => {
+    const ans = answersByLinkId.get(lid);
+    return ans ? { linkId: lid, text: textByLinkId.get(lid), answer: [ans] } : { linkId: lid };
+  });
+
+  return {
+    id: generateUUID(),
+    resourceType: "QuestionnaireResponse",
+    status: "completed",
+    questionnaire: `Questionnaire/${config.questionnaireId}`,
+    subject,
+    authored,
+    item: items,
+  };
+}
+
+export function observationsToQuestionnaireResponses(observations, config = {}) {
+  /** Group obs by effectiveDateTime (fallback to issued or "unknown") */
+  const groupByEffectiveTime = (observations) => {
+    const byTime = new Map();
+    for (const o of observations || []) {
+      const key = o.effectiveDateTime || o.issued || "unknown";
+      if (!byTime.has(key)) byTime.set(key, []);
+      byTime.get(key).push(o);
+    }
+    return byTime;
+  };
+  const byTime = groupByEffectiveTime(observations || []);
+  const out = [];
+  for (const [, group] of byTime.entries()) {
+    const qr = observationsToQuestionnaireResponse(group, config);
+    if (qr) out.push(qr);
+  }
+  return out.sort((a, b) => String(a.authored).localeCompare(String(b.authored)));
 }

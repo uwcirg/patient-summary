@@ -13,7 +13,7 @@ import {
 } from "@/util/fhirUtil";
 import Questionnaire from "@/models/Questionnaire";
 import FhirResultBuilder from "@/models/resultBuilders/FhirResultBuilder";
-import { getChartConfig, isEmptyArray, isNumber } from "@/util";
+import { isEmptyArray} from "@/util";
 
 export default function useFetchResources() {
   const SUMMARY_DATA_KEY = "summaryData";
@@ -152,7 +152,6 @@ export default function useFetchResources() {
     const patientBundleToUse = !isEmptyArray(paramPatientBundle) ? paramPatientBundle : [];
     const questionnaireObject = new Questionnaire(questionnaireJson, null, patientBundleToUse);
     const questionnaireId = questionnaireObject.id;
-    const chartConfig = getChartConfig(questionnaireObject.id);
     let evalData;
     try {
       evalData = questionnaireObject.summary(patientBundleToUse);
@@ -160,31 +159,7 @@ export default function useFetchResources() {
       console.log(e);
       throw new Error("Error building summary results for ", questionnaireId);
     }
-    const scoringData = !isEmptyArray(evalData)
-      ? evalData.filter((item) => {
-          return item && !isEmptyArray(item.responses) && isNumber(item.score) && item.date;
-        })
-      : null;
-    const chartData = !isEmptyArray(scoringData)
-      ? scoringData.map((item) => ({
-          ...item,
-          ...(item.scoringParams ?? {}),
-          date: item.date,
-          total: item.score,
-        }))
-      : null;
-    const config = questionnaireObject.summaryConfig;
-    const scoringParams = config?.scoringParams;
-
-    const returnResult = {
-      config: config,
-      chartConfig: { ...chartConfig, ...scoringParams },
-      chartData: chartData,
-      scoringData: scoringData,
-      responses: evalData,
-      questionnaire: questionnaireJson,
-    };
-    return returnResult;
+    return evalData;
   };
 
   const getSummaryDataByQuestionnaireId = (questionnaireId, exactMatchById, paramPatientBundle) => {
@@ -199,7 +174,10 @@ export default function useFetchResources() {
   useQuery(
     "fhirResources",
     async () => {
-      const results = await getFhirResources();
+      const results = await getFhirResources({
+        questionnaireList: questionnaireList,
+        exactMatchById: exactMatchById,
+      });
       return results;
     },
     {
@@ -215,24 +193,20 @@ export default function useFetchResources() {
             [resource]: new FhirResultBuilder(fhirData).build(resource),
           };
         });
-        
+
         patientBundle.current = {
           ...patientBundle.current,
           entry: [...patientBundle.current.entry, ...fhirData],
           evalResults: {
             ...patientBundle.current.evalResults,
-            ...Object.assign({}, ...resourceEvalResults??[]),
+            ...Object.assign({}, ...(resourceEvalResults ?? [])),
           },
         };
         let summaries = {};
         const bundle = JSON.parse(JSON.stringify(patientBundle.current.entry));
         questionnaireList?.map((qid) => {
           try {
-            const data = getSummaryDataByQuestionnaireId(
-              qid,
-              exactMatchById,
-              bundle,
-            );
+            const data = getSummaryDataByQuestionnaireId(qid, exactMatchById, bundle);
             summaries[qid] = data;
             handleResourceComplete(qid, {
               data: data,
@@ -259,12 +233,9 @@ export default function useFetchResources() {
     },
   );
 
-  const getFhirResources = async () => {
+  const getFhirResources = async (params = {}) => {
     if (!client || !patient || !patient.id) throw new Error("Client or patient missing.");
-    const resources = getFHIRResourcePaths(patient.id, resourceTypesToLoad, {
-      questionnaireList: questionnaireList,
-      exactMatchById: exactMatchById,
-    });
+    const resources = getFHIRResourcePaths(patient.id, resourceTypesToLoad, params);
     const requests = resources.map((resource) =>
       client
         .request(
