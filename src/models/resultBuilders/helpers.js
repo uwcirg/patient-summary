@@ -246,6 +246,7 @@ export function buildQuestionnaire(config = {}) {
 /* -------------------- Observations to QuestionnaireResponse -------------------- */
 export function observationsToQuestionnaireResponse(group, config = {}) {
   if (isEmptyArray(group)) return null;
+  console.log("group ", group)
   const subject = config.getSubject?.(group) || group[0]?.subject || undefined;
   const authored =
     config.getAuthored?.(group) || group[0]?.effectiveDateTime || group[0]?.issued || new Date().toISOString();

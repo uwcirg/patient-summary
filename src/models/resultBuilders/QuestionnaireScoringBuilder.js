@@ -504,7 +504,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const questionnaire = loader(canonical);
       if (!questionnaire) continue;
       const summaries = this._summariesByQuestionnaireRef(qrs, questionnaire, strategyOptions);
-      if (!isEmptyArray(summaries)) out[canonical] = summaries;
+      if (!isEmptyArray(summaries?.responses)) out[canonical] = summaries;
     }
     return out;
   }
@@ -553,7 +553,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (!questionnaire) continue;
 
       const summaries = this._summariesByQuestionnaireRef(qrs, questionnaire, strategyOptions);
-      if (summaries && summaries.length) out[canonical] = summaries;
+      if (!isEmptyArray(summaries?.responses)) out[canonical] = summaries;
     }
     return out;
   }

@@ -68,10 +68,15 @@ describe("QuestionnaireScoringBuilder smoke (randomized, deterministic)", () => 
     expect(qrs.map((x) => x.id)).toEqual(expectedNewestFirst);
 
     const summaries = b.summariesFromBundle(questionnaire);
-    expect(summaries.map((s) => s.id)).toEqual(expectedNewestFirst);
+    expect(summaries.responses.map((s) => s.id)).toEqual(expectedNewestFirst);
 
     const grouped = await b.summariesByQuestionnaireFromBundleAsync();
-    expect((grouped[questionnaire.url] || []).map((s) => s.id)).toEqual(expectedNewestFirst);
+    const pack =
+      grouped[questionnaire.url] ??
+      grouped[`Questionnaire/${questionnaire.id}`] ?? // if your QRs sometimes use this form
+      null;
+
+    expect((pack?.responses ?? []).map((s) => s.id)).toEqual(expectedNewestFirst);
 
     // override: keep newest 10 only
     const newest10 = new Set(expectedNewestFirst.slice(0, 10));
@@ -90,6 +95,6 @@ describe("QuestionnaireScoringBuilder smoke (randomized, deterministic)", () => 
     expect(qrsOv).toEqual(expectedNewestFirst.slice(0, 10));
 
     const summariesOv = await b.summariesFromBundleAsync(questionnaire, {}, override);
-    expect(summariesOv.map((s) => s.id)).toEqual(expectedNewestFirst.slice(0, 10));
+    expect(summariesOv?.responses?.map((s) => s.id)).toEqual(expectedNewestFirst.slice(0, 10));
   });
 });
