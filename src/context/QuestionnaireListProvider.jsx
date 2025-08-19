@@ -16,6 +16,7 @@ import {
 import { getEnvQuestionnaireList, getEnv, isEmptyArray } from "@util";
 import questionnaireConfigs from "@config/questionnaire_config";
 import { buildQuestionnaire, observationsToQuestionnaireResponses } from "@models/resultBuilders/helpers";
+import QuestionnaireScoringBuilder from "@models/resultBuilders/QuestionnaireScoringBuilder";
 import { QuestionnaireListContext } from "./QuestionnaireListContext";
 import { FhirClientContext } from "./FhirClientContext";
 import { NO_CACHE_HEADER } from "@/consts";
@@ -47,6 +48,7 @@ export default function QuestionnaireListProvider({ children }) {
           questionnaireList: action.questionnaireList,
           questionnaireResponses: action.questionnaireResponses,
           questionnaires: action.questionnaires,
+          summaries: action.summaries,
           exactMatchById: !!action.exactMatchById,
           loadedStatus: {
             questionnaire: false,
@@ -75,6 +77,7 @@ export default function QuestionnaireListProvider({ children }) {
       questionnaire: false,
       questionnaireResponse: false,
     },
+    summaries: {},
     complete: false,
     error: false,
     errorMessage: "",
@@ -174,11 +177,15 @@ export default function QuestionnaireListProvider({ children }) {
             },
           )
           .then(() => {
+            const questionnaireResources = [...qAllResources, ...getFhirResourcesFromQueryResult(qResources)];
+            const questionnaireResponseResources = getFhirResourcesFromQueryResult(matchedResults);
+            const summaries = new QuestionnaireScoringBuilder({}, [...questionnaireResources, ...questionnaireResponseResources]).summariesByQuestionnaireFromBundle();
             dispatch({
               type: "RESULTS",
               questionnaireList: qListToLoad,
-              questionnaires: [...qAllResources, ...getFhirResourcesFromQueryResult(qResources)],
-              questionnaireResponses: getFhirResourcesFromQueryResult(matchedResults),
+              questionnaires: questionnaireResources,
+              questionnaireResponses: questionnaireResponseResources,
+              summaries: summaries,
               exactMatchById: !hasPreloadQList,
               complete: true,
             });

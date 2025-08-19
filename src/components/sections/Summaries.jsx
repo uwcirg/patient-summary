@@ -17,7 +17,7 @@ export default function Summaries({ questionnaireKeys, summaryData }) {
   if (!questionnaireKeys || !questionnaireKeys.length) {
     return <Alert severity="error">No matching data found.</Alert>;
   }
-  if (summaryData.error) {
+  if (summaryData && summaryData.error) {
     return <Alert severity="error">Error loading data.</Alert>;
   }
   if (!hasSummaryData()) {

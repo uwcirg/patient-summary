@@ -57,7 +57,7 @@ export default function Summary(props) {
     height: 2,
     width: 2,
   };
-  const shouldDisplayResponses = () => !summary.loading && !summary.error;
+  const shouldDisplayResponses = () => summary && !summary.loading && !summary.error;
 
   const formatChartData = (data) => {
     if (summary.chartConfig && summary.chartConfig.dataFormatter) return summary.chartConfig.dataFormatter(data);
@@ -74,7 +74,7 @@ export default function Summary(props) {
       </Stack>
     );
   const renderError = () =>
-    !!summary.error && (
+    summary && !!summary.error && (
       <Box sx={{ marginBottom: 1 }}>
         <Error message={summary.error}></Error>
       </Box>

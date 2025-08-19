@@ -2,6 +2,7 @@ import { getChartConfig, isEmptyArray, isNil, isNumber, fuzzyMatch, normalizeStr
 import FhirResultBuilder from "./FhirResultBuilder";
 import { summarizeCIDASHelper, summarizeMiniCogHelper, summarizeSLUMHelper } from "./helpers";
 import { DEFAULT_FALLBACK_SCORE_MAPS } from "@/consts";
+import questionnaireConfig from "@/config/questionnaire_config";
 import { linkIdEquals } from "@/util/fhirUtil";
 
 export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
@@ -80,7 +81,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (!res || String(res.resourceType).toLowerCase() !== "questionnaireresponse") continue;
       if (completedOnly && res.status !== "completed") continue;
 
-      const key = (res.questionnaire ?? "").toString();
+      let key = (res.questionnaire ?? "").toString();
+      if (key.includes("/")) key = key.split("/")[1];
       if (!key) continue;
       if (!groups[key]) groups[key] = [];
       groups[key].push(res);
@@ -189,7 +191,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if ((this.cfg.matchMode ?? "fuzzy") === "strict") {
       return (url && ref === url) || (id && ref === id) || (name && ref === name);
     }
-    return (url && fuzzyMatch(ref, url)) || (id && fuzzyMatch(ref, id)) || (name && fuzzyMatch(ref, name));
+    return (id && fuzzyMatch(ref, id)) || (name && fuzzyMatch(ref, name)) || (url && fuzzyMatch(ref, url));
   }
 
   matchedResponsesByQuestionnaire(responses) {
@@ -297,6 +299,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (!ans) return null;
 
     const prim = this.answerPrimitive(ans);
+    console.log("prim ", prim)
     if (!isNil(prim) && !isNaN(parseInt(prim))) return prim;
     const coding = this.answerCoding(ans);
     if (coding?.code) {
@@ -369,27 +372,33 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   // -------------------- public APIs --------------------
   getResponsesSummary(questionnaireResponses, questionnaire) {
-    const scoreLinkIds = this.cfg.questionLinkIds?.length
-      ? this.cfg.questionLinkIds
+    console.log("questionnaire ", questionnaire)
+    const config = this.cfg && this.cfg.questionnaireId? this.cfg: questionnaireConfig[questionnaire?.id];
+    console.log("config ", config)
+    const scoreLinkIds = config?.questionLinkIds?.length
+      ? config.questionLinkIds
       : this.getAnswerLinkIdsByQuestionnaire(questionnaire);
+    const scoringQuestionId = config?.scoringQuestionId;
+    console.log("scoring id ", scoringQuestionId)
 
     const rows = (questionnaireResponses || []).map((qr) => {
+
       const flat = this.flattenResponseItems(qr.item);
       const nonScoring =
         flat.length === 1
           ? flat
           : flat.filter(
-              (it) => !this.cfg.scoringQuestionId || !this.isLinkIdEquals(it.linkId, this.cfg.scoringQuestionId),
+              (it) => !scoringQuestionId || !this.isLinkIdEquals(it.linkId, scoringQuestionId),
             );
 
-      const totalItems = this.cfg.questionLinkIds?.length
-        ? this.cfg.questionLinkIds.length
+      const totalItems = scoreLinkIds?.length
+        ? scoreLinkIds?.length
         : this.getAnswerLinkIdsByQuestionnaire(questionnaire).length;
 
       const totalAnsweredItems = Math.min(nonScoring.filter((it) => this.firstAnswer(it) != null).length, totalItems);
 
-      const scoringQuestionScore = this.cfg.scoringQuestionId
-        ? this.getScoringByResponseItem(questionnaire, flat, this.cfg.scoringQuestionId)
+      const scoringQuestionScore = scoringQuestionId
+        ? this.getScoringByResponseItem(questionnaire, flat, scoringQuestionId)
         : null;
 
       const questionScores = scoreLinkIds.map((id) => this.getScoringByResponseItem(questionnaire, flat, id));
@@ -411,13 +420,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         scoringQuestionScore,
         score,
         scoreSeverity,
-        highSeverityScoreCutoff: this.cfg.highSeverityScoreCutoff,
+        highSeverityScoreCutoff: config?.highSeverityScoreCutoff,
         scoreMeaning: this.meaningFromSeverity(scoreSeverity),
-        scoringParams: this.cfg.scoringParams,
+        scoringParams: config?.scoringParams,
         totalItems,
         totalAnsweredItems,
         authoredDate: qr.authored,
         lastUpdated: qr.meta?.lastUpdated,
+        config: config
       };
     });
 
@@ -476,7 +486,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           total: item.score,
         }))
       : null;
-    const config = questionnaire.summaryConfig;
+    const config = questionnaireConfig[questionnaire?.id];
     const scoringParams = config?.scoringParams;
 
     return {

@@ -4,16 +4,13 @@ import { FhirClientContext } from "@/context/FhirClientContext";
 import { QuestionnaireListContext } from "@/context/QuestionnaireListContext";
 import { NO_CACHE_HEADER } from "@/consts";
 import {
-  getResourcesByResourceType,
   getResourceTypesFromResources,
   getFhirResourcesFromQueryResult,
   getFHIRResourceTypesToLoad,
   getFHIRResourcePaths,
   processPage,
 } from "@/util/fhirUtil";
-import Questionnaire from "@/models/Questionnaire";
-import FhirResultBuilder from "@/models/resultBuilders/FhirResultBuilder";
-import { isEmptyArray} from "@/util";
+import { isEmptyArray } from "@/util";
 
 export default function useFetchResources() {
   const SUMMARY_DATA_KEY = "summaryData";
@@ -24,8 +21,8 @@ export default function useFetchResources() {
     exactMatchById,
     questionnaireResponses: ctxQuestionnaireResponseResources,
     questionnaires: ctxQuestionnaireResources,
+    summaries,
   } = useContext(QuestionnaireListContext);
-  const questionnareKeys = questionnaireList ? questionnaireList : [];
   const [error, setError] = useState(null);
   const patientBundle = useRef({
     resourceType: "Bundle",
@@ -48,7 +45,7 @@ export default function useFetchResources() {
     return resourcesToLoad.filter((resource) => String(resource).toLowerCase() !== "patient");
   };
 
-  const getResourcesToTrack = (resourceTypesToLoad, questionnareKeys) => {
+  const getResourcesToTrack = (resourceTypesToLoad) => {
     // all the resources that will be loaded
     let initialResourcesToLoad = [
       ...(resourceTypesToLoad ? resourceTypesToLoad : []).map((type) => ({
@@ -57,16 +54,6 @@ export default function useFetchResources() {
         error: false,
       })),
     ];
-    if (!isEmptyArray(questionnareKeys)) {
-      questionnareKeys.map((key) => {
-        initialResourcesToLoad.push({
-          id: key,
-          title: `Summarizing ${key}`,
-          complete: false,
-          error: false,
-          data: null,
-        });
-      });
       initialResourcesToLoad.push({
         id: SUMMARY_DATA_KEY,
         title: `Waiting for all summary data ...`,
@@ -74,15 +61,13 @@ export default function useFetchResources() {
         error: false,
         data: null,
       });
-    }
+    
 
     return initialResourcesToLoad;
   };
 
   const resourceTypesToLoad = getResourceTypesToLoad();
-
-  // all the resources that will be loaded
-  const initialResourcesToLoad = getResourcesToTrack(resourceTypesToLoad, questionnareKeys);
+  const initialResourcesToLoad = getResourcesToTrack(resourceTypesToLoad);
 
   // hook for tracking resource load state
   const resourceReducer = (state, action) => {
@@ -123,54 +108,6 @@ export default function useFetchResources() {
     dispatch({ type: "ERROR", id: resource });
   };
 
-  // search for matching questionnaire
-  const searchMatchingQuestionnaire = (questionnaireId, paramPatientBundle, exactMatchById) => {
-    if (!questionnaireId || isEmptyArray(paramPatientBundle)) return null;
-    const questionnaireResources = getResourcesByResourceType(paramPatientBundle, "Questionnaire");
-    const returnResult = !isEmptyArray(questionnaireResources)
-      ? questionnaireResources.find((resource) => {
-          if (!exactMatchById) {
-            const toMatch = String(questionnaireId).toLowerCase();
-            const arrMatches = [
-              String(resource.name).toLowerCase(),
-              String(resource.id).toLowerCase(),
-              String(resource.url).toLowerCase(),
-            ];
-            return String(resource.id).toLowerCase() === toMatch || arrMatches.find((key) => key.includes(toMatch));
-          }
-          return resource.id === questionnaireId;
-        })
-      : null;
-    if (returnResult) {
-      return returnResult;
-    }
-    return null;
-  };
-
-  const getEvalResultsForQuestionnaire = (questionnaireJson, paramPatientBundle) => {
-    if (!questionnaireJson) return null;
-    const patientBundleToUse = !isEmptyArray(paramPatientBundle) ? paramPatientBundle : [];
-    const questionnaireObject = new Questionnaire(questionnaireJson, null, patientBundleToUse);
-    const questionnaireId = questionnaireObject.id;
-    let evalData;
-    try {
-      evalData = questionnaireObject.summary(patientBundleToUse);
-    } catch (e) {
-      console.log(e);
-      throw new Error("Error building summary results for ", questionnaireId);
-    }
-    return evalData;
-  };
-
-  const getSummaryDataByQuestionnaireId = (questionnaireId, exactMatchById, paramPatientBundle) => {
-    // find matching questionnaire & questionnaire response(s)
-    const questionnaireJson = searchMatchingQuestionnaire(questionnaireId, paramPatientBundle, exactMatchById);
-    if (!questionnaireJson) {
-      throw new Error("No matching questionnaire found.");
-    }
-    return getEvalResultsForQuestionnaire(questionnaireJson, paramPatientBundle);
-  };
-
   useQuery(
     "fhirResources",
     async () => {
@@ -188,43 +125,46 @@ export default function useFetchResources() {
         if (isReady()) {
           return;
         }
-        const resourceEvalResults = resourceTypesToLoad.map((resource) => {
-          return {
-            [resource]: new FhirResultBuilder(fhirData).build(resource),
-          };
-        });
+        import("@/models/resultBuilders/FhirResultBuilder").then((result) => {
+          const {default: FhirResultBuilder} = result;
+          const resourceEvalResults = resourceTypesToLoad.map((resource) => {
+            return {
+              [resource]: new FhirResultBuilder(fhirData).build(resource),
+            };
+          });
 
-        patientBundle.current = {
-          ...patientBundle.current,
-          entry: [...patientBundle.current.entry, ...fhirData],
-          evalResults: {
-            ...patientBundle.current.evalResults,
-            ...Object.assign({}, ...(resourceEvalResults ?? [])),
-          },
-        };
-        let summaries = {};
-        const bundle = JSON.parse(JSON.stringify(patientBundle.current.entry));
-        questionnaireList?.map((qid) => {
-          try {
-            const data = getSummaryDataByQuestionnaireId(qid, exactMatchById, bundle);
-            summaries[qid] = data;
-            handleResourceComplete(qid, {
-              data: data,
-            });
-          } catch (e) {
-            console.log(e);
-            handleResourceError(qid);
-          }
+          patientBundle.current = {
+            ...patientBundle.current,
+            entry: [...patientBundle.current.entry, ...fhirData],
+            evalResults: {
+              ...patientBundle.current.evalResults,
+              ...Object.assign({}, ...(resourceEvalResults ?? [])),
+            },
+          };
+          // let summaries = {};
+          // const bundle = JSON.parse(JSON.stringify(patientBundle.current.entry));
+          // questionnaireList?.map((qid) => {
+          //   try {
+          //     const data = getSummaryDataByQuestionnaireId(qid, exactMatchById, bundle);
+          //     summaries[qid] = data;
+          //     handleResourceComplete(qid, {
+          //       data: data,
+          //     });
+          //   } catch (e) {
+          //     console.log(e);
+          //     handleResourceError(qid);
+          //   }
+          // });
+          console.log("patient bundle ", patientBundle.current);
+          console.log("Summary data ", summaries);
+          setTimeout(
+            () =>
+              handleResourceComplete(SUMMARY_DATA_KEY, {
+                data: summaries??{},
+              }),
+            150,
+          );
         });
-        console.log("patient bundle ", patientBundle.current);
-        console.log("Summary data ", summaries);
-        setTimeout(
-          () =>
-            handleResourceComplete(SUMMARY_DATA_KEY, {
-              data: summaries,
-            }),
-          150,
-        );
       },
       onError: (e) => {
         setError("Error fetching FHIR resources. See console for detail.");
