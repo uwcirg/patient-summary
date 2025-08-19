@@ -1,244 +1,425 @@
-import { useCallback, useContext, useMemo, useReducer, useState, useRef } from "react";
+import { useCallback, useContext, useMemo, useReducer, useRef, useState } from "react";
 import { useQuery } from "react-query";
-import { FhirClientContext } from "@/context/FhirClientContext";
-import { QuestionnaireListContext } from "@/context/QuestionnaireListContext";
-import { NO_CACHE_HEADER } from "@/consts";
 import {
-  getResourceTypesFromResources,
+  getFHIRResourcePath,
   getFhirResourcesFromQueryResult,
+  getFlowsheetIds,
+  getLinkIdsFromObservations,
+  normalizeLinkId,
+  processPage,
+  getResourceTypesFromResources,
   getFHIRResourceTypesToLoad,
   getFHIRResourcePaths,
-  processPage,
-} from "@/util/fhirUtil";
-import { isEmptyArray } from "@/util";
+} from "@util/fhirUtil";
+import { getEnvQuestionnaireList, getEnv, isEmptyArray } from "@util";
+import questionnaireConfigs from "@config/questionnaire_config";
+import { buildQuestionnaire, observationsToQuestionnaireResponses } from "@models/resultBuilders/helpers";
+import QuestionnaireScoringBuilder from "@models/resultBuilders/QuestionnaireScoringBuilder";
+import { FhirClientContext } from "@/context/FhirClientContext";
+import { NO_CACHE_HEADER } from "@/consts";
 
-export default function useFetchResources() {
-  const SUMMARY_DATA_KEY = "summaryData";
-  let loadedFHIRData = [];
+const SUMMARY_DATA_KEY = "summaryData";
+const BLOCKED_EXTRA_TYPES = new Set(["questionnaire", "questionnaireresponse"]);
+const DEFAULT_QUERY_PARAMS = {
+  refetchOnWindowFocus: false,
+  refetchOnMount: false,
+  refetchOnReconnect: false,
+  retry: false,
+  staleTime: 1 * 60 * 1000,
+};
+
+// ---- Single-flight cache for phase-1 (per patient+run) ----
+const PHASE1_FLIGHTS = new Map(); // key -> Promise<{questionnaires, questionnaireResponses, summaries, qListToLoad, exactMatchById}>
+
+/** Runs phase-1 exactly once per key by returning the same Promise if already in-flight or completed. */
+function runPhase1Once(key, fn) {
+  if (PHASE1_FLIGHTS.has(key)) return PHASE1_FLIGHTS.get(key);
+  const p = (async () => {
+    try {
+      return await fn();
+    } finally {
+      // Keep the promise cached so late subscribers use the same result.
+      // (If you prefer to allow re-runs after it settles, delete on finally)
+      // PHASE1_FLIGHTS.delete(key);
+    }
+  })();
+  PHASE1_FLIGHTS.set(key, p);
+  return p;
+}
+
+/** ---- Base reducer (QRs/Qs/summaries) ---- */
+function baseReducer(state, action) {
+  switch (action.type) {
+    case "RESULTS":
+      return {
+        ...state,
+        questionnaireList: action.questionnaireList,
+        questionnaireResponses: action.questionnaireResponses,
+        questionnaires: action.questionnaires,
+        summaries: action.summaries,
+        exactMatchById: !!action.exactMatchById,
+        loadedStatus: { questionnaire: false, questionnaireResponse: true },
+        complete: true,
+        error: false,
+        errorMessage: "",
+      };
+    case "ERROR":
+      return {
+        ...state,
+        error: true,
+        errorMessage: action.errorMessage ?? String(action.message ?? "Unknown error"),
+        complete: true,
+      };
+    case "RESET":
+      return {
+        ...state,
+        questionnaireList: [],
+        questionnaires: [],
+        questionnaireResponses: [],
+        summaries: {},
+        loadedStatus: { questionnaire: false, questionnaireResponse: false },
+        complete: false,
+        error: false,
+        errorMessage: "",
+      };
+    default:
+      return state;
+  }
+}
+
+/** ---- Loader reducer for extra FHIR resources ---- */
+function loaderReducer(state, action) {
+  switch (action.type) {
+    case "INIT_TRACKING":
+      return action.items;
+    case "COMPLETE":
+      return state.map((r) => (r.id === action.id ? { ...r, data: action.data ?? r.data, complete: true } : r));
+    case "ERROR":
+      return state.map((r) => (r.id === action.id ? { ...r, complete: true, error: true } : r));
+    case "RESET":
+      return [];
+    default:
+      return state;
+  }
+}
+
+export default function usePatientQuestionnaireData() {
+  const isFromEpic = String(getEnv("REACT_APP_EPIC_QUERIES")) === "true";
   const { client, patient } = useContext(FhirClientContext);
-  let {
-    questionnaireList,
-    exactMatchById,
-    questionnaireResponses: ctxQuestionnaireResponseResources,
-    questionnaires: ctxQuestionnaireResources,
-    summaries,
-  } = useContext(QuestionnaireListContext);
+
+  const [base, dispatchBase] = useReducer(baseReducer, {
+    questionnaireList: [],
+    questionnaires: [],
+    questionnaireResponses: [],
+    exactMatchById: isFromEpic,
+    loadedStatus: { questionnaire: false, questionnaireResponse: false },
+    summaries: {},
+    complete: false,
+    error: false,
+    errorMessage: "",
+  });
+
+  // phase-2 tracking
+  const [toBeLoadedResources, dispatchLoader] = useReducer(loaderReducer, []);
+  const [extraTypes, setExtraTypes] = useState([]);
   const [error, setError] = useState(null);
+
+  // refresh
+  const [bump, setBump] = useState(0);
+  const refresh = useCallback(() => {
+    dispatchBase({ type: "RESET" });
+    dispatchLoader({ type: "RESET" });
+    setError(null);
+    setExtraTypes([]);
+    // clear flight for this patient so phase-1 can re-run on refresh
+    if (patient?.id) PHASE1_FLIGHTS.delete(`${patient.id}::${bump}`);
+    setBump((x) => x + 1);
+  }, [patient?.id, bump]);
+
+  // Bundle + eval results
   const patientBundle = useRef({
     resourceType: "Bundle",
     id: "resource-bundle",
     type: "collection",
-    entry: [{ resource: patient }, ...(ctxQuestionnaireResponseResources ?? []), ...(ctxQuestionnaireResources ?? [])],
+    entry: [],
     evalResults: {},
   });
 
-  const getResourceTypesToLoad = () => {
-    const existingResources = [
-      ...new Set(getResourceTypesFromResources(ctxQuestionnaireResources).map((r) => String(r).toLowerCase())),
-      ...new Set(getResourceTypesFromResources(ctxQuestionnaireResponseResources).map((r) => String(r).toLowerCase())),
-    ];
-    let resources = getFHIRResourceTypesToLoad().filter((r) => {
-      return existingResources.indexOf(String(r).toLowerCase()) === -1;
-    });
-    const resourcesToLoad = [...new Set(resources.flat())];
-    // patient resource is loaded already
-    return resourcesToLoad.filter((resource) => String(resource).toLowerCase() !== "patient");
-  };
+  /** -------------------- Phase 1 via React Query (single-flight guarded) -------------------- */
+  const phase1Key = useMemo(() => (patient?.id ? `${patient.id}::${bump}` : null), [patient?.id, bump]);
 
-  const getResourcesToTrack = (resourceTypesToLoad) => {
-    // all the resources that will be loaded
-    let initialResourcesToLoad = [
-      ...(resourceTypesToLoad ? resourceTypesToLoad : []).map((type) => ({
-        id: type,
-        complete: false,
-        error: false,
-      })),
-    ];
-      initialResourcesToLoad.push({
-        id: SUMMARY_DATA_KEY,
-        title: `Waiting for all summary data ...`,
-        complete: false,
-        error: false,
-        data: null,
-      });
-    
-
-    return initialResourcesToLoad;
-  };
-
-  const resourceTypesToLoad = getResourceTypesToLoad();
-  const initialResourcesToLoad = getResourcesToTrack(resourceTypesToLoad);
-
-  // hook for tracking resource load state
-  const resourceReducer = (state, action) => {
-    switch (action.type) {
-      case "COMPLETE":
-        return state.map((resource) => {
-          if (resource.id === action.id) {
-            return { ...resource, data: action.data, complete: true };
-          } else {
-            return resource;
-          }
-        });
-      case "ERROR":
-        return state.map((resource) => {
-          if (resource.id === action.id) {
-            return { ...resource, complete: true, error: true };
-          } else {
-            return resource;
-          }
-        });
-      default:
-        return state;
-    }
-  };
-
-  const [toBeLoadedResources, dispatch] = useReducer(resourceReducer, initialResourcesToLoad);
-
-  const isReady = useCallback(
-    () => isEmptyArray(toBeLoadedResources) || !toBeLoadedResources.find((o) => !o.complete) || error,
-    [error, toBeLoadedResources],
-  );
-
-  const handleResourceComplete = (resource, params) => {
-    dispatch({ type: "COMPLETE", id: resource, ...params });
-  };
-
-  const handleResourceError = (resource) => {
-    dispatch({ type: "ERROR", id: resource });
-  };
-
-  useQuery(
-    "fhirResources",
+  const phase1Query = useQuery(
+    ["phase1-qr-obs-q", phase1Key],
     async () => {
-      const results = await getFhirResources({
-        questionnaireList: questionnaireList,
-        exactMatchById: exactMatchById,
+      if (!client || !patient?.id) throw new Error("No FHIR client or patient provided");
+
+      return runPhase1Once(phase1Key, async () => {
+        const preloadList = getEnvQuestionnaireList();
+        let qrResources = [];
+        let obResources = [];
+
+        // 1) Load QR + Obs
+        await Promise.allSettled([
+          client.request(
+            { url: `QuestionnaireResponse?_count=200&patient=${patient.id}`, header: NO_CACHE_HEADER },
+            { pageLimit: 0, onPage: processPage(client, qrResources) },
+          ),
+          client.request(
+            {
+              url: `Observation?_count=200&patient=${patient.id}&code=${getFlowsheetIds().join(",")}`,
+              header: NO_CACHE_HEADER,
+            },
+            { pageLimit: 0, onPage: processPage(client, obResources) },
+          ),
+        ]);
+
+        let matchedQRs = !isEmptyArray(qrResources)
+          ? qrResources.filter((it) => it && it.questionnaire && it.questionnaire.split("/")[1])
+          : [];
+
+        const hasPreload = !isEmptyArray(preloadList);
+        if (!hasPreload && isEmptyArray(matchedQRs) && isEmptyArray(obResources)) {
+          throw new Error("No questionnaire list set.");
+        }
+
+        let qIds = [...preloadList];
+        let syntheticQs = [];
+
+        // 2) From Obs, build synthetic Qs/QRs if configs match
+        if (!isEmptyArray(obResources)) {
+          let obsLinkIds = getLinkIdsFromObservations(obResources);
+          if (!isEmptyArray(obsLinkIds)) {
+            for (const key in questionnaireConfigs) {
+              const cfg = questionnaireConfigs[key];
+              const hit = cfg?.questionLinkIds?.find((linkId) => obsLinkIds.includes(normalizeLinkId(linkId)));
+              if (hit) {
+                if (cfg) {
+                  const builtQ = buildQuestionnaire(cfg);
+                  const builtQRs = observationsToQuestionnaireResponses(obResources, cfg);
+                  syntheticQs = [...syntheticQs, builtQ];
+                  matchedQRs = [...matchedQRs, ...builtQRs];
+                  if (cfg.questionnaireId) qIds.push(cfg.questionnaireId);
+                } else if (cfg?.questionnaireId) {
+                  qIds.push(cfg.questionnaireId);
+                }
+              }
+            }
+          }
+        }
+
+        // 3) Determine Q list and fetch Questionnaires
+        const matchedQIds = matchedQRs?.map((it) => it.questionnaire?.split("/")[1]) ?? [];
+        const uniqueQIds = [...new Set([...qIds, ...matchedQIds])];
+        const qListToLoad = hasPreload ? preloadList : uniqueQIds;
+
+        const qPath = getFHIRResourcePath(patient.id, ["Questionnaire"], {
+          questionnaireList: qListToLoad,
+          exactMatchById: !hasPreload,
+        });
+
+        let qResources = [];
+        await client.request(
+          { url: qPath, header: NO_CACHE_HEADER },
+          { pageLimit: 0, onPage: processPage(client, qResources) },
+        );
+
+        const questionnaires = [...syntheticQs, ...getFhirResourcesFromQueryResult(qResources)];
+        const questionnaireResponses = getFhirResourcesFromQueryResult(matchedQRs);
+        const bundle = [...questionnaires, ...questionnaireResponses];
+        const summaries = new QuestionnaireScoringBuilder({}, bundle).summariesByQuestionnaireFromBundle();
+
+        return {
+          questionnaires,
+          questionnaireResponses,
+          summaries,
+          qListToLoad: [...qListToLoad, ...syntheticQs.map((q) => q.id)],
+          exactMatchById: !hasPreload,
+        };
       });
-      return results;
     },
     {
-      disabled: isReady(),
-      refetchOnWindowFocus: false,
-      onSettled: (fhirData) => {
-        console.log("FHIR data ", fhirData);
-        if (isReady()) {
-          return;
-        }
-        import("@/models/resultBuilders/FhirResultBuilder").then((result) => {
-          const {default: FhirResultBuilder} = result;
-          const resourceEvalResults = resourceTypesToLoad.map((resource) => {
-            return {
-              [resource]: new FhirResultBuilder(fhirData).build(resource),
-            };
-          });
+      ...DEFAULT_QUERY_PARAMS,
+      enabled: !!client && !!patient?.id && !base.complete && !base.error && !!phase1Key,
+      onSuccess: ({ questionnaires, questionnaireResponses, summaries, qListToLoad, exactMatchById }) => {
+        // seed bundle
+        patientBundle.current = {
+          ...patientBundle.current,
+          entry: [{ resource: patient }, ...questionnaireResponses, ...questionnaires],
+        };
 
-          patientBundle.current = {
-            ...patientBundle.current,
-            entry: [...patientBundle.current.entry, ...fhirData],
-            evalResults: {
-              ...patientBundle.current.evalResults,
-              ...Object.assign({}, ...(resourceEvalResults ?? [])),
-            },
-          };
-          console.log("patient bundle ", patientBundle.current);
-          console.log("Summary data ", summaries);
-          setTimeout(
-            () =>
-              handleResourceComplete(SUMMARY_DATA_KEY, {
-                data: summaries??{},
-              }),
-            150,
-          );
+        // commit base results
+        dispatchBase({
+          type: "RESULTS",
+          questionnaireList: qListToLoad,
+          questionnaires,
+          questionnaireResponses,
+          summaries,
+          exactMatchById,
         });
+
+        // compute extra resource types for phase-2
+        const haveTypes = [
+          ...new Set(getResourceTypesFromResources(questionnaires).map((r) => String(r).toLowerCase())),
+          ...new Set(getResourceTypesFromResources(questionnaireResponses).map((r) => String(r).toLowerCase())),
+          "patient",
+        ];
+
+        const wanted = getFHIRResourceTypesToLoad()
+          .flat()
+          .filter((t) => !haveTypes.includes(String(t).toLowerCase()));
+
+        const uniqWanted = [...new Set(wanted)].filter(
+          (t) => !BLOCKED_EXTRA_TYPES.has(String(t).replace(/\s+/g, "").toLowerCase()),
+        );
+
+        setExtraTypes(uniqWanted);
+
+        if (uniqWanted.length > 0) {
+          const tracking = [
+            ...uniqWanted.map((t) => ({ id: t, complete: false, error: false })),
+            {
+              id: SUMMARY_DATA_KEY,
+              title: "Waiting for all summary data ...",
+              complete: false,
+              error: false,
+              data: null,
+            },
+          ];
+          dispatchLoader({ type: "INIT_TRACKING", items: tracking });
+        } else {
+          dispatchLoader({
+            type: "INIT_TRACKING",
+            items: [{ id: SUMMARY_DATA_KEY, title: "Summary data", complete: true, error: false, data: summaries }],
+          });
+        }
       },
       onError: (e) => {
-        setError("Error fetching FHIR resources. See console for detail.");
-        console.log("FHIR resources fetching error: ", e);
+        dispatchBase({ type: "ERROR", errorMessage: e?.message ?? String(e) });
       },
     },
   );
 
-  const getFhirResources = async (params = {}) => {
-    if (!client || !patient || !patient.id) throw new Error("Client or patient missing.");
-    const resources = getFHIRResourcePaths(patient.id, resourceTypesToLoad, params);
-    const requests = resources.map((resource) =>
+  /** -------------------- Phase 2 via React Query -------------------- */
+  const readyForExtras =
+    !!client &&
+    !!patient?.id &&
+    base.complete &&
+    !base.error &&
+    extraTypes.length > 0 &&
+    toBeLoadedResources.length > 0;
+
+  const loadedFHIRDataRef = useRef([]);
+
+  const getFhirResources = useCallback(async () => {
+    loadedFHIRDataRef.current = [];
+    const paths = getFHIRResourcePaths(patient.id, extraTypes, {
+      questionnaireList: base.questionnaireList,
+      exactMatchById: base.exactMatchById,
+    });
+
+    const requests = paths.map((p) =>
       client
         .request(
-          { url: resource.resourcePath, header: NO_CACHE_HEADER },
-          {
-            pageLimit: 0, // unlimited pages
-            onPage: processPage(client, loadedFHIRData),
-          },
+          { url: p.resourcePath, header: NO_CACHE_HEADER },
+          { pageLimit: 0, onPage: processPage(client, loadedFHIRDataRef.current) },
         )
         .then(() => {
-          handleResourceComplete(resource.resourceType);
-          return loadedFHIRData;
+          dispatchLoader({ type: "COMPLETE", id: p.resourceType });
+          return loadedFHIRDataRef.current;
         })
         .catch((e) => {
-          handleResourceError(resource.resourceType);
-          throw new Error(e);
+          dispatchLoader({ type: "ERROR", id: p.resourceType });
+          console.warn("FHIR resource retrieval error for", p.resourceType, e);
+          return [];
         }),
     );
-    if (!requests.length) {
-      console.log("No FHIR resource(s) specified.");
-      return [];
-    }
-    let bundle = [];
-    return Promise.allSettled(requests).then(
-      (results) => {
-        results.forEach((item) => {
-          if (item.status === "rejected") {
-            console.log("Fhir resource retrieval error ", item.reason);
-            return true;
-          }
-          const result = item.value;
-          bundle = [...bundle, ...getFhirResourcesFromQueryResult(result)];
-        });
-        return bundle;
-      },
-      (e) => {
-        throw new Error(e);
-      },
-    );
-  };
 
-  const getAllChartData = useCallback(
-    (summaryData) => {
-      if (!isReady() || !summaryData || !summaryData.data) return null;
-      const dataToUse = Object.assign({}, JSON.parse(JSON.stringify(summaryData.data)));
-      const keys = Object.keys(dataToUse);
-      const formattedData = keys.map((key) => {
-        const data = dataToUse[key];
-        if (!data || isEmptyArray(data.chartData)) return [];
-        let dataToReturn = [];
-        if (data.chartConfig && data.chartConfig.dataFormatter) {
-          dataToReturn = data.chartConfig.dataFormatter(data.chartData);
-        } else dataToReturn = data.chartData;
-        {
-          return dataToReturn.map((o) => {
-            o.key = key;
-            o[key] = o["score"];
-            return o;
-          });
-        }
-      });
-      return formattedData.flat().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    if (!requests.length) return [];
+    const settled = await Promise.allSettled(requests);
+    let bundle = [];
+    for (const res of settled) {
+      if (res.status === "fulfilled") {
+        bundle = [...bundle, ...getFhirResourcesFromQueryResult(res.value)];
+      }
+    }
+    return bundle;
+  }, [client, patient?.id, extraTypes, base.questionnaireList, base.exactMatchById, dispatchLoader]);
+
+  useQuery(
+    ["extra-fhir-resources", patient?.id, extraTypes.join(","), bump],
+    async () => {
+      const fhirData = await getFhirResources();
+
+      const { default: FhirResultBuilder } = await import("@/models/resultBuilders/FhirResultBuilder");
+      const evalEntries = extraTypes.map((t) => ({ [t]: new FhirResultBuilder(fhirData).build(t) }));
+      const evalResults = Object.assign({}, ...(evalEntries ?? []));
+
+      patientBundle.current = {
+        ...patientBundle.current,
+        entry: [...patientBundle.current.entry, ...fhirData],
+        evalResults: { ...patientBundle.current.evalResults, ...evalResults },
+      };
+
+      dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: base.summaries ?? {} });
+      return fhirData;
     },
-    [isReady],
+    {
+      ...DEFAULT_QUERY_PARAMS,
+      enabled: readyForExtras,
+    },
   );
 
-  const summaryData = toBeLoadedResources.find((resource) => resource.id === SUMMARY_DATA_KEY);
-  const allChartData = useMemo(() => getAllChartData(summaryData), [summaryData, getAllChartData]);
+  /** -------------------- Derived helpers -------------------- */
+  const phase2DoneOrSkipped =
+    isEmptyArray(toBeLoadedResources) || !toBeLoadedResources.find((o) => !o.complete) || !!error;
+
+  const isReady = base.complete && (phase2DoneOrSkipped || extraTypes.length === 0) && !base.error;
+
+  const summaryData = useMemo(() => toBeLoadedResources.find((r) => r.id === SUMMARY_DATA_KEY), [toBeLoadedResources]);
+
+  const allChartData = useMemo(() => {
+    if (!isReady || !summaryData || !summaryData.data) return null;
+    const dataToUse = JSON.parse(JSON.stringify(summaryData.data));
+    const keys = Object.keys(dataToUse);
+    const formatted = keys.map((key) => {
+      const d = dataToUse[key];
+      if (!d || isEmptyArray(d.chartData)) return [];
+      const series = d.chartConfig?.dataFormatter ? d.chartConfig.dataFormatter(d.chartData) : d.chartData;
+      return series.map((o) => ({ ...o, key, [key]: o.score }));
+    });
+    return formatted.flat().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [isReady, summaryData]);
+
+  const loading =
+    (phase1Query.isLoading && !base.complete) ||
+    (!base.complete && !base.error) ||
+    (base.complete && extraTypes.length > 0 && !phase2DoneOrSkipped && !base.error);
 
   return {
-    isReady: isReady(),
-    error: error,
-    toBeLoadedResources: toBeLoadedResources,
-    patientBundle: patientBundle.current.entry,
+    // status
+    loading,
+    isReady,
+    error: error || (base.error ? base.errorMessage : null),
+
+    // base (phase 1)
+    questionnaireList: base.questionnaireList,
+    questionnaires: base.questionnaires,
+    questionnaireResponses: base.questionnaireResponses,
+    summaries: base.summaries,
+    loadingFlags: base.loadedStatus,
+
+    // phase 2
+    toBeLoadedResources,
     evalData: patientBundle.current.evalResults,
-    summaryData: summaryData,
-    allChartData: allChartData,
-    questionnaireList: questionnaireList,
+
+    // bundle
+    patientBundle: patientBundle.current.entry,
+
+    // charts
+    summaryData,
+    allChartData,
+
+    // controls
+    refresh,
   };
 }

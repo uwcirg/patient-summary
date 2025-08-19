@@ -363,3 +363,11 @@ export function getQuestionItemType(answerOption) {
   const key = Object.keys(answerOption).find((k) => k.startsWith("value"));
   return key ? key.slice(5).replace(/^[A-Z]/, (c) => c.toLowerCase()) : "string";
 }
+
+export function getLinkIdsFromObservations(obResources) {
+  if (isEmptyArray(obResources)) return [];
+  let obsLinkIds = obResources
+    .filter((o) => getLinkIdByFromFlowsheetId(getFlowsheetId(o)))
+    .map((o) => normalizeLinkId(getLinkIdByFromFlowsheetId(getFlowsheetId(o))));
+  return [...new Set(obsLinkIds)];
+}

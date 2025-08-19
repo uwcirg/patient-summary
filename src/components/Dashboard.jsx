@@ -2,12 +2,9 @@ import React from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
-import {
-  getAppHeight,
-  getSectionsToShow,
-  isEmptyArray,
-} from "@util";
+import { getAppHeight, getSectionsToShow, isEmptyArray } from "@util";
 import ErrorComponent from "./ErrorComponent";
+import Loader from "./Loader";
 import ProgressIndicator from "./ProgressIndicator";
 import Section from "./Section";
 import Version from "./Version";
@@ -17,19 +14,19 @@ import useFetchResources from "@/hooks/useFetchResources";
 export default function Dashboard() {
   const {
     error,
+    loading,
     isReady,
     patientBundle,
     questionnaireList,
     summaryData,
     evalData,
     toBeLoadedResources,
-    allChartData
+    allChartData,
   } = useFetchResources();
   const sectionsToShow = getSectionsToShow();
-  
+
   const renderSections = () => {
-    if (isEmptyArray(sectionsToShow))
-      return <Alert severity="warning">No section to show.</Alert>;
+    if (isEmptyArray(sectionsToShow)) return <Alert severity="warning">No section to show.</Alert>;
     return sectionsToShow.map((section) => {
       return (
         <Section
@@ -39,7 +36,7 @@ export default function Dashboard() {
             summaryData: summaryData,
             questionnaireKeys: questionnaireList,
             evalData: evalData,
-            allChartData: allChartData
+            allChartData: allChartData,
           }}
           key={`section_${section.id}`}
         ></Section>
@@ -64,10 +61,9 @@ export default function Dashboard() {
 
   return (
     <Box className="app">
-      {!isReady && (
-        <ProgressIndicator resources={toBeLoadedResources}></ProgressIndicator>
-      )}
-      {isReady && (
+      {loading && <Loader></Loader>}
+      {!isReady && <ProgressIndicator resources={toBeLoadedResources}></ProgressIndicator>}
+      {!loading && isReady && (
         <>
           <FloatingNavButton></FloatingNavButton>
           <Stack className="summaries" sx={mainStackStyleProps}>

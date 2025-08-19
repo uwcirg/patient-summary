@@ -411,6 +411,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (isEmptyArray(responses)) responses = this.responsesOnly(flat);
 
       return {
+        ...config??{},
         id: qr.id,
         date: this.dateTimeText(qr.authored),
         responses,

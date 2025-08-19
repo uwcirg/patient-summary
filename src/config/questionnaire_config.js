@@ -168,6 +168,7 @@ const questionnaireConfigs = {
       { min: 0, label: "high", meaning: "possible impairment" }, // catch-all for 0–2
     ],
     highSeverityScoreCutoff: 2, // flag when total ≤ 2 (common rule)
+    comparisonToAlert: "lower",
     matchMode: "fuzzy",
   },
   "CIRG-PHQ9": {
@@ -204,6 +205,7 @@ const questionnaireConfigs = {
     scoringQuestionId: "/71492-3", // total score item
     questionLinkIds: ["/71492-3"],
     scoringParams: { maximumScore: 30 },
+    comparisonToAlert: "lower",
     matchMode: "fuzzy",
     // No questionLinkIds needed—SLUMS uses a single total-score field
   },

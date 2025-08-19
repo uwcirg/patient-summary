@@ -30,7 +30,7 @@ export default function Summaries({ questionnaireKeys, summaryData }) {
           summaryData.data && summaryData.data[questionnaireId] ? summaryData.data[questionnaireId] : null;
         if (!dataObject) return null;
         return (
-          <Box className="summary-container" key={`summary_${questionnaireId}`}>
+          <Box className="summary-container" key={`summary_${questionnaireId}_${index}`}>
             <Summary
               questionnaireId={questionnaireId}
               data={dataObject}
