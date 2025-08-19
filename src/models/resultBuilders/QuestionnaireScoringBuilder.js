@@ -42,6 +42,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     this.responseAnswerTypes = new Set([
       "boolean",
       "decimal",
+      "coding",
       "integer",
       "date",
       "dateTime",
@@ -299,7 +300,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (!ans) return null;
 
     const prim = this.answerPrimitive(ans);
-    console.log("prim ", prim)
     if (!isNil(prim) && !isNaN(parseInt(prim))) return prim;
     const coding = this.answerCoding(ans);
     if (coding?.code) {
@@ -372,14 +372,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   // -------------------- public APIs --------------------
   getResponsesSummary(questionnaireResponses, questionnaire) {
-    console.log("questionnaire ", questionnaire)
     const config = this.cfg && this.cfg.questionnaireId? this.cfg: questionnaireConfig[questionnaire?.id];
-    console.log("config ", config)
     const scoreLinkIds = config?.questionLinkIds?.length
       ? config.questionLinkIds
       : this.getAnswerLinkIdsByQuestionnaire(questionnaire);
     const scoringQuestionId = config?.scoringQuestionId;
-    console.log("scoring id ", scoringQuestionId)
 
     const rows = (questionnaireResponses || []).map((qr) => {
 

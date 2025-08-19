@@ -141,20 +141,6 @@ export default function useFetchResources() {
               ...Object.assign({}, ...(resourceEvalResults ?? [])),
             },
           };
-          // let summaries = {};
-          // const bundle = JSON.parse(JSON.stringify(patientBundle.current.entry));
-          // questionnaireList?.map((qid) => {
-          //   try {
-          //     const data = getSummaryDataByQuestionnaireId(qid, exactMatchById, bundle);
-          //     summaries[qid] = data;
-          //     handleResourceComplete(qid, {
-          //       data: data,
-          //     });
-          //   } catch (e) {
-          //     console.log(e);
-          //     handleResourceError(qid);
-          //   }
-          // });
           console.log("patient bundle ", patientBundle.current);
           console.log("Summary data ", summaries);
           setTimeout(

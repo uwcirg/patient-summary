@@ -133,6 +133,8 @@ export default function QuestionnaireListProvider({ children }) {
           return;
         }
         let qIds = [...preloadQuestionnaireList];
+        let builtQuestionnaires = [];
+        let builtQuestionnaireResponses = [];
         if (!isEmptyArray(obResources)) {
           let obsLinkIds = obResources
             .filter((item) => getLinkIdByFromFlowsheetId(getFlowsheetId(item)))
@@ -145,15 +147,15 @@ export default function QuestionnaireListProvider({ children }) {
                   (linkId) => obsLinkIds.indexOf(normalizeLinkId(linkId)) !== -1,
                 )
               ) {
-                const builtQuestionnaire = buildQuestionnaire(questionnaireConfigs[config]);
-                const builtQrs = observationsToQuestionnaireResponses(obResources, questionnaireConfigs[config]);
-                if (config.questionnaireId) {
-                  qIds = [...qIds, config.questionnaireId];
-                }
-                console.log("built questionnaire ", builtQuestionnaire);
-                console.log("built Qrs ", builtQrs);
-                qAllResources = [...qAllResources, builtQuestionnaire];
-                matchedResults = [...matchedResults, ...builtQrs];
+                if (questionnaireConfigs[config]) {
+                  builtQuestionnaires = [...builtQuestionnaires, buildQuestionnaire(questionnaireConfigs[config])];
+                  builtQuestionnaireResponses = [
+                    ...builtQuestionnaireResponses,
+                    ...observationsToQuestionnaireResponses(obResources, questionnaireConfigs[config]),
+                  ];
+                } else qIds = [...qIds, config.questionnaireId];
+                console.log("built questionnaire ", builtQuestionnaires);
+                console.log("built Qrs ", builtQuestionnaireResponses);
               }
             }
           }
@@ -163,6 +165,8 @@ export default function QuestionnaireListProvider({ children }) {
         });
         qIds = [...qIds, ...(matchedResults?.map((item) => item.questionnaire?.split("/")[1]) ?? [])];
         let uniqueQIds = [...new Set(qIds)];
+        qAllResources = builtQuestionnaires;
+        matchedResults = [...matchedResults, ...builtQuestionnaireResponses];
         const qListToLoad = hasPreloadQList ? preloadQuestionnaireList : uniqueQIds;
         const questionnaireResourcePath = getFHIRResourcePath(patient.id, ["Questionnaire"], {
           questionnaireList: qListToLoad,
@@ -177,12 +181,15 @@ export default function QuestionnaireListProvider({ children }) {
             },
           )
           .then(() => {
-            const questionnaireResources = [...qAllResources, ...getFhirResourcesFromQueryResult(qResources)];
+            const questionnaireResources = [...getFhirResourcesFromQueryResult([...qAllResources, ...qResources])];
             const questionnaireResponseResources = getFhirResourcesFromQueryResult(matchedResults);
-            const summaries = new QuestionnaireScoringBuilder({}, [...questionnaireResources, ...questionnaireResponseResources]).summariesByQuestionnaireFromBundle();
+            const summaries = new QuestionnaireScoringBuilder({}, [
+              ...questionnaireResources,
+              ...questionnaireResponseResources,
+            ]).summariesByQuestionnaireFromBundle();
             dispatch({
               type: "RESULTS",
-              questionnaireList: qListToLoad,
+              questionnaireList: [...qListToLoad, ...builtQuestionnaires.map((q) => q.id)],
               questionnaires: questionnaireResources,
               questionnaireResponses: questionnaireResponseResources,
               summaries: summaries,
