@@ -103,7 +103,7 @@ function loaderReducer(state, action) {
   }
 }
 
-export default function usePatientQuestionnaireData() {
+export default function useFetchResources() {
   const isFromEpic = String(getEnv("REACT_APP_EPIC_QUERIES")) === "true";
   const { client, patient } = useContext(FhirClientContext);
 
@@ -214,7 +214,7 @@ export default function usePatientQuestionnaireData() {
 
         const qPath = getFHIRResourcePath(patient.id, ["Questionnaire"], {
           questionnaireList: qListToLoad,
-          exactMatchById: !hasPreload,
+          exactMatchById: !hasPreload || isFromEpic,
         });
 
         let qResources = [];
@@ -233,7 +233,7 @@ export default function usePatientQuestionnaireData() {
           questionnaireResponses,
           summaries,
           qListToLoad: [...qListToLoad, ...syntheticQs.map((q) => q.id)],
-          exactMatchById: !hasPreload,
+          exactMatchById: !hasPreload || isFromEpic,
         };
       });
     },
