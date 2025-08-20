@@ -11,7 +11,7 @@ import {
   getFHIRResourceTypesToLoad,
   getFHIRResourcePaths,
 } from "@util/fhirUtil";
-import { getEnvQuestionnaireList, getEnv, isEmptyArray } from "@util";
+import { fuzzyMatch, getEnvQuestionnaireList, getEnv, isEmptyArray } from "@util";
 import questionnaireConfigs from "@config/questionnaire_config";
 import { buildQuestionnaire, observationsToQuestionnaireResponses } from "@models/resultBuilders/helpers";
 import QuestionnaireScoringBuilder from "@models/resultBuilders/QuestionnaireScoringBuilder";
@@ -39,7 +39,7 @@ function runPhase1Once(key, fn) {
       return await fn();
     } finally {
       // Keep the promise cached so late subscribers use the same result.
-      // (If you prefer to allow re-runs after it settles, delete on finally)
+      // delete if want to allow re-runs after it settles
       // PHASE1_FLIGHTS.delete(key);
     }
   })();
@@ -101,6 +101,10 @@ function loaderReducer(state, action) {
     default:
       return state;
   }
+}
+
+function getSummaries(bundle) {
+  return new QuestionnaireScoringBuilder({}, bundle).summariesByQuestionnaireFromBundle();
 }
 
 export default function useFetchResources() {
@@ -191,16 +195,19 @@ export default function useFetchResources() {
           if (!isEmptyArray(obsLinkIds)) {
             for (const key in questionnaireConfigs) {
               const cfg = questionnaireConfigs[key];
+              if (hasPreload && !preloadList.find((q) => fuzzyMatch(q, key))) {
+                continue;
+              }
               const hit = cfg?.questionLinkIds?.find((linkId) => obsLinkIds.includes(normalizeLinkId(linkId)));
               if (hit) {
                 if (cfg) {
                   const builtQ = buildQuestionnaire(cfg);
                   const builtQRs = observationsToQuestionnaireResponses(obResources, cfg);
+                  console.log("built questionnaire ", builtQ);
+                  console.log("buit QRs ", builtQRs);
                   syntheticQs = [...syntheticQs, builtQ];
                   matchedQRs = [...matchedQRs, ...builtQRs];
                   if (cfg.questionnaireId) qIds.push(cfg.questionnaireId);
-                } else if (cfg?.questionnaireId) {
-                  qIds.push(cfg.questionnaireId);
                 }
               }
             }
@@ -223,16 +230,23 @@ export default function useFetchResources() {
           { pageLimit: 0, onPage: processPage(client, qResources) },
         );
 
-        const questionnaires = [...syntheticQs, ...getFhirResourcesFromQueryResult(qResources)];
-        const questionnaireResponses = getFhirResourcesFromQueryResult(matchedQRs);
-        const bundle = [...questionnaires, ...questionnaireResponses];
-        const summaries = new QuestionnaireScoringBuilder({}, bundle).summariesByQuestionnaireFromBundle();
-
+        const questionnaires = [
+          ...getFhirResourcesFromQueryResult(syntheticQs),
+          ...getFhirResourcesFromQueryResult(qResources),
+        ];
+        const idsFromQuestionnaires = questionnaires.map((item) => item.resource.id);
+        let questionnaireResponses = getFhirResourcesFromQueryResult(matchedQRs);
+        if (!isEmptyArray(questionnaires)) {
+          questionnaireResponses = questionnaireResponses.filter((item) => {
+            const qId = String(item.resource?.questionnaire).split("/")[1];
+            return idsFromQuestionnaires.indexOf(qId) !== -1;
+          });
+        }
         return {
           questionnaires,
           questionnaireResponses,
-          summaries,
-          qListToLoad: [...qListToLoad, ...syntheticQs.map((q) => q.id)],
+          //summaries,
+          qListToLoad: qListToLoad,
           exactMatchById: !hasPreload || isFromEpic,
         };
       });
@@ -240,7 +254,7 @@ export default function useFetchResources() {
     {
       ...DEFAULT_QUERY_PARAMS,
       enabled: !!client && !!patient?.id && !base.complete && !base.error && !!phase1Key,
-      onSuccess: ({ questionnaires, questionnaireResponses, summaries, qListToLoad, exactMatchById }) => {
+      onSuccess: ({ questionnaires, questionnaireResponses, qListToLoad, exactMatchById }) => {
         // seed bundle
         patientBundle.current = {
           ...patientBundle.current,
@@ -253,7 +267,7 @@ export default function useFetchResources() {
           questionnaireList: qListToLoad,
           questionnaires,
           questionnaireResponses,
-          summaries,
+          //summaries,
           exactMatchById,
         });
 
@@ -289,7 +303,15 @@ export default function useFetchResources() {
         } else {
           dispatchLoader({
             type: "INIT_TRACKING",
-            items: [{ id: SUMMARY_DATA_KEY, title: "Summary data", complete: true, error: false, data: summaries }],
+            items: [
+              {
+                id: SUMMARY_DATA_KEY,
+                title: "Summary data",
+                complete: true,
+                error: false,
+                data: getSummaries(patientBundle.current.entry),
+              },
+            ],
           });
         }
       },
@@ -349,7 +371,6 @@ export default function useFetchResources() {
     ["extra-fhir-resources", patient?.id, extraTypes.join(","), bump],
     async () => {
       const fhirData = await getFhirResources();
-
       const { default: FhirResultBuilder } = await import("@/models/resultBuilders/FhirResultBuilder");
       const evalEntries = extraTypes.map((t) => ({ [t]: new FhirResultBuilder(fhirData).build(t) }));
       const evalResults = Object.assign({}, ...(evalEntries ?? []));
@@ -360,7 +381,7 @@ export default function useFetchResources() {
         evalResults: { ...patientBundle.current.evalResults, ...evalResults },
       };
 
-      dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: base.summaries ?? {} });
+      dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: getSummaries(patientBundle.current.entry) });
       return fhirData;
     },
     {
@@ -377,8 +398,16 @@ export default function useFetchResources() {
 
   const summaryData = useMemo(() => toBeLoadedResources.find((r) => r.id === SUMMARY_DATA_KEY), [toBeLoadedResources]);
 
+  const hasSummaryData = useMemo(() => {
+    if (!isReady || !summaryData || !summaryData.data) return false;
+    const keys = Object.keys(summaryData.data);
+    return !!keys.find(
+      (key) => summaryData.data[key] && (summaryData.data[key].error || !isEmptyArray(summaryData.data[key].responses)),
+    );
+  }, [isReady, summaryData]);
+
   const allChartData = useMemo(() => {
-    if (!isReady || !summaryData || !summaryData.data) return null;
+    if (!isReady || !hasSummaryData) return null;
     const dataToUse = JSON.parse(JSON.stringify(summaryData.data));
     const keys = Object.keys(dataToUse);
     const formatted = keys.map((key) => {
@@ -388,7 +417,7 @@ export default function useFetchResources() {
       return series.map((o) => ({ ...o, key, [key]: o.score }));
     });
     return formatted.flat().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [isReady, summaryData]);
+  }, [isReady, hasSummaryData, summaryData]);
 
   const loading =
     (phase1Query.isLoading && !base.complete) ||
@@ -418,6 +447,9 @@ export default function useFetchResources() {
     // charts
     summaryData,
     allChartData,
+
+    // bool
+    hasSummaryData,
 
     // controls
     refresh,

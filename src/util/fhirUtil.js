@@ -187,7 +187,7 @@ export function conceptCode(c) {
   if (!c || isEmptyArray(c.coding)) return null;
   const codings = c.coding;
   for (let i = 0; i < codings.length; i++) {
-    const code = codings[i]?.code ?? (codings[i]?.code?.value ? codings[i]?.code?.value : codings[i]?.code);
+    const code = codings[i]?.code ?? (codings[i]?.code?.value ? codings[i]?.code?.value : null);
     if (code) return code;
   }
   return null;
@@ -199,11 +199,11 @@ export function conceptText(c) {
   if (c.text?.value) return c.text.value;
   const codings = !isEmptyArray(c.coding) ? c.coding : [];
   for (let i = 0; i < codings.length; i++) {
-    const d = codings[i]?.display ?? (codings[i]?.display?.value ? codings[i]?.display?.value : codings[i]?.display);
+    const d = codings[i]?.display ?? (codings[i]?.display?.value ? codings[i]?.display?.value : "");
     if (d) return d;
   }
   for (let i = 0; i < codings.length; i++) {
-    const code = codings[i]?.code ?? (codings[i]?.code?.value ? codings[i]?.code?.value : codings[i]?.code);
+    const code = codings[i]?.code ?? (codings[i]?.code?.value ? codings[i]?.code?.value : "");
     if (code) return code;
   }
   return null;
@@ -256,10 +256,20 @@ export function getValueText(O) {
   return null;
 }
 export const getValueFromResource = (resourceItem) => {
-  const n = Number(resourceItem?.valueQuantity?.value);
-  if (Number.isFinite(n)) {
-    const coding = DEFAULT_VAL_TO_LOIN_CODE[n];
-    if (coding) return { valueCoding: coding };
+  const n = resourceItem?.valueQuantity ? Number(resourceItem?.valueQuantity?.value ?? undefined) : undefined;
+  if (isFinite(n)) {
+    const code = conceptCode(resourceItem?.code);
+    const linkId = code ? getLinkIdByFromFlowsheetId(code) : null;
+    if (linkId) {
+      const coding = DEFAULT_VAL_TO_LOIN_CODE[n];
+      if (coding) return { valueCoding: coding };
+      return {
+        valueQuantity: resourceItem["valueQuantity"],
+      };
+    }
+    return {
+      valueQuantity: resourceItem["valueQuantity"],
+    };
   }
   const key = [
     "valueCodeableConcept",
@@ -271,7 +281,7 @@ export const getValueFromResource = (resourceItem) => {
     "valueDateTime",
     "valueBoolean",
     "valueReference",
-    "valueQuantity",
+    "valueUri",
   ].find((k) => !isNil(resourceItem?.[k]));
 
   return key ? { [key]: resourceItem[key] } : undefined;
@@ -350,7 +360,7 @@ export function getFlowsheetIds() {
 
 export function makeQuestionItem(linkId, text, answerOptions) {
   return {
-    linkId,
+    linkId: normalizeLinkId(linkId),
     type: !isEmptyArray(answerOptions) ? getQuestionItemType(answerOptions[0]) : "string",
     text: text || "",
     ...(!isEmptyArray(answerOptions) ? { answerOption: answerOptions } : {}),

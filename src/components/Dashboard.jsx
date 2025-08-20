@@ -22,6 +22,7 @@ export default function Dashboard() {
     evalData,
     toBeLoadedResources,
     allChartData,
+    hasSummaryData
   } = useFetchResources();
   const sectionsToShow = getSectionsToShow();
 
@@ -34,6 +35,7 @@ export default function Dashboard() {
           data={{
             patientBundle: patientBundle,
             summaryData: summaryData,
+            hasSummaryData,
             questionnaireKeys: questionnaireList,
             evalData: evalData,
             allChartData: allChartData,

@@ -6,26 +6,21 @@ import Divider from "@mui/material/Divider";
 import Summary from "@components/Summary";
 import { isEmptyArray } from "@util";
 
-export default function Summaries({ questionnaireKeys, summaryData }) {
-  const hasSummaryData = () => {
-    if (!summaryData || !summaryData.data) return false;
-    const keys = Object.keys(summaryData.data);
-    return keys.find(
-      (key) => summaryData.data[key] && (summaryData.data[key].error || !isEmptyArray(summaryData.data[key].responses)),
-    );
-  };
-  if (!questionnaireKeys || !questionnaireKeys.length) {
+export default function Summaries({ hasSummaryData, questionnaireKeys, summaryData }) {
+  if (isEmptyArray(questionnaireKeys)) {
     return <Alert severity="error">No matching data found.</Alert>;
   }
   if (summaryData && summaryData.error) {
     return <Alert severity="error">Error loading data.</Alert>;
   }
-  if (!hasSummaryData()) {
+  if (!hasSummaryData) {
     return <Alert severity="warning">No data found.</Alert>;
   }
+  const keys = Object.keys(summaryData.data);
+  if (isEmptyArray(keys)) return <Alert severity="warning">No data found.</Alert>;
   return (
     <Box>
-      {questionnaireKeys.map((questionnaireId, index) => {
+      {keys.map((questionnaireId, index) => {
         const dataObject =
           summaryData.data && summaryData.data[questionnaireId] ? summaryData.data[questionnaireId] : null;
         if (!dataObject) return null;
@@ -36,7 +31,7 @@ export default function Summaries({ questionnaireKeys, summaryData }) {
               data={dataObject}
               key={`questionnaire_summary_${index}`}
             ></Summary>
-            {index !== questionnaireKeys.length - 1 && (
+            {index !== keys.length - 1 && (
               <Divider
                 className="print-hidden"
                 key={`questionnaire_divider_${index}`}
@@ -53,4 +48,5 @@ export default function Summaries({ questionnaireKeys, summaryData }) {
 Summaries.propTypes = {
   questionnaireKeys: PropTypes.array,
   summaryData: PropTypes.object,
+  hasSummaryData: PropTypes.bool
 };

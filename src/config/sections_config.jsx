@@ -18,7 +18,9 @@ const renderLoader = () => (
       marginBottom: (theme) => theme.spacing(1),
     }}
   >
-    <Box color="primary">Retrieving content ...</Box>
+    <Box color="primary" sx={{ padding: (theme) => theme.spacing(1) }}>
+      Retrieving content ...
+    </Box>
     <CircularProgress color="primary" size={24}></CircularProgress>
   </Stack>
 );
@@ -66,7 +68,7 @@ const renderScoringSummary = (props) => {
             alignSelf: "stretch",
           }}
         >
-          <ScoreSummary summaryData={summaryData}></ScoreSummary>
+          <ScoreSummary summaryData={summaryData} hasSummaryData={props.hasSummaryData}></ScoreSummary>
         </Box>
       </Stack>
     </Suspense>
@@ -89,11 +91,17 @@ const renderObservations = (props) => {
     </Suspense>
   );
 };
-const renderSummaries = ({ questionnaireKeys, summaryData }) => {
+const renderSummaries = ({ questionnaireKeys, summaryData, hasSummaryData }) => {
   const Summaries = lazy(() => import("../components/sections/Summaries"));
   return (
     <Suspense fallback={renderLoader()}>
-      {<Summaries questionnaireKeys={questionnaireKeys} summaryData={summaryData}></Summaries>}
+      {
+        <Summaries
+          questionnaireKeys={questionnaireKeys}
+          summaryData={summaryData}
+          hasSummaryData={hasSummaryData}
+        ></Summaries>
+      }
     </Suspense>
   );
 };
@@ -104,7 +112,6 @@ const sections = [
   {
     id: "scoreSummary",
     title: "Score Summary",
-    //library: defaultInterventionLibrary,
     resources: [...DEFAULT_RESOURCES, "Condition"],
     icon: (props) => <SummarizeIcon fontSize="medium" color="primary" {...props}></SummarizeIcon>,
     component: (props) => renderScoringSummary(props),
@@ -124,7 +131,7 @@ const sections = [
     resources: ["Condition"],
     icon: (props) => <MedicalInformationIcon fontSize="medium" color="primary" {...props}></MedicalInformationIcon>,
     component: (props) => renderConditions(props),
-    default: true
+    default: true,
   },
   {
     id: "observations",
@@ -132,7 +139,7 @@ const sections = [
     resources: ["Observation"],
     icon: (props) => <FactCheckIcon fontSize="medium" color="primary" {...props}></FactCheckIcon>,
     component: (props) => renderObservations(props),
-    default: true
+    default: true,
   },
 ];
 const DEFAULT_SECTIONS = sections.filter((item) => !!item.default);

@@ -6,6 +6,7 @@ import {
   getValueFromResource,
   getResourcesByResourceType,
   linkIdEquals,
+  normalizeLinkId,
   makeQuestionItem,
 } from "@util/fhirUtil";
 import { generateUUID, isEmptyArray } from "@util";
@@ -222,7 +223,7 @@ export function buildQuestionnaire(config = {}) {
   // optional total score item (readOnly)
   if (config.scoringQuestionId) {
     items.push({
-      linkId: config.scoringQuestionId,
+      linkId: normalizeLinkId(config.scoringQuestionId),
       type: "decimal",
       text: "Total score",
       readOnly: true,
@@ -232,11 +233,11 @@ export function buildQuestionnaire(config = {}) {
 
   return {
     resourceType: "Questionnaire",
-    id: config.questionnaireId || generateUUID(),
+    id: config.questionnaireId ?? generateUUID(),
     url: config.questionnaireUrl,
     questionnaire: `Questionnaire/${config.questionnaireId}`,
     name: (config.questionnaireName || "").toUpperCase(),
-    title: config.title || config.questionnaireName || "Questionnaire",
+    title: config.title ?? config.questionnaireName ?? "Questionnaire",
     status: "active",
     date: new Date().toISOString().slice(0, 10),
     item: items,
@@ -254,7 +255,7 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
   const answersByLinkId = new Map();
   const textByLinkId = new Map();
   for (const obs of group) {
-    const lid = config.getLinkId ? config.getLinkId(obs) : getLinkIdByFromFlowsheetId(getFlowsheetId(obs));
+    let lid = config.getLinkId ? config.getLinkId(obs) : getLinkIdByFromFlowsheetId(getFlowsheetId(obs));
     if (!lid) continue;
     const ans = config.answerMapper ? config.answerMapper(obs) : getValueFromResource(obs);
     if (!ans) continue;
@@ -262,14 +263,15 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
     textByLinkId.set(lid, conceptText(obs.code));
   }
 
-  let qLinkIds = config?.questionLinkIds || [];
-  if (config?.scoringQuestionId) {
-    qLinkIds.push(config.scoringQuestionId)
+  let qLinkIds = config?.questionLinkIds || answersByLinkId.keys() || [];
+  if (config?.scoringQuestionId && qLinkIds.indexOf(config?.scoringQuestionId) === -1) {
+    qLinkIds.push(config.scoringQuestionId);
   }
 
   const items = [...new Set(qLinkIds)].map((lid) => {
     const ans = answersByLinkId.get(lid);
-    return ans ? { linkId: lid, text: textByLinkId.get(lid), answer: [ans] } : { linkId: lid };
+    const nLid = normalizeLinkId(lid);
+    return ans ? { linkId: nLid, text: textByLinkId.get(lid), answer: [ans] } : { linkId: nLid };
   });
 
   return {
