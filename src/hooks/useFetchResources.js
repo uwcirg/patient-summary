@@ -25,7 +25,6 @@ const DEFAULT_QUERY_PARAMS = {
   refetchOnMount: false,
   refetchOnReconnect: false,
   retry: false,
-  staleTime: 1 * 60 * 1000,
 };
 
 // ---- Single-flight cache for phase-1 (per patient+run) ----
@@ -399,12 +398,12 @@ export default function useFetchResources() {
   const summaryData = useMemo(() => toBeLoadedResources.find((r) => r.id === SUMMARY_DATA_KEY), [toBeLoadedResources]);
 
   const hasSummaryData = useMemo(() => {
-    if (!isReady || !summaryData || !summaryData.data) return false;
+    if (!summaryData || !summaryData.data) return false;
     const keys = Object.keys(summaryData.data);
     return !!keys.find(
       (key) => summaryData.data[key] && (summaryData.data[key].error || !isEmptyArray(summaryData.data[key].responses)),
     );
-  }, [isReady, summaryData]);
+  }, [summaryData]);
 
   const allChartData = useMemo(() => {
     if (!isReady || !hasSummaryData) return null;
