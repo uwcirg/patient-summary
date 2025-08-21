@@ -1,4 +1,4 @@
-import { getChartConfig, isEmptyArray, isNil, isNumber, fuzzyMatch, normalizeStr, objectToString } from "@util";
+import { getChartConfig, isEmptyArray, isNil, isNumber, isPlainObject, fuzzyMatch, normalizeStr, objectToString } from "@util";
 import FhirResultBuilder from "./FhirResultBuilder";
 import { summarizeCIDASHelper, summarizeMiniCogHelper, summarizeSLUMHelper } from "./helpers";
 import { DEFAULT_FALLBACK_SCORE_MAPS } from "@/consts";
@@ -238,6 +238,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
   answerPrimitive(ans) {
     if (!ans) return null;
+    if (!isPlainObject(ans)) return null;
     if ("valueBoolean" in ans) return ans.valueBoolean;
     if ("valueInteger" in ans) return ans.valueInteger;
     if ("valueDecimal" in ans) return ans.valueDecimal;

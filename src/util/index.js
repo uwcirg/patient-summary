@@ -232,6 +232,10 @@ export function isNumber(target) {
   return target != null;
 }
 
+export function isPlainObject(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 export function objectToString(value) {
   if (typeof value === "object" && value !== null) {
     // If it's a plain object, stringify it

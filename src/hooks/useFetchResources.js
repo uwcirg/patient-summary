@@ -52,10 +52,7 @@ function baseReducer(state, action) {
     case "RESULTS":
       return {
         ...state,
-        questionnaireList: action.questionnaireList,
-        questionnaireResponses: action.questionnaireResponses,
-        questionnaires: action.questionnaires,
-        summaries: action.summaries,
+        ...action,
         exactMatchById: !!action.exactMatchById,
         loadedStatus: { questionnaire: false, questionnaireResponse: true },
         complete: true,
@@ -233,14 +230,7 @@ export default function useFetchResources() {
           ...getFhirResourcesFromQueryResult(syntheticQs),
           ...getFhirResourcesFromQueryResult(qResources),
         ];
-        const idsFromQuestionnaires = questionnaires.map((item) => item.resource.id);
         let questionnaireResponses = getFhirResourcesFromQueryResult(matchedQRs);
-        if (!isEmptyArray(questionnaires)) {
-          questionnaireResponses = questionnaireResponses.filter((item) => {
-            const qId = String(item.resource?.questionnaire).split("/")[1];
-            return idsFromQuestionnaires.indexOf(qId) !== -1;
-          });
-        }
         return {
           questionnaires,
           questionnaireResponses,
@@ -395,28 +385,34 @@ export default function useFetchResources() {
 
   const isReady = base.complete && (phase2DoneOrSkipped || extraTypes.length === 0) && !base.error;
 
-  const summaryData = useMemo(() => toBeLoadedResources.find((r) => r.id === SUMMARY_DATA_KEY), [toBeLoadedResources]);
+  const summaryData = useMemo(() => {
+    const found = toBeLoadedResources.find((r) => r.id === SUMMARY_DATA_KEY);
+    if (!found || !found.data) return null;
 
-  const hasSummaryData = useMemo(() => {
-    if (!summaryData || !summaryData.data) return false;
-    const keys = Object.keys(summaryData.data);
-    return !!keys.find(
-      (key) => summaryData.data[key] && (summaryData.data[key].error || !isEmptyArray(summaryData.data[key].responses)),
+    const keys = Object.keys(found.data);
+    const hasAnyUseful = !!keys.find(
+      (key) => found.data[key] && (found.data[key].error || !isEmptyArray(found.data[key].responses)),
     );
-  }, [summaryData]);
+
+    return hasAnyUseful ? found : null;
+  }, [toBeLoadedResources]);
 
   const allChartData = useMemo(() => {
-    if (!isReady || !hasSummaryData) return null;
+    if (!summaryData) return null; // summaryData already encodes usefulness
+
+    // deep clone to avoid accidental mutation by formatters
     const dataToUse = JSON.parse(JSON.stringify(summaryData.data));
     const keys = Object.keys(dataToUse);
-    const formatted = keys.map((key) => {
+
+    const rows = keys.flatMap((key) => {
       const d = dataToUse[key];
       if (!d || isEmptyArray(d.chartData)) return [];
       const series = d.chartConfig?.dataFormatter ? d.chartConfig.dataFormatter(d.chartData) : d.chartData;
       return series.map((o) => ({ ...o, key, [key]: o.score }));
     });
-    return formatted.flat().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [isReady, hasSummaryData, summaryData]);
+
+    return rows.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [summaryData]);
 
   const loading =
     (phase1Query.isLoading && !base.complete) ||
@@ -446,9 +442,6 @@ export default function useFetchResources() {
     // charts
     summaryData,
     allChartData,
-
-    // bool
-    hasSummaryData,
 
     // controls
     refresh,
