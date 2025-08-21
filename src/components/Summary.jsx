@@ -59,10 +59,10 @@ export default function Summary(props) {
   };
   const shouldDisplayResponses = () => summary && !summary.loading && !summary.error;
 
-  const formatChartData = (data) => {
-    if (summary.chartConfig && summary.chartConfig.dataFormatter) return summary.chartConfig.dataFormatter(data);
-    return data;
-  };
+  // const formatChartData = (data) => {
+  //   if (summary.chartConfig && summary.chartConfig.dataFormatter) return summary.chartConfig.dataFormatter(data);
+  //   return data;
+  // };
 
   const getAnchorElementId = () => QUESTIONNAIRE_ANCHOR_ID_PREFIX;
   const hasResponses = () => !isEmptyArray(summary.responses);
@@ -74,7 +74,8 @@ export default function Summary(props) {
       </Stack>
     );
   const renderError = () =>
-    summary && !!summary.error && (
+    summary &&
+    !!summary.error && (
       <Box sx={{ marginBottom: 1 }}>
         <Error message={summary.error}></Error>
       </Box>
@@ -90,16 +91,14 @@ export default function Summary(props) {
       </Typography>
     );
   };
-  const renderSummary = () =>
-    shouldDisplayResponses() && (
+  const renderSummary = () => {
+    if (!shouldDisplayResponses()) return null;
+    return (
       <Stack direction="column" spacing={1} alignItems="flex-start" className="response-summary" flexWrap={"wrap"}>
         {hasChart && (
           <Chart
-            type={summary.chartConfig.type}
-            data={{
-              ...summary.chartConfig,
-              data: formatChartData(summary.chartData),
-            }}
+            type={summary.chartType}
+            data={summary.chartData}
           ></Chart>
         )}
         {!hasResponses() && <Alert severity="warning">No recorded responses</Alert>}
@@ -112,6 +111,7 @@ export default function Summary(props) {
         )}
       </Stack>
     );
+  };
 
   useEffect(() => {
     if (!summary.loading) return;

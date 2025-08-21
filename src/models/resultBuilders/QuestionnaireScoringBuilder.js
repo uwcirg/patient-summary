@@ -1,4 +1,13 @@
-import { getChartConfig, isEmptyArray, isNil, isNumber, isPlainObject, fuzzyMatch, normalizeStr, objectToString } from "@util";
+import {
+  getChartConfig,
+  isEmptyArray,
+  isNil,
+  isNumber,
+  isPlainObject,
+  fuzzyMatch,
+  normalizeStr,
+  objectToString,
+} from "@util";
 import FhirResultBuilder from "./FhirResultBuilder";
 import { summarizeCIDASHelper, summarizeMiniCogHelper, summarizeSLUMHelper } from "./helpers";
 import { DEFAULT_FALLBACK_SCORE_MAPS } from "@/consts";
@@ -484,7 +493,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           return item && !isEmptyArray(item.responses) && isNumber(item.score) && item.date;
         })
       : null;
-    const chartData = !isEmptyArray(scoringData)
+    const chartConfig = getChartConfig(questionnaire?.id);
+    let chartData = !isEmptyArray(scoringData)
       ? scoringData.map((item) => ({
           ...item,
           ...(item.scoringParams ?? {}),
@@ -492,13 +502,22 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           total: item.score,
         }))
       : null;
+    if (chartData) {
+      if (chartConfig && chartConfig.dataFormatter) {
+        chartData = chartConfig.dataFormatter(chartData);
+      }
+    }
     const config = questionnaireConfig[questionnaire?.id];
     const scoringParams = config?.scoringParams;
 
     return {
       config: config,
-      chartConfig: { ...getChartConfig(questionnaire?.id), ...scoringParams },
-      chartData: chartData,
+      chartConfig: { ...chartConfig, ...scoringParams },
+      chartData: {
+        ...chartConfig,
+        data: chartData,
+      },
+      chartType: chartConfig?.type,
       scoringData: scoringData,
       responses: evalData,
       questionnaire: questionnaire,

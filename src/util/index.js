@@ -116,7 +116,7 @@ export function isInViewport(element) {
 }
 
 export function hasData(arrObj) {
-  return !isEmptyArray(arrObj);
+  return !isEmptyArray(arrObj?.data);
 }
 
 export function getTomorrow() {

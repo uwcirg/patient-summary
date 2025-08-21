@@ -406,9 +406,8 @@ export default function useFetchResources() {
 
     const rows = keys.flatMap((key) => {
       const d = dataToUse[key];
-      if (!d || isEmptyArray(d.chartData)) return [];
-      const series = d.chartConfig?.dataFormatter ? d.chartConfig.dataFormatter(d.chartData) : d.chartData;
-      return series.map((o) => ({ ...o, key, [key]: o.score }));
+      if (!d || isEmptyArray(d.chartData?.data)) return [];
+      return d.chartData.data.map((o) => ({ ...o, key, [key]: o.score }));
     });
 
     return rows.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -418,6 +417,10 @@ export default function useFetchResources() {
     (phase1Query.isLoading && !base.complete) ||
     (!base.complete && !base.error) ||
     (base.complete && extraTypes.length > 0 && !phase2DoneOrSkipped && !base.error);
+
+  if (isReady) {
+    console.log("summaryData ", summaryData);
+  }
 
   return {
     // status

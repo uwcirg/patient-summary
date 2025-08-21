@@ -24,7 +24,7 @@ const CHART_CONFIG = {
     xsChartWidth: 400,
     chartWidth: 520,
     lgChartWidth: 600,
-    chartHeight: 520,
+    chartHeight: 528,
     xFieldKey: "date",
     xAxisTitle: "Date",
     yAxisTitle: "Score",

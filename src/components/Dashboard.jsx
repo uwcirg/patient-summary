@@ -34,7 +34,7 @@ export default function Dashboard() {
           data={{
             patientBundle,
             summaryData,
-            questionnaireKeys: questionnaireList,
+            questionnaireList,
             evalData,
             allChartData,
           }}

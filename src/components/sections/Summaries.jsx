@@ -6,10 +6,7 @@ import Divider from "@mui/material/Divider";
 import Summary from "@components/Summary";
 import { isEmptyArray } from "@util";
 
-export default function Summaries({ questionnaireKeys, summaryData }) {
-  if (isEmptyArray(questionnaireKeys)) {
-    return <Alert severity="error">No matching data found.</Alert>;
-  }
+export default function Summaries({summaryData }) {
   if (summaryData && summaryData.error) {
     return <Alert severity="error">Error loading data.</Alert>;
   }
@@ -46,6 +43,5 @@ export default function Summaries({ questionnaireKeys, summaryData }) {
 }
 
 Summaries.propTypes = {
-  questionnaireKeys: PropTypes.array,
   summaryData: PropTypes.object,
 };
