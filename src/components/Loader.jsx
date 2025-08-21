@@ -1,9 +1,10 @@
 import React from "react";
+import PropTypes from "prop-types";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 
-export default function Loader() {
+export default function Loader({ message, styles }) {
   return (
     <Box
       sx={{
@@ -16,6 +17,7 @@ export default function Loader() {
         left: 0,
         zIndex: (theme) => theme.zIndex.drawer + 1,
         padding: (theme) => theme.spacing(2, 2),
+        ...(styles ?? {}),
       }}
     >
       <Stack
@@ -39,10 +41,14 @@ export default function Loader() {
           alignItems="center"
           sx={{ fontSize: "1.1rem", marginBottom: 1.25 }}
         >
-          <div>Please wait ...</div>
+          <div>{message ? message : "Please wait ..."}</div>
           <CircularProgress color="info"></CircularProgress>
         </Stack>
       </Stack>
     </Box>
   );
 }
+Loader.propTypes = {
+  message: PropTypes.string,
+  styles: PropTypes.object,
+};

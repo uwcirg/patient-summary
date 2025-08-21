@@ -4,25 +4,12 @@ import MedicalInformationIcon from "@mui/icons-material/MedicalInformationOutlin
 import FactCheckIcon from "@mui/icons-material/FactCheckOutlined";
 import SummarizeIcon from "@mui/icons-material/SummarizeOutlined";
 import Box from "@mui/material/Box";
-import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import { isEmptyArray } from "@util";
+import Loader from "@components/Loader";
 
 const renderLoader = () => (
-  <Stack
-    direction="row"
-    spacing={1}
-    alignItems="center"
-    sx={{
-      marginTop: (theme) => theme.spacing(1),
-      marginBottom: (theme) => theme.spacing(1),
-    }}
-  >
-    <Box color="primary" sx={{ padding: (theme) => theme.spacing(1) }}>
-      Retrieving content ...
-    </Box>
-    <CircularProgress color="primary" size={24}></CircularProgress>
-  </Stack>
+  <Loader message="Retrieving content..." styles={{ position: "relative", width: "auto", height: "auto" }}></Loader>
 );
 
 const renderScoringSummary = (props) => {
