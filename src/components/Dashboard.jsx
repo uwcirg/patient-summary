@@ -34,8 +34,7 @@ export default function Dashboard() {
           section={section}
           data={{
             patientBundle: patientBundle,
-            summaryData: summaryData,
-            hasSummaryData,
+            summaryData: hasSummaryData ? summaryData : null,
             questionnaireKeys: questionnaireList,
             evalData: evalData,
             allChartData: allChartData,

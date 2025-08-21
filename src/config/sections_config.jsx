@@ -55,7 +55,7 @@ const renderScoringSummary = (props) => {
             alignSelf: "stretch",
           }}
         >
-          <ScoreSummary summaryData={summaryData} hasSummaryData={props.hasSummaryData}></ScoreSummary>
+          <ScoreSummary summaryData={summaryData}></ScoreSummary>
         </Box>
       </Stack>
     </Suspense>
@@ -78,7 +78,7 @@ const renderObservations = (props) => {
     </Suspense>
   );
 };
-const renderSummaries = ({ questionnaireKeys, summaryData, hasSummaryData }) => {
+const renderSummaries = ({ questionnaireKeys, summaryData}) => {
   const Summaries = lazy(() => import("../components/sections/Summaries"));
   return (
     <Suspense fallback={renderLoader()}>
@@ -86,7 +86,6 @@ const renderSummaries = ({ questionnaireKeys, summaryData, hasSummaryData }) => 
         <Summaries
           questionnaireKeys={questionnaireKeys}
           summaryData={summaryData}
-          hasSummaryData={hasSummaryData}
         ></Summaries>
       }
     </Suspense>

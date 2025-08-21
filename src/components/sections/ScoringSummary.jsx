@@ -28,7 +28,7 @@ export default function ScoringSummary(props) {
     theme && theme.palette && theme.palette.link && theme.palette.link.main ? theme.palette.link.main : "blue";
   const borderColor =
     theme && theme.palette && theme.palette.border && theme.palette.border.main ? theme.palette.border.main : "#FFF";
-  const { hasSummaryData, summaryData } = props;
+  const { summaryData } = props;
   const hasNoResponses = (responses) => isEmptyArray(responses);
   const getInstrumentShortName = (id) => {
     const matchedQuestionnaire =
@@ -101,7 +101,7 @@ export default function ScoringSummary(props) {
     scrollToAnchor(anchorElementId);
   };
   const getScoreList = () => {
-    if (!hasSummaryData) return [];
+    if (!summaryData) return [];
     return Object.keys(summaryData);
   };
 
@@ -295,7 +295,7 @@ export default function ScoringSummary(props) {
   };
 
   const renderSummary = () => {
-    if (!hasSummaryData)
+    if (!summaryData)
       return (
         <Box sx={{ padding: theme.spacing(1, 0.5) }}>
           <Alert severity="warning">No score summary available</Alert>
@@ -350,6 +350,5 @@ export default function ScoringSummary(props) {
 }
 
 ScoringSummary.propTypes = {
-  summaryData: PropTypes.object,
-  hasSummaryData: PropTypes.bool
+  summaryData: PropTypes.object
 };
