@@ -16,7 +16,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { range } from "@/util";
+import { generateUUID, range } from "@/util";
 export default function LineCharts(props) {
   const {
     id,
@@ -40,6 +40,10 @@ export default function LineCharts(props) {
   } = props;
   const theme = useTheme();
   const hasYFields = () => yLineFields && yLineFields.length > 0;
+  let maxYValue = maximumScore
+    ? maximumScore
+    : data?.reduce((m, d) => Math.max(m, Number(d?.score ?? -Infinity)), -Infinity);
+  maxYValue = !data || maxYValue === -Infinity ? null : maxYValue + 1;
   const defaultOptions = {
     activeDot: { r: 6 },
     dot: { strokeWidth: 2 },
@@ -58,7 +62,7 @@ export default function LineCharts(props) {
       height={100}
       domain={xDomain}
       textAnchor="end"
-      tick={{ style: { fontSize: "12px", fontWeight: 500 }, dy: -2, dx: -4}}
+      tick={{ style: { fontSize: "12px", fontWeight: 500 }, dy: -2, dx: -4 }}
       tickFormatter={xTickFormatter}
       tickMargin={12}
       interval="preserveStartEnd"
@@ -67,14 +71,13 @@ export default function LineCharts(props) {
       <Label value={xLabel} offset={-2} position="insideBottom" />
     </XAxis>
   );
-  const yDomain = maximumScore ? [0, maximumScore] : [0, "auto"];
-  const yTicks = maximumScore ? range(0, maximumScore) : range(0, 50);
+  const yDomain = maxYValue ? [0, maxYValue] : [0, "auto"];
+  const yTicks = maxYValue ? range(0, maxYValue) : range(0, 50);
 
   const renderYAxis = () => (
     <YAxis
       domain={yDomain}
       label={{ value: yLabel, angle: -90, position: "insideLeft" }}
-      interval={maximumScore > 40 ? "preserveEnd" : 1}
       minTickGap={8}
       tick={(e) => {
         const configData = data.find((item) => item.highSeverityScoreCutoff);
@@ -143,7 +146,7 @@ export default function LineCharts(props) {
     />
   );
   const renderMinScoreMeaningLabel = () => {
-    if (!maximumScore) return null;
+    if (!maxYValue) return null;
     if (!data || !data.length) return null;
     if (!data.find((item) => item.scoreSeverity)) return null;
     const configData = data.find((item) => item && item.comparisonToAlert) ?? {};
@@ -160,13 +163,13 @@ export default function LineCharts(props) {
     );
   };
   const renderMaxScoreMeaningLabel = () => {
-    if (!maximumScore) return null;
+    if (!maxYValue) return null;
     if (!data || !data.length) return null;
     if (!data.find((item) => item.scoreSeverity)) return null;
     const configData = data.find((item) => item && item.comparisonToAlert) ?? {};
     return (
       <ReferenceLine
-        y={maximumScore}
+        y={maxYValue}
         x={100}
         stroke={configData.comparisonToAlert === "lower" ? "green" : "red"}
         strokeWidth={0}
@@ -182,7 +185,7 @@ export default function LineCharts(props) {
     );
   };
   const renderScoreSeverityCutoffLine = () => {
-    if (!maximumScore) return null;
+    if (!maxYValue) return null;
     if (!data || !data.length) return null;
     const configData = data.find((item) => item && item.highSeverityScoreCutoff);
     if (!configData) return null;
@@ -196,7 +199,7 @@ export default function LineCharts(props) {
     );
   };
   const renderScoreSeverityArea = () => {
-    if (!maximumScore) return null;
+    if (!maxYValue) return null;
     if (!data || !data.length) return null;
     const configData = data.find((item) => item && item.highSeverityScoreCutoff);
     if (!configData) return null;
@@ -228,7 +231,7 @@ export default function LineCharts(props) {
               left: 40,
               bottom: 40,
             }}
-            id={`lineChart_${id}`}
+            id={`lineChart_${id ?? generateUUID()}`}
           >
             <CartesianGrid strokeDasharray="2 2" />
             {renderXAxis()}

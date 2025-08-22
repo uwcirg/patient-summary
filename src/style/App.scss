@@ -133,11 +133,13 @@ p {
   }
 }
 
-// .recharts-xAxis {
-//   .recharts-cartesian-axis-tick:first-of-type {
-//     display: none;
-//   }
-// }
+.recharts-legend-item.inactive {
+  .recharts-symbols,
+  .recharts-surface path {
+    fill: #fff !important;
+    stroke: currentColor !important;
+  }
+}
 .recharts-legend-item-text {
   white-space: nowrap;
   color: rgb(120, 40, 31);
@@ -154,7 +156,6 @@ p {
 .recharts-default-legend {
   line-height: 1.8;
 }
-
 
 @media print {
   @page {

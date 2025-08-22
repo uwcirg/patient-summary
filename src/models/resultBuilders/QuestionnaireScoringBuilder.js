@@ -1,18 +1,18 @@
-import { isEmptyArray, fuzzyMatch, normalizeStr} from "@util";
+import {
+  getChartConfig,
+  isEmptyArray,
+  isNil,
+  isNumber,
+  isPlainObject,
+  fuzzyMatch,
+  normalizeStr,
+  objectToString,
+} from "@util";
 import FhirResultBuilder from "./FhirResultBuilder";
 import { summarizeCIDASHelper, summarizeMiniCogHelper, summarizeSLUMHelper } from "./helpers";
+import { DEFAULT_FALLBACK_SCORE_MAPS } from "@/consts";
+import questionnaireConfig from "@/config/questionnaire_config";
 import { linkIdEquals } from "@/util/fhirUtil";
-
-
-// --- Scoring maps (pluggable) ---
-const DEFAULT_FALLBACK_SCORE_MAPS = {
-  default: {
-    "LA6568-5": 0,
-    "LA6569-3": 1,
-    "LA6570-1": 2,
-    "LA6571-9": 3,
-  },
-};
 
 export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   /**
@@ -48,6 +48,19 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     };
 
     this.patientBundle = patientBundle || null;
+    this.responseAnswerTypes = new Set([
+      "boolean",
+      "decimal",
+      "coding",
+      "integer",
+      "date",
+      "dateTime",
+      "time",
+      "string",
+      "text",
+      "choice",
+      "open-choice",
+    ]);
   }
 
   // -------------------- Bundle access (supports override) --------------------
@@ -78,7 +91,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (!res || String(res.resourceType).toLowerCase() !== "questionnaireresponse") continue;
       if (completedOnly && res.status !== "completed") continue;
 
-      const key = (res.questionnaire ?? "").toString();
+      let key = (res.questionnaire ?? "").toString();
+      // Only normalize "Questionnaire/<id>" references; leave canonical URLs intact.
+      if (/^Questionnaire\//i.test(key)) {
+        key = key.split("/")[1]; // "<id>"
+      }
       if (!key) continue;
       if (!groups[key]) groups[key] = [];
       groups[key].push(res);
@@ -132,7 +149,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const q = entries[i];
       if (!q || q.resourceType !== "Questionnaire") continue;
 
-      if (q.id) idx[`Questionnaire/${q.id}`] = q;
+      if (q.id) idx[q.id] = q;
       if (q.name) idx[normalizeStr(q.name)] = q;
       if (q.url) idx[q.url] = q;
     }
@@ -146,8 +163,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const byName = normalizeStr(canonical);
     if (byName && qIndex[byName]) return qIndex[byName];
 
-    if (!canonical.includes("/") && qIndex[`Questionnaire/${canonical}`]) {
-      return qIndex[`Questionnaire/${canonical}`];
+    if (!canonical.includes("/") && qIndex[canonical]) {
+      qIndex[canonical];
     }
     return null;
   }
@@ -164,6 +181,18 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   isLinkIdEquals(a, b) {
     return linkIdEquals(a, b, this.cfg.matchMode ?? "fuzzy");
   }
+  isResponseQuestionItem(item) {
+    if (!item || !item.linkId) return false;
+    if (item.linkId === "introduction") return false;
+    if (String(item.linkId).toLowerCase().includes("ignore")) return false;
+    if (!this.responseAnswerTypes.has(item.type)) {
+      return false;
+    }
+    if (this.cfg.scoringQuestionId) {
+      return !this.isLinkIdEquals(item.linkId, this.cfg.scoringQuestionId);
+    }
+    return true;
+  }
 
   // -------------------- Questionnaire matching --------------------
   questionnaireRefMatches(canonical) {
@@ -175,9 +204,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if ((this.cfg.matchMode ?? "fuzzy") === "strict") {
       return (url && ref === url) || (id && ref === id) || (name && ref === name);
     }
-    return (
-      (url && fuzzyMatch(ref, url)) || (id && fuzzyMatch(ref, id)) || (name && fuzzyMatch(ref, name))
-    );
+    return (id && fuzzyMatch(ref, id)) || (name && fuzzyMatch(ref, name)) || (url && fuzzyMatch(ref, url));
   }
 
   matchedResponsesByQuestionnaire(responses) {
@@ -220,6 +247,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
   answerPrimitive(ans) {
     if (!ans) return null;
+    if (!isPlainObject(ans)) return null;
     if ("valueBoolean" in ans) return ans.valueBoolean;
     if ("valueInteger" in ans) return ans.valueInteger;
     if ("valueDecimal" in ans) return ans.valueDecimal;
@@ -235,28 +263,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   // -------------------- Questionnaire helpers --------------------
   getAnswerLinkIdsByQuestionnaire(questionnaire) {
-    const answerTypes = new Set([
-      "boolean",
-      "decimal",
-      "integer",
-      "date",
-      "dateTime",
-      "time",
-      "string",
-      "text",
-      "choice",
-      "open-choice",
-    ]);
     const out = [];
     const walk = (items = []) => {
       for (const it of items) {
-        if (
-          it.linkId &&
-          it.type &&
-          answerTypes.has(it.type) &&
-          (!this.cfg.scoringQuestionId || !this.isLinkIdEquals(it.linkId, this.cfg.scoringQuestionId))
-        )
-          out.push(it.linkId);
+        if (it.linkId && it.type && this.isResponseQuestionItem(it)) out.push(it.linkId);
         if (!isEmptyArray(it.item)) walk(it.item);
       }
     };
@@ -302,6 +312,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const ans = this.firstAnswer(it);
     if (!ans) return null;
 
+    const prim = this.answerPrimitive(ans);
+    if (!isNil(prim) && !isNaN(parseInt(prim))) return prim;
     const coding = this.answerCoding(ans);
     if (coding?.code) {
       const fromExt = this.getAnswerValueByExtension(questionnaire, coding.code);
@@ -309,8 +321,18 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (this.fallbackScoreMap[coding.code] != null) return this.fallbackScoreMap[coding.code];
       return null;
     }
-    const prim = this.answerPrimitive(ans);
-    return typeof prim === "number" ? prim : null;
+
+    return null;
+  }
+
+  getAnswerItemDisplayValue(answerItem) {
+    if (isNumber(answerItem?.value)) return answerItem.value;
+    if (answerItem?.display) return answerItem.display;
+    const coding = this.answerCoding(answerItem);
+    const primitive = this.answerPrimitive(answerItem);
+    return coding
+      ? (coding.display ?? this.fallbackScoreMap[coding.code] ?? null)
+      : (primitive ?? objectToString(answerItem));
   }
 
   // -------------------- formatting --------------------
@@ -319,12 +341,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const list = [];
     const walk = (items = []) => {
       for (const q of items) {
-        if (
-          q.linkId &&
-          q.linkId !== "introduction" &&
-          (!this.cfg.scoringQuestionId || !this.isLinkIdEquals(q.linkId, this.cfg.scoringQuestionId))
-        )
-          list.push(q);
+        if (q.linkId && this.isResponseQuestionItem(q)) list.push(q);
         if (q.item?.length) walk(q.item);
       }
     };
@@ -333,15 +350,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return list.map((q) => {
       const resp = this.findResponseItemByLinkId(responseItemsFlat, q.linkId);
       const ans = this.firstAnswer(resp);
-      const coding = this.answerCoding(ans);
-      const primitive = this.answerPrimitive(ans);
-      const value = coding ? (coding.display ?? coding.code ?? null) : primitive;
-
       return {
         id: q.linkId,
-        answer: value ?? null,
+        answer: this.getAnswerItemDisplayValue(ans),
         question: q.linkId === this.cfg.scoringQuestionId ? `<b>${q.text}</b>` : q.text,
         text: resp?.text ? resp?.text : q.text,
+        type: q.type,
       };
     });
   }
@@ -349,10 +363,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   responsesOnly(responseItemsFlat = []) {
     return (responseItemsFlat || []).map((item) => {
       const ans = this.firstAnswer(item);
-      const coding = this.answerCoding(ans);
-      const primitive = this.answerPrimitive(ans);
-      const value = coding ? (coding.display ?? coding.code ?? null) : primitive;
-      return { id: item.linkId, answer: value ?? null, question: item.text, text: item.text };
+      return {
+        id: item.linkId,
+        answer: this.getAnswerItemDisplayValue(ans) ?? null,
+        question: item.text,
+        text: item.text,
+      };
     });
   }
 
@@ -370,33 +386,33 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
   meaningFromSeverity(sev) {
     const bands = this.cfg.severityBands;
-    if (bands && bands.length) return bands.find((b) => b.label === sev)?.meaning ?? null;
+    if (!isEmptyArray(bands)) return bands.find((b) => b.label === sev)?.meaning ?? null;
     return null;
   }
 
   // -------------------- public APIs --------------------
   getResponsesSummary(questionnaireResponses, questionnaire) {
-    const scoreLinkIds = this.cfg.questionLinkIds?.length
-      ? this.cfg.questionLinkIds
+    const config = this.cfg && this.cfg.questionnaireId ? this.cfg : questionnaireConfig[questionnaire?.id];
+    const scoreLinkIds = config?.questionLinkIds?.length
+      ? config.questionLinkIds
       : this.getAnswerLinkIdsByQuestionnaire(questionnaire);
+    const scoringQuestionId = config?.scoringQuestionId;
 
     const rows = (questionnaireResponses || []).map((qr) => {
       const flat = this.flattenResponseItems(qr.item);
       const nonScoring =
         flat.length === 1
           ? flat
-          : flat.filter(
-              (it) => !this.cfg.scoringQuestionId || !this.isLinkIdEquals(it.linkId, this.cfg.scoringQuestionId),
-            );
+          : flat.filter((it) => !scoringQuestionId || !this.isLinkIdEquals(it.linkId, scoringQuestionId));
 
-      const totalItems = this.cfg.questionLinkIds?.length
-        ? this.cfg.questionLinkIds.length
+      const totalItems = scoreLinkIds?.length
+        ? scoreLinkIds?.length
         : this.getAnswerLinkIdsByQuestionnaire(questionnaire).length;
 
       const totalAnsweredItems = Math.min(nonScoring.filter((it) => this.firstAnswer(it) != null).length, totalItems);
 
-      const scoringQuestionScore = this.cfg.scoringQuestionId
-        ? this.getScoringByResponseItem(questionnaire, flat, this.cfg.scoringQuestionId)
+      const scoringQuestionScore = scoringQuestionId
+        ? this.getScoringByResponseItem(questionnaire, flat, scoringQuestionId)
         : null;
 
       const questionScores = scoreLinkIds.map((id) => this.getScoringByResponseItem(questionnaire, flat, id));
@@ -412,19 +428,21 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (isEmptyArray(responses)) responses = this.responsesOnly(flat);
 
       return {
+        ...(config ?? {}),
         id: qr.id,
         date: this.dateTimeText(qr.authored),
         responses,
         scoringQuestionScore,
         score,
         scoreSeverity,
-        highSeverityScoreCutoff: this.cfg.highSeverityScoreCutoff,
+        highSeverityScoreCutoff: config?.highSeverityScoreCutoff,
         scoreMeaning: this.meaningFromSeverity(scoreSeverity),
-        scoringParams: this.cfg.scoringParams,
+        scoringParams: config?.scoringParams,
         totalItems,
         totalAnsweredItems,
         authoredDate: qr.authored,
         lastUpdated: qr.meta?.lastUpdated,
+        config: config,
       };
     });
 
@@ -463,10 +481,47 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
 
   _summariesByQuestionnaireRef(qrs, questionnaire, options = {}) {
-    if (this.questionnaireRefMatches("SLUM")) return this.summarizeSLUM(qrs, questionnaire, options);
-    if (this.questionnaireRefMatches("CIDAS")) return this.summarizeCIDAS(qrs, questionnaire, options);
-    if (this.questionnaireRefMatches("MINICOG")) return this.summarizeMiniCog(qrs, questionnaire, options);
-    return this.getResponsesSummary(qrs, questionnaire);
+    const map = {
+      SLUM: "summarizeSLUM",
+      CIDAS: "summarizeCIDAS",
+      MINICOG: "summarizeMiniCog",
+    };
+    const key = Object.keys(map).find((k) => this.questionnaireRefMatches(k));
+    const evalData = key ? this[map[key]](qrs, questionnaire, options) : this.getResponsesSummary(qrs, questionnaire);
+    const scoringData = !isEmptyArray(evalData)
+      ? evalData.filter((item) => {
+          return item && !isEmptyArray(item.responses) && isNumber(item.score) && item.date;
+        })
+      : null;
+    const chartConfig = getChartConfig(questionnaire?.id);
+    let chartData = !isEmptyArray(scoringData)
+      ? scoringData.map((item) => ({
+          ...item,
+          ...(item.scoringParams ?? {}),
+          date: item.date,
+          total: item.score,
+        }))
+      : null;
+    if (chartData) {
+      if (chartConfig && chartConfig.dataFormatter) {
+        chartData = chartConfig.dataFormatter(chartData);
+      }
+    }
+    const config = questionnaireConfig[questionnaire?.id];
+    const scoringParams = config?.scoringParams;
+
+    return {
+      config: config,
+      chartConfig: { ...chartConfig, ...scoringParams },
+      chartData: {
+        ...chartConfig,
+        data: chartData,
+      },
+      chartType: chartConfig?.type,
+      scoringData: scoringData,
+      responseData: evalData,
+      questionnaire: questionnaire,
+    };
   }
 
   // -------------------- Sync APIs (supporting bundle override) --------------------
@@ -484,7 +539,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const questionnaire = loader(canonical);
       if (!questionnaire) continue;
       const summaries = this._summariesByQuestionnaireRef(qrs, questionnaire, strategyOptions);
-      if (!isEmptyArray(summaries)) out[canonical] = summaries;
+      if (!isEmptyArray(summaries?.responseData)) out[canonical] = summaries;
     }
     return out;
   }
@@ -533,7 +588,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (!questionnaire) continue;
 
       const summaries = this._summariesByQuestionnaireRef(qrs, questionnaire, strategyOptions);
-      if (summaries && summaries.length) out[canonical] = summaries;
+      if (!isEmptyArray(summaries?.responseData)) out[canonical] = summaries;
     }
     return out;
   }

@@ -57,15 +57,9 @@ export default function Summary(props) {
     height: 2,
     width: 2,
   };
-  const shouldDisplayResponses = () => !summary.loading && !summary.error;
-
-  const formatChartData = (data) => {
-    if (summary.chartConfig && summary.chartConfig.dataFormatter) return summary.chartConfig.dataFormatter(data);
-    return data;
-  };
-
+  const shouldDisplayResponses = () => summary && !summary.loading && !summary.error;
   const getAnchorElementId = () => QUESTIONNAIRE_ANCHOR_ID_PREFIX;
-  const hasResponses = () => !isEmptyArray(summary.responses);
+  const hasResponses = () => !isEmptyArray(summary.responseData);
 
   const renderLoader = () =>
     summary.loading && (
@@ -74,6 +68,7 @@ export default function Summary(props) {
       </Stack>
     );
   const renderError = () =>
+    summary &&
     !!summary.error && (
       <Box sx={{ marginBottom: 1 }}>
         <Error message={summary.error}></Error>
@@ -90,28 +85,27 @@ export default function Summary(props) {
       </Typography>
     );
   };
-  const renderSummary = () =>
-    shouldDisplayResponses() && (
+  const renderSummary = () => {
+    if (!shouldDisplayResponses()) return null;
+    return (
       <Stack direction="column" spacing={1} alignItems="flex-start" className="response-summary" flexWrap={"wrap"}>
         {hasChart && (
           <Chart
-            type={summary.chartConfig.type}
-            data={{
-              ...summary.chartConfig,
-              data: formatChartData(summary.chartData),
-            }}
+            type={summary.chartType}
+            data={summary.chartData}
           ></Chart>
         )}
         {!hasResponses() && <Alert severity="warning">No recorded responses</Alert>}
         {hasResponses() && (
           <Responses
-            data={summary.responses}
+            data={summary.responseData}
             questionnaireId={questionnaireId}
             questionnaireJson={summary.questionnaire}
           ></Responses>
         )}
       </Stack>
     );
+  };
 
   useEffect(() => {
     if (!summary.loading) return;

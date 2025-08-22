@@ -1,14 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
 import Box from "@mui/material/Box";
-import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 
 
-export default function ProgressIndicator({ resources }) {
+export default function ProgressIndicator({ resources, sx }) {
   const total = resources?.length;
   const loaded = resources?.filter(
     (resource) => resource.complete || resource.error
@@ -26,6 +25,7 @@ export default function ProgressIndicator({ resources }) {
         left: 0,
         zIndex: (theme) => theme.zIndex.drawer + 1,
         padding: (theme) => theme.spacing(2, 2),
+        ...sx
       }}
     >
       <Stack
@@ -53,7 +53,6 @@ export default function ProgressIndicator({ resources }) {
           <div>
             <b>{Math.ceil((loaded / total) * 100)} %</b>
           </div>
-          <CircularProgress color="info"></CircularProgress>
         </Stack>
         <Stack direction="column" alignItems="flex-start" spacing={1}>
           {resources.map((resource, index) => {
@@ -67,7 +66,7 @@ export default function ProgressIndicator({ resources }) {
                 key={`resource_${resource}_${index}`}
               >
                 <Typography
-                  variant="body2"
+                  variant="body1"
                   sx={{
                     color: (theme) =>
                       resource.error
@@ -104,4 +103,5 @@ ProgressIndicator.propTypes = {
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     })
   ),
+  sx: PropTypes.object
 };

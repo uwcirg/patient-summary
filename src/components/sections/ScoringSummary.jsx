@@ -30,22 +30,12 @@ export default function ScoringSummary(props) {
     theme && theme.palette && theme.palette.border && theme.palette.border.main ? theme.palette.border.main : "#FFF";
   const { summaryData } = props;
   const hasNoResponses = (responses) => isEmptyArray(responses);
-  const responsesHasScore = (responses) => {
-    if (hasNoResponses(responses)) return false;
-    return responses.some((result) => isNumber(result.score));
-  };
   const getInstrumentShortName = (id) => {
     const matchedQuestionnaire =
       summaryData[id] && summaryData[id].questionnaire ? summaryData[id].questionnaire : null;
     const qo = new Questionnaire(matchedQuestionnaire, id);
     return qo.shortName ?? qo.displayName;
   };
-  const hasList = () =>
-    summaryData &&
-    Object.keys(summaryData).length > 0 &&
-    Object.keys(summaryData).some((key) => {
-      return responsesHasScore(summaryData[key].responses);
-    });
   const getSortedResponses = (rdata) => {
     if (hasNoResponses(rdata)) return [];
     return rdata.sort((a, b) => {
@@ -111,12 +101,12 @@ export default function ScoringSummary(props) {
     scrollToAnchor(anchorElementId);
   };
   const getScoreList = () => {
-    if (!hasList()) return [];
+    if (!summaryData) return [];
     return Object.keys(summaryData);
   };
 
   const getMostRecentEntry = (summaryData) => {
-    return getResponsesByIndex(summaryData.responses, 0);
+    return getResponsesByIndex(summaryData.responseData, 0);
   };
 
   const displayScoreRange = (summaryData) => {
@@ -252,7 +242,7 @@ export default function ScoringSummary(props) {
         sx={{ width: "100%" }}
       >
         <Scoring
-          score={getCurrentScoreByInstrument(summaryData[key].responses)}
+          score={getCurrentScoreByInstrument(summaryData[key].responseData)}
           scoreParams={getMostRecentEntry(summaryData[key])}
           justifyContent="space-between"
         ></Scoring>
@@ -283,7 +273,7 @@ export default function ScoringSummary(props) {
 
   const renderComparedToLastCell = (key) => (
     <TableCell align="center" size="small" sx={{ ...cellStyle, borderRightWidth: 0 }}>
-      {getDisplayIcon(summaryData[key].responses)}
+      {getDisplayIcon(summaryData[key].responseData)}
     </TableCell>
   );
 
@@ -305,7 +295,7 @@ export default function ScoringSummary(props) {
   };
 
   const renderSummary = () => {
-    if (!hasList())
+    if (!summaryData)
       return (
         <Box sx={{ padding: theme.spacing(1, 0.5) }}>
           <Alert severity="warning">No score summary available</Alert>
@@ -360,5 +350,5 @@ export default function ScoringSummary(props) {
 }
 
 ScoringSummary.propTypes = {
-  summaryData: PropTypes.object,
+  summaryData: PropTypes.object
 };

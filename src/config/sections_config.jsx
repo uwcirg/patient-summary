@@ -4,27 +4,16 @@ import MedicalInformationIcon from "@mui/icons-material/MedicalInformationOutlin
 import FactCheckIcon from "@mui/icons-material/FactCheckOutlined";
 import SummarizeIcon from "@mui/icons-material/SummarizeOutlined";
 import Box from "@mui/material/Box";
-import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import { isEmptyArray } from "@util";
+import Loader from "@components/Loader";
 
 const renderLoader = () => (
-  <Stack
-    direction="row"
-    spacing={1}
-    alignItems="center"
-    sx={{
-      marginTop: (theme) => theme.spacing(1),
-      marginBottom: (theme) => theme.spacing(1),
-    }}
-  >
-    <Box color="primary">Retrieving content ...</Box>
-    <CircularProgress color="primary" size={24}></CircularProgress>
-  </Stack>
+  <Loader message="Retrieving content..." styles={{ position: "relative", width: "auto", height: "auto" }}></Loader>
 );
 
 const renderScoringSummary = (props) => {
-  const summaryData = props.summaryData?.data || {};
+  const summaryData = props.summaryData?.data;
   const ScoreSummary = lazy(() => import("../components/sections/ScoringSummary"));
   const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
   const chartData = props.allChartData;
@@ -89,11 +78,15 @@ const renderObservations = (props) => {
     </Suspense>
   );
 };
-const renderSummaries = ({ questionnaireKeys, summaryData }) => {
+const renderSummaries = ({summaryData}) => {
   const Summaries = lazy(() => import("../components/sections/Summaries"));
   return (
     <Suspense fallback={renderLoader()}>
-      {<Summaries questionnaireKeys={questionnaireKeys} summaryData={summaryData}></Summaries>}
+      {
+        <Summaries
+          summaryData={summaryData}
+        ></Summaries>
+      }
     </Suspense>
   );
 };
@@ -104,7 +97,6 @@ const sections = [
   {
     id: "scoreSummary",
     title: "Score Summary",
-    //library: defaultInterventionLibrary,
     resources: [...DEFAULT_RESOURCES, "Condition"],
     icon: (props) => <SummarizeIcon fontSize="medium" color="primary" {...props}></SummarizeIcon>,
     component: (props) => renderScoringSummary(props),
@@ -124,7 +116,7 @@ const sections = [
     resources: ["Condition"],
     icon: (props) => <MedicalInformationIcon fontSize="medium" color="primary" {...props}></MedicalInformationIcon>,
     component: (props) => renderConditions(props),
-    default: true
+    default: true,
   },
   {
     id: "observations",
@@ -132,7 +124,7 @@ const sections = [
     resources: ["Observation"],
     icon: (props) => <FactCheckIcon fontSize="medium" color="primary" {...props}></FactCheckIcon>,
     component: (props) => renderObservations(props),
-    default: true
+    default: true,
   },
 ];
 const DEFAULT_SECTIONS = sections.filter((item) => !!item.default);

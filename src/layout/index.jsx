@@ -11,7 +11,6 @@ import { injectFaviconByProject, fetchEnvData } from "../util";
 import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
 import FhirClientProvider from "../context/FhirClientProvider";
-import QuestionnaireListProvider from "../context/QuestionnaireListProvider";
 import Base from "./Base";
 
 function ErrorFallBack({ error }) {
@@ -50,9 +49,7 @@ export default function Index({ children }) {
         <QueryClientProvider client={queryClient}>
           <FhirClientProvider>
             <CssBaseline />
-            <QuestionnaireListProvider>
               <Base>{children}</Base>
-            </QuestionnaireListProvider>
           </FhirClientProvider>
         </QueryClientProvider>
       </ThemeProvider>

@@ -1,5 +1,10 @@
 import { getEnv, getSectionsToShow, isEmptyArray, isNil } from "./index.js";
-import { DEFAULT_OBSERVATION_CATEGORIES } from "@/consts/index.js";
+import {
+  DEFAULT_OBSERVATION_CATEGORIES,
+  DEFAULT_VAL_TO_LOIN_CODE,
+  FLOWSHEET_SYSTEM,
+  FLOWSHEET_ID_LINK_ID_MAPPINGS,
+} from "@/consts/index.js";
 
 /*
  * @param client, FHIR client object
@@ -57,7 +62,6 @@ export function processPage(client, resources = []) {
 export function getFHIRResourceTypesToLoad() {
   const sections = getSectionsToShow();
   const resourceTypes = sections.map((section) => section.resources).flat();
-  if (isEmptyArray(resourceTypes)) return ["Questionnaire", "QuestionnaireResponse"];
   return [...new Set(resourceTypes)];
 }
 
@@ -182,22 +186,23 @@ export function conceptCode(c) {
   if (!c || isEmptyArray(c.coding)) return null;
   const codings = c.coding;
   for (let i = 0; i < codings.length; i++) {
-    const code = codings[i]?.code ?? (codings[i]?.code?.value ? codings[i]?.code?.value : codings[i]?.code);
+    const code = codings[i]?.code ?? (codings[i]?.code?.value ? codings[i]?.code?.value : null);
     if (code) return code;
   }
   return null;
 }
+
 export function conceptText(c) {
   if (!c) return null;
   if (typeof c.text === "string" && c.text.trim()) return c.text;
   if (c.text?.value) return c.text.value;
   const codings = !isEmptyArray(c.coding) ? c.coding : [];
   for (let i = 0; i < codings.length; i++) {
-    const d = codings[i]?.display ?? (codings[i]?.display?.value ? codings[i]?.display?.value : codings[i]?.display);
+    const d = codings[i]?.display ?? (codings[i]?.display?.value ? codings[i]?.display?.value : "");
     if (d) return d;
   }
   for (let i = 0; i < codings.length; i++) {
-    const code = codings[i]?.code ?? (codings[i]?.code?.value ? codings[i]?.code?.value : codings[i]?.code);
+    const code = codings[i]?.code ?? (codings[i]?.code?.value ? codings[i]?.code?.value : "");
     if (code) return code;
   }
   return null;
@@ -236,17 +241,51 @@ export function formatValueQuantity({ value, unit }, fallbackText) {
 
 export function getValueText(O) {
   if (!O) return null;
-  if (O.valueCodeableConcept) return conceptText(O.valueCodeableConcept);
+  if (!isNil(O.code)) return conceptText(O.code);
+  if (!isNil(O.valueCodeableConcept)) return conceptCode(O.valueCodeableConcept);
   if (!isNil(O.valueString)) return String(O.valueString);
   if (!isNil(O.valueDecimal)) return String(O.valueDecimal);
   if (!isNil(O.valueInteger)) return String(O.valueInteger);
+  if (!isNil(O.valueDate)) return String(O.valueDate);
   if (!isNil(O.valueDateTime)) return String(O.valueDateTime);
   if (!isNil(O.valueBoolean)) return String(O.valueBoolean);
-  if (O.value && typeof O.value === "object" && "value" in O.value && typeof O.value.value !== "object") {
-    return String(O.value.value);
+  if (O.value && typeof O.value !== "object") {
+    return String(O.value);
   }
   return null;
 }
+export const getValueFromResource = (resourceItem) => {
+  const n = resourceItem?.valueQuantity ? Number(resourceItem?.valueQuantity?.value ?? undefined) : undefined;
+  if (isFinite(n)) {
+    const code = conceptCode(resourceItem?.code);
+    const linkId = code ? getLinkIdByFromFlowsheetId(code) : null;
+    if (linkId) {
+      const coding = DEFAULT_VAL_TO_LOIN_CODE[n];
+      if (coding) return { valueCoding: coding };
+      return {
+        valueQuantity: resourceItem["valueQuantity"],
+      };
+    }
+    return {
+      valueQuantity: resourceItem["valueQuantity"],
+    };
+  }
+  const key = [
+    "valueCodeableConcept",
+    "valueCoding",
+    "valueString",
+    "valueDecimal",
+    "valueInteger",
+    "valueDate",
+    "valueDateTime",
+    "valueBoolean",
+    "valueReference",
+    "valueUri",
+  ].find((k) => !isNil(resourceItem?.[k]));
+
+  return key ? { [key]: resourceItem[key] } : undefined;
+};
+
 export function getValueBlockFromQuantity(O) {
   if (!O) {
     return {
@@ -255,8 +294,8 @@ export function getValueBlockFromQuantity(O) {
     };
   }
   const q = O.valueQuantity ?? (O.value && typeof O.value === "object" && "value" in O.value ? O.value : null);
-  if (!q) return { value: null, unit: O.valueCodeableConcept ? null : null };
-  return { value: q.value ?? null, unit: O.valueCodeableConcept ? null : (q.unit ?? q.code ?? null) };
+  if (!q) return { value: null, unit: O.code ? null : null };
+  return { value: q.value ?? null, unit: O.code ? null : (q.unit ?? null) };
 }
 
 export function getValueDisplayWithRef(valueStr, rangeSummary) {
@@ -298,4 +337,46 @@ export function getComponentValues(components = []) {
       displayValueWithRef,
     };
   });
+}
+
+export function getDefaultQuestionItemText(linkId, index) {
+  const codeBit = String(linkId).match(/(\d+-\d)$/)?.[1]; // grabs "44250-9" if present
+  return `Question ${index + 1}${codeBit ? ` (${codeBit})` : ""}`;
+}
+
+export const getFlowsheetId = (item) => item?.code?.coding?.find((c) => c.system === FLOWSHEET_SYSTEM)?.code || null;
+
+export const getLinkIdByFromFlowsheetId = (id) => {
+  if (id && FLOWSHEET_ID_LINK_ID_MAPPINGS[id]) {
+    return FLOWSHEET_ID_LINK_ID_MAPPINGS[id];
+  }
+  return null;
+};
+
+export function getFlowsheetIds() {
+  return Object.keys(FLOWSHEET_ID_LINK_ID_MAPPINGS);
+}
+
+export function makeQuestionItem(linkId, text, answerOptions) {
+  return {
+    linkId: normalizeLinkId(linkId),
+    type: !isEmptyArray(answerOptions) ? getQuestionItemType(answerOptions[0]) : "string",
+    text: text || "",
+    ...(!isEmptyArray(answerOptions) ? { answerOption: answerOptions } : {}),
+  };
+}
+
+// infer a sensible FHIR item.type from one example answer option
+export function getQuestionItemType(answerOption) {
+  if (!answerOption) return "string";
+  const key = Object.keys(answerOption).find((k) => k.startsWith("value"));
+  return key ? key.slice(5).replace(/^[A-Z]/, (c) => c.toLowerCase()) : "string";
+}
+
+export function getLinkIdsFromObservations(obResources) {
+  if (isEmptyArray(obResources)) return [];
+  let obsLinkIds = obResources
+    .filter((o) => getLinkIdByFromFlowsheetId(getFlowsheetId(o)))
+    .map((o) => normalizeLinkId(getLinkIdByFromFlowsheetId(getFlowsheetId(o))));
+  return [...new Set(obsLinkIds)];
 }

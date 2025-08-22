@@ -56,10 +56,14 @@ export function getChartConfig(questionnaireId) {
 export function getEnvQuestionnaireList() {
   const configList = getEnv("REACT_APP_QUESTIONNAIRES");
   if (configList)
-    return configList
-      .split(",")
-      .filter((item) => item)
-      .map((item) => item.trim());
+    return [
+      ...new Set(
+        configList
+          .split(",")
+          .filter((item) => item)
+          .map((item) => item.trim()),
+      ),
+    ];
   return [];
 }
 
@@ -112,7 +116,7 @@ export function isInViewport(element) {
 }
 
 export function hasData(arrObj) {
-  return !isEmptyArray(arrObj);
+  return !isEmptyArray(arrObj?.data);
 }
 
 export function getTomorrow() {
@@ -226,6 +230,23 @@ export function isNumber(target) {
   if (isNaN(target)) return false;
   if (typeof target === "number") return true;
   return target != null;
+}
+
+export function isPlainObject(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function objectToString(value) {
+  if (typeof value === "object" && value !== null) {
+    // If it's a plain object, stringify it
+    if (Object.prototype.toString.call(value) === "[object Object]") {
+      return JSON.stringify(value);
+    } else {
+      // Handle other object types (e.g., Array, Date) if needed
+      return value.toString(); // Fallback to default toString for other objects
+    }
+  }
+  return null;
 }
 
 export function shouldShowPatientInfo(client) {
@@ -349,4 +370,23 @@ export async function isImagefileExist(url) {
     console.log(error);
     return false; // Request failed or URL is invalid
   }
+}
+// https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid
+export function generateUUID() {
+  // Public Domain/MIT
+  var d = new Date().getTime(); //Timestamp
+  var d2 = (typeof performance !== "undefined" && performance.now && performance.now() * 1000) || 0; //Time in microseconds since page-load or 0 if unsupported
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    var r = Math.random() * 16; //random number between 0 and 16
+    if (d > 0) {
+      //Use timestamp until depleted
+      r = (d + r) % 16 | 0;
+      d = Math.floor(d / 16);
+    } else {
+      //Use microseconds since page-load if supported
+      r = (d2 + r) % 16 | 0;
+      d2 = Math.floor(d2 / 16);
+    }
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  });
 }
