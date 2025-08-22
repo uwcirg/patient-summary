@@ -33,7 +33,7 @@ const DEFAULT_QUERY_PARAMS = {
 };
 
 // ---- Single-flight cache for phase-1 (per patient+run) ----
-const PHASE1_FLIGHTS = new Map(); // key -> Promise<{questionnaires, questionnaireResponses, summaries, qListToLoad, exactMatchById}>
+const PHASE1_FLIGHTS = new Map(); // key -> Promise<{...}>
 
 /** Runs phase-1 exactly once per key by returning the same Promise if already in-flight or completed. */
 function runPhase1Once(key, fn) {
@@ -42,8 +42,7 @@ function runPhase1Once(key, fn) {
     try {
       return await fn();
     } finally {
-      // Keep the promise cached so late subscribers use the same result.
-      // delete if want to allow re-runs after it settles
+      // Keep cached to share settled result. Uncomment to allow re-runs after settle:
       // PHASE1_FLIGHTS.delete(key);
     }
   })();
@@ -86,7 +85,7 @@ function baseReducer(state, action) {
   }
 }
 
-/** ---- Loader reducer for to be loaded FHIR resources ---- */
+/** ---- Loader reducer for to-be-loaded FHIR resources ---- */
 function loaderReducer(state, action) {
   switch (String(action.type).toUpperCase()) {
     case "INIT_TRACKING":
@@ -104,7 +103,11 @@ function loaderReducer(state, action) {
       return state.map((r) => (r.id === action.id ? { ...r, data: action.data ?? r.data, complete: true } : r));
 
     case "ERROR":
-      return state.map((r) => (r.id === action.id ? { ...r, complete: true, error: true } : r));
+      return state.map((r) =>
+        r.id === action.id
+          ? { ...r, complete: true, error: true, errorMessage: action.errorMessage || String(action.reason || "") }
+          : r,
+      );
 
     case "RESET":
       return [];
@@ -127,7 +130,6 @@ export default function useFetchResources() {
     questionnaires: [],
     questionnaireResponses: [],
     exactMatchById: isFromEpic,
-    loadedStatus: { questionnaire: false, questionnaireResponse: false },
     summaries: {},
     complete: false,
     error: false,
@@ -146,7 +148,6 @@ export default function useFetchResources() {
     dispatchLoader({ type: "RESET" });
     setError(null);
     setExtraTypes([]);
-    // clear flight for this patient so phase-1 can re-run on refresh
     if (patient?.id) PHASE1_FLIGHTS.delete(`${patient.id}::${bump}`);
     setBump((x) => x + 1);
   }, [patient?.id, bump]);
@@ -162,19 +163,43 @@ export default function useFetchResources() {
 
   /** -------------------- Phase 1 via React Query (single-flight guarded) -------------------- */
   const phase1Key = useMemo(() => (patient?.id ? `${patient.id}::${bump}` : null), [patient?.id, bump]);
+  const phase1KeyRef = useRef(phase1Key);
+  useEffect(() => {
+    phase1KeyRef.current = phase1Key;
+  }, [phase1Key]);
+
+  useEffect(() => {
+    if (!phase1Key) return;
+    // Start with phase-1 types shown as pending
+    dispatchLoader({
+      type: "INIT_TRACKING",
+      items: [
+        { id: QUESTIONNAIRE_DATA_KEY, title: QUESTIONNAIRE_DATA_KEY, complete: false, error: false },
+        { id: QUESTIONNAIRE_RESPONSES_DATA_KEY, title: QUESTIONNAIRE_RESPONSES_DATA_KEY, complete: false, error: false },
+        { id: SUMMARY_DATA_KEY, title: "Response Summary Data", complete: false, error: false, data: null },
+      ],
+    });
+  }, [phase1Key]);
 
   const phase1Query = useQuery(
     ["phase1-qr-obs-q", phase1Key],
     async () => {
-      if (!client || !patient?.id) setError("No FHIR client or patient ID provided.");
+      if (!client || !patient?.id) {
+        const msg = "No FHIR client or patient ID provided.";
+        setError(msg);
+        throw new Error(msg);
+      }
 
       return runPhase1Once(phase1Key, async () => {
         const preloadList = getEnvQuestionnaireList();
         let qrResources = [];
         let obResources = [];
 
-        // 1) Load QR + Obs
-        const settledResults = await Promise.allSettled([
+        // Track request errors locally
+        let qrReqErrored = false;
+        let qReqErrored = false;
+
+        const results = await Promise.allSettled([
           client.request(
             { url: `QuestionnaireResponse?_count=200&patient=${patient.id}`, header: NO_CACHE_HEADER },
             { pageLimit: 0, onPage: processPage(client, qrResources) },
@@ -186,15 +211,20 @@ export default function useFetchResources() {
             },
             { pageLimit: 0, onPage: processPage(client, obResources) },
           ),
-        ]).catch((e) => {
-          console.error(e);
-          setError("Error occurred in FHIR requests. Resources are QuestionnaireResponse and Observation.");
-        });
-        for (const res of settledResults) {
-          if (res.status === "rejected") {
-            dispatchLoader({ type: "ERROR", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
-            break;
-          }
+        ]);
+
+        const [qrRes, obsRes] = results;
+        if (qrRes.status === "rejected") {
+          qrReqErrored = true;
+          dispatchLoader({
+            type: "ERROR",
+            id: QUESTIONNAIRE_RESPONSES_DATA_KEY,
+            errorMessage: qrRes.reason?.message || "QuestionnaireResponse request failed",
+          });
+        }
+        if (obsRes.status === "rejected") {
+          // We don't track Observation row; still useful to log
+          console.warn("Observation request failed", obsRes.reason);
         }
 
         let matchedQRs = !isEmptyArray(qrResources)
@@ -202,43 +232,44 @@ export default function useFetchResources() {
           : [];
 
         const hasPreload = !isEmptyArray(preloadList);
+
+        // If we have nothing to drive Questionnaire fetch (no preload, no QRs, no Obs),
+        // mark Questionnaire as error, QR as complete (unless its request errored), and finish summary.
         if (!hasPreload && !isFromEpic && isEmptyArray(matchedQRs) && isEmptyArray(obResources)) {
-          dispatchLoader({ type: "ERROR", id: QUESTIONNAIRE_DATA_KEY });
-          const qrError = toBeLoadedResources.find((o) => o.id === QUESTIONNAIRE_RESPONSES_DATA_KEY && o.error);
-          dispatchLoader({ type: qrError ? "ERRPR" : "COMPLETE", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
-          dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY });
+          dispatchLoader({
+            type: "ERROR",
+            id: QUESTIONNAIRE_DATA_KEY,
+            errorMessage: "No questionnaires to load (no preload, QR matches, or observations)",
+          });
+          if (!qrReqErrored) {
+            dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
+          }
+          dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: {} });
           return {};
         }
 
+        // Build synthetic Q/QR from observations where configs match
         let qIds = [...preloadList];
         let syntheticQs = [];
-
-        // 2) From Obs, build synthetic Qs/QRs if configs match
         if (!isEmptyArray(obResources)) {
-          let obsLinkIds = getLinkIdsFromObservations(obResources);
+          const obsLinkIds = getLinkIdsFromObservations(obResources);
           if (!isEmptyArray(obsLinkIds)) {
             for (const key in questionnaireConfigs) {
               const cfg = questionnaireConfigs[key];
-              if (hasPreload && !preloadList.find((q) => fuzzyMatch(q, key))) {
-                continue;
-              }
+              if (hasPreload && !preloadList.find((q) => fuzzyMatch(q, key))) continue;
               const hit = cfg?.questionLinkIds?.find((linkId) => obsLinkIds.includes(normalizeLinkId(linkId)));
-              if (hit) {
-                if (cfg) {
-                  const builtQ = buildQuestionnaire(cfg);
-                  const builtQRs = observationsToQuestionnaireResponses(obResources, cfg);
-                  console.log("built questionnaire ", builtQ);
-                  console.log("buit QRs ", builtQRs);
-                  syntheticQs = [...syntheticQs, builtQ];
-                  matchedQRs = [...matchedQRs, ...builtQRs];
-                  if (cfg.questionnaireId) qIds.push(cfg.questionnaireId);
-                }
+              if (hit && cfg) {
+                const builtQ = buildQuestionnaire(cfg);
+                const builtQRs = observationsToQuestionnaireResponses(obResources, cfg);
+                syntheticQs = [...syntheticQs, builtQ];
+                matchedQRs = [...matchedQRs, ...builtQRs];
+                if (cfg.questionnaireId) qIds.push(cfg.questionnaireId);
               }
             }
           }
         }
 
-        // 3) Determine Q list and fetch Questionnaires
+        // Determine Questionnaire list & fetch
         const matchedQIds = matchedQRs?.map((it) => it.questionnaire?.split("/")[1]) ?? [];
         const uniqueQIds = [...new Set([...qIds, ...matchedQIds])];
         const qListToLoad = hasPreload ? preloadList : uniqueQIds;
@@ -249,30 +280,47 @@ export default function useFetchResources() {
         });
 
         let qResources = [];
-        await client
-          .request({ url: qPath, header: NO_CACHE_HEADER }, { pageLimit: 0, onPage: processPage(client, qResources) })
-          .catch((e) => {
-            console.error("Error requesting questionnaire resources ", e);
-            dispatchLoader({ type: "ERROR", id: QUESTIONNAIRE_DATA_KEY });
-          });
+        try {
+          await client.request(
+            { url: qPath, header: NO_CACHE_HEADER },
+            { pageLimit: 0, onPage: processPage(client, qResources) },
+          );
+        } catch (e) {
+          qReqErrored = true;
+          console.error("Error requesting Questionnaire resources ", e);
+          dispatchLoader({ type: "ERROR", id: QUESTIONNAIRE_DATA_KEY, errorMessage: e?.message });
+        }
 
         const questionnaires = [
           ...getFhirResourcesFromQueryResult(syntheticQs),
           ...getFhirResourcesFromQueryResult(qResources),
         ];
-        let questionnaireResponses = getFhirResourcesFromQueryResult(matchedQRs);
+        const questionnaireResponses = getFhirResourcesFromQueryResult(matchedQRs);
+
         return {
           questionnaires,
           questionnaireResponses,
-          qListToLoad: qListToLoad,
+          qListToLoad,
           exactMatchById: !hasPreload || isFromEpic,
+          qrReqErrored,
+          qReqErrored,
         };
       });
     },
     {
       ...DEFAULT_QUERY_PARAMS,
       enabled: !!client && !!patient?.id && !base.complete && !base.error && !!phase1Key,
-      onSuccess: ({ questionnaires, questionnaireResponses, qListToLoad, exactMatchById }) => {
+      onSuccess: (payload) => {
+        if (phase1KeyRef.current !== phase1Key) return; // ignore stale result
+        const {
+          questionnaires,
+          questionnaireResponses,
+          qListToLoad,
+          exactMatchById,
+          qrReqErrored,
+          qReqErrored,
+        } = payload || {};
+
         // seed bundle
         patientBundle.current = {
           ...patientBundle.current,
@@ -285,13 +333,12 @@ export default function useFetchResources() {
           questionnaireList: qListToLoad,
           questionnaires,
           questionnaireResponses,
-          //summaries,
           exactMatchById,
         });
-        if (!toBeLoadedResources.find((o) => o.id === QUESTIONNAIRE_DATA_KEY && o.error))
-          dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
-        if (!toBeLoadedResources.find((o) => o.id === QUESTIONNAIRE_RESPONSES_DATA_KEY && o.error))
-          dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
+
+        // Mark phase-1 rows complete iff their request didn't error
+        if (!qReqErrored) dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
+        if (!qrReqErrored) dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
 
         // compute extra resource types for phase-2
         const haveTypes = [
@@ -311,7 +358,6 @@ export default function useFetchResources() {
         setExtraTypes(uniqWanted);
 
         if (uniqWanted.length > 0) {
-          // Add pending phase-2 resource types without resetting existing items
           dispatchLoader({
             type: "UPSERT_MANY",
             items: uniqWanted.map((t) => ({
@@ -322,7 +368,6 @@ export default function useFetchResources() {
             })),
           });
         } else {
-          // No extras -> SUMMARY can complete now
           dispatchLoader({
             type: "COMPLETE",
             id: SUMMARY_DATA_KEY,
@@ -331,6 +376,7 @@ export default function useFetchResources() {
         }
       },
       onError: (e) => {
+        if (phase1KeyRef.current !== phase1Key) return; // ignore stale error
         dispatchBase({ type: "ERROR", errorMessage: e?.message ?? String(e) });
       },
     },
@@ -338,12 +384,7 @@ export default function useFetchResources() {
 
   /** -------------------- Phase 2 via React Query -------------------- */
   const readyForExtras =
-    !!client &&
-    !!patient?.id &&
-    base.complete &&
-    !base.error &&
-    extraTypes.length > 0 &&
-    toBeLoadedResources.length > 0;
+    !!client && !!patient?.id && base.complete && !base.error && extraTypes.length > 0 && toBeLoadedResources.length > 0;
 
   const loadedFHIRDataRef = useRef([]);
 
@@ -365,7 +406,7 @@ export default function useFetchResources() {
           return loadedFHIRDataRef.current;
         })
         .catch((e) => {
-          dispatchLoader({ type: "ERROR", id: p.resourceType });
+          dispatchLoader({ type: "ERROR", id: p.resourceType, errorMessage: e?.message });
           console.warn("FHIR resource retrieval error for", p.resourceType, e);
           return [];
         }),
@@ -425,8 +466,6 @@ export default function useFetchResources() {
 
   const allChartData = useMemo(() => {
     if (!summaryData) return null; // summaryData already encodes usefulness
-
-    // deep clone to avoid accidental mutation by formatters
     const dataToUse = JSON.parse(JSON.stringify(summaryData.data));
     const keys = Object.keys(dataToUse);
 
@@ -447,24 +486,6 @@ export default function useFetchResources() {
   if (isReady) {
     console.log("summaryData ", summaryData);
   }
-
-  useEffect(() => {
-    if (!phase1Key) return;
-    // Start with phase-1 types shown as pending
-    dispatchLoader({
-      type: "INIT_TRACKING",
-      items: [
-        { id: QUESTIONNAIRE_DATA_KEY, title: QUESTIONNAIRE_DATA_KEY, complete: false, error: false },
-        {
-          id: QUESTIONNAIRE_RESPONSES_DATA_KEY,
-          title: QUESTIONNAIRE_RESPONSES_DATA_KEY,
-          complete: false,
-          error: false,
-        },
-        { id: SUMMARY_DATA_KEY, title: "Response Summary Data", complete: false, error: false, data: null },
-      ],
-    });
-  }, [phase1Key]);
 
   return {
     // status
