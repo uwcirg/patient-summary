@@ -62,7 +62,6 @@ export function processPage(client, resources = []) {
 export function getFHIRResourceTypesToLoad() {
   const sections = getSectionsToShow();
   const resourceTypes = sections.map((section) => section.resources).flat();
-  if (isEmptyArray(resourceTypes)) return ["Questionnaire", "QuestionnaireResponse"];
   return [...new Set(resourceTypes)];
 }
 

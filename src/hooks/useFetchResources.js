@@ -40,7 +40,7 @@ function runPhase1Once(key, fn) {
     try {
       return await fn();
     } finally {
-      // Keep cached to share settled result
+      // keep cached; delete if you want re-runs post-settle:
       // PHASE1_FLIGHTS.delete(key);
     }
   })();
@@ -48,12 +48,13 @@ function runPhase1Once(key, fn) {
   return p;
 }
 
-// --- One reducer to manage both "base" and "loader" slices ---
+// base scope: questionnaire & questionnaire resources
+// loader scope: other FHIR resources
 function reducer(state, action) {
-  const actionType = String(action.type).toUpperCase();
+  const t = String(action.type).toUpperCase();
 
   if (action.scope === "base") {
-    switch (actionType) {
+    switch (t) {
       case "RESULTS":
         return {
           ...state,
@@ -99,7 +100,7 @@ function reducer(state, action) {
   }
 
   if (action.scope === "loader") {
-    switch (actionType) {
+    switch (t) {
       case "INIT_TRACKING":
         return { ...state, loader: action.items };
 
@@ -135,7 +136,7 @@ function reducer(state, action) {
     }
   }
 
-  if (actionType === "RESET_ALL") {
+  if (t === "RESET_ALL") {
     return {
       ...state,
       base: {
@@ -159,6 +160,17 @@ function getSummaries(bundle) {
   return new QuestionnaireScoringBuilder({}, bundle).summariesByQuestionnaireFromBundle();
 }
 
+// --- helpers for config-driven tracking + guards ---
+const normalizeType = (t) => String(t).replace(/\s+/g, "").toLowerCase();
+const shouldTrack = (typeSet, typeName) => typeSet.has(normalizeType(typeName));
+
+const isNonEmptyString = (v) => typeof v === "string" && v.trim().length > 0;
+const toStringArray = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === "string") : []);
+const safeDateMs = (d) => {
+  const ms = new Date(d ?? "").getTime();
+  return Number.isFinite(ms) ? ms : 0;
+};
+
 export default function useFetchResources() {
   const isFromEpic = String(getEnv("REACT_APP_EPIC_QUERIES")) === "true";
   const { client, patient } = useContext(FhirClientContext);
@@ -176,26 +188,35 @@ export default function useFetchResources() {
   };
   const [state, dispatch] = useReducer(reducer, { base: initialBaseState, loader: [] });
 
-  // thin wrappers keep call sites unchanged
+  // stable scoped dispatchers
+  const dispatchBase = useCallback((action) => dispatch({ ...action, scope: "base" }), [dispatch]);
+  const dispatchLoader = useCallback((action) => dispatch({ ...action, scope: "loader" }), [dispatch]);
+
   const base = state.base;
   const toBeLoadedResources = state.loader;
-  const makeScopedDispatch = useCallback((scope) => (action) => dispatch({ ...action, scope }), [dispatch]);
-  const dispatchBase = useMemo(() => makeScopedDispatch("base"), [makeScopedDispatch]);
-  const dispatchLoader = useMemo(() => makeScopedDispatch("loader"), [makeScopedDispatch]);
 
   const [extraTypes, setExtraTypes] = useState([]);
   const [error, setError] = useState(null);
 
-  // refresh
+  // stable patient id
+  const pid = useMemo(() => (isNonEmptyString(patient?.id) ? String(patient.id) : null), [patient?.id]);
+
+  // refresh bump controls recomputation of configured types
   const [bump, setBump] = useState(0);
+
+  // recompute configured types when patient or refresh changes
+  const configuredTypesRaw = useMemo(() => getFHIRResourceTypesToLoad().flat().map(String).filter(Boolean), []);
+  const configuredTypeSet = useMemo(() => new Set(configuredTypesRaw.map(normalizeType)), [configuredTypesRaw]);
+
+  // refresh
   const refresh = useCallback(() => {
     dispatchBase({ type: "RESET" });
     dispatchLoader({ type: "RESET" });
     setError(null);
     setExtraTypes([]);
-    if (patient?.id) PHASE1_FLIGHTS.delete(`${patient.id}::${bump}`);
+    if (pid) PHASE1_FLIGHTS.delete(`${pid}::${bump}`);
     setBump((x) => x + 1);
-  }, [patient?.id, bump, dispatchBase, dispatchLoader]);
+  }, [pid, bump, dispatchBase, dispatchLoader]);
 
   // Bundle + eval results
   const patientBundle = useRef({
@@ -206,34 +227,60 @@ export default function useFetchResources() {
     evalResults: {},
   });
 
-  /** -------------------- Phase 1 via React Query -------------------- */
-  const phase1Key = useMemo(() => (patient?.id ? `${patient.id}::${bump}` : null), [patient?.id, bump]);
+  /** -------------------- Phase 1 via React Query (single-flight guarded) -------------------- */
+  const phase1Key = useMemo(() => (pid ? `${pid}::${bump}` : null), [pid, bump]);
   const phase1KeyRef = useRef(phase1Key);
   useEffect(() => {
     phase1KeyRef.current = phase1Key;
   }, [phase1Key]);
 
+  // INIT loader rows based on configured types (always include summary)
   useEffect(() => {
     if (!phase1Key) return;
-    dispatchLoader({
-      type: "INIT_TRACKING",
-      items: [
-        { id: QUESTIONNAIRE_DATA_KEY, title: QUESTIONNAIRE_DATA_KEY, complete: false, error: false },
-        {
-          id: QUESTIONNAIRE_RESPONSES_DATA_KEY,
-          title: QUESTIONNAIRE_RESPONSES_DATA_KEY,
-          complete: false,
-          error: false,
-        },
-        { id: SUMMARY_DATA_KEY, title: "Response Summary Data", complete: false, error: false, data: null },
-      ],
-    });
-  }, [phase1Key, dispatchLoader]);
+
+    const items = [];
+    const wantQ = shouldTrack(configuredTypeSet, QUESTIONNAIRE_DATA_KEY);
+    const wantQR = shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
+
+    if (wantQ) {
+      items.push({ id: QUESTIONNAIRE_DATA_KEY, title: QUESTIONNAIRE_DATA_KEY, complete: false, error: false });
+    }
+    if (wantQR) {
+      items.push({
+        id: QUESTIONNAIRE_RESPONSES_DATA_KEY,
+        title: QUESTIONNAIRE_RESPONSES_DATA_KEY,
+        complete: false,
+        error: false,
+      });
+    }
+
+    // Phase-2 configured extras (exclude Q/QR and blocked)
+    const extrasPlanned = configuredTypesRaw
+      .filter((t) => {
+        const n = normalizeType(t);
+        return (
+          !BLOCKED_EXTRA_TYPES.has(n) &&
+          n !== normalizeType(QUESTIONNAIRE_DATA_KEY) &&
+          n !== normalizeType(QUESTIONNAIRE_RESPONSES_DATA_KEY)
+        );
+      })
+      // de-dupe while preserving case
+      .filter((t, i, arr) => arr.findIndex((x) => normalizeType(x) === normalizeType(t)) === i);
+
+    for (const t of extrasPlanned) {
+      items.push({ id: t, title: t, complete: false, error: false });
+    }
+
+    // Always track summary
+    items.push({ id: SUMMARY_DATA_KEY, title: "Response Summary Data", complete: false, error: false, data: null });
+
+    dispatchLoader({ type: "INIT_TRACKING", items });
+  }, [phase1Key, configuredTypesRaw, configuredTypeSet, dispatchLoader]);
 
   const phase1Query = useQuery(
     ["phase1-qr-obs-q", phase1Key],
     async () => {
-      if (!client || !patient?.id) {
+      if (!client || !isNonEmptyString(pid)) {
         const msg = "No FHIR client or patient ID provided.";
         setError(msg);
         throw new Error(msg);
@@ -244,34 +291,46 @@ export default function useFetchResources() {
         let qrResources = [];
         let obResources = [];
 
+        // What we intend to fetch in phase-1
+        const wantQ = shouldTrack(configuredTypeSet, QUESTIONNAIRE_DATA_KEY);
+        const wantQR = shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
+        const wantObs = wantQ || wantQR;
+
+        // Track request errors locally
         let qrReqErrored = false;
         let qReqErrored = false;
 
-        const results = await Promise.allSettled([
-          client.request(
-            { url: `QuestionnaireResponse?_count=200&patient=${patient.id}`, header: NO_CACHE_HEADER },
-            { pageLimit: 0, onPage: processPage(client, qrResources) },
-          ),
-          client.request(
-            {
-              url: `Observation?_count=200&patient=${patient.id}&code=${getFlowsheetIds().join(",")}`,
-              header: NO_CACHE_HEADER,
-            },
-            { pageLimit: 0, onPage: processPage(client, obResources) },
-          ),
-        ]);
-
-        const [qrRes, obsRes] = results;
-        if (qrRes.status === "rejected") {
-          qrReqErrored = true;
-          dispatchLoader({
-            type: "ERROR",
-            id: QUESTIONNAIRE_RESPONSES_DATA_KEY,
-            errorMessage: qrRes.reason?.message || "QuestionnaireResponse request failed",
-          });
+        // Conditionally fetch QR + Obs
+        if (wantQR) {
+          try {
+            await client.request(
+              { url: `QuestionnaireResponse?_count=200&patient=${pid}`, header: NO_CACHE_HEADER },
+              { pageLimit: 0, onPage: processPage(client, qrResources) },
+            );
+          } catch (e) {
+            qrReqErrored = true;
+            dispatchLoader({
+              type: "ERROR",
+              id: QUESTIONNAIRE_RESPONSES_DATA_KEY,
+              errorMessage: e?.message || "QuestionnaireResponse request failed",
+            });
+          }
         }
-        if (obsRes.status === "rejected") {
-          console.warn("Observation request failed", obsRes.reason);
+
+        if (wantObs) {
+          const flowsheetIds = toStringArray(getFlowsheetIds());
+          const obsQueryBase = `Observation?_count=200&patient=${pid}`;
+          const obsUrl = flowsheetIds.length ? `${obsQueryBase}&code=${flowsheetIds.join(",")}` : obsQueryBase;
+
+          try {
+            await client.request(
+              { url: obsUrl, header: NO_CACHE_HEADER },
+              { pageLimit: 0, onPage: processPage(client, obResources) },
+            );
+          } catch (e) {
+            // We don't track Observation in the loader, but log for diagnostics.
+            console.warn("Observation request failed", e);
+          }
         }
 
         let matchedQRs = !isEmptyArray(qrResources)
@@ -280,13 +339,19 @@ export default function useFetchResources() {
 
         const hasPreload = !isEmptyArray(preloadList);
 
+        // If we have nothing to drive Questionnaire fetch (no preload, no QRs, no Obs)
         if (!hasPreload && !isFromEpic && isEmptyArray(matchedQRs) && isEmptyArray(obResources)) {
-          dispatchLoader({
-            type: "ERROR",
-            id: QUESTIONNAIRE_DATA_KEY,
-            errorMessage: "No questionnaires to load. ",
-          });
-          if (!qrReqErrored) dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
+          if (wantQ) {
+            dispatchLoader({
+              type: "ERROR",
+              id: QUESTIONNAIRE_DATA_KEY,
+              errorMessage: "No questionnaires to load (no preload, QR matches, or observations)",
+            });
+          }
+          if (!qrReqErrored && wantQR) {
+            dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
+          }
+          // With no inputs, summary has nothing to compute
           dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: {} });
           return {};
         }
@@ -294,20 +359,22 @@ export default function useFetchResources() {
         // Build synthetic Q/QR from observations where configs match
         let qIds = [...preloadList];
         let syntheticQs = [];
-        if (!isEmptyArray(obResources)) {
+        if (wantObs && !isEmptyArray(obResources)) {
           const obsLinkIds = getLinkIdsFromObservations(obResources);
           if (!isEmptyArray(obsLinkIds)) {
-            for (const key in questionnaireConfigs) {
-              const cfg = questionnaireConfigs[key];
+            for (const [key, cfg] of Object.entries(questionnaireConfigs || {})) {
+              if (!cfg) continue;
               if (hasPreload && !preloadList.find((q) => fuzzyMatch(q, key))) continue;
-              const hit = cfg?.questionLinkIds?.find((linkId) => obsLinkIds.includes(normalizeLinkId(linkId)));
-              if (hit && cfg) {
-                const builtQ = buildQuestionnaire(cfg);
-                const builtQRs = observationsToQuestionnaireResponses(obResources, cfg);
-                syntheticQs = [...syntheticQs, builtQ];
-                matchedQRs = [...matchedQRs, ...builtQRs];
-                if (cfg.questionnaireId) qIds.push(cfg.questionnaireId);
-              }
+
+              const cfgLinkIds = toStringArray(cfg.questionLinkIds);
+              const hit = cfgLinkIds.find((linkId) => obsLinkIds.includes(normalizeLinkId(linkId)));
+              if (!hit) continue;
+
+              const builtQ = buildQuestionnaire(cfg);
+              const builtQRs = observationsToQuestionnaireResponses(obResources, cfg);
+              syntheticQs.push(builtQ);
+              matchedQRs = [...matchedQRs, ...builtQRs];
+              if (cfg.questionnaireId) qIds.push(cfg.questionnaireId);
             }
           }
         }
@@ -317,21 +384,22 @@ export default function useFetchResources() {
         const uniqueQIds = [...new Set([...qIds, ...matchedQIds])];
         const qListToLoad = hasPreload ? preloadList : uniqueQIds;
 
-        const qPath = getFHIRResourcePath(patient.id, ["Questionnaire"], {
+        const qPath = getFHIRResourcePath(pid, [QUESTIONNAIRE_DATA_KEY], {
           questionnaireList: qListToLoad,
           exactMatchById: !hasPreload || isFromEpic,
         });
 
         let qResources = [];
-        try {
-          await client.request(
-            { url: qPath, header: NO_CACHE_HEADER },
-            { pageLimit: 0, onPage: processPage(client, qResources) },
-          );
-        } catch (e) {
-          qReqErrored = true;
-          console.error("Error requesting Questionnaire resources ", e);
-          dispatchLoader({ type: "ERROR", id: QUESTIONNAIRE_DATA_KEY, errorMessage: e?.message });
+        if (wantQ) {
+          try {
+            await client.request(
+              { url: qPath, header: NO_CACHE_HEADER },
+              { pageLimit: 0, onPage: processPage(client, qResources) },
+            );
+          } catch (e) {
+            qReqErrored = true;
+            dispatchLoader({ type: "ERROR", id: QUESTIONNAIRE_DATA_KEY, errorMessage: e?.message });
+          }
         }
 
         const questionnaires = [
@@ -352,17 +420,19 @@ export default function useFetchResources() {
     },
     {
       ...DEFAULT_QUERY_PARAMS,
-      enabled: !!client && !!patient?.id && !base.complete && !base.error && !!phase1Key,
+      enabled: !!client && !!pid && !base.complete && !base.error && !!phase1Key,
       onSuccess: (payload) => {
         if (phase1KeyRef.current !== phase1Key) return; // ignore stale result
         const { questionnaires, questionnaireResponses, qListToLoad, exactMatchById, qrReqErrored, qReqErrored } =
           payload || {};
 
+        // seed bundle
         patientBundle.current = {
           ...patientBundle.current,
           entry: [{ resource: patient }, ...(questionnaireResponses ?? []), ...(questionnaires ?? [])],
         };
 
+        // commit base results
         dispatchBase({
           type: "RESULTS",
           questionnaireList: qListToLoad,
@@ -371,36 +441,53 @@ export default function useFetchResources() {
           exactMatchById,
         });
 
-        if (!qReqErrored) dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
-        if (!qrReqErrored) dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
+        // Mark base rows complete only if tracked
+        const wantQ = shouldTrack(configuredTypeSet, QUESTIONNAIRE_DATA_KEY);
+        const wantQR = shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
+        if (!qReqErrored && wantQ) dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
+        if (!qrReqErrored && wantQR) dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
 
+        // compute extra resource types for phase-2
         const haveTypes = [
           ...new Set(getResourceTypesFromResources(questionnaires ?? []).map((r) => String(r).toLowerCase())),
           ...new Set(getResourceTypesFromResources(questionnaireResponses ?? []).map((r) => String(r).toLowerCase())),
           "patient",
         ];
 
-        const wanted = getFHIRResourceTypesToLoad()
-          .flat()
-          .filter((t) => !haveTypes.includes(String(t).toLowerCase()));
+        // What config wants overall (already seeded in loader), excluding Q/QR/blocked
+        const extrasPlanned = configuredTypesRaw.filter((t) => {
+          const n = normalizeType(t);
+          return (
+            !BLOCKED_EXTRA_TYPES.has(n) &&
+            n !== normalizeType(QUESTIONNAIRE_DATA_KEY) &&
+            n !== normalizeType(QUESTIONNAIRE_RESPONSES_DATA_KEY)
+          );
+        });
 
-        const uniqWanted = [...new Set(wanted)].filter(
-          (t) => !BLOCKED_EXTRA_TYPES.has(String(t).replace(/\s+/g, "").toLowerCase()),
-        );
+        // Which extras are actually needed after phase-1 results
+        const extrasWanted = extrasPlanned.filter((t) => !haveTypes.includes(normalizeType(t)));
 
-        setExtraTypes(uniqWanted);
-
-        if (uniqWanted.length > 0) {
+        // Keep needed extras pending (ensure rows exist)
+        if (extrasWanted.length > 0) {
           dispatchLoader({
             type: "UPSERT_MANY",
-            items: uniqWanted.map((t) => ({
-              id: t,
-              title: t,
-              complete: false,
-              error: false,
-            })),
+            items: extrasWanted.map((t) => ({ id: t, title: t, complete: false, error: false })),
           });
-        } else {
+        }
+
+        // Mark *not* needed extras as complete (skipped)
+        const extrasSkip = extrasPlanned.filter(
+          (t) => !extrasWanted.find((w) => normalizeType(w) === normalizeType(t)),
+        );
+        for (const t of extrasSkip) {
+          dispatchLoader({ type: "COMPLETE", id: t, data: [] }); // no fetch needed
+        }
+
+        // Drive phase-2 list
+        setExtraTypes(extrasWanted);
+
+        // If nothing to fetch, summary can finalize now
+        if (extrasWanted.length === 0) {
           dispatchLoader({
             type: "COMPLETE",
             id: SUMMARY_DATA_KEY,
@@ -417,18 +504,13 @@ export default function useFetchResources() {
 
   /** -------------------- Phase 2 via React Query -------------------- */
   const readyForExtras =
-    !!client &&
-    !!patient?.id &&
-    base.complete &&
-    !base.error &&
-    extraTypes.length > 0 &&
-    toBeLoadedResources.length > 0;
+    !!client && !!pid && base.complete && !base.error && extraTypes.length > 0 && toBeLoadedResources.length > 0;
 
   const loadedFHIRDataRef = useRef([]);
 
   const getFhirResources = useCallback(async () => {
     loadedFHIRDataRef.current = [];
-    const paths = getFHIRResourcePaths(patient.id, extraTypes, {
+    const paths = getFHIRResourcePaths(pid, extraTypes, {
       questionnaireList: base.questionnaireList,
       exactMatchById: base.exactMatchById,
     });
@@ -459,10 +541,10 @@ export default function useFetchResources() {
       }
     }
     return bundle;
-  }, [client, patient?.id, extraTypes, base.questionnaireList, base.exactMatchById, dispatchLoader]);
+  }, [client, pid, extraTypes, base.questionnaireList, base.exactMatchById, dispatchLoader]);
 
   useQuery(
-    ["extra-fhir-resources", patient?.id, extraTypes.join(","), bump],
+    ["extra-fhir-resources", pid, extraTypes.join(","), bump],
     async () => {
       const fhirData = await getFhirResources();
       const { default: FhirResultBuilder } = await import("@/models/resultBuilders/FhirResultBuilder");
@@ -509,11 +591,11 @@ export default function useFetchResources() {
 
     const rows = keys.flatMap((key) => {
       const d = dataToUse[key];
-      if (!d || isEmptyArray(d.chartData?.data)) return [];
+      if (!d || !Array.isArray(d.chartData?.data) || d.chartData.data.length === 0) return [];
       return d.chartData.data.map((o) => ({ ...o, key, [key]: o.score }));
     });
 
-    return rows.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return rows.sort((a, b) => safeDateMs(a.date) - safeDateMs(b.date));
   }, [summaryData]);
 
   const loading =
@@ -554,3 +636,6 @@ export default function useFetchResources() {
     refresh,
   };
 }
+
+// Export reducer for unit tests if desired
+export { reducer };

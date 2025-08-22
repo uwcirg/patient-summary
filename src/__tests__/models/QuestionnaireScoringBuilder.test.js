@@ -47,7 +47,7 @@ describe("QuestionnaireScoringBuilder", () => {
     expect(qrs.map((x) => x.id)).toEqual(["r0"]);
 
     const summaries = await b.summariesFromBundleAsync(null, {}, override);
-    expect(summaries?.responses?.map((s) => s.id)).toEqual(["r0"]);
+    expect(summaries?.responseData?.map((s) => s.id)).toEqual(["r0"]);
   });
 
   it("index resolves Questionnaire", () => {
