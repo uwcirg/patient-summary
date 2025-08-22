@@ -13,7 +13,7 @@ const renderLoader = () => (
 );
 
 const renderScoringSummary = (props) => {
-  const summaryData = props.summaryData?.data || {};
+  const summaryData = props.summaryData?.data;
   const ScoreSummary = lazy(() => import("../components/sections/ScoringSummary"));
   const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
   const chartData = props.allChartData;

@@ -3,14 +3,15 @@ import PropTypes from "prop-types";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
-
-export default function Loader({ message, styles }) {
+import {getAppHeight} from "@util";
+export default function Loader({ message, styles, children }) {
   return (
     <Box
       sx={{
         position: "fixed",
         width: "100%",
         height: "100%",
+        minHeight: getAppHeight(),
         backgroundColor: "#FFF",
         marginLeft: "auto",
         marginRight: "auto",
@@ -44,11 +45,13 @@ export default function Loader({ message, styles }) {
           <div>{message ? message : "Please wait ..."}</div>
           <CircularProgress color="info"></CircularProgress>
         </Stack>
+        {children}
       </Stack>
     </Box>
   );
 }
 Loader.propTypes = {
+  children: PropTypes.oneOfType([PropTypes.element, PropTypes.array]),
   message: PropTypes.string,
   styles: PropTypes.object,
 };

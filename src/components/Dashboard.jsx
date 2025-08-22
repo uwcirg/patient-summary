@@ -61,8 +61,12 @@ export default function Dashboard() {
 
   return (
     <Box className="app">
-      {loading && <Loader></Loader>}
-      {!isReady && <ProgressIndicator resources={toBeLoadedResources}></ProgressIndicator>}
+      {loading && (
+        <Loader>
+          <ProgressIndicator resources={toBeLoadedResources} sx={{position: "relative"}}></ProgressIndicator>
+        </Loader>
+      )}
+
       {!loading && isReady && (
         <>
           <FloatingNavButton></FloatingNavButton>

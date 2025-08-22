@@ -106,7 +106,7 @@ export default function ScoringSummary(props) {
   };
 
   const getMostRecentEntry = (summaryData) => {
-    return getResponsesByIndex(summaryData.responses, 0);
+    return getResponsesByIndex(summaryData.responseData, 0);
   };
 
   const displayScoreRange = (summaryData) => {
@@ -242,7 +242,7 @@ export default function ScoringSummary(props) {
         sx={{ width: "100%" }}
       >
         <Scoring
-          score={getCurrentScoreByInstrument(summaryData[key].responses)}
+          score={getCurrentScoreByInstrument(summaryData[key].responseData)}
           scoreParams={getMostRecentEntry(summaryData[key])}
           justifyContent="space-between"
         ></Scoring>
@@ -273,7 +273,7 @@ export default function ScoringSummary(props) {
 
   const renderComparedToLastCell = (key) => (
     <TableCell align="center" size="small" sx={{ ...cellStyle, borderRightWidth: 0 }}>
-      {getDisplayIcon(summaryData[key].responses)}
+      {getDisplayIcon(summaryData[key].responseData)}
     </TableCell>
   );
 

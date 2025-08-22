@@ -519,7 +519,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       },
       chartType: chartConfig?.type,
       scoringData: scoringData,
-      responses: evalData,
+      responseData: evalData,
       questionnaire: questionnaire,
     };
   }
@@ -539,7 +539,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const questionnaire = loader(canonical);
       if (!questionnaire) continue;
       const summaries = this._summariesByQuestionnaireRef(qrs, questionnaire, strategyOptions);
-      if (!isEmptyArray(summaries?.responses)) out[canonical] = summaries;
+      if (!isEmptyArray(summaries?.responseData)) out[canonical] = summaries;
     }
     return out;
   }
@@ -588,7 +588,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (!questionnaire) continue;
 
       const summaries = this._summariesByQuestionnaireRef(qrs, questionnaire, strategyOptions);
-      if (!isEmptyArray(summaries?.responses)) out[canonical] = summaries;
+      if (!isEmptyArray(summaries?.responseData)) out[canonical] = summaries;
     }
     return out;
   }

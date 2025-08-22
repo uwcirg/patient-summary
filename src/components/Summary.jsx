@@ -58,14 +58,8 @@ export default function Summary(props) {
     width: 2,
   };
   const shouldDisplayResponses = () => summary && !summary.loading && !summary.error;
-
-  // const formatChartData = (data) => {
-  //   if (summary.chartConfig && summary.chartConfig.dataFormatter) return summary.chartConfig.dataFormatter(data);
-  //   return data;
-  // };
-
   const getAnchorElementId = () => QUESTIONNAIRE_ANCHOR_ID_PREFIX;
-  const hasResponses = () => !isEmptyArray(summary.responses);
+  const hasResponses = () => !isEmptyArray(summary.responseData);
 
   const renderLoader = () =>
     summary.loading && (
@@ -104,7 +98,7 @@ export default function Summary(props) {
         {!hasResponses() && <Alert severity="warning">No recorded responses</Alert>}
         {hasResponses() && (
           <Responses
-            data={summary.responses}
+            data={summary.responseData}
             questionnaireId={questionnaireId}
             questionnaireJson={summary.questionnaire}
           ></Responses>
