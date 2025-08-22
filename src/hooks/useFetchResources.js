@@ -33,16 +33,14 @@ const DEFAULT_QUERY_PARAMS = {
 };
 
 // ---- Single-flight cache for phase-1 (per patient+run) ----
-const PHASE1_FLIGHTS = new Map(); // key -> Promise<{...}>
-
-/** Runs phase-1 exactly once per key by returning the same Promise if already in-flight or completed. */
+const PHASE1_FLIGHTS = new Map();
 function runPhase1Once(key, fn) {
   if (PHASE1_FLIGHTS.has(key)) return PHASE1_FLIGHTS.get(key);
   const p = (async () => {
     try {
       return await fn();
     } finally {
-      // Keep cached to share settled result. Uncomment to allow re-runs after settle:
+      // Keep cached to share settled result
       // PHASE1_FLIGHTS.delete(key);
     }
   })();
@@ -50,28 +48,98 @@ function runPhase1Once(key, fn) {
   return p;
 }
 
-/** ---- Base reducer (QRs/Qs/summaries) ---- */
-function baseReducer(state, action) {
-  switch (String(action.type).toUpperCase()) {
-    case "RESULTS":
-      return {
-        ...state,
-        ...action,
-        exactMatchById: !!action.exactMatchById,
-        complete: true,
-        error: false,
-        errorMessage: "",
-      };
-    case "ERROR":
-      return {
-        ...state,
-        error: true,
-        errorMessage: action.errorMessage ?? String(action.message ?? "Unknown error"),
-        complete: true,
-      };
-    case "RESET":
-      return {
-        ...state,
+// --- One reducer to manage both "base" and "loader" slices ---
+function reducer(state, action) {
+  const actionType = String(action.type).toUpperCase();
+
+  if (action.scope === "base") {
+    switch (actionType) {
+      case "RESULTS":
+        return {
+          ...state,
+          base: {
+            ...state.base,
+            questionnaireList: action.questionnaireList ?? state.base.questionnaireList,
+            questionnaires: action.questionnaires ?? [],
+            questionnaireResponses: action.questionnaireResponses ?? [],
+            exactMatchById: !!action.exactMatchById,
+            summaries: action.summaries ?? state.base.summaries,
+            complete: true,
+            error: false,
+            errorMessage: "",
+          },
+        };
+      case "ERROR":
+        return {
+          ...state,
+          base: {
+            ...state.base,
+            error: true,
+            errorMessage: action.errorMessage ?? String(action.message ?? "Error occurred."),
+            complete: true,
+          },
+        };
+      case "RESET":
+        return {
+          ...state,
+          base: {
+            ...state.base,
+            questionnaireList: [],
+            questionnaires: [],
+            questionnaireResponses: [],
+            summaries: {},
+            complete: false,
+            error: false,
+            errorMessage: "",
+          },
+        };
+      default:
+        return state;
+    }
+  }
+
+  if (action.scope === "loader") {
+    switch (actionType) {
+      case "INIT_TRACKING":
+        return { ...state, loader: action.items };
+
+      case "UPSERT_MANY": {
+        const map = new Map(state.loader.map((r) => [r.id, r]));
+        for (const it of action.items) map.set(it.id, { ...(map.get(it.id) || {}), ...it });
+        return { ...state, loader: Array.from(map.values()) };
+      }
+
+      case "COMPLETE":
+        return {
+          ...state,
+          loader: state.loader.map((r) =>
+            r.id === action.id ? { ...r, data: action.data ?? r.data, complete: true } : r,
+          ),
+        };
+
+      case "ERROR":
+        return {
+          ...state,
+          loader: state.loader.map((r) =>
+            r.id === action.id
+              ? { ...r, complete: true, error: true, errorMessage: action.errorMessage || String(action.reason || "") }
+              : r,
+          ),
+        };
+
+      case "RESET":
+        return { ...state, loader: [] };
+
+      default:
+        return state;
+    }
+  }
+
+  if (actionType === "RESET_ALL") {
+    return {
+      ...state,
+      base: {
+        ...state.base,
         questionnaireList: [],
         questionnaires: [],
         questionnaireResponses: [],
@@ -79,42 +147,12 @@ function baseReducer(state, action) {
         complete: false,
         error: false,
         errorMessage: "",
-      };
-    default:
-      return state;
+      },
+      loader: [],
+    };
   }
-}
 
-/** ---- Loader reducer for to-be-loaded FHIR resources ---- */
-function loaderReducer(state, action) {
-  switch (String(action.type).toUpperCase()) {
-    case "INIT_TRACKING":
-      return action.items;
-
-    case "UPSERT_MANY": {
-      const map = new Map(state.map((r) => [r.id, r]));
-      for (const it of action.items) {
-        map.set(it.id, { ...(map.get(it.id) || {}), ...it });
-      }
-      return Array.from(map.values());
-    }
-
-    case "COMPLETE":
-      return state.map((r) => (r.id === action.id ? { ...r, data: action.data ?? r.data, complete: true } : r));
-
-    case "ERROR":
-      return state.map((r) =>
-        r.id === action.id
-          ? { ...r, complete: true, error: true, errorMessage: action.errorMessage || String(action.reason || "") }
-          : r,
-      );
-
-    case "RESET":
-      return [];
-
-    default:
-      return state;
-  }
+  return state;
 }
 
 function getSummaries(bundle) {
@@ -125,7 +163,8 @@ export default function useFetchResources() {
   const isFromEpic = String(getEnv("REACT_APP_EPIC_QUERIES")) === "true";
   const { client, patient } = useContext(FhirClientContext);
 
-  const [base, dispatchBase] = useReducer(baseReducer, {
+  // unified reducer + state
+  const initialBaseState = {
     questionnaireList: [],
     questionnaires: [],
     questionnaireResponses: [],
@@ -134,10 +173,16 @@ export default function useFetchResources() {
     complete: false,
     error: false,
     errorMessage: "",
-  });
+  };
+  const [state, dispatch] = useReducer(reducer, { base: initialBaseState, loader: [] });
 
-  // resources loading tracking
-  const [toBeLoadedResources, dispatchLoader] = useReducer(loaderReducer, []);
+  // thin wrappers keep call sites unchanged
+  const base = state.base;
+  const toBeLoadedResources = state.loader;
+  const makeScopedDispatch = useCallback((scope) => (action) => dispatch({ ...action, scope }), [dispatch]);
+  const dispatchBase = useMemo(() => makeScopedDispatch("base"), [makeScopedDispatch]);
+  const dispatchLoader = useMemo(() => makeScopedDispatch("loader"), [makeScopedDispatch]);
+
   const [extraTypes, setExtraTypes] = useState([]);
   const [error, setError] = useState(null);
 
@@ -150,7 +195,7 @@ export default function useFetchResources() {
     setExtraTypes([]);
     if (patient?.id) PHASE1_FLIGHTS.delete(`${patient.id}::${bump}`);
     setBump((x) => x + 1);
-  }, [patient?.id, bump]);
+  }, [patient?.id, bump, dispatchBase, dispatchLoader]);
 
   // Bundle + eval results
   const patientBundle = useRef({
@@ -161,7 +206,7 @@ export default function useFetchResources() {
     evalResults: {},
   });
 
-  /** -------------------- Phase 1 via React Query (single-flight guarded) -------------------- */
+  /** -------------------- Phase 1 via React Query -------------------- */
   const phase1Key = useMemo(() => (patient?.id ? `${patient.id}::${bump}` : null), [patient?.id, bump]);
   const phase1KeyRef = useRef(phase1Key);
   useEffect(() => {
@@ -170,16 +215,20 @@ export default function useFetchResources() {
 
   useEffect(() => {
     if (!phase1Key) return;
-    // Start with phase-1 types shown as pending
     dispatchLoader({
       type: "INIT_TRACKING",
       items: [
         { id: QUESTIONNAIRE_DATA_KEY, title: QUESTIONNAIRE_DATA_KEY, complete: false, error: false },
-        { id: QUESTIONNAIRE_RESPONSES_DATA_KEY, title: QUESTIONNAIRE_RESPONSES_DATA_KEY, complete: false, error: false },
+        {
+          id: QUESTIONNAIRE_RESPONSES_DATA_KEY,
+          title: QUESTIONNAIRE_RESPONSES_DATA_KEY,
+          complete: false,
+          error: false,
+        },
         { id: SUMMARY_DATA_KEY, title: "Response Summary Data", complete: false, error: false, data: null },
       ],
     });
-  }, [phase1Key]);
+  }, [phase1Key, dispatchLoader]);
 
   const phase1Query = useQuery(
     ["phase1-qr-obs-q", phase1Key],
@@ -195,7 +244,6 @@ export default function useFetchResources() {
         let qrResources = [];
         let obResources = [];
 
-        // Track request errors locally
         let qrReqErrored = false;
         let qReqErrored = false;
 
@@ -223,7 +271,6 @@ export default function useFetchResources() {
           });
         }
         if (obsRes.status === "rejected") {
-          // We don't track Observation row; still useful to log
           console.warn("Observation request failed", obsRes.reason);
         }
 
@@ -233,17 +280,13 @@ export default function useFetchResources() {
 
         const hasPreload = !isEmptyArray(preloadList);
 
-        // If we have nothing to drive Questionnaire fetch (no preload, no QRs, no Obs),
-        // mark Questionnaire as error, QR as complete (unless its request errored), and finish summary.
         if (!hasPreload && !isFromEpic && isEmptyArray(matchedQRs) && isEmptyArray(obResources)) {
           dispatchLoader({
             type: "ERROR",
             id: QUESTIONNAIRE_DATA_KEY,
-            errorMessage: "No questionnaires to load (no preload, QR matches, or observations)",
+            errorMessage: "No questionnaires to load. ",
           });
-          if (!qrReqErrored) {
-            dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
-          }
+          if (!qrReqErrored) dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
           dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: {} });
           return {};
         }
@@ -312,22 +355,14 @@ export default function useFetchResources() {
       enabled: !!client && !!patient?.id && !base.complete && !base.error && !!phase1Key,
       onSuccess: (payload) => {
         if (phase1KeyRef.current !== phase1Key) return; // ignore stale result
-        const {
-          questionnaires,
-          questionnaireResponses,
-          qListToLoad,
-          exactMatchById,
-          qrReqErrored,
-          qReqErrored,
-        } = payload || {};
+        const { questionnaires, questionnaireResponses, qListToLoad, exactMatchById, qrReqErrored, qReqErrored } =
+          payload || {};
 
-        // seed bundle
         patientBundle.current = {
           ...patientBundle.current,
           entry: [{ resource: patient }, ...(questionnaireResponses ?? []), ...(questionnaires ?? [])],
         };
 
-        // commit base results
         dispatchBase({
           type: "RESULTS",
           questionnaireList: qListToLoad,
@@ -336,11 +371,9 @@ export default function useFetchResources() {
           exactMatchById,
         });
 
-        // Mark phase-1 rows complete iff their request didn't error
         if (!qReqErrored) dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
         if (!qrReqErrored) dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
 
-        // compute extra resource types for phase-2
         const haveTypes = [
           ...new Set(getResourceTypesFromResources(questionnaires ?? []).map((r) => String(r).toLowerCase())),
           ...new Set(getResourceTypesFromResources(questionnaireResponses ?? []).map((r) => String(r).toLowerCase())),
@@ -384,7 +417,12 @@ export default function useFetchResources() {
 
   /** -------------------- Phase 2 via React Query -------------------- */
   const readyForExtras =
-    !!client && !!patient?.id && base.complete && !base.error && extraTypes.length > 0 && toBeLoadedResources.length > 0;
+    !!client &&
+    !!patient?.id &&
+    base.complete &&
+    !base.error &&
+    extraTypes.length > 0 &&
+    toBeLoadedResources.length > 0;
 
   const loadedFHIRDataRef = useRef([]);
 
@@ -465,7 +503,7 @@ export default function useFetchResources() {
   }, [toBeLoadedResources]);
 
   const allChartData = useMemo(() => {
-    if (!summaryData) return null; // summaryData already encodes usefulness
+    if (!summaryData) return null;
     const dataToUse = JSON.parse(JSON.stringify(summaryData.data));
     const keys = Object.keys(dataToUse);
 

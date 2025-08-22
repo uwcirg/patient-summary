@@ -66,7 +66,7 @@ export default function ProgressIndicator({ resources, sx }) {
                 key={`resource_${resource}_${index}`}
               >
                 <Typography
-                  variant="body2"
+                  variant="body1"
                   sx={{
                     color: (theme) =>
                       resource.error

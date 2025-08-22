@@ -63,7 +63,10 @@ export default function Dashboard() {
     <Box className="app">
       {loading && (
         <Loader>
-          <ProgressIndicator resources={toBeLoadedResources} sx={{position: "relative"}}></ProgressIndicator>
+          <ProgressIndicator
+            resources={toBeLoadedResources}
+            sx={{ position: "relative", padding: (theme) => theme.spacing(0, 2) }}
+          ></ProgressIndicator>
         </Loader>
       )}
 
