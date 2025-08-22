@@ -468,7 +468,7 @@ export default function useFetchResources() {
         const extrasWanted = extrasPlanned.filter((t) => !haveTypes.includes(normalizeType(t)));
 
         // Keep needed extras pending (ensure rows exist)
-        if (extrasWanted.length > 0) {
+        if (!isEmptyArray(extrasWanted)) {
           dispatchLoader({
             type: "UPSERT_MANY",
             items: extrasWanted.map((t) => ({ id: t, title: t, complete: false, error: false })),
@@ -487,7 +487,7 @@ export default function useFetchResources() {
         setExtraTypes(extrasWanted);
 
         // If nothing to fetch, summary can finalize now
-        if (extrasWanted.length === 0) {
+        if (isEmptyArray(extrasWanted)) {
           dispatchLoader({
             type: "COMPLETE",
             id: SUMMARY_DATA_KEY,
@@ -504,7 +504,12 @@ export default function useFetchResources() {
 
   /** -------------------- Phase 2 via React Query -------------------- */
   const readyForExtras =
-    !!client && !!pid && base.complete && !base.error && extraTypes.length > 0 && toBeLoadedResources.length > 0;
+    !!client &&
+    !!pid &&
+    base.complete &&
+    !base.error &&
+    !isEmptyArray(extraTypes) &&
+    !isEmptyArray(toBeLoadedResources);
 
   const loadedFHIRDataRef = useRef([]);
 
@@ -570,7 +575,7 @@ export default function useFetchResources() {
   const phase2DoneOrSkipped =
     isEmptyArray(toBeLoadedResources) || !toBeLoadedResources.find((o) => !o.complete) || !!error;
 
-  const isReady = base.complete && (phase2DoneOrSkipped || extraTypes.length === 0) && !base.error;
+  const isReady = base.complete && (phase2DoneOrSkipped || isEmptyArray(extraTypes)) && !base.error;
 
   const summaryData = useMemo(() => {
     const found = toBeLoadedResources.find((r) => r.id === SUMMARY_DATA_KEY);
@@ -591,7 +596,7 @@ export default function useFetchResources() {
 
     const rows = keys.flatMap((key) => {
       const d = dataToUse[key];
-      if (!d || !Array.isArray(d.chartData?.data) || d.chartData.data.length === 0) return [];
+      if (!d || isEmptyArray(d.chartData?.data)) return [];
       return d.chartData.data.map((o) => ({ ...o, key, [key]: o.score }));
     });
 
