@@ -49,7 +49,9 @@ export default function Responses(props) {
     if (!dataForQuestions) return null;
     copyData.forEach((d) => {
       if (d.id === dataForQuestions.id) return true;
-      if (isEmptyArray(d.responses)) return true;
+      if (isEmptyArray(d.responses)) {
+        d.responses = [];
+      }
       dataForQuestions.responses.forEach((item) => {
         const matched = d.responses.find((o) => o.id === item.id);
         if (!matched) {
@@ -140,16 +142,15 @@ export default function Responses(props) {
         if (!rowDataItem) return;
         if (isNumber(rowDataItem.score)) {
           return <Score instrumentId={questionnaireId} score={rowDataItem.score} scoreParams={rowDataItem}></Score>;
-        } else return (typeof rowDataItem === "string" ? rowDataItem : "--");
+        } else return typeof rowDataItem === "string" ? rowDataItem : "--";
       },
     })),
   ];
 
-  const getLastAssessedDateTime = () => (dates && dates.length ? getLocaleDateStringFromDate(dates[0].date) : "--");
+  const getLastAssessedDateTime = () => (!isEmptyArray(dates) ? getLocaleDateStringFromDate(dates[0].date) : "--");
 
-  const hasData = () =>
-    data && data.length > 0 && data.filter((item) => item.responses && item.responses.length).length > 0;
-  const hasScores = () => data.filter((item) => isNumber(item.score)).length > 0;
+  const hasData = () => !isEmptyArray(data) && !!data.find((item) => !isEmptyArray(item.responses));
+  const hasScores = () => !isEmptyArray(data) && !!data.find((item) => isNumber(item.score));
 
   const getData = () => {
     if (!hasData()) return null;
@@ -188,9 +189,10 @@ export default function Responses(props) {
   };
 
   const getMatchedAnswerByLinkIdDateId = (question_linkId, responses_date, responses_id) => {
-    const matchItem = data.filter((item) => item.id === responses_id && item.date === responses_date);
-    if (!matchItem.length) return "--";
-    const responses = matchItem[0].responses;
+    const matchItem = data.find((item) => item.id === responses_id && item.date === responses_date);
+    if (!matchItem) return "--";
+    const responses = matchItem.responses;
+    if (isEmptyArray(responses)) return "--";
     const answerItem = responses.find((o) => o.id === question_linkId);
     if (!answerItem) return "--";
     return getAnswer(answerItem);
@@ -295,7 +297,7 @@ export default function Responses(props) {
             backgroundColor: headerBgColor,
             position: "sticky",
             top: 0,
-            zIndex: 999,
+            zIndex: 998,
             borderRight: "1px solid #ececec",
           },
           rowStyle: (rowData) => ({

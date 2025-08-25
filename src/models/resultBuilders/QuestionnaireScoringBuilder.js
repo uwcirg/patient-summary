@@ -373,19 +373,22 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
 
   // -------------------- severity --------------------
-  severityFromScore(score) {
-    const bands = this.cfg.severityBands;
-    if (!bands || !bands.length || typeof score !== "number") return "low";
+  severityFromScore(score, configParams) {
+    const config = configParams ?? this.cfg;
+    const bands = config?.severityBands;
+    console.log("config ", config, "score ", score, "bands ", bands);
+    if (!bands || !bands.length || !isNumber(score)) return "low";
 
-    // Assumes bands sorted by min descending, e.g. [{min:3,label:'low'},{min:0,label:'high'}]
+    // Assumes bands sorted by min descending, e.g. [{min:3,label:'hight'},{min:0,label:'low'}]
     for (const band of bands) {
       if (score >= (band.min ?? 0)) return band.label;
     }
     // Fallback to the last band's label
     return bands[bands.length - 1]?.label ?? "low";
   }
-  meaningFromSeverity(sev) {
-    const bands = this.cfg.severityBands;
+  meaningFromSeverity(sev, configParams) {
+    const config = configParams ?? this.cfg;
+    const bands = config?.severityBands;
     if (!isEmptyArray(bands)) return bands.find((b) => b.label === sev)?.meaning ?? null;
     return null;
   }
@@ -422,7 +425,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (scoringQuestionScore != null) score = scoringQuestionScore;
       else if (nonScoring.length > 0 && allAnswered) score = questionScores.reduce((sum, n) => sum + (n ?? 0), 0);
 
-      const scoreSeverity = this.severityFromScore(score);
+      const scoreSeverity = this.severityFromScore(score, config);
 
       let responses = this.formattedResponses(questionnaire?.item ?? [], flat);
       if (isEmptyArray(responses)) responses = this.responsesOnly(flat);
@@ -436,7 +439,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         score,
         scoreSeverity,
         highSeverityScoreCutoff: config?.highSeverityScoreCutoff,
-        scoreMeaning: this.meaningFromSeverity(scoreSeverity),
+        scoreMeaning: this.meaningFromSeverity(scoreSeverity, config),
         scoringParams: config?.scoringParams,
         totalItems,
         totalAnsweredItems,
