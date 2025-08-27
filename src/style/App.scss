@@ -205,8 +205,11 @@ p {
       }
     }
   }
-  .summary-container:not(:first-of-type) {
-    page-break-inside: avoid;
+  .recharts-legend-wrapper {
+    left: 4px !important;
+  }
+  .recharts-legend-item-text {
+    font-size: 10px;
   }
   .questionnaire-title {
     page-break-after: avoid;
@@ -215,9 +218,6 @@ p {
   }
   .responses-table-container {
     page-break-after: always;
-  }
-  .accordion-wrapper {
-    page-break-inside: avoid;
   }
   .MuiToolbar-root {
     background-color: $default-print-background-color !important;

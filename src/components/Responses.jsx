@@ -24,7 +24,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import Filter from "@mui/icons-material/FilterAlt";
 import OutlinedIcon from "@mui/icons-material/WysiwygOutlined";
 import { getLocaleDateStringFromDate, isEmptyArray, isNumber } from "@util";
-import Response from "@models/Response";
 import Questionnaire from "@models/Questionnaire";
 import Score from "./Score";
 
@@ -41,32 +40,9 @@ export default function Responses(props) {
       ? theme.palette.lightest.main
       : "#FFF";
   const questionnaireTitle = new Questionnaire(questionnaireJson).displayName;
-  const getFormattedData = (data) => {
-    if (isEmptyArray(data)) return null;
-    let copyData = JSON.parse(JSON.stringify(data));
-    const maxResponsesLength = Math.max(...copyData.map((d) => (d.responses ? d.responses.length : 0)));
-    const dataForQuestions = copyData.find((d) => d.responses && d.responses.length === maxResponsesLength);
-    if (!dataForQuestions) return null;
-    copyData.forEach((d) => {
-      if (d.id === dataForQuestions.id) return true;
-      if (isEmptyArray(d.responses)) {
-        d.responses = [];
-      }
-      dataForQuestions.responses.forEach((item) => {
-        const matched = d.responses.find((o) => o.id === item.id);
-        if (!matched) {
-          d.responses.push({
-            id: item.id,
-            question: item.question,
-            answer: "",
-          });
-        }
-      });
-    });
-    return copyData;
-  };
-  const data = getFormattedData(props.data) || [];
-  const dates = data.map((item) => ({ date: item.date, id: item.id }));
+  const data = props.data;
+  const responseData = data?.responseData;
+  const dates = data?.responseData?.map((item) => ({ date: item.date, id: item.id })) ?? [];
   const lighterThemeMainColor = theme && theme.palette && theme.palette.lighter && theme.palette.lighter.main;
   const summaryHeaderProps = {
     variant: "subtitle2",
@@ -148,30 +124,7 @@ export default function Responses(props) {
   ];
 
   const getLastAssessedDateTime = () => (!isEmptyArray(dates) ? getLocaleDateStringFromDate(dates[0].date) : "--");
-
-  const hasData = () => !isEmptyArray(data) && !!data.find((item) => !isEmptyArray(item.responses));
-  const hasScores = () => !isEmptyArray(data) && !!data.find((item) => isNumber(item.score));
-
-  const getData = () => {
-    if (!hasData()) return null;
-    let result = data[0].responses.map((row) => {
-      let o = {};
-      o.question = getQuestion(row);
-      dates.forEach((item) => {
-        o[item.id] = getMatchedAnswerByLinkIdDateId(row.id, item.date, item.id);
-      });
-      return o;
-    });
-    if (hasScores()) {
-      let scoringResult = {
-        question: "Score",
-      };
-      data.forEach((item) => (scoringResult[item.id] = { score: item.score, ...item }));
-      result.push(scoringResult);
-    }
-    return result;
-  };
-
+  const hasData = () => data && !isEmptyArray(data.responseData);
   const handleClickOpen = () => {
     setOpen(true);
   };
@@ -179,29 +132,14 @@ export default function Responses(props) {
   const handleClose = () => {
     setOpen(false);
   };
-  const getAnswer = (response) => {
-    const o = new Response(response);
-    return o.answerText ? o.answerText : "--";
-  };
-  const getQuestion = (item) => {
-    const o = new Response(item);
-    return o.questionText;
-  };
-
-  const getMatchedAnswerByLinkIdDateId = (question_linkId, responses_date, responses_id) => {
-    const matchItem = data.find((item) => item.id === responses_id && item.date === responses_date);
-    if (!matchItem) return "--";
-    const responses = matchItem.responses;
-    if (isEmptyArray(responses)) return "--";
-    const answerItem = responses.find((o) => o.id === question_linkId);
-    if (!answerItem) return "--";
-    return getAnswer(answerItem);
-  };
 
   const renderPrintOnlyResponseTable = () => {
     if (!hasData()) return null;
-    const arrDates = dates.filter((item, index) => index === 0);
-    const arrData = data.filter((item, index) => index === 0);
+    const rowData = data?.printResponseData;
+    if (!rowData) return null;
+    const headerRow = rowData.headerRow;
+    const bodyRows = rowData.bodyRows;
+    const scoreRow = rowData.scoreRow;
     // this will render the current and the previous response(s) for print
     return (
       <Box className="print-only responses-table-container" sx={{ marginTop: theme.spacing(2) }}>
@@ -212,42 +150,46 @@ export default function Responses(props) {
             }}
           >
             <TableRow>
-              {["Questions", ...arrDates.map((item) => item.date)].map((item, index) => (
-                <TableCell key={`header_${index}`}>{getLocaleDateStringFromDate(item)}</TableCell>
-              ))}
+              {headerRow.map((item, index) => {
+                return <TableCell key={`header_${index}`}>{item}</TableCell>;
+              })}
             </TableRow>
           </TableHead>
           <TableBody>
-            {data[0].responses.map((row, index) => (
+            {bodyRows.map((row, index) => (
               <TableRow
                 key={`row_content_${index}`}
-                id={`row_${row.id}_${index}`}
-                sx={{
-                  "&:last-child td, &:last-child th": { border: 0 },
-                }}
+                id={`row_content_${index}`}
               >
-                <TableCell
-                  dangerouslySetInnerHTML={{
-                    __html: getQuestion(row),
-                  }}
-                  size="small"
-                ></TableCell>
-                {arrDates.map((item, index) => (
-                  <TableCell key={`answer_cell_${index}`} size="small">
-                    {getMatchedAnswerByLinkIdDateId(row.id, item.date, item.id)}
-                  </TableCell>
-                ))}
+                {row.map((cell, index) => {
+                  if (index === 0) {
+                    return (
+                      <TableCell
+                        dangerouslySetInnerHTML={{
+                          __html: cell,
+                        }}
+                        key={`question_cell_${index}`}
+                        size="small"
+                      ></TableCell>
+                    );
+                  }
+                  return (
+                    <TableCell key={`answer_cell_${index}`} size="small">
+                      {cell}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))}
-            {hasScores() && (
+            {scoreRow && (
               <TableRow>
                 <TableCell>
                   <b>Score</b>
                 </TableCell>
-                {arrData.map((item, index) => (
+                {scoreRow.map((item, index) => (
                   <TableCell key={`score_cell_${index}`}>
                     {isNumber(item.score) && (
-                      <Score instrumentId={questionnaireId} score={item.score} scoreParams={item}></Score>
+                      <Score instrumentId={questionnaireId} score={item.score} scoreParams={item.scoreParams}></Score>
                     )}
                     {!isNumber(item.score) && <span>--</span>}
                   </TableCell>
@@ -285,7 +227,8 @@ export default function Responses(props) {
           Container: (props) => <Paper className="table-root" elevation={1} {...props} />,
         }}
         columns={columns}
-        data={getData()}
+        //data={getData()}
+        data={data?.tableResponseData}
         options={{
           search: false,
           showTitle: false,
@@ -313,7 +256,7 @@ export default function Responses(props) {
       <SummaryHeaderCell>
         <Typography {...summaryHeaderProps}>Responses Completed</Typography>
       </SummaryHeaderCell>
-      <SummaryBodyCell>{data.length}</SummaryBodyCell>
+      <SummaryBodyCell>{responseData.length}</SummaryBodyCell>
     </Stack>
   );
 
@@ -327,7 +270,7 @@ export default function Responses(props) {
   );
 
   const renderViewResponses = () => (
-    <Stack {...summaryColumnProps}>
+    <Stack {...summaryColumnProps} className="print-hidden">
       <SummaryHeaderCell>
         <Typography {...summaryHeaderProps}>Responses</Typography>
       </SummaryHeaderCell>
@@ -336,7 +279,6 @@ export default function Responses(props) {
           color="primary"
           title="View"
           size="small"
-          className="print-hidden"
           endIcon={<OutlinedIcon fontSize="medium"></OutlinedIcon>}
           onClick={() => handleClickOpen()}
         >
@@ -415,10 +357,5 @@ export default function Responses(props) {
 Responses.propTypes = {
   questionnaireId: PropTypes.string,
   questionnaireJson: PropTypes.object,
-  data: PropTypes.arrayOf(
-    PropTypes.shape({
-      date: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
-      responses: PropTypes.array,
-    }),
-  ),
+  data: PropTypes.object,
 };

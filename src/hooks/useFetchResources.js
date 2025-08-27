@@ -156,9 +156,18 @@ function reducer(state, action) {
   return state;
 }
 
-function getSummaries(bundle) {
-  return new QuestionnaireScoringBuilder({}, bundle).summariesByQuestionnaireFromBundle();
-}
+const getSummaries = (bundle) => {
+  let summaries = new QuestionnaireScoringBuilder({}, bundle).summariesByQuestionnaireFromBundle();
+  const summaryDataKeys = Object.keys(summaries);
+  const qList = getEnvQuestionnaireList();
+  if (!qList) return summaries;
+  qList.forEach((qKey) => {
+    const hitKey = summaryDataKeys.find((key) => fuzzyMatch(key, qKey));
+    if (hitKey) return true;
+    summaries[qKey] = null;
+  });
+  return summaries;
+};
 
 // --- helpers for config-driven tracking + guards ---
 const normalizeType = (t) => String(t).replace(/\s+/g, "").toLowerCase();
@@ -288,12 +297,14 @@ export default function useFetchResources() {
 
       return runPhase1Once(phase1Key, async () => {
         const preloadList = getEnvQuestionnaireList();
+        const hasPreload = !isEmptyArray(preloadList);
+
         let qrResources = [];
         let obResources = [];
 
         // What we intend to fetch in phase-1
-        const wantQ = shouldTrack(configuredTypeSet, QUESTIONNAIRE_DATA_KEY);
-        const wantQR = shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
+        const wantQ = hasPreload || shouldTrack(configuredTypeSet, QUESTIONNAIRE_DATA_KEY);
+        const wantQR = wantQ || isFromEpic || shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
         const wantObs = wantQ || wantQR;
 
         // Track request errors locally
@@ -336,8 +347,6 @@ export default function useFetchResources() {
         let matchedQRs = !isEmptyArray(qrResources)
           ? qrResources.filter((it) => it && it.questionnaire && it.questionnaire.split("/")[1])
           : [];
-
-        const hasPreload = !isEmptyArray(preloadList);
 
         // If we have nothing to drive Questionnaire fetch (no preload, no QRs, no Obs)
         if (!hasPreload && !isFromEpic && isEmptyArray(matchedQRs) && isEmptyArray(obResources)) {
@@ -563,6 +572,12 @@ export default function useFetchResources() {
       };
 
       dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: getSummaries(patientBundle.current.entry) });
+
+      // debounce(
+      //   () =>
+      //     dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: getSummaries(patientBundle.current.entry) }),
+      //   250,
+      // );
       return fhirData;
     },
     {

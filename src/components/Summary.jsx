@@ -57,7 +57,7 @@ export default function Summary(props) {
     height: 2,
     width: 2,
   };
-  const shouldDisplayResponses = () => summary && !summary.loading && !summary.error;
+  const shouldDisplayResponses = () => !summary || (summary && !summary.loading && !summary.error);
   const getAnchorElementId = () => QUESTIONNAIRE_ANCHOR_ID_PREFIX;
   const hasResponses = () => !isEmptyArray(summary.responseData);
 
@@ -89,16 +89,12 @@ export default function Summary(props) {
     if (!shouldDisplayResponses()) return null;
     return (
       <Stack direction="column" spacing={1} alignItems="flex-start" className="response-summary" flexWrap={"wrap"}>
-        {hasChart && (
-          <Chart
-            type={summary.chartType}
-            data={summary.chartData}
-          ></Chart>
-        )}
+        {hasChart && <Chart type={summary.chartType} data={summary.chartData}></Chart>}
         {!hasResponses() && <Alert severity="warning">No recorded responses</Alert>}
         {hasResponses() && (
           <Responses
-            data={summary.responseData}
+            //data={summary.responseData}
+            data={summary}
             questionnaireId={questionnaireId}
             questionnaireJson={summary.questionnaire}
           ></Responses>
@@ -107,8 +103,10 @@ export default function Summary(props) {
     );
   };
 
+  const renderAlert = () => <Alert severity="warning">No summary data</Alert>
+
   useEffect(() => {
-    if (!summary.loading) return;
+    if (!data || !summary.loading) return;
     if (data && data.error) {
       dispatch({
         type: "error",
@@ -136,14 +134,19 @@ export default function Summary(props) {
         <Stack direction="row" spacing={1} alignItems="flex-start">
           {/* questionnaire title */}
           <div>{renderTitle()}</div>
-          <QuestionnaireInfo questionnaireJson={data.questionnaire}></QuestionnaireInfo>
+          <QuestionnaireInfo questionnaireJson={data?.questionnaire}></QuestionnaireInfo>
         </Stack>
-        {/* error message */}
-        {renderError()}
-        {/* loading indicator */}
-        {renderLoader()}
-        {/* chart & responses */}
-        {renderSummary()}
+        {!data && renderAlert()}
+        {data && (
+          <>
+            {/* error message */}
+            {renderError()}
+            {/* loading indicator */}
+            {renderLoader()}
+            {/* chart & responses */}
+            {renderSummary()}
+          </>
+        )}
       </Stack>
     </>
   );

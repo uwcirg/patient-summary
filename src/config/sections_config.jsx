@@ -78,15 +78,11 @@ const renderObservations = (props) => {
     </Suspense>
   );
 };
-const renderSummaries = ({summaryData}) => {
+const renderSummaries = ({ summaryData }) => {
   const Summaries = lazy(() => import("../components/sections/Summaries"));
   return (
     <Suspense fallback={renderLoader()}>
-      {
-        <Summaries
-          summaryData={summaryData}
-        ></Summaries>
-      }
+      {<Summaries summaryData={summaryData}></Summaries>}
     </Suspense>
   );
 };

@@ -28,73 +28,75 @@ describe("Testing Summary component", () => {
   });
 
   it("Render summary - non-empty data set", () => {
-    const dummyData = [
-      {
-        date: "2022-07-22",
-        responses: [
-          {
-            id: "minicog-question1",
-            answer: 2,
-            value: {
-              value: 2,
+    const dummyData = {
+      responseData: [
+        {
+          date: "2022-07-22",
+          responses: [
+            {
+              id: "minicog-question1",
+              answer: 2,
+              value: {
+                value: 2,
+              },
+              question: "Word Recall (0-3 points)",
+              text: "Word Recall (0-3 points)",
             },
-            question: "Word Recall (0-3 points)",
-            text: "Word Recall (0-3 points)",
-          },
-          {
-            id: "minicog-question2",
-            answer: 0,
-            value: {
-              value: 0,
+            {
+              id: "minicog-question2",
+              answer: 0,
+              value: {
+                value: 0,
+              },
+              question: "Clock Draw (0 or 2 points)",
+              text: "Clock Draw (0 or 2 points)",
             },
-            question: "Clock Draw (0 or 2 points)",
-            text: "Clock Draw (0 or 2 points)",
-          },
-          {
-            id: "minicog-total-score",
-            answer: 2,
-            value: {
-              value: 2,
+            {
+              id: "minicog-total-score",
+              answer: 2,
+              value: {
+                value: 2,
+              },
+              question: "<b>Total Score (0 - 5 points)</b>",
+              text: "Total Score (0 - 5 points)",
             },
-            question: "<b>Total Score (0 - 5 points)</b>",
-            text: "Total Score (0 - 5 points)",
-          },
-        ],
-      },
-      {
-        date: "2022-07-12",
-        responses: [
-          {
-            id: "minicog-question1",
-            answer: 2,
-            value: {
-              value: 2,
+          ],
+        },
+        {
+          date: "2022-07-12",
+          responses: [
+            {
+              id: "minicog-question1",
+              answer: 2,
+              value: {
+                value: 2,
+              },
+              question: "Word Recall (0-3 points)",
+              text: "Word Recall (0-3 points)",
             },
-            question: "Word Recall (0-3 points)",
-            text: "Word Recall (0-3 points)",
-          },
-          {
-            id: "minicog-question2",
-            answer: 2,
-            value: {
-              value: 2,
+            {
+              id: "minicog-question2",
+              answer: 2,
+              value: {
+                value: 2,
+              },
+              question: "Clock Draw (0 or 2 points)",
+              text: "Clock Draw (0 or 2 points)",
             },
-            question: "Clock Draw (0 or 2 points)",
-            text: "Clock Draw (0 or 2 points)",
-          },
-          {
-            id: "minicog-total-score",
-            answer: 4,
-            value: {
-              value: 4,
+            {
+              id: "minicog-total-score",
+              answer: 4,
+              value: {
+                value: 4,
+              },
+              question: "<b>Total Score (0 - 5 points)</b>",
+              text: "Total Score (0 - 5 points)",
             },
-            question: "<b>Total Score (0 - 5 points)</b>",
-            text: "Total Score (0 - 5 points)",
-          },
-        ],
-      },
-    ];
+          ],
+        },
+      ],
+    };
     render(<Responses data={dummyData} />);
-    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(screen.getByText("View")).toBeInTheDocument();
   });
 });

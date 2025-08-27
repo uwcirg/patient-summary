@@ -106,6 +106,7 @@ export default function ScoringSummary(props) {
   };
 
   const getMostRecentEntry = (summaryData) => {
+    if (!summaryData) return null;
     return getResponsesByIndex(summaryData.responseData, 0);
   };
 
@@ -139,7 +140,7 @@ export default function ScoringSummary(props) {
   const displayScoreMeaning = (summaryData) => {
     const mostRecentEntry = getMostRecentEntry(summaryData);
     if (!mostRecentEntry) return "--";
-    return mostRecentEntry.scoreMeaning;
+    return mostRecentEntry.scoreMeaning??"--";
   };
 
   const scoreList = getScoreList();
@@ -242,7 +243,7 @@ export default function ScoringSummary(props) {
         sx={{ width: "100%" }}
       >
         <Scoring
-          score={getCurrentScoreByInstrument(summaryData[key].responseData)}
+          score={getCurrentScoreByInstrument(summaryData[key]?.responseData)}
           scoreParams={getMostRecentEntry(summaryData[key])}
           justifyContent="space-between"
         ></Scoring>
@@ -273,7 +274,7 @@ export default function ScoringSummary(props) {
 
   const renderComparedToLastCell = (key) => (
     <TableCell align="center" size="small" sx={{ ...cellStyle, borderRightWidth: 0 }}>
-      {getDisplayIcon(summaryData[key].responseData)}
+      {getDisplayIcon(summaryData[key]?.responseData)}
     </TableCell>
   );
 
@@ -307,6 +308,7 @@ export default function ScoringSummary(props) {
         sx={{
           padding: 0,
           height: "100%",
+          overflow: "hidden",
           maxWidth: {
             xs: "420px",
             sm: "100%",

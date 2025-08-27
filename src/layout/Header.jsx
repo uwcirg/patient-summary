@@ -265,10 +265,10 @@ export default function Header(props) {
                     </Box>
                   )}
                   {hasSections &&
-                    sections.map((section) => (
+                    sections.map((section, index) => (
                       <MenuItem
-                        onClick={() => scrollToElement(section.anchorElementId)}
-                        key={`${section.anchorElementId}_item`}
+                        onClick={() => scrollToElement(`anchor_${section.id.toLowerCase()}`)}
+                        key={`${section.id??index}_menuitem`}
                       >
                         <ListItemIcon>{section.icon({ fontSize: "small" })}</ListItemIcon>
                         <ListItemText>{section.title}</ListItemText>

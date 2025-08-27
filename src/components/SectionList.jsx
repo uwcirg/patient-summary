@@ -15,9 +15,9 @@ export default function SectionList(props) {
   if (isEmptyArray(renderList)) return false;
   return (
     <List className="sections-list" sx={{ marginTop: theme.spacing(2) }}>
-      {renderList.map((section) => (
+      {renderList.map((section, index) => (
         <ListItem
-          key={`listItem_${section.id}`}
+          key={`listItem_${index}`}
           disablePadding
           sx={{ minHeight: "50px" }}
         >

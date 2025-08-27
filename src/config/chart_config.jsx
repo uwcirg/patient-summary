@@ -42,7 +42,6 @@ const CHART_CONFIG = {
           return item;
         });
       dataTOUse = dataTOUse.sort((a, b) => a.date.getTime() - b.date.getTime());
-
       let startDate = !isEmptyArray(dataTOUse) ? new Date(dataTOUse[0].date.valueOf()) : new Date();
       startDate.setMonth(0);
       startDate.setDate(0);

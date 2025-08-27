@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
@@ -29,7 +30,7 @@ export default function Dashboard() {
     if (isEmptyArray(sectionsToShow)) return <Alert severity="warning">No section to show.</Alert>;
     return sectionsToShow.map((section) => {
       return (
-        <Section
+        <MemoizedSection
           section={section}
           data={{
             patientBundle,
@@ -39,9 +40,18 @@ export default function Dashboard() {
             allChartData,
           }}
           key={`section_${section.id}`}
-        ></Section>
+        ></MemoizedSection>
       );
     });
+  };
+  // eslint-disable-next-line
+  const MemoizedSection = React.memo(function MemoizedSection({ section, data }) {
+    // eslint-disable-next-line
+    return <Section section={section} data={data} key={`section_${section.id}`}></Section>;
+  });
+  MemoizedSection.proptypes = {
+    section: PropTypes.element,
+    data: PropTypes.object,
   };
 
   const renderError = () => {

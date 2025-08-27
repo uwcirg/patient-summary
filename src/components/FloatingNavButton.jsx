@@ -17,7 +17,7 @@ export default function FloatingNavButton() {
   ));
   BoxRef.displayName = "BoxRef";
   const FabRef = forwardRef((props, ref) => (
-    <Fab ref={ref} {...props} className="back-to-top">
+    <Fab ref={ref} {...props} className="back-to-top print-hidden">
       {props.children}
     </Fab>
   ));

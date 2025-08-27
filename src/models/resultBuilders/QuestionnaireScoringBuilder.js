@@ -1,18 +1,30 @@
 import {
   getChartConfig,
+  getLocaleDateStringFromDate,
   isEmptyArray,
-  isNil,
   isNumber,
   isPlainObject,
   fuzzyMatch,
   normalizeStr,
   objectToString,
 } from "@util";
+import Response from "@models/Response";
 import FhirResultBuilder from "./FhirResultBuilder";
 import { summarizeCIDASHelper, summarizeMiniCogHelper, summarizeSLUMHelper } from "./helpers";
 import { DEFAULT_FALLBACK_SCORE_MAPS } from "@/consts";
 import questionnaireConfig from "@/config/questionnaire_config";
 import { linkIdEquals } from "@/util/fhirUtil";
+
+const RT_QR = "questionnaireresponse";
+const RT_Q = "Questionnaire";
+
+/** Strict numeric coercion, returns number or null (never NaN). */
+const toFiniteNumber = (v) => {
+  const n = typeof v === "string" && v.trim() !== "" ? Number(v) : typeof v === "number" ? v : NaN;
+  return Number.isFinite(n) ? n : null;
+};
+
+const isQr = (res) => res && String(res.resourceType).toLowerCase() === RT_QR;
 
 export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   /**
@@ -21,15 +33,16 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
    * @param {string} config.questionnaireName
    * @param {string} config.questionnaireUrl
    * @param {string|null} config.scoringQuestionId
-   * @param {Object} [config.scoringParams]        // e.g., { maximumScore: 27 }
-   * @param {string[]} [config.questionLinkIds]    // optional; derive from Questionnaire if omitted
-   * @param {'strict'|'fuzzy'} [config.matchMode]  // default 'fuzzy'
+   * @param {Object} [config.scoringParams]
+   * @param {string[]} [config.questionLinkIds]
+   * @param {'strict'|'fuzzy'} [config.matchMode]
    * @param {{min:number,label:string,meaning?:string}[]} [config.severityBands]
    * @param {number} [config.highSeverityScoreCutoff]
-   * @param {Object|Array} patientBundle           // FHIR Bundle or array of resources
+   * @param {Object|Array} patientBundle
    */
   constructor(config = {}, patientBundle) {
     super();
+
     const bands = !isEmptyArray(config?.severityBands) ? [...config.severityBands] : null;
     if (bands) bands.sort((a, b) => (b.min ?? 0) - (a.min ?? 0));
 
@@ -63,45 +76,39 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     ]);
   }
 
-  // -------------------- Bundle access (supports override) --------------------
+  // -------------------- Bundle access --------------------
   _bundleEntries(bundleOverride) {
     const b = bundleOverride || this.patientBundle;
     if (!b) return [];
-    // tolerate arrays of resources OR a proper Bundle
-    if (!isEmptyArray(b) && b.find((x) => x?.resource || x?.resourceType)) {
-      return b.map((x) => (x?.resource ? x.resource : x));
+    // Array of {resource} entries OR bare resources
+    if (Array.isArray(b)) {
+      return b.map((x) => (x && x.resource ? x.resource : x)).filter((r) => r && r.resourceType);
     }
+    // Proper Bundle
     if (!isEmptyArray(b?.entry)) return b.entry.map((e) => e.resource).filter(Boolean);
     return [];
   }
 
-  // Extract QRs (QuestionnaireResponse)
   fromBundle(bundleOverride) {
     const entries = this._bundleEntries(bundleOverride);
-    return entries.filter((r) => r && String(r.resourceType).toLowerCase() === "questionnaireresponse");
+    return entries.filter(isQr);
   }
 
-  // Group QRs by `questionnaire` canonical
   fromBundleGrouped({ completedOnly = true } = {}, bundleOverride) {
     const groups = Object.create(null);
-    const entries = this._bundleEntries(bundleOverride);
-
-    for (let i = 0; i < entries.length; i++) {
-      const res = entries[i];
-      if (!res || String(res.resourceType).toLowerCase() !== "questionnaireresponse") continue;
+    for (const res of this._bundleEntries(bundleOverride)) {
+      if (!isQr(res)) continue;
       if (completedOnly && res.status !== "completed") continue;
 
       let key = (res.questionnaire ?? "").toString();
-      // Only normalize "Questionnaire/<id>" references; leave canonical URLs intact.
-      if (/^Questionnaire\//i.test(key)) {
-        key = key.split("/")[1]; // "<id>"
-      }
+      // Keep canonical URLs intact; normalize "Questionnaire/<id>" to "<id>"
+      if (/^Questionnaire\//i.test(key)) key = key.split("/")[1] || "";
       if (!key) continue;
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(res);
+
+      (groups[key] || (groups[key] = [])).push(res);
     }
 
-    // newest-first within each group (authored -> meta.lastUpdated)
+    // newest-first within each group
     for (const k of Object.keys(groups)) {
       const list = groups[k].map((qr) => ({
         authoredDate: qr.authored ?? null,
@@ -113,17 +120,16 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return groups;
   }
 
-  // Get QRs matching this builder's questionnaire config
   fromBundleForThisQuestionnaire({ completedOnly = true } = {}, bundleOverride) {
     const groups = this.fromBundleGrouped({ completedOnly }, bundleOverride);
     const out = [];
 
-    // Try direct canonical match first
+    // Direct (canonical/id/name) match against group keys
     for (const canonical of Object.keys(groups)) {
       if (this.questionnaireRefMatches(canonical)) out.push(...groups[canonical]);
     }
 
-    // Fallback: scan all with fuzzy/strict rules
+    // Fallback: scan individual QRs if none matched by key
     if (!out.length) {
       for (const canonical of Object.keys(groups)) {
         for (const qr of groups[canonical] || []) {
@@ -132,23 +138,16 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       }
     }
 
-    // Ensure combined list is sorted
     return this.sortByNewestAuthoredOrUpdated(
       out.map((qr) => ({ authoredDate: qr.authored ?? null, lastUpdated: qr.meta?.lastUpdated ?? null, _qr: qr })),
     ).map((x) => x._qr);
   }
 
-  /**
-   * Index Questionnaire defs found in bundle.
-   * Keys: canonical url | "Questionnaire/<id>" | normalized name
-   */
+  // -------------------- Questionnaire indexing --------------------
   indexQuestionnairesInBundle(bundleOverride) {
     const idx = Object.create(null);
-    const entries = this._bundleEntries(bundleOverride);
-    for (let i = 0; i < entries.length; i++) {
-      const q = entries[i];
-      if (!q || q.resourceType !== "Questionnaire") continue;
-
+    for (const q of this._bundleEntries(bundleOverride)) {
+      if (!q || q.resourceType !== RT_Q) continue;
       if (q.id) idx[q.id] = q;
       if (q.name) idx[normalizeStr(q.name)] = q;
       if (q.url) idx[q.url] = q;
@@ -158,13 +157,15 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   resolveQuestionnaireFromIndex(canonical, qIndex) {
     if (!canonical) return null;
-    if (qIndex[canonical]) return qIndex[canonical];
-
-    const byName = normalizeStr(canonical);
+    // Normalize common reference forms like "Questionnaire/<id>"
+    let c = String(canonical);
+    if (/^Questionnaire\//i.test(c)) c = c.split("/")[1] || "";
+    if (!c) return null;
+    if (qIndex[c]) return qIndex[c];
+    const byName = normalizeStr(c);
     if (byName && qIndex[byName]) return qIndex[byName];
-
-    if (!canonical.includes("/") && qIndex[canonical]) {
-      qIndex[canonical];
+    if (!c.includes("/") && qIndex[c]) {
+      return qIndex[canonical];
     }
     return null;
   }
@@ -183,11 +184,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
   isResponseQuestionItem(item) {
     if (!item || !item.linkId) return false;
-    if (item.linkId === "introduction") return false;
-    if (String(item.linkId).toLowerCase().includes("ignore")) return false;
-    if (!this.responseAnswerTypes.has(item.type)) {
-      return false;
-    }
+    const linkId = String(item.linkId).toLowerCase();
+    if (linkId === "introduction" || linkId.includes("ignore")) return false;
+    if (!this.responseAnswerTypes.has(item.type)) return false;
     if (this.cfg.scoringQuestionId) {
       return !this.isLinkIdEquals(item.linkId, this.cfg.scoringQuestionId);
     }
@@ -246,7 +245,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return c ? { code: c.code ?? null, display: c.display ?? null } : null;
   }
   answerPrimitive(ans) {
-    if (!ans) return null;
     if (!isPlainObject(ans)) return null;
     if ("valueBoolean" in ans) return ans.valueBoolean;
     if ("valueInteger" in ans) return ans.valueInteger;
@@ -313,31 +311,34 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (!ans) return null;
 
     const prim = this.answerPrimitive(ans);
-    if (!isNil(prim) && !isNaN(parseInt(prim))) return prim;
+    const primNum = toFiniteNumber(prim);
+    if (primNum != null) return primNum;
+
     const coding = this.answerCoding(ans);
     if (coding?.code) {
       const fromExt = this.getAnswerValueByExtension(questionnaire, coding.code);
       if (fromExt != null) return fromExt;
       if (this.fallbackScoreMap[coding.code] != null) return this.fallbackScoreMap[coding.code];
-      return null;
     }
-
     return null;
   }
 
   getAnswerItemDisplayValue(answerItem) {
-    if (isNumber(answerItem?.value)) return answerItem.value;
-    if (answerItem?.display) return answerItem.display;
+    if (!answerItem) return null;
+    // Prefer human display
     const coding = this.answerCoding(answerItem);
-    const primitive = this.answerPrimitive(answerItem);
-    return coding
-      ? (coding.display ?? this.fallbackScoreMap[coding.code] ?? null)
-      : (primitive ?? objectToString(answerItem));
+    if (coding) return coding.display ?? this.fallbackScoreMap[coding.code] ?? null;
+
+    const prim = this.answerPrimitive(answerItem);
+    const primNum = toFiniteNumber(prim);
+    if (primNum != null) return primNum;
+    return prim ?? objectToString(answerItem);
   }
 
   // -------------------- formatting --------------------
   formattedResponses(questionnaireItems, responseItemsFlat) {
     if (isEmptyArray(questionnaireItems)) return this.responsesOnly(responseItemsFlat);
+
     const list = [];
     const walk = (items = []) => {
       for (const q of items) {
@@ -376,14 +377,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   severityFromScore(score, configParams) {
     const config = configParams ?? this.cfg;
     const bands = config?.severityBands;
-    console.log("config ", config, "score ", score, "bands ", bands);
-    if (!bands || !bands.length || !isNumber(score)) return "low";
+    if (isEmptyArray(bands) || !isNumber(score)) return "low";
 
-    // Assumes bands sorted by min descending, e.g. [{min:3,label:'hight'},{min:0,label:'low'}]
+    // bands assumed sorted desc by min
     for (const band of bands) {
       if (score >= (band.min ?? 0)) return band.label;
     }
-    // Fallback to the last band's label
     return bands[bands.length - 1]?.label ?? "low";
   }
   meaningFromSeverity(sev, configParams) {
@@ -399,17 +398,19 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const scoreLinkIds = config?.questionLinkIds?.length
       ? config.questionLinkIds
       : this.getAnswerLinkIdsByQuestionnaire(questionnaire);
+
     const scoringQuestionId = config?.scoringQuestionId;
 
     const rows = (questionnaireResponses || []).map((qr) => {
       const flat = this.flattenResponseItems(qr.item);
+
       const nonScoring =
         flat.length === 1
           ? flat
           : flat.filter((it) => !scoringQuestionId || !this.isLinkIdEquals(it.linkId, scoringQuestionId));
 
       const totalItems = scoreLinkIds?.length
-        ? scoreLinkIds?.length
+        ? scoreLinkIds.length
         : this.getAnswerLinkIdsByQuestionnaire(questionnaire).length;
 
       const totalAnsweredItems = Math.min(nonScoring.filter((it) => this.firstAnswer(it) != null).length, totalItems);
@@ -423,10 +424,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
       let score = null;
       if (scoringQuestionScore != null) score = scoringQuestionScore;
-      else if (nonScoring.length > 0 && allAnswered) score = questionScores.reduce((sum, n) => sum + (n ?? 0), 0);
+      else if (nonScoring.length > 0 && allAnswered) {
+        score = questionScores.reduce((sum, n) => sum + (n ?? 0), 0);
+      }
 
       const scoreSeverity = this.severityFromScore(score, config);
-
       let responses = this.formattedResponses(questionnaire?.item ?? [], flat);
       if (isEmptyArray(responses)) responses = this.responsesOnly(flat);
 
@@ -463,6 +465,78 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   _isPromise(x) {
     return !!x && typeof x.then === "function";
   }
+  _getAnswer(response) {
+    const o = new Response(response);
+    return o.answerText ? o.answerText : "--";
+  }
+  _getQuestion(item) {
+    const o = new Response(item);
+    return o.questionText;
+  }
+  _hasResponseData(data) {
+    return !isEmptyArray(data) && !!data.find((item) => !isEmptyArray(item.responses));
+  }
+  _hasScoreData(data) {
+    return !isEmptyArray(data) && !!data.find((item) => isNumber(item.score));
+  }
+
+  _getMatchedAnswerByLinkIdDateId(data, question_linkId, responses_date, responses_id) {
+    const matchItem = (data || []).find((item) => item.id === responses_id && item.date === responses_date);
+    if (!matchItem || isEmptyArray(matchItem.responses)) return "--";
+    const answerItem = matchItem.responses.find((o) => o.id === question_linkId);
+    return answerItem ? this._getAnswer(answerItem) : "--";
+  }
+
+  _formatTableResponseData = (data) => {
+    if (!this._hasResponseData(data)) return null;
+
+    const dates = data.map((item) => ({ date: item.date, id: item.id }));
+
+    // Use the row with max responses as the “schema”
+    const anchorRowData = [...data].sort((a, b) => (b.responses?.length || 0) - (a.responses?.length || 0))[0];
+    if (!anchorRowData || isEmptyArray(anchorRowData.responses)) return null;
+
+    // Build a set of all question ids
+    const qIds = new Set(anchorRowData.responses.map((r) => r.id));
+    for (const d of data) {
+      for (const r of d.responses || []) qIds.add(r.id);
+    }
+
+    const result = [...qIds].map((qid) => {
+      const row = {};
+      // Question text from first available response carrying that qid
+      const sample =
+        (anchorRowData.responses || []).find((r) => r.id === qid) ||
+        (data.find((d) => (d.responses || []).some((r) => r.id === qid))?.responses || []).find((r) => r.id === qid);
+      row.question = sample ? this._getQuestion(sample) : qid;
+      for (const d of dates) {
+        row[d.id] = this._getMatchedAnswerByLinkIdDateId(data, qid, d.date, d.id);
+      }
+      return row;
+    });
+
+    if (this._hasScoreData(data)) {
+      const scoringRow = { question: "Score" };
+      for (const item of data) scoringRow[item.id] = { score: item.score, ...item };
+      result.push(scoringRow);
+    }
+    return result;
+  };
+
+  _formatPrintResponseData(data, params) {
+    if (!this._hasResponseData(data)) return null;
+
+    // Current implementation prints only the first column/date
+    const first = data[0];
+    const headerRow = ["Questions", getLocaleDateStringFromDate(first.date)];
+    const bodyRows = (first.responses || []).map((row) => [
+      this._getQuestion(row),
+      this._getMatchedAnswerByLinkIdDateId(data, row.id, first.date, first.id),
+    ]);
+    const scoreRow = this._hasScoreData(data) ? [{ score: first.score, scoreParams: params }] : null;
+
+    return { headerRow, bodyRows, scoreRow };
+  }
 
   async _loadQuestionnaire(canonical, questionnaireLoader, bundleOverride) {
     if (questionnaireLoader) {
@@ -484,18 +558,22 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
 
   _summariesByQuestionnaireRef(qrs, questionnaire, options = {}) {
-    const map = {
+    const config = questionnaireConfig[questionnaire?.id] ?? this.cfg;
+
+    const strategyMap = {
       SLUM: "summarizeSLUM",
       CIDAS: "summarizeCIDAS",
       MINICOG: "summarizeMiniCog",
     };
-    const key = Object.keys(map).find((k) => this.questionnaireRefMatches(k));
-    const evalData = key ? this[map[key]](qrs, questionnaire, options) : this.getResponsesSummary(qrs, questionnaire);
+    const selectedKey = Object.keys(strategyMap).find((k) => this.questionnaireRefMatches(k));
+    const evalData = selectedKey
+      ? this[strategyMap[selectedKey]](qrs, questionnaire, options)
+      : this.getResponsesSummary(qrs, questionnaire);
+
     const scoringData = !isEmptyArray(evalData)
-      ? evalData.filter((item) => {
-          return item && !isEmptyArray(item.responses) && isNumber(item.score) && item.date;
-        })
+      ? evalData.filter((item) => item && !isEmptyArray(item.responses) && isNumber(item.score) && item.date)
       : null;
+
     const chartConfig = getChartConfig(questionnaire?.id);
     let chartData = !isEmptyArray(scoringData)
       ? scoringData.map((item) => ({
@@ -505,29 +583,27 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           total: item.score,
         }))
       : null;
-    if (chartData) {
-      if (chartConfig && chartConfig.dataFormatter) {
-        chartData = chartConfig.dataFormatter(chartData);
-      }
+
+    if (chartData && chartConfig?.dataFormatter) {
+      chartData = chartConfig.dataFormatter(chartData);
     }
-    const config = questionnaireConfig[questionnaire?.id];
+
     const scoringParams = config?.scoringParams;
 
     return {
       config: config,
       chartConfig: { ...chartConfig, ...scoringParams },
-      chartData: {
-        ...chartConfig,
-        data: chartData,
-      },
+      chartData: { ...chartConfig, data: chartData },
       chartType: chartConfig?.type,
       scoringData: scoringData,
       responseData: evalData,
+      tableResponseData: this._formatTableResponseData(evalData),
+      printResponseData: this._formatPrintResponseData(evalData, config),
       questionnaire: questionnaire,
     };
   }
 
-  // -------------------- Sync APIs (supporting bundle override) --------------------
+  // -------------------- Sync APIs --------------------
   summariesByQuestionnaireFromBundle(
     questionnaireLoader,
     { strategyOptions = {}, completedOnly = true } = {},
@@ -564,7 +640,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return this._summariesByQuestionnaireRef(qrs, q, strategyOptions);
   }
 
-  // -------------------- Async APIs (supporting bundle override) --------------------
+  // -------------------- Async APIs --------------------
   async summariesByQuestionnaireFromBundleAsync(
     questionnaireLoader,
     { strategyOptions = {}, completedOnly = true } = {},
