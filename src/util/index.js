@@ -345,6 +345,12 @@ export function toMaybeDate(s) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+/** Strict numeric coercion, returns number or null (never NaN). */
+export function toFiniteNumber(v) {
+  const n = typeof v === "string" && v.trim() !== "" ? Number(v) : typeof v === "number" ? v : NaN;
+  return Number.isFinite(n) ? n : null;
+}
+
 export function toMillis(s) {
   if (!s) return 0;
   const t = Date.parse(s);

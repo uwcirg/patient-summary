@@ -1,49 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import QuestionnaireScoringBuilder from "../../models/resultBuilders/QuestionnaireScoringBuilder";
-//import { isEmptyArray, isNil, isNumber, isPlainObject, normalizeStr, fuzzyMatch, objectToString, getChartConfig, getLocaleDateStringFromDate } from "../../util";
-// --- Mocks for external deps used inside the class ---
-// vi.mock("@util", () => ({
-//   // simple, predictable helpers
-//   isEmptyArray: (a) => !Array.isArray(a) || a.length === 0,
-//   isNil: (x) => x == null,
-//   isNumber: (x) => typeof x === "number" && Number.isFinite(x),
-//   isPlainObject: (x) => x && typeof x === "object" && Object.getPrototypeOf(x) === Object.prototype,
-//   normalizeStr: (s) => (typeof s === "string" ? s.trim().toLowerCase() : s),
-//   fuzzyMatch: (a, b) => (a && b ? a.includes(b) || b.includes(a) : false),
-//   objectToString: (o) => (o == null ? "" : JSON.stringify(o)),
-//   getChartConfig: vi.fn(() => ({ type: "line" })), // not under test here
-//   getLocaleDateStringFromDate: (d) => d,
-//   toMaybeDate: (s) => {
-//     if (!s) return null;
-//     const d = new Date(s);
-//     return Number.isNaN(d.getTime()) ? null : d;
-//   },
-// }));
-
-vi.mock("@/util/fhirUtil", () => ({
-  linkIdEquals: (a, b, _mode = "fuzzy") => {
-    if (_mode === "strict") return String(a) === String(b);
-    const A = String(a || "").toLowerCase();
-    const B = String(b || "").toLowerCase();
-    return A === B;
-  },
-}));
-
-// Response is used only by table/print helpers; keep it trivial
-vi.mock("@models/Response", () => ({
-  default: class Response {
-    obj;
-    constructor(obj) {
-      this.obj = obj;
-    }
-    get answerText() {
-      return this.obj?.answer ?? null;
-    }
-    get questionText() {
-      return this.obj?.question ?? this.obj?.text ?? this.obj?.id ?? "";
-    }
-  },
-}));
 
 // ---------- Test helpers ----------
 const mkQR = ({ id, questionnaire, authored, status = "completed", items = [], lastUpdated }) => ({

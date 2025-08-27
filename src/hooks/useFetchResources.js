@@ -66,8 +66,6 @@ function reducer(state, action) {
             exactMatchById: !!action.exactMatchById,
             summaries: action.summaries ?? state.base.summaries,
             complete: true,
-            error: false,
-            errorMessage: "",
           },
         };
       case "ERROR":
@@ -205,7 +203,7 @@ export default function useFetchResources() {
   const toBeLoadedResources = state.loader;
 
   const [extraTypes, setExtraTypes] = useState([]);
-  const [error, setError] = useState(null);
+  const [fatalError, setFatalError] = useState(null);
 
   // stable patient id
   const pid = useMemo(() => (isNonEmptyString(patient?.id) ? String(patient.id) : null), [patient?.id]);
@@ -221,7 +219,7 @@ export default function useFetchResources() {
   const refresh = useCallback(() => {
     dispatchBase({ type: "RESET" });
     dispatchLoader({ type: "RESET" });
-    setError(null);
+    setFatalError(null);
     setExtraTypes([]);
     if (pid) PHASE1_FLIGHTS.delete(`${pid}::${bump}`);
     setBump((x) => x + 1);
@@ -259,7 +257,6 @@ export default function useFetchResources() {
         id: QUESTIONNAIRE_RESPONSES_DATA_KEY,
         title: QUESTIONNAIRE_RESPONSES_DATA_KEY,
         complete: false,
-        error: false,
       });
     }
 
@@ -281,7 +278,7 @@ export default function useFetchResources() {
     }
 
     // Always track summary
-    items.push({ id: SUMMARY_DATA_KEY, title: "Response Summary Data", complete: false, error: false, data: null });
+    items.push({ id: SUMMARY_DATA_KEY, title: "Response Summary Data", complete: false, data: null });
 
     dispatchLoader({ type: "INIT_TRACKING", items });
   }, [phase1Key, configuredTypesRaw, configuredTypeSet, dispatchLoader]);
@@ -291,7 +288,7 @@ export default function useFetchResources() {
     async () => {
       if (!client || !isNonEmptyString(pid)) {
         const msg = "No FHIR client or patient ID provided.";
-        setError(msg);
+        setFatalError(msg);
         throw new Error(msg);
       }
 
@@ -406,6 +403,7 @@ export default function useFetchResources() {
               { pageLimit: 0, onPage: processPage(client, qResources) },
             );
           } catch (e) {
+            console.log(e);
             qReqErrored = true;
             dispatchLoader({ type: "ERROR", id: QUESTIONNAIRE_DATA_KEY, errorMessage: e?.message });
           }
@@ -572,12 +570,6 @@ export default function useFetchResources() {
       };
 
       dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: getSummaries(patientBundle.current.entry) });
-
-      // debounce(
-      //   () =>
-      //     dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: getSummaries(patientBundle.current.entry) }),
-      //   250,
-      // );
       return fhirData;
     },
     {
@@ -588,7 +580,7 @@ export default function useFetchResources() {
 
   /** -------------------- Derived helpers -------------------- */
   const phase2DoneOrSkipped =
-    isEmptyArray(toBeLoadedResources) || !toBeLoadedResources.find((o) => !o.complete) || !!error;
+    isEmptyArray(toBeLoadedResources) || !toBeLoadedResources.find((o) => !o.complete) || !!fatalError;
 
   const isReady = base.complete && (phase2DoneOrSkipped || isEmptyArray(extraTypes)) && !base.error;
 
@@ -618,6 +610,16 @@ export default function useFetchResources() {
     return rows.sort((a, b) => safeDateMs(a.date) - safeDateMs(b.date));
   }, [summaryData]);
 
+  const loaderErrors = useMemo(() => state.loader.filter((r) => r?.error), [state.loader]);
+
+  const errorMessages = [
+    ...(base.error ? [base.errorMessage] : []),
+    ...(fatalError ? [fatalError] : []),
+    ...loaderErrors.map((r) => `${r.title || r.id}: ${r.errorMessage || "Unknown error"}`),
+  ];
+
+  const hasError = errorMessages.length > 0;
+
   const loading =
     (phase1Query.isLoading && !base.complete) ||
     (!base.complete && !base.error) ||
@@ -631,8 +633,9 @@ export default function useFetchResources() {
     // status
     loading,
     isReady,
-    error: error || (base.error ? base.errorMessage : null),
-
+    errorMessages,
+    fatalError,
+    hasError,
     // to be loaded resources tracking
     toBeLoadedResources,
 

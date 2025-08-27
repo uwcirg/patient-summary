@@ -7,6 +7,7 @@ import {
   fuzzyMatch,
   normalizeStr,
   objectToString,
+  toFiniteNumber
 } from "@util";
 import Response from "@models/Response";
 import FhirResultBuilder from "./FhirResultBuilder";
@@ -17,12 +18,6 @@ import { linkIdEquals } from "@/util/fhirUtil";
 
 const RT_QR = "questionnaireresponse";
 const RT_Q = "Questionnaire";
-
-/** Strict numeric coercion, returns number or null (never NaN). */
-const toFiniteNumber = (v) => {
-  const n = typeof v === "string" && v.trim() !== "" ? Number(v) : typeof v === "number" ? v : NaN;
-  return Number.isFinite(n) ? n : null;
-};
 
 const isQr = (res) => res && String(res.resourceType).toLowerCase() === RT_QR;
 
@@ -54,7 +49,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       questionnaireUrl: config.questionnaireUrl ?? "",
       scoringQuestionId: config.scoringQuestionId ?? "",
       scoringParams: config.scoringParams ?? {},
-      questionLinkIds: Array.isArray(config.questionLinkIds) ? config.questionLinkIds : null,
+      questionLinkIds: !isEmptyArray(config.questionLinkIds) ? config.questionLinkIds : null,
       matchMode: config.matchMode ?? "fuzzy",
       severityBands: bands,
       highSeverityScoreCutoff: config.highSeverityScoreCutoff ?? bands?.[0]?.min ?? null,

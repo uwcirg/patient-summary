@@ -14,7 +14,9 @@ import useFetchResources from "@/hooks/useFetchResources";
 
 export default function Dashboard() {
   const {
-    error,
+    hasError,
+    errorMessages,
+    fatalError,
     loading,
     isReady,
     patientBundle,
@@ -57,7 +59,7 @@ export default function Dashboard() {
   const renderError = () => {
     return (
       <Box sx={{ marginTop: 1 }}>
-        <ErrorComponent message={error}></ErrorComponent>
+        <ErrorComponent message={errorMessages}></ErrorComponent>
       </Box>
     );
   };
@@ -84,9 +86,9 @@ export default function Dashboard() {
         <>
           <FloatingNavButton></FloatingNavButton>
           <Stack className="summaries" sx={mainStackStyleProps}>
-            <section>
-              {error && renderError()}
-              {!error && <>{renderSections()}</>}
+            <section style={{ minHeight: getAppHeight() }}>
+              {hasError && renderError()}
+              {!fatalError && renderSections()}
             </section>
             <Version></Version>
           </Stack>

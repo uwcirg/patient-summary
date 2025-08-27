@@ -10,6 +10,9 @@ export default function Error(props) {
       return message.message;
     }
     if (typeof message !== "string") {
+      if (Array.isArray(message)) {
+        return message.join(" | ");
+      }
       console.log("Error: ", message);
       return "Error occurred. See console for detail.";
     }
@@ -25,5 +28,5 @@ export default function Error(props) {
 }
 
 Error.propTypes = {
-  message: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
+  message: PropTypes.oneOfType([PropTypes.object, PropTypes.string, PropTypes.array]),
 };
