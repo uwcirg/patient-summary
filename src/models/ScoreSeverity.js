@@ -1,6 +1,6 @@
 class ScoreSeverity {
-  constructor(severity, scoreParams = {}) {
-    this.severity = severity ? String(severity).toLowerCase() : "";
+  constructor(scoreParams = {}) {
+    this.severity = scoreParams && scoreParams.scoreSeverity ? String(scoreParams.scoreSeverity).toLowerCase() : null;
     this.scoreParams = scoreParams;
   }
   static range = ["high", "moderate", "moderately high"];
@@ -25,6 +25,10 @@ class ScoreSeverity {
 
   get iconClass() {
     return this.isHigh() ? "alert-icon" : "";
+  }
+
+  get alertNote() {
+    return this.scoreParams && this.scoreParams.alertNote ? this.scoreParams.alertNote : null;
   }
 }
 export default ScoreSeverity;

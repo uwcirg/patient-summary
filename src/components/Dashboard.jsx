@@ -19,12 +19,8 @@ export default function Dashboard() {
     fatalError,
     loading,
     isReady,
-    patientBundle,
-    questionnaireList,
-    summaryData,
-    evalData,
     toBeLoadedResources,
-    allChartData,
+    ...otherResults
   } = useFetchResources();
   const sectionsToShow = getSectionsToShow();
 
@@ -35,11 +31,7 @@ export default function Dashboard() {
         <MemoizedSection
           section={section}
           data={{
-            patientBundle,
-            summaryData,
-            questionnaireList,
-            evalData,
-            allChartData,
+            ...otherResults
           }}
           key={`section_${section.id}`}
         ></MemoizedSection>

@@ -627,9 +627,11 @@ export default function useFetchResources() {
 
   if (isReady) {
     console.log("summaryData ", summaryData);
+    console.log("evalData ", patientBundle.current.evalResults);
   }
 
   return {
+    ...(patientBundle.current.evalResults ? patientBundle.current.evalResults : {}),
     // status
     loading,
     isReady,

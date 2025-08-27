@@ -9,12 +9,7 @@ import ScoreSeverity from "@models/ScoreSeverity";
 
 export default function Scoring(props) {
   const { score, justifyContent, alignItems, scoreParams } = props;
-  const getScoreSeverity = () =>
-    scoreParams && scoreParams.scoreSeverity ? String(scoreParams.scoreSeverity).toLowerCase() : null;
-  const getAlertNote = () => (scoreParams && scoreParams.alertNote ? scoreParams.alertNote : null);
-  const scoreSeverity = getScoreSeverity();
-  const oSeverity = new ScoreSeverity(scoreSeverity, scoreParams);
-  const alertNote = getAlertNote();
+  const oSeverity = new ScoreSeverity(scoreParams);
   const getScoreDisplay = () => <span data-testid="score">{isNumber(score) ? score : "--"}</span>;
 
   // display alert icon for score that has high severity
@@ -36,12 +31,12 @@ export default function Scoring(props) {
         alignItems={alignItems || "center"}
       >
         <div className={`${oSeverity.textColorClass}`}>{getScoreDisplay()}</div>
-        {alertNote && (
-          <Tooltip title={alertNote} placement="top" arrow>
+        {oSeverity.alertNote && (
+          <Tooltip title={oSeverity.alertNote} placement="top" arrow>
             {renderIcon()}
           </Tooltip>
         )}
-        {!alertNote && renderIcon()}
+        {!oSeverity.alertNote && renderIcon()}
       </Stack>
     );
   }

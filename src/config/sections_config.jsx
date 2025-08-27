@@ -66,7 +66,7 @@ const renderConditions = (props) => {
   const Conditions = lazy(() => import("../components/sections/Conditions"));
   return (
     <Suspense fallback={renderLoader()}>
-      <Conditions data={props.evalData?.Condition}></Conditions>
+      <Conditions data={props?.Condition}></Conditions>
     </Suspense>
   );
 };
@@ -74,17 +74,13 @@ const renderObservations = (props) => {
   const Observation = lazy(() => import("../components/sections/Observations"));
   return (
     <Suspense fallback={renderLoader()}>
-      <Observation data={props.evalData?.Observation}></Observation>
+      <Observation data={props?.Observation}></Observation>
     </Suspense>
   );
 };
 const renderSummaries = ({ summaryData }) => {
   const Summaries = lazy(() => import("../components/sections/Summaries"));
-  return (
-    <Suspense fallback={renderLoader()}>
-      {<Summaries summaryData={summaryData}></Summaries>}
-    </Suspense>
-  );
+  return <Suspense fallback={renderLoader()}>{<Summaries summaryData={summaryData}></Summaries>}</Suspense>;
 };
 
 const DEFAULT_RESOURCES = ["Questionnaire", "QuestionnaireResponse"];
