@@ -9,7 +9,7 @@ import {
   normalizeLinkId,
   makeQuestionItem,
 } from "@util/fhirUtil";
-import { generateUUID, isEmptyArray } from "@util";
+import { generateUUID, isEmptyArray, isNumber } from "@util";
 import { DEFAULT_ANSWER_OPTIONS } from "@/consts";
 
 /* ---------------------------------------------
@@ -303,4 +303,98 @@ export function observationsToQuestionnaireResponses(observations, config = {}) 
     if (qr) out.push(qr);
   }
   return out.sort((a, b) => String(a.authored).localeCompare(String(b.authored)));
+}
+
+/**
+ * @param {Array} rdata
+ * @returns {Array}
+ */
+const sortResponsesNewestFirst = (rdata = []) =>
+  [...rdata].sort(
+    (a, b) => new Date(b?.date ?? 0).getTime() - new Date(a?.date ?? 0).getTime()
+  );
+
+/**
+ * @param {Array} rdata
+ */
+const getMostRecent = (rdata = []) => sortResponsesNewestFirst(rdata)[0] || null;
+
+/**
+ * @param {Array} rdata
+ */
+const getPrevious = (rdata = []) => sortResponsesNewestFirst(rdata)[1] || null;
+
+/**
+ * Build rows from summaryData
+ * @param {Object<string, any>} summaryData
+ * @param {Object} [opts]
+ * @param {(key:string, questionnaire?:any) => (string|null|undefined)} [opts.instrumentNameByKey]
+ * @param {(iso:string|Date|null|undefined) => (string|null|undefined)} [opts.formatDate]
+ * @returns {Array<Object>}
+ */
+export function buildScoringSummaryRows(summaryData, opts = {}) {
+  if (!summaryData) return [];
+
+  const { instrumentNameByKey, formatDate } = opts;
+
+  return Object.keys(summaryData).map((key) => {
+    const node = summaryData[key] || {};
+    const q = node.questionnaire || null;
+    const responses = node.responseData || [];
+
+    const current = getMostRecent(responses);
+    const prev = getPrevious(responses);
+
+    const instrumentName =
+      (instrumentNameByKey && instrumentNameByKey(key, q)) ||
+      q?.shortName ||
+      q?.displayName ||
+      key;
+
+    const lastAssessedISO = current?.date ?? null;
+    const lastAssessed = formatDate ? formatDate(lastAssessedISO) : lastAssessedISO;
+
+    const curScore = isNumber(current?.score) ? current.score : current?.score ?? null;
+    const minScore = isNumber(current?.scoringParams?.minimumScore)
+      ? current.scoringParams.minimumScore
+      : 0;
+    const maxScore = isNumber(current?.scoringParams?.maximumScore)
+      ? current.scoringParams.maximumScore
+      : null;
+
+    const totalAnswered = isNumber(current?.totalAnsweredItems)
+      ? current.totalAnsweredItems
+      : null;
+    const totalItems = isNumber(current?.totalItems) ? current.totalItems : null;
+
+    const meaning = current?.scoreMeaning ?? null;
+    const comparisonToAlert = current?.comparisonToAlert ?? "";
+
+    const prevScore = isNumber(prev?.score) ? prev.score : null;
+
+    let comparison = null; // "higher" | "lower" | "equal" | null
+    if (prevScore != null && curScore != null && isNumber(curScore) && isNumber(prevScore)) {
+      if (curScore > prevScore) comparison = "higher";
+      else if (curScore < prevScore) comparison = "lower";
+      else comparison = "equal";
+    }
+
+    const scoringParams = current;
+
+    return {
+      key,
+      instrumentName,
+      lastAssessed,
+      score: isNumber(curScore) ? curScore : (curScore ?? null),
+      minScore,
+      maxScore,
+      totalAnswered,
+      totalItems,
+      meaning,
+      comparison,
+      comparisonToAlert,
+      scoringParams,
+      raw: node, // keep original if the UI needs to drill in (optional)
+    };
+  });
 }

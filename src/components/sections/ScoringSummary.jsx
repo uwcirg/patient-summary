@@ -16,7 +16,8 @@ import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import Scoring from "@components/Score";
 import Questionnaire from "@models/Questionnaire";
-import { isEmptyArray, isNumber, scrollToAnchor, getLocaleDateStringFromDate } from "@util";
+import { isEmptyArray, isNumber, scrollToAnchor } from "@util";
+import { buildScoringSummaryRows } from "@models/resultBuilders/helpers";
 
 export default function ScoringSummary(props) {
   const theme = useTheme();
@@ -29,121 +30,43 @@ export default function ScoringSummary(props) {
   const borderColor =
     theme && theme.palette && theme.palette.border && theme.palette.border.main ? theme.palette.border.main : "#FFF";
   const { summaryData } = props;
-  const hasNoResponses = (responses) => isEmptyArray(responses);
-  const getInstrumentShortName = (id) => {
-    const matchedQuestionnaire =
-      summaryData[id] && summaryData[id].questionnaire ? summaryData[id].questionnaire : null;
-    const qo = new Questionnaire(matchedQuestionnaire, id);
-    return qo.shortName ?? qo.displayName;
-  };
-  const getSortedResponses = (rdata) => {
-    if (hasNoResponses(rdata)) return [];
-    return rdata.sort((a, b) => {
-      const aTime = new Date(a.date).getTime();
-      const bTime = new Date(b.date).getTime();
-      return bTime - aTime;
-    });
-  };
-  const getResponsesByIndex = (rdata, index) => {
-    const sortedResponses = getSortedResponses(rdata);
-    if (hasNoResponses(sortedResponses)) return null;
-    return sortedResponses[index];
-  };
-
-  const getCurrentResponses = (rdata) => {
-    return getResponsesByIndex(rdata, 0);
-  };
-
-  const getPrevResponses = (rdata) => {
-    return getResponsesByIndex(rdata, 1);
-  };
-
-  const getPrevScoreByInstrument = (rdata) => {
-    const responses = getPrevResponses(rdata);
-    if (!responses || !responses.date) return parseInt(null);
-    return parseInt(responses.score);
-  };
-
-  const getCurrentScoreByInstrument = (rdata) => {
-    const responses = getCurrentResponses(rdata);
-    if (!responses || !responses.date) return parseInt(null);
-    const score = responses.score;
-    return isNumber(score) ? score : "--";
-  };
-  const getDisplayIcon = (rdata) => {
-    const currentResponses = getCurrentResponses(rdata);
-    const comparisonToAlert = currentResponses ? currentResponses.comparisonToAlert : ""; // display alert if score is lower/higher than previous
-    const currentScore = getCurrentScoreByInstrument(rdata);
-    const prevScore = getPrevScoreByInstrument(rdata);
+  const getDisplayIcon = (row) => {
     const iconProps = {
       fontSize: "small",
       sx: { verticalAlign: "middle" },
     };
+    const comparison = row?.comparison;
+    const comparisonToAlert = row?.comparisonToAlert;
     //console.log("current score ", currentScore, " prev score ", prevScore);
-    if (!isNumber(prevScore) || !isNumber(currentScore)) return "--";
-    if (isNumber(prevScore)) {
-      if (comparisonToAlert === "lower") {
-        if (currentScore < prevScore) return <SouthIcon color="error" {...iconProps}></SouthIcon>;
-        if (currentScore > prevScore) return <NorthIcon color="success" {...iconProps}></NorthIcon>;
-        return <HorizontalRuleIcon {...iconProps}></HorizontalRuleIcon>;
-      } else {
-        if (currentScore > prevScore) return <NorthIcon color="error" {...iconProps}></NorthIcon>;
-        if (currentScore < prevScore) return <SouthIcon color="success" {...iconProps}></SouthIcon>;
-        return <HorizontalRuleIcon {...iconProps}></HorizontalRuleIcon>;
-      }
+    if (!comparison) return "--";
+    if (comparison === "equal") return <HorizontalRuleIcon {...iconProps}></HorizontalRuleIcon>;
+    if (comparisonToAlert === "lower") {
+      if (comparison === "lower") return <SouthIcon color="error" {...iconProps}></SouthIcon>;
+      if (comparison === "higher") return <NorthIcon color="success" {...iconProps}></NorthIcon>;
+      return comparison;
     } else {
-      if (isNumber(currentScore)) return <HorizontalRuleIcon color="info" {...iconProps}></HorizontalRuleIcon>;
-      return null;
+      if (comparison === "higher") return <NorthIcon color="error" {...iconProps}></NorthIcon>;
+      if (comparison === "lower") return <SouthIcon color="success" {...iconProps}></SouthIcon>;
+      return comparison;
     }
   };
   const handleClick = (e, anchorElementId) => {
     e.preventDefault();
     scrollToAnchor(anchorElementId);
   };
-  const getScoreList = () => {
-    if (!summaryData) return [];
-    return Object.keys(summaryData);
-  };
 
-  const getMostRecentEntry = (summaryData) => {
-    if (!summaryData) return null;
-    return getResponsesByIndex(summaryData.responseData, 0);
-  };
-
-  const displayScoreRange = (summaryData) => {
-    const mostRecentEntry = getMostRecentEntry(summaryData);
-    if (!mostRecentEntry) return null;
-    const scoringParams = mostRecentEntry.scoringParams;
-    if (!scoringParams) return null;
-    if (!scoringParams.maximumScore) return null;
-    const minScore = scoringParams.minimumScore ? scoringParams.minimumScore : 0;
-    const maxScore = scoringParams.maximumScore;
+  const displayScoreRange = (minScore, maxScore) => {
+    if (!isNumber(minScore) || !isNumber(maxScore)) return "";
     return `( ${minScore} - ${maxScore} )`;
   };
 
-  const displayLastAssessed = (summaryData) => {
-    const mostRecentEntry = getMostRecentEntry(summaryData);
-    if (!mostRecentEntry) return "--";
-    if (!mostRecentEntry.date) return "--";
-    return getLocaleDateStringFromDate(mostRecentEntry.date);
-  };
-
-  const displayNumAnswered = (summaryData) => {
-    const mostRecentEntry = getMostRecentEntry(summaryData);
-    if (!mostRecentEntry) return "--";
-    const totalItems = mostRecentEntry.totalItems;
-    const totalAnsweredItems = mostRecentEntry.totalAnsweredItems;
+  const displayNumAnswered = (row) => {
+    const totalItems = row.totalItems;
+    const totalAnsweredItems = row.totalAnswered;
     if (!totalItems || !totalAnsweredItems) return "--";
     return `${totalAnsweredItems} / ${totalItems}`;
   };
 
-  const displayScoreMeaning = (summaryData) => {
-    const mostRecentEntry = getMostRecentEntry(summaryData);
-    if (!mostRecentEntry) return "--";
-    return mostRecentEntry.scoreMeaning??"--";
-  };
-
-  const scoreList = getScoreList();
   const defaultTableCellProps = {
     size: "small",
   };
@@ -210,7 +133,7 @@ export default function ScoringSummary(props) {
     </TableHead>
   );
 
-  const renderInstrumentLinkCell = (key) => (
+  const renderInstrumentLinkCell = (row) => (
     <TableCell
       sx={{
         ...fixedCellStyle,
@@ -220,21 +143,28 @@ export default function ScoringSummary(props) {
         },
       }}
       size="small"
+      key={`score_summary_${row.key}_link`}
     >
       <Link
-        onClick={(e) => handleClick(e, key)}
+        onClick={(e) => handleClick(e, row.key)}
         underline="none"
         sx={{ color: linkColor, cursor: "pointer" }}
-        href={`#${key}`}
+        href={`#${row.key}`}
         className="instrument-link"
       >
-        {getInstrumentShortName(key)}
+        {row.instrumentName}
       </Link>
     </TableCell>
   );
 
-  const renderScoreCell = (key) => (
-    <TableCell align="left" size="small" className="score-cell" sx={cellStyle}>
+  const renderScoreCell = (row) => (
+    <TableCell
+      align="left"
+      size="small"
+      className="score-cell"
+      sx={cellStyle}
+      key={`score_summary_${row.key}_score_cell`}
+    >
       <Stack
         direction={"column"}
         spacing={1}
@@ -242,61 +172,80 @@ export default function ScoringSummary(props) {
         alignItems={"center"}
         sx={{ width: "100%" }}
       >
-        <Scoring
-          score={getCurrentScoreByInstrument(summaryData[key]?.responseData)}
-          scoreParams={getMostRecentEntry(summaryData[key])}
-          justifyContent="space-between"
-        ></Scoring>
+        <Scoring score={row.score} scoreParams={row.scoringParams} justifyContent="space-between"></Scoring>
         <Box className="no-wrap-text muted-text" sx={{ fontSize: "0.7rem" }}>
-          {displayScoreRange(summaryData[key])}
+          {displayScoreRange(row.minScore, row.maxScore)}
         </Box>
       </Stack>
     </TableCell>
   );
 
-  const renderLastAssessedCell = (key) => (
-    <TableCell align="center" size="small" sx={cellStyle}>
-      {displayLastAssessed(summaryData[key])}
+  const renderLastAssessedCell = (row) => (
+    <TableCell align="center" size="small" sx={cellStyle} key={`score_summary_${row.key}_last_assessed`}>
+      {row.lastAssessed}
     </TableCell>
   );
 
-  const renderNumAnsweredCell = (key) => (
-    <TableCell align="center" size="small" sx={cellStyle}>
-      {displayNumAnswered(summaryData[key])}
+  const renderNumAnsweredCell = (row) => (
+    <TableCell align="center" size="small" sx={cellStyle} key={`score_summary_${row.key}_num_answered`}>
+      {displayNumAnswered(row)}
     </TableCell>
   );
 
-  const renderScoreMeaningCell = (key) => (
-    <TableCell align="center" size="small" className="capitalized-text" sx={cellStyle}>
-      {displayScoreMeaning(summaryData[key])}
+  const renderScoreMeaningCell = (row) => (
+    <TableCell
+      align="center"
+      size="small"
+      className="capitalized-text"
+      sx={cellStyle}
+      key={`score_summary_${row.key}_score_meaning`}
+    >
+      {row.meaning}
     </TableCell>
   );
 
-  const renderComparedToLastCell = (key) => (
-    <TableCell align="center" size="small" sx={{ ...cellStyle, borderRightWidth: 0 }}>
-      {getDisplayIcon(summaryData[key]?.responseData)}
+  const renderComparedToLastCell = (row) => (
+    <TableCell
+      align="center"
+      size="small"
+      sx={{ ...cellStyle, borderRightWidth: 0 }}
+      key={`score_summary_${row.key}_compared_to`}
+    >
+      {getDisplayIcon(row)}
     </TableCell>
   );
 
   const renderTableBody = () => {
     return (
       <TableBody>
-        {scoreList.map((key, index) => (
-          <TableRow key={`{summary_${index}}`}>
-            {renderInstrumentLinkCell(key)}
-            {renderLastAssessedCell(key)}
-            {renderScoreCell(key)}
-            {renderNumAnsweredCell(key)}
-            {renderScoreMeaningCell(key)}
-            {renderComparedToLastCell(key)}
+        {summaryRows.map((row, index) => (
+          <TableRow key={`{summary_${row.key}_${index}}`}>
+            {renderInstrumentLinkCell(row)}
+            {renderLastAssessedCell(row)}
+            {renderScoreCell(row)}
+            {renderNumAnsweredCell(row)}
+            {renderScoreMeaningCell(row)}
+            {renderComparedToLastCell(row)}
           </TableRow>
         ))}
       </TableBody>
     );
   };
 
+  const summaryRows = React.useMemo(() => {
+    if (!summaryData) return [];
+    return buildScoringSummaryRows(summaryData, {
+      instrumentNameByKey: (key, q) => {
+        // preserve your current naming logic, but outside the UI
+        const qo = new Questionnaire(q, key);
+        return qo.shortName ?? qo.displayName ?? key;
+      },
+      formatDate: (iso) => (iso ? new Date(iso).toLocaleDateString() : null),
+    });
+  }, [summaryData]);
+
   const renderSummary = () => {
-    if (!summaryData)
+    if (isEmptyArray(summaryRows))
       return (
         <Box sx={{ padding: theme.spacing(1, 0.5) }}>
           <Alert severity="warning">No score summary available</Alert>
@@ -352,5 +301,5 @@ export default function ScoringSummary(props) {
 }
 
 ScoringSummary.propTypes = {
-  summaryData: PropTypes.object
+  summaryData: PropTypes.object,
 };
