@@ -51,7 +51,7 @@ export default function Dashboard() {
   const renderError = () => {
     return (
       <Box sx={{ marginTop: 1 }}>
-        <ErrorComponent message={errorMessages}></ErrorComponent>
+        <ErrorComponent message={errorMessages} severity={fatalError?"error":"warning"}></ErrorComponent>
       </Box>
     );
   };

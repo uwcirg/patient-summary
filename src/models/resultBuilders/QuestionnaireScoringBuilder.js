@@ -595,6 +595,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       tableResponseData: this._formatTableResponseData(evalData),
       printResponseData: this._formatPrintResponseData(evalData, config),
       questionnaire: questionnaire,
+      error: !questionnaire ? "No associated questionnaire found": ""
     };
   }
 
