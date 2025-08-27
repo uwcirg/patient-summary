@@ -5,7 +5,6 @@ import Alert from "@mui/material/Alert";
 import MaterialTable from "@material-table/core";
 import TableContainer from "@mui/material/TableContainer";
 import Error from "@components/ErrorComponent";
-import Observation from "@models/Observation";
 import { isEmptyArray } from "@/util";
 export default function Observations(props) {
   const theme = useTheme();
@@ -14,19 +13,6 @@ export default function Observations(props) {
       ? theme.palette.lightest.main
       : "#FFF";
   const { data } = props;
-  const getData = (data) => {
-    if (!data) return null;
-    const goodData = Observation.getGoodData(data);
-    return goodData
-      .map((item) => {
-        const o = new Observation(item);
-        return o.toObj();
-      })
-      .sort((a, b) => {
-        return new Date(b.dateText).getTime() - new Date(a.dateText).getTime();
-      });
-  };
-  const results = getData(data);
   const columns = [
     {
       title: "ID",
@@ -96,7 +82,7 @@ export default function Observations(props) {
   if (data?.error) {
     return <Error message={data.error}></Error>;
   }
-  if (isEmptyArray(results))
+  if (isEmptyArray(data))
     return (
       <Alert severity="warning" className="condition-no-data">
         No recorded observation
@@ -115,7 +101,7 @@ export default function Observations(props) {
       >
         <MaterialTable
           columns={columns}
-          data={getData(data)}
+          data={data}
           options={{
             search: false,
             showTitle: false,
@@ -127,7 +113,7 @@ export default function Observations(props) {
           }}
         ></MaterialTable>
       </TableContainer>
-      <div className="print-only">{renderPrintView(results)}</div>
+      <div className="print-only">{renderPrintView(data)}</div>
     </>
   );
 }

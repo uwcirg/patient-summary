@@ -1,4 +1,6 @@
 import { coalesce, isEmptyArray, toMaybeDate, toMillis } from "@util";
+import Condition from "@models/Condition";
+import Observation from "@models/Observation";
 import QuestionnaireScoringBuilder from "./QuestionnaireScoringBuilder";
 import {
   conceptCode,
@@ -68,6 +70,14 @@ export class ConditionResultsBuilder extends FhirResultBuilder {
   constructor(patientBundle) {
     super(patientBundle);
   }
+  formattData(data) {
+    if (!data) return null;
+    const goodData = Condition.getGoodData(data);
+    return goodData.map((item) => {
+      const o = new Condition(item);
+      return o.toObj();
+    });
+  }
   build(patientBundle) {
     const conditions = getResourcesByResourceType(patientBundle ?? this.patientBundle, "condition");
     const rows = (conditions || []).map((C) => {
@@ -85,7 +95,7 @@ export class ConditionResultsBuilder extends FhirResultBuilder {
       };
     });
 
-    return this.sortRowsByDateDesc(rows);
+    return this.formattData(this.sortRowsByDateDesc(rows));
   }
 }
 
@@ -93,7 +103,20 @@ export class ObservationResultsBuilder extends FhirResultBuilder {
   constructor(patientBundle) {
     super(patientBundle);
   }
-  
+
+  formatData(data) {
+    if (!data) return null;
+    const goodData = Observation.getGoodData(data);
+    return goodData
+      .map((item) => {
+        const o = new Observation(item);
+        return o.toObj();
+      })
+      .sort((a, b) => {
+        return new Date(b.dateText).getTime() - new Date(a.dateText).getTime();
+      });
+  }
+
   build(patientBundle) {
     const bundle = patientBundle ?? this.patientBundle;
     const observations = getResourcesByResourceType(bundle, "Observation");
@@ -133,7 +156,7 @@ export class ObservationResultsBuilder extends FhirResultBuilder {
       };
     });
 
-    return this.sortRowsByDateDesc(rows);
+    return this.formatData(this.sortRowsByDateDesc(rows));
   }
 }
 
