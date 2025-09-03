@@ -449,12 +449,7 @@ export default function useFetchResources() {
       enabled: !!client && !!pid && !base.complete && !base.error && !!phase1Key,
       onSuccess: (payload) => {
         if (phase1KeyRef.current !== phase1Key) return; // ignore stale result
-        const {
-          questionnaires,
-          questionnaireResponses,
-          qListToLoad,
-          exactMatchById,
-        } = payload || {};
+        const { questionnaires, questionnaireResponses, qListToLoad, exactMatchById } = payload || {};
 
         // seed bundle
         patientBundle.current = {
@@ -573,11 +568,22 @@ export default function useFetchResources() {
         entry: [...patientBundle.current.entry, ...fhirData],
         evalResults: { ...patientBundle.current.evalResults, ...evalResults },
       };
-
-      dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: getSummaries(patientBundle.current.entry) });
       return fhirData;
     },
-    { ...DEFAULT_QUERY_PARAMS, enabled: readyForExtras },
+    {
+      ...DEFAULT_QUERY_PARAMS,
+      enabled: readyForExtras,
+      onSuccess: () => {
+        setTimeout(
+          () =>
+            dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: getSummaries(patientBundle.current.entry) }),
+          250,
+        );
+      },
+      onError: (e) => {
+        dispatchBase({ type: "ERROR", errorMessage: e?.message ?? String(e) });
+      },
+    },
   );
 
   // ---------------------------------------------------------------------------
