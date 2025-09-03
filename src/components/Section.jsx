@@ -14,7 +14,8 @@ import { DEFAULT_ACCORDION_HEADER_HEIGHT } from "@/consts";
 export default function Section({ section, data }) {
   const theme = useTheme();
   if (!section) return false;
-  const sectionId = section.id.toLowerCase();
+  const sectionId = section.id?.toLowerCase();
+  if (!sectionId) return null;
   const renderAnchorElement = () => (
     <Box
       id={`anchor_${section.id.toLowerCase()}`}

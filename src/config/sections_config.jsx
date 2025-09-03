@@ -85,7 +85,7 @@ const renderSummaries = ({ summaryData }) => {
 
 const DEFAULT_RESOURCES = ["Questionnaire", "QuestionnaireResponse"];
 
-const sections = [
+export const sections = [
   {
     id: "scoreSummary",
     title: "Score Summary",

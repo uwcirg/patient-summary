@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import ChartConfig from "@config/chart_config";
-import defaultSections from "@config/sections_config";
+import defaultSections, {sections} from "@config/sections_config";
 import { DEFAULT_TOOLBAR_HEIGHT, QUESTIONNAIRE_ANCHOR_ID_PREFIX, queryNeedPatientBanner } from "@/consts";
 
 export const shortDateRE = /^\d{4}-\d{2}-\d{2}$/; // matches '2012-04-05'
@@ -72,13 +72,15 @@ export function getSectionsToShow() {
   if (!configSections) return defaultSections;
   let sectionsToShow = [];
   const targetSections = configSections.split(",").map((item) => {
+    if (!item) return null;
     item = String(item).trim().toLowerCase();
     return item;
   });
-  defaultSections.forEach((section) => {
+  sections.forEach((section) => {
     if (targetSections.indexOf(section.id.toLowerCase()) !== -1) sectionsToShow.push(section);
   });
-  return sectionsToShow;
+  if (!isEmptyArray(sectionsToShow)) return sectionsToShow;
+  return defaultSections;
 }
 export function imageOK(img) {
   if (!img) {

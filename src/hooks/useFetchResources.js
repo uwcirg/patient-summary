@@ -18,14 +18,19 @@ import QuestionnaireScoringBuilder from "@models/resultBuilders/QuestionnaireSco
 import { FhirClientContext } from "@/context/FhirClientContext";
 import { NO_CACHE_HEADER } from "@/consts";
 
+// -----------------------------------------------------------------------------
+// Constants
+// -----------------------------------------------------------------------------
 const SUMMARY_DATA_KEY = "summaryData";
 const QUESTIONNAIRE_DATA_KEY = "Questionnaire";
 const QUESTIONNAIRE_RESPONSES_DATA_KEY = "QuestionnaireResponse";
 const OBSERVATION_DATA_KEY = "Observation";
+
 const BLOCKED_EXTRA_TYPES = new Set([
   QUESTIONNAIRE_DATA_KEY.toLowerCase(),
   QUESTIONNAIRE_RESPONSES_DATA_KEY.toLowerCase(),
 ]);
+
 const DEFAULT_QUERY_PARAMS = {
   refetchOnWindowFocus: false,
   refetchOnMount: false,
@@ -33,7 +38,7 @@ const DEFAULT_QUERY_PARAMS = {
   retry: false,
 };
 
-// ---- Single-flight cache for phase-1 (per patient+run) ----
+// Single-flight cache for phase-1 (per patient+run)
 const PHASE1_FLIGHTS = new Map();
 function runPhase1Once(key, fn) {
   if (PHASE1_FLIGHTS.has(key)) return PHASE1_FLIGHTS.get(key);
@@ -49,13 +54,65 @@ function runPhase1Once(key, fn) {
   return p;
 }
 
-// base scope: questionnaire & questionnaire resources
-// loader scope: other FHIR resources
-function reducer(state, action) {
-  const t = String(action.type).toUpperCase();
+// -----------------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------------
+const normalizeType = (t) => String(t).replace(/\s+/g, "").toLowerCase();
+const shouldTrack = (typeSet, typeName) => typeSet.has(normalizeType(typeName));
+const isNonEmptyString = (v) => typeof v === "string" && v.trim().length > 0;
+const toStringArray = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === "string") : []);
+const safeDateMs = (d) => {
+  const ms = new Date(d ?? "").getTime();
+  return Number.isFinite(ms) ? ms : 0;
+};
 
-  if (action.scope === "base") {
-    switch (t) {
+function uniqueNormalized(list) {
+  const exists = new Set();
+  const out = [];
+  for (const t of list) {
+    const n = normalizeType(t);
+    if (exists.has(n)) continue;
+    exists.add(n);
+    out.push(t);
+  }
+  return out;
+}
+
+function computePlannedExtras(configuredTypesRaw) {
+  return uniqueNormalized(
+    configuredTypesRaw.filter((t) => {
+      const n = normalizeType(t);
+      return (
+        !BLOCKED_EXTRA_TYPES.has(n) &&
+        n !== normalizeType(QUESTIONNAIRE_DATA_KEY) &&
+        n !== normalizeType(QUESTIONNAIRE_RESPONSES_DATA_KEY)
+      );
+    }),
+  );
+}
+
+function getSummaries(bundle) {
+  let summaries = new QuestionnaireScoringBuilder({}, bundle).summariesByQuestionnaireFromBundle();
+  const summaryDataKeys = Object.keys(summaries);
+  const qList = getEnvQuestionnaireList();
+  if (!qList) return summaries;
+  qList.forEach((qKey) => {
+    const hitKey = summaryDataKeys.find((key) => fuzzyMatch(key, qKey));
+    if (hitKey) return;
+    summaries[qKey] = null;
+  });
+  return summaries;
+}
+
+// -----------------------------------------------------------------------------
+// Reducer
+// -----------------------------------------------------------------------------
+function reducer(state, action) {
+  const { scope, type } = action;
+  const actionType = String(type).toUpperCase();
+
+  if (scope === "base") {
+    switch (actionType) {
       case "RESULTS":
         return {
           ...state,
@@ -67,6 +124,8 @@ function reducer(state, action) {
             exactMatchById: !!action.exactMatchById,
             summaries: action.summaries ?? state.base.summaries,
             complete: true,
+            error: false,
+            errorMessage: "",
           },
         };
       case "ERROR":
@@ -83,10 +142,10 @@ function reducer(state, action) {
         return {
           ...state,
           base: {
-            ...state.base,
             questionnaireList: [],
             questionnaires: [],
             questionnaireResponses: [],
+            exactMatchById: state.base.exactMatchById,
             summaries: {},
             complete: false,
             error: false,
@@ -98,10 +157,10 @@ function reducer(state, action) {
     }
   }
 
-  if (action.scope === "loader") {
-    switch (t) {
-      case "INIT_TRACKING":
-        return { ...state, loader: action.items };
+  if (scope === "loader") {
+    switch (actionType) {
+      // case "INIT_TRACKING":
+      //   return { ...state, loader: action.items };
 
       case "UPSERT_MANY": {
         const map = new Map(state.loader.map((r) => [r.id, r]));
@@ -113,7 +172,7 @@ function reducer(state, action) {
         return {
           ...state,
           loader: state.loader.map((r) =>
-            r.id === action.id ? { ...r, data: action.data ?? r.data, complete: true } : r,
+            r.id === action.id ? { ...r, data: action.data ?? r.data, complete: true, error: false } : r,
           ),
         };
 
@@ -135,14 +194,13 @@ function reducer(state, action) {
     }
   }
 
-  if (t === "RESET_ALL") {
+  if (actionType === "RESET_ALL") {
     return {
-      ...state,
       base: {
-        ...state.base,
         questionnaireList: [],
         questionnaires: [],
         questionnaireResponses: [],
+        exactMatchById: state.base.exactMatchById,
         summaries: {},
         complete: false,
         error: false,
@@ -155,32 +213,16 @@ function reducer(state, action) {
   return state;
 }
 
-const getSummaries = (bundle) => {
-  let summaries = new QuestionnaireScoringBuilder({}, bundle).summariesByQuestionnaireFromBundle();
-  const summaryDataKeys = Object.keys(summaries);
-  const qList = getEnvQuestionnaireList();
-  if (!qList) return summaries;
-  qList.forEach((qKey) => {
-    const hitKey = summaryDataKeys.find((key) => fuzzyMatch(key, qKey));
-    if (hitKey) return true;
-    summaries[qKey] = null;
-  });
-  return summaries;
-};
-
-// --- helpers for config-driven tracking + guards ---
-const normalizeType = (t) => String(t).replace(/\s+/g, "").toLowerCase();
-const shouldTrack = (typeSet, typeName) => typeSet.has(normalizeType(typeName));
-
-const isNonEmptyString = (v) => typeof v === "string" && v.trim().length > 0;
-const toStringArray = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === "string") : []);
-const safeDateMs = (d) => {
-  const ms = new Date(d ?? "").getTime();
-  return Number.isFinite(ms) ? ms : 0;
-};
-
+// -----------------------------------------------------------------------------
+// Hook
+// -----------------------------------------------------------------------------
 export default function useFetchResources() {
   const isFromEpic = String(getEnv("REACT_APP_EPIC_QUERIES")) === "true";
+  // recompute configured types when mounted (config is static at runtime)
+  const configuredTypesRaw = useMemo(() => getFHIRResourceTypesToLoad().flat().map(String).filter(Boolean), []);
+  const configuredTypeSet = useMemo(() => new Set(configuredTypesRaw.map(normalizeType)), [configuredTypesRaw]);
+
+  const plannedExtras = useMemo(() => computePlannedExtras(configuredTypesRaw), [configuredTypesRaw]);
   const { client, patient } = useContext(FhirClientContext);
 
   // unified reducer + state
@@ -194,7 +236,26 @@ export default function useFetchResources() {
     error: false,
     errorMessage: "",
   };
-  const [state, dispatch] = useReducer(reducer, { base: initialBaseState, loader: [] });
+
+  const getInitTrackItems = () => {
+    const items = [];
+    const wantQ = shouldTrack(configuredTypeSet, QUESTIONNAIRE_DATA_KEY);
+    const wantQR = shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
+
+    if (wantQ) items.push({ id: QUESTIONNAIRE_DATA_KEY, title: QUESTIONNAIRE_DATA_KEY, complete: false, error: false });
+    if (wantQR) {
+      items.push({ id: QUESTIONNAIRE_RESPONSES_DATA_KEY, title: QUESTIONNAIRE_RESPONSES_DATA_KEY, complete: false });
+      items.push({ id: OBSERVATION_DATA_KEY, title: OBSERVATION_DATA_KEY, complete: false });
+    }
+
+    // Add planned extras (excluding Q/QR/blocked already handled)
+    for (const t of plannedExtras) items.push({ id: t, title: t, complete: false, error: false });
+
+    // Always track summary
+    items.push({ id: SUMMARY_DATA_KEY, title: "Response Summary Data", complete: false, data: null });
+    return items;
+  };
+  const [state, dispatch] = useReducer(reducer, { base: initialBaseState, loader: getInitTrackItems() });
 
   // stable scoped dispatchers
   const dispatchBase = useCallback((action) => dispatch({ ...action, scope: "base" }), [dispatch]);
@@ -212,10 +273,6 @@ export default function useFetchResources() {
   // refresh bump controls recomputation of configured types
   const [bump, setBump] = useState(0);
 
-  // recompute configured types when patient or refresh changes
-  const configuredTypesRaw = useMemo(() => getFHIRResourceTypesToLoad().flat().map(String).filter(Boolean), []);
-  const configuredTypeSet = useMemo(() => new Set(configuredTypesRaw.map(normalizeType)), [configuredTypesRaw]);
-
   // refresh
   const refresh = useCallback(() => {
     dispatchBase({ type: "RESET" });
@@ -226,7 +283,7 @@ export default function useFetchResources() {
     setBump((x) => x + 1);
   }, [pid, bump, dispatchBase, dispatchLoader]);
 
-  // Bundle + eval results
+  // Bundle + eval results (kept in ref to avoid re-renders during accumulation)
   const patientBundle = useRef({
     resourceType: "Bundle",
     id: "resource-bundle",
@@ -235,59 +292,14 @@ export default function useFetchResources() {
     evalResults: {},
   });
 
-  /** -------------------- Phase 1 via React Query (single-flight guarded) -------------------- */
+  // ---------------------------------------------------------------------------
+  // Phase 1
+  // ---------------------------------------------------------------------------
   const phase1Key = useMemo(() => (pid ? `${pid}::${bump}` : null), [pid, bump]);
   const phase1KeyRef = useRef(phase1Key);
   useEffect(() => {
     phase1KeyRef.current = phase1Key;
   }, [phase1Key]);
-
-  // INIT loader rows based on configured types (always include summary)
-  useEffect(() => {
-    if (!phase1Key) return;
-
-    const items = [];
-    const wantQ = shouldTrack(configuredTypeSet, QUESTIONNAIRE_DATA_KEY);
-    const wantQR = shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
-
-    if (wantQ) {
-      items.push({ id: QUESTIONNAIRE_DATA_KEY, title: QUESTIONNAIRE_DATA_KEY, complete: false, error: false });
-    }
-    if (wantQR) {
-      items.push({
-        id: QUESTIONNAIRE_RESPONSES_DATA_KEY,
-        title: QUESTIONNAIRE_RESPONSES_DATA_KEY,
-        complete: false,
-      });
-      items.push({
-        id: OBSERVATION_DATA_KEY,
-        title: OBSERVATION_DATA_KEY,
-        complete: false,
-      });
-    }
-
-    // Phase-2 configured extras (exclude Q/QR and blocked)
-    const extrasPlanned = configuredTypesRaw
-      .filter((t) => {
-        const n = normalizeType(t);
-        return (
-          !BLOCKED_EXTRA_TYPES.has(n) &&
-          n !== normalizeType(QUESTIONNAIRE_DATA_KEY) &&
-          n !== normalizeType(QUESTIONNAIRE_RESPONSES_DATA_KEY)
-        );
-      })
-      // de-dupe while preserving case
-      .filter((t, i, arr) => arr.findIndex((x) => normalizeType(x) === normalizeType(t)) === i);
-
-    for (const t of extrasPlanned) {
-      items.push({ id: t, title: t, complete: false, error: false });
-    }
-
-    // Always track summary
-    items.push({ id: SUMMARY_DATA_KEY, title: "Response Summary Data", complete: false, data: null });
-
-    dispatchLoader({ type: "INIT_TRACKING", items });
-  }, [phase1Key, configuredTypesRaw, configuredTypeSet, dispatchLoader]);
 
   const phase1Query = useQuery(
     ["phase1-qr-obs-q", phase1Key],
@@ -330,6 +342,7 @@ export default function useFetchResources() {
               errorMessage: e?.message || "QuestionnaireResponse request failed",
             });
           }
+          if (!qrReqErrored) dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
         }
 
         if (wantObs) {
@@ -350,6 +363,7 @@ export default function useFetchResources() {
               errorMessage: e?.message || "Observation request failed",
             });
           }
+          if (!oReqErrored) dispatchLoader({ type: "COMPLETE", id: OBSERVATION_DATA_KEY });
         }
 
         let matchedQRs = !isEmptyArray(qrResources)
@@ -366,20 +380,12 @@ export default function useFetchResources() {
                 "No matching questionnaire responses to load (no questionnaire list, QR matches, or observations)",
             });
           }
-          if (!qrReqErrored && wantQR) {
-            dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
-          }
-          if (!oReqErrored && wantQR) {
-            dispatchLoader({ type: "COMPLETE", id: OBSERVATION_DATA_KEY });
-          }
-          // With no inputs, summary has nothing to compute
-          dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: {} });
           return {};
         }
 
         // Build synthetic Q/QR from observations where configs match
         let qIds = [...preloadList];
-        let syntheticQs = [];
+        const syntheticQs = [];
         if (wantObs && !isEmptyArray(obResources)) {
           const obsLinkIds = getLinkIdsFromObservations(obResources);
           if (!isEmptyArray(obsLinkIds)) {
@@ -418,10 +424,10 @@ export default function useFetchResources() {
               { pageLimit: 0, onPage: processPage(client, qResources) },
             );
           } catch (e) {
-            console.log(e);
             qReqErrored = true;
             dispatchLoader({ type: "ERROR", id: QUESTIONNAIRE_DATA_KEY, errorMessage: e?.message });
           }
+          if (!qReqErrored) dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
         }
 
         const questionnaires = [
@@ -435,8 +441,6 @@ export default function useFetchResources() {
           questionnaireResponses,
           qListToLoad,
           exactMatchById: !hasPreload || isFromEpic,
-          qrReqErrored,
-          qReqErrored,
         };
       });
     },
@@ -445,8 +449,12 @@ export default function useFetchResources() {
       enabled: !!client && !!pid && !base.complete && !base.error && !!phase1Key,
       onSuccess: (payload) => {
         if (phase1KeyRef.current !== phase1Key) return; // ignore stale result
-        const { questionnaires, questionnaireResponses, qListToLoad, exactMatchById, qrReqErrored, qReqErrored } =
-          payload || {};
+        const {
+          questionnaires,
+          questionnaireResponses,
+          qListToLoad,
+          exactMatchById,
+        } = payload || {};
 
         // seed bundle
         patientBundle.current = {
@@ -454,20 +462,18 @@ export default function useFetchResources() {
           entry: [{ resource: patient }, ...(questionnaireResponses ?? []), ...(questionnaires ?? [])],
         };
 
-        // commit base results
-        dispatchBase({
-          type: "RESULTS",
-          questionnaireList: qListToLoad,
-          questionnaires,
-          questionnaireResponses,
-          exactMatchById,
-        });
-
-        // Mark base rows complete only if tracked
-        const wantQ = shouldTrack(configuredTypeSet, QUESTIONNAIRE_DATA_KEY);
-        const wantQR = shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
-        if (!qReqErrored && wantQ) dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
-        if (!qrReqErrored && wantQR) dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
+        // mark base as completed
+        setTimeout(
+          () =>
+            dispatchBase({
+              type: "RESULTS",
+              questionnaireList: qListToLoad,
+              questionnaires,
+              questionnaireResponses,
+              exactMatchById,
+            }),
+          250,
+        );
 
         // compute extra resource types for phase-2
         const haveTypes = [
@@ -476,18 +482,8 @@ export default function useFetchResources() {
           "patient",
         ];
 
-        // What config wants overall (already seeded in loader), excluding Q/QR/blocked
-        const extrasPlanned = configuredTypesRaw.filter((t) => {
-          const n = normalizeType(t);
-          return (
-            !BLOCKED_EXTRA_TYPES.has(n) &&
-            n !== normalizeType(QUESTIONNAIRE_DATA_KEY) &&
-            n !== normalizeType(QUESTIONNAIRE_RESPONSES_DATA_KEY)
-          );
-        });
-
         // Which extras are actually needed after phase-1 results
-        const extrasWanted = extrasPlanned.filter((t) => !haveTypes.includes(normalizeType(t)));
+        const extrasWanted = plannedExtras.filter((t) => !haveTypes.includes(normalizeType(t)));
 
         // Keep needed extras pending (ensure rows exist)
         if (!isEmptyArray(extrasWanted)) {
@@ -498,24 +494,19 @@ export default function useFetchResources() {
         }
 
         // Mark *not* needed extras as complete (skipped)
-        const extrasSkip = extrasPlanned.filter(
+        const extrasSkip = plannedExtras.filter(
           (t) => !extrasWanted.find((w) => normalizeType(w) === normalizeType(t)),
         );
-        for (const t of extrasSkip) {
-          dispatchLoader({ type: "COMPLETE", id: t, data: [] }); // no fetch needed
+        for (const t of extrasSkip) dispatchLoader({ type: "COMPLETE", id: t, data: [] });
+
+        // If nothing to fetch, summary can finalize now
+        if (isEmptyArray(extrasWanted)) {
+          dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: getSummaries(patientBundle.current.entry) });
+          return;
         }
 
         // Drive phase-2 list
         setExtraTypes(extrasWanted);
-
-        // If nothing to fetch, summary can finalize now
-        if (isEmptyArray(extrasWanted)) {
-          dispatchLoader({
-            type: "COMPLETE",
-            id: SUMMARY_DATA_KEY,
-            data: getSummaries(patientBundle.current.entry),
-          });
-        }
       },
       onError: (e) => {
         if (phase1KeyRef.current !== phase1Key) return; // ignore stale error
@@ -524,7 +515,9 @@ export default function useFetchResources() {
     },
   );
 
-  /** -------------------- Phase 2 via React Query -------------------- */
+  // ---------------------------------------------------------------------------
+  // Phase 2
+  // ---------------------------------------------------------------------------
   const readyForExtras =
     !!client &&
     !!pid &&
@@ -562,11 +555,8 @@ export default function useFetchResources() {
     if (!requests.length) return [];
     const settled = await Promise.allSettled(requests);
     let bundle = [];
-    for (const res of settled) {
-      if (res.status === "fulfilled") {
-        bundle = [...bundle, ...getFhirResourcesFromQueryResult(res.value)];
-      }
-    }
+    for (const res of settled)
+      if (res.status === "fulfilled") bundle = [...bundle, ...getFhirResourcesFromQueryResult(res.value)];
     return bundle;
   }, [client, pid, extraTypes, base.questionnaireList, base.exactMatchById, dispatchLoader]);
 
@@ -587,27 +577,23 @@ export default function useFetchResources() {
       dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: getSummaries(patientBundle.current.entry) });
       return fhirData;
     },
-    {
-      ...DEFAULT_QUERY_PARAMS,
-      enabled: readyForExtras,
-    },
+    { ...DEFAULT_QUERY_PARAMS, enabled: readyForExtras },
   );
 
-  /** -------------------- Derived helpers -------------------- */
+  // ---------------------------------------------------------------------------
+  // Derived helpers & return payload
+  // ---------------------------------------------------------------------------
   const phase2DoneOrSkipped =
     isEmptyArray(toBeLoadedResources) || !toBeLoadedResources.find((o) => !o.complete) || !!fatalError;
-
   const isReady = base.complete && (phase2DoneOrSkipped || isEmptyArray(extraTypes)) && !base.error;
 
   const summaryData = useMemo(() => {
     const found = toBeLoadedResources.find((r) => r.id === SUMMARY_DATA_KEY);
     if (!found || !found.data || found.error) return null;
-
     const keys = Object.keys(found.data);
     const hasAnyUseful = !!keys.find(
       (key) => found.data[key] && (found.data[key].error || !isEmptyArray(found.data[key].responseData)),
     );
-
     return hasAnyUseful ? found : null;
   }, [toBeLoadedResources]);
 
@@ -615,18 +601,15 @@ export default function useFetchResources() {
     if (!summaryData) return null;
     const dataToUse = JSON.parse(JSON.stringify(summaryData.data));
     const keys = Object.keys(dataToUse);
-
     const rows = keys.flatMap((key) => {
       const d = dataToUse[key];
       if (!d || isEmptyArray(d.chartData?.data)) return [];
       return d.chartData.data.map((o) => ({ ...o, key, [getDisplayQTitle(key)]: o.score }));
     });
-
     return rows.sort((a, b) => safeDateMs(a.date) - safeDateMs(b.date));
   }, [summaryData]);
 
   const chartKeys = useMemo(() => [...new Set(allChartData?.map((o) => getDisplayQTitle(o.key)))], [allChartData]);
-
   const loaderErrors = useMemo(() => state.loader.filter((r) => r?.error), [state.loader]);
 
   const errorMessages = [

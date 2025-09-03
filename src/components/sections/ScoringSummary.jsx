@@ -247,9 +247,7 @@ export default function ScoringSummary(props) {
   const renderSummary = () => {
     if (isEmptyArray(summaryRows))
       return (
-        <Box sx={{ padding: theme.spacing(1, 0.5) }}>
-          <Alert severity="warning">No score summary available</Alert>
-        </Box>
+         <Alert severity="warning">No score summary available</Alert>
       );
     return (
       <TableContainer
