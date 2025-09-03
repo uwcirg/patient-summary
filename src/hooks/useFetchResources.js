@@ -11,7 +11,7 @@ import {
   getFHIRResourceTypesToLoad,
   getFHIRResourcePaths,
 } from "@util/fhirUtil";
-import { fuzzyMatch, getEnvQuestionnaireList, getEnv, isEmptyArray } from "@util";
+import { fuzzyMatch, getEnvQuestionnaireList, getDisplayQTitle, getEnv, isEmptyArray } from "@util";
 import questionnaireConfigs from "@config/questionnaire_config";
 import { buildQuestionnaire, observationsToQuestionnaireResponses } from "@models/resultBuilders/helpers";
 import QuestionnaireScoringBuilder from "@models/resultBuilders/QuestionnaireScoringBuilder";
@@ -21,6 +21,7 @@ import { NO_CACHE_HEADER } from "@/consts";
 const SUMMARY_DATA_KEY = "summaryData";
 const QUESTIONNAIRE_DATA_KEY = "Questionnaire";
 const QUESTIONNAIRE_RESPONSES_DATA_KEY = "QuestionnaireResponse";
+const OBSERVATION_DATA_KEY = "Observation";
 const BLOCKED_EXTRA_TYPES = new Set([
   QUESTIONNAIRE_DATA_KEY.toLowerCase(),
   QUESTIONNAIRE_RESPONSES_DATA_KEY.toLowerCase(),
@@ -258,6 +259,11 @@ export default function useFetchResources() {
         title: QUESTIONNAIRE_RESPONSES_DATA_KEY,
         complete: false,
       });
+      items.push({
+        id: OBSERVATION_DATA_KEY,
+        title: OBSERVATION_DATA_KEY,
+        complete: false,
+      });
     }
 
     // Phase-2 configured extras (exclude Q/QR and blocked)
@@ -307,6 +313,7 @@ export default function useFetchResources() {
         // Track request errors locally
         let qrReqErrored = false;
         let qReqErrored = false;
+        let oReqErrored = false;
 
         // Conditionally fetch QR + Obs
         if (wantQR) {
@@ -327,7 +334,7 @@ export default function useFetchResources() {
 
         if (wantObs) {
           const flowsheetIds = toStringArray(getFlowsheetIds());
-          const obsQueryBase = `Observation?_count=200&patient=${pid}`;
+          const obsQueryBase = `Observation?_count=200&patient=${pid}&category=vital-signs`;
           const obsUrl = flowsheetIds.length ? `${obsQueryBase}&code=${flowsheetIds.join(",")}` : obsQueryBase;
 
           try {
@@ -336,8 +343,12 @@ export default function useFetchResources() {
               { pageLimit: 0, onPage: processPage(client, obResources) },
             );
           } catch (e) {
-            // We don't track Observation in the loader, but log for diagnostics.
-            console.warn("Observation request failed", e);
+            oReqErrored = true;
+            dispatchLoader({
+              type: "ERROR",
+              id: OBSERVATION_DATA_KEY,
+              errorMessage: e?.message || "Observation request failed",
+            });
           }
         }
 
@@ -350,12 +361,16 @@ export default function useFetchResources() {
           if (wantQ) {
             dispatchLoader({
               type: "ERROR",
-              id: QUESTIONNAIRE_DATA_KEY,
-              errorMessage: "No questionnaires to load (no preload, QR matches, or observations)",
+              id: QUESTIONNAIRE_RESPONSES_DATA_KEY,
+              errorMessage:
+                "No matching questionnaire responses to load (no questionnaire list, QR matches, or observations)",
             });
           }
           if (!qrReqErrored && wantQR) {
             dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
+          }
+          if (!oReqErrored && wantQR) {
+            dispatchLoader({ type: "COMPLETE", id: OBSERVATION_DATA_KEY });
           }
           // With no inputs, summary has nothing to compute
           dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: {} });
@@ -604,11 +619,13 @@ export default function useFetchResources() {
     const rows = keys.flatMap((key) => {
       const d = dataToUse[key];
       if (!d || isEmptyArray(d.chartData?.data)) return [];
-      return d.chartData.data.map((o) => ({ ...o, key, [key]: o.score }));
+      return d.chartData.data.map((o) => ({ ...o, key, [getDisplayQTitle(key)]: o.score }));
     });
 
     return rows.sort((a, b) => safeDateMs(a.date) - safeDateMs(b.date));
   }, [summaryData]);
+
+  const chartKeys = useMemo(() => [...new Set(allChartData?.map((o) => getDisplayQTitle(o.key)))], [allChartData]);
 
   const loaderErrors = useMemo(() => state.loader.filter((r) => r?.error), [state.loader]);
 
@@ -656,6 +673,7 @@ export default function useFetchResources() {
     // charts
     summaryData,
     allChartData,
+    chartKeys,
 
     // controls
     refresh,

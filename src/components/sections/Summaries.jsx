@@ -32,7 +32,8 @@ export default function Summaries({ summaryData }) {
               <Divider
                 className="print-hidden"
                 key={`questionnaire_divider_${index}`}
-                sx={{ borderWidth: "2px", marginBottom: 2 }}
+                sx={{ borderWidth: "2px", marginBottom: 2, opacity: 0.6 }}
+                variant="middle"
               ></Divider>
             )}
           </Box>

@@ -7,7 +7,7 @@ import {
   fuzzyMatch,
   normalizeStr,
   objectToString,
-  toFiniteNumber
+  toFiniteNumber,
 } from "@util";
 import Response from "@models/Response";
 import FhirResultBuilder from "./FhirResultBuilder";
@@ -332,7 +332,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   // -------------------- formatting --------------------
   formattedResponses(questionnaireItems, responseItemsFlat) {
-    if (isEmptyArray(questionnaireItems)) return this.responsesOnly(responseItemsFlat);
+    if (
+      isEmptyArray(questionnaireItems) ||
+      !questionnaireItems.some((item) => responseItemsFlat?.find((o) => o.linkId === item.linkId))
+    )
+      return this.responsesOnly(responseItemsFlat);
 
     const list = [];
     const walk = (items = []) => {
@@ -595,7 +599,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       tableResponseData: this._formatTableResponseData(evalData),
       printResponseData: this._formatPrintResponseData(evalData, config),
       questionnaire: questionnaire,
-      error: !questionnaire ? "No associated questionnaire found": ""
+      error: !questionnaire ? "No associated questionnaire found" : "",
     };
   }
 

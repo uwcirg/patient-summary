@@ -13,15 +13,8 @@ import FloatingNavButton from "./FloatingNavButton";
 import useFetchResources from "@/hooks/useFetchResources";
 
 export default function Dashboard() {
-  const {
-    hasError,
-    errorMessages,
-    fatalError,
-    loading,
-    isReady,
-    toBeLoadedResources,
-    ...otherResults
-  } = useFetchResources();
+  const { hasError, errorMessages, fatalError, loading, isReady, toBeLoadedResources, ...otherResults } =
+    useFetchResources();
   const sectionsToShow = getSectionsToShow();
 
   const renderSections = () => {
@@ -31,7 +24,7 @@ export default function Dashboard() {
         <MemoizedSection
           section={section}
           data={{
-            ...otherResults
+            ...otherResults,
           }}
           key={`section_${section.id}`}
         ></MemoizedSection>
@@ -51,7 +44,7 @@ export default function Dashboard() {
   const renderError = () => {
     return (
       <Box sx={{ marginTop: 1 }}>
-        <ErrorComponent message={errorMessages} severity={fatalError?"error":"warning"}></ErrorComponent>
+        <ErrorComponent message={errorMessages} severity={fatalError ? "error" : "warning"}></ErrorComponent>
       </Box>
     );
   };

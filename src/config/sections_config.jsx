@@ -17,7 +17,7 @@ const renderScoringSummary = (props) => {
   const ScoreSummary = lazy(() => import("../components/sections/ScoringSummary"));
   const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
   const chartData = props.allChartData;
-  const chartKeys = [...new Set(chartData?.map((o) => o.key))];
+  const chartKeys = props.chartKeys;
   return (
     <Suspense fallback={renderLoader()}>
       <Stack
@@ -89,7 +89,7 @@ const sections = [
   {
     id: "scoreSummary",
     title: "Score Summary",
-    resources: [...DEFAULT_RESOURCES, "Condition"],
+    resources: DEFAULT_RESOURCES,
     icon: (props) => <SummarizeIcon fontSize="medium" color="primary" {...props}></SummarizeIcon>,
     component: (props) => renderScoringSummary(props),
     default: true,
@@ -108,7 +108,7 @@ const sections = [
     resources: ["Condition"],
     icon: (props) => <MedicalInformationIcon fontSize="medium" color="primary" {...props}></MedicalInformationIcon>,
     component: (props) => renderConditions(props),
-    default: true,
+    //default: true,
   },
   {
     id: "observations",
@@ -116,7 +116,7 @@ const sections = [
     resources: ["Observation"],
     icon: (props) => <FactCheckIcon fontSize="medium" color="primary" {...props}></FactCheckIcon>,
     component: (props) => renderObservations(props),
-    default: true,
+    //default: true,
   },
 ];
 const DEFAULT_SECTIONS = sections.filter((item) => !!item.default);

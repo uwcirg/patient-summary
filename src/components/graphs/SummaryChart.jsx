@@ -7,8 +7,11 @@ import { isEmptyArray } from "@/util";
 import { COLORS, LEGEND_ICON_TYPES } from "@/config/chart_config";
 
 export default function LineCharts(props) {
-  const { data, keys = [] } = props;
+  let { data, keys = [] } = props;
   let visStates = {};
+  if (isEmptyArray(keys)) {
+    keys = [...new Set(data?.map((o) => o.key))];
+  }
   keys.forEach((key) => (visStates[key] = true));
   function reducer(state, action) {
     if (!action.key) return state;
@@ -50,7 +53,16 @@ export default function LineCharts(props) {
           tick={{ style: { fontSize: "12px", fontWeight: 500 }, dy: 4, dx: -4 }}
         />
         <YAxis type="number" tick={{ fontWeight: 500, fontSize: "12px" }} width={32} />
-        <Tooltip />
+        <Tooltip
+          itemStyle={{ fontSize: "10px" }}
+          labelStyle={{ fontSize: "10px" }}
+          animationBegin={500}
+          animationDuration={550}
+          labelFormatter={(value, data) => {
+            if (!isEmptyArray(data) && value > 0) return new Date(value).toISOString().substring(0, 10);
+            return "";
+          }}
+        />
         <Legend
           align="left"
           verticalAlign="middle"

@@ -108,8 +108,8 @@ export default function LineCharts(props) {
   );
   const renderToolTip = () => (
     <Tooltip
-      itemStyle={{ fontSize: "12px" }}
-      labelStyle={{ fontSize: "12px" }}
+      itemStyle={{ fontSize: "10px" }}
+      labelStyle={{ fontSize: "10px" }}
       animationBegin={500}
       animationDuration={550}
       labelFormatter={tooltipLabelFormatter}

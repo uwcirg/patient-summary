@@ -9,15 +9,16 @@ const Chart = (props) => {
   const CHART_SPACING = 240;
 
   useEffect(() => {
-    window.addEventListener("resize", () => {
+    const resizeEvent = () => {
       clearTimeout(resizeChartTimeoutId);
       resizeChartTimeoutId = setTimeout(() => {
         if (chartRef.current) {
-          chartRef.current.style.height =
-            (window.innerHeight - CHART_SPACING) + "px";
+          chartRef.current.style.height = window.innerHeight - CHART_SPACING + "px";
         }
       }, 250);
-    });
+    };
+    window.addEventListener("resize", resizeEvent);
+    return () => window.removeEventListener("resize", resizeEvent);
   }, []);
   return (
     <div
@@ -27,18 +28,13 @@ const Chart = (props) => {
           sm: "100%",
           md: "50%",
         },
-        height: (window.innerHeight - CHART_SPACING) + "px",
-        minHeight:
-          props.data && props.data.chartHeight
-            ? props.data.chartHeight + "px"
-            : "520px",
+        height: window.innerHeight - CHART_SPACING + "px",
+        minHeight: props.data && props.data.chartHeight ? props.data.chartHeight + "px" : "520px",
       }}
       ref={chartRef}
     >
       {props.type === "linechart" && <LineChart {...props.data}></LineChart>}
-      {eligibleCharts.indexOf(props.type) === -1 && (
-        <Error message="Graph type specified is not available."></Error>
-      )}
+      {eligibleCharts.indexOf(props.type) === -1 && <Error message="Graph type specified is not available."></Error>}
       {/* other types of graph go here */}
     </div>
   );
