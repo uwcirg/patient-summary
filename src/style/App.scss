@@ -132,14 +132,6 @@ p {
     margin-right: 0 !important;
   }
 }
-
-.recharts-legend-item.inactive {
-  .recharts-symbols,
-  .recharts-surface path {
-    fill: #fff !important;
-    stroke: currentColor !important;
-  }
-}
 .recharts-legend-item-text {
   white-space: nowrap;
   color: rgb(120, 40, 31);
@@ -151,7 +143,43 @@ p {
 }
 
 .recharts-legend-wrapper {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+}
+.multiple {
+  .recharts-legend-wrapper {
+    li {
+      padding: 2px 12px 2px 6px;
+      border-radius: 8px;
+      box-shadow: 1px 1px 2px #ececec;
+      margin-bottom: 4px;
+      cursor: pointer;
+      position: relative;
+      &::after {
+        content: "✓";
+        font-size: 0.65rem;
+        content: "";
+        position: absolute;
+        bottom: 10px;
+        left: 92%;
+        transform: translateX(-50%);
+        width: 6px;
+        height: 6px;
+        border: 1px solid #777;
+        border-radius: 50%;
+        opacity: 0.5;
+      }
+      &.inactive::after {
+        content: "\00d7";
+        width: 0;
+        height: 0;
+        border: 0;
+        top: 25%;
+        left: 90%;
+        bottom: 0;
+        transform: translate(-50%, -50%);
+      }
+    }
+  }
 }
 .recharts-default-legend {
   line-height: 1.8;
@@ -207,6 +235,10 @@ p {
   }
   .recharts-legend-wrapper {
     left: 4px !important;
+    li {
+      box-shadow: none;
+      padding: 0;
+    }
   }
   .recharts-legend-item-text {
     font-size: 10px;

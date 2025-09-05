@@ -82,11 +82,7 @@ function computePlannedExtras(configuredTypesRaw) {
   return uniqueNormalized(
     configuredTypesRaw.filter((t) => {
       const n = normalizeType(t);
-      return (
-        !BLOCKED_EXTRA_TYPES.has(n) &&
-        n !== normalizeType(QUESTIONNAIRE_DATA_KEY) &&
-        n !== normalizeType(QUESTIONNAIRE_RESPONSES_DATA_KEY)
-      );
+      return !BLOCKED_EXTRA_TYPES.has(n);
     }),
   );
 }
@@ -159,9 +155,6 @@ function reducer(state, action) {
 
   if (scope === "loader") {
     switch (actionType) {
-      // case "INIT_TRACKING":
-      //   return { ...state, loader: action.items };
-
       case "UPSERT_MANY": {
         const map = new Map(state.loader.map((r) => [r.id, r]));
         for (const it of action.items) map.set(it.id, { ...(map.get(it.id) || {}), ...it });
@@ -301,7 +294,7 @@ export default function useFetchResources() {
     phase1KeyRef.current = phase1Key;
   }, [phase1Key]);
 
-  const phase1Query = useQuery(
+  useQuery(
     ["phase1-qr-obs-q", phase1Key],
     async () => {
       if (!client || !isNonEmptyString(pid)) {
@@ -316,56 +309,83 @@ export default function useFetchResources() {
 
         let qrResources = [];
         let obResources = [];
+        let qResources = [];
 
         // What we intend to fetch in phase-1
-        const wantQ = hasPreload || shouldTrack(configuredTypeSet, QUESTIONNAIRE_DATA_KEY);
+        const wantQ = hasPreload || isFromEpic || shouldTrack(configuredTypeSet, QUESTIONNAIRE_DATA_KEY);
         const wantQR = wantQ || isFromEpic || shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
         const wantObs = wantQ || wantQR;
 
-        // Track request errors locally
-        let qrReqErrored = false;
-        let qReqErrored = false;
-        let oReqErrored = false;
+        const exactMatchById = !hasPreload || isFromEpic;
 
-        // Conditionally fetch QR + Obs
+        // --- Build phase-1 tasks (QR + Obs in parallel; Q also in parallel if preload list is known) ---
+        const phase1Tasks = [];
+
         if (wantQR) {
-          try {
-            await client.request(
+          phase1Tasks.push({
+            id: QUESTIONNAIRE_RESPONSES_DATA_KEY,
+            promise: client.request(
               { url: `QuestionnaireResponse?_count=200&patient=${pid}`, header: NO_CACHE_HEADER },
               { pageLimit: 0, onPage: processPage(client, qrResources) },
-            );
-          } catch (e) {
-            qrReqErrored = true;
-            dispatchLoader({
-              type: "ERROR",
-              id: QUESTIONNAIRE_RESPONSES_DATA_KEY,
-              errorMessage: e?.message || "QuestionnaireResponse request failed",
-            });
-          }
-          if (!qrReqErrored) dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_RESPONSES_DATA_KEY });
+            ),
+            onErrorMessage: "QuestionnaireResponse request failed",
+          });
         }
 
+        let obsUrl = null;
         if (wantObs) {
           const flowsheetIds = toStringArray(getFlowsheetIds());
           const obsQueryBase = `Observation?_count=200&patient=${pid}&category=vital-signs`;
-          const obsUrl = flowsheetIds.length ? `${obsQueryBase}&code=${flowsheetIds.join(",")}` : obsQueryBase;
+          obsUrl = flowsheetIds.length ? `${obsQueryBase}&code=${flowsheetIds.join(",")}` : obsQueryBase;
 
-          try {
-            await client.request(
+          phase1Tasks.push({
+            id: OBSERVATION_DATA_KEY,
+            promise: client.request(
               { url: obsUrl, header: NO_CACHE_HEADER },
               { pageLimit: 0, onPage: processPage(client, obResources) },
-            );
-          } catch (e) {
-            oReqErrored = true;
-            dispatchLoader({
-              type: "ERROR",
-              id: OBSERVATION_DATA_KEY,
-              errorMessage: e?.message || "Observation request failed",
-            });
-          }
-          if (!oReqErrored) dispatchLoader({ type: "COMPLETE", id: OBSERVATION_DATA_KEY });
+            ),
+            onErrorMessage: "Observation request failed",
+          });
         }
 
+        // If we already know the Q list (preload), fetch Q in parallel with QR/Obs.
+        // Otherwise, we must wait for QR/Obs to determine Q IDs.
+        let qPreloadedTask = null;
+        if (wantQ && hasPreload) {
+          const qPathPreload = getFHIRResourcePath(pid, [QUESTIONNAIRE_DATA_KEY], {
+            questionnaireList: preloadList,
+            exactMatchById,
+          });
+
+          qPreloadedTask = {
+            id: QUESTIONNAIRE_DATA_KEY,
+            promise: client.request(
+              { url: qPathPreload, header: NO_CACHE_HEADER },
+              { pageLimit: 0, onPage: processPage(client, qResources) },
+            ),
+            onErrorMessage: "Questionnaire request failed",
+          };
+          phase1Tasks.push(qPreloadedTask);
+        }
+
+        // --- Execute phase-1 in parallel ---
+        if (phase1Tasks.length) {
+          const results = await Promise.allSettled(phase1Tasks.map((t) => t.promise));
+          results.forEach((res, i) => {
+            const { id, onErrorMessage } = phase1Tasks[i];
+            if (res.status === "fulfilled") {
+              dispatchLoader({ type: "COMPLETE", id });
+            } else {
+              dispatchLoader({
+                type: "ERROR",
+                id,
+                errorMessage: res.reason?.message || onErrorMessage || `${id} request failed`,
+              });
+            }
+          });
+        }
+
+        // Filter matched QRs by Questionnaire/id presence
         let matchedQRs = !isEmptyArray(qrResources)
           ? qrResources.filter((it) => it && it.questionnaire && it.questionnaire.split("/")[1])
           : [];
@@ -386,6 +406,7 @@ export default function useFetchResources() {
         // Build synthetic Q/QR from observations where configs match
         let qIds = [...preloadList];
         const syntheticQs = [];
+
         if (wantObs && !isEmptyArray(obResources)) {
           const obsLinkIds = getLinkIdsFromObservations(obResources);
           if (!isEmptyArray(obsLinkIds)) {
@@ -406,28 +427,36 @@ export default function useFetchResources() {
           }
         }
 
-        // Determine Questionnaire list & fetch
+        // Determine Questionnaire list & fetch (if not already fetched via preload parallel path)
         const matchedQIds = matchedQRs?.map((it) => it.questionnaire?.split("/")[1]) ?? [];
         const uniqueQIds = [...new Set([...qIds, ...matchedQIds])];
         const qListToLoad = hasPreload ? preloadList : uniqueQIds;
 
-        const qPath = getFHIRResourcePath(pid, [QUESTIONNAIRE_DATA_KEY], {
-          questionnaireList: qListToLoad,
-          exactMatchById: !hasPreload || isFromEpic,
-        });
+        if (wantQ && !hasPreload) {
+          const qPath = getFHIRResourcePath(pid, [QUESTIONNAIRE_DATA_KEY], {
+            questionnaireList: qListToLoad,
+            exactMatchById,
+          });
 
-        let qResources = [];
-        if (wantQ) {
-          try {
-            await client.request(
+          const qTask = {
+            id: QUESTIONNAIRE_DATA_KEY,
+            promise: client.request(
               { url: qPath, header: NO_CACHE_HEADER },
               { pageLimit: 0, onPage: processPage(client, qResources) },
-            );
-          } catch (e) {
-            qReqErrored = true;
-            dispatchLoader({ type: "ERROR", id: QUESTIONNAIRE_DATA_KEY, errorMessage: e?.message });
+            ),
+            onErrorMessage: "Questionnaire request failed",
+          };
+
+          const [qResult] = await Promise.allSettled([qTask.promise]);
+          if (qResult.status === "fulfilled") {
+            dispatchLoader({ type: "COMPLETE", id: qTask.id });
+          } else {
+            dispatchLoader({
+              type: "ERROR",
+              id: qTask.id,
+              errorMessage: qResult.reason?.message || qTask.onErrorMessage,
+            });
           }
-          if (!qReqErrored) dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
         }
 
         const questionnaires = [
@@ -440,7 +469,7 @@ export default function useFetchResources() {
           questionnaires,
           questionnaireResponses,
           qListToLoad,
-          exactMatchById: !hasPreload || isFromEpic,
+          exactMatchById,
         };
       });
     },
@@ -605,8 +634,8 @@ export default function useFetchResources() {
 
   const allChartData = useMemo(() => {
     if (!summaryData) return null;
-    const dataToUse = JSON.parse(JSON.stringify(summaryData.data));
-    const keys = Object.keys(dataToUse);
+    const dataToUse = JSON.parse(JSON.stringify(summaryData?.data));
+    const keys = Object.keys(dataToUse ?? []);
     const rows = keys.flatMap((key) => {
       const d = dataToUse[key];
       if (!d || isEmptyArray(d.chartData?.data)) return [];
@@ -625,11 +654,7 @@ export default function useFetchResources() {
   ];
 
   const hasError = errorMessages.length > 0;
-
-  const loading =
-    (phase1Query.isLoading && !base.complete) ||
-    (!base.complete && !base.error) ||
-    (base.complete && extraTypes.length > 0 && !phase2DoneOrSkipped && !base.error);
+  const errorSeverity = fatalError ? "error" : "warning";
 
   if (isReady) {
     console.log("summaryData ", summaryData);
@@ -638,10 +663,9 @@ export default function useFetchResources() {
 
   return {
     ...(patientBundle.current.evalResults ? patientBundle.current.evalResults : {}),
-    // status
-    loading,
     isReady,
     errorMessages,
+    errorSeverity,
     fatalError,
     hasError,
     // to be loaded resources tracking

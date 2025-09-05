@@ -25,9 +25,9 @@ const renderScoringSummary = (props) => {
         direction={`${!isEmptyArray(chartData) && chartData.length < 20 ? "row" : "column"}`}
         alignItems={"center"}
         sx={{
+          gap: (theme) => theme.spacing(1),
           marginLeft: (theme) => theme.spacing(1),
           marginRight: (theme) => theme.spacing(1),
-          gap: (theme) => theme.spacing(1),
         }}
         flexWrap={"wrap"}
       >

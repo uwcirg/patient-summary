@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -14,42 +14,7 @@ import Chart from "./Chart";
 import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "@/consts";
 
 export default function Summary(props) {
-  const { questionnaireId, data } = props;
-  const summaryReducer = (summary, action) => {
-    if (action.type === "reset") {
-      return {
-        responses: [],
-        chartConfig: [],
-        chartData: [],
-        error: "",
-        loading: false,
-      };
-    }
-    if (action.type === "update") {
-      return {
-        ...action.payload,
-        loading: false,
-      };
-    }
-    if (action.type === "error") {
-      return {
-        ...summary,
-        loading: false,
-        [action.type]: action.payload,
-      };
-    }
-    return {
-      ...summary,
-      [action.type]: action.payload,
-    };
-  };
-  const [summary, dispatch] = useReducer(summaryReducer, {
-    responses: [],
-    chartData: [],
-    chartConfig: [],
-    error: "",
-    loading: true,
-  });
+  const { questionnaireId, data: summary } = props;
   const hasChart = hasData(summary.chartData);
   const anchorElementStyle = {
     position: "relative",
@@ -57,7 +22,7 @@ export default function Summary(props) {
     height: 2,
     width: 2,
   };
-  const shouldDisplayResponses = () => !summary || (summary && !summary.loading && !summary.error);
+  const shouldDisplayResponses = () => !summary || (summary && !summary.error);
   const getAnchorElementId = () => QUESTIONNAIRE_ANCHOR_ID_PREFIX;
   const hasResponses = () => !isEmptyArray(summary.responseData);
 
@@ -77,7 +42,7 @@ export default function Summary(props) {
   const renderAnchor = () => <div id={`${getAnchorElementId()}_${questionnaireId}`} style={anchorElementStyle}></div>;
   const renderTitle = () => {
     let questionnaireTitle = questionnaireId;
-    const qo = new Questionnaire(data?.questionnaire, questionnaireId);
+    const qo = new Questionnaire(summary?.questionnaire, questionnaireId);
     questionnaireTitle = qo.displayName;
     return (
       <Typography variant="h6" component="h3" color="accent" sx={{ marginBottom: 1 }} className="questionnaire-title">
@@ -93,7 +58,6 @@ export default function Summary(props) {
         {!hasResponses() && <Alert severity="warning">No recorded responses</Alert>}
         {hasResponses() && (
           <Responses
-            //data={summary.responseData}
             data={summary}
             questionnaireId={questionnaireId}
             questionnaireJson={summary.questionnaire}
@@ -103,19 +67,7 @@ export default function Summary(props) {
     );
   };
 
-  const renderAlert = () => <Alert severity="warning">No summary data</Alert>
-
-  useEffect(() => {
-    if (!data || !summary.loading) return;
-    if (data && data.error) {
-      dispatch({
-        type: "error",
-        payload: data.error,
-      });
-      return;
-    }
-    dispatch({ type: "update", payload: data });
-  }, [data, summary.loading]);
+  const renderAlert = () => <Alert severity="warning">No summary data</Alert>;
 
   return (
     <>
@@ -134,10 +86,10 @@ export default function Summary(props) {
         <Stack direction="row" spacing={1} alignItems="flex-start">
           {/* questionnaire title */}
           <div>{renderTitle()}</div>
-          <QuestionnaireInfo questionnaireJson={data?.questionnaire}></QuestionnaireInfo>
+          <QuestionnaireInfo questionnaireJson={summary?.questionnaire}></QuestionnaireInfo>
         </Stack>
-        {!data && renderAlert()}
-        {data && (
+        {!summary && renderAlert()}
+        {summary && (
           <>
             {/* error message */}
             {renderError()}

@@ -13,7 +13,7 @@ import FloatingNavButton from "./FloatingNavButton";
 import useFetchResources from "@/hooks/useFetchResources";
 
 export default function Dashboard() {
-  const { hasError, errorMessages, fatalError, loading, isReady, toBeLoadedResources, ...otherResults } =
+  const { hasError, errorMessages, errorSeverity, fatalError, isReady, toBeLoadedResources, ...otherResults } =
     useFetchResources();
   const sectionsToShow = getSectionsToShow();
 
@@ -44,7 +44,7 @@ export default function Dashboard() {
   const renderError = () => {
     return (
       <Box sx={{ marginTop: 1 }}>
-        <ErrorComponent message={errorMessages} severity={fatalError ? "error" : "warning"}></ErrorComponent>
+        <ErrorComponent message={errorMessages} severity={errorSeverity}></ErrorComponent>
       </Box>
     );
   };
@@ -58,7 +58,7 @@ export default function Dashboard() {
 
   return (
     <Box className="app">
-      {loading && (
+      {!isReady && (
         <Loader>
           <ProgressIndicator
             resources={toBeLoadedResources}
@@ -67,7 +67,7 @@ export default function Dashboard() {
         </Loader>
       )}
 
-      {!loading && isReady && (
+      {isReady && (
         <>
           <FloatingNavButton></FloatingNavButton>
           <Stack className="summaries" sx={mainStackStyleProps}>

@@ -40,6 +40,7 @@ export default function LineCharts(props) {
         boxShadow:
           "0px 2px 1px -1px rgba(0, 0, 0, 0.2), 0px 1px 1px 0px rgba(0, 0, 0, 0.14), 0px 1px 3px 0px rgba(0, 0, 0, 0.12)",
       }}
+      className={keys.length > 1 ? "multiple" : "single"}
     >
       <LineChart data={data} margin={{ top: 25, right: 64, left: 20, bottom: 24 }} width={730} height={420}>
         <CartesianGrid strokeDasharray="2 2" />
@@ -69,6 +70,7 @@ export default function LineCharts(props) {
           layout="vertical"
           iconSize={12}
           onClick={handleLegendClick}
+          className={keys.length > 1 ? "multple" : "single"}
         ></Legend>
         {keys.map((key, index) => {
           return (

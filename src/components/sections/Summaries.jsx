@@ -14,12 +14,7 @@ export default function Summaries({ summaryData }) {
     return <Alert severity="warning">No data found.</Alert>;
   }
   const keys = Object.keys(summaryData.data);
-  if (isEmptyArray(keys))
-    return (
-      <Alert severity="warning">
-        No data found.
-      </Alert>
-    );
+  if (isEmptyArray(keys)) return <Alert severity="warning">No data found.</Alert>;
 
   return (
     <Box>
