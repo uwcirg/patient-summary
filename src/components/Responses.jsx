@@ -22,7 +22,7 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import Filter from "@mui/icons-material/FilterAlt";
-import OutlinedIcon from "@mui/icons-material/WysiwygOutlined";
+import TableRowsIcon from "@mui/icons-material/TableRows";
 import { getLocaleDateStringFromDate, isEmptyArray, isNumber } from "@util";
 import Questionnaire from "@models/Questionnaire";
 import Score from "./Score";
@@ -207,7 +207,6 @@ export default function Responses(props) {
       className="responses-container"
       sx={{
         borderRadius: 0,
-        marginTop: theme.spacing(2),
         marginLeft: "auto",
         marginRight: "auto",
         padding: theme.spacing(2),
@@ -279,7 +278,7 @@ export default function Responses(props) {
           color="primary"
           title="View"
           size="small"
-          endIcon={<OutlinedIcon fontSize="medium"></OutlinedIcon>}
+          endIcon={<TableRowsIcon fontSize="medium"></TableRowsIcon>}
           onClick={() => handleClickOpen()}
         >
           View
@@ -320,13 +319,13 @@ export default function Responses(props) {
         exit: 500,
       }}
     >
-      <AppBar sx={{ position: "relative" }}>
+      <AppBar sx={{ position: "relative", minHeight: "48px" }}>
         <Toolbar>
           <IconButton edge="start" color="inherit" onClick={handleClose} aria-label="close">
             <CloseIcon />
           </IconButton>
           <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-            Questionnaire Responses for {questionnaireTitle}
+            {questionnaireTitle}
           </Typography>
           <Button color="inherit" onClick={handleClose}>
             Close
