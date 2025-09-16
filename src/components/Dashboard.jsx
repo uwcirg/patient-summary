@@ -44,7 +44,11 @@ export default function Dashboard() {
   const renderError = () => {
     return (
       <Box sx={{ marginTop: 1 }}>
-        <ErrorComponent message={errorMessages} severity={errorSeverity}></ErrorComponent>
+        <ErrorComponent
+          message={errorMessages}
+          severity={errorSeverity}
+          sx={{ padding: (theme) => theme.spacing(0, 2) }}
+        ></ErrorComponent>
       </Box>
     );
   };

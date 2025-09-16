@@ -1,17 +1,7 @@
-// import { getResourcesByResourceType } from "../util/fhirUtil";
 import QuestionnaireScoringBuilder from "./resultBuilders/QuestionnaireScoringBuilder";
 import { getDisplayQTitle, isEmptyArray } from "@/util";
 import { getConfigForQuestionnaire } from "@/config/questionnaire_config";
 
-// const getScoreQuestionIdById = (id) => {
-//   return {
-//     "cirg-phq9": "/44261-6",
-//     "cirg-gad7": "/70274-6",
-//     "cirg-peg": "91147-9",
-//     "cirg-phq-4": "/70272-0",
-//   }[String(id).toLowerCase()];
-// };
-// source Questionnaire FHIR resource
 class Questionnaire {
   constructor(dataObj = null, key, patientBundle = []) {
     this.data = Object.assign({}, dataObj);

@@ -276,7 +276,7 @@ export default function Responses(props) {
       <SummaryBodyCell>
         <Button
           color="primary"
-          title="View"
+          title="View responses by date"
           size="small"
           endIcon={<TableRowsIcon fontSize="medium"></TableRowsIcon>}
           onClick={() => handleClickOpen()}

@@ -154,19 +154,22 @@ p {
       margin-bottom: 4px;
       cursor: pointer;
       position: relative;
+      z-index: 2;
       &::after {
         content: "✓";
-        font-size: 0.65rem;
-        content: "";
+        font-size: 0.6rem;
+        content: "\2713";
         position: absolute;
+        z-index: 1;
         bottom: 10px;
+        top: 25%;
         left: 92%;
         transform: translateX(-50%);
-        width: 6px;
-        height: 6px;
-        border: 1px solid #777;
-        border-radius: 50%;
-        opacity: 0.5;
+        // width: 6px;
+        // height: 6px;
+        // border: 1px solid #777;
+        // border-radius: 50%;
+        opacity: 0.4;
       }
       &.inactive::after {
         content: "\00d7";
@@ -313,7 +316,7 @@ p {
 }
 
 .back-to-top {
-  --accent: #e3dff5;
+  --accent: #e5e9e8;
   --white: oklch(100% 0 0);
   background-image: linear-gradient(var(--accent) 0% var(--progress), var(--white) var(--progress) 100%);
   animation: progress linear;

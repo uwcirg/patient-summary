@@ -86,7 +86,7 @@ export default function LineCharts(props) {
               animationBegin={400}
               strokeWidth={2}
               connectNulls={true}
-              hide={!state[key]}
+              hide={keys.length > 1 ? !state[key] : false}
             />
           );
         })}

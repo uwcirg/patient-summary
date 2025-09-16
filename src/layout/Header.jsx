@@ -267,8 +267,11 @@ export default function Header(props) {
                   {hasSections &&
                     sections.map((section, index) => (
                       <MenuItem
-                        onClick={() => scrollToElement(`anchor_${section.id.toLowerCase()}`)}
-                        key={`${section.id??index}_menuitem`}
+                        onClick={(e) => {
+                          scrollToElement(`anchor_${section.id.toLowerCase()}`);
+                          handleMobileMenuClose(e);
+                        }}
+                        key={`${section.id ?? index}_menuitem`}
                       >
                         <ListItemIcon>{section.icon({ fontSize: "small" })}</ListItemIcon>
                         <ListItemText>{section.title}</ListItemText>

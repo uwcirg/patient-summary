@@ -20,7 +20,7 @@ export default function Error(props) {
   };
   return (
     <div>
-      <Alert severity={props.severity??"error"} variant="filled">
+      <Alert severity={props.severity??"error"} variant="filled" sx={props.sx}>
         <div dangerouslySetInnerHTML={{ __html: getMessage() }}></div>
       </Alert>
     </div>
@@ -29,5 +29,6 @@ export default function Error(props) {
 
 Error.propTypes = {
   message: PropTypes.oneOfType([PropTypes.object, PropTypes.string, PropTypes.array]),
-  severity: PropTypes.string
+  severity: PropTypes.string,
+  sx: PropTypes.object
 };

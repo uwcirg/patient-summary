@@ -59,7 +59,7 @@ export default function LineCharts(props) {
   const renderXAxis = () => (
     <XAxis
       dataKey={xFieldKey}
-      height={100}
+      height={108}
       domain={xDomain}
       textAnchor="end"
       tick={{ style: { fontSize: "12px", fontWeight: 500 }, dy: -2, dx: -4 }}
@@ -68,7 +68,7 @@ export default function LineCharts(props) {
       interval="preserveStartEnd"
       angle={270}
     >
-      <Label value={xLabel} offset={-2} position="insideBottom" />
+      <Label value={xLabel} offset={4} position="insideBottom" />
     </XAxis>
   );
   const yDomain = maxYValue ? [0, maxYValue] : [0, "auto"];
@@ -229,7 +229,7 @@ export default function LineCharts(props) {
               top: 30,
               right: 80,
               left: 40,
-              bottom: 40,
+              bottom: 30,
             }}
             id={`lineChart_${id ?? generateUUID()}`}
           >

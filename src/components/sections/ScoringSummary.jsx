@@ -84,7 +84,7 @@ export default function ScoringSummary(props) {
     whiteSpace: "nowrap",
     lineHeight: 1.4,
     fontSize: "0.8rem",
-    padding: theme.spacing(0.5, 1),
+    padding: theme.spacing(0.75, 1),
     verticalAlign: "top",
     ...cellWhiteSpaceStyle,
   };
@@ -120,14 +120,13 @@ export default function ScoringSummary(props) {
           Score
         </TableCell>
         <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
-          # <br /> Answered
+          # Answered
         </TableCell>
         <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
           Meaning
         </TableCell>
         <TableCell variant="head" sx={{ ...cellStyle, borderRightWidth: 0 }} {...defaultTableCellProps}>
-          Compared <br /> to <br />
-          Last
+          Compared to Last
         </TableCell>
       </TableRow>
     </TableHead>
@@ -167,13 +166,13 @@ export default function ScoringSummary(props) {
     >
       <Stack
         direction={"column"}
-        spacing={1}
+        spacing={0.75}
         justifyContent={"space-between"}
         alignItems={"center"}
         sx={{ width: "100%" }}
       >
         <Scoring score={row.score} scoreParams={row.scoringParams} justifyContent="space-between"></Scoring>
-        <Box className="no-wrap-text muted-text" sx={{ fontSize: "0.7rem" }}>
+        <Box className="no-wrap-text muted-text" sx={{ fontSize: "0.65rem" }}>
           {displayScoreRange(row.minScore, row.maxScore)}
         </Box>
       </Stack>
@@ -245,10 +244,7 @@ export default function ScoringSummary(props) {
   }, [summaryData]);
 
   const renderSummary = () => {
-    if (isEmptyArray(summaryRows))
-      return (
-         <Alert severity="warning">No score summary available</Alert>
-      );
+    if (isEmptyArray(summaryRows)) return <Alert severity="warning">No score summary available</Alert>;
     return (
       <TableContainer
         className="table-container"

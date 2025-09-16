@@ -287,18 +287,18 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
 
 export function observationsToQuestionnaireResponses(observations, config = {}) {
   /** Group obs by effectiveDateTime (fallback to issued or "unknown") */
-  const groupByEffectiveTime = (observations) => {
-    const byTime = new Map();
+  const groupBy = (observations) => {
+    const byGroup = new Map();
     for (const o of observations || []) {
-      const key = o.effectiveDateTime || o.issued || "unknown";
-      if (!byTime.has(key)) byTime.set(key, []);
-      byTime.get(key).push(o);
+      const key = o.encounter?.reference || o.effectiveDateTime || o.issued || "unknown";
+      if (!byGroup.has(key)) byGroup.set(key, []);
+      byGroup.get(key).push(o);
     }
-    return byTime;
+    return byGroup;
   };
-  const byTime = groupByEffectiveTime(observations || []);
+  const groupByKey = groupBy(observations || []);
   const out = [];
-  for (const [, group] of byTime.entries()) {
+  for (const [, group] of groupByKey.entries()) {
     const qr = observationsToQuestionnaireResponse(group, config);
     if (qr) out.push(qr);
   }
@@ -310,9 +310,7 @@ export function observationsToQuestionnaireResponses(observations, config = {}) 
  * @returns {Array}
  */
 const sortResponsesNewestFirst = (rdata = []) =>
-  [...rdata].sort(
-    (a, b) => new Date(b?.date ?? 0).getTime() - new Date(a?.date ?? 0).getTime()
-  );
+  [...rdata].sort((a, b) => new Date(b?.date ?? 0).getTime() - new Date(a?.date ?? 0).getTime());
 
 /**
  * @param {Array} rdata
@@ -346,25 +344,16 @@ export function buildScoringSummaryRows(summaryData, opts = {}) {
     const prev = getPrevious(responses);
 
     const instrumentName =
-      (instrumentNameByKey && instrumentNameByKey(key, q)) ||
-      q?.shortName ||
-      q?.displayName ||
-      key;
+      (instrumentNameByKey && instrumentNameByKey(key, q)) || q?.shortName || q?.displayName || key;
 
     const lastAssessedISO = current?.date ?? null;
     const lastAssessed = formatDate ? formatDate(lastAssessedISO) : lastAssessedISO;
 
-    const curScore = isNumber(current?.score) ? current.score : current?.score ?? null;
-    const minScore = isNumber(current?.scoringParams?.minimumScore)
-      ? current.scoringParams.minimumScore
-      : 0;
-    const maxScore = isNumber(current?.scoringParams?.maximumScore)
-      ? current.scoringParams.maximumScore
-      : null;
+    const curScore = isNumber(current?.score) ? current.score : (current?.score ?? null);
+    const minScore = isNumber(current?.scoringParams?.minimumScore) ? current.scoringParams.minimumScore : 0;
+    const maxScore = isNumber(current?.scoringParams?.maximumScore) ? current.scoringParams.maximumScore : null;
 
-    const totalAnswered = isNumber(current?.totalAnsweredItems)
-      ? current.totalAnsweredItems
-      : null;
+    const totalAnswered = isNumber(current?.totalAnsweredItems) ? current.totalAnsweredItems : null;
     const totalItems = isNumber(current?.totalItems) ? current.totalItems : null;
 
     const meaning = current?.scoreMeaning ?? null;
