@@ -258,6 +258,11 @@ p {
     background-color: $default-print-background-color !important;
     box-shadow: none !important;
   }
+  .error-container {
+    h1, h2, h3, h4 {
+      font-size: 1rem;
+    }
+  }
   .MuiTablePagination-toolbar,
   .MuiPopper-root {
     display: none !important;

@@ -19,7 +19,7 @@ export default function Error(props) {
     return message;
   };
   return (
-    <div>
+    <div className="error-container">
       <Alert severity={props.severity??"error"} variant="filled" sx={props.sx}>
         <div dangerouslySetInnerHTML={{ __html: getMessage() }}></div>
       </Alert>

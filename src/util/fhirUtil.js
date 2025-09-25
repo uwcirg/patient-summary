@@ -373,7 +373,7 @@ export function getQuestionItemType(answerOption) {
   return key ? key.slice(5).replace(/^[A-Z]/, (c) => c.toLowerCase()) : "string";
 }
 
-export function getLinkIdsFromObservations(obResources) {
+export function getLinkIdsFromObservationFlowsheetIds(obResources) {
   if (isEmptyArray(obResources)) return [];
   let obsLinkIds = obResources
     .filter((o) => getLinkIdByFromFlowsheetId(getFlowsheetId(o)))

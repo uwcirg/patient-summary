@@ -3,8 +3,8 @@ import { useQuery } from "react-query";
 import {
   getFHIRResourcePath,
   getFhirResourcesFromQueryResult,
-  getFlowsheetIds,
-  getLinkIdsFromObservations,
+  // getFlowsheetIds,
+  getLinkIdsFromObservationFlowsheetIds,
   normalizeLinkId,
   processPage,
   getResourceTypesFromResources,
@@ -334,9 +334,10 @@ export default function useFetchResources() {
 
         let obsUrl = null;
         if (wantObs) {
-          const flowsheetIds = toStringArray(getFlowsheetIds());
+          // const flowsheetIds = toStringArray(getFlowsheetIds());
           const obsQueryBase = `Observation?_count=200&patient=${pid}&category=vital-signs`;
-          obsUrl = flowsheetIds.length ? `${obsQueryBase}&code=${flowsheetIds.join(",")}` : obsQueryBase;
+          //obsUrl = flowsheetIds.length ? `${obsQueryBase}&code=${flowsheetIds.join(",")}` : obsQueryBase;
+          obsUrl = obsQueryBase;
 
           phase1Tasks.push({
             id: OBSERVATION_DATA_KEY,
@@ -408,7 +409,7 @@ export default function useFetchResources() {
         const syntheticQs = [];
 
         if (wantObs && !isEmptyArray(obResources)) {
-          const obsLinkIds = getLinkIdsFromObservations(obResources);
+          const obsLinkIds = getLinkIdsFromObservationFlowsheetIds(obResources);
           if (!isEmptyArray(obsLinkIds)) {
             for (const [key, cfg] of Object.entries(questionnaireConfigs || {})) {
               if (!cfg) continue;
