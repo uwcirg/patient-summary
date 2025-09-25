@@ -67,9 +67,12 @@ export function getFHIRResourceTypesToLoad() {
 
 export function getFHIRResourceQueryParams(resourceType, options) {
   if (!resourceType) return null;
-  let paramsObj = {
-    _sort: "-_lastUpdated",
-  };
+  const isFromEpic = String(getEnv("REACT_APP_EPIC_QUERIES")) === "true";
+  let paramsObj = isFromEpic
+    ? {}
+    : {
+        _sort: "-_lastUpdated",
+      };
   const queryOptions = options ? options : {};
   const envCategory = getEnv("REACT_APP_FHIR_CAREPLAN_CATEGORY");
   const envObCategories = getEnv("REACT_APP_FHIR_OBSERVATION_CATEGORIES");

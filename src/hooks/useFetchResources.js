@@ -325,7 +325,7 @@ export default function useFetchResources() {
           phase1Tasks.push({
             id: QUESTIONNAIRE_RESPONSES_DATA_KEY,
             promise: client.request(
-              { url: `QuestionnaireResponse?_count=200&patient=${pid}`, header: NO_CACHE_HEADER },
+              { url: `QuestionnaireResponse?patient=${pid}`, header: NO_CACHE_HEADER },
               { pageLimit: 0, onPage: processPage(client, qrResources) },
             ),
             onErrorMessage: "QuestionnaireResponse request failed",
@@ -335,7 +335,7 @@ export default function useFetchResources() {
         let obsUrl = null;
         if (wantObs) {
           // const flowsheetIds = toStringArray(getFlowsheetIds());
-          const obsQueryBase = `Observation?_count=200&patient=${pid}&category=vital-signs`;
+          const obsQueryBase = `Observation?patient=${pid}&category=vital-signs`;
           //obsUrl = flowsheetIds.length ? `${obsQueryBase}&code=${flowsheetIds.join(",")}` : obsQueryBase;
           obsUrl = obsQueryBase;
 
