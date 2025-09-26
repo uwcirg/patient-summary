@@ -344,7 +344,14 @@ export function getDefaultQuestionItemText(linkId, index) {
   return `Question ${index + 1}${codeBit ? ` (${codeBit})` : ""}`;
 }
 
-export const getFlowsheetId = (item) => item?.code?.coding?.find((c) => c.system === FLOWSHEET_SYSTEM)?.code || null;
+export const getFlowsheetId = (item) => {
+  const coding = item?.code?.coding;
+  if (!coding) return null;
+  const matched = coding.find((c) => c.system === FLOWSHEET_SYSTEM);
+  if (!matched) return null;
+  const matchIds = getFlowsheetIds();
+  return coding.find((c) => matchIds.indexOf(c.code) !== -1)?.code;
+};
 
 export const getLinkIdByFromFlowsheetId = (id) => {
   if (id && FLOWSHEET_ID_LINK_ID_MAPPINGS[id]) {
@@ -379,4 +386,8 @@ export function getLinkIdsFromObservationFlowsheetIds(obResources) {
     .filter((o) => getLinkIdByFromFlowsheetId(getFlowsheetId(o)))
     .map((o) => normalizeLinkId(getLinkIdByFromFlowsheetId(getFlowsheetId(o))));
   return [...new Set(obsLinkIds)];
+}
+
+export function getValidObservationsForQRs(obResources) {
+  return obResources?.filter((o) => getLinkIdByFromFlowsheetId(getFlowsheetId(o)));
 }

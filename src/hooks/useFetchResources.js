@@ -10,6 +10,7 @@ import {
   getResourceTypesFromResources,
   getFHIRResourceTypesToLoad,
   getFHIRResourcePaths,
+  getValidObservationsForQRs
 } from "@util/fhirUtil";
 import { fuzzyMatch, getEnvQuestionnaireList, getDisplayQTitle, getEnv, isEmptyArray } from "@util";
 import questionnaireConfigs from "@config/questionnaire_config";
@@ -380,7 +381,8 @@ export default function useFetchResources() {
         const syntheticQs = [];
 
         if (wantObs && !isEmptyArray(obResources)) {
-          const obsLinkIds = getLinkIdsFromObservationFlowsheetIds(obResources);
+          const matchedObservations = getValidObservationsForQRs(obResources);
+          const obsLinkIds = getLinkIdsFromObservationFlowsheetIds(matchedObservations);
           if (!isEmptyArray(obsLinkIds)) {
             for (const [key, cfg] of Object.entries(questionnaireConfigs || {})) {
               if (!cfg) continue;
@@ -391,7 +393,9 @@ export default function useFetchResources() {
               if (!hit) continue;
 
               const builtQ = buildQuestionnaire(cfg);
-              const builtQRs = observationsToQuestionnaireResponses(obResources, cfg);
+              const builtQRs = observationsToQuestionnaireResponses(matchedObservations, cfg);
+              console.log("builtQ ", builtQ);
+              console.log("builtQRs ", builtQRs);
               syntheticQs.push(builtQ);
               matchedQRs = [...matchedQRs, ...builtQRs];
               if (cfg.questionnaireId) qIds.push(cfg.questionnaireId);
