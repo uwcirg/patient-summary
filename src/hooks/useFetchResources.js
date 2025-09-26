@@ -433,8 +433,8 @@ export default function useFetchResources() {
         const uniqueQIds = [...new Set([...qIds, ...matchedQIds])];
         const qListToLoad = hasPreload ? preloadList : uniqueQIds;
 
-        if (wantQ && !hasPreload) {
-          if (!qListToLoad) {
+        if (wantQ) {
+          if (isEmptyArray(qListToLoad)) {
             dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
           } else {
             const qPath = getFHIRResourcePath(pid, [QUESTIONNAIRE_DATA_KEY], {
