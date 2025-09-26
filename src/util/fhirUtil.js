@@ -115,10 +115,13 @@ export function getFHIRResourcePaths(patientId, resourceTypesToLoad, options) {
       ...(options ? options : {}),
       patientId: patientId,
     });
-    if (paramsObj) {
+    if (paramsObj && !isEmptyArray(Object.keys(paramsObj))) {
       const searchParams = new URLSearchParams(paramsObj);
-      path = path + "?" + searchParams.toString();
+      if (searchParams) {
+        path = path + "?" + searchParams.toString();
+      }
     }
+    console.log("path ", path)
     return {
       resourceType: resource,
       resourcePath: path,

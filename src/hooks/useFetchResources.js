@@ -434,29 +434,33 @@ export default function useFetchResources() {
         const qListToLoad = hasPreload ? preloadList : uniqueQIds;
 
         if (wantQ && !hasPreload) {
-          const qPath = getFHIRResourcePath(pid, [QUESTIONNAIRE_DATA_KEY], {
-            questionnaireList: qListToLoad,
-            exactMatchById,
-          });
-
-          const qTask = {
-            id: QUESTIONNAIRE_DATA_KEY,
-            promise: client.request(
-              { url: qPath, header: NO_CACHE_HEADER },
-              { pageLimit: 0, onPage: processPage(client, qResources) },
-            ),
-            onErrorMessage: "Questionnaire request failed",
-          };
-
-          const [qResult] = await Promise.allSettled([qTask.promise]);
-          if (qResult.status === "fulfilled") {
-            dispatchLoader({ type: "COMPLETE", id: qTask.id });
+          if (!qListToLoad) {
+            dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
           } else {
-            dispatchLoader({
-              type: "ERROR",
-              id: qTask.id,
-              errorMessage: qResult.reason?.message || qTask.onErrorMessage,
+            const qPath = getFHIRResourcePath(pid, [QUESTIONNAIRE_DATA_KEY], {
+              questionnaireList: qListToLoad,
+              exactMatchById,
             });
+
+            const qTask = {
+              id: QUESTIONNAIRE_DATA_KEY,
+              promise: client.request(
+                { url: qPath, header: NO_CACHE_HEADER },
+                { pageLimit: 0, onPage: processPage(client, qResources) },
+              ),
+              onErrorMessage: "Questionnaire request failed",
+            };
+
+            const [qResult] = await Promise.allSettled([qTask.promise]);
+            if (qResult.status === "fulfilled") {
+              dispatchLoader({ type: "COMPLETE", id: qTask.id });
+            } else {
+              dispatchLoader({
+                type: "ERROR",
+                id: qTask.id,
+                errorMessage: qResult.reason?.message || qTask.onErrorMessage,
+              });
+            }
           }
         }
 
