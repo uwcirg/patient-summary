@@ -121,7 +121,6 @@ export function getFHIRResourcePaths(patientId, resourceTypesToLoad, options) {
         path = path + "?" + searchParams.toString();
       }
     }
-    console.log("path ", path)
     return {
       resourceType: resource,
       resourcePath: path,
@@ -146,7 +145,7 @@ export function getResourceTypesFromResources(resources) {
 }
 
 export function getQuestionnairesByCarePlan(arrCarePlans) {
-  if (!arrCarePlans) return [];
+  if (isEmptyArray(arrCarePlans)) return [];
   let activities = [];
   arrCarePlans.forEach((item) => {
     if (item.resource.activity) {
@@ -166,7 +165,7 @@ export function getQuestionnairesByCarePlan(arrCarePlans) {
 export function getFhirResourcesFromQueryResult(result) {
   let bundle = [];
   if (!result) return [];
-  if (result.resourceType === "Bundle" && result.entry) {
+  if (result.resourceType === "Bundle" && !isEmptyArray(result.entry)) {
     result.entry.forEach((o) => {
       if (o && o.resource) bundle.push({ resource: o.resource });
     });

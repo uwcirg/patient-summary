@@ -312,8 +312,12 @@ export default function useFetchResources() {
         let qResources = [];
 
         // What we intend to fetch in phase-1
-        const wantQ = hasPreload || isFromEpic || shouldTrack(configuredTypeSet, QUESTIONNAIRE_DATA_KEY);
-        const wantQR = wantQ || isFromEpic || shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
+        const wantQ =
+          hasPreload ||
+          isFromEpic ||
+          shouldTrack(configuredTypeSet, QUESTIONNAIRE_DATA_KEY) ||
+          shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
+        const wantQR = wantQ || shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
         const wantObs = wantQ || wantQR;
 
         const exactMatchById = !hasPreload || isFromEpic;
@@ -349,26 +353,6 @@ export default function useFetchResources() {
           });
         }
 
-        // If we already know the Q list (preload), fetch Q in parallel with QR/Obs.
-        // Otherwise, we must wait for QR/Obs to determine Q IDs.
-        let qPreloadedTask = null;
-        if (wantQ && hasPreload) {
-          const qPathPreload = getFHIRResourcePath(pid, [QUESTIONNAIRE_DATA_KEY], {
-            questionnaireList: preloadList,
-            exactMatchById,
-          });
-
-          qPreloadedTask = {
-            id: QUESTIONNAIRE_DATA_KEY,
-            promise: client.request(
-              { url: qPathPreload, header: NO_CACHE_HEADER },
-              { pageLimit: 0, onPage: processPage(client, qResources) },
-            ),
-            onErrorMessage: "Questionnaire request failed",
-          };
-          phase1Tasks.push(qPreloadedTask);
-        }
-
         // --- Execute phase-1 in parallel ---
         if (phase1Tasks.length) {
           const results = await Promise.allSettled(phase1Tasks.map((t) => t.promise));
@@ -390,19 +374,6 @@ export default function useFetchResources() {
         let matchedQRs = !isEmptyArray(qrResources)
           ? qrResources.filter((it) => it && it.questionnaire && it.questionnaire.split("/")[1])
           : [];
-
-        // If we have nothing to drive Questionnaire fetch (no preload, no QRs, no Obs)
-        if (!hasPreload && !isFromEpic && isEmptyArray(matchedQRs) && isEmptyArray(obResources)) {
-          if (wantQ) {
-            dispatchLoader({
-              type: "ERROR",
-              id: QUESTIONNAIRE_RESPONSES_DATA_KEY,
-              errorMessage:
-                "No matching questionnaire responses to load (no questionnaire list, QR matches, or observations)",
-            });
-          }
-          return {};
-        }
 
         // Build synthetic Q/QR from observations where configs match
         let qIds = [...preloadList];
