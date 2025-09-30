@@ -1,8 +1,9 @@
 import {
   conceptText,
   getDefaultQuestionItemText,
-  getFlowsheetId,
+  getFlowsheetIdFromOb,
   getLinkIdByFromFlowsheetId,
+  getValidObservationsForQRs,
   getValueFromResource,
   getResourcesByResourceType,
   linkIdEquals,
@@ -217,7 +218,8 @@ export function summarizeMiniCogHelper(
 export function buildQuestionnaire(config = {}) {
   const items = (config.questionLinkIds || []).map((lid, idx) => {
     const opts = config.answerOptionsByLinkId?.[lid] ?? DEFAULT_ANSWER_OPTIONS;
-    return makeQuestionItem(lid, config.itemTextByLinkId?.[lid] ?? getDefaultQuestionItemText(lid, idx), opts);
+    const defaultQText = getDefaultQuestionItemText(lid, idx, config);
+    return makeQuestionItem(lid, defaultQText ? defaultQText : config.itemTextByLinkId?.[lid], opts);
   });
 
   // optional total score item (readOnly)
@@ -255,7 +257,7 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
   const answersByLinkId = new Map();
   const textByLinkId = new Map();
   for (const obs of group) {
-    let lid = config.getLinkId ? config.getLinkId(obs) : getLinkIdByFromFlowsheetId(getFlowsheetId(obs));
+    let lid = config.getLinkId ? config.getLinkId(obs) : getLinkIdByFromFlowsheetId(getFlowsheetIdFromOb(obs));
     if (!lid) continue;
     const ans = config.answerMapper ? config.answerMapper(obs) : getValueFromResource(obs);
     if (!ans) continue;
@@ -271,7 +273,9 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
   const items = [...new Set(qLinkIds)].map((lid) => {
     const ans = answersByLinkId.get(lid);
     const nLid = normalizeLinkId(lid);
-    return ans ? { linkId: nLid, text: textByLinkId.get(lid), answer: [ans] } : { linkId: nLid };
+    return ans
+      ? { linkId: nLid, text: textByLinkId.get(lid), answer: [ans] }
+      : { linkId: nLid, text: config?.questionTextsByLinkId[nLid] ?? nLid };
   });
 
   return {
@@ -285,7 +289,9 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
   };
 }
 
-export function observationsToQuestionnaireResponses(observations, config = {}) {
+export function observationsToQuestionnaireResponses(observationResources, config = {}) {
+  if (isEmptyArray(observationResources)) return [];
+  const observations = getValidObservationsForQRs(observationResources);
   /** Group obs by effectiveDateTime (fallback to issued or "unknown") */
   const groupBy = (observations) => {
     const byGroup = new Map();

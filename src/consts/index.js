@@ -42,6 +42,8 @@ export const FLOWSHEET_ID_LINK_ID_MAPPINGS = {
   1570000023: "/44253-3",
   1570000024: "/44260-8",
   1570000025: "/44261-6", // total score (not an item answer)
+  1570000016: "PHQ-2-Score"
 };
 
 export const FLOWSHEET_SYSTEM = "http://open.epic.com/FHIR/StructureDefinition/observation-flowsheet-id";
+export const FLOWSHEET_CODE_IDS = ["tcspRW.3lXOnl6nYHXrx3Rg0", " tAcMJ6d9AZFqpzWcp-YjG6Q0"];

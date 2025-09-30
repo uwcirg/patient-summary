@@ -3,6 +3,7 @@ import { useQuery } from "react-query";
 import {
   getFHIRResourcePath,
   getFhirResourcesFromQueryResult,
+  getFlowSheetObservationURLS,
   // getFlowsheetIds,
   getLinkIdsFromObservationFlowsheetIds,
   normalizeLinkId,
@@ -10,7 +11,6 @@ import {
   getResourceTypesFromResources,
   getFHIRResourceTypesToLoad,
   getFHIRResourcePaths,
-  getValidObservationsForQRs
 } from "@util/fhirUtil";
 import { fuzzyMatch, getEnvQuestionnaireList, getDisplayQTitle, getEnv, isEmptyArray } from "@util";
 import questionnaireConfigs from "@config/questionnaire_config";
@@ -337,20 +337,21 @@ export default function useFetchResources() {
           });
         }
 
-        let obsUrl = null;
+        // let obsUrl = null;
         if (wantObs) {
-          // const flowsheetIds = toStringArray(getFlowsheetIds());
-          const obsQueryBase = `Observation?patient=${pid}&category=vital-signs`;
-          //obsUrl = flowsheetIds.length ? `${obsQueryBase}&code=${flowsheetIds.join(",")}` : obsQueryBase;
-          obsUrl = obsQueryBase;
-
-          phase1Tasks.push({
-            id: OBSERVATION_DATA_KEY,
-            promise: client.request(
-              { url: obsUrl, header: NO_CACHE_HEADER },
-              { pageLimit: 0, onPage: processPage(client, obResources) },
-            ),
-            onErrorMessage: "Observation request failed",
+          // const obsQueryBase = `Observation?patient=${pid}&category=vital-signs`;
+          // //obsUrl = flowsheetIds.length ? `${obsQueryBase}&code=${flowsheetIds.join(",")}` : obsQueryBase;
+          // obsUrl = obsQueryBase;
+          const obURLs = getFlowSheetObservationURLS(pid);
+          obURLs.map((url, index) => {
+            phase1Tasks.push({
+              id: `${OBSERVATION_DATA_KEY} ${index + 1}`,
+              promise: client.request(
+                { url: url, header: NO_CACHE_HEADER },
+                { pageLimit: 0, onPage: processPage(client, obResources) },
+              ),
+              onErrorMessage: `Observation request failed. URL ${url}`,
+            });
           });
         }
 
@@ -379,21 +380,21 @@ export default function useFetchResources() {
         // Build synthetic Q/QR from observations where configs match
         let qIds = [...preloadList];
         const syntheticQs = [];
-
+        
         if (wantObs && !isEmptyArray(obResources)) {
-          const matchedObservations = getValidObservationsForQRs(obResources);
-          const obsLinkIds = getLinkIdsFromObservationFlowsheetIds(matchedObservations);
+          const obsLinkIds = getLinkIdsFromObservationFlowsheetIds(obResources);
+          console.log("matched linkIds from observations ", obsLinkIds);
           if (!isEmptyArray(obsLinkIds)) {
             for (const [key, cfg] of Object.entries(questionnaireConfigs || {})) {
               if (!cfg) continue;
               if (hasPreload && !preloadList.find((q) => fuzzyMatch(q, key))) continue;
 
-              const cfgLinkIds = toStringArray(cfg.questionLinkIds);
+              const cfgLinkIds = toStringArray([...cfg.questionLinkIds??[], cfg.scoringQuestionId]);
               const hit = cfgLinkIds.find((linkId) => obsLinkIds.includes(normalizeLinkId(linkId)));
               if (!hit) continue;
 
               const builtQ = buildQuestionnaire(cfg);
-              const builtQRs = observationsToQuestionnaireResponses(matchedObservations, cfg);
+              const builtQRs = observationsToQuestionnaireResponses(obResources, cfg);
               console.log("builtQ ", builtQ);
               console.log("builtQRs ", builtQRs);
               syntheticQs.push(builtQ);

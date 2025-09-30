@@ -1,7 +1,8 @@
-import { getEnv, getSectionsToShow, isEmptyArray, isNil } from "./index.js";
+import { getEnv, getSectionsToShow, isEmptyArray, isNil, normalizeStr } from "./index.js";
 import {
   DEFAULT_OBSERVATION_CATEGORIES,
   DEFAULT_VAL_TO_LOIN_CODE,
+  FLOWSHEET_CODE_IDS,
   FLOWSHEET_SYSTEM,
   FLOWSHEET_ID_LINK_ID_MAPPINGS,
 } from "@/consts/index.js";
@@ -339,29 +340,14 @@ export function getComponentValues(components = []) {
   });
 }
 
-export function getDefaultQuestionItemText(linkId, index) {
+export function getDefaultQuestionItemText(linkId, index, config={}) {
   const codeBit = String(linkId).match(/(\d+-\d)$/)?.[1]; // grabs "44250-9" if present
-  return `Question ${index + 1}${codeBit ? ` (${codeBit})` : ""}`;
-}
-
-export const getFlowsheetId = (item) => {
-  const coding = item?.code?.coding;
-  if (!coding) return null;
-  const matched = coding.find((c) => c.system === FLOWSHEET_SYSTEM);
-  if (!matched) return null;
-  const matchIds = getFlowsheetIds();
-  return coding.find((c) => matchIds.indexOf(c.code) !== -1)?.code;
-};
-
-export const getLinkIdByFromFlowsheetId = (id) => {
-  if (id && FLOWSHEET_ID_LINK_ID_MAPPINGS[id]) {
-    return FLOWSHEET_ID_LINK_ID_MAPPINGS[id];
+  let qText = "";
+  if (config && config.questionTextsByLinkId) {
+    qText = config.questionTextsByLinkId[codeBit];
   }
-  return null;
-};
-
-export function getFlowsheetIds() {
-  return Object.keys(FLOWSHEET_ID_LINK_ID_MAPPINGS);
+  if (!qText) qText = codeBit;
+  return `Question ${index + 1}${qText ? ` (${qText})` : ""}`;
 }
 
 export function makeQuestionItem(linkId, text, answerOptions) {
@@ -380,14 +366,56 @@ export function getQuestionItemType(answerOption) {
   return key ? key.slice(5).replace(/^[A-Z]/, (c) => c.toLowerCase()) : "string";
 }
 
+export const getFlowsheetSystem = () => {
+  const envSystem = getEnv("REACT_APP_FLOWSHEET_SYSTEM");
+  if (envSystem) return envSystem;
+  return FLOWSHEET_SYSTEM;
+};
+
+export const getFlowsheetIdFromOb = (item) => {
+  const coding = item?.code?.coding;
+  if (!coding) return null;
+  // const matched = coding.find((c) => c.system === getFlowsheetSystem());
+  // if (!matched) return null;
+  const matchIds = getFlowsheetIds();
+  return coding.find((c) => matchIds.indexOf(c.code) !== -1)?.code;
+};
+
+export const getLinkIdByFromFlowsheetId = (id) => {
+  if (id && FLOWSHEET_ID_LINK_ID_MAPPINGS[id]) {
+    return FLOWSHEET_ID_LINK_ID_MAPPINGS[id];
+  }
+  return null;
+};
+
+export function getFlowsheetIds() {
+  return Object.keys(FLOWSHEET_ID_LINK_ID_MAPPINGS);
+}
+
 export function getLinkIdsFromObservationFlowsheetIds(obResources) {
   if (isEmptyArray(obResources)) return [];
   let obsLinkIds = obResources
-    .filter((o) => getLinkIdByFromFlowsheetId(getFlowsheetId(o)))
-    .map((o) => normalizeLinkId(getLinkIdByFromFlowsheetId(getFlowsheetId(o))));
+    .filter((o) => getLinkIdByFromFlowsheetId(getFlowsheetIdFromOb(o)))
+    .map((o) => normalizeLinkId(getLinkIdByFromFlowsheetId(getFlowsheetIdFromOb(o))));
   return [...new Set(obsLinkIds)];
 }
 
 export function getValidObservationsForQRs(obResources) {
-  return obResources?.filter((o) => getLinkIdByFromFlowsheetId(getFlowsheetId(o)));
+  return obResources?.filter((o) => getLinkIdByFromFlowsheetId(getFlowsheetIdFromOb(o)));
+}
+
+export function getFlowsheetCodeIds() {
+  const systemCodes = getEnv("REACT_APP_FLOWSHEET_CODE_IDS");
+  if (systemCodes) return systemCodes.split(",").map((item) => normalizeStr(item));
+  return FLOWSHEET_CODE_IDS;
+}
+
+export function getFlowSheetObservationURLS(patientId) {
+  if (!patientId) return [];
+  const codeIds = getFlowsheetCodeIds();
+  const codeSystem = getFlowsheetSystem();
+  return [
+    ...codeIds.map((id) => `Observation?patient=${patientId}&code=${id}`),
+    ...codeIds.map((id) => `Observation?patient=${patientId}&code=${codeSystem}|${id}`),
+  ];
 }
