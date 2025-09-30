@@ -195,6 +195,10 @@ p {
   .summaries {
     background-color: $summary-container-background-color;
   }
+  .scoring-summary-table {
+   // page-break-after: always;
+    overflow: auto;
+  }
   .print-hidden {
     display: none !important;
   }
@@ -247,11 +251,10 @@ p {
     font-size: 10px;
   }
   .questionnaire-title {
-    page-break-after: avoid;
     width: 100%;
     border-bottom: 1px solid $default-print-color !important;
   }
-  .responses-table-container {
+  .accordion-wrapper:not(:last-of-type) {
     page-break-after: always;
   }
   .MuiToolbar-root {

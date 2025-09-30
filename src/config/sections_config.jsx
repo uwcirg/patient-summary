@@ -23,7 +23,7 @@ const renderScoringSummary = (props) => {
       <Stack
         spacing={1}
         direction={`${!isEmptyArray(chartData) && chartData.length < 20 ? "row" : "column"}`}
-        alignItems={"center"}
+        alignItems={"top"}
         sx={{
           gap: (theme) => theme.spacing(1),
           marginLeft: (theme) => theme.spacing(1),
@@ -52,7 +52,6 @@ const renderScoringSummary = (props) => {
               md: "auto",
               lg: 2.5,
             },
-            alignSelf: "stretch",
           }}
         >
           <ScoreSummary summaryData={summaryData}></ScoreSummary>

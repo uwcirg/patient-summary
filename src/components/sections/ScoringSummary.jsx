@@ -284,10 +284,10 @@ export default function ScoringSummary(props) {
       className="scoring-summary-container"
       spacing={1}
       direction="column"
-      sx={{
-        alignSelf: "stretch",
-        height: "100%",
-      }}
+      // sx={{
+      //   alignSelf: "stretch",
+      //   height: "100%",
+      // }}
     >
       {renderSummary()}
     </Stack>
