@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
+import ErrorIcon from "@mui/icons-material/ErrorOutlined";
 import { getAppHeight, getSectionsToShow, isEmptyArray } from "@util";
 import ErrorComponent from "./ErrorComponent";
 import Loader from "./Loader";
@@ -43,13 +44,26 @@ export default function Dashboard() {
 
   const renderError = () => {
     return (
-      <Box sx={{ marginTop: 1 }}>
-        <ErrorComponent
-          message={errorMessages}
-          severity={errorSeverity}
-          sx={{ padding: (theme) => theme.spacing(0, 2) }}
-        ></ErrorComponent>
-      </Box>
+      <Section
+        section={{
+          id: "applicationError",
+          title: "Application Errors",
+          body: (
+            <ErrorComponent
+              message={errorMessages}
+              severity={errorSeverity}
+              sx={{ padding: (theme) => theme.spacing(0, 2) }}
+              icon={false}
+            ></ErrorComponent>
+          ),
+          sx: {
+            "& .MuiAccordionSummary-root": {
+              backgroundColor: "error.main"
+            }
+          },
+          icon: () => <ErrorIcon></ErrorIcon>
+        }}
+      ></Section>
     );
   };
 

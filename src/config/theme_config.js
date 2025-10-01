@@ -1,5 +1,5 @@
 import { createTheme } from "@mui/material/styles";
-import { grey, deepPurple, blue, indigo, orange} from "@mui/material/colors";
+import { grey, deepPurple, blue, indigo, orange, red} from "@mui/material/colors";
 import { getEnvProjectId } from "@/util";
 const defaultOptions = {
   breakpoints: {
@@ -57,6 +57,9 @@ export const themes = {
       border: {
         main: "#ececec",
       },
+      error: {
+        main: red[900]
+      }
     },
   }),
   dcw: createTheme({

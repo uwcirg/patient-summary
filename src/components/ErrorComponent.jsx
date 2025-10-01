@@ -11,18 +11,34 @@ export default function Error(props) {
     }
     if (typeof message !== "string") {
       if (Array.isArray(message)) {
-        return message.join(" | ");
+        return (
+          <ul>
+            {message.map((m, index) => (
+              <li key={`errormessage_${index}`}>{m}</li>
+            ))}
+          </ul>
+        );
       }
-      console.log("Error: ", message);
       return "Error occurred. See console for detail.";
     }
     return message;
   };
+  const messageToBeRendered = getMessage();
+  const isString = typeof messageToBeRendered === "string";
+  const alertParams = {
+    severity: props.severity ?? "error",
+    variant: "filled",
+    sx: props.sx,
+    icon: props.icon
+  };
   return (
     <div className="error-container">
-      <Alert severity={props.severity??"error"} variant="filled" sx={props.sx}>
-        <div dangerouslySetInnerHTML={{ __html: getMessage() }}></div>
-      </Alert>
+      {isString && (
+        <Alert {...alertParams}>
+          <div dangerouslySetInnerHTML={{ __html: messageToBeRendered }}></div>
+        </Alert>
+      )}
+      {!isString && <Alert {...alertParams}>{messageToBeRendered}</Alert>}
     </div>
   );
 }
@@ -30,5 +46,6 @@ export default function Error(props) {
 Error.propTypes = {
   message: PropTypes.oneOfType([PropTypes.object, PropTypes.string, PropTypes.array]),
   severity: PropTypes.string,
-  sx: PropTypes.object
+  sx: PropTypes.object,
+  icon: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
 };

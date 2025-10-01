@@ -7,6 +7,10 @@ $default-print-background-color: #fff;
 $default-print-color: #444;
 $success-color: #1d771d;
 
+html {
+  scrollbar-gutter: stable; /* Reserve space to prevent shifts */
+}
+
 html,
 body {
   height: 100%;
@@ -196,7 +200,7 @@ p {
     background-color: $summary-container-background-color;
   }
   .scoring-summary-table {
-   // page-break-after: always;
+    // page-break-after: always;
     overflow: auto;
   }
   .print-hidden {
@@ -263,7 +267,10 @@ p {
     box-shadow: none !important;
   }
   .error-container {
-    h1, h2, h3, h4 {
+    h1,
+    h2,
+    h3,
+    h4 {
       font-size: 1rem;
     }
   }

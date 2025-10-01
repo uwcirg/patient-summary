@@ -250,9 +250,15 @@ export function buildQuestionnaire(config = {}) {
 /* -------------------- Observations to QuestionnaireResponse -------------------- */
 export function observationsToQuestionnaireResponse(group, config = {}) {
   if (isEmptyArray(group)) return null;
+  const trimToMinutes = (dtString) => {
+    if (!dtString) return dtString;
+    const d = new Date(dtString);
+    // Keep only "YYYY-MM-DDTHH:MM"
+    return d.toISOString().slice(0, 16);
+  };
   const subject = config.getSubject?.(group) || group[0]?.subject || undefined;
   const authored =
-    config.getAuthored?.(group) || group[0]?.effectiveDateTime || group[0]?.issued || new Date().toISOString();
+    config.getAuthored?.(group) || trimToMinutes(group[0]?.effectiveDateTime) || trimToMinutes(group[0]?.issued)|| new Date().toISOString();
 
   // map answers
   const answersByLinkId = new Map();

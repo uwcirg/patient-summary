@@ -175,7 +175,14 @@ function reducer(state, action) {
           ...state,
           loader: state.loader.map((r) =>
             r.id === action.id
-              ? { ...r, complete: true, error: true, errorMessage: action.errorMessage || String(action.reason || "") }
+              ? {
+                  ...r,
+                  complete: true,
+                  error: true,
+                  errorMessage:
+                    (r.errorMessage ? r.errorMessage + " | " : "") +
+                    (action.errorMessage || String(action.reason || "fetch resource error")),
+                }
               : r,
           ),
         };
@@ -343,9 +350,10 @@ export default function useFetchResources() {
           // //obsUrl = flowsheetIds.length ? `${obsQueryBase}&code=${flowsheetIds.join(",")}` : obsQueryBase;
           // obsUrl = obsQueryBase;
           const obURLs = getFlowSheetObservationURLS(pid);
-          obURLs.map((url, index) => {
+          obURLs.map((url) => {
             phase1Tasks.push({
-              id: `${OBSERVATION_DATA_KEY} ${index + 1}`,
+              // id: `${OBSERVATION_DATA_KEY} ${index + 1}`,
+              id: OBSERVATION_DATA_KEY,
               promise: client.request(
                 { url: url, header: NO_CACHE_HEADER },
                 { pageLimit: 0, onPage: processPage(client, obResources) },
@@ -380,7 +388,7 @@ export default function useFetchResources() {
         // Build synthetic Q/QR from observations where configs match
         let qIds = [...preloadList];
         const syntheticQs = [];
-        
+
         if (wantObs && !isEmptyArray(obResources)) {
           const obsLinkIds = getLinkIdsFromObservationFlowsheetIds(obResources);
           console.log("matched linkIds from observations ", obsLinkIds);
@@ -389,7 +397,7 @@ export default function useFetchResources() {
               if (!cfg) continue;
               if (hasPreload && !preloadList.find((q) => fuzzyMatch(q, key))) continue;
 
-              const cfgLinkIds = toStringArray([...cfg.questionLinkIds??[], cfg.scoringQuestionId]);
+              const cfgLinkIds = toStringArray([...(cfg.questionLinkIds ?? []), cfg.scoringQuestionId]);
               const hit = cfgLinkIds.find((linkId) => obsLinkIds.includes(normalizeLinkId(linkId)));
               if (!hit) continue;
 
@@ -631,7 +639,12 @@ export default function useFetchResources() {
   const errorMessages = [
     ...(base.error ? [base.errorMessage] : []),
     ...(fatalError ? [fatalError] : []),
-    ...loaderErrors.map((r) => `${r.title || r.id}: ${r.errorMessage || "Unknown error"}`),
+    ...loaderErrors.map((r) => {
+      if (r.errorMessage.includes(" | ")) {
+        return r.errorMessage.split(" | ").map((m) => `${r.title || r.id}: ${m || "Unknown error"}`);
+      }
+      return `${r.title || r.id}: ${r.errorMessage || "Unknown error"}`;
+    }).flat(),
   ];
 
   const hasError = errorMessages.length > 0;

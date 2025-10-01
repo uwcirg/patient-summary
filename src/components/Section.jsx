@@ -35,7 +35,7 @@ export default function Section({ section, data }) {
       justifyContent={"center"}
       alignItems={"center"}
     >
-      {section.icon({ color: "#FFF" })}
+      {section.icon && section.icon({ color: "#FFF" })}
       <Typography variant="h6" component="h2" id={`${sectionId}_title`}>
         {section.title}
       </Typography>
@@ -63,6 +63,7 @@ export default function Section({ section, data }) {
           "& .MuiPaper-root": {
             borderRadius: 0,
           },
+          ...section.sx??{}
         }}
       >
         <AccordionSummary
@@ -81,9 +82,10 @@ export default function Section({ section, data }) {
         </AccordionSummary>
         <AccordionDetails sx={{ padding: theme.spacing(1, 0.5) }}>
           {section.component && section.component(data)}
-          {!section.component && (
+          {!section.body && !section.component && (
             <ErrorComponent message="no section component to render"></ErrorComponent>
           )}
+          {section.body && <div>{section.body}</div>}
         </AccordionDetails>
       </Accordion>
     </Box>
