@@ -46,4 +46,4 @@ export const FLOWSHEET_ID_LINK_ID_MAPPINGS = {
 };
 
 export const FLOWSHEET_SYSTEM = "http://open.epic.com/FHIR/StructureDefinition/observation-flowsheet-id";
-export const FLOWSHEET_CODE_IDS = ["tcspRW.3lXOnl6nYHXrx3Rg0", " tAcMJ6d9AZFqpzWcp-YjG6Q0"];
+export const FLOWSHEET_CODE_IDS = ["tcspRW.3lXOnl6nYHXrx3Rg0", "tAcMJ6d9AZFqpzWcp-YjG6Q0"];
