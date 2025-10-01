@@ -1,4 +1,4 @@
-import { getEnv, getSectionsToShow, isEmptyArray, isNil, normalizeStr } from "./index.js";
+import { getEnv, getSectionsToShow, isEmptyArray, isNil, hasValue } from "./index.js";
 import {
   DEFAULT_OBSERVATION_CATEGORIES,
   DEFAULT_VAL_TO_LOIN_CODE,
@@ -6,6 +6,7 @@ import {
   FLOWSHEET_SYSTEM,
   FLOWSHEET_ID_LINK_ID_MAPPINGS,
 } from "@/consts/index.js";
+import { questionTextsByLinkId } from "@/config/questionnaire_config";
 
 /*
  * @param client, FHIR client object
@@ -340,12 +341,9 @@ export function getComponentValues(components = []) {
   });
 }
 
-export function getDefaultQuestionItemText(linkId, index, config={}) {
+export function getDefaultQuestionItemText(linkId, index) {
   const codeBit = String(linkId).match(/(\d+-\d)$/)?.[1]; // grabs "44250-9" if present
-  let qText = "";
-  if (config && config.questionTextsByLinkId) {
-    qText = config.questionTextsByLinkId[codeBit];
-  }
+  let qText = questionTextsByLinkId[codeBit];
   if (!qText) qText = codeBit;
   return `Question ${index + 1}${qText ? ` (${qText})` : ""}`;
 }
@@ -354,7 +352,7 @@ export function makeQuestionItem(linkId, text, answerOptions) {
   return {
     linkId: normalizeLinkId(linkId),
     type: !isEmptyArray(answerOptions) ? getQuestionItemType(answerOptions[0]) : "string",
-    text: text || "",
+    text: text ?? questionTextsByLinkId[normalizeLinkId(linkId)],
     ...(!isEmptyArray(answerOptions) ? { answerOption: answerOptions } : {}),
   };
 }
@@ -368,7 +366,7 @@ export function getQuestionItemType(answerOption) {
 
 export const getFlowsheetSystem = () => {
   const envSystem = getEnv("REACT_APP_FLOWSHEET_SYSTEM");
-  if (envSystem) return envSystem;
+  if (envSystem) return String(envSystem).trim();
   return FLOWSHEET_SYSTEM;
 };
 
@@ -406,7 +404,11 @@ export function getValidObservationsForQRs(obResources) {
 
 export function getFlowsheetCodeIds() {
   const systemCodes = getEnv("REACT_APP_FLOWSHEET_CODE_IDS");
-  if (systemCodes) return systemCodes.split(",").map((item) => normalizeStr(item));
+  if (systemCodes)
+    return systemCodes
+      .split(",")
+      .filter((item) => hasValue(item))
+      .map((item) => String(item).trim());
   return FLOWSHEET_CODE_IDS;
 }
 
@@ -415,7 +417,9 @@ export function getFlowSheetObservationURLS(patientId) {
   const codeIds = getFlowsheetCodeIds();
   const codeSystem = getFlowsheetSystem();
   return [
-    ...codeIds.map((id) => `Observation?patient=${patientId}&code=${id}`),
-    ...codeIds.map((id) => `Observation?patient=${patientId}&code=${codeSystem}|${id}`),
+    ...codeIds.map((id) => `Observation?patient=${patientId}&code=${encodeURIComponent(id)}`),
+    ...codeIds.map(
+      (id) => `Observation?patient=${patientId}&code=${encodeURIComponent(codeSystem)}|${encodeURIComponent(id)}`,
+    ),
   ];
 }

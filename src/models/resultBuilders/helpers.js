@@ -12,6 +12,7 @@ import {
 } from "@util/fhirUtil";
 import { generateUUID, isEmptyArray, isNumber } from "@util";
 import { DEFAULT_ANSWER_OPTIONS } from "@/consts";
+import { questionTextsByLinkId } from "@/config/questionnaire_config";
 
 /* ---------------------------------------------
  * External helpers
@@ -218,8 +219,8 @@ export function summarizeMiniCogHelper(
 export function buildQuestionnaire(config = {}) {
   const items = (config.questionLinkIds || []).map((lid, idx) => {
     const opts = config.answerOptionsByLinkId?.[lid] ?? DEFAULT_ANSWER_OPTIONS;
-    const defaultQText = getDefaultQuestionItemText(lid, idx, config);
-    return makeQuestionItem(lid, defaultQText ? defaultQText : config.itemTextByLinkId?.[lid], opts);
+    const defaultQText = getDefaultQuestionItemText(lid, idx);
+    return makeQuestionItem(lid, config.itemTextByLinkId?.[lid] ?? defaultQText, opts);
   });
 
   // optional total score item (readOnly)
@@ -270,12 +271,15 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
     qLinkIds.push(config.scoringQuestionId);
   }
 
-  const items = [...new Set(qLinkIds)].map((lid) => {
+  const items = [...new Set(qLinkIds)].map((lid, idx) => {
     const ans = answersByLinkId.get(lid);
     const nLid = normalizeLinkId(lid);
-    return ans
-      ? { linkId: nLid, text: textByLinkId.get(lid), answer: [ans] }
-      : { linkId: nLid, text: config?.questionTextsByLinkId[nLid] ?? nLid };
+    const text = textByLinkId.get(lid);
+    let answerObject = { linkId: nLid, text: text ? text : (questionTextsByLinkId[nLid] ?? `Question ${idx + 1}`) };
+    if (ans) {
+      answerObject["answer"] = [ans];
+    }
+    return answerObject;
   });
 
   return {

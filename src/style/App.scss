@@ -254,7 +254,8 @@ p {
     width: 100%;
     border-bottom: 1px solid $default-print-color !important;
   }
-  .accordion-wrapper:not(:last-of-type) {
+  .accordion-wrapper:not(:last-of-type),
+  .summary:not(:last-of-type) {
     page-break-after: always;
   }
   .MuiToolbar-root {
