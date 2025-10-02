@@ -11,7 +11,7 @@ import {
 } from "@util";
 import Response from "@models/Response";
 import FhirResultBuilder from "./FhirResultBuilder";
-import { summarizeCIDASHelper, summarizeMiniCogHelper, summarizeSLUMHelper } from "./helpers";
+import { buildQuestionnaire, summarizeCIDASHelper, summarizeMiniCogHelper, summarizeSLUMHelper } from "./helpers";
 import { DEFAULT_FALLBACK_SCORE_MAPS } from "@/consts";
 import questionnaireConfig from "@/config/questionnaire_config";
 import { linkIdEquals } from "@/util/fhirUtil";
@@ -123,7 +123,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     for (const canonical of Object.keys(groups)) {
       if (this.questionnaireRefMatches(canonical)) out.push(...groups[canonical]);
     }
-
     // Fallback: scan individual QRs if none matched by key
     if (!out.length) {
       for (const canonical of Object.keys(groups)) {
@@ -142,7 +141,23 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   indexQuestionnairesInBundle(bundleOverride) {
     const idx = Object.create(null);
     for (const q of this._bundleEntries(bundleOverride)) {
-      if (!q || q.resourceType !== RT_Q) continue;
+      if (!q) continue;
+      if (normalizeStr(q.resourceType) === normalizeStr(RT_QR)) {
+        if (q.questionnaire) {
+          const qIndex = /^Questionnaire\//i.test(q.questionnaire) ? q.questionnaire.split("/")[1] : q.questionnaire;
+          if (questionnaireConfig[qIndex]) {
+            idx[qIndex] = buildQuestionnaire(questionnaireConfig[qIndex]);
+          } else {
+            idx[qIndex] = {
+              resourceType: "Questionnaire",
+              id: qIndex,
+              name: qIndex,
+            };
+          }
+        } else continue;
+        continue;
+      }
+      if (!q || normalizeStr(q.resourceType) !== normalizeStr(RT_Q)) continue;
       if (q.id) idx[q.id] = q;
       if (q.name) idx[normalizeStr(q.name)] = q;
       if (q.url) idx[q.url] = q;
@@ -180,7 +195,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   isResponseQuestionItem(item, config) {
     if (!item || !item.linkId) return false;
     const linkId = String(item.linkId).toLowerCase();
-    const scoreLinkId = config?.scoringQuestionId??this.cfg.scoringQuestionId;
+    const configToUse = config ? config : this.cfg;
+    const scoreLinkId = configToUse?.scoringQuestionId;
     if (linkId === "introduction" || linkId.includes("ignore")) return false;
     if (!this.responseAnswerTypes.has(item.type)) return false;
     if (scoreLinkId) {
@@ -190,13 +206,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
 
   // -------------------- Questionnaire matching --------------------
-  questionnaireRefMatches(canonical) {
+  questionnaireRefMatches(canonical, config) {
+    const configToUse = config ? config : this.cfg;
     const ref = normalizeStr(canonical);
-    const id = normalizeStr(this.cfg.questionnaireId);
-    const name = normalizeStr(this.cfg.questionnaireName);
-    const url = normalizeStr(this.cfg.questionnaireUrl);
+    const id = normalizeStr(configToUse.questionnaireId);
+    const name = normalizeStr(configToUse.questionnaireName);
+    const url = normalizeStr(configToUse.questionnaireUrl);
 
-    if ((this.cfg.matchMode ?? "fuzzy") === "strict") {
+    if ((configToUse.matchMode ?? "fuzzy") === "strict") {
       return (url && ref === url) || (id && ref === id) || (name && ref === name);
     }
     return (id && fuzzyMatch(ref, id)) || (name && fuzzyMatch(ref, name)) || (url && fuzzyMatch(ref, url));
@@ -338,11 +355,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       !questionnaireItems.some((item) => responseItemsFlat?.find((o) => o.linkId === item.linkId))
     )
       return this.responsesOnly(responseItemsFlat);
-
+    const configToUse = config ? config : this.cfg;
     const list = [];
     const walk = (items = []) => {
       for (const q of items) {
-        if (q.linkId && this.isResponseQuestionItem(q, config)) list.push(q);
+        if (q.linkId && this.isResponseQuestionItem(q, configToUse)) list.push(q);
         if (q.item?.length) walk(q.item);
       }
     };
@@ -354,7 +371,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       return {
         id: q.linkId,
         answer: this.getAnswerItemDisplayValue(ans),
-        question: q.linkId === this.cfg.scoringQuestionId ? `<b>${q.text}</b>` : q.text,
+        question: q.linkId === configToUse?.scoringQuestionId ? `<b>${q.text}</b>` : q.text,
         text: resp?.text ? resp?.text : q.text,
         type: q.type,
       };
@@ -565,7 +582,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       CIDAS: "summarizeCIDAS",
       MINICOG: "summarizeMiniCog",
     };
-    const selectedKey = Object.keys(strategyMap).find((k) => this.questionnaireRefMatches(k));
+    const selectedKey = Object.keys(strategyMap).find((k) => this.questionnaireRefMatches(k, config));
     const evalData = selectedKey
       ? this[strategyMap[selectedKey]](qrs, questionnaire, options)
       : this.getResponsesSummary(qrs, questionnaire);
@@ -612,7 +629,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   ) {
     const groups = this.fromBundleGrouped({ completedOnly }, bundleOverride);
     const loader = questionnaireLoader || this.makeBundleQuestionnaireLoader(bundleOverride);
-
     const out = Object.create(null);
     for (const canonical of Object.keys(groups)) {
       const qrs = groups[canonical];

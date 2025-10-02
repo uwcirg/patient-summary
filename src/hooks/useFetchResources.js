@@ -379,13 +379,14 @@ export default function useFetchResources() {
 
         // Build synthetic Q/QR from observations where configs match
         let qIds = [...preloadList];
-          // Determine Questionnaire list & fetch (if not already fetched via preload parallel path)
+        // Determine Questionnaire list & fetch (if not already fetched via preload parallel path)
         const matchedQIds = matchedQRs?.map((it) => it.questionnaire?.split("/")[1]) ?? [];
         const uniqueQIds = [...new Set([...qIds, ...matchedQIds])];
         const qListToLoad = hasPreload ? preloadList : uniqueQIds;
         const queryQByExactMatch = exactMatchById || !isEmptyArray(matchedQIds);
 
-        const syntheticQs = [], syntheticQRs = [];
+        const syntheticQs = [],
+          syntheticQRs = [];
 
         if (wantObs && !isEmptyArray(obResources)) {
           const obsLinkIds = getLinkIdsFromObservation(obResources);
@@ -448,6 +449,17 @@ export default function useFetchResources() {
           ...getFhirResourcesFromQueryResult(qResources),
         ];
         const questionnaireResponses = getFhirResourcesFromQueryResult(matchedQRs);
+
+        // seed bundle
+        patientBundle.current = {
+          ...patientBundle.current,
+          entry: [
+            { resource: patient },
+            ...questionnaireResponses ?? [],
+            ...questionnaires ?? [],
+          ],
+        };
+
         return {
           questionnaires,
           questionnaireResponses,
@@ -462,12 +474,6 @@ export default function useFetchResources() {
       onSuccess: (payload) => {
         if (phase1KeyRef.current !== phase1Key) return; // ignore stale result
         const { questionnaires, questionnaireResponses, qListToLoad, exactMatchById } = payload || {};
-
-        // seed bundle
-        patientBundle.current = {
-          ...patientBundle.current,
-          entry: [{ resource: patient }, ...(questionnaireResponses ?? []), ...(questionnaires ?? [])],
-        };
 
         // mark base as completed
         setTimeout(
