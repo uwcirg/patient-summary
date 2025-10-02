@@ -1,3 +1,5 @@
+import { isEmptyArray } from "@util";
+import { normalizeLinkId } from "@util/fhirUtil";
 const questionnaireConfigs = {
   "CIRG-ADL-IADL": {
     questionnaireId: "CIRG-ADL-IADL",
@@ -174,6 +176,7 @@ const questionnaireConfigs = {
   "CIRG-PHQ9": {
     questionnaireId: "CIRG-PHQ9",
     questionnaireName: "phq9",
+    title: "Patient Health Questionnaire-9 (PHQ-9)",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/phq9",
     scoringQuestionId: "/44261-6",
     scoringParams: { maximumScore: 27 },
@@ -187,7 +190,8 @@ const questionnaireConfigs = {
       "/44252-5",
       "/44253-3",
       "/44260-8",
-      "PHQ-2-Score",
+      "/44261-6",
+      "/55758-7",
     ],
     matchMode: "fuzzy",
     highSeverityScoreCutoff: 20,
@@ -216,7 +220,7 @@ export const getConfigForQuestionnaire = (id) => {
   return questionnaireConfigs[String(id).toUpperCase()] || null;
 };
 
-export const questionTextsByLinkId = {
+export const questionTextsByLoincCode = {
   // PHQ-9 questions
   "44250-9": "Little interest or pleasure in doing things",
   "44255-8": "Feeling down, depressed, or hopeless",
@@ -228,6 +232,22 @@ export const questionTextsByLinkId = {
   "44253-3":
     "Moving or speaking so slowly that other people could have noticed. Or the opposite-being so fidgety or restless that you have been moving around a lot more than usual",
   "44260-8": "Thoughts that you would be better off dead, or of hurting yourself in some way",
+  "55758-7": "PHQ-2 total score",
 };
+
+export function findMatchingQuestionLinkIdFromCode(resource, linkIdList) {
+  if (!resource) return null;
+  if (!resource?.code?.coding) return null;
+  if (isEmptyArray(linkIdList)) return null;
+
+  for (const coding of resource.code.coding) {
+    const match = linkIdList.find((id) => normalizeLinkId(id) === normalizeLinkId(coding.code));
+    if (match) {
+      return match;
+    }
+  }
+
+  return null; // no match found
+}
 
 export default questionnaireConfigs;

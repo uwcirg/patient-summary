@@ -4,8 +4,7 @@ import {
   getFHIRResourcePath,
   getFhirResourcesFromQueryResult,
   getFlowSheetObservationURLS,
-  // getFlowsheetIds,
-  getLinkIdsFromObservationFlowsheetIds,
+  getLinkIdsFromObservation,
   normalizeLinkId,
   processPage,
   getResourceTypesFromResources,
@@ -322,7 +321,6 @@ export default function useFetchResources() {
         // What we intend to fetch in phase-1
         const wantQ =
           hasPreload ||
-          isFromEpic ||
           shouldTrack(configuredTypeSet, QUESTIONNAIRE_DATA_KEY) ||
           shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
         const wantQR = wantQ || shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
@@ -343,16 +341,10 @@ export default function useFetchResources() {
             onErrorMessage: "QuestionnaireResponse request failed",
           });
         }
-
-        // let obsUrl = null;
         if (wantObs) {
-          // const obsQueryBase = `Observation?patient=${pid}&category=vital-signs`;
-          // //obsUrl = flowsheetIds.length ? `${obsQueryBase}&code=${flowsheetIds.join(",")}` : obsQueryBase;
-          // obsUrl = obsQueryBase;
           const obURLs = getFlowSheetObservationURLS(pid);
           obURLs.map((url) => {
             phase1Tasks.push({
-              // id: `${OBSERVATION_DATA_KEY} ${index + 1}`,
               id: OBSERVATION_DATA_KEY,
               promise: client.request(
                 { url: url, header: NO_CACHE_HEADER },
@@ -387,11 +379,17 @@ export default function useFetchResources() {
 
         // Build synthetic Q/QR from observations where configs match
         let qIds = [...preloadList];
-        const syntheticQs = [];
+          // Determine Questionnaire list & fetch (if not already fetched via preload parallel path)
+        const matchedQIds = matchedQRs?.map((it) => it.questionnaire?.split("/")[1]) ?? [];
+        const uniqueQIds = [...new Set([...qIds, ...matchedQIds])];
+        const qListToLoad = hasPreload ? preloadList : uniqueQIds;
+        const queryQByExactMatch = exactMatchById || !isEmptyArray(matchedQIds);
+
+        const syntheticQs = [], syntheticQRs = [];
 
         if (wantObs && !isEmptyArray(obResources)) {
-          const obsLinkIds = getLinkIdsFromObservationFlowsheetIds(obResources);
-          console.log("matched linkIds from observations ", obsLinkIds);
+          const obsLinkIds = getLinkIdsFromObservation(obResources);
+          // console.log("matched linkIds from observations ", obsLinkIds);
           if (!isEmptyArray(obsLinkIds)) {
             for (const [key, cfg] of Object.entries(questionnaireConfigs || {})) {
               if (!cfg) continue;
@@ -402,20 +400,17 @@ export default function useFetchResources() {
               if (!hit) continue;
 
               const builtQ = buildQuestionnaire(cfg);
-              const builtQRs = observationsToQuestionnaireResponses(obResources, cfg);
+              const builtQRs = observationsToQuestionnaireResponses(obResources, cfg) || [];
               console.log("builtQ ", builtQ);
               console.log("builtQRs ", builtQRs);
               syntheticQs.push(builtQ);
-              matchedQRs = [...matchedQRs, ...builtQRs];
+              syntheticQRs.push(...builtQRs);
+              // matchedQRs = [...matchedQRs, ...builtQRs];
               if (cfg.questionnaireId) qIds.push(cfg.questionnaireId);
             }
           }
         }
-
-        // Determine Questionnaire list & fetch (if not already fetched via preload parallel path)
-        const matchedQIds = matchedQRs?.map((it) => it.questionnaire?.split("/")[1]) ?? [];
-        const uniqueQIds = [...new Set([...qIds, ...matchedQIds])];
-        const qListToLoad = hasPreload ? preloadList : uniqueQIds;
+        matchedQRs = [...matchedQRs, ...syntheticQRs];
 
         if (wantQ) {
           if (isEmptyArray(qListToLoad)) {
@@ -423,7 +418,7 @@ export default function useFetchResources() {
           } else {
             const qPath = getFHIRResourcePath(pid, [QUESTIONNAIRE_DATA_KEY], {
               questionnaireList: qListToLoad,
-              exactMatchById,
+              exactMatchById: queryQByExactMatch,
             });
 
             const qTask = {
@@ -453,12 +448,11 @@ export default function useFetchResources() {
           ...getFhirResourcesFromQueryResult(qResources),
         ];
         const questionnaireResponses = getFhirResourcesFromQueryResult(matchedQRs);
-
         return {
           questionnaires,
           questionnaireResponses,
           qListToLoad,
-          exactMatchById,
+          exactMatchById: queryQByExactMatch,
         };
       });
     },
@@ -639,12 +633,14 @@ export default function useFetchResources() {
   const errorMessages = [
     ...(base.error ? [base.errorMessage] : []),
     ...(fatalError ? [fatalError] : []),
-    ...loaderErrors.map((r) => {
-      if (r.errorMessage.includes(" | ")) {
-        return r.errorMessage.split(" | ").map((m) => `${r.title || r.id}: ${m || "Unknown error"}`);
-      }
-      return `${r.title || r.id}: ${r.errorMessage || "Unknown error"}`;
-    }).flat(),
+    ...loaderErrors
+      .map((r) => {
+        if (r.errorMessage.includes(" | ")) {
+          return r.errorMessage.split(" | ").map((m) => `${r.title || r.id}: ${m || "Unknown error"}`);
+        }
+        return `${r.title || r.id}: ${r.errorMessage || "Unknown error"}`;
+      })
+      .flat(),
   ];
 
   const hasError = errorMessages.length > 0;

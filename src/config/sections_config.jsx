@@ -31,19 +31,21 @@ const renderScoringSummary = (props) => {
         }}
         flexWrap={"wrap"}
       >
-        <Box
-          sx={{
-            flex: {
-              xs: "auto",
-              sm: "auto",
-              md: "auto",
-              lg: 2,
-            },
-            width: "100%",
-          }}
-        >
-          <ChartSummary data={chartData} keys={chartKeys}></ChartSummary>
-        </Box>
+        {!isEmptyArray(chartData) && chartKeys.length > 1 && (
+          <Box
+            sx={{
+              flex: {
+                xs: "auto",
+                sm: "auto",
+                md: "auto",
+                lg: 2,
+              },
+              width: "100%",
+            }}
+          >
+            <ChartSummary data={chartData} keys={chartKeys}></ChartSummary>
+          </Box>
+        )}
         <Box
           sx={{
             flex: {

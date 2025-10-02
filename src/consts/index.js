@@ -30,20 +30,22 @@ export const DEFAULT_FALLBACK_SCORE_MAPS = {
 };
 // defaultAnswerOptions are what get rendered into the Questionnaire item.answerOption
 export const DEFAULT_ANSWER_OPTIONS = [0, 1, 2, 3].map((n) => ({ valueCoding: DEFAULT_VAL_TO_LOIN_CODE[n] }));
-// Epic flowsheet -> question linkId mapping
-export const FLOWSHEET_ID_LINK_ID_MAPPINGS = {
-  1570000014: "/44250-9",
-  1570000015: "/44255-8",
-  1570000018: "/44259-0",
-  1570000019: "/44254-1",
-  1570000020: "/44251-7",
-  1570000021: "/44258-2",
-  1570000022: "/44252-5",
-  1570000023: "/44253-3",
-  1570000024: "/44260-8",
-  1570000025: "/44261-6", // total score (not an item answer)
-  1570000016: "PHQ-2-Score"
+// Loinc code -> question linkId mapping
+export const LOINC_CODE_LINK_ID_MAPPINGS = {
+  //PHQ9
+  "44250-9": "/44250-9",
+  "44255-8": "/44255-8",
+  "44259-0": "/44259-0",
+  "44254-1": "/44254-1",
+  "44251-7": "/44251-7",
+  "44258-2": "/44258-2",
+  "44252-5": "/44252-5",
+  "44253-3": "/44253-3",
+  "44260-8": "/44260-8",
+  "44261-6": "/44261-6", // total score (not an item answer)
+  "55758-7": "/55758-7" // PH2 score
 };
 
+export const LOIN_SYSTEM = "http://loinc.org";
 export const FLOWSHEET_SYSTEM = "http://open.epic.com/FHIR/StructureDefinition/observation-flowsheet-id";
 export const FLOWSHEET_CODE_IDS = ["tcspRW.3lXOnl6nYHXrx3Rg0", "tAcMJ6d9AZFqpzWcp-YjG6Q0"];

@@ -4,9 +4,9 @@ import {
   DEFAULT_VAL_TO_LOIN_CODE,
   FLOWSHEET_CODE_IDS,
   FLOWSHEET_SYSTEM,
-  FLOWSHEET_ID_LINK_ID_MAPPINGS,
+  LOINC_CODE_LINK_ID_MAPPINGS,
 } from "@/consts/index.js";
-import { questionTextsByLinkId } from "@/config/questionnaire_config";
+import { questionTextsByLoincCode } from "@/config/questionnaire_config";
 
 /*
  * @param client, FHIR client object
@@ -260,7 +260,7 @@ export const getValueFromResource = (resourceItem) => {
   const n = resourceItem?.valueQuantity ? Number(resourceItem?.valueQuantity?.value ?? undefined) : undefined;
   if (isFinite(n)) {
     const code = conceptCode(resourceItem?.code);
-    const linkId = code ? getLinkIdByFromFlowsheetId(code) : null;
+    const linkId = code ? getLinkIdFromLoincCode(code) : null;
     if (linkId) {
       const coding = DEFAULT_VAL_TO_LOIN_CODE[n];
       if (coding) return { valueCoding: coding };
@@ -343,16 +343,16 @@ export function getComponentValues(components = []) {
 
 export function getDefaultQuestionItemText(linkId, index) {
   const codeBit = String(linkId).match(/(\d+-\d)$/)?.[1]; // grabs "44250-9" if present
-  let qText = questionTextsByLinkId[codeBit];
+  let qText = questionTextsByLoincCode[codeBit];
   if (!qText) qText = codeBit;
-  return `Question ${index + 1}${qText ? ` (${qText})` : ""}`;
+  return `Question ${index + 1}${codeBit ? ` (${codeBit})` : ""}`;
 }
 
 export function makeQuestionItem(linkId, text, answerOptions) {
   return {
     linkId: normalizeLinkId(linkId),
     type: !isEmptyArray(answerOptions) ? getQuestionItemType(answerOptions[0]) : "string",
-    text: text ?? questionTextsByLinkId[normalizeLinkId(linkId)],
+    text: text,
     ...(!isEmptyArray(answerOptions) ? { answerOption: answerOptions } : {}),
   };
 }
@@ -373,33 +373,38 @@ export const getFlowsheetSystem = () => {
 export const getFlowsheetIdFromOb = (item) => {
   const coding = item?.code?.coding;
   if (!coding) return null;
-  // const matched = coding.find((c) => c.system === getFlowsheetSystem());
-  // if (!matched) return null;
-  const matchIds = getFlowsheetIds();
+  const matchIds = getFlowsheetCodeIds();
   return coding.find((c) => matchIds.indexOf(c.code) !== -1)?.code;
 };
 
-export const getLinkIdByFromFlowsheetId = (id) => {
-  if (id && FLOWSHEET_ID_LINK_ID_MAPPINGS[id]) {
-    return FLOWSHEET_ID_LINK_ID_MAPPINGS[id];
+export const getLinkIdFromLoincCode = (id) => {
+  if (id && LOINC_CODE_LINK_ID_MAPPINGS [id]) {
+    return LOINC_CODE_LINK_ID_MAPPINGS [id];
   }
   return null;
 };
 
-export function getFlowsheetIds() {
-  return Object.keys(FLOWSHEET_ID_LINK_ID_MAPPINGS);
-}
-
-export function getLinkIdsFromObservationFlowsheetIds(obResources) {
+export function getLinkIdsFromObservation(obResources) {
   if (isEmptyArray(obResources)) return [];
-  let obsLinkIds = obResources
-    .filter((o) => getLinkIdByFromFlowsheetId(getFlowsheetIdFromOb(o)))
-    .map((o) => normalizeLinkId(getLinkIdByFromFlowsheetId(getFlowsheetIdFromOb(o))));
-  return [...new Set(obsLinkIds)];
+
+  const matches = [];
+
+  for (const obs of obResources) {
+    if (!obs?.code?.coding) continue;
+
+    for (const coding of obs.code.coding) {
+      if (LOINC_CODE_LINK_ID_MAPPINGS[coding.code]) {
+        matches.push(coding.code);
+      }
+    }
+  }
+
+  return matches;
 }
 
 export function getValidObservationsForQRs(obResources) {
-  return obResources?.filter((o) => getLinkIdByFromFlowsheetId(getFlowsheetIdFromOb(o)));
+  const systemCodes = getFlowsheetCodeIds();
+  return obResources?.filter((o) => o.code?.coding?.find((item) => systemCodes.indexOf(item.code) !== -1));
 }
 
 export function getFlowsheetCodeIds() {
@@ -415,12 +420,12 @@ export function getFlowsheetCodeIds() {
 export function getFlowSheetObservationURLS(patientId) {
   if (!patientId) return [];
   const codeIds = getFlowsheetCodeIds();
-  const codeSystem = getFlowsheetSystem();
+  //const codeSystem = getFlowsheetSystem();
 
   return [
     ...codeIds.map((id) => `Observation?patient=${patientId}&code=${encodeURIComponent(id)}`),
-    ...codeIds.map(
-      (id) => `Observation?patient=${patientId}&code=${encodeURIComponent(codeSystem)}|${encodeURIComponent(id)}`,
-    ),
+    // ...codeIds.map(
+    //   (id) => `Observation?patient=${patientId}&code=${encodeURIComponent(codeSystem)}|${encodeURIComponent(id)}`,
+    // ),
   ];
 }

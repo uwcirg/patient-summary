@@ -15,7 +15,7 @@ import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "@/consts";
 
 export default function Summary(props) {
   const { questionnaireId, data: summary } = props;
-  const hasChart = hasData(summary.chartData);
+  const hasChart = hasData(summary?.chartData);
   const anchorElementStyle = {
     position: "relative",
     top: -64,
