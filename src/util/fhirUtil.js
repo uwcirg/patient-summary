@@ -378,8 +378,8 @@ export const getFlowsheetIdFromOb = (item) => {
 };
 
 export const getLinkIdFromLoincCode = (id) => {
-  if (id && LOINC_CODE_LINK_ID_MAPPINGS [id]) {
-    return LOINC_CODE_LINK_ID_MAPPINGS [id];
+  if (id && LOINC_CODE_LINK_ID_MAPPINGS[id]) {
+    return LOINC_CODE_LINK_ID_MAPPINGS[id];
   }
   return null;
 };
@@ -420,10 +420,11 @@ export function getFlowsheetCodeIds() {
 export function getFlowSheetObservationURLS(patientId) {
   if (!patientId) return [];
   const codeIds = getFlowsheetCodeIds();
-  //const codeSystem = getFlowsheetSystem();
-  const queryCodes = codeIds.map((id) => encodeURIComponent(id)).join(",");
-
-  return [
-     `Observation?patient=${patientId}&code=${queryCodes}`
-  ];
+  const queryCodes = codeIds
+    .map((id) => (id ?? "").toString().trim()) // strip leading/trailing spaces; handle null/undefined
+    .filter((s) => s.length > 0) // drop empties after trim
+    .map(encodeURIComponent) // then URL-encode
+    .join(",");
+  if (!queryCodes) return [];
+  return [`Observation?patient=${patientId}&code=${queryCodes}`];
 }
