@@ -421,11 +421,9 @@ export function getFlowSheetObservationURLS(patientId) {
   if (!patientId) return [];
   const codeIds = getFlowsheetCodeIds();
   //const codeSystem = getFlowsheetSystem();
+  const queryCodes = codeIds.map((id) => encodeURIComponent(id)).join(",");
 
   return [
-    ...codeIds.map((id) => `Observation?patient=${patientId}&code=${encodeURIComponent(id)}`),
-    // ...codeIds.map(
-    //   (id) => `Observation?patient=${patientId}&code=${encodeURIComponent(codeSystem)}|${encodeURIComponent(id)}`,
-    // ),
+     `Observation?patient=${patientId}&code=${queryCodes}`
   ];
 }
