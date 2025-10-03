@@ -1,8 +1,6 @@
 import {
   conceptText,
   getDefaultQuestionItemText,
-  // getFlowsheetIdFromOb,
-  // getLinkIdFromFlowsheetId,
   getValidObservationsForQRs,
   getValueFromResource,
   getResourcesByResourceType,
@@ -11,8 +9,8 @@ import {
   makeQuestionItem,
 } from "@util/fhirUtil";
 import { generateUUID, isEmptyArray, isNumber } from "@util";
-import { DEFAULT_ANSWER_OPTIONS } from "@/consts";
-import { findMatchingQuestionLinkIdFromCode, questionTextsByLoincCode } from "@/config/questionnaire_config";
+import { DEFAULT_ANSWER_OPTIONS} from "@/consts";
+import { findMatchingQuestionLinkIdFromCode } from "@/config/questionnaire_config";
 
 /* ---------------------------------------------
  * External helpers
@@ -222,7 +220,7 @@ export function buildQuestionnaire(config = {}) {
     const defaultQText = getDefaultQuestionItemText(lid, idx);
     return makeQuestionItem(
       lid,
-      config.itemTextByLinkId?.[lid] ?? questionTextsByLoincCode[normalizeLinkId(lid)] ?? defaultQText,
+      config.itemTextByLinkId?.[lid] ?? defaultQText,
       opts,
     );
   });
@@ -292,7 +290,7 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
     const text = textByLinkId.get(lid);
     let answerObject = {
       linkId: nLid,
-      text: text ? text : (questionTextsByLoincCode[normalizeLinkId(lid)] ?? `Question ${idx + 1}`),
+      text: text ? text : (getDefaultQuestionItemText(normalizeLinkId(lid)) ?? `Question ${idx + 1}`),
     };
     if (ans) {
       answerObject["answer"] = [ans];
@@ -348,7 +346,19 @@ const getMostRecent = (rdata = []) => sortResponsesNewestFirst(rdata)[0] || null
 /**
  * @param {Array} rdata
  */
-const getPrevious = (rdata = []) => sortResponsesNewestFirst(rdata)[1] || null;
+const getPreviousWithScore = (rdata = []) => {
+  const rows = sortResponsesNewestFirst(rdata);
+  if (isEmptyArray(rows) || rows.length < 2) return null;
+  let prev = null;
+  for (let i = 1; i < rows.length; i++) {
+    const item = rows[i];
+    if (isNumber(item?.score)) {
+      prev = item;
+      break;
+    }
+  }
+  return prev;
+};
 
 /**
  * Build rows from summaryData
@@ -369,7 +379,7 @@ export function buildScoringSummaryRows(summaryData, opts = {}) {
     const responses = node.responseData || [];
 
     const current = getMostRecent(responses);
-    const prev = getPrevious(responses);
+    const prev = getPreviousWithScore(responses);
 
     const instrumentName =
       (instrumentNameByKey && instrumentNameByKey(key, q)) || q?.shortName || q?.displayName || key;

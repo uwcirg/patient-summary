@@ -4,7 +4,7 @@ import {
   getFHIRResourcePath,
   getFhirResourcesFromQueryResult,
   getFlowSheetObservationURLS,
-  getLinkIdsFromObservation,
+  getCodeableCodesFromObservation,
   normalizeLinkId,
   processPage,
   getResourceTypesFromResources,
@@ -389,24 +389,20 @@ export default function useFetchResources() {
           syntheticQRs = [];
 
         if (wantObs && !isEmptyArray(obResources)) {
-          const obsLinkIds = getLinkIdsFromObservation(obResources);
-          // console.log("matched linkIds from observations ", obsLinkIds);
-          if (!isEmptyArray(obsLinkIds)) {
+          const obsCodes = getCodeableCodesFromObservation(obResources);
+          if (!isEmptyArray(obsCodes)) {
             for (const [key, cfg] of Object.entries(questionnaireConfigs || {})) {
               if (!cfg) continue;
               if (hasPreload && !preloadList.find((q) => fuzzyMatch(q, key))) continue;
-
-              const cfgLinkIds = toStringArray([...(cfg.questionLinkIds ?? []), cfg.scoringQuestionId]);
-              const hit = cfgLinkIds.find((linkId) => obsLinkIds.includes(normalizeLinkId(linkId)));
+              const cfgLinkIds = toStringArray([...(cfg.questionLinkIds ?? [])]);
+              const hit = cfgLinkIds.find((linkId) => obsCodes.includes(normalizeLinkId(linkId)));
               if (!hit) continue;
-
               const builtQ = buildQuestionnaire(cfg);
               const builtQRs = observationsToQuestionnaireResponses(obResources, cfg) || [];
               console.log("builtQ ", builtQ);
               console.log("builtQRs ", builtQRs);
               syntheticQs.push(builtQ);
               syntheticQRs.push(...builtQRs);
-              // matchedQRs = [...matchedQRs, ...builtQRs];
               if (cfg.questionnaireId) qIds.push(cfg.questionnaireId);
             }
           }
@@ -453,11 +449,7 @@ export default function useFetchResources() {
         // seed bundle
         patientBundle.current = {
           ...patientBundle.current,
-          entry: [
-            { resource: patient },
-            ...questionnaireResponses ?? [],
-            ...questionnaires ?? [],
-          ],
+          entry: [{ resource: patient }, ...(questionnaireResponses ?? []), ...(questionnaires ?? [])],
         };
 
         return {

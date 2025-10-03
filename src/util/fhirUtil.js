@@ -1,12 +1,12 @@
-import { getEnv, getSectionsToShow, isEmptyArray, isNil, hasValue } from "./index.js";
+import { getEnv, getSectionsToShow, isEmptyArray, isNil, hasValue, isNumber } from "./index.js";
 import {
   DEFAULT_OBSERVATION_CATEGORIES,
-  DEFAULT_VAL_TO_LOIN_CODE,
+ // DEFAULT_VAL_TO_LOIN_CODE,
   FLOWSHEET_CODE_IDS,
   FLOWSHEET_SYSTEM,
-  LOINC_CODE_LINK_ID_MAPPINGS,
+ // LOINC_CODE_LINK_ID_MAPPINGS,
 } from "@/consts/index.js";
-import { questionTextsByLoincCode } from "@/config/questionnaire_config";
+import { questionTextsByLoincCode } from "@/consts";
 
 /*
  * @param client, FHIR client object
@@ -259,15 +259,15 @@ export function getValueText(O) {
 export const getValueFromResource = (resourceItem) => {
   const n = resourceItem?.valueQuantity ? Number(resourceItem?.valueQuantity?.value ?? undefined) : undefined;
   if (isFinite(n)) {
-    const code = conceptCode(resourceItem?.code);
-    const linkId = code ? getLinkIdFromLoincCode(code) : null;
-    if (linkId) {
-      const coding = DEFAULT_VAL_TO_LOIN_CODE[n];
-      if (coding) return { valueCoding: coding };
-      return {
-        valueQuantity: resourceItem["valueQuantity"],
-      };
-    }
+    // const code = conceptCode(resourceItem?.code);
+    // const linkId = code ? getLinkIdFromLoincCode(code) : null;
+    // if (linkId) {
+    //   const coding = DEFAULT_VAL_TO_LOIN_CODE[n];
+    //   if (coding) return { valueCoding: coding };
+    //   return {
+    //     valueQuantity: resourceItem["valueQuantity"],
+    //   };
+    // }
     return {
       valueQuantity: resourceItem["valueQuantity"],
     };
@@ -342,10 +342,10 @@ export function getComponentValues(components = []) {
 }
 
 export function getDefaultQuestionItemText(linkId, index) {
+  if (!linkId) return "";
   const codeBit = String(linkId).match(/(\d+-\d)$/)?.[1]; // grabs "44250-9" if present
   let qText = questionTextsByLoincCode[codeBit];
-  if (!qText) qText = codeBit;
-  return `Question ${index + 1}${codeBit ? ` (${codeBit})` : ""}`;
+  return qText ? qText : (isNumber(index) ? `Question ${index}` : "") + " " + codeBit;
 }
 
 export function makeQuestionItem(linkId, text, answerOptions) {
@@ -377,14 +377,14 @@ export const getFlowsheetIdFromOb = (item) => {
   return coding.find((c) => matchIds.indexOf(c.code) !== -1)?.code;
 };
 
-export const getLinkIdFromLoincCode = (id) => {
-  if (id && LOINC_CODE_LINK_ID_MAPPINGS[id]) {
-    return LOINC_CODE_LINK_ID_MAPPINGS[id];
-  }
-  return null;
-};
+// export const getLinkIdFromLoincCode = (id) => {
+//   if (id && LOINC_CODE_LINK_ID_MAPPINGS[id]) {
+//     return LOINC_CODE_LINK_ID_MAPPINGS[id];
+//   }
+//   return null;
+// };
 
-export function getLinkIdsFromObservation(obResources) {
+export function getCodeableCodesFromObservation(obResources) {
   if (isEmptyArray(obResources)) return [];
 
   const matches = [];
@@ -393,13 +393,13 @@ export function getLinkIdsFromObservation(obResources) {
     if (!obs?.code?.coding) continue;
 
     for (const coding of obs.code.coding) {
-      if (LOINC_CODE_LINK_ID_MAPPINGS[coding.code]) {
+      if (coding.code) {
         matches.push(coding.code);
       }
     }
   }
 
-  return matches;
+  return [...new Set(matches)];
 }
 
 export function getValidObservationsForQRs(obResources) {

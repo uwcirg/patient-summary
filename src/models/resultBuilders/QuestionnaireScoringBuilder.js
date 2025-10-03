@@ -197,10 +197,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const linkId = String(item.linkId).toLowerCase();
     const configToUse = config ? config : this.cfg;
     const scoreLinkId = configToUse?.scoringQuestionId;
+    const subScoreIds = configToUse?.subScoreQuestionIds;
     if (linkId === "introduction" || linkId.includes("ignore")) return false;
     if (!this.responseAnswerTypes.has(item.type)) return false;
     if (scoreLinkId) {
       return !this.isLinkIdEquals(item.linkId, scoreLinkId);
+    }
+    if (!isEmptyArray(subScoreIds)) {
+      return !subScoreIds.find((id) => this.isLinkIdEquals(id, item.linkId));
     }
     return true;
   }
@@ -371,7 +375,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       return {
         id: q.linkId,
         answer: this.getAnswerItemDisplayValue(ans),
-        question: q.linkId === configToUse?.scoringQuestionId ? `<b>${q.text}</b>` : q.text,
+        question: this.isLinkIdEquals(q.linkId, configToUse?.scoringQuestionId) ? `<b>${q.text}</b>` : q.text,
         text: resp?.text ? resp?.text : q.text,
         type: q.type,
       };
@@ -412,8 +416,13 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   // -------------------- public APIs --------------------
   getResponsesSummary(questionnaireResponses, questionnaire) {
     const config = this.cfg && this.cfg.questionnaireId ? this.cfg : questionnaireConfig[questionnaire?.id];
-    const scoreLinkIds = config?.questionLinkIds?.length
-      ? config.questionLinkIds
+    const subScoreQuestionIds = !isEmptyArray(config?.subScoringQuestionIds) ? config.subScoringQuestionIds : [];
+    const scoreLinkIds = !isEmptyArray(config?.questionLinkIds)
+      ? config.questionLinkIds.filter(
+          (q) =>
+            !this.isLinkIdEquals(q, config?.scoringQuestionId) &&
+            !subScoreQuestionIds.find((id) => this.isLinkIdEquals(id, q)),
+        )
       : this.getAnswerLinkIdsByQuestionnaire(questionnaire);
 
     const scoringQuestionId = config?.scoringQuestionId;
@@ -424,7 +433,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const nonScoring =
         flat.length === 1
           ? flat
-          : flat.filter((it) => !scoringQuestionId || !this.isLinkIdEquals(it.linkId, scoringQuestionId));
+          : flat.filter(
+              (it) =>
+                (!scoringQuestionId || !this.isLinkIdEquals(it.linkId, scoringQuestionId)) &&
+                (isEmptyArray(subScoreQuestionIds) ||
+                  !subScoreQuestionIds.find((id) => this.isLinkIdEquals(id, it.linkId))),
+            );
 
       const totalItems = scoreLinkIds?.length
         ? scoreLinkIds.length
@@ -600,17 +614,17 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           total: item.score,
         }))
       : null;
-
     if (chartData && chartConfig?.dataFormatter) {
       chartData = chartConfig.dataFormatter(chartData);
     }
 
     const scoringParams = config?.scoringParams;
+    const chartParams =  { ...chartConfig, ...scoringParams };
 
     return {
       config: config,
-      chartConfig: { ...chartConfig, ...scoringParams },
-      chartData: { ...chartConfig, data: chartData },
+      chartConfig: chartParams,
+      chartData: { ...chartParams, data: chartData },
       chartType: chartConfig?.type,
       scoringData: scoringData,
       responseData: evalData,

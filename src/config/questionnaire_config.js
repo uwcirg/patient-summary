@@ -179,6 +179,7 @@ const questionnaireConfigs = {
     title: "Patient Health Questionnaire-9 (PHQ-9)",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/phq9",
     scoringQuestionId: "/44261-6",
+    subScoringQuestionIds: ["/55758-7"],
     scoringParams: { maximumScore: 27 },
     questionLinkIds: [
       "/44250-9",
@@ -190,6 +191,7 @@ const questionnaireConfigs = {
       "/44252-5",
       "/44253-3",
       "/44260-8",
+      "/69722-7",
       "/44261-6",
       "/55758-7",
     ],
@@ -219,22 +221,6 @@ const questionnaireConfigs = {
 export const getConfigForQuestionnaire = (id) => {
   return questionnaireConfigs[String(id).toUpperCase()] || null;
 };
-
-export const questionTextsByLoincCode = {
-  // PHQ-9 questions
-  "44250-9": "Little interest or pleasure in doing things",
-  "44255-8": "Feeling down, depressed, or hopeless",
-  "44259-0": "Trouble falling or staying asleep, or sleeping too much",
-  "44254-1": "Feeling tired or having little energy",
-  "44251-7": "Poor appetite or overeating",
-  "44258-2": "Feeling bad about yourself-or that you are a failure or have let yourself or your family down",
-  "44252-5": "Trouble concentrating on things, such as reading the newspaper or watching television",
-  "44253-3":
-    "Moving or speaking so slowly that other people could have noticed. Or the opposite-being so fidgety or restless that you have been moving around a lot more than usual",
-  "44260-8": "Thoughts that you would be better off dead, or of hurting yourself in some way",
-  "55758-7": "PHQ-2 total score",
-};
-
 export function findMatchingQuestionLinkIdFromCode(resource, linkIdList) {
   if (!resource) return null;
   if (!resource?.code?.coding) return null;

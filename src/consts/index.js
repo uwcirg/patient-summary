@@ -30,22 +30,39 @@ export const DEFAULT_FALLBACK_SCORE_MAPS = {
 };
 // defaultAnswerOptions are what get rendered into the Questionnaire item.answerOption
 export const DEFAULT_ANSWER_OPTIONS = [0, 1, 2, 3].map((n) => ({ valueCoding: DEFAULT_VAL_TO_LOIN_CODE[n] }));
-// Loinc code -> question linkId mapping
-export const LOINC_CODE_LINK_ID_MAPPINGS = {
-  //PHQ9
-  "44250-9": "/44250-9",
-  "44255-8": "/44255-8",
-  "44259-0": "/44259-0",
-  "44254-1": "/44254-1",
-  "44251-7": "/44251-7",
-  "44258-2": "/44258-2",
-  "44252-5": "/44252-5",
-  "44253-3": "/44253-3",
-  "44260-8": "/44260-8",
-  "44261-6": "/44261-6", // total score (not an item answer)
-  "55758-7": "/55758-7" // PH2 score
+
+// default texts, in case not provided, from https://loinc.org/
+export const questionTextsByLoincCode = {
+  // PHQ-9 questions
+  "44250-9": "Little interest or pleasure in doing things",
+  "44255-8": "Feeling down, depressed, or hopeless",
+  "44259-0": "Trouble falling or staying asleep, or sleeping too much",
+  "44254-1": "Feeling tired or having little energy",
+  "44251-7": "Poor appetite or overeating",
+  "44258-2": "Feeling bad about yourself-or that you are a failure or have let yourself or your family down",
+  "44252-5": "Trouble concentrating on things, such as reading the newspaper or watching television",
+  "44253-3":
+    "Moving or speaking so slowly that other people could have noticed. Or the opposite-being so fidgety or restless that you have been moving around a lot more than usual",
+  "44260-8": "Thoughts that you would be better off dead, or of hurting yourself in some way",
+  "69722-7":
+    "How difficult have these problems made it for you to do your work, take care of things at home, or get along with other people?",
+  "55758-7": "PHQ-2 total score",
 };
 
 export const LOIN_SYSTEM = "http://loinc.org";
 export const FLOWSHEET_SYSTEM = "http://open.epic.com/FHIR/StructureDefinition/observation-flowsheet-id";
-export const FLOWSHEET_CODE_IDS = ["tcspRW.3lXOnl6nYHXrx3Rg0", "tAcMJ6d9AZFqpzWcp-YjG6Q0"];
+// code IDS from UCSD Test system; these will be different in PROD, use config, REACT_APP_FLOWSHEET_CODE_IDS
+export const FLOWSHEET_CODE_IDS = [
+  "tdYjwfyJvuW4IRAhjwoPFeA0",
+  "tcfuT6l6w588Qqjcx6cXqxw0",
+  "tags.2ubhSPRHJcPwj9A-9A0",
+  "tbX6Ca3KWexbQqjSTR.gb5w0",
+  "t0-c.j3CMZhmoM0Qd8ZtPmA0",
+  "tUvwUAzzAo2GM-83FWMNMBA0",
+  "t9ed6G2pi.iZGhA9T0KKSXQ0",
+  "tKyPjZXsY.fwUg8kQpgnrGg0",
+  "teN3kKw8NMBIF9ZU7Nd-9pQ0",
+  "tnU0icMggWEcRhksuu4hJ3A0",
+  "tcspRW.3lXOnl6nYHXrx3Rg0",
+  "tAcMJ6d9AZFqpzWcp-YjG6Q0",
+];

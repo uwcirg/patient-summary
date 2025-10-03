@@ -43,7 +43,7 @@ export default function LineCharts(props) {
   let maxYValue = maximumScore
     ? maximumScore
     : data?.reduce((m, d) => Math.max(m, Number(d?.score ?? -Infinity)), -Infinity);
-  maxYValue = !data || maxYValue === -Infinity ? null : maxYValue + 1;
+  maxYValue = !data || maxYValue === -Infinity ? null : maxYValue;
   const defaultOptions = {
     activeDot: { r: 6 },
     dot: { strokeWidth: 2 },
