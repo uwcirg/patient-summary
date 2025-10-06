@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import ChartConfig from "@config/chart_config";
-import defaultSections, {sections} from "@config/sections_config";
+import defaultSections, { sections } from "@config/sections_config";
 import { DEFAULT_TOOLBAR_HEIGHT, QUESTIONNAIRE_ANCHOR_ID_PREFIX, queryNeedPatientBanner } from "@/consts";
 
 export const shortDateRE = /^\d{4}-\d{2}-\d{2}$/; // matches '2012-04-05'
@@ -326,7 +326,7 @@ export function getLocaleDateStringFromDate(dateString, format) {
 }
 
 export function hasValue(value) {
-  return value != null && value !== "" && typeof value !== "undefined";
+  return value != null && String(value) !== "" && typeof value !== "undefined";
 }
 
 export function isEmptyArray(o) {

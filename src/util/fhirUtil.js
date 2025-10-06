@@ -1,10 +1,10 @@
 import { getEnv, getSectionsToShow, isEmptyArray, isNil, hasValue, isNumber } from "./index.js";
 import {
   DEFAULT_OBSERVATION_CATEGORIES,
- // DEFAULT_VAL_TO_LOIN_CODE,
+  // DEFAULT_VAL_TO_LOIN_CODE,
   FLOWSHEET_CODE_IDS,
   FLOWSHEET_SYSTEM,
- // LOINC_CODE_LINK_ID_MAPPINGS,
+  // LOINC_CODE_LINK_ID_MAPPINGS,
 } from "@/consts/index.js";
 import { questionTextsByLoincCode } from "@/consts";
 
@@ -104,7 +104,7 @@ export function getFHIRResourceQueryParams(resourceType, options) {
 }
 
 export function getFHIRResourcePath(patientId, resourceType, options) {
-  const { resourcePath } = getFHIRResourcePaths(patientId, resourceType, options)[0];
+  const { resourcePath } = getFHIRResourcePaths(patientId, [resourceType], options)[0];
   return resourcePath;
 }
 
@@ -345,7 +345,7 @@ export function getDefaultQuestionItemText(linkId, index) {
   if (!linkId) return "";
   const codeBit = String(linkId).match(/(\d+-\d)$/)?.[1]; // grabs "44250-9" if present
   let qText = questionTextsByLoincCode[codeBit];
-  return qText ? qText : (isNumber(index) ? `Question ${index}` : "") + " " + codeBit;
+  return qText ? qText : (isNumber(index) ? `Question ${index}` : "") + (codeBit ? " " + codeBit : "");
 }
 
 export function makeQuestionItem(linkId, text, answerOptions) {
@@ -386,7 +386,6 @@ export const getFlowsheetIdFromOb = (item) => {
 
 export function getCodeableCodesFromObservation(obResources) {
   if (isEmptyArray(obResources)) return [];
-
   const matches = [];
 
   for (const obs of obResources) {
@@ -413,18 +412,14 @@ export function getFlowsheetCodeIds() {
     return systemCodes
       .split(",")
       .filter((item) => hasValue(item))
-      .map((item) => String(item).trim());
+      .map((item) => normalizeLinkId(item));
   return FLOWSHEET_CODE_IDS;
 }
 
 export function getFlowSheetObservationURLS(patientId) {
   if (!patientId) return [];
   const codeIds = getFlowsheetCodeIds();
-  const queryCodes = codeIds
-    .map((id) => (id ?? "").toString().trim()) // strip leading/trailing spaces; handle null/undefined
-    .filter((s) => s.length > 0) // drop empties after trim
-    .map(encodeURIComponent) // then URL-encode
-    .join(",");
+  const queryCodes = codeIds.map(encodeURIComponent).join(",");
   if (!queryCodes) return [];
   return [`Observation?patient=${patientId}&code=${queryCodes}`];
 }

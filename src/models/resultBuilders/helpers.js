@@ -9,7 +9,7 @@ import {
   makeQuestionItem,
 } from "@util/fhirUtil";
 import { generateUUID, isEmptyArray, isNumber } from "@util";
-import { DEFAULT_ANSWER_OPTIONS} from "@/consts";
+import { DEFAULT_ANSWER_OPTIONS } from "@/consts";
 import { findMatchingQuestionLinkIdFromCode } from "@/config/questionnaire_config";
 
 /* ---------------------------------------------
@@ -218,21 +218,17 @@ export function buildQuestionnaire(config = {}) {
   const items = (config.questionLinkIds || []).map((lid, idx) => {
     const opts = config.answerOptionsByLinkId?.[lid] ?? DEFAULT_ANSWER_OPTIONS;
     const defaultQText = getDefaultQuestionItemText(lid, idx);
-    return makeQuestionItem(
-      lid,
-      config.itemTextByLinkId?.[lid] ?? defaultQText,
-      opts,
-    );
+    return makeQuestionItem(lid, config.itemTextByLinkId?.[lid] ?? defaultQText, opts);
   });
 
   // optional total score item (readOnly)
   if (config.scoringQuestionId) {
     items.push({
-      linkId: normalizeLinkId(config.scoringQuestionId),
+      linkId: config.scoringQuestionId,
       type: "decimal",
       text: "Total score",
       readOnly: true,
-      code: [{ system: "http://loinc.org", code: config.scoringQuestionId }],
+      code: [{ system: "http://loinc.org", code: normalizeLinkId(config.scoringQuestionId) }],
     });
   }
 
@@ -280,7 +276,10 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
   }
 
   let qLinkIds = Array.from(answersByLinkId.keys()) || config?.questionLinkIds || [];
-  if (config?.scoringQuestionId && qLinkIds.indexOf(config?.scoringQuestionId) === -1) {
+  if (
+    config?.scoringQuestionId &&
+    !qLinkIds.find((qid) => normalizeLinkId(qid) === normalizeLinkId(config?.scoringQuestionId))
+  ) {
     qLinkIds.push(config.scoringQuestionId);
   }
 

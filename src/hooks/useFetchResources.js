@@ -377,13 +377,12 @@ export default function useFetchResources() {
           ? qrResources.filter((it) => it && it.questionnaire && it.questionnaire.split("/")[1])
           : [];
 
-        // Build synthetic Q/QR from observations where configs match
+        // initially populated with pre-load questionnaire list
         let qIds = [...preloadList];
         // Determine Questionnaire list & fetch (if not already fetched via preload parallel path)
         const matchedQIds = matchedQRs?.map((it) => it.questionnaire?.split("/")[1]) ?? [];
         const uniqueQIds = [...new Set([...qIds, ...matchedQIds])];
         const qListToLoad = hasPreload ? preloadList : uniqueQIds;
-        const queryQByExactMatch = exactMatchById || !isEmptyArray(matchedQIds);
 
         const syntheticQs = [],
           syntheticQRs = [];
@@ -413,9 +412,9 @@ export default function useFetchResources() {
           if (isEmptyArray(qListToLoad)) {
             dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
           } else {
-            const qPath = getFHIRResourcePath(pid, [QUESTIONNAIRE_DATA_KEY], {
+            const qPath = getFHIRResourcePath(pid, QUESTIONNAIRE_DATA_KEY, {
               questionnaireList: qListToLoad,
-              exactMatchById: queryQByExactMatch,
+              exactMatchById: exactMatchById,
             });
 
             const qTask = {
@@ -456,7 +455,7 @@ export default function useFetchResources() {
           questionnaires,
           questionnaireResponses,
           qListToLoad,
-          exactMatchById: queryQByExactMatch,
+          exactMatchById: exactMatchById,
         };
       });
     },
