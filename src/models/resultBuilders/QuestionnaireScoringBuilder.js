@@ -375,8 +375,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       return {
         id: q.linkId,
         answer: this.getAnswerItemDisplayValue(ans),
-        question: this.isLinkIdEquals(q.linkId, configToUse?.scoringQuestionId) ? `<b>${q.text}</b>` : q.text,
-        text: resp?.text ? resp?.text : q.text,
+        question: q.text,
+        text: resp?.text ? resp?.text : "",
         type: q.type,
       };
     });
@@ -511,37 +511,43 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return !isEmptyArray(data) && !!data.find((item) => isNumber(item.score));
   }
 
-  _getMatchedAnswerByLinkIdDateId(data, question_linkId, responses_date, responses_id) {
+  _getMatchedAnswerByDateId(data, rowData, responses_date, responses_id) {
     const matchItem = (data || []).find((item) => item.id === responses_id && item.date === responses_date);
     if (!matchItem || isEmptyArray(matchItem.responses)) return "--";
-    const answerItem = matchItem.responses.find((o) => o.id === question_linkId);
-    return answerItem ? this._getAnswer(answerItem) : "--";
+    const answerItem = matchItem.responses.find(
+      (o) => this.isLinkIdEquals(o?.id, rowData?.id) || normalizeStr(o?.question) === normalizeStr(rowData?.question),
+    );
+    // console.log("answerItem ", answerItem);
+    return this._getAnswer(answerItem);
   }
 
   _formatTableResponseData = (data) => {
-    if (!this._hasResponseData(data)) return null;
+    if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
 
-    const dates = data.map((item) => ({ date: item.date, id: item.id }));
+    const dates = data.map((item) => ({ date: item.date, id: item.id, raw: item }));
 
     // Use the row with max responses as the “schema”
     const anchorRowData = [...data].sort((a, b) => (b.responses?.length || 0) - (a.responses?.length || 0))[0];
     if (!anchorRowData || isEmptyArray(anchorRowData.responses)) return null;
 
     // Build a set of all question ids
-    const qIds = new Set(anchorRowData.responses.map((r) => r.id));
-    for (const d of data) {
-      for (const r of d.responses || []) qIds.add(r.id);
-    }
+    let qIds = new Set(anchorRowData.responses.map((r) => r.id)),
+      configToUse;
+    if (data[0].questionnaireId) configToUse = questionnaireConfig[data[0].questionnaireId];
+    if (!qIds && configToUse && configToUse.questionLinkIds) qIds = configToUse.questionLinkIds;
 
     const result = [...qIds].map((qid) => {
       const row = {};
       // Question text from first available response carrying that qid
       const sample =
-        (anchorRowData.responses || []).find((r) => r.id === qid) ||
-        (data.find((d) => (d.responses || []).some((r) => r.id === qid))?.responses || []).find((r) => r.id === qid);
-      row.question = sample ? this._getQuestion(sample) : qid;
+        (anchorRowData.responses || []).find((r) => this.isLinkIdEquals(r.id, qid)) ||
+        (data.find((d) => (d.responses || []).some((r) => this.isLinkIdEquals(r.id, qid)))?.responses || []).find((r) =>
+          this.isLinkIdEquals(r.id, qid),
+        );
+      row.id = qid;
+      row.question = sample ? this._getQuestion(sample) : `Question ${qid}`;
       for (const d of dates) {
-        row[d.id] = this._getMatchedAnswerByLinkIdDateId(data, qid, d.date, d.id);
+        row[d.id] = this._getMatchedAnswerByDateId(data, sample, d.date, d.id);
       }
       return row;
     });
@@ -562,7 +568,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const headerRow = ["Questions", getLocaleDateStringFromDate(first.date)];
     const bodyRows = (first.responses || []).map((row) => [
       this._getQuestion(row),
-      this._getMatchedAnswerByLinkIdDateId(data, row.id, first.date, first.id),
+      this._getMatchedAnswerByDateId(data, row, first.date, first.id),
     ]);
     const scoreRow = this._hasScoreData(data) ? [{ score: first.score, scoreParams: params }] : null;
 
@@ -619,7 +625,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     }
 
     const scoringParams = config?.scoringParams;
-    const chartParams =  { ...chartConfig, ...scoringParams };
+    const chartParams = { ...chartConfig, ...scoringParams };
 
     return {
       config: config,

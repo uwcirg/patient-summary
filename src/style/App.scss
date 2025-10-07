@@ -1,4 +1,4 @@
-$chart-background-color: #f6f7fa;
+$chart-background-color: #fbfcff;
 $muted-text-color: #4f4d4d;
 $border-color: #ececec;
 $app-background-color: #faf9fa;
@@ -6,6 +6,7 @@ $summary-container-background-color: #fff;
 $default-print-background-color: #fff;
 $default-print-color: #444;
 $success-color: #1d771d;
+$header-height: 52px;
 
 html {
   scrollbar-gutter: stable; /* Reserve space to prevent shifts */
@@ -19,14 +20,14 @@ body {
   height: 100%;
 }
 body {
-  padding: 0;
-  margin: 0;
+  padding: 0 !important;
+  margin: 0 !important;
   font-family: "Roboto", sans-serif;
   font-size: 14px !important;
   background-color: $app-background-color;
 }
 main {
-  min-height: 100%;
+  min-height: calc(100vh - $header-height);
   overflow-x: hidden;
   background-color: $app-background-color;
 }
@@ -64,6 +65,9 @@ p {
 
 .ghost {
   visibility: hidden;
+  &.logo {
+    width: 40px;
+  }
 }
 
 .invisible {
@@ -244,6 +248,13 @@ p {
       }
     }
   }
+  .recharts-responsive-container,
+  .recharts-legend-item {
+    box-shadow: none !important;
+    &:after {
+      display: none;
+    }
+  }
   .recharts-legend-wrapper {
     left: 4px !important;
     li {
@@ -259,7 +270,7 @@ p {
     border-bottom: 1px solid $default-print-color !important;
   }
   .accordion-wrapper:not(:last-of-type),
-  .summary:not(:last-of-type) {
+  .summary-container:not(:last-of-type) {
     page-break-after: always;
   }
   .MuiToolbar-root {

@@ -158,8 +158,7 @@ export default function Responses(props) {
           <TableBody>
             {bodyRows.map((row, index) => (
               <TableRow
-                key={`row_content_${index}`}
-                id={`row_content_${index}`}
+                key={`row_content_${row.id}_${index}`}
               >
                 {row.map((cell, index) => {
                   if (index === 0) {

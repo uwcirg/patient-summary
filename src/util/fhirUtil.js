@@ -6,7 +6,7 @@ import {
   FLOWSHEET_SYSTEM,
   // LOINC_CODE_LINK_ID_MAPPINGS,
 } from "@/consts/index.js";
-import { questionTextsByLoincCode } from "@/consts";
+// import { questionTextsByLoincCode } from "@/consts";
 
 /*
  * @param client, FHIR client object
@@ -344,8 +344,10 @@ export function getComponentValues(components = []) {
 export function getDefaultQuestionItemText(linkId, index) {
   if (!linkId) return "";
   const codeBit = String(linkId).match(/(\d+-\d)$/)?.[1]; // grabs "44250-9" if present
-  let qText = questionTextsByLoincCode[codeBit];
-  return qText ? qText : (isNumber(index) ? `Question ${index}` : "") + (codeBit ? " " + codeBit : "");
+  if (!codeBit || !isNumber(index)) return "";
+  return (isNumber(index) ? `Question ${index}` : "") + (codeBit ? " " + codeBit : "");
+  // let qText = questionTextsByLoincCode[codeBit];
+  // return qText ? qText : (isNumber(index) ? `Question ${index}` : "") + (codeBit ? " " + codeBit : "");
 }
 
 export function makeQuestionItem(linkId, text, answerOptions) {

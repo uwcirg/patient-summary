@@ -396,7 +396,7 @@ export default function useFetchResources() {
               const cfgLinkIds = toStringArray([...(cfg.questionLinkIds ?? [])]);
               const hit = cfgLinkIds.find((linkId) => obsCodes.includes(normalizeLinkId(linkId)));
               if (!hit) continue;
-              const builtQ = buildQuestionnaire(cfg);
+              const builtQ = buildQuestionnaire(obResources, cfg);
               const builtQRs = observationsToQuestionnaireResponses(obResources, cfg) || [];
               console.log("builtQ ", builtQ);
               console.log("builtQRs ", builtQRs);

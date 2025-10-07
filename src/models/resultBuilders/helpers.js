@@ -8,7 +8,7 @@ import {
   normalizeLinkId,
   makeQuestionItem,
 } from "@util/fhirUtil";
-import { generateUUID, isEmptyArray, isNumber } from "@util";
+import { generateUUID, isEmptyArray, isNil, isNumber } from "@util";
 import { DEFAULT_ANSWER_OPTIONS } from "@/consts";
 import { findMatchingQuestionLinkIdFromCode } from "@/config/questionnaire_config";
 
@@ -214,11 +214,14 @@ export function summarizeMiniCogHelper(
 }
 
 /* --------------------------- build questionnaire based on config/params --------------------------- */
-export function buildQuestionnaire(config = {}) {
-  const items = (config.questionLinkIds || []).map((lid, idx) => {
+export function buildQuestionnaire(resources = [], config = {}) {
+  const qLinkIdList = config.questionLinkIds || [];
+  const items = qLinkIdList.map((lid, idx) => {
     const opts = config.answerOptionsByLinkId?.[lid] ?? DEFAULT_ANSWER_OPTIONS;
+    const match = resources.find(o => findMatchingQuestionLinkIdFromCode(o, qLinkIdList));
     const defaultQText = getDefaultQuestionItemText(lid, idx);
-    return makeQuestionItem(lid, config.itemTextByLinkId?.[lid] ?? defaultQText, opts);
+    const text = match ? conceptText(match) : (config.itemTextByLinkId?.[lid] ?? defaultQText);
+    return makeQuestionItem(lid, text, opts);
   });
 
   // optional total score item (readOnly)
@@ -260,36 +263,37 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
     trimToMinutes(group[0]?.effectiveDateTime) ||
     trimToMinutes(group[0]?.issued) ||
     new Date().toISOString();
+  const qLinkIdList = config?.questionLinkIds?.map((id) => normalizeLinkId(id));
 
   // map answers
   const answersByLinkId = new Map();
   const textByLinkId = new Map();
   for (const obs of group) {
-    let lid = config.getLinkId
-      ? config.getLinkId(obs, config)
-      : (findMatchingQuestionLinkIdFromCode(obs, config?.questionLinkIds) ?? obs.id);
+    let lid = normalizeLinkId(
+      config.getLinkId
+        ? config.getLinkId(obs, config)
+        : (findMatchingQuestionLinkIdFromCode(obs, qLinkIdList) ?? obs.id),
+    );
     if (!lid) continue;
     const ans = config.answerMapper ? config.answerMapper(obs) : getValueFromResource(obs);
-    if (!ans) continue;
-    answersByLinkId.set(lid, ans);
+    if (!isNil(ans)) answersByLinkId.set(lid, ans);
     textByLinkId.set(lid, conceptText(obs.code));
   }
 
-  let qLinkIds = Array.from(answersByLinkId.keys()) || config?.questionLinkIds || [];
+  let qLinkIds = Array.from(answersByLinkId.keys()) || qLinkIdList || [];
   if (
     config?.scoringQuestionId &&
     !qLinkIds.find((qid) => normalizeLinkId(qid) === normalizeLinkId(config?.scoringQuestionId))
   ) {
-    qLinkIds.push(config.scoringQuestionId);
+    qLinkIds.push(normalizeLinkId(config.scoringQuestionId));
   }
 
-  const items = [...new Set(qLinkIds)].map((lid, idx) => {
+  const items = [...new Set(qLinkIds)].map((lid) => {
     const ans = answersByLinkId.get(lid);
-    const nLid = normalizeLinkId(lid);
     const text = textByLinkId.get(lid);
     let answerObject = {
-      linkId: nLid,
-      text: text ? text : (getDefaultQuestionItemText(normalizeLinkId(lid)) ?? `Question ${idx + 1}`),
+      linkId: lid,
+      text: text ? text : getDefaultQuestionItemText(normalizeLinkId(lid)),
     };
     if (ans) {
       answerObject["answer"] = [ans];

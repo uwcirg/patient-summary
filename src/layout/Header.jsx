@@ -107,7 +107,7 @@ export default function Header(props) {
               }}
             >
               <img
-                className="header-logo ghost"
+                className="logo header-logo ghost"
                 ref={desktopImgRef}
                 alt={"project logo"}
                 style={{
@@ -140,7 +140,7 @@ export default function Header(props) {
                 alt={"project logo"}
                 onLoad={handleImageLoaded}
                 onError={handleImageLoaded}
-                className="ghost"
+                className="logo ghost"
                 style={{
                   cursor: "pointer",
                   height: 40,

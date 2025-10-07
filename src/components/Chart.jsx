@@ -6,7 +6,7 @@ let resizeChartTimeoutId = 0;
 const Chart = (props) => {
   const eligibleCharts = ["linechart"];
   const chartRef = useRef();
-  const CHART_SPACING = 240;
+  const CHART_SPACING = 320;
 
   useEffect(() => {
     const resizeEvent = () => {

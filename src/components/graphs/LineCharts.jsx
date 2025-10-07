@@ -68,7 +68,7 @@ export default function LineCharts(props) {
       interval="preserveStartEnd"
       angle={270}
     >
-      <Label value={xLabel} offset={4} position="insideBottom" />
+      <Label value={xLabel} offset={-8} position="insideBottom" />
     </XAxis>
   );
   const yDomain = maxYValue ? [0, maxYValue] : [0, "auto"];
@@ -119,6 +119,9 @@ export default function LineCharts(props) {
     <Legend
       formatter={(value) => <span style={{ marginRight: "8px", fontSize: "14px" }}>{value.replace(/_/g, " ")}</span>}
       iconSize={12}
+      wrapperStyle={{
+        bottom: "12px"
+      }}
     />
   );
   const renderMultipleLines = () =>
@@ -219,17 +222,17 @@ export default function LineCharts(props) {
             sm: chartWidth,
             lg: lgChartWidth ? lgChartWidth : chartWidth,
           },
-          height: "calc(100% - 40px)",
+          height: "calc(100% - 120px)",
         }}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
           <LineChart
             data={data}
             margin={{
-              top: 30,
+              top: 40,
               right: 80,
               left: 40,
-              bottom: 30,
+              bottom: 40,
             }}
             id={`lineChart_${id ?? generateUUID()}`}
           >
