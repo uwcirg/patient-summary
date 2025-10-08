@@ -90,8 +90,8 @@ export default function Responses(props) {
         else return <span dangerouslySetInnerHTML={{ __html: rowData["question"] }}></span>;
       },
     },
-    ...dates.map((item) => ({
-      id: `date_${item.id}`,
+    ...dates.map((item, index) => ({
+      id: `date_${item.id}_${index}`,
       title: getLocaleDateStringFromDate(item.date),
       field: item.id,
       cellStyle: {

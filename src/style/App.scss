@@ -309,6 +309,13 @@ p {
       }
     }
   }
+  .MuiAccordionSummary-root {
+    background-color: transparent !important;
+    color: #444 !important;
+    svg {
+      display: none !important;
+    }
+  }
   .MuiAccordionDetails-root {
     padding: 8px 0 !important;
   }

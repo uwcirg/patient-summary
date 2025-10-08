@@ -191,10 +191,14 @@ const questionnaireConfigs = {
       "/44252-5",
       "/44253-3",
       "/44260-8",
-      "/69722-7",
+      //"/69722-7",
       "/44261-6",
       "/55758-7",
     ],
+    itemTextByLinkId: {
+      "/55758-7": "PHQ-2 total score",
+      "/44261-6": "PHQ-9 total score"
+    },
     matchMode: "fuzzy",
     highSeverityScoreCutoff: 20,
     severityBands: [

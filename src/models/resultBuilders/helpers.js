@@ -280,7 +280,9 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
     textByLinkId.set(lid, conceptText(obs.code));
   }
 
-  let qLinkIds = Array.from(answersByLinkId.keys()) || qLinkIdList || [];
+  const answerLinkIdList =  Array.from(answersByLinkId.keys());
+
+  let qLinkIds = !isEmptyArray(answerLinkIdList) ? answerLinkIdList : (qLinkIdList || []);
   if (
     config?.scoringQuestionId &&
     !qLinkIds.find((qid) => normalizeLinkId(qid) === normalizeLinkId(config?.scoringQuestionId))
