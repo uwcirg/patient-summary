@@ -14,7 +14,7 @@ import FhirResultBuilder from "./FhirResultBuilder";
 import { buildQuestionnaire, summarizeCIDASHelper, summarizeMiniCogHelper, summarizeSLUMHelper } from "./helpers";
 import { DEFAULT_FALLBACK_SCORE_MAPS } from "@/consts";
 import questionnaireConfig from "@/config/questionnaire_config";
-import { linkIdEquals } from "@/util/fhirUtil";
+import { getQuestionnaireItemByLinkId, linkIdEquals } from "@/util/fhirUtil";
 
 const RT_QR = "questionnaireresponse";
 const RT_Q = "Questionnaire";
@@ -479,6 +479,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         authoredDate: qr.authored,
         lastUpdated: qr.meta?.lastUpdated,
         config: config,
+        questionnaire: questionnaire,
       };
     });
 
@@ -515,9 +516,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const matchItem = (data || []).find((item) => item.id === responses_id && item.date === responses_date);
     if (!matchItem || isEmptyArray(matchItem.responses)) return "--";
     const answerItem = matchItem.responses.find(
-      (o) => this.isLinkIdEquals(o?.id, rowData?.id) || normalizeStr(o?.question) === normalizeStr(rowData?.question),
+      (o) => this.isLinkIdEquals(o?.id, rowData?.id),
     );
-    // console.log("answerItem ", answerItem);
     return this._getAnswer(answerItem);
   }
 
@@ -545,7 +545,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           this.isLinkIdEquals(r.id, qid),
         );
       row.id = qid;
-      row.question = sample ? this._getQuestion(sample) : `Question ${qid}`;
+      const qItem = getQuestionnaireItemByLinkId(anchorRowData.questionnaire, qid);
+      row.question = sample ? this._getQuestion(sample) : qItem && qItem.text ? qItem.text : `Question ${qid}`;
       for (const d of dates) {
         row[d.id] = this._getMatchedAnswerByDateId(data, sample, d.date, d.id);
       }

@@ -350,6 +350,12 @@ export function getDefaultQuestionItemText(linkId, index) {
   // return qText ? qText : (isNumber(index) ? `Question ${index}` : "") + (codeBit ? " " + codeBit : "");
 }
 
+export function getQuestionnaireItemByLinkId(questionnaire, linkId) {
+  if (!questionnaire) return null;
+  if (isEmptyArray(questionnaire.item)) return null;
+  return questionnaire.item?.find((o) => linkIdEquals(o.linkId, linkId));
+}
+
 export function makeQuestionItem(linkId, text, answerOptions) {
   return {
     linkId: normalizeLinkId(linkId),
