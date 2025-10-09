@@ -259,15 +259,6 @@ export function getValueText(O) {
 export const getValueFromResource = (resourceItem) => {
   const n = resourceItem?.valueQuantity ? Number(resourceItem?.valueQuantity?.value ?? undefined) : undefined;
   if (isFinite(n)) {
-    // const code = conceptCode(resourceItem?.code);
-    // const linkId = code ? getLinkIdFromLoincCode(code) : null;
-    // if (linkId) {
-    //   const coding = DEFAULT_VAL_TO_LOIN_CODE[n];
-    //   if (coding) return { valueCoding: coding };
-    //   return {
-    //     valueQuantity: resourceItem["valueQuantity"],
-    //   };
-    // }
     return {
       valueQuantity: resourceItem["valueQuantity"],
     };
@@ -346,8 +337,6 @@ export function getDefaultQuestionItemText(linkId, index) {
   const codeBit = String(linkId).match(/(\d+-\d)$/)?.[1]; // grabs "44250-9" if present
   if (!codeBit || !isNumber(index)) return "";
   return (isNumber(index) ? `Question ${index}` : "") + (codeBit ? " " + codeBit : "");
-  // let qText = questionTextsByLoincCode[codeBit];
-  // return qText ? qText : (isNumber(index) ? `Question ${index}` : "") + (codeBit ? " " + codeBit : "");
 }
 
 export function getQuestionnaireItemByLinkId(questionnaire, linkId) {
@@ -384,13 +373,6 @@ export const getFlowsheetIdFromOb = (item) => {
   const matchIds = getFlowsheetCodeIds();
   return coding.find((c) => matchIds.indexOf(c.code) !== -1)?.code;
 };
-
-// export const getLinkIdFromLoincCode = (id) => {
-//   if (id && LOINC_CODE_LINK_ID_MAPPINGS[id]) {
-//     return LOINC_CODE_LINK_ID_MAPPINGS[id];
-//   }
-//   return null;
-// };
 
 export function getCodeableCodesFromObservation(obResources) {
   if (isEmptyArray(obResources)) return [];
