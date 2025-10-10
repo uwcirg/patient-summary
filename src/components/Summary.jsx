@@ -85,7 +85,7 @@ export default function Summary(props) {
       >
         <Stack direction="row" spacing={1} alignItems="flex-start">
           {/* questionnaire title */}
-          <div>{renderTitle()}</div>
+          <div className="questionnaire-title-container">{renderTitle()}</div>
           <QuestionnaireInfo questionnaireJson={summary?.questionnaire}></QuestionnaireInfo>
         </Stack>
         {!summary && renderAlert()}

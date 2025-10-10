@@ -6,7 +6,7 @@ let resizeChartTimeoutId = 0;
 const Chart = (props) => {
   const eligibleCharts = ["linechart"];
   const chartRef = useRef();
-  const CHART_SPACING = 320;
+  const CHART_SPACING = 280;
 
   useEffect(() => {
     const resizeEvent = () => {
@@ -28,8 +28,8 @@ const Chart = (props) => {
           sm: "100%",
           md: "50%",
         },
-        height: window.innerHeight - CHART_SPACING + "px",
-        minHeight: props.data && props.data.chartHeight ? props.data.chartHeight + "px" : "520px",
+      height: window.innerHeight - CHART_SPACING + "px",
+       // minHeight: props.data && props.data.chartHeight ? props.data.chartHeight + "px" : "520px",
       }}
       ref={chartRef}
     >

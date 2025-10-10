@@ -30,6 +30,7 @@ const renderScoringSummary = (props) => {
           marginRight: (theme) => theme.spacing(1),
         }}
         flexWrap={"wrap"}
+        className="score-summary-wrapper"
       >
         {!isEmptyArray(chartData) && chartKeys.length > 1 && (
           <Box
@@ -42,6 +43,7 @@ const renderScoringSummary = (props) => {
               },
               width: "100%",
             }}
+            className="chart-container-wrapper"
           >
             <ChartSummary data={chartData} keys={chartKeys}></ChartSummary>
           </Box>

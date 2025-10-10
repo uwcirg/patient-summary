@@ -8,6 +8,7 @@ export default function Version() {
     return (
       <Box
         sx={{ marginTop: 2, color: "muted.main", fontSize: "0.9em"}}
+        className="print-hidden"
       >{`Version: ${versionString}`}</Box>
     );
 }

@@ -222,7 +222,7 @@ export default function LineCharts(props) {
             sm: chartWidth,
             lg: lgChartWidth ? lgChartWidth : chartWidth,
           },
-          height: "calc(100% - 120px)",
+          height: "calc(100% - 40px)",
         }}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>

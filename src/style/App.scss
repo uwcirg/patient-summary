@@ -69,7 +69,6 @@ p {
     width: 40px;
   }
 }
-
 .invisible {
   display: none;
   width: 0;
@@ -119,6 +118,9 @@ p {
       left: 0;
     }
   }
+}
+.questionnaire-title::first-letter {
+  text-transform: capitalize;
 }
 .responses-container {
   position: relative;
@@ -198,10 +200,13 @@ p {
 
 @media print {
   @page {
-    margin: 5mm 5mm 5mm 5mm;
+    margin: 2mm 2mm 2mm 2mm;
   }
   .summaries {
     background-color: $summary-container-background-color;
+    h3 {
+      font-size: 1rem;
+    }
   }
   .scoring-summary-table {
     // page-break-after: always;
@@ -222,9 +227,11 @@ p {
   header {
     background-color: $default-print-background-color !important;
     box-shadow: none !important;
+    border-bottom: 1px solid #777 !important;
   }
   .scoring-summary-container {
     padding: 0 !important;
+    page-break-inside: avoid;
     th,
     td {
       position: relative !important;
@@ -234,6 +241,7 @@ p {
     }
   }
   .chart__container {
+    height: auto !important;
     width: 100% !important;
     background-color: $default-print-background-color !important;
   }
@@ -255,20 +263,38 @@ p {
       display: none;
     }
   }
+  .recharts-responsive-container {
+    border: 1px solid #ececec;
+    min-height: auto !important;
+  }
   .recharts-legend-wrapper {
     left: 4px !important;
+    min-height: auto !important;
     li {
       box-shadow: none;
       padding: 0;
     }
   }
+  .score-summary-wrapper {
+    .recharts-legend-wrapper {
+       top: 8px !important;
+    }
+  }
   .recharts-legend-item-text {
     font-size: 10px;
   }
-  .questionnaire-title {
+  .questionnaire-title-container {
     width: 100%;
-    border-bottom: 1px solid $default-print-color !important;
+    .questionnaire-title {
+      font-size: 0.95rem;
+      border-bottom: 1px solid $default-print-color !important;
+      width: 100%;
+    }
   }
+  // .accordion-wrapper:not(:last-of-type),
+  // .summary-container:not(:last-of-type) {
+  //   page-break-after: always;
+  // }
   .accordion-wrapper:not(:last-of-type),
   .summary-container:not(:last-of-type) {
     page-break-after: always;
@@ -310,6 +336,7 @@ p {
     }
   }
   .MuiAccordionSummary-root {
+    padding: 0 !important;
     background-color: transparent !important;
     color: #444 !important;
     svg {
@@ -318,6 +345,9 @@ p {
   }
   .MuiAccordionDetails-root {
     padding: 8px 0 !important;
+  }
+  .summary {
+    display: block;
   }
   .table-container {
     border: 0 !important;
