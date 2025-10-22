@@ -15,14 +15,17 @@ export default function PROReport() {
   //const keys = Object.keys(summaries ?? {});
   const renderTwoColumns = (table) => {
     const allCharts = table.rows.map((row) => row.chartData);
-    console.log("allcharts ", allCharts)
     return (
       <Stack
         direction="row"
         spacing={1}
         alignItems="center"
         className="response-summary"
-        flexWrap={"nowrap"}
+        flexWrap={{
+          xs: "wrap",
+          sm: "wrap",
+          md: "nowrap",
+        }}
         key={`wrapper_${table.id}`}
         sx={{
           padding: (theme) => theme.spacing(1),
@@ -69,7 +72,7 @@ export default function PROReport() {
             scoringSummaryData={table.rows}
             disableLinks={true}
             tableStyle={{
-              width: "auto"
+              width: "auto",
             }}
             {...table}
           ></ScoringSummary>
