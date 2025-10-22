@@ -11,6 +11,7 @@ import {
 import { generateUUID, isEmptyArray, isNil, isNumber } from "@util";
 import { DEFAULT_ANSWER_OPTIONS } from "@/consts";
 import { findMatchingQuestionLinkIdFromCode } from "@/config/questionnaire_config";
+import Questionnaire from "@/models/Questionnaire";
 
 /* ---------------------------------------------
  * External helpers
@@ -59,7 +60,7 @@ export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, 
       scoreSeverity,
       scoreMeaning: ctx.meaningFromSeverity(scoreSeverity),
       comparisonToAlert: "lower",
-      scoringParams: { maximumScore: ctx.cfg.scoringParams?.maximumScore ?? 30 },
+      scoringParams: { maximumScore: ctx.cfg.scoringParams?.maximumScore ?? 30, scoreSeverity: scoreSeverity },
       highSeverityScoreCutoff: hasLowerLevelEducation ? 19 : 20,
       totalAnsweredItems,
       totalItems,
@@ -111,7 +112,7 @@ export function summarizeCIDASHelper(
       highSeverityScoreCutoff,
       scoreMeaning: ctx.meaningFromSeverity(scoreSeverity),
       alertNote: suicideScore >= 1 ? "suicide concern" : null,
-      scoringParams: { maximumScore },
+      scoringParams: { maximumScore, scoreSeverity },
       totalAnsweredItems,
       totalItems,
       authoredDate: qr.authored,
@@ -201,7 +202,7 @@ export function summarizeMiniCogHelper(
       scoreSeverity,
       scoreMeaning: ctx.meaningFromSeverity(scoreSeverity),
       comparisonToAlert: "lower",
-      scoringParams: ctx.cfg.scoringParams ?? { maximumScore: 5 },
+      scoringParams: {...ctx.cfg.scoringParams ?? { maximumScore: 5 }, scoreSeverity},
       highSeverityScoreCutoff,
       totalAnsweredItems,
       totalItems,
@@ -218,7 +219,7 @@ export function buildQuestionnaire(resources = [], config = {}) {
   const qLinkIdList = config.questionLinkIds || [];
   const items = qLinkIdList.map((lid, idx) => {
     const opts = config.answerOptionsByLinkId?.[lid] ?? DEFAULT_ANSWER_OPTIONS;
-    const match = resources.find(o => findMatchingQuestionLinkIdFromCode(o, qLinkIdList));
+    const match = resources.find((o) => findMatchingQuestionLinkIdFromCode(o, qLinkIdList));
     const defaultQText = getDefaultQuestionItemText(lid, idx);
     const text = match ? conceptText(match) : (config.itemTextByLinkId?.[lid] ?? defaultQText);
     return makeQuestionItem(lid, text, opts);
@@ -280,9 +281,9 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
     textByLinkId.set(lid, conceptText(obs.code));
   }
 
-  const answerLinkIdList =  Array.from(answersByLinkId.keys());
+  const answerLinkIdList = Array.from(answersByLinkId.keys());
 
-  let qLinkIds = !isEmptyArray(answerLinkIdList) ? answerLinkIdList : (qLinkIdList || []);
+  let qLinkIds = !isEmptyArray(answerLinkIdList) ? answerLinkIdList : qLinkIdList || [];
   if (
     config?.scoringQuestionId &&
     !qLinkIds.find((qid) => normalizeLinkId(qid) === normalizeLinkId(config?.scoringQuestionId))
@@ -387,10 +388,14 @@ export function buildScoringSummaryRows(summaryData, opts = {}) {
     const prev = getPreviousWithScore(responses);
 
     const instrumentName =
-      (instrumentNameByKey && instrumentNameByKey(key, q)) || q?.shortName || q?.displayName || key;
+      (instrumentNameByKey && instrumentNameByKey(key, q)) || new Questionnaire(q).shortName || key;
 
     const lastAssessedISO = current?.date ?? null;
-    const lastAssessed = formatDate ? formatDate(lastAssessedISO) : lastAssessedISO;
+    const lastAssessed = lastAssessedISO
+      ? formatDate
+        ? formatDate(lastAssessedISO)
+        : new Date(lastAssessedISO).toLocaleDateString()
+      : "";
 
     const curScore = isNumber(current?.score) ? current.score : (current?.score ?? null);
     const minScore = isNumber(current?.scoringParams?.minimumScore) ? current.scoringParams.minimumScore : 0;
@@ -399,6 +404,11 @@ export function buildScoringSummaryRows(summaryData, opts = {}) {
     const totalAnswered = isNumber(current?.totalAnsweredItems) ? current.totalAnsweredItems : null;
     const totalItems = isNumber(current?.totalItems) ? current.totalItems : null;
 
+    // const meaning =
+    //   current?.scoreMeaning ??
+    //   (isNumber(totalAnswered) && isNumber(totalItems) && totalItems >= 1 && totalAnswered < totalItems
+    //     ? "incomplete"
+    //     : "--");
     const meaning = current?.scoreMeaning ?? null;
     const comparisonToAlert = current?.comparisonToAlert ?? "";
 
@@ -411,7 +421,7 @@ export function buildScoringSummaryRows(summaryData, opts = {}) {
       else comparison = "equal";
     }
 
-    const scoringParams = current;
+    const scoringParams = current?.scoringParams;
 
     return {
       key,

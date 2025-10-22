@@ -8,15 +8,18 @@ import {
   ReferenceArea,
   ReferenceLine,
   XAxis,
-  YAxis,
+  //  YAxis,
   CartesianGrid,
-  Text,
+  // Text,
   Tooltip,
   Label,
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { generateUUID, range } from "@/util";
+import {
+  generateUUID,
+  //range
+} from "@/util";
 export default function LineCharts(props) {
   const {
     id,
@@ -31,10 +34,12 @@ export default function LineCharts(props) {
     xFieldKey,
     xLabel,
     maximumScore,
+    highScore,
+    //  minimumScore,
     yFieldKey,
     yLineFields,
-    yLabel,
-    yTickFormatter,
+    //  yLabel,
+    //   yTickFormatter,
     tooltipLabelFormatter,
     data,
   } = props;
@@ -43,6 +48,7 @@ export default function LineCharts(props) {
   let maxYValue = maximumScore
     ? maximumScore
     : data?.reduce((m, d) => Math.max(m, Number(d?.score ?? -Infinity)), -Infinity);
+  // let minYValue = minimumScore ?? 0;
   maxYValue = !data || maxYValue === -Infinity ? null : maxYValue;
   const defaultOptions = {
     activeDot: { r: 6 },
@@ -52,7 +58,7 @@ export default function LineCharts(props) {
     legendType: legendType || "line",
   };
   const renderTitle = () => (
-    <Typography variant="subtitle1" component="h4" color="secondary" sx={{ textAlign: "center", marginTop: 2 }}>
+    <Typography variant="subtitle1" component="h4" color="secondary" sx={{ textAlign: "center", marginTop: 1 }}>
       {title}
     </Typography>
   );
@@ -68,44 +74,44 @@ export default function LineCharts(props) {
       interval="preserveStartEnd"
       angle={270}
     >
-      <Label value={xLabel} offset={-8} position="insideBottom" />
+      {xLabel && <Label value={xLabel} offset={-8} position="insideBottom" />}
     </XAxis>
   );
-  const yDomain = maxYValue ? [0, maxYValue] : [0, "auto"];
-  const yTicks = maxYValue ? range(0, maxYValue) : range(0, 50);
+  // const yDomain = maxYValue ? [minYValue??0, maxYValue] : [minYValue??0, "auto"];
+  // const yTicks = maxYValue ? range(minYValue??0, maxYValue) : range(minYValue??0, 50);
 
-  const renderYAxis = () => (
-    <YAxis
-      domain={yDomain}
-      label={{ value: yLabel, angle: -90, position: "insideLeft" }}
-      minTickGap={8}
-      tick={(e) => {
-        const configData = data.find((item) => item.highSeverityScoreCutoff);
-        let color = "#666";
-        const {
-          payload: { value },
-        } = e;
-        if (configData) {
-          if (configData.comparisonToAlert === "lower") {
-            if (value <= parseInt(configData.highSeverityScoreCutoff)) {
-              color = "red";
-            }
-          } else {
-            if (value >= parseInt(configData.highSeverityScoreCutoff)) {
-              color = "red";
-            }
-          }
-        }
-        e["fill"] = color;
-        e["fontSize"] = "12px";
-        e["fontWeight"] = 500;
-        return <Text {...e}>{value}</Text>;
-      }}
-      tickFormatter={yTickFormatter}
-      ticks={yTicks}
-      tickMargin={8}
-    />
-  );
+  // const renderYAxis = () => (
+  //   <YAxis
+  //     domain={yDomain}
+  //     label={{ value: yLabel, angle: -90, position: "insideLeft" }}
+  //     minTickGap={8}
+  //     tick={(e) => {
+  //       const configData = data.find((item) => item.highSeverityScoreCutoff);
+  //       let color = "#666";
+  //       const {
+  //         payload: { value },
+  //       } = e;
+  //       if (configData) {
+  //         if (configData.comparisonToAlert === "lower") {
+  //           if (value <= parseInt(configData.highSeverityScoreCutoff)) {
+  //             color = "red";
+  //           }
+  //         } else {
+  //           if (value >= parseInt(configData.highSeverityScoreCutoff)) {
+  //             color = "red";
+  //           }
+  //         }
+  //       }
+  //       e["fill"] = color;
+  //       e["fontSize"] = "12px";
+  //       e["fontWeight"] = 500;
+  //       return <Text {...e}>{value}</Text>;
+  //     }}
+  //     tickFormatter={yTickFormatter}
+  //     ticks={yTicks}
+  //     tickMargin={8}
+  //   />
+  // );
   const renderToolTip = () => (
     <Tooltip
       itemStyle={{ fontSize: "10px" }}
@@ -120,7 +126,7 @@ export default function LineCharts(props) {
       formatter={(value) => <span style={{ marginRight: "8px", fontSize: "14px" }}>{value.replace(/_/g, " ")}</span>}
       iconSize={12}
       wrapperStyle={{
-        bottom: "12px"
+        bottom: "12px",
       }}
     />
   );
@@ -145,7 +151,13 @@ export default function LineCharts(props) {
       type="monotone"
       dataKey={yFieldKey}
       stroke={theme.palette.primary.main}
-      strokeWidth={strokeWidth ? strokeWidth : 2}
+      dot={({ cx, cy, value }) => {
+        let color;
+        if (highScore && value >= highScore) color = "red";
+        else color = "green";
+        return <circle cx={cx} cy={cy} r={4} fill={color} stroke="none" />;
+      }}
+      strokeWidth={strokeWidth ? strokeWidth : 1}
     />
   );
   const renderMinScoreMeaningLabel = () => {
@@ -222,23 +234,24 @@ export default function LineCharts(props) {
             sm: chartWidth,
             lg: lgChartWidth ? lgChartWidth : chartWidth,
           },
-          height: "calc(100% - 40px)",
+          //     height: "calc(100% - 40px)",
+          height: 250,
         }}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
           <LineChart
             data={data}
             margin={{
-              top: 40,
-              right: 80,
+              top: 20,
+              right: 40,
               left: 40,
-              bottom: 40,
+              bottom: 20,
             }}
             id={`lineChart_${id ?? generateUUID()}`}
           >
-            <CartesianGrid strokeDasharray="2 2" />
+            <CartesianGrid strokeDasharray="2 2" horizontal={false} fill="#f9f7f7ff" />
             {renderXAxis()}
-            {renderYAxis()}
+            {/* {renderYAxis()} */}
             {renderScoreSeverityCutoffLine()}
             {renderScoreSeverityArea()}
             {renderToolTip()}

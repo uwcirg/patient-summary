@@ -63,7 +63,10 @@ export function processPage(client, resources = []) {
 
 export function getFHIRResourceTypesToLoad() {
   const sections = getSectionsToShow();
-  const resourceTypes = sections.map((section) => section.resources).flat();
+  const resourceTypes = sections
+    .map((section) => section.resources)
+    .filter((resource) => !!resource)
+    .flat();
   return [...new Set(resourceTypes)];
 }
 
@@ -104,6 +107,7 @@ export function getFHIRResourceQueryParams(resourceType, options) {
 }
 
 export function getFHIRResourcePath(patientId, resourceType, options) {
+  if (!resourceType) return "";
   const { resourcePath } = getFHIRResourcePaths(patientId, [resourceType], options)[0];
   return resourcePath;
 }
@@ -111,23 +115,25 @@ export function getFHIRResourcePath(patientId, resourceType, options) {
 export function getFHIRResourcePaths(patientId, resourceTypesToLoad, options) {
   if (!patientId) return [];
   if (isEmptyArray(resourceTypesToLoad)) return [];
-  return resourceTypesToLoad.map((resource) => {
-    let path = `/${resource}`;
-    const paramsObj = getFHIRResourceQueryParams(resource, {
-      ...(options ? options : {}),
-      patientId: patientId,
-    });
-    if (paramsObj && !isEmptyArray(Object.keys(paramsObj))) {
-      const searchParams = new URLSearchParams(paramsObj);
-      if (searchParams) {
-        path = path + "?" + searchParams.toString();
+  return resourceTypesToLoad
+    .filter((resource) => !!resource)
+    .map((resource) => {
+      let path = `/${resource}`;
+      const paramsObj = getFHIRResourceQueryParams(resource, {
+        ...(options ? options : {}),
+        patientId: patientId,
+      });
+      if (paramsObj && !isEmptyArray(Object.keys(paramsObj))) {
+        const searchParams = new URLSearchParams(paramsObj);
+        if (searchParams) {
+          path = path + "?" + searchParams.toString();
+        }
       }
-    }
-    return {
-      resourceType: resource,
-      resourcePath: path,
-    };
-  });
+      return {
+        resourceType: resource,
+        resourcePath: path,
+      };
+    });
 }
 
 export function getResourcesByResourceType(patientBundle, resourceType) {

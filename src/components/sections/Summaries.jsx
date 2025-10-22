@@ -6,21 +6,20 @@ import Divider from "@mui/material/Divider";
 import Summary from "@components/Summary";
 import { isEmptyArray } from "@util";
 
-export default function Summaries({ summaryData }) {
-  if (summaryData && summaryData.error) {
+export default function Summaries({ summaryError, summaries }) {
+  if (summaryError) {
     return <Alert severity="error">Error loading data.</Alert>;
   }
-  if (!summaryData) {
+  if (!summaries) {
     return <Alert severity="warning">No data found.</Alert>;
   }
-  const keys = Object.keys(summaryData.data);
+  const keys = Object.keys(summaries);
   if (isEmptyArray(keys)) return <Alert severity="warning">No data found.</Alert>;
 
   return (
     <Box>
       {keys.map((questionnaireId, index) => {
-        const dataObject =
-          summaryData.data && summaryData.data[questionnaireId] ? summaryData.data[questionnaireId] : null;
+        const dataObject = summaries[questionnaireId];
         return (
           <Box className="summary-container" key={`summary_${questionnaireId}_${index}`}>
             <Summary
@@ -44,5 +43,6 @@ export default function Summaries({ summaryData }) {
 }
 
 Summaries.propTypes = {
-  summaryData: PropTypes.object,
+  summaries: PropTypes.object,
+  summaryError: PropTypes.bool
 };

@@ -9,6 +9,7 @@ import ScoreSeverity from "@models/ScoreSeverity";
 
 export default function Scoring(props) {
   const { score, justifyContent, alignItems, scoreParams } = props;
+  console.log("scoreParam ", scoreParams)
   const oSeverity = new ScoreSeverity(scoreParams);
   const getScoreDisplay = () => <span data-testid="score">{isNumber(score) ? score : "--"}</span>;
 

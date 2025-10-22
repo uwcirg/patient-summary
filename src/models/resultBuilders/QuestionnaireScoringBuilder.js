@@ -146,19 +146,21 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (normalizeStr(q.resourceType) === normalizeStr(RT_QR)) {
         if (q.questionnaire) {
           const qIndex = /^Questionnaire\//i.test(q.questionnaire) ? q.questionnaire.split("/")[1] : q.questionnaire;
-          if (questionnaireConfig[qIndex]) {
-            idx[qIndex] = buildQuestionnaire(questionnaireConfig[qIndex]);
-          } else {
-            idx[qIndex] = {
-              resourceType: "Questionnaire",
-              id: qIndex,
-              name: qIndex,
-            };
+          if (!idx[qIndex]) {
+            if (questionnaireConfig[qIndex]) {
+              idx[qIndex] = buildQuestionnaire(questionnaireConfig[qIndex]);
+            } else {
+              idx[qIndex] = {
+                resourceType: "Questionnaire",
+                id: qIndex,
+                name: qIndex,
+              };
+            }
           }
         } else continue;
         continue;
       }
-      if (!q || normalizeStr(q.resourceType) !== normalizeStr(RT_Q)) continue;
+      if (normalizeStr(q.resourceType) !== normalizeStr(RT_Q)) continue;
       if (q.id) idx[q.id] = q;
       if (q.name) idx[normalizeStr(q.name)] = q;
       if (q.url) idx[q.url] = q;
@@ -389,8 +391,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     [
       ...questionnaireItemList,
       ...(responseItemsFlat ?? []).map((item, index) => {
-        if (!item.id)
-          item.id = item.linkId;
+        if (!item.id) item.id = item.linkId;
         const ans = this.firstAnswer(item);
         item.answer = this.getAnswerItemDisplayValue(ans);
         item.question = item.text ?? `Question ${index}`;
@@ -495,7 +496,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         scoreSeverity,
         highSeverityScoreCutoff: config?.highSeverityScoreCutoff,
         scoreMeaning: this.meaningFromSeverity(scoreSeverity, config),
-        scoringParams: config?.scoringParams,
+        scoringParams: {
+          ...(config?.scoringParams ?? {}),
+          scoreSeverity: scoreSeverity,
+        },
         totalItems,
         totalAnsweredItems,
         authoredDate: qr.authored,
@@ -528,7 +532,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
 
   _getAnswerByTargetLinkIdFromResponseData(targetLinkId, responseData, responses_id) {
-    const matchResponseData= (responseData || []).find((item) => item.id === responses_id);
+    const matchResponseData = (responseData || []).find((item) => item.id === responses_id);
     if (!matchResponseData || isEmptyArray(matchResponseData.responses)) return "--";
     const answerItem = matchResponseData.responses.find((o) => this.isLinkIdEquals(o?.id, targetLinkId));
     return this._getAnswer(answerItem);

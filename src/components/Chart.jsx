@@ -1,25 +1,27 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, 
+  //useEffect 
+  } from "react";
 import PropTypes from "prop-types";
 import Error from "./ErrorComponent";
 import LineChart from "./graphs/LineCharts";
-let resizeChartTimeoutId = 0;
+//let resizeChartTimeoutId = 0;
 const Chart = (props) => {
   const eligibleCharts = ["linechart"];
   const chartRef = useRef();
-  const CHART_SPACING = 280;
+ // const CHART_SPACING = 280;
 
-  useEffect(() => {
-    const resizeEvent = () => {
-      clearTimeout(resizeChartTimeoutId);
-      resizeChartTimeoutId = setTimeout(() => {
-        if (chartRef.current) {
-          chartRef.current.style.height = window.innerHeight - CHART_SPACING + "px";
-        }
-      }, 250);
-    };
-    window.addEventListener("resize", resizeEvent);
-    return () => window.removeEventListener("resize", resizeEvent);
-  }, []);
+  // useEffect(() => {
+  //   const resizeEvent = () => {
+  //     clearTimeout(resizeChartTimeoutId);
+  //     resizeChartTimeoutId = setTimeout(() => {
+  //       if (chartRef.current) {
+  //         chartRef.current.style.height = window.innerHeight - CHART_SPACING + "px";
+  //       }
+  //     }, 250);
+  //   };
+  //   window.addEventListener("resize", resizeEvent);
+  //   return () => window.removeEventListener("resize", resizeEvent);
+  // }, []);
   return (
     <div
       className="chart__container"
@@ -28,7 +30,7 @@ const Chart = (props) => {
           sm: "100%",
           md: "50%",
         },
-      height: window.innerHeight - CHART_SPACING + "px",
+     // height: window.innerHeight - CHART_SPACING + "px",
        // minHeight: props.data && props.data.chartHeight ? props.data.chartHeight + "px" : "520px",
       }}
       ref={chartRef}

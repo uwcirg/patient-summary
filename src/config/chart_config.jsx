@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { isEmptyArray, getTomorrow, getDateObjectInLocalDateTime } from "@util";
+import { isEmptyArray, getDateObjectInLocalDateTime } from "@util";
 
 const Rect = (props) => {
   const { cx, cy, color, value } = props;
@@ -46,14 +46,14 @@ const CHART_CONFIG = {
       startDate.setMonth(0);
       startDate.setDate(0);
       startDate.setFullYear(startDate.getFullYear() - 1);
-      dataTOUse.unshift({
-        total: null,
-        date: startDate.valueOf(),
-      });
-      dataTOUse.push({
-        total: null,
-        date: getTomorrow().valueOf(),
-      });
+      // dataTOUse.unshift({
+      //   total: null,
+      //   date: startDate.valueOf(),
+      // });
+      // dataTOUse.push({
+      //   total: null,
+      //   date: getTomorrow().valueOf(),
+      // });
       return dataTOUse.map((item) => {
         item.date = item.date.valueOf();
         return item;

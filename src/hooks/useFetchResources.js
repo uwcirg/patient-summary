@@ -13,7 +13,11 @@ import {
 } from "@util/fhirUtil";
 import { fuzzyMatch, getEnvQuestionnaireList, getDisplayQTitle, getEnv, isEmptyArray } from "@util";
 import questionnaireConfigs from "@config/questionnaire_config";
-import { buildQuestionnaire, observationsToQuestionnaireResponses } from "@models/resultBuilders/helpers";
+import {
+  buildQuestionnaire,
+  buildScoringSummaryRows,
+  observationsToQuestionnaireResponses,
+} from "@models/resultBuilders/helpers";
 import QuestionnaireScoringBuilder from "@models/resultBuilders/QuestionnaireScoringBuilder";
 import { FhirClientContext } from "@/context/FhirClientContext";
 import { NO_CACHE_HEADER } from "@/consts";
@@ -162,6 +166,19 @@ function reducer(state, action) {
       }
 
       case "COMPLETE":
+        // If SUMMARY row completed, mirror into base.summaries
+        if (action.id === SUMMARY_DATA_KEY) {
+          return {
+            ...state,
+            base: {
+              ...state.base,
+              summaries: action.data || {}, // <- keep base in sync
+            },
+            loader: state.loader.map((r) =>
+              r.id === action.id ? { ...r, data: action.data ?? r.data, complete: true, error: false } : r,
+            ),
+          };
+        }
         return {
           ...state,
           loader: state.loader.map((r) =>
@@ -222,6 +239,7 @@ export default function useFetchResources() {
   const configuredTypesRaw = useMemo(() => getFHIRResourceTypesToLoad().flat().map(String).filter(Boolean), []);
   const configuredTypeSet = useMemo(() => new Set(configuredTypesRaw.map(normalizeType)), [configuredTypesRaw]);
 
+  console.log("raw ", configuredTypesRaw)
   const plannedExtras = useMemo(() => computePlannedExtras(configuredTypesRaw), [configuredTypesRaw]);
   const { client, patient } = useContext(FhirClientContext);
 
@@ -624,9 +642,15 @@ export default function useFetchResources() {
     return rows.sort((a, b) => safeDateMs(a.date) - safeDateMs(b.date));
   }, [summaryData]);
 
+  const scoringSummaryData = useMemo(() => {
+    if (!summaryData) return null;
+    const dataToUse = summaryData?.data;
+    return buildScoringSummaryRows(dataToUse);
+  }, [summaryData]);
+
   const chartKeys = useMemo(() => [...new Set(allChartData?.map((o) => getDisplayQTitle(o.key)))], [allChartData]);
   const loaderErrors = useMemo(() => state.loader.filter((r) => r?.error), [state.loader]);
-
+  const baseData = useMemo(() => base, [base]);
   const errorMessages = [
     ...(base.error ? [base.errorMessage] : []),
     ...(fatalError ? [fatalError] : []),
@@ -655,14 +679,16 @@ export default function useFetchResources() {
     errorSeverity,
     fatalError,
     hasError,
+    summaryError: base.error,
     // to be loaded resources tracking
     toBeLoadedResources,
 
     // base (phase 1)
-    questionnaireList: base.questionnaireList,
-    questionnaires: base.questionnaires,
-    questionnaireResponses: base.questionnaireResponses,
-    summaries: base.summaries,
+    questionnaireList: baseData?.questionnaireList,
+    questionnaires: baseData.questionnaires,
+    questionnaireResponses: baseData.questionnaireResponses,
+    summaries: baseData.summaries,
+    summaryKeys: Object.keys(baseData.summaries),
 
     // phase 2
     evalData: patientBundle.current.evalResults,
@@ -672,6 +698,7 @@ export default function useFetchResources() {
 
     // charts
     summaryData,
+    scoringSummaryData,
     allChartData,
     chartKeys,
 

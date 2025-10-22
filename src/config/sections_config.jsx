@@ -13,7 +13,7 @@ const renderLoader = () => (
 );
 
 const renderScoringSummary = (props) => {
-  const summaryData = props.summaryData?.data;
+  const scoringSummaryData = props.scoringSummaryData;
   const ScoreSummary = lazy(() => import("../components/sections/ScoringSummary"));
   const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
   const chartData = props.allChartData;
@@ -58,12 +58,21 @@ const renderScoringSummary = (props) => {
             },
           }}
         >
-          <ScoreSummary summaryData={summaryData}></ScoreSummary>
+          <ScoreSummary scoringSummaryData={scoringSummaryData}></ScoreSummary>
         </Box>
       </Stack>
     </Suspense>
   );
 };
+
+const renderProReport = (props) => {
+  const ProReport = lazy(() => import("../components/sections/PROReport"));
+  return (
+    <Suspense fallback={renderLoader()}>
+      <ProReport {...props}></ProReport>
+    </Suspense>
+  );
+}
 
 const renderConditions = (props) => {
   const Conditions = lazy(() => import("../components/sections/Conditions"));
@@ -81,9 +90,9 @@ const renderObservations = (props) => {
     </Suspense>
   );
 };
-const renderSummaries = ({ summaryData }) => {
+const renderSummaries = (props) => {
   const Summaries = lazy(() => import("../components/sections/Summaries"));
-  return <Suspense fallback={renderLoader()}>{<Summaries summaryData={summaryData}></Summaries>}</Suspense>;
+  return <Suspense fallback={renderLoader()}>{<Summaries {...props}></Summaries>}</Suspense>;
 };
 
 const DEFAULT_RESOURCES = ["Questionnaire", "QuestionnaireResponse"];
@@ -95,7 +104,16 @@ export const sections = [
     resources: DEFAULT_RESOURCES,
     icon: (props) => <SummarizeIcon fontSize="medium" color="primary" {...props}></SummarizeIcon>,
     component: (props) => renderScoringSummary(props),
-    default: true,
+    //default: true,
+  },
+  {
+    id: "proReport",
+    title: "PRO Report",
+    resources: DEFAULT_RESOURCES,
+    icon: (props) => <BallotIcon fontSize="medium" color="primary" {...props}></BallotIcon>,
+    component: (props) => renderProReport(props),
+    default: true
+
   },
   {
     id: "questionnaireResponses",
@@ -103,7 +121,7 @@ export const sections = [
     resources: DEFAULT_RESOURCES,
     icon: (props) => <BallotIcon fontSize="medium" color="primary" {...props}></BallotIcon>,
     component: (props) => renderSummaries(props),
-    default: true,
+    //default: true,
   },
   {
     id: "conditions",

@@ -265,7 +265,8 @@ export function shouldShowPatientInfo(client) {
   return String(getEnv("REACT_APP_DISABLE_HEADER")).toLowerCase() !== "true";
 }
 export function shouldShowNav() {
-  return String(getEnv("REACT_APP_DISABLE_NAV")).toLowerCase() !== "true";
+  return false;
+ // return String(getEnv("REACT_APP_DISABLE_NAV")).toLowerCase() !== "true";
 }
 export function getAppHeight() {
   return `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT}px)`;

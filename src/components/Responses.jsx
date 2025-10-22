@@ -124,6 +124,8 @@ export default function Responses(props) {
   ];
 
   const getLastAssessedDateTime = () => (!isEmptyArray(dates) ? getLocaleDateStringFromDate(dates[0].date) : "--");
+  const getMostRecentScore = () =>  (!isEmptyArray(responseData) ? responseData[0].score : null);
+  const getMostRecentScoreParams = () =>  (!isEmptyArray(responseData) ? responseData[0].scoringParams : null);
   const hasData = () => data && !isEmptyArray(data.responseData);
   const handleClickOpen = () => {
     setOpen(true);
@@ -226,7 +228,7 @@ export default function Responses(props) {
         }}
         columns={columns}
         //data={getData()}
-        data={data?.tableResponseData}
+        data={data?.tableResponseData ?? []}
         options={{
           search: false,
           showTitle: false,
@@ -249,19 +251,28 @@ export default function Responses(props) {
     </Box>
   );
 
-  const renderNumberOfResponses = () => (
+  // const renderNumberOfResponses = () => (
+  //   <Stack {...summaryColumnProps}>
+  //     <SummaryHeaderCell>
+  //       <Typography {...summaryHeaderProps}>Responses Completed</Typography>
+  //     </SummaryHeaderCell>
+  //     <SummaryBodyCell>{responseData.length}</SummaryBodyCell>
+  //   </Stack>
+  // );
+
+  const renderScore = () => (
     <Stack {...summaryColumnProps}>
       <SummaryHeaderCell>
-        <Typography {...summaryHeaderProps}>Responses Completed</Typography>
+        <Typography {...summaryHeaderProps}>Score/Result</Typography>
       </SummaryHeaderCell>
-      <SummaryBodyCell>{responseData.length}</SummaryBodyCell>
+      <SummaryBodyCell><Score score={getMostRecentScore()} scoreParams={getMostRecentScoreParams()} justifyContent="space-between"></Score></SummaryBodyCell>
     </Stack>
   );
 
   const renderLastAssessed = () => (
     <Stack {...summaryColumnProps}>
       <SummaryHeaderCell>
-        <Typography {...summaryHeaderProps}>Last answered on</Typography>
+        <Typography {...summaryHeaderProps}>Most Recent Pro Date</Typography>
       </SummaryHeaderCell>
       <SummaryBodyCell>{getLastAssessedDateTime()}</SummaryBodyCell>
     </Stack>
@@ -341,7 +352,8 @@ export default function Responses(props) {
       {hasData() && (
         <Root>
           <Stack direction="row" alignItems="center" spacing={0}>
-            {renderNumberOfResponses()}
+            {/* {renderNumberOfResponses()} */}
+            {renderScore()}
             {renderLastAssessed()}
             {renderViewResponses()}
           </Stack>
