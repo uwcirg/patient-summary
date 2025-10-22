@@ -14,6 +14,7 @@ import Stack from "@mui/material/Stack";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
+import ErrorIcon from "@mui/icons-material/Error";
 import Scoring from "@components/Score";
 import { isEmptyArray, isNumber, scrollToAnchor } from "@util";
 
@@ -176,7 +177,10 @@ export default function ScoringSummary(props) {
       )}
       {row.text && (
         <Stack justifyContent="space-between" alignItems="center">
-          {row.text}
+          <Stack spacing={1} direction={"row"} alignItems={"center"}>
+            <Box sx={{color: row.alert ? "error.main": "#444"}}>{row.text}</Box>
+            {row.alert && <ErrorIcon color="error" fontSize="small"></ErrorIcon>}
+          </Stack>
         </Stack>
       )}
     </TableCell>

@@ -13,12 +13,13 @@ export default function SimpleTable({ rows, columns }) {
     borderRight: `1px solid`,
     borderColor: "border.main",
   };
+  const columnsToRender = columns.filter(column => column.field !== "id");
   return (
     <TableContainer>
-      <Table sx={{ width: "auto", border: "1px solid #ececec" }} size="small">
+      <Table sx={{ width: "auto"}} size="small">
         <TableHead>
           <TableRow sx={{ backgroundColor: "lightest.main" }}>
-            {columns.map((column) => {
+            {columnsToRender.map((column) => {
               return <TableCell key={column.field}>{column.headername}</TableCell>;
             })}
           </TableRow>
@@ -27,7 +28,7 @@ export default function SimpleTable({ rows, columns }) {
           {rows.map((row) => {
             const keys = Object.keys(row).filter((key) => key !== "id");
             return (
-              <TableRow key={row.id} sx={{ "&:last-child td, &:last-child th": { borderRight: 0 } }}>
+              <TableRow key={row.id}>
                 {keys.map((key, index) => (
                   <TableCell key={`cell_${row.id}_${key}`} sx={{ ...cellStyle, fontWeight: index === 0 ? 500 : 400 }}>
                     {row[key]}

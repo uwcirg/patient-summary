@@ -3,17 +3,12 @@ import CHART_CONFIG from "./chart_config";
 export default {
   sections: [
     {
-      id: "urgent-basic-needs",
-      title: "URGENT AND BASIC NEEDS",
-      layout: "two-columns",
+      id: "section_urgent-basic-needs",
+      title: "Urgent and Basic Needs",
       tables: [
         {
-          id: "urgent-basic-needs-main",
-          columns: [
-            { field: "measure", headername: "Measure", type: "text" },
-            { field: "score", headername: "Score/Result", type: "text" },
-            { field: "date", headername: "Most recent PRO date", type: "date", format: "YYYY-MM-DD", align: "right" },
-          ],
+          id: "table_urgent-basic-needs-main",
+          layout: "two-columns",
           rows: [
             {
               key: "CIRG-PHQ9",
@@ -28,7 +23,7 @@ export default {
                 maximumScore: 27,
                 minimumScore: 24,
                 highScore: 20,
-                scoreSeverity: "high"
+                scoreSeverity: "high",
               },
               totalAnswered: 9,
               totalItems: 9,
@@ -50,13 +45,13 @@ export default {
                     date: "2024-09-11",
                     total: 23,
                   },
-                   {
-                    date: "2023-08-08",
-                    total: 12,
-                  },
                   {
                     date: "2023-08-08",
                     total: 16,
+                  },
+                  {
+                    date: "2023-01-08",
+                    total: 12,
                   },
                 ]),
               },
@@ -75,15 +70,14 @@ export default {
                 maximumScore: 3,
                 minimumScore: 1,
                 scoreSeverity: "high",
-                highScore: 3
-
+                highScore: 3,
               },
               totalAnswered: 1,
               totalItems: 1,
               chartData: {
                 ...CHART_CONFIG.default,
                 id: "PHQ_SI_CHART",
-                 title: "Suicide Ideation",
+                title: "Suicide Ideation",
                 maximumScore: 3,
                 minimumScore: 1,
                 highScore: 3,
@@ -97,9 +91,13 @@ export default {
                     date: "2024-09-11",
                     total: 2,
                   },
-                   {
+                  {
                     date: "2023-08-08",
                     total: 2,
+                  },
+                  {
+                    date: "2023-01-08",
+                    total: 1,
                   },
                 ]),
               },
@@ -112,6 +110,7 @@ export default {
               lastAssessed: "5/11/2025",
               meaning: "--",
               text: "Yes",
+              alert: true,
               totalAnswered: 1,
               totalItems: 1,
             },
@@ -134,6 +133,7 @@ export default {
               lastAssessed: "5/11/2025",
               meaning: "--",
               text: "Very Low Food Security",
+              alert: true,
               totalAnswered: 1,
               totalItems: 1,
             },
@@ -145,6 +145,7 @@ export default {
               lastAssessed: "5/11/2025",
               meaning: "--",
               text: "Struggling to Survive",
+              alert: true,
               totalAnswered: 1,
               totalItems: 1,
             },
@@ -152,20 +153,186 @@ export default {
         },
       ],
     },
-     {
-      id: "symptoms",
-      title: "SYMPTOMS",
-      layout: "simple",
+    {
+      id: "section_symptoms",
+      title: "Symptoms",
       tables: [
         {
-          id: "symptoms-bother",
+          id: "table_symptoms-bother",
+          layout: "simple",
           columns: [
             { field: "measure", headername: "Measure", type: "text" },
-            { field: "bothersALot", headername: "Bothers a lot", type: "text"},
-            { field: "bothersSome", headername: "Bothers some", type: "text"},
+            { field: "bothersALot", headername: "Bothers a lot", type: "text" },
+            { field: "bothersSome", headername: "Bothers some", type: "text" },
+          ],
+          rows: [{ id: 1, measure: "Current Symptoms", bothersALot: "Rash, Cough", bothersSome: "Sad, Headache" }],
+        },
+      ],
+    },
+    {
+      id: "section_health_behaviors",
+      title: "Health Behavior",
+      tables: [
+        {
+          id: "table_art_adherence",
+          layout: "simple",
+          title: "ART Adherence",
+          columns: [
+            { field: "measure", headername: "Measure", type: "text" },
+            { field: "lastMissedDose", headername: "Last Missed Dose", type: "text" },
+          ],
+          rows: [{ id: 22, measure: "Last Missed Dose", lastMissedDose: "Within the last week" }],
+        },
+        {
+          id: "table_substance_use",
+          title: "Substance Use",
+          layout: "two-columns",
+          rows: [
+            {
+              key: "CIRG-Nicotine-Use",
+              comparison: "",
+              comparisonToAlert: "",
+              instrumentName: "Nicotine Use",
+              lastAssessed: "5/11/2025",
+              meaning: "--",
+              text: "Tobacco cigarettes: Currently",
+              totalAnswered: 1,
+              totalItems: 1,
+            },
+            {
+              key: "CIRG-Alcohol-Use",
+              comparison: "higher",
+              comparisonToAlert: "",
+              instrumentName: "Alcohol Score",
+              lastAssessed: "5/11/2025",
+              maxScore: 45,
+              meaning: "At Risk",
+              minScore: 0,
+              score: 40,
+              scoringParams: {
+                maximumScore: 3,
+                minimumScore: 1,
+                scoreSeverity: "high",
+                highScore: 35,
+              },
+              totalAnswered: 1,
+              totalItems: 1,
+              chartData: {
+                ...CHART_CONFIG.default,
+                id: "Alcohol_Use_CHART",
+                title: "Alcohol Use",
+                maximumScore: 45,
+                minimumScore: 30,
+                highScore: 35,
+                xLabel: "",
+                data: CHART_CONFIG.default.dataFormatter([
+                  {
+                    date: "2025-05-11",
+                    total: 40,
+                  },
+                  {
+                    date: "2024-09-11",
+                    total: 35,
+                  },
+                  {
+                    date: "2023-08-08",
+                    total: 30,
+                  },
+                  {
+                    date: "2023-01-08",
+                    total: 30,
+                  },
+                ]),
+              },
+            },
+            {
+              key: "CIRG-Mini-Score",
+              comparison: "higher",
+              comparisonToAlert: "",
+              instrumentName: "MINI Score",
+              lastAssessed: "5/11/2025",
+              maxScore: 5,
+              meaning: "Dependent Drinker",
+              minScore: 0,
+              score: 3,
+              scoringParams: {
+                maximumScore: 5,
+                minimumScore: 1,
+                highScore: 4,
+              },
+              totalAnswered: 1,
+              totalItems: 1,
+              chartData: {
+                ...CHART_CONFIG.default,
+                id: "MINI_Score_CHART",
+                title: "MINI Score",
+                maximumScore: 5,
+                minimumScore: 0,
+                highScore: 4,
+                xLabel: "",
+                data: CHART_CONFIG.default.dataFormatter([
+                  {
+                    date: "2025-05-11",
+                    total: 3,
+                  },
+                  {
+                    date: "2024-09-11",
+                    total: 3,
+                  },
+                  {
+                    date: "2023-08-08",
+                    total: 2,
+                  },
+                  {
+                    date: "2023-01-08",
+                    total: 2,
+                  },
+                ]),
+              },
+            },
+            {
+              key: "CIRG-Concurrent-Drug-Use",
+              comparison: "",
+              comparisonToAlert: "",
+              instrumentName: "Concurrent Drug Use",
+              lastAssessed: "5/11/2025",
+              meaning: "--",
+              text: "No",
+              totalAnswered: 1,
+              totalItems: 1,
+            },
+          ],
+        },
+        {
+          id: "table_sexual_risk",
+          layout: "simple",
+          title: "Sexual Risk Behavior",
+          columns: [
+            { field: "measure", headername: "Measure", type: "text" },
+            { field: "date", headername: "Most Recent PRO Date", type: "text" },
+            { field: "result", headername: "Result", type: "text" },
           ],
           rows: [
-            { id: 1, measure: "Current Symptoms", bothersALot: "Rash, Cough", bothersSome: "Sad, Headache" },
+            { id: 23, measure: "# of sex partners x 3 months", date: "2025-05-11", result: "2" },
+            { id: 24, measure: "Unprotected sex", date: "2025-05-11", result: "Yes" },
+            { id: 25, measure: "Exchange sex (recent)", date: "2025-05-11", result: "No" },
+
+            // TODO figure out how to show red here
+            { id: 26, measure: "Concern for STI", date: "2025-05-11", result: "No" },
+          ],
+        },
+        {
+          id: "table_psychosocial_concern",
+          layout: "simple",
+          title: "Psychosocial Concerns and Quality of Life",
+          columns: [
+            { field: "measure", headername: "Measure", type: "text" },
+            { field: "date", headername: "Most Recent PRO Date", type: "text" },
+            { field: "result", headername: "Result", type: "text" },
+          ],
+          rows: [
+            { id: 30, measure: "PTSD Symptoms", date: "2025-05-11", result: "N/A" },
+            { id: 31, measure: "Social Support", date: "2025-05-11", result: "N/A" },
           ],
         },
       ],

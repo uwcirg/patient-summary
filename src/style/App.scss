@@ -304,6 +304,9 @@ p {
     background-color: $default-print-background-color !important;
     box-shadow: none !important;
   }
+  .response-summary {
+    flex-wrap: wrap !important;
+  }
   .error-container {
     h1,
     h2,
