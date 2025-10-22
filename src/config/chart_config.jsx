@@ -59,7 +59,12 @@ const CHART_CONFIG = {
         return item;
       });
     },
-    xTickFormatter: (item) => new Date(item).toISOString().substring(0, 10),
+    // xTickFormatter: (item) => new Date(item).toISOString().substring(0, 10),
+    xTickFormatter: (value) => {
+      const d = value instanceof Date ? value : new Date(value);
+      if (isNaN(d)) return "";
+      return d.toLocaleString("en-US", { month: "short", year: "2-digit" }).replace(" ", "' ");
+    },
     tooltipLabelFormatter: (value, data) => {
       if (!isEmptyArray(data) && value > 0) return new Date(value).toISOString().substring(0, 10);
       return "";

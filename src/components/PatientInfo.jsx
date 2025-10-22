@@ -41,12 +41,22 @@ export default function PatientInfo(props) {
   //   if (!patient.gender) return "--";
   //   return patient.gender;
   // };
+
+  const renderMRN = () => (
+    // TODO: use real data
+    <Box>
+      <Typography component="span" sx={{ color: mutecColor }} variant="body2">
+        mrn:{" "}
+      </Typography>
+      <Typography component="span" variant="body2">U112233</Typography>
+    </Box>
+  );
   const renderDOB = () => (
     <Box>
       <Typography component="span" sx={{ color: mutecColor }} variant="body2">
         dob:{" "}
       </Typography>
-      <Typography component="span">{getPatientDob()}</Typography>
+      <Typography component="span" variant="body2">{getPatientDob()}</Typography>
     </Box>
   );
   const renderAge = () => (
@@ -60,7 +70,7 @@ export default function PatientInfo(props) {
       >
         age:{" "}
       </Typography>
-      <Typography component="span" className="patient-age">
+      <Typography component="span" variant="body2" className="patient-age">
         {getPatientAge()}
       </Typography>
     </Box>
@@ -81,7 +91,7 @@ export default function PatientInfo(props) {
       className="patientinfo-container"
       sx={{ marginLeft: theme.spacing(1), padding: theme.spacing(0.25, 0, 0.25) }}
     >
-      <Stack spacing={0.5} direction="row" alignItems="center">
+      <Stack spacing={1} direction="row" alignItems="center">
         <Typography
           component="span"
           className="patient-name"
@@ -89,6 +99,7 @@ export default function PatientInfo(props) {
         >
           {getPatientName()}
         </Typography>
+        {renderMRN()}
       </Stack>
       <Stack
         spacing={1}

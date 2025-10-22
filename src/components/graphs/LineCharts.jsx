@@ -69,11 +69,12 @@ export default function LineCharts(props) {
       height={108}
       domain={xDomain}
       textAnchor="end"
-      tick={{ style: { fontSize: "12px", fontWeight: 500 }, dy: -2, dx: -4 }}
+     // tick={{ style: { fontSize: "12px", fontWeight: 500 }, dy: -2, dx: -4 }}
+     tick={{ style: { fontSize: "12px", fontWeight: 500 }}}
       tickFormatter={xTickFormatter}
       tickMargin={12}
       interval="preserveStartEnd"
-      angle={270}
+      //angle={270}
     >
       {xLabel && <Label value={xLabel} offset={-8} position="insideBottom" />}
     </XAxis>
@@ -253,7 +254,7 @@ export default function LineCharts(props) {
             }}
             id={`lineChart_${id ?? generateUUID()}`}
           >
-            <CartesianGrid strokeDasharray="2 2" horizontal={false} fill="#f9f7f7ff" />
+            <CartesianGrid strokeDasharray="2 2" horizontal={false} vertical={false} fill="#fdfbfbff" />
             {renderXAxis()}
             {renderYAxis()}
             {renderScoreSeverityCutoffLine()}

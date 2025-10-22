@@ -8,13 +8,14 @@ import { Box, Stack, Typography } from "@mui/material";
 import { isEmptyArray } from "@util";
 import Chart from "../Chart";
 import Section from "../Section";
-import SimpleTable from "../SimpleTable";
+//import SimpleTable from "../SimpleTable";
 import ScoringSummary from "./ScoringSummary";
 
 export default function PROReport() {
   //const keys = Object.keys(summaries ?? {});
   const renderTwoColumns = (table) => {
     const allCharts = table.rows.map((row) => row.chartData);
+    console.log("allcharts ", allCharts)
     return (
       <Stack
         direction="row"
@@ -42,46 +43,6 @@ export default function PROReport() {
       </Stack>
     );
   };
-  // const renderTwoColumns = (section) => (
-  //   <Stack
-  //     direction="row"
-  //     spacing={1}
-  //     alignItems="flex-start"
-  //     className="response-summary"
-  //     flexWrap={"nowrap"}
-  //     key={section.id}
-  //     sx={{
-  //       padding: (theme) => theme.spacing(1),
-  //     }}
-  //   >
-  //     <div>
-  //       {/* <Typography variant="h6" component="h3" color="accent" sx={{ marginBottom: 1 }} className="questionnaire-title">
-  //         {section.title}
-  //       </Typography> */}
-  //       {section.tables.map((table) => {
-  //         return (
-  //           <ScoringSummary
-  //             key={`reportable_table_${table.id}`}
-  //             scoringSummaryData={table.rows}
-  //             disableLinks={true}
-  //           ></ScoringSummary>
-  //         );
-  //       })}
-  //     </div>
-  //     <div>
-  //       {section.tables.map((table) => {
-  //         //if (!table.chartData) return null;
-
-  //         const allCharts = table.rows.map((row) => row.chartData);
-  //         if (isEmptyArray(allCharts)) return null;
-  //         return allCharts.map((chartData) => {
-  //           if (isEmptyArray(chartData?.data)) return null;
-  //           return <Chart key={`chart_${table.id}_${chartData?.id}`} type={chartData?.type} data={chartData}></Chart>;
-  //         });
-  //       })}
-  //     </div>
-  //   </Stack>
-  // );
   const renderTable = (table) => {
     return (
       <Box sx={{ marginBottom: (theme) => theme.spacing(2) }}>
@@ -95,14 +56,24 @@ export default function PROReport() {
               marginLeft: 1,
               fontWeight: 500,
               borderBottomStyle: "solid",
-              borderBottomWidth: "1px",
+              borderBottomWidth: "2px",
               borderBottomColor: "#ececec",
             }}
           >
             {table.title}
           </Typography>
         )}
-        {table.layout === "simple" && <SimpleTable key={table.id} {...table}></SimpleTable>}
+        {table.layout === "simple" && (
+          <ScoringSummary
+            key={table.id}
+            scoringSummaryData={table.rows}
+            disableLinks={true}
+            tableStyle={{
+              width: "auto"
+            }}
+            {...table}
+          ></ScoringSummary>
+        )}
         {table.layout === "two-columns" && renderTwoColumns(table)}
       </Box>
     );
