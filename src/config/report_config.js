@@ -5,7 +5,7 @@ export default {
     {
       id: "urgent-basic-needs",
       title: "URGENT AND BASIC NEEDS",
-      layout: "full",
+      layout: "two-columns",
       tables: [
         {
           id: "urgent-basic-needs-main",
@@ -148,6 +148,24 @@ export default {
               totalAnswered: 1,
               totalItems: 1,
             },
+          ],
+        },
+      ],
+    },
+     {
+      id: "symptoms",
+      title: "SYMPTOMS",
+      layout: "simple",
+      tables: [
+        {
+          id: "symptoms-bother",
+          columns: [
+            { field: "measure", headername: "Measure", type: "text" },
+            { field: "bothersALot", headername: "Bothers a lot", type: "text"},
+            { field: "bothersSome", headername: "Bothers some", type: "text"},
+          ],
+          rows: [
+            { id: 1, measure: "Current Symptoms", bothersALot: "Rash, Cough", bothersSome: "Sad, Headache" },
           ],
         },
       ],

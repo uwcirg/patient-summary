@@ -112,6 +112,7 @@ export const sections = [
     resources: DEFAULT_RESOURCES,
     icon: (props) => <BallotIcon fontSize="medium" color="primary" {...props}></BallotIcon>,
     component: (props) => renderProReport(props),
+    standalone: true,
     default: true
 
   },

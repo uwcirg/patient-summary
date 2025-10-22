@@ -1,38 +1,44 @@
-import {useEffect} from "react";
+import * as React from "react";
 import PropTypes from "prop-types";
-import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
-import Paper from "@mui/material/Paper";
-
-// const paginationModel = { page: 0, pageSize: 5 };
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+//import Paper from "@mui/material/Paper";
 
 export default function SimpleTable({ rows, columns }) {
-    const apiRef = useGridApiRef();
-    useEffect(() => {
-        if (apiRef.current && rows.length > 0) {
-          apiRef.current.autosizeColumns({
-            includeHeaders: true, // Consider header content for width calculation
-            // You can also specify a specific column to autosize:
-            // columns: ['myColumnField'],
-          });
-        }
-      }, [rows, apiRef]);
+  const cellStyle = {
+    borderRight: `1px solid`,
+    borderColor: "border.main",
+  };
   return (
-    <Paper sx={{ margin: (theme) => theme.spacing(1, 2, 2) }} elevation={0}>
-      <DataGrid
-        apiRef={apiRef}
-        rows={rows}
-        columns={columns}
-        // initialState={{ pagination: { paginationModel } }}
-        // pageSizeOptions={[5, 10]}
-        // checkboxSelection
-        density="compact"
-        columnHeaderHeight={40}
-        hideFooter={true}
-        sx={{
-            border: 1
-        }}
-      />
-    </Paper>
+    <TableContainer>
+      <Table sx={{ width: "auto", border: "1px solid #ececec" }} size="small">
+        <TableHead>
+          <TableRow sx={{ backgroundColor: "lightest.main" }}>
+            {columns.map((column) => {
+              return <TableCell key={column.field}>{column.headername}</TableCell>;
+            })}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {rows.map((row) => {
+            const keys = Object.keys(row).filter((key) => key !== "id");
+            return (
+              <TableRow key={row.id} sx={{ "&:last-child td, &:last-child th": { borderRight: 0 } }}>
+                {keys.map((key, index) => (
+                  <TableCell key={`cell_${row.id}_${key}`} sx={{ ...cellStyle, fontWeight: index === 0 ? 500 : 400 }}>
+                    {row[key]}
+                  </TableCell>
+                ))}
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }
 
