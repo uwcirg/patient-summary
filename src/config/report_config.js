@@ -313,12 +313,12 @@ export default {
             { field: "result", headername: "Result", type: "text" },
           ],
           rows: [
-            { id: 23, measure: "# of sex partners x 3 months", date: "2025-05-11", result: "2" },
-            { id: 24, measure: "Unprotected sex", date: "2025-05-11", result: "Yes" },
-            { id: 25, measure: "Exchange sex (recent)", date: "2025-05-11", result: "No" },
+            { id: 23, measure: "# of sex partners x 3 months", date: "5/11/2025", result: "2" },
+            { id: 24, measure: "Unprotected sex", date: "5/11/2025", result: "Yes" },
+            { id: 25, measure: "Exchange sex (recent)", date: "5/11/2025", result: "No" },
 
             // TODO figure out how to show red here
-            { id: 26, measure: "Concern for STI", date: "2025-05-11", result: "No" },
+            { id: 26, measure: "Concern for STI", date: "5/11/2025", result: "No" },
           ],
         },
         {
@@ -331,8 +331,8 @@ export default {
             { field: "result", headername: "Result", type: "text" },
           ],
           rows: [
-            { id: 30, measure: "PTSD Symptoms", date: "2025-05-11", result: "N/A" },
-            { id: 31, measure: "Social Support", date: "2025-05-11", result: "N/A" },
+            { id: 30, measure: "PTSD Symptoms", date: "5/11/2025", result: "N/A" },
+            { id: 31, measure: "Social Support", date: "5/11/2025", result: "N/A" },
           ],
         },
       ],

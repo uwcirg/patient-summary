@@ -14,7 +14,7 @@ import Stack from "@mui/material/Stack";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
-import ErrorIcon from "@mui/icons-material/Error";
+// import ErrorIcon from "@mui/icons-material/Error";
 import Scoring from "@components/Score";
 import { isEmptyArray, isNumber, scrollToAnchor } from "@util";
 
@@ -75,6 +75,7 @@ export default function ScoringSummary(props) {
     whiteSpace: "nowrap",
     lineHeight: 1.4,
     fontSize: "0.8rem",
+    wordBreak: "break-word",
     padding: theme.spacing(0.75, 1),
     verticalAlign: "top",
     ...cellWhiteSpaceStyle,
@@ -177,10 +178,8 @@ export default function ScoringSummary(props) {
       )}
       {row.text && (
         <Stack justifyContent="space-between" alignItems="center">
-          <Stack spacing={1} direction={"row"} alignItems={"center"}>
-            <Box sx={{color: row.alert ? "error.main": "#444"}}>{row.text}</Box>
-            {row.alert && <ErrorIcon color="error" fontSize="small"></ErrorIcon>}
-          </Stack>
+          <Box sx={{ color: row.alert ? "error.main" : "#444" }}>{row.text}</Box>
+          {/* {row.alert && <ErrorIcon color="error" fontSize="small"></ErrorIcon>} */}
         </Stack>
       )}
     </TableCell>

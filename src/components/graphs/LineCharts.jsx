@@ -8,9 +8,9 @@ import {
   ReferenceArea,
   ReferenceLine,
   XAxis,
-  //  YAxis,
+   YAxis,
   CartesianGrid,
-  // Text,
+  //Text,
   Tooltip,
   Label,
   Legend,
@@ -18,7 +18,7 @@ import {
 } from "recharts";
 import {
   generateUUID,
-  //range
+  range
 } from "@/util";
 export default function LineCharts(props) {
   const {
@@ -35,20 +35,21 @@ export default function LineCharts(props) {
     xLabel,
     maximumScore,
     highScore,
-    //  minimumScore,
+     minimumScore,
     yFieldKey,
     yLineFields,
-    //  yLabel,
-    //   yTickFormatter,
+  //   yLabel,
+      yTickFormatter,
     tooltipLabelFormatter,
     data,
   } = props;
   const theme = useTheme();
   const hasYFields = () => yLineFields && yLineFields.length > 0;
+  console.log("maximumScore ", maximumScore)
   let maxYValue = maximumScore
     ? maximumScore
     : data?.reduce((m, d) => Math.max(m, Number(d?.score ?? -Infinity)), -Infinity);
-  // let minYValue = minimumScore ?? 0;
+   let minYValue = minimumScore ?? 0;
   maxYValue = !data || maxYValue === -Infinity ? null : maxYValue;
   const defaultOptions = {
     activeDot: { r: 6 },
@@ -77,41 +78,44 @@ export default function LineCharts(props) {
       {xLabel && <Label value={xLabel} offset={-8} position="insideBottom" />}
     </XAxis>
   );
-  // const yDomain = maxYValue ? [minYValue??0, maxYValue] : [minYValue??0, "auto"];
-  // const yTicks = maxYValue ? range(minYValue??0, maxYValue) : range(minYValue??0, 50);
+  const yDomain = maxYValue ? [minYValue??0, maxYValue] : [minYValue??0, "auto"];
+  const yTicks = maxYValue ? range(minYValue??0, maxYValue) : range(minYValue??0, 50);
 
-  // const renderYAxis = () => (
-  //   <YAxis
-  //     domain={yDomain}
-  //     label={{ value: yLabel, angle: -90, position: "insideLeft" }}
-  //     minTickGap={8}
-  //     tick={(e) => {
-  //       const configData = data.find((item) => item.highSeverityScoreCutoff);
-  //       let color = "#666";
-  //       const {
-  //         payload: { value },
-  //       } = e;
-  //       if (configData) {
-  //         if (configData.comparisonToAlert === "lower") {
-  //           if (value <= parseInt(configData.highSeverityScoreCutoff)) {
-  //             color = "red";
-  //           }
-  //         } else {
-  //           if (value >= parseInt(configData.highSeverityScoreCutoff)) {
-  //             color = "red";
-  //           }
-  //         }
-  //       }
-  //       e["fill"] = color;
-  //       e["fontSize"] = "12px";
-  //       e["fontWeight"] = 500;
-  //       return <Text {...e}>{value}</Text>;
-  //     }}
-  //     tickFormatter={yTickFormatter}
-  //     ticks={yTicks}
-  //     tickMargin={8}
-  //   />
-  // );
+  const renderYAxis = () => (
+    <YAxis
+      domain={yDomain}
+     // label={{ value: yLabel, angle: -90, position: "insideLeft" }}
+      minTickGap={8}
+      tickLine={{stroke: "#FFF"}}
+      stroke="#FFF"
+      // tick={(e) => {
+      //   const configData = data.find((item) => item.highSeverityScoreCutoff);
+      //   let color = "#666";
+      //   const {
+      //     payload: { value },
+      //   } = e;
+      //   if (configData) {
+      //     if (configData.comparisonToAlert === "lower") {
+      //       if (value <= parseInt(configData.highSeverityScoreCutoff)) {
+      //         color = "red";
+      //       }
+      //     } else {
+      //       if (value >= parseInt(configData.highSeverityScoreCutoff)) {
+      //         color = "red";
+      //       }
+      //     }
+      //   }
+      //   e["fill"] = color;
+      //   e["fontSize"] = "12px";
+      //   e["fontWeight"] = 500;
+      //   return <Text {...e}>{value}</Text>;
+      // }}
+      tick={false}
+      tickFormatter={yTickFormatter}
+      ticks={yTicks}
+      tickMargin={8}
+    />
+  );
   const renderToolTip = () => (
     <Tooltip
       itemStyle={{ fontSize: "10px" }}
@@ -251,7 +255,7 @@ export default function LineCharts(props) {
           >
             <CartesianGrid strokeDasharray="2 2" horizontal={false} fill="#f9f7f7ff" />
             {renderXAxis()}
-            {/* {renderYAxis()} */}
+            {renderYAxis()}
             {renderScoreSeverityCutoffLine()}
             {renderScoreSeverityArea()}
             {renderToolTip()}
@@ -272,6 +276,7 @@ LineCharts.propTypes = {
   title: PropTypes.string,
   xsChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   chartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  highScore: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   lgChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   legendType: PropTypes.string,
   strokeWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
@@ -279,6 +284,7 @@ LineCharts.propTypes = {
   xTickFormatter: PropTypes.func,
   xFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   xLabel: PropTypes.string,
+  minimumScore: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   maximumScore: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yLineFields: PropTypes.array,
