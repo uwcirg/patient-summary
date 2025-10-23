@@ -244,7 +244,7 @@ export const report_config = {
             {
               key: "CIRG-Alcohol-Use",
               source: "cnics",
-              comparison: "lower",
+              comparison: "higher",
               comparisonToAlert: "",
               instrumentName: "Alcohol Score",
               lastAssessed: "2025-05-11",
@@ -273,12 +273,12 @@ export const report_config = {
                 data: CHART_CONFIG.default.dataFormatter([
                   {
                     date: "2025-05-11",
-                    total: 30,
+                    total: 40,
                     source: "cnics",
                   },
                   {
                     date: "2024-09-11",
-                    total: 42,
+                    total: 35,
                     source: "cnics",
                   },
                   {
