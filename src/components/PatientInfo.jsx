@@ -45,8 +45,8 @@ export default function PatientInfo(props) {
   const renderMRN = () => (
     // TODO: use real data
     <Box>
-      <Typography component="span" sx={{ color: mutecColor }} variant="body2">
-        mrn:{" "}
+      <Typography component="span" sx={{ color: mutecColor, marginLeft: "2px" }} variant="body2">
+        MRN: {" "}
       </Typography>
       <Typography component="span" variant="body2">U112233</Typography>
     </Box>
