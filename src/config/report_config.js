@@ -1,4 +1,3 @@
-
 import CHART_CONFIG from "./chart_config";
 
 export default {
@@ -341,25 +340,25 @@ export default {
               headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
             },
             {
-              id: "date",
-              header: "Last Done",
-              align: "left",
-              accessor: "date",
-              type: "text",
-            },
-            {
               id: "result",
               header: "Result",
               align: "left",
               accessor: "result",
               type: "text",
             },
+            {
+              id: "date",
+              header: "Last Done",
+              align: "left",
+              accessor: "date",
+              type: "text",
+            },
           ],
           rows: [
-            { id: 23, measure: "# of sex partners x 3 months", date: "2025-05-11", result: "2" },
-            { id: 24, measure: "Unprotected sex", date: "2025-05-11", result: "Yes" },
-            { id: 25, measure: "Exchange sex (recent)", date: "2025-05-11", result: "No" },
-            { id: 26, measure: "Concern for STI", date: "2025-05-11", result: "No" },
+            { id: 23, measure: "# of sex partners x 3 months", result: "2", date: "2025-05-11" },
+            { id: 24, measure: "Unprotected sex", result: "Yes", date: "2025-05-11" },
+            { id: 25, measure: "Exchange sex (recent)", result: "No", date: "2025-05-11" },
+            { id: 26, measure: "Concern for STI", result: "No", date: "2025-05-11" },
           ],
         },
         {
@@ -382,23 +381,23 @@ export default {
               headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
             },
             {
-              id: "date",
-              header: "Last Done",
-              align: "left",
-              accessor: "date",
-              type: "text",
-            },
-            {
               id: "result",
               header: "Result",
               align: "left",
               accessor: "result",
               type: "text",
             },
+             {
+              id: "date",
+              header: "Last Done",
+              align: "left",
+              accessor: "date",
+              type: "text",
+            },
           ],
           rows: [
-            { id: 30, measure: "PTSD Symptoms", date: "2025-05-11", result: "N/A" },
-            { id: 31, measure: "Social Support", date: "2025-05-11", result: "N/A" },
+            { id: 30, measure: "PTSD Symptoms", result: "N/A", date: "2025-05-11" },
+            { id: 31, measure: "Social Support", result: "N/A", date: "2025-05-11" },
           ],
         },
       ],
