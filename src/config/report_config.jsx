@@ -32,7 +32,6 @@ export const report_config = {
               totalItems: 9,
               chartData: {
                 ...CHART_CONFIG.default,
-                type: "barchart",
                 maximumScore: 27,
                 minimumScore: 24,
                 highScore: 20,
@@ -265,9 +264,10 @@ export const report_config = {
               chartData: {
                 ...CHART_CONFIG.default,
                 id: "Alcohol_Use_CHART",
-                title: "Alcohol Use",
+                title: "Alcohol Score",
+                type: "barchart",
                 maximumScore: 45,
-                minimumScore: 30,
+                minimumScore: 0,
                 highScore: 35,
                 xLabel: "",
                 data: CHART_CONFIG.default.dataFormatter([
@@ -283,13 +283,13 @@ export const report_config = {
                   },
                   {
                     date: "2023-08-08",
-                    total: 30,
-                    source: "cnics",
+                    total: 25,
+                    source: "epic",
                   },
                   {
                     date: "2023-01-08",
-                    total: 30,
-                    source: "cnics",
+                    total: 20,
+                    source: "epic",
                   },
                 ]),
               },
@@ -329,7 +329,7 @@ export const report_config = {
                   {
                     date: "2024-09-11",
                     total: 3,
-                    source: "epic",
+                    source: "cnics",
                   },
                   {
                     date: "2023-08-08",
@@ -339,7 +339,7 @@ export const report_config = {
                   {
                     date: "2023-01-08",
                     total: 2,
-                    source: "epic",
+                    source: "cnics",
                   },
                 ]),
               },

@@ -8,7 +8,7 @@ import {
   ReferenceArea,
   ReferenceLine,
   XAxis,
-   YAxis,
+  YAxis,
   CartesianGrid,
   //Text,
   Tooltip,
@@ -16,10 +16,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import {
-  generateUUID,
-  range
-} from "@/util";
+import { generateUUID, isEmptyArray, range } from "@/util";
 export default function LineCharts(props) {
   const {
     id,
@@ -29,27 +26,32 @@ export default function LineCharts(props) {
     lgChartWidth,
     legendType,
     strokeWidth,
-    xDomain,
+    // xDomain,
     xTickFormatter,
     xFieldKey,
     xLabel,
     maximumScore,
     highScore,
-     minimumScore,
+    minimumScore,
     yFieldKey,
     yLineFields,
-  //   yLabel,
-      yTickFormatter,
+    //   yLabel,
+    yTickFormatter,
     tooltipLabelFormatter,
     data,
   } = props;
   const theme = useTheme();
+  const sources = React.useMemo(() => {
+    const set = new Set();
+    for (const d of data || []) if (d?.source) set.add(d.source);
+    return Array.from(set);
+  }, [data]);
   const hasYFields = () => yLineFields && yLineFields.length > 0;
-  console.log("maximumScore ", maximumScore)
+  console.log("maximumScore ", maximumScore);
   let maxYValue = maximumScore
     ? maximumScore
     : data?.reduce((m, d) => Math.max(m, Number(d?.score ?? -Infinity)), -Infinity);
-   let minYValue = minimumScore ?? 0;
+  let minYValue = minimumScore ?? 0;
   maxYValue = !data || maxYValue === -Infinity ? null : maxYValue;
   const defaultOptions = {
     activeDot: { r: 6 },
@@ -67,27 +69,51 @@ export default function LineCharts(props) {
     <XAxis
       dataKey={xFieldKey}
       height={108}
-      domain={xDomain}
+      domain={["dataMin", "dataMax"]}
       textAnchor="end"
-     // tick={{ style: { fontSize: "12px", fontWeight: 500 }, dy: -2, dx: -4 }}
-     tick={{ style: { fontSize: "12px", fontWeight: 500 }}}
+      type="number"
+      allowDataOverflow={false}
+      // tick={{ style: { fontSize: "12px", fontWeight: 500 }, dy: -2, dx: -4 }}
+      tick={{ style: { fontSize: "12px", fontWeight: 500, textAnchor: "middle" } }}
       tickFormatter={xTickFormatter}
       tickMargin={12}
       interval="preserveStartEnd"
+      scale="time"
+      connectNulls={false}
       //angle={270}
     >
       {xLabel && <Label value={xLabel} offset={-8} position="insideBottom" />}
     </XAxis>
   );
-  const yDomain = maxYValue ? [minYValue??0, maxYValue] : [minYValue??0, "auto"];
-  const yTicks = maxYValue ? range(minYValue??0, maxYValue) : range(minYValue??0, 50);
+  const yDomain = maxYValue ? [minYValue ?? 0, maxYValue] : [minYValue ?? 0, "auto"];
+  const yTicks = maxYValue ? range(minYValue ?? 0, maxYValue) : range(minYValue ?? 0, 50);
+  const SourceDot = ({ cx, cy, payload }, highScore) => {
+    if (!cx || !cy) return null;
+    let color;
+    if (highScore && payload[yFieldKey] >= highScore) color = "red";
+    else color = "green";
+
+    switch (payload.source) {
+      case "cnics":
+        return <circle cx={cx} cy={cy} r={4} fill={color} stroke={color} strokeWidth={1} />;
+      case "epic":
+        return <rect x={cx - 2} y={cy - 2} width={6} height={6} fill={color} stroke={color} strokeWidth={1.5} />;
+      default:
+        return <circle cx={cx} cy={cy} r={4} fill={color} />;
+    }
+  };
+  SourceDot.propTypes = {
+    cx: PropTypes.number,
+    cy: PropTypes.number,
+    payload: PropTypes.object,
+  };
 
   const renderYAxis = () => (
     <YAxis
       domain={yDomain}
-     // label={{ value: yLabel, angle: -90, position: "insideLeft" }}
+      // label={{ value: yLabel, angle: -90, position: "insideLeft" }}
       minTickGap={8}
-      tickLine={{stroke: "#FFF"}}
+      tickLine={{ stroke: "#FFF" }}
       stroke="#FFF"
       // tick={(e) => {
       //   const configData = data.find((item) => item.highSeverityScoreCutoff);
@@ -126,15 +152,64 @@ export default function LineCharts(props) {
       labelFormatter={tooltipLabelFormatter}
     />
   );
-  const renderLegend = () => (
-    <Legend
-      formatter={(value) => <span style={{ marginRight: "8px", fontSize: "14px" }}>{value.replace(/_/g, " ")}</span>}
-      iconSize={12}
-      wrapperStyle={{
-        bottom: "12px",
-      }}
-    />
-  );
+  // const renderLegend = () => (
+  //   <Legend
+  //     formatter={(value) => <span style={{ marginRight: "8px", fontSize: "14px" }}>{value.replace(/_/g, " ")}</span>}
+  //     iconSize={12}
+  //     wrapperStyle={{
+  //       bottom: "12px",
+  //     }}
+  //   />
+  // );
+  const renderSourceLegend = () => {
+    if (isEmptyArray(sources)) return null;
+    return (
+      <Legend
+        verticalAlign="top"
+        //align="left"
+        align="right"
+        wrapperStyle={{ position: "absolute", top: 10, left: MIN_CHART_WIDTH + 40 }}
+        content={(legendProps) => <SourceLegend {...legendProps} sources={sources}></SourceLegend>}
+      />
+    );
+  };
+  const SourceLegend = () => {
+    // Draw icons that mirror your dot shapes
+    const items = [
+      {
+        key: "cnics",
+        label: "CNICS",
+        icon: (
+          <svg width="16" height="16">
+            <circle cx="8" cy="8" r="4" fill="green" />
+          </svg>
+        ),
+      },
+      {
+        key: "epic",
+        label: "Epic",
+        icon: (
+          <svg width="16" height="16">
+            <rect x="4" y="4" width="8" height="8" fill="green" />
+          </svg>
+        ),
+      },
+    ];
+    return (
+      <div style={{ display: "flex", gap: 16, alignItems: "center", padding: "4px 8px" }}>
+        {items.map((it) => (
+          <div
+            key={it.key}
+            style={{ display: "flex", gap: 2, alignItems: "center" }}
+            aria-label={`${it.label} legend item`}
+          >
+            {it.icon}
+            <span style={{ fontSize: 12, color: "#444" }}>{it.label}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
   const renderMultipleLines = () =>
     yLineFields.map((item, index) => (
       <Line
@@ -156,12 +231,13 @@ export default function LineCharts(props) {
       type="monotone"
       dataKey={yFieldKey}
       stroke={theme.palette.primary.main}
-      dot={({ cx, cy, value }) => {
-        let color;
-        if (highScore && value >= highScore) color = "red";
-        else color = "green";
-        return <circle cx={cx} cy={cy} r={4} fill={color} stroke="none" />;
-      }}
+      // dot={({ cx, cy, value }) => {
+      //   let color;
+      //   if (highScore && value >= highScore) color = "red";
+      //   else color = "green";
+      //   return <circle cx={cx} cy={cy} r={4} fill={color} stroke="none" />;
+      // }}
+      dot={({ cx, cy, payload }) => SourceDot({ cx, cy, payload }, highScore)}
       strokeWidth={strokeWidth ? strokeWidth : 1}
     />
   );
@@ -249,7 +325,7 @@ export default function LineCharts(props) {
             margin={{
               top: 20,
               right: 40,
-              left: 40,
+              left: 0,
               bottom: 20,
             }}
             id={`lineChart_${id ?? generateUUID()}`}
@@ -260,7 +336,8 @@ export default function LineCharts(props) {
             {renderScoreSeverityCutoffLine()}
             {renderScoreSeverityArea()}
             {renderToolTip()}
-            {renderLegend()}
+            {/* {renderLegend()} */}
+            {renderSourceLegend()}
             {hasYFields() && renderMultipleLines()}
             {!hasYFields() && renderSingleLine()}
             {renderMaxScoreMeaningLabel()}
