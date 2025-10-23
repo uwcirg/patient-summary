@@ -1,6 +1,7 @@
+import Stack from "@mui/material/Stack";
 import CHART_CONFIG from "./chart_config";
 
-export default {
+export const report_config = {
   sections: [
     {
       id: "section_urgent-basic-needs",
@@ -12,6 +13,7 @@ export default {
           rows: [
             {
               key: "CIRG-PHQ9",
+              source: "epic",
               comparison: "equal",
               comparisonToAlert: "higher",
               instrumentName: "PHQ-9",
@@ -41,24 +43,29 @@ export default {
                   {
                     date: "2025-05-11",
                     total: 23,
+                    source: "epic", // TODO get it from real data source
                   },
                   {
                     date: "2024-09-11",
                     total: 23,
+                    source: "epic",
                   },
                   {
                     date: "2023-08-08",
                     total: 16,
+                    source: "epic",
                   },
                   {
                     date: "2023-01-08",
                     total: 12,
+                    source: "epic",
                   },
                 ]),
               },
             },
             {
               key: "CIRG-PHQ9-SI",
+              source: "epic",
               comparison: "higher",
               comparisonToAlert: "",
               instrumentName: "Suicide Ideation",
@@ -87,18 +94,22 @@ export default {
                   {
                     date: "2025-05-11",
                     total: 3,
+                    source: "epic",
                   },
                   {
                     date: "2024-09-11",
                     total: 2,
+                    source: "epic",
                   },
                   {
                     date: "2023-08-08",
                     total: 2,
+                    source: "epic",
                   },
                   {
                     date: "2023-01-08",
                     total: 1,
+                    source: "epic",
                   },
                 ]),
               },
@@ -113,6 +124,7 @@ export default {
               text: "",
               alert: true,
               totalAnswered: 1,
+              source: "cnics",
             },
             {
               key: "CIRG-IPV",
@@ -123,6 +135,7 @@ export default {
               meaning: "No",
               text: "",
               totalAnswered: 1,
+              source: "cnics",
             },
             {
               key: "CIRG-Food-Security",
@@ -134,6 +147,7 @@ export default {
               text: "",
               alert: true,
               totalAnswered: 1,
+              source: "cnics",
             },
             {
               key: "CIRG-Financial-Situation",
@@ -145,6 +159,7 @@ export default {
               text: "",
               alert: true,
               totalAnswered: 1,
+              source: "cnics",
             },
           ],
         },
@@ -157,7 +172,7 @@ export default {
         {
           id: "table_symptoms-bother",
           layout: "simple",
-          hiddenColumns: ["id", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
+          hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
           columns: [
             {
               id: "measure",
@@ -169,7 +184,15 @@ export default {
             { id: "bothersALot", header: "Bothers a lot", align: "right", accessor: "bothersALot" },
             { id: "bothersSome", header: "Bothers some", align: "right", accessor: "bothersSome" },
           ],
-          rows: [{ id: 1, measure: "Current Symptoms", bothersALot: "Rash, Cough", bothersSome: "Sad, Headache" }],
+          rows: [
+            {
+              id: 1,
+              measure: "Current Symptoms",
+              bothersALot: "Rash, Cough",
+              bothersSome: "Sad, Headache",
+              source: "cnics",
+            },
+          ],
         },
       ],
     },
@@ -181,7 +204,7 @@ export default {
           id: "table_art_adherence",
           layout: "simple",
           title: "ART Adherence",
-          hiddenColumns: ["id", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
+          hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
           columns: [
             {
               id: "measure",
@@ -199,7 +222,7 @@ export default {
               type: "text",
             },
           ],
-          rows: [{ id: 22, measure: "Last Missed Dose", lastMissedDose: "Within the last week" }],
+          rows: [{ id: 22, measure: "Last Missed Dose", lastMissedDose: "Within the last week", source: "cnics" }],
         },
         {
           id: "table_substance_use",
@@ -208,6 +231,7 @@ export default {
           rows: [
             {
               key: "CIRG-Nicotine-Use",
+              source: "cnics",
               comparison: "",
               comparisonToAlert: "",
               instrumentName: "Nicotine Use",
@@ -218,6 +242,7 @@ export default {
             },
             {
               key: "CIRG-Alcohol-Use",
+              source: "cnics",
               comparison: "higher",
               comparisonToAlert: "",
               instrumentName: "Alcohol Score",
@@ -247,24 +272,29 @@ export default {
                   {
                     date: "2025-05-11",
                     total: 40,
+                    source: "cnics",
                   },
                   {
                     date: "2024-09-11",
                     total: 35,
+                    source: "cnics",
                   },
                   {
                     date: "2023-08-08",
                     total: 30,
+                    source: "cnics",
                   },
                   {
                     date: "2023-01-08",
                     total: 30,
+                    source: "cnics",
                   },
                 ]),
               },
             },
             {
               key: "CIRG-Mini-Score",
+              source: "epic",
               comparison: "higher",
               comparisonToAlert: "",
               instrumentName: "MINI Score",
@@ -292,24 +322,29 @@ export default {
                   {
                     date: "2025-05-11",
                     total: 3,
+                    source: "epic",
                   },
                   {
                     date: "2024-09-11",
                     total: 3,
+                    source: "epic",
                   },
                   {
                     date: "2023-08-08",
                     total: 2,
+                    source: "epic",
                   },
                   {
                     date: "2023-01-08",
                     total: 2,
+                    source: "epic",
                   },
                 ]),
               },
             },
             {
               key: "CIRG-Concurrent-Drug-Use",
+              source: "cnics",
               comparison: "",
               comparisonToAlert: "",
               instrumentName: "Concurrent Drug Use",
@@ -329,7 +364,7 @@ export default {
           //   { field: "date", headername: "Last Done", type: "text" },
           //   { field: "result", headername: "Result", type: "text" },
           // ],
-          hiddenColumns: ["id", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
+          hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
           columns: [
             {
               id: "measure",
@@ -352,13 +387,19 @@ export default {
               align: "left",
               accessor: "date",
               type: "text",
+              renderCell: (row, value) => (
+                <Stack direction={"column"} spacing={1}>
+                  <span>{value ?? "--"}</span>
+                  {row.source && <span className="muted-text">{row.source}</span>}
+                </Stack>
+              ),
             },
           ],
           rows: [
-            { id: 23, measure: "# of sex partners x 3 months", result: "2", date: "2025-05-11" },
-            { id: 24, measure: "Unprotected sex", result: "Yes", date: "2025-05-11" },
-            { id: 25, measure: "Exchange sex (recent)", result: "No", date: "2025-05-11" },
-            { id: 26, measure: "Concern for STI", result: "No", date: "2025-05-11" },
+            { id: 23, measure: "# of sex partners x 3 months", result: "2", date: "2025-05-11", source: "cnics" },
+            { id: 24, measure: "Unprotected sex", result: "Yes", date: "2025-05-11", source: "cnics" },
+            { id: 25, measure: "Exchange sex (recent)", result: "No", date: "2025-05-11", source: "cnics" },
+            { id: 26, measure: "Concern for STI", result: "No", date: "2025-05-11", source: "cnics" },
           ],
         },
         {
@@ -370,7 +411,7 @@ export default {
           //   { field: "date", headername: "Most Recent PRO Date", type: "text" },
           //   { field: "result", headername: "Result", type: "text" },
           // ],
-          hiddenColumns: ["id", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
+          hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
           columns: [
             {
               id: "measure",
@@ -387,17 +428,23 @@ export default {
               accessor: "result",
               type: "text",
             },
-             {
+            {
               id: "date",
               header: "Last Done",
               align: "left",
               accessor: "date",
               type: "text",
+              renderCell: (row, value) => (
+                <Stack direction={"column"} spacing={1}>
+                  <span>{value ?? "--"}</span>
+                  {row.source && <span className="muted-text">{row.source}</span>}
+                </Stack>
+              ),
             },
           ],
           rows: [
-            { id: 30, measure: "PTSD Symptoms", result: "N/A", date: "2025-05-11" },
-            { id: 31, measure: "Social Support", result: "N/A", date: "2025-05-11" },
+            { id: 30, measure: "PTSD Symptoms", result: "N/A", date: "2025-05-11", source: "cnics" },
+            { id: 31, measure: "Social Support", result: "N/A", date: "2025-05-11", source: "cnics" },
           ],
         },
       ],

@@ -1,4 +1,4 @@
-import report_config from "@config/report_config";
+import {report_config} from "@config/report_config";
 import React from "react";
 import PropTypes from "prop-types";
 import { Box, Stack, Typography } from "@mui/material";
@@ -27,14 +27,14 @@ export default function PROReport() {
           md: "nowrap",
         }}
         key={`wrapper_${table.id}`}
-        sx={{
-          padding: (theme) => theme.spacing(1),
-        }}
       >
         <ScoringSummary
           key={`reportable_table_${table.id}`}
           scoringSummaryData={table.rows}
           disableLinks={true}
+          containerStyle={{
+            alignSelf: "stretch"
+          }}
         ></ScoringSummary>
         <Box>
           {!isEmptyArray(allCharts) &&
@@ -48,7 +48,7 @@ export default function PROReport() {
   };
   const renderTable = (table) => {
     return (
-      <Box sx={{ marginBottom: (theme) => theme.spacing(2) }}>
+      <Box sx={{ marginBottom: (theme) => theme.spacing(2), alignSelf: "stretch" , padding: (theme) => theme.spacing(0, 1)}}>
         {table.title && (
           <Typography
             variant="body1"

@@ -76,7 +76,7 @@ export default function ScoringSummary(props) {
     fontSize: "0.8rem",
     wordBreak: "break-word",
     padding: theme.spacing(0.75, 1),
-    verticalAlign: "top",
+    verticalAlign: "center",
     ...cellWhiteSpaceStyle,
   };
   const stickyStyle = {
@@ -89,7 +89,12 @@ export default function ScoringSummary(props) {
   // -------- reusable default cell renderers
   const defaultRenderers = {
     text: (row, value) => <span className={row.alert ? "text-error" : ""}>{value ?? "--"}</span>,
-    date: (row, value) => <>{value ?? "--"}</>,
+    date: (row, value) => (
+      <Stack direction={"column"} spacing={1}>
+        <span>{value ?? "--"}</span>
+        {row.source && <span className="muted-text">{row.source}</span>}
+      </Stack>
+    ),
     score: (row) => (
       <>
         {isNumber(row.score) && (
@@ -293,6 +298,7 @@ export default function ScoringSummary(props) {
           position: { xs: "initial", sm: "relative" },
           marginLeft: { sm: 0 },
           borderRadius: 0,
+          alignSelf: "stretch"
         }}
       >
         <Table
@@ -317,7 +323,7 @@ export default function ScoringSummary(props) {
   };
 
   return (
-    <Stack className="scoring-summary-container" spacing={1} direction="column">
+    <Stack className="scoring-summary-container" spacing={1} direction="column" sx={props.containerStyle??{}}>
       {renderSummary()}
     </Stack>
   );
@@ -344,4 +350,5 @@ ScoringSummary.propTypes = {
   ),
   columns: PropTypes.arrayOf(columnShape),
   tableStyle: PropTypes.object,
+  containerStyle: PropTypes.object
 };
