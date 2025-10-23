@@ -32,6 +32,7 @@ export const report_config = {
               totalItems: 9,
               chartData: {
                 ...CHART_CONFIG.default,
+                type: "barchart",
                 maximumScore: 27,
                 minimumScore: 24,
                 highScore: 20,
@@ -86,6 +87,7 @@ export const report_config = {
                 ...CHART_CONFIG.default,
                 id: "PHQ_SI_CHART",
                 title: "Suicide Ideation",
+                type: "linechart",
                 maximumScore: 3,
                 minimumScore: 1,
                 highScore: 3,

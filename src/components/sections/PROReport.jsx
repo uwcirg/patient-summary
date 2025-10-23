@@ -1,4 +1,4 @@
-import {report_config} from "@config/report_config";
+import { report_config } from "@config/report_config";
 import React from "react";
 import PropTypes from "prop-types";
 import { Box, Stack, Typography } from "@mui/material";
@@ -14,7 +14,8 @@ import ScoringSummary from "./ScoringSummary";
 export default function PROReport() {
   //const keys = Object.keys(summaries ?? {});
   const renderTwoColumns = (table) => {
-    const allCharts = table.rows.map((row) => row.chartData);
+    const allCharts = table.rows.filter((row) => row.chartData).map((row) => row.chartData);
+    console.log("chart data ", allCharts);
     return (
       <Stack
         direction="row"
@@ -33,7 +34,7 @@ export default function PROReport() {
           scoringSummaryData={table.rows}
           disableLinks={true}
           containerStyle={{
-            alignSelf: "stretch"
+            alignSelf: "stretch",
           }}
         ></ScoringSummary>
         <Box>
@@ -48,7 +49,13 @@ export default function PROReport() {
   };
   const renderTable = (table) => {
     return (
-      <Box sx={{ marginBottom: (theme) => theme.spacing(2), alignSelf: "stretch" , padding: (theme) => theme.spacing(0, 1)}}>
+      <Box
+        sx={{
+          marginBottom: (theme) => theme.spacing(2),
+          alignSelf: "stretch",
+          padding: (theme) => theme.spacing(0, 1),
+        }}
+      >
         {table.title && (
           <Typography
             variant="body1"

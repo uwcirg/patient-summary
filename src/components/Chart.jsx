@@ -3,10 +3,11 @@ import React, { useRef,
   } from "react";
 import PropTypes from "prop-types";
 import Error from "./ErrorComponent";
+import BarChart from "./graphs/BarCharts";
 import LineChart from "./graphs/LineCharts";
 //let resizeChartTimeoutId = 0;
 const Chart = (props) => {
-  const eligibleCharts = ["linechart"];
+  const eligibleCharts = ["linechart", "barchart"];
   const chartRef = useRef();
  // const CHART_SPACING = 280;
 
@@ -36,6 +37,7 @@ const Chart = (props) => {
       ref={chartRef}
     >
       {props.type === "linechart" && <LineChart {...props.data}></LineChart>}
+      {props.type === "barchart" && <BarChart {...props.data}></BarChart>}
       {eligibleCharts.indexOf(props.type) === -1 && <Error message="Graph type specified is not available."></Error>}
       {/* other types of graph go here */}
     </div>
