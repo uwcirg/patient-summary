@@ -13,14 +13,14 @@ export const report_config = {
           rows: [
             {
               key: "CIRG-PHQ9",
-              source: "epic",
-              comparison: "equal",
+              source: "cnics",
+              comparison: "higher",
               comparisonToAlert: "higher",
               instrumentName: "PHQ-9",
               lastAssessed: "2025-05-11",
               maxScore: 27,
               meaning: "severe depression",
-              score: 23,
+              score: 20,
               alert: true,
               scoringParams: {
                 maximumScore: 27,
@@ -42,30 +42,30 @@ export const report_config = {
                 data: CHART_CONFIG.default.dataFormatter([
                   {
                     date: "2025-05-11",
-                    total: 23,
-                    source: "epic", // TODO get it from real data source
+                    total: 20,
+                    source: "cnics", // TODO get it from real data source
                   },
                   {
                     date: "2024-09-11",
-                    total: 23,
+                    total: 19,
                     source: "epic",
                   },
                   {
                     date: "2023-08-08",
                     total: 16,
-                    source: "epic",
+                    source: "cnics",
                   },
                   {
                     date: "2023-01-08",
                     total: 12,
-                    source: "epic",
+                    source: "cnics",
                   },
                 ]),
               },
             },
             {
               key: "CIRG-PHQ9-SI",
-              source: "epic",
+              source: "cnics",
               comparison: "higher",
               comparisonToAlert: "",
               instrumentName: "Suicide Ideation",
@@ -95,7 +95,7 @@ export const report_config = {
                   {
                     date: "2025-05-11",
                     total: 3,
-                    source: "epic",
+                    source: "cnics",
                   },
                   {
                     date: "2024-09-11",
@@ -105,12 +105,12 @@ export const report_config = {
                   {
                     date: "2023-08-08",
                     total: 2,
-                    source: "epic",
+                    source: "cnics",
                   },
                   {
                     date: "2023-01-08",
                     total: 1,
-                    source: "epic",
+                    source: "cnics",
                   },
                 ]),
               },
@@ -244,7 +244,7 @@ export const report_config = {
             {
               key: "CIRG-Alcohol-Use",
               source: "cnics",
-              comparison: "higher",
+              comparison: "lower",
               comparisonToAlert: "",
               instrumentName: "Alcohol Score",
               lastAssessed: "2025-05-11",
@@ -273,30 +273,30 @@ export const report_config = {
                 data: CHART_CONFIG.default.dataFormatter([
                   {
                     date: "2025-05-11",
-                    total: 40,
+                    total: 30,
                     source: "cnics",
                   },
                   {
                     date: "2024-09-11",
-                    total: 35,
+                    total: 42,
                     source: "cnics",
                   },
                   {
                     date: "2023-08-08",
                     total: 25,
-                    source: "epic",
+                    source: "cnics",
                   },
                   {
                     date: "2023-01-08",
                     total: 20,
-                    source: "epic",
+                    source: "cnics",
                   },
                 ]),
               },
             },
             {
               key: "CIRG-Mini-Score",
-              source: "epic",
+              source: "cnics",
               comparison: "higher",
               comparisonToAlert: "",
               instrumentName: "MINI Score",
@@ -324,22 +324,18 @@ export const report_config = {
                   {
                     date: "2025-05-11",
                     total: 3,
-                    source: "epic",
                   },
                   {
                     date: "2024-09-11",
                     total: 3,
-                    source: "cnics",
                   },
                   {
                     date: "2023-08-08",
                     total: 2,
-                    source: "epic",
                   },
                   {
                     date: "2023-01-08",
                     total: 2,
-                    source: "cnics",
                   },
                 ]),
               },
