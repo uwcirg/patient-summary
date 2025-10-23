@@ -20,7 +20,7 @@ export const report_config = {
               lastAssessed: "2025-05-11",
               maxScore: 27,
               meaning: "severe depression",
-              score: 20,
+              score: 23,
               alert: true,
               scoringParams: {
                 maximumScore: 27,
@@ -42,12 +42,12 @@ export const report_config = {
                 data: CHART_CONFIG.default.dataFormatter([
                   {
                     date: "2025-05-11",
-                    total: 20,
+                    total: 23,
                     source: "cnics", // TODO get it from real data source
                   },
                   {
                     date: "2024-09-11",
-                    total: 19,
+                    total: 20,
                     source: "epic",
                   },
                   {
