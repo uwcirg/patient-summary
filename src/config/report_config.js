@@ -327,7 +327,7 @@ export default {
           title: "Sexual Risk Behavior",
           // columns: [
           //   { field: "measure", headername: "Measure", type: "text" },
-          //   { field: "date", headername: "Most Recent PRO Date", type: "text" },
+          //   { field: "date", headername: "Last Done", type: "text" },
           //   { field: "result", headername: "Result", type: "text" },
           // ],
           hiddenColumns: ["id", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
@@ -342,7 +342,7 @@ export default {
             },
             {
               id: "date",
-              header: "Most Recent PRO Date",
+              header: "Last Done",
               align: "left",
               accessor: "date",
               type: "text",
@@ -383,7 +383,7 @@ export default {
             },
             {
               id: "date",
-              header: "Most Recent PRO Date",
+              header: "Last Done",
               align: "left",
               accessor: "date",
               type: "text",

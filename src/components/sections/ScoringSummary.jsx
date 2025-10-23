@@ -157,13 +157,12 @@ export default function ScoringSummary(props) {
         ),
     },
     {
-      id: "lastAssessed",
-      header: "Most Recent PRO Date",
+      id: "numAnswered",
+      header: "Answered",
       align: "center",
-      type: "date",
       headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
       cellProps: { sx: baseCellStyle, size: "small" },
-      accessor: "lastAssessed",
+      renderCell: (row) => displayNumAnswered(row),
     },
     {
       id: "score",
@@ -172,14 +171,6 @@ export default function ScoringSummary(props) {
       headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
       cellProps: { sx: baseCellStyle, size: "small", align: "left" },
       type: "score",
-    },
-    {
-      id: "numAnswered",
-      header: "Answered",
-      align: "center",
-      headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
-      cellProps: { sx: baseCellStyle, size: "small" },
-      renderCell: (row) => displayNumAnswered(row),
     },
     {
       id: "meaning",
@@ -191,8 +182,18 @@ export default function ScoringSummary(props) {
       type: "text",
     },
     {
+      id: "lastAssessed",
+      header: "Last Done",
+      align: "center",
+      type: "date",
+      headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
+      cellProps: { sx: baseCellStyle, size: "small" },
+      accessor: "lastAssessed",
+    },
+
+    {
       id: "comparison",
-      header: "Compared to Last",
+      header: "Change from Last",
       align: "center",
       headerProps: { sx: { ...baseCellStyle, borderRightWidth: 0 }, ...defaultHeaderCellProps },
       cellProps: { sx: { ...baseCellStyle, borderRightWidth: 0 }, size: "small" },
@@ -302,7 +303,7 @@ export default function ScoringSummary(props) {
             tableLayout: "fixed",
             width: "100%",
             height: "100%",
-            ...props.tableStyle??{}
+            ...(props.tableStyle ?? {}),
           }}
           size="small"
           aria-label="scoring summary table"
@@ -342,5 +343,5 @@ ScoringSummary.propTypes = {
     PropTypes.oneOf(["measure", "lastAssessed", "score", "numAnswered", "meaning", "comparison"]),
   ),
   columns: PropTypes.arrayOf(columnShape),
-  tableStyle: PropTypes.object
+  tableStyle: PropTypes.object,
 };
