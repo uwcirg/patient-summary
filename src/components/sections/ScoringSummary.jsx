@@ -166,7 +166,7 @@ export default function ScoringSummary(props) {
     },
     {
       id: "score",
-      header: "Score / Result",
+      header: "Score",
       align: "center",
       headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
       cellProps: { sx: baseCellStyle, size: "small", align: "left" },
