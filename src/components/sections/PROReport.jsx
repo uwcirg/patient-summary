@@ -15,7 +15,7 @@ export default function PROReport() {
   //const keys = Object.keys(summaries ?? {});
   const renderTwoColumns = (table) => {
     const allCharts = table.rows.filter((row) => row.chartData).map((row) => row.chartData);
-    console.log("chart data ", allCharts);
+    //console.log("chart data ", allCharts);
     return (
       <Stack
         direction="row"

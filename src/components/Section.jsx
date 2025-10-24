@@ -46,7 +46,7 @@ export default function Section({ section, data }) {
       }}
     >
       {renderAnchorElement()}
-      {section.standalone && <Paper sx={{ padding: (theme) => theme.spacing(1) }}>{section.component(data)}</Paper>}
+      {section.standalone && <Paper className="section-wrapper" sx={{ padding: (theme) => theme.spacing(1) }}>{section.component(data)}</Paper>}
       {!section.standalone && (
         <Accordion
           key={`section_${sectionId}`}

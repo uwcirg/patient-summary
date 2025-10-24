@@ -219,6 +219,9 @@ p {
   .print-only {
     display: block;
   }
+  .section-wrapper {
+    box-shadow: none !important;
+  }
   .selector-stats-wrapper {
     background-color: $default-print-background-color !important;
     margin-top: 8px !important;
@@ -245,6 +248,7 @@ p {
     height: auto !important;
     width: 100% !important;
     background-color: $default-print-background-color !important;
+    page-break-inside: avoid;
   }
   .table-container {
     width: 100% !important;

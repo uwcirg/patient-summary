@@ -168,7 +168,7 @@ export default function LineCharts(props) {
         verticalAlign="top"
         //align="left"
         align="right"
-        wrapperStyle={{ position: "absolute", top: 10, left: MIN_CHART_WIDTH + 40 }}
+        wrapperStyle={{ position: "absolute", top: 10, right: 36, width: "auto"}}
         content={(legendProps) => <SourceLegend {...legendProps} sources={sources}></SourceLegend>}
       />
     );

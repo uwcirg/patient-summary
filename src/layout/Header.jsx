@@ -267,6 +267,7 @@ export default function Header(props) {
                   {hasSections &&
                     sections.map((section, index) => (
                       <MenuItem
+                        sx={{display: "none"}} //TODO remove
                         onClick={(e) => {
                           scrollToElement(`anchor_${section.id.toLowerCase()}`);
                           handleMobileMenuClose(e);
@@ -277,7 +278,7 @@ export default function Header(props) {
                         <ListItemText>{section.title}</ListItemText>
                       </MenuItem>
                     ))}
-                  {hasSections && <Divider></Divider>}
+                  {hasSections && <Divider sx={{display: "none"}}></Divider>}
                   <MenuItem>
                     {renderPrintButton({
                       variant: "text",
