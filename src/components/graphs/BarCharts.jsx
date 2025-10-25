@@ -13,15 +13,15 @@ export default function BarCharts(props) {
     xTickFormatter,
     xFieldKey, // "date"
     xLabel,
-    maximumScore,
+    maximumYValue,
     highScore,
-    minimumScore,
-    yFieldKey, // "total"
+    minimumYValue,
+    yFieldKey, // "total", "score", etc.
     tooltipLabelFormatter,
     data = [],
   } = props;
 
-  // ✅ Convert date strings -> timestamps once
+  // Convert date strings -> timestamps once
   const parsed = useMemo(
     () =>
       data.map((d) => ({
@@ -33,8 +33,8 @@ export default function BarCharts(props) {
 
   const MIN_CHART_WIDTH = xsChartWidth ?? 400;
 
-  let maxYValue = maximumScore ?? parsed.reduce((m, d) => Math.max(m, Number(d?.[yFieldKey] ?? -Infinity)), -Infinity);
-  const minYValue = minimumScore ?? 0;
+  let maxYValue = maximumYValue ?? parsed.reduce((m, d) => Math.max(m, Number(d?.[yFieldKey] ?? -Infinity)), -Infinity);
+  let minYValue = minimumYValue ?? data?.reduce((min, d) => Math.min(min, d[yFieldKey]), Infinity);
   maxYValue = parsed.length === 0 || maxYValue === -Infinity ? null : maxYValue;
   const yDomain = maxYValue ? [minYValue, maxYValue] : [minYValue, "auto"];
 
@@ -47,8 +47,8 @@ export default function BarCharts(props) {
   const renderXAxis = () => (
     <XAxis
       dataKey={xFieldKey}
-      type="number" // ✅ numeric axis
-      scale="time" // ✅ time scale
+      type="number" 
+      scale="time" // time scale
       domain={["dataMin", "dataMax"]}
       height={108}
       tick={{ fontSize: 12, fontWeight: 500, textAnchor: "middle" }} // no nested "style" object
@@ -125,8 +125,8 @@ BarCharts.propTypes = {
   xTickFormatter: PropTypes.func,
   xFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   xLabel: PropTypes.string,
-  minimumScore: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  maximumScore: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  minimumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  maximumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yLineFields: PropTypes.array,
   yLabel: PropTypes.string,

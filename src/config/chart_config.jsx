@@ -23,15 +23,18 @@ const CHART_CONFIG = {
     title: "Total Score by Date",
     xsChartWidth: 400,
     chartWidth: 520,
+    dotColor: "#444",
     lgChartWidth: 600,
-    chartHeight: 560,
+    chartHeight: 250,
     xFieldKey: "date",
     xAxisTitle: "Date",
     yAxisTitle: "Score",
     yFieldKey: "total",
-    yLabel: "score",
+   // yLabel: "score",
+    yLabel: "",
     xLabel: "date",
     legendType: "none",
+    showTicks: false,
     dataFormatter: (data) => {
       if (isEmptyArray(data)) return data;
       let dataTOUse = JSON.parse(JSON.stringify(data));

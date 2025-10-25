@@ -658,7 +658,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     }
 
     const scoringParams = config?.scoringParams;
-    const chartParams = { ...chartConfig, ...scoringParams };
+    const chartParams = {
+      ...chartConfig,
+      ...scoringParams,
+      maximumYValue: scoringParams?.maximumScore,
+      minimumYValue: scoringParams?.minimumScore,
+    };
 
     return {
       config: config,

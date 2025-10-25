@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  //Text,
+  Text,
   Tooltip,
   Label,
   Legend,
@@ -19,26 +19,29 @@ import {
 import { generateUUID, isEmptyArray, range } from "@/util";
 export default function LineCharts(props) {
   const {
-    id,
-    title,
-    xsChartWidth,
+    chartHeight,
     chartWidth,
-    lgChartWidth,
+    data,
+    dotColor,
+    highScore,
+    id,
     legendType,
+    lgChartWidth,
+    maximumYValue,
+    minimumYValue,
+    showTicks,
     strokeWidth,
-    // xDomain,
-    xTickFormatter,
+    title,
+    tooltipLabelFormatter,
     xFieldKey,
     xLabel,
-    maximumScore,
-    highScore,
-    minimumScore,
+    // xDomain,
+    xTickFormatter,
+    xsChartWidth,
     yFieldKey,
+    yLabel,
     yLineFields,
-    //   yLabel,
     yTickFormatter,
-    tooltipLabelFormatter,
-    data,
   } = props;
   const theme = useTheme();
   const sources = React.useMemo(() => {
@@ -46,12 +49,11 @@ export default function LineCharts(props) {
     for (const d of data || []) if (d?.source) set.add(d.source);
     return Array.from(set);
   }, [data]);
-  const hasYFields = () => yLineFields && yLineFields.length > 0;
-  console.log("maximumScore ", maximumScore);
-  let maxYValue = maximumScore
-    ? maximumScore
-    : data?.reduce((m, d) => Math.max(m, Number(d?.score ?? -Infinity)), -Infinity);
-  let minYValue = minimumScore ?? 0;
+  const hasMultipleYFields = () => yLineFields && yLineFields.length > 0;
+  let maxYValue = maximumYValue
+    ? maximumYValue
+    : data?.reduce((m, d) => Math.max(m, Number(d[yFieldKey] ?? -Infinity)), -Infinity);
+  let minYValue = minimumYValue ?? data?.reduce((min, d) => Math.min(min, d[yFieldKey]), Infinity);
   maxYValue = !data || maxYValue === -Infinity ? null : maxYValue;
   const defaultOptions = {
     activeDot: { r: 6 },
@@ -73,14 +75,12 @@ export default function LineCharts(props) {
       textAnchor="end"
       type="number"
       allowDataOverflow={false}
-      // tick={{ style: { fontSize: "12px", fontWeight: 500 }, dy: -2, dx: -4 }}
       tick={{ style: { fontSize: "12px", fontWeight: 500, textAnchor: "middle" } }}
       tickFormatter={xTickFormatter}
       tickMargin={12}
       interval="preserveStartEnd"
       scale="time"
       connectNulls={false}
-      //angle={270}
     >
       {xLabel && <Label value={xLabel} offset={-8} position="insideBottom" />}
     </XAxis>
@@ -88,6 +88,7 @@ export default function LineCharts(props) {
   const yDomain = maxYValue ? [minYValue ?? 0, maxYValue] : [minYValue ?? 0, "auto"];
   const yTicks = maxYValue ? range(minYValue ?? 0, maxYValue) : range(minYValue ?? 0, 50);
   const SourceDot = ({ cx, cy, payload }, highScore) => {
+    if (isEmptyArray(sources)) return null;
     if (!cx || !cy) return null;
     let color;
     if (highScore && payload[yFieldKey] >= highScore) color = "red";
@@ -98,8 +99,9 @@ export default function LineCharts(props) {
         return <circle cx={cx} cy={cy} r={4} fill={color} stroke={color} strokeWidth={1} />;
       case "epic":
         return <rect x={cx - 2} y={cy - 2} width={6} height={6} fill={color} stroke={color} strokeWidth={1.5} />;
+      // add other sources if needed
       default:
-        return <circle cx={cx} cy={cy} r={4} fill={color} />;
+      return <circle cx={cx} cy={cy} r={4} fill={color} />;
     }
   };
   SourceDot.propTypes = {
@@ -111,33 +113,36 @@ export default function LineCharts(props) {
   const renderYAxis = () => (
     <YAxis
       domain={yDomain}
-      // label={{ value: yLabel, angle: -90, position: "insideLeft" }}
+      label={yLabel ? { value: yLabel, angle: -90, position: "insideLeft" } : null}
       minTickGap={8}
       tickLine={{ stroke: "#FFF" }}
       stroke="#FFF"
-      // tick={(e) => {
-      //   const configData = data.find((item) => item.highSeverityScoreCutoff);
-      //   let color = "#666";
-      //   const {
-      //     payload: { value },
-      //   } = e;
-      //   if (configData) {
-      //     if (configData.comparisonToAlert === "lower") {
-      //       if (value <= parseInt(configData.highSeverityScoreCutoff)) {
-      //         color = "red";
-      //       }
-      //     } else {
-      //       if (value >= parseInt(configData.highSeverityScoreCutoff)) {
-      //         color = "red";
-      //       }
-      //     }
-      //   }
-      //   e["fill"] = color;
-      //   e["fontSize"] = "12px";
-      //   e["fontWeight"] = 500;
-      //   return <Text {...e}>{value}</Text>;
-      // }}
-      tick={false}
+      tick={
+        showTicks
+          ? (e) => {
+              const configData = data.find((item) => item.highSeverityScoreCutoff);
+              let color = "#666";
+              const {
+                payload: { value },
+              } = e;
+              if (configData) {
+                if (configData.comparisonToAlert === "lower") {
+                  if (value <= parseInt(configData.highSeverityScoreCutoff)) {
+                    color = "red";
+                  }
+                } else {
+                  if (value >= parseInt(configData.highSeverityScoreCutoff)) {
+                    color = "red";
+                  }
+                }
+              }
+              e["fill"] = color;
+              e["fontSize"] = "12px";
+              e["fontWeight"] = 500;
+              return <Text {...e}>{value}</Text>;
+            }
+          : false
+      }
       tickFormatter={yTickFormatter}
       ticks={yTicks}
       tickMargin={8}
@@ -152,23 +157,24 @@ export default function LineCharts(props) {
       labelFormatter={tooltipLabelFormatter}
     />
   );
-  // const renderLegend = () => (
-  //   <Legend
-  //     formatter={(value) => <span style={{ marginRight: "8px", fontSize: "14px" }}>{value.replace(/_/g, " ")}</span>}
-  //     iconSize={12}
-  //     wrapperStyle={{
-  //       bottom: "12px",
-  //     }}
-  //   />
-  // );
-  const renderSourceLegend = () => {
-    if (isEmptyArray(sources)) return null;
+  const renderLegend = () => {
+    if (isEmptyArray(sources))
+      return (
+        <Legend
+          formatter={(value) => (
+            <span style={{ marginRight: "8px", fontSize: "14px" }}>{value.replace(/_/g, " ")}</span>
+          )}
+          iconSize={12}
+          wrapperStyle={{
+            bottom: "12px",
+          }}
+        />
+      );
     return (
       <Legend
         verticalAlign="top"
-        //align="left"
         align="right"
-        wrapperStyle={{ position: "absolute", top: 10, right: 36, width: "auto"}}
+        wrapperStyle={{ position: "absolute", top: 10, right: 36, width: "auto" }}
         content={(legendProps) => <SourceLegend {...legendProps} sources={sources}></SourceLegend>}
       />
     );
@@ -231,13 +237,16 @@ export default function LineCharts(props) {
       type="monotone"
       dataKey={yFieldKey}
       stroke={theme.palette.primary.main}
-      // dot={({ cx, cy, value }) => {
-      //   let color;
-      //   if (highScore && value >= highScore) color = "red";
-      //   else color = "green";
-      //   return <circle cx={cx} cy={cy} r={4} fill={color} stroke="none" />;
-      // }}
-      dot={({ cx, cy, payload }) => SourceDot({ cx, cy, payload }, highScore)}
+      dot={({ cx, cy, payload, value }) => {
+        if (!isEmptyArray(sources)) return SourceDot({ cx, cy, payload }, highScore);
+        let color;
+        if (highScore) {
+          if (highScore && value >= highScore) color = "red";
+          else color = "green";
+          return <circle cx={cx} cy={cy} r={4} fill={color} stroke="none" />;
+        }
+        return <circle cx={cx} cy={cy} r={4} fill={dotColor} stroke="none" />;
+      }}
       strokeWidth={strokeWidth ? strokeWidth : 1}
     />
   );
@@ -315,8 +324,7 @@ export default function LineCharts(props) {
             sm: chartWidth,
             lg: lgChartWidth ? lgChartWidth : chartWidth,
           },
-          //     height: "calc(100% - 40px)",
-          height: 250,
+          height: chartHeight ? chartHeight : "calc(100% - 40px)",
         }}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
@@ -336,10 +344,9 @@ export default function LineCharts(props) {
             {renderScoreSeverityCutoffLine()}
             {renderScoreSeverityArea()}
             {renderToolTip()}
-            {/* {renderLegend()} */}
-            {renderSourceLegend()}
-            {hasYFields() && renderMultipleLines()}
-            {!hasYFields() && renderSingleLine()}
+            {renderLegend()}
+            {hasMultipleYFields() && renderMultipleLines()}
+            {!hasMultipleYFields() && renderSingleLine()}
             {renderMaxScoreMeaningLabel()}
             {renderMinScoreMeaningLabel()}
           </LineChart>
@@ -350,24 +357,27 @@ export default function LineCharts(props) {
 }
 
 LineCharts.propTypes = {
-  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  title: PropTypes.string,
-  xsChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   chartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  chartHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  data: PropTypes.array,
+  dotColor: PropTypes.string,
   highScore: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  lgChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   legendType: PropTypes.string,
+  lgChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  maximumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  minimumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  showTicks: PropTypes.bool,
   strokeWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  title: PropTypes.string,
+  tooltipLabelFormatter: PropTypes.func,
   xDomain: PropTypes.array,
-  xTickFormatter: PropTypes.func,
   xFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   xLabel: PropTypes.string,
-  minimumScore: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  maximumScore: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  xTickFormatter: PropTypes.func,
+  xsChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  yLineFields: PropTypes.array,
   yLabel: PropTypes.string,
+  yLineFields: PropTypes.array,
   yTickFormatter: PropTypes.func,
-  tooltipLabelFormatter: PropTypes.func,
-  data: PropTypes.array,
 };

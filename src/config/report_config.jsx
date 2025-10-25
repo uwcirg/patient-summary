@@ -19,12 +19,13 @@ export const report_config = {
               instrumentName: "PHQ-9",
               lastAssessed: "2025-05-11",
               maxScore: 27,
+              minScore: 0,
               meaning: "severe depression",
               score: 23,
               alert: true,
               scoringParams: {
                 maximumScore: 27,
-                minimumScore: 24,
+                minimumScore: 0,
                 highScore: 20,
                 scoreSeverity: "high",
               },
@@ -32,8 +33,8 @@ export const report_config = {
               totalItems: 9,
               chartData: {
                 ...CHART_CONFIG.default,
-                maximumScore: 27,
-                minimumScore: 24,
+                maximumYValue: 27,
+                minimumYValue: 0,
                 highScore: 20,
                 chartHeight: 250,
                 xLabel: "",
@@ -70,15 +71,15 @@ export const report_config = {
               comparisonToAlert: "",
               instrumentName: "Suicide Ideation",
               lastAssessed: "2025-05-11",
-              maxScore: 3,
               meaning: "Nearly Every Day",
               alert: true,
               minScore: 0,
+              maxScore: 3,
               score: 3,
               totalAnswered: 1,
               scoringParams: {
                 maximumScore: 3,
-                minimumScore: 1,
+                minimumScore: 0,
                 scoreSeverity: "high",
                 highScore: 3,
               },
@@ -87,8 +88,8 @@ export const report_config = {
                 id: "PHQ_SI_CHART",
                 title: "Suicide Ideation",
                 type: "linechart",
-                maximumScore: 3,
-                minimumScore: 1,
+                maximumYValue: 3,
+                minimumYValue: 0,
                 highScore: 3,
                 xLabel: "",
                 data: CHART_CONFIG.default.dataFormatter([
@@ -249,9 +250,9 @@ export const report_config = {
               instrumentName: "Alcohol Score",
               lastAssessed: "2025-05-11",
               maxScore: 45,
-              meaning: "At Risk",
               minScore: 0,
               score: 40,
+              meaning: "At Risk",
               alert: true,
               scoringParams: {
                 maximumScore: 3,
@@ -266,8 +267,8 @@ export const report_config = {
                 id: "Alcohol_Use_CHART",
                 title: "Alcohol Score",
                 type: "barchart",
-                maximumScore: 45,
-                minimumScore: 0,
+                maximumYValue: 45,
+                minimumYValue: 0,
                 highScore: 35,
                 xLabel: "",
                 data: CHART_CONFIG.default.dataFormatter([
@@ -307,7 +308,7 @@ export const report_config = {
               score: 3,
               scoringParams: {
                 maximumScore: 5,
-                minimumScore: 1,
+                minimumScore: 0,
                 highScore: 4,
               },
               totalAnswered: 3,
@@ -316,8 +317,8 @@ export const report_config = {
                 ...CHART_CONFIG.default,
                 id: "MINI_Score_CHART",
                 title: "MINI Score",
-                maximumScore: 5,
-                minimumScore: 0,
+                maximumYValue: 5,
+                minimumYValue: 0,
                 highScore: 4,
                 xLabel: "",
                 data: CHART_CONFIG.default.dataFormatter([
@@ -357,11 +358,6 @@ export const report_config = {
           id: "table_sexual_risk",
           layout: "simple",
           title: "Sexual Risk Behavior",
-          // columns: [
-          //   { field: "measure", headername: "Measure", type: "text" },
-          //   { field: "date", headername: "Last Done", type: "text" },
-          //   { field: "result", headername: "Result", type: "text" },
-          // ],
           hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
           columns: [
             {
@@ -404,11 +400,6 @@ export const report_config = {
           id: "table_psychosocial_concern",
           layout: "simple",
           title: "Psychosocial Concerns and Quality of Life",
-          // columns: [
-          //   { field: "measure", headername: "Measure", type: "text" },
-          //   { field: "date", headername: "Most Recent PRO Date", type: "text" },
-          //   { field: "result", headername: "Result", type: "text" },
-          // ],
           hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
           columns: [
             {
