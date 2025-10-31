@@ -47,3 +47,12 @@ export const FLOWSHEET_CODE_IDS = [
   "tcspRW.3lXOnl6nYHXrx3Rg0",
   "tAcMJ6d9AZFqpzWcp-YjG6Q0",
 ];
+
+export const PHQ9_SI_QUESTION_LINK_ID = "44260-8";
+
+export const PHQ9_SI_ANSWER_SCORE_MAPPINGS = {
+  "not at all": 0,
+  "several days": 1,
+  "more than half the days": 2,
+  "nearly every day": 3,
+};

@@ -1,3 +1,4 @@
+import React from "react";
 import {
   conceptText,
   getDefaultQuestionItemText,
@@ -8,9 +9,12 @@ import {
   normalizeLinkId,
   makeQuestionItem,
 } from "@util/fhirUtil";
-import { generateUUID, isEmptyArray, isNil, isNumber } from "@util";
+import { getLocaleDateStringFromDate, generateUUID, isEmptyArray, isNil, isNumber } from "@util";
+import Scoring from "@components/Score";
 import { DEFAULT_ANSWER_OPTIONS } from "@/consts";
+import { getDateDomain } from "@/config/chart_config";
 import { findMatchingQuestionLinkIdFromCode } from "@/config/questionnaire_config";
+import { report_config } from "@/config/report_config";
 import Questionnaire from "@/models/Questionnaire";
 
 /* ---------------------------------------------
@@ -202,7 +206,7 @@ export function summarizeMiniCogHelper(
       scoreSeverity,
       scoreMeaning: ctx.meaningFromSeverity(scoreSeverity),
       comparisonToAlert: "lower",
-      scoringParams: {...ctx.cfg.scoringParams ?? { maximumScore: 5 }, scoreSeverity},
+      scoringParams: { ...(ctx.cfg.scoringParams ?? { maximumScore: 5 }), scoreSeverity },
       highSeverityScoreCutoff,
       totalAnsweredItems,
       totalItems,
@@ -259,6 +263,8 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
     return d.toISOString().slice(0, 16);
   };
   const subject = config.getSubject?.(group) || group[0]?.subject || undefined;
+  const extension = group[0].extension;
+  const identifier = group[0].identifier;
   const authored =
     config.getAuthored?.(group) ||
     trimToMinutes(group[0]?.effectiveDateTime) ||
@@ -309,6 +315,8 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
     resourceType: "QuestionnaireResponse",
     status: "completed",
     questionnaire: `Questionnaire/${config.questionnaireId}`,
+    extension,
+    identifier,
     subject,
     authored,
     item: items,
@@ -341,23 +349,27 @@ export function observationsToQuestionnaireResponses(observationResources, confi
  * @param {Array} rdata
  * @returns {Array}
  */
-const sortResponsesNewestFirst = (rdata = []) =>
+export const sortResponsesNewestFirst = (rdata = []) =>
   [...rdata].sort((a, b) => new Date(b?.date ?? 0).getTime() - new Date(a?.date ?? 0).getTime());
 
 /**
  * @param {Array} rdata
  */
-const getMostRecent = (rdata = []) => sortResponsesNewestFirst(rdata)[0] || null;
+export const getMostRecent = (rdata = []) => sortResponsesNewestFirst(rdata)[0] || null;
 
 /**
  * @param {Array} rdata
  */
-const getPreviousWithScore = (rdata = []) => {
+export const getPreviousWithScore = (rdata = []) => {
   const rows = sortResponsesNewestFirst(rdata);
   if (isEmptyArray(rows) || rows.length < 2) return null;
   let prev = null;
+  const currentItem = rows[0];
   for (let i = 1; i < rows.length; i++) {
     const item = rows[i];
+    if (currentItem.date && currentItem.date === item.date) {
+      continue;
+    }
     if (isNumber(item?.score)) {
       prev = item;
       break;
@@ -365,6 +377,52 @@ const getPreviousWithScore = (rdata = []) => {
   }
   return prev;
 };
+
+export function getScoreParamsFromResponses(responses) {
+  if (isEmptyArray(responses)) return null;
+  const current = getMostRecent(responses);
+  const prev = getPreviousWithScore(responses);
+  const curScore = isNumber(current?.score) ? current.score : (current?.score ?? null);
+  const minScore = isNumber(current?.scoringParams?.minimumScore) ? current.scoringParams.minimumScore : 0;
+  const maxScore = isNumber(current?.scoringParams?.maximumScore) ? current.scoringParams.maximumScore : null;
+  const meaning = current?.scoreMeaning ?? null;
+  const comparisonToAlert = current?.comparisonToAlert ?? "higher";
+
+  const prevScore = isNumber(prev?.score) ? prev.score : null;
+
+  let comparison = null; // "higher" | "lower" | "equal" | null
+  if (prevScore != null && curScore != null && isNumber(curScore) && isNumber(prevScore)) {
+    if (curScore > prevScore) comparison = "higher";
+    else if (curScore < prevScore) comparison = "lower";
+    else comparison = "equal";
+  }
+  const score = isNumber(curScore) ? curScore : (curScore ?? null);
+  const source = current?.source;
+  const alert = isNumber(score) && score >= current?.scoringParams?.highSeverityScoreCutoff;
+  const warning = isNumber(score) && score >= current?.scoringParams?.mediumSeverityScoreCutoff;
+  const totalAnswered = isNumber(current?.totalAnsweredItems) ? current.totalAnsweredItems : null;
+  const totalItems = isNumber(current?.totalItems) ? current.totalItems : null;
+  const scoringParams = {
+    ...(current?.scoringParams ?? {}),
+    score,
+    currentScore: curScore,
+    previousScore: prevScore,
+    alert,
+    warning,
+    minScore,
+    maxScore,
+    totalAnswered,
+    totalItems,
+    meaning,
+    comparison,
+    comparisonToAlert,
+    source,
+  };
+  return {
+    ...scoringParams,
+    scoringParams: scoringParams,
+  };
+}
 
 /**
  * Build rows from summaryData
@@ -385,7 +443,6 @@ export function buildScoringSummaryRows(summaryData, opts = {}) {
     const responses = node.responseData || [];
 
     const current = getMostRecent(responses);
-    const prev = getPreviousWithScore(responses);
 
     const instrumentName =
       (instrumentNameByKey && instrumentNameByKey(key, q)) || new Questionnaire(q).shortName || key;
@@ -396,47 +453,137 @@ export function buildScoringSummaryRows(summaryData, opts = {}) {
         ? formatDate(lastAssessedISO)
         : new Date(lastAssessedISO).toLocaleDateString()
       : "";
-
-    const curScore = isNumber(current?.score) ? current.score : (current?.score ?? null);
-    const minScore = isNumber(current?.scoringParams?.minimumScore) ? current.scoringParams.minimumScore : 0;
-    const maxScore = isNumber(current?.scoringParams?.maximumScore) ? current.scoringParams.maximumScore : null;
-
-    const totalAnswered = isNumber(current?.totalAnsweredItems) ? current.totalAnsweredItems : null;
-    const totalItems = isNumber(current?.totalItems) ? current.totalItems : null;
-
-    // const meaning =
-    //   current?.scoreMeaning ??
-    //   (isNumber(totalAnswered) && isNumber(totalItems) && totalItems >= 1 && totalAnswered < totalItems
-    //     ? "incomplete"
-    //     : "--");
-    const meaning = current?.scoreMeaning ?? null;
-    const comparisonToAlert = current?.comparisonToAlert ?? "";
-
-    const prevScore = isNumber(prev?.score) ? prev.score : null;
-
-    let comparison = null; // "higher" | "lower" | "equal" | null
-    if (prevScore != null && curScore != null && isNumber(curScore) && isNumber(prevScore)) {
-      if (curScore > prevScore) comparison = "higher";
-      else if (curScore < prevScore) comparison = "lower";
-      else comparison = "equal";
-    }
-
-    const scoringParams = current?.scoringParams;
-
     return {
+      ...(getScoreParamsFromResponses(responses) ?? {}),
       key,
       instrumentName,
       lastAssessed,
-      score: isNumber(curScore) ? curScore : (curScore ?? null),
-      minScore,
-      maxScore,
-      totalAnswered,
-      totalItems,
-      meaning,
-      comparison,
-      comparisonToAlert,
-      scoringParams,
-      raw: node, // keep original if the UI needs to drill in (optional)
+      responses: current?.responses,
+      responseData: node?.responseData,
+      tableResponseData: node?.tableResponseData,
+      //raw: node, // keep original if the UI needs to drill in (optional)
     };
   });
+}
+
+export function getResponseColumns(data) {
+  if (isEmptyArray(data)) return [];
+
+  const dates = data?.map((item) => ({ date: item.date, id: item.id })) ?? [];
+
+  // tiny safe normalizer to avoid raw objects rendering
+  const normalize = (v) => {
+    if (v == null || String(v) === "null" || String(v) === "undefined") return "—";
+    if (typeof v === "string" || typeof v === "number") return v;
+    if (React.isValidElement(v)) return v;
+    if (Array.isArray(v)) return v.join(", ");
+    return "--";
+  };
+
+  return [
+    {
+      title: "Questions",
+      field: "question",
+      filtering: false,
+      cellStyle: {
+        position: "sticky",
+        left: 0,
+        backgroundColor: "#FFF",
+        borderRight: "1px solid #ececec",
+        minWidth: "200px",
+      },
+      render: (rowData) => {
+        const q = rowData?.question;
+        if (typeof q === "string" && q.toLowerCase() === "score") {
+          return <b>{q}</b>;
+        }
+        // fall back to normalized string if not a plain string
+        if (typeof q !== "string") return normalize(q);
+        return <span dangerouslySetInnerHTML={{ __html: q }} />;
+      },
+    },
+    ...dates.map((item, index) => ({
+      id: `date_${item.id}_${index}`,
+      title: getLocaleDateStringFromDate(item.date),
+      field: item.id, // the row is expected to have row[item.id]
+      cellStyle: {
+        minWidth: "148px",
+        borderRight: "1px solid #ececec",
+      },
+      render: (rowData) => {
+        const rowDataItem = rowData?.[item.id];
+
+        // explicit placeholders prevent React from trying to render objects
+        if (!rowDataItem || String(rowDataItem) === "null" || String(rowDataItem) === "undefined") return "—";
+
+        // numeric score path (your happy path)
+        if (isNumber(rowDataItem.score)) {
+          return (
+            <Scoring
+              // instrumentId is optional; provide if you have it on the cell
+              instrumentId={rowDataItem.instrumentId}
+              score={rowDataItem.score}
+              // pass only the params object; Scoring already expects an object here
+              scoreParams={rowDataItem}
+            />
+          );
+        }
+
+        // string answers render directly; everything else is safely stringified
+        return typeof rowDataItem === "string" ? rowDataItem : normalize(rowDataItem);
+      },
+    })),
+  ];
+}
+
+export function buildReportData(summaryData = {}) {
+  let skeleton = report_config;
+  skeleton.sections.forEach((section) => {
+    const tables = section.tables;
+    if (isEmptyArray(tables)) return true;
+    tables.forEach((table) => {
+      const dataKeysToMatch = table.dataKeysToMatch;
+      const paramsByKey = table.paramsByKey ?? {};
+      let rows = [];
+      let charts = [];
+      if (!isEmptyArray(dataKeysToMatch)) {
+        const arrDates = dataKeysToMatch.flatMap((key) => {
+          const d = summaryData[key];
+          if (!d || isEmptyArray(d.chartData?.data)) return [];
+          return d.chartData.data.map((o) => o.date);
+        });
+        const dates = !isEmptyArray(arrDates) ? [...new Set(arrDates)] : [];
+        let xDomain = getDateDomain(dates, {
+          padding: dates.length <= 2 ? 0.15 : 0.05,
+        });
+        dataKeysToMatch.forEach((key) => {
+          const dataFunc = paramsByKey[key].getProcessedData;
+          const processedData = dataFunc ? dataFunc(summaryData) : null;
+          const scoringSummaryData =
+            summaryData[key] && summaryData[key].scoringSummaryData
+              ? summaryData[key].scoringSummaryData
+              : processedData?.scoringSummaryData;
+          const chartData =
+            summaryData[key] && summaryData[key].chartData ? summaryData[key].chartData : processedData?.chartData;
+          if (scoringSummaryData) {
+            rows.push({
+              ...(paramsByKey[key].scoringParams ?? {}),
+              ...(scoringSummaryData ?? {}),
+            });
+          }
+          if (chartData) {
+            charts.push({
+              ...(chartData?.scoringParams ?? {}),
+              xDomain,
+              ...(paramsByKey[key].chartParams ?? {}),
+              ...(chartData ?? {}),
+            });
+          }
+        });
+      }
+      table.rows = rows;
+      table.charts = charts;
+    });
+  });
+  return skeleton;
 }

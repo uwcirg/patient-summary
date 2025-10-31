@@ -104,7 +104,7 @@ export const sections = [
     resources: DEFAULT_RESOURCES,
     icon: (props) => <SummarizeIcon fontSize="medium" color="primary" {...props}></SummarizeIcon>,
     component: (props) => renderScoringSummary(props),
-    //default: true,
+    // default: true,
   },
   {
     id: "proReport",
@@ -122,7 +122,7 @@ export const sections = [
     resources: DEFAULT_RESOURCES,
     icon: (props) => <BallotIcon fontSize="medium" color="primary" {...props}></BallotIcon>,
     component: (props) => renderSummaries(props),
-    //default: true,
+    // default: true,
   },
   {
     id: "conditions",

@@ -5,23 +5,22 @@ import Tooltip from "@mui/material/Tooltip";
 import ErrorIcon from "@mui/icons-material/Error";
 import WarningIcon from "@mui/icons-material/ReportProblem";
 import { isNumber } from "@util";
-import ScoreSeverity from "@models/ScoreSeverity";
+import Score from "@models/Score";
 
 export default function Scoring(props) {
   const { score, justifyContent, alignItems, scoreParams } = props;
-  console.log("scoreParam ", scoreParams)
-  const oSeverity = new ScoreSeverity(scoreParams);
-  const getScoreDisplay = () => <span data-testid="score">{isNumber(score) ? score : "--"}</span>;
+  const oScore = new Score(score, scoreParams);
+  const getScoreDisplay = () => <span data-testid="score">{isNumber(score) ? score : "N/A"}</span>;
 
   // display alert icon for score that has high severity
-  if (oSeverity.isInRange()) {
+  if (oScore.isInRange()) {
     const renderIcon = () => {
-      if (oSeverity.isHigh())
+      if (oScore.isHigh())
         return (
-          <ErrorIcon color={oSeverity.iconColorClass} fontSize="small" className={oSeverity.iconClass}></ErrorIcon>
+          <ErrorIcon color={oScore.iconColorClass} fontSize="small" className={oScore.iconClass}></ErrorIcon>
         );
       return (
-        <WarningIcon color={oSeverity.iconColorClass} fontSize="small" className={oSeverity.iconClass}></WarningIcon>
+        <WarningIcon color={oScore.iconColorClass} fontSize="small" className={oScore.iconClass}></WarningIcon>
       );
     };
     return (
@@ -31,13 +30,13 @@ export default function Scoring(props) {
         justifyContent={justifyContent || "flex-start"}
         alignItems={alignItems || "center"}
       >
-        <div className={`${oSeverity.textColorClass}`}>{getScoreDisplay()}</div>
-        {oSeverity.alertNote && (
-          <Tooltip title={oSeverity.alertNote} placement="top" arrow>
+        <div className={`${oScore.textColorClass}`}>{getScoreDisplay()}</div>
+        {oScore.alertNote && (
+          <Tooltip title={oScore.alertNote} placement="top" arrow>
             {renderIcon()}
           </Tooltip>
         )}
-        {!oSeverity.alertNote && renderIcon()}
+        {!oScore.alertNote && renderIcon()}
       </Stack>
     );
   }

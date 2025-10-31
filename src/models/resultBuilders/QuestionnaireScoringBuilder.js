@@ -441,6 +441,20 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     );
   }
 
+  getDataSource(resource) {
+    if (!resource) return "";
+    if (!isEmptyArray(resource.extension)) {
+      const source = resource.extension.find((node) => String(node.url).includes("epic"));
+      return source ? "epic" : "cnics";
+    }
+    if (!isEmptyArray(resource.identifier)) {
+      const source = resource.identifier.find((node) => String(node.system).includes("epic"));
+      return source ? "epic" : "cnics";
+    }
+    //TODO fix this
+    return "cnics";
+  }
+
   // -------------------- public APIs --------------------
   getResponsesSummary(questionnaireResponses, questionnaire) {
     const config = this.cfg && this.cfg.questionnaireId ? this.cfg : questionnaireConfig[questionnaire?.id];
@@ -485,20 +499,35 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         totalAnsweredItems = 1;
       }
 
+      //const scoringParams = config?.scoringParams ?? {};
+      // const maxScore = scoringParams.maximumScore;
+      // const minScore = scoringParams.minimumScore ?? 0;
+      // const alert = isNumber(score) ? score > config?.highSeverityScoreCutoff : false;
+      const scoreMeaning = this.meaningFromSeverity(scoreSeverity, config);
       return {
         ...(config ?? {}),
         id: qr.id,
         date: this.dateTimeText(qr.authored),
+        source: this.getDataSource(qr),
         raw: flat,
         responses,
         scoringQuestionScore,
         score,
+       // maxScore,
+       // minScore,
+      //  alert,
         scoreSeverity,
-        highSeverityScoreCutoff: config?.highSeverityScoreCutoff,
+        //highSeverityScoreCutoff: config?.highSeverityScoreCutoff,
         scoreMeaning: this.meaningFromSeverity(scoreSeverity, config),
+        //comparisonToAlert: config?.comparisonToAlert ?? "higher",
         scoringParams: {
-          ...(config?.scoringParams ?? {}),
-          scoreSeverity: scoreSeverity,
+          //...(config?.scoringParams ?? {}),
+          ...(config?config:{}),
+          scoreSeverity,
+          scoreMeaning,
+          // highSeverityScoreCutoff: config?.highSeverityScoreCutoff,
+          // mediumSeverityScoreCutoff: config?.mediumSeverityScoreCutoff,
+          score: score,
         },
         totalItems,
         totalAnsweredItems,
@@ -651,6 +680,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           ...(item.scoringParams ?? {}),
           date: item.date,
           total: item.score,
+          source: item.source,
         }))
       : null;
     if (chartData && chartConfig?.dataFormatter) {
@@ -662,7 +692,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       ...chartConfig,
       ...scoringParams,
       maximumYValue: scoringParams?.maximumScore,
-      minimumYValue: scoringParams?.minimumScore,
+      minimumYValue: scoringParams?.minimumScore??0,
     };
 
     return {

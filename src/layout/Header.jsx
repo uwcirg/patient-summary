@@ -33,7 +33,7 @@ export default function Header(props) {
   const desktopImgRef = useRef(null);
   const mobileImgRef = useRef(null);
   const sections = getSectionsToShow();
-  const hasSections = sections && sections.length > 0;
+  const shouldShowSections = sections && sections.length > 1;
 
   const { returnURL, inEHR } = props;
   const getDesktopImgSrc = async () => {
@@ -264,10 +264,9 @@ export default function Header(props) {
                       <Divider></Divider>
                     </Box>
                   )}
-                  {hasSections &&
+                  {shouldShowSections &&
                     sections.map((section, index) => (
                       <MenuItem
-                        sx={{display: "none"}} //TODO remove
                         onClick={(e) => {
                           scrollToElement(`anchor_${section.id.toLowerCase()}`);
                           handleMobileMenuClose(e);
@@ -278,7 +277,7 @@ export default function Header(props) {
                         <ListItemText>{section.title}</ListItemText>
                       </MenuItem>
                     ))}
-                  {hasSections && <Divider sx={{display: "none"}}></Divider>}
+                  {shouldShowSections && <Divider sx={{display: "none"}}></Divider>}
                   <MenuItem>
                     {renderPrintButton({
                       variant: "text",

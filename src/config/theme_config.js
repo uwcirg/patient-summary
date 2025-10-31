@@ -59,6 +59,9 @@ export const themes = {
       },
       error: {
         main: red[900]
+      },
+      warning: {
+        main: orange[900]
       }
     },
   }),

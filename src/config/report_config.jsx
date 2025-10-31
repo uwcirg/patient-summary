@@ -1,7 +1,71 @@
-import Stack from "@mui/material/Stack";
+import { linkIdEquals } from "@util/fhirUtil";
+import { PHQ9_SI_ANSWER_SCORE_MAPPINGS, PHQ9_SI_QUESTION_LINK_ID } from "@consts";
+import { isEmptyArray, isNumber, deepMerge } from "@util";
 import CHART_CONFIG from "./chart_config";
+import { getScoreParamsFromResponses } from "@/models/resultBuilders/helpers";
 
-export const report_config = {
+export const INSTRUMENT_DEFAULTS = {
+  "CIRG-PHQ9": {
+    title: "PHQ-9",
+    scoringParams: { minimumScore: 0, maximumScore: 27, highSeverityScoreCutoff: 20, comparisonToAlert: "higher" },
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 27, xLabel: "" },
+  },
+  "CIRG-PHQ9-SI": {
+    title: "Suicide Ideation",
+    scoringParams: { minimumScore: 0, maximumScore: 3, highSeverityScoreCutoff: 3, comparisonToAlert: "higher" },
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 3, xLabel: "" },
+  },
+  "CIRG-Alcohol-Use": {
+    title: "Alcohol Score",
+    scoringParams: { minimumScore: 0, maximumScore: 45, highSeverityScoreCutoff: 35 },
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 45, xLabel: "" },
+  },
+  "CIRG-Mini-Score": {
+    title: "MINI-Score",
+    scoringParams: { minimumScore: 0, maximumScore: 5, highSeverityScoreCutoff: 4 },
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 5, xLabel: "" },
+  },
+  // add others as needed…
+};
+
+const normalizeParams = (params = {}) => {
+  const scoring = params.scoringParams ?? {};
+  const chart = params.chartParams ?? {};
+  const chartWithCutoff =
+    chart.highSeverityScoreCutoff == null
+      ? { ...chart, highSeverityScoreCutoff: scoring.highSeverityScoreCutoff }
+      : chart;
+  return { ...params, scoringParams: scoring, chartParams: chartWithCutoff };
+};
+
+export function buildReportConfig(baseConfig) {
+  // DO NOT JSON-clone; create a new object while preserving functions
+  const out = {
+    ...baseConfig,
+    sections: baseConfig.sections?.map((section) => {
+      const nextSection = {
+        ...section,
+        tables: section.tables?.map((table) => {
+          const keys = table.dataKeysToMatch ?? (table.keyToMatch ? [table.keyToMatch] : []);
+          const paramsByKey = { ...(table.paramsByKey ?? {}) };
+
+          keys.forEach((key) => {
+            const defaults = INSTRUMENT_DEFAULTS[key] || {};
+            const current = paramsByKey[key] || {};
+            paramsByKey[key] = normalizeParams(deepMerge(defaults, current));
+          });
+
+          return { ...table, paramsByKey };
+        }),
+      };
+      return nextSection;
+    }),
+  };
+
+  return out;
+}
+
+export const report_config_base = {
   sections: [
     {
       id: "section_urgent-basic-needs",
@@ -10,433 +74,107 @@ export const report_config = {
         {
           id: "table_urgent-basic-needs-main",
           layout: "two-columns",
-          rows: [
-            {
-              key: "CIRG-PHQ9",
-              source: "cnics",
-              comparison: "higher",
-              comparisonToAlert: "higher",
-              instrumentName: "PHQ-9",
-              lastAssessed: "2025-05-11",
-              maxScore: 27,
-              minScore: 0,
-              meaning: "severe depression",
-              score: 23,
-              alert: true,
-              scoringParams: {
-                maximumScore: 27,
-                minimumScore: 0,
-                highScore: 20,
-                scoreSeverity: "high",
-              },
-              totalAnswered: 9,
-              totalItems: 9,
-              chartData: {
-                ...CHART_CONFIG.default,
-                maximumYValue: 27,
-                minimumYValue: 0,
-                highScore: 20,
-                chartHeight: 250,
-                xLabel: "",
-                id: "PHQ9_Chart",
-                title: "PHQ9",
-                data: CHART_CONFIG.default.dataFormatter([
-                  {
-                    date: "2025-05-11",
-                    total: 23,
-                    source: "cnics", // TODO get it from real data source
-                  },
-                  {
-                    date: "2024-09-11",
-                    total: 20,
-                    source: "epic",
-                  },
-                  {
-                    date: "2023-08-08",
-                    total: 16,
-                    source: "cnics",
-                  },
-                  {
-                    date: "2023-01-08",
-                    total: 12,
-                    source: "cnics",
-                  },
-                ]),
-              },
-            },
-            {
-              key: "CIRG-PHQ9-SI",
-              source: "cnics",
-              comparison: "higher",
-              comparisonToAlert: "",
-              instrumentName: "Suicide Ideation",
-              lastAssessed: "2025-05-11",
-              meaning: "Nearly Every Day",
-              alert: true,
-              minScore: 0,
-              maxScore: 3,
-              score: 3,
-              totalAnswered: 1,
-              scoringParams: {
-                maximumScore: 3,
-                minimumScore: 0,
-                scoreSeverity: "high",
-                highScore: 3,
-              },
-              chartData: {
-                ...CHART_CONFIG.default,
-                id: "PHQ_SI_CHART",
-                title: "Suicide Ideation",
-                type: "linechart",
-                maximumYValue: 3,
-                minimumYValue: 0,
-                highScore: 3,
-                xLabel: "",
-                data: CHART_CONFIG.default.dataFormatter([
-                  {
-                    date: "2025-05-11",
-                    total: 3,
-                    source: "cnics",
-                  },
-                  {
-                    date: "2024-09-11",
-                    total: 2,
-                    source: "epic",
-                  },
-                  {
-                    date: "2023-08-08",
-                    total: 2,
-                    source: "cnics",
-                  },
-                  {
-                    date: "2023-01-08",
-                    total: 1,
-                    source: "cnics",
-                  },
-                ]),
-              },
-            },
-            {
-              key: "CIRG-Overdose",
-              comparison: "",
-              comparisonToAlert: "",
-              instrumentName: "Overdose (recent)",
-              lastAssessed: "2025-05-11",
-              meaning: "Yes",
-              text: "",
-              alert: true,
-              totalAnswered: 1,
-              source: "cnics",
-            },
-            {
-              key: "CIRG-IPV",
-              comparison: "",
-              comparisonToAlert: "",
-              instrumentName: "IPV (past year)",
-              lastAssessed: "2025-05-11",
-              meaning: "No",
-              text: "",
-              totalAnswered: 1,
-              source: "cnics",
-            },
-            {
-              key: "CIRG-Food-Security",
-              comparison: "",
-              comparisonToAlert: "",
-              instrumentName: "Food Security",
-              lastAssessed: "2025-05-11",
-              meaning: "Very Low Food Security",
-              text: "",
-              alert: true,
-              totalAnswered: 1,
-              source: "cnics",
-            },
-            {
-              key: "CIRG-Financial-Situation",
-              comparison: "",
-              comparisonToAlert: "",
-              instrumentName: "Financial Situation",
-              lastAssessed: "2025-05-11",
-              meaning: "Struggling to Survive",
-              text: "",
-              alert: true,
-              totalAnswered: 1,
-              source: "cnics",
-            },
+          dataKeysToMatch: [
+            "CIRG-PHQ9",
+            "CIRG-PHQ9-SI",
+            "CIRG-IPV",
+            "CIRG-Overdose",
+            "CIRG-Food-Security",
+            "CIRG-Financial-Situation",
           ],
+          paramsByKey: {
+            // Only overrides unique to this table:
+            "CIRG-PHQ9": {
+              chartParams: { title: "PHQ-9", xLabel: "" }, // (already the same as defaults; you can omit entirely)
+            },
+            "CIRG-PHQ9-SI": {
+              getProcessedData: (summaryData) => {
+                const HOST_ID = "CIRG-PHQ9"; // where the SI answer lives
+                const SELF_ID = "CIRG-PHQ9-SI"; // instrument defaults to use
+
+                const host = summaryData?.[HOST_ID]?.scoringSummaryData;
+                if (!host || isEmptyArray(host.responses)) return null;
+
+                const siItem = host.responses.find((r) => linkIdEquals(r.id, PHQ9_SI_QUESTION_LINK_ID));
+                if (!siItem) return null;
+
+                const score = PHQ9_SI_ANSWER_SCORE_MAPPINGS[String(siItem.answer).toLowerCase()];
+                if (!isNumber(score)) return null;
+
+                const { title, scoringParams, chartParams } = INSTRUMENT_DEFAULTS[SELF_ID] ?? {};
+                const alert = score >= (scoringParams?.highSeverityScoreCutoff ?? Infinity);
+                const lastAssessed = host.lastAssessed;
+                const meaning = siItem.answer;
+                const responseData = host.responseData ?? [];
+                const yFieldKey = "score";
+                const data = chartParams.dataFormatter(
+                  responseData
+                    .map((entry) => {
+                      if (isEmptyArray(entry.responses)) return null;
+                      const hit = entry.responses.find((o) => linkIdEquals(o.id, PHQ9_SI_QUESTION_LINK_ID));
+                      if (!hit) return null;
+                      const s = PHQ9_SI_ANSWER_SCORE_MAPPINGS[String(hit.answer).toLowerCase()];
+                      if (!isNumber(s)) return null;
+                      return { date: entry.date, [yFieldKey]: s, source: entry.source, ...scoringParams, };
+                    })
+                    .filter((row) => row && isNumber(row[yFieldKey])),
+                );
+                return {
+                  scoringSummaryData: {
+                    ...getScoreParamsFromResponses(data),
+                    ...scoringParams,
+                    key: "CIRG_PHQ9_SI",
+                    scoringParams: {
+                      scoreSeverity: alert ? "high" : "normal",
+                    },
+                   // comparison,
+                    instrumentName: title,
+                    source: host?.source,
+                    score,
+                    alert,
+                    lastAssessed,
+                    meaning,
+                    totalAnswered: 1,
+                  },
+                  chartData: {
+                    ...chartParams,
+                    ...scoringParams,
+                    id: "CIRG_PHQ9_SI_CHART",
+                    yFieldKey,
+                    title,
+                    data,
+                  },
+                };
+              },
+            },
+          },
         },
       ],
     },
-    {
-      id: "section_symptoms",
-      title: "Symptoms",
-      tables: [
-        {
-          id: "table_symptoms-bother",
-          layout: "simple",
-          hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
-          columns: [
-            {
-              id: "measure",
-              header: "Measure",
-              align: "left",
-              accessor: "measure",
-              headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
-            },
-            { id: "bothersALot", header: "Bothers a lot", align: "right", accessor: "bothersALot" },
-            { id: "bothersSome", header: "Bothers some", align: "right", accessor: "bothersSome" },
-          ],
-          rows: [
-            {
-              id: 1,
-              measure: "Current Symptoms",
-              bothersALot: "Rash, Cough",
-              bothersSome: "Sad, Headache",
-              source: "cnics",
-            },
-          ],
-        },
-      ],
-    },
+
     {
       id: "section_health_behaviors",
       title: "Health Behavior",
       tables: [
         {
-          id: "table_art_adherence",
-          layout: "simple",
-          title: "ART Adherence",
-          hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
-          columns: [
-            {
-              id: "measure",
-              header: "Measure",
-              align: "left",
-              accessor: "measure",
-              type: "text",
-              headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
-            },
-            {
-              id: "lastMissedDose",
-              header: "Last Missed Dose",
-              align: "left",
-              accessor: "lastMissedDose",
-              type: "text",
-            },
-          ],
-          rows: [{ id: 22, measure: "Last Missed Dose", lastMissedDose: "Within the last week", source: "cnics" }],
-        },
-        {
           id: "table_substance_use",
+          keyToMatch: "CIRG_SUBSTANCE_USE",
           title: "Substance Use",
           layout: "two-columns",
-          rows: [
-            {
-              key: "CIRG-Nicotine-Use",
-              source: "cnics",
-              comparison: "",
-              comparisonToAlert: "",
-              instrumentName: "Nicotine Use",
-              lastAssessed: "2025-05-11",
-              meaning: "Tobacco cigarettes: Currently",
-              text: "N/A",
-              totalAnswered: 1,
+          dataKeysToMatch: ["CIRG-Nicotine-Use", "CIRG-Alcohol-Use", "CIRG-Mini-Score", "CIRG-Concurrent-Drug-Use"],
+          paramsByKey: {
+            "CIRG-Alcohol-Use": {
+              chartParams: { xLabel: "" }, // title/min/max/cutoff come from defaults
             },
-            {
-              key: "CIRG-Alcohol-Use",
-              source: "cnics",
-              comparison: "higher",
-              comparisonToAlert: "",
-              instrumentName: "Alcohol Score",
-              lastAssessed: "2025-05-11",
-              maxScore: 45,
-              minScore: 0,
-              score: 40,
-              meaning: "At Risk",
-              alert: true,
-              scoringParams: {
-                maximumScore: 3,
-                minimumScore: 1,
-                scoreSeverity: "high",
-                highScore: 35,
-              },
-              totalAnswered: 10,
-              totalItems: 10,
-              chartData: {
-                ...CHART_CONFIG.default,
-                id: "Alcohol_Use_CHART",
-                title: "Alcohol Score",
-                type: "barchart",
-                maximumYValue: 45,
-                minimumYValue: 0,
-                highScore: 35,
-                xLabel: "",
-                data: CHART_CONFIG.default.dataFormatter([
-                  {
-                    date: "2025-05-11",
-                    total: 40,
-                    source: "cnics",
-                  },
-                  {
-                    date: "2024-09-11",
-                    total: 35,
-                    source: "cnics",
-                  },
-                  {
-                    date: "2023-08-08",
-                    total: 25,
-                    source: "cnics",
-                  },
-                  {
-                    date: "2023-01-08",
-                    total: 20,
-                    source: "cnics",
-                  },
-                ]),
-              },
+            "CIRG-Mini-Score": {
+              chartParams: { xLabel: "" },
             },
-            {
-              key: "CIRG-Mini-Score",
-              source: "cnics",
-              comparison: "higher",
-              comparisonToAlert: "",
-              instrumentName: "MINI Score",
-              lastAssessed: "2025-05-11",
-              maxScore: 5,
-              meaning: "Dependent Drinker",
-              minScore: 0,
-              score: 3,
-              scoringParams: {
-                maximumScore: 5,
-                minimumScore: 0,
-                highScore: 4,
-              },
-              totalAnswered: 3,
-              totalItems: 3,
-              chartData: {
-                ...CHART_CONFIG.default,
-                id: "MINI_Score_CHART",
-                title: "MINI Score",
-                maximumYValue: 5,
-                minimumYValue: 0,
-                highScore: 4,
-                xLabel: "",
-                data: CHART_CONFIG.default.dataFormatter([
-                  {
-                    date: "2025-05-11",
-                    total: 3,
-                  },
-                  {
-                    date: "2024-09-11",
-                    total: 3,
-                  },
-                  {
-                    date: "2023-08-08",
-                    total: 2,
-                  },
-                  {
-                    date: "2023-01-08",
-                    total: 2,
-                  },
-                ]),
-              },
-            },
-            {
-              key: "CIRG-Concurrent-Drug-Use",
-              source: "cnics",
-              comparison: "",
-              comparisonToAlert: "",
-              instrumentName: "Concurrent Drug Use",
-              lastAssessed: "2025-05-11",
-              meaning: "No",
-              text: "N/A",
-              totalAnswered: 1,
-            },
-          ],
-        },
-        {
-          id: "table_sexual_risk",
-          layout: "simple",
-          title: "Sexual Risk Behavior",
-          hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
-          columns: [
-            {
-              id: "measure",
-              header: "Measure",
-              align: "left",
-              accessor: "measure",
-              type: "text",
-              headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
-            },
-            {
-              id: "result",
-              header: "Result",
-              align: "left",
-              accessor: "result",
-              type: "text",
-            },
-            {
-              id: "date",
-              header: "Last Done",
-              align: "left",
-              accessor: "date",
-              type: "text",
-              renderCell: (row, value) => (
-                <Stack direction={"column"} spacing={1}>
-                  <span>{value ?? "--"}</span>
-                  {row.source && <span className="muted-text">{row.source}</span>}
-                </Stack>
-              ),
-            },
-          ],
-          rows: [
-            { id: 23, measure: "# of sex partners x 3 months", result: "2", date: "2025-05-11", source: "cnics" },
-            { id: 24, measure: "Unprotected sex", result: "Yes", date: "2025-05-11", source: "cnics" },
-            { id: 25, measure: "Exchange sex (recent)", result: "No", date: "2025-05-11", source: "cnics" },
-            { id: 26, measure: "Concern for STI", result: "No", date: "2025-05-11", source: "cnics" },
-          ],
-        },
-        {
-          id: "table_psychosocial_concern",
-          layout: "simple",
-          title: "Psychosocial Concerns and Quality of Life",
-          hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
-          columns: [
-            {
-              id: "measure",
-              header: "Measure",
-              align: "left",
-              accessor: "measure",
-              type: "text",
-              headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
-            },
-            {
-              id: "result",
-              header: "Result",
-              align: "left",
-              accessor: "result",
-              type: "text",
-            },
-            {
-              id: "date",
-              header: "Last Done",
-              align: "left",
-              accessor: "date",
-              type: "text",
-              renderCell: (row, value) => (
-                <Stack direction={"column"} spacing={1}>
-                  <span>{value ?? "--"}</span>
-                  {row.source && <span className="muted-text">{row.source}</span>}
-                </Stack>
-              ),
-            },
-          ],
-          rows: [
-            { id: 30, measure: "PTSD Symptoms", result: "N/A", date: "2025-05-11", source: "cnics" },
-            { id: 31, measure: "Social Support", result: "N/A", date: "2025-05-11", source: "cnics" },
-          ],
+          },
         },
       ],
     },
   ],
 };
+
+export const report_config = buildReportConfig(report_config_base);
+export default report_config;

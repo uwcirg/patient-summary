@@ -1,5 +1,6 @@
-class ScoreSeverity {
-  constructor(scoreParams = {}) {
+class Score {
+  constructor(score, scoreParams = {}) {
+    this.score = score;
     this.severity = scoreParams && scoreParams.scoreSeverity ? String(scoreParams.scoreSeverity).toLowerCase() : null;
     this.scoreParams = scoreParams;
   }
@@ -12,7 +13,15 @@ class ScoreSeverity {
   }
 
   isInRange() {
-    return ScoreSeverity.range.indexOf(this.severity) !== -1;
+    return Score.range.indexOf(this.severity) !== -1;
+  }
+
+  get currentScore() {
+    return this.score;
+  }
+
+  get previousScore() {
+    return this.scoreParams?.previousScore;
   }
 
   get textColorClass() {
@@ -31,4 +40,4 @@ class ScoreSeverity {
     return this.scoreParams && this.scoreParams.alertNote ? this.scoreParams.alertNote : null;
   }
 }
-export default ScoreSeverity;
+export default Score;

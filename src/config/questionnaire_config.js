@@ -2,8 +2,10 @@ import { isEmptyArray } from "@util";
 import { normalizeLinkId } from "@util/fhirUtil";
 const questionnaireConfigs = {
   "CIRG-ADL-IADL": {
+    key: "CIRG-ADL-IADL",
     questionnaireId: "CIRG-ADL-IADL",
     questionnaireName: "adl-iadl",
+    instrumentName: "ADL-IADL",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/adl-iadl",
     scoringQuestionId: "adl-iadls-total-score",
     scoringParams: { maximumScore: 45 },
@@ -22,8 +24,10 @@ const questionnaireConfigs = {
     matchMode: "fuzzy",
   },
   "CIRG-BEHAV5": {
+    key: "CIRG-BEHAV5",
     questionnaireId: "CIRG-BEHAV5",
     questionnaireName: "behav5",
+    instrumentName: "BEHAV-5",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/behav5",
     scoringQuestionId: "behav-8",
     scoringParams: { maximumScore: 6 },
@@ -31,16 +35,20 @@ const questionnaireConfigs = {
     matchMode: "fuzzy",
   },
   "CIRG-C-IDAS": {
+    key: "CIRG-C-IDAS",
     questionnaireId: "CIRG-C-IDAS",
     questionnaireName: "c-idas",
+    instrumentName: "C-IDAS",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/c-idas",
     scoringQuestionId: "c-ids-score", // from your CQL
     scoringParams: { maximumScore: 36 },
     matchMode: "fuzzy",
   },
   "CIRG-CP-ECOG": {
+    key: "CIRG-CP-ECOG",
     questionnaireId: "CIRG-CP-ECOG",
     questionnaireName: "cp-ecog",
+    instrumentName: "CP-ECOG",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/cp-ecog",
     scoringQuestionId: "cp-ecog-total-score",
     scoringParams: { maximumScore: 48 },
@@ -69,8 +77,10 @@ const questionnaireConfigs = {
     // highSeverityScoreCutoff: 37, // if you define bands/cutoff
   },
   "CIRG-ECOG12": {
+    key: "CIRG-ECOG12",
     questionnaireId: "CIRG-ECOG12",
     questionnaireName: "ecog12",
+    instrumentName: "ECOG-12",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/ecog12",
     scoringQuestionId: "ecog12-total-score",
     scoringParams: { maximumScore: 48 },
@@ -99,8 +109,10 @@ const questionnaireConfigs = {
     // highSeverityScoreCutoff: 37,
   },
   "CIRG-GAD7": {
+    key: "CIRG-GAD7",
     questionnaireId: "CIRG-GAD7",
     questionnaireName: "gad7",
+    instrumentName: "GAD-7",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/gad7",
     scoringQuestionId: "/70274-6",
     scoringParams: { maximumScore: 21 },
@@ -114,10 +126,13 @@ const questionnaireConfigs = {
     ],
     // optional (defaults to top band min = 15 anyway)
     highSeverityScoreCutoff: 15,
+    mediumSeverityScoreCutoff: 10,
   },
   "CIRG-GDS": {
+    key: "CIRG-GDS",
     questionnaireId: "CIRG-GDS",
     questionnaireName: "gds",
+    instrumentName: "GDS",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/gds",
     scoringQuestionId: "/48545-8",
     scoringParams: { maximumScore: 15 },
@@ -149,8 +164,10 @@ const questionnaireConfigs = {
     // highSeverityScoreCutoff: 11,
   },
   "CIRG-MINICOG": {
+    key: "CIRG-MINICOG",
     questionnaireId: "CIRG-MINICOG",
     questionnaireName: "MINICOG",
+    instrumentName: "MINI-COG",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/minicog",
     recallLinkIds: ["/recall-1", "/recall-2", "/recall-3"],
     clockLinkId: "/clock",
@@ -174,8 +191,10 @@ const questionnaireConfigs = {
     matchMode: "fuzzy",
   },
   "CIRG-PHQ9": {
+    key: "CIRG-PHQ9",
     questionnaireId: "CIRG-PHQ9",
     questionnaireName: "phq9",
+    instrumentName: "PHQ-9",
     title: "Patient Health Questionnaire-9 (PHQ-9)",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/phq9",
     scoringQuestionId: "/44261-6",
@@ -201,6 +220,7 @@ const questionnaireConfigs = {
     },
     matchMode: "fuzzy",
     highSeverityScoreCutoff: 20,
+    mediumSeverityScoreCutoff: 15,
     severityBands: [
       { min: 20, label: "high", meaning: "severe depression" },
       { min: 15, label: "moderately high", meaning: "moderately severe depression" },
@@ -210,8 +230,10 @@ const questionnaireConfigs = {
     ],
   },
   "CIRG-SLUMS": {
+    key: "CIRG-SLUMS",
     questionnaireId: "CIRG-SLUMS",
     questionnaireName: "slums",
+    instrumentName: "SLUMS",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/slums",
     scoringQuestionId: "/71492-3", // total score item
     questionLinkIds: ["/71492-3"],

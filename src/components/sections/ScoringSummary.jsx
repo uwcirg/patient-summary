@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
-import Alert from "@mui/material/Alert";
+//import Alert from "@mui/material/Alert";
 import Link from "@mui/material/Link";
 import Box from "@mui/material/Box";
 import Table from "@mui/material/Table";
@@ -14,8 +14,10 @@ import Stack from "@mui/material/Stack";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
+import { getResponseColumns } from "@models/resultBuilders/helpers";
 import Scoring from "@components/Score";
-import { isEmptyArray, isNumber, scrollToAnchor } from "@util";
+import { isNumber, scrollToAnchor } from "@util";
+import ResponsesViewer from "../ResponsesViewer";
 
 // tiny helper to read nested keys like "provider.name"
 const getByPath = (obj, path) => {
@@ -37,11 +39,11 @@ export default function ScoringSummary(props) {
     if (comparison === "equal") return <HorizontalRuleIcon {...iconProps} />;
     if (comparisonToAlert === "lower") {
       if (comparison === "lower") return <SouthIcon color="error" {...iconProps} />;
-      if (comparison === "higher") return <NorthIcon color="success" {...iconProps} />;
+      if (comparison === "higher") return <NorthIcon color="info" {...iconProps} />;
       return comparison;
     } else {
       if (comparison === "higher") return <NorthIcon color="error" {...iconProps} />;
-      if (comparison === "lower") return <SouthIcon color="success" {...iconProps} />;
+      if (comparison === "lower") return <SouthIcon color="info" {...iconProps} />;
       return comparison;
     }
   };
@@ -51,16 +53,21 @@ export default function ScoringSummary(props) {
     scrollToAnchor(anchorElementId);
   };
 
-  const displayScoreRange = (minScore, maxScore) => {
-    if (!isNumber(minScore) || !isNumber(maxScore)) return "";
-    return `( ${minScore} - ${maxScore} )`;
+  const displayScoreRange = (row) => {
+    const { minScore, maxScore, minimumScore, maximumScore } = row;
+    const minScoreToUse = isNumber(minScore) ? minScore : isNumber(minimumScore) ? minimumScore : 0;
+    const maxScoreToUse = isNumber(maxScore) ? maxScore : isNumber(maximumScore) ? maximumScore : 0;
+    if (!isNumber(minScoreToUse) || !isNumber(maxScoreToUse)) return "";
+    if (minScoreToUse === maxScoreToUse) return "";
+    return `( ${minScoreToUse} - ${maxScoreToUse} )`;
   };
 
   const displayNumAnswered = (row) => {
     const totalItems = row.totalItems;
     const totalAnsweredItems = row.totalAnswered;
-    if (!totalItems && !totalAnsweredItems) return "--";
+    if (!totalItems && !totalAnsweredItems) return "";
     if (!totalItems && totalAnsweredItems) return "Yes";
+    if (parseInt(totalAnsweredItems) === 0 && parseInt(totalItems) === 0) return "";
     return `${totalAnsweredItems} / ${totalItems}`;
   };
 
@@ -88,36 +95,41 @@ export default function ScoringSummary(props) {
 
   // -------- reusable default cell renderers
   const defaultRenderers = {
-    text: (row, value) => <span className={row.alert ? "text-error" : ""}>{value ?? "--"}</span>,
+    text: (row, value) => (
+      <span className={row.alert ? "text-error" : row.warning ? "text-warning" : ""}>{value ?? "--"}</span>
+    ),
     date: (row, value) => (
-      <Stack direction={"column"} spacing={1}>
+      <Stack direction={"column"} spacing={1} alignItems={"center"} justifyContent={"center"}>
         <span>{value ?? "--"}</span>
         {row.source && <span className="muted-text">{row.source}</span>}
       </Stack>
     ),
-    score: (row) => (
-      <>
-        {isNumber(row.score) && (
-          <Stack
-            direction="column"
-            spacing={0.75}
-            justifyContent="space-between"
-            alignItems="center"
-            sx={{ width: "100%" }}
-          >
-            <Scoring score={row.score} scoreParams={row.scoringParams} justifyContent="space-between" />
-            <Box className="no-wrap-text muted-text" sx={{ fontSize: "0.65rem" }}>
-              {displayScoreRange(row.minScore, row.maxScore)}
-            </Box>
-          </Stack>
-        )}
-        {row.text && (
-          <Stack justifyContent="space-between" alignItems="center">
-            <Box sx={{ color: row.alert ? "error.main" : "#444" }}>{row.text}</Box>
-          </Stack>
-        )}
-      </>
-    ),
+    score: (row) => {
+      return (
+        <>
+          {isNumber(row.score) && (
+            <Stack
+              direction="column"
+              spacing={0.75}
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ width: "100%" }}
+            >
+              <Scoring score={row.score} scoreParams={row.scoringParams} justifyContent="space-between" />
+              <Box className="no-wrap-text muted-text" sx={{ fontSize: "0.65rem" }}>
+                {displayScoreRange(row)}
+              </Box>
+            </Stack>
+          )}
+          {row.text && (
+            <Stack justifyContent="space-between" alignItems="center">
+              <Box sx={{ color: row.alert ? "error.main" : row.warning ? "warning.main" : "#444" }}>{row.text}</Box>
+            </Stack>
+          )}
+          {!isNumber(row.score) && !row.text && <Box className="muted-text text-center">N/A</Box>}
+        </>
+      );
+    },
   };
 
   // -------- original columns ------------
@@ -142,6 +154,7 @@ export default function ScoringSummary(props) {
           fontWeight: 500,
           borderBottom: `1px solid`,
           borderBottomColor: "border.main",
+          textAlign: "center"
         },
         size: "small",
       },
@@ -157,6 +170,13 @@ export default function ScoringSummary(props) {
           >
             {row.instrumentName}
           </Link>
+        ) : props.enableResponsesViewer && row?.responseData ? (
+          <ResponsesViewer
+            title={row.instrumentName}
+            responsesTileTitle={row.instrumentName}
+            tableData={row?.tableResponseData}
+            columns={getResponseColumns(row?.responseData)}
+          />
         ) : (
           row.instrumentName
         ),
@@ -183,7 +203,7 @@ export default function ScoringSummary(props) {
       align: "center",
       headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
       cellProps: { sx: baseCellStyle, size: "small", className: "capitalized-text" },
-      accessor: "meaning",
+      accessor: (row) => (row.meaning ? row.meaning : (row.scoreMeaning ?? "")),
       type: "text",
     },
     {
@@ -193,7 +213,7 @@ export default function ScoringSummary(props) {
       type: "date",
       headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
       cellProps: { sx: baseCellStyle, size: "small" },
-      accessor: "lastAssessed",
+      accessor: (row) => (row.lastAssessed ? row.lastAssessed : (row.date ?? "")),
     },
 
     {
@@ -261,32 +281,56 @@ export default function ScoringSummary(props) {
     return <>{value ?? "—"}</>;
   };
 
-  const renderTableBody = () => (
-    <TableBody>
-      {scoringSummaryData.map((row, index) => (
-        <TableRow key={`summary_${row.key || index}_${index}`}>
-          {EFFECTIVE_COLUMNS.filter((c) => isColVisible(c.id)).map((col) => (
+  const renderTableBody = () => {
+    const visibleColumns = EFFECTIVE_COLUMNS.filter((c) => isColVisible(c.id));
+    const hasData = scoringSummaryData && scoringSummaryData.length > 0;
+
+    return (
+      <TableBody>
+        {hasData ? (
+          scoringSummaryData.map((row, index) => (
+            <TableRow key={`summary_${row.key || index}_${index}`}>
+              {visibleColumns.map((col) => (
+                <TableCell
+                  key={`cell_${col.id}_${row.key || index}`}
+                  {...defaultTableCellProps}
+                  align={col.align || "left"}
+                  {...(col.cellProps || {})}
+                  sx={{
+                    ...baseCellStyle,
+                    ...(col.sticky ? stickyStyle : {}),
+                    ...(col.cellProps?.sx || {}),
+                  }}
+                >
+                  {renderCell(col, row)}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))
+        ) : (
+          <TableRow>
             <TableCell
-              key={`cell_${col.id}_${row.key || index}`}
-              {...defaultTableCellProps}
-              align={col.align || "left"}
-              {...(col.cellProps || {})}
+              colSpan={visibleColumns.length}
+              align="center"
               sx={{
                 ...baseCellStyle,
-                ...(col.sticky ? stickyStyle : {}),
-                ...(col.cellProps?.sx || {}),
+                // remove sticky styling for the merged cell
+                position: "static",
+                backgroundColor: "transparent",
+                fontStyle: "italic",
+                color: "text.secondary",
               }}
             >
-              {renderCell(col, row)}
+              {props.emptyMessage || "No Data"}
             </TableCell>
-          ))}
-        </TableRow>
-      ))}
-    </TableBody>
-  );
+          </TableRow>
+        )}
+      </TableBody>
+    );
+  };
 
   const renderSummary = () => {
-    if (isEmptyArray(scoringSummaryData)) return <Alert severity="warning">No score summary available</Alert>;
+    // if (isEmptyArray(scoringSummaryData)) return <Alert severity="warning">No score summary available</Alert>;
     return (
       <TableContainer
         className="table-container"
@@ -298,7 +342,7 @@ export default function ScoringSummary(props) {
           position: { xs: "initial", sm: "relative" },
           marginLeft: { sm: 0 },
           borderRadius: 0,
-          alignSelf: "stretch"
+          alignSelf: "stretch",
         }}
       >
         <Table
@@ -323,7 +367,7 @@ export default function ScoringSummary(props) {
   };
 
   return (
-    <Stack className="scoring-summary-container" spacing={1} direction="column" sx={props.containerStyle??{}}>
+    <Stack className="scoring-summary-container" spacing={1} direction="column" sx={props.containerStyle ?? {}}>
       {renderSummary()}
     </Stack>
   );
@@ -345,10 +389,12 @@ const columnShape = PropTypes.shape({
 ScoringSummary.propTypes = {
   scoringSummaryData: PropTypes.array,
   disableLinks: PropTypes.bool,
+  enableResponsesViewer: PropTypes.bool,
   hiddenColumns: PropTypes.arrayOf(
-    PropTypes.oneOf(["measure", "lastAssessed", "score", "numAnswered", "meaning", "comparison"]),
+    PropTypes.oneOf(["id", "source", "measure", "lastAssessed", "score", "numAnswered", "meaning", "comparison"]),
   ),
   columns: PropTypes.arrayOf(columnShape),
+  emptyMessage: PropTypes.string,
   tableStyle: PropTypes.object,
-  containerStyle: PropTypes.object
+  containerStyle: PropTypes.object,
 };

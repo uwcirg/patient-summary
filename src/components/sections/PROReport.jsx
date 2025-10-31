@@ -14,7 +14,7 @@ import ScoringSummary from "./ScoringSummary";
 export default function PROReport() {
   //const keys = Object.keys(summaries ?? {});
   const renderTwoColumns = (table) => {
-    const allCharts = table.rows.filter((row) => row.chartData).map((row) => row.chartData);
+   // const allCharts = table.rows.filter((row) => row.chartData).map((row) => row.chartData);
     //console.log("chart data ", allCharts);
     return (
       <Stack
@@ -33,15 +33,16 @@ export default function PROReport() {
           key={`reportable_table_${table.id}`}
           scoringSummaryData={table.rows}
           disableLinks={true}
+          enableResponsesViewer={true}
           containerStyle={{
             alignSelf: "stretch",
           }}
         ></ScoringSummary>
         <Box>
-          {!isEmptyArray(allCharts) &&
-            allCharts.map((chartData) => {
+          {!isEmptyArray(table.charts) &&
+            table.charts.map((chartData, index) => {
               if (isEmptyArray(chartData?.data)) return null;
-              return <Chart key={`chart_${table.id}_${chartData?.id}`} type={chartData?.type} data={chartData}></Chart>;
+              return <Chart key={`chart_${table.id}_${chartData?.id}_${index}`} type={chartData?.type} data={chartData}></Chart>;
             })}
         </Box>
       </Stack>
@@ -55,6 +56,7 @@ export default function PROReport() {
           alignSelf: "stretch",
           padding: (theme) => theme.spacing(0, 1),
         }}
+        key={table.id}
       >
         {table.title && (
           <Typography
@@ -88,11 +90,11 @@ export default function PROReport() {
       </Box>
     );
   };
-  return report_config.sections.map((section) => {
+  return report_config.sections.map((section, index) => {
     //if (section.layout == "simple")
     return (
       <Section
-        key={section.id}
+        key={`${section.id}_${index}`}
         section={{
           id: section.id,
           title: section.title,

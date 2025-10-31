@@ -234,10 +234,6 @@ export function isNumber(target) {
   return target != null;
 }
 
-export function isPlainObject(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
 export function objectToString(value) {
   if (typeof value === "object" && value !== null) {
     // If it's a plain object, stringify it
@@ -265,8 +261,9 @@ export function shouldShowPatientInfo(client) {
   return String(getEnv("REACT_APP_DISABLE_HEADER")).toLowerCase() !== "true";
 }
 export function shouldShowNav() {
-  return false;
- // return String(getEnv("REACT_APP_DISABLE_NAV")).toLowerCase() !== "true";
+  const sections = getSectionsToShow();
+  if (isEmptyArray(sections) || sections.length === 1) return false;
+  return String(getEnv("REACT_APP_DISABLE_NAV")).toLowerCase() !== "true";
 }
 export function getAppHeight() {
   return `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT}px)`;
@@ -406,4 +403,26 @@ export function debounce(fn, delay) {
     clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);
   };
+}
+
+// shallow check for plain objects
+export const isPlainObject = (v) =>
+  v != null && !Array.isArray(v) && typeof v === "object" && Object.getPrototypeOf(v) === Object.prototype;
+
+// deep merge that preserves functions and arrays (arrays are replaced by override)
+export function deepMerge(base = {}, override = {}) {
+  const out = { ...base };
+  for (const key of Object.keys(override)) {
+    const bv = out[key];
+    const ov = override[key];
+    if (isPlainObject(bv) && isPlainObject(ov)) out[key] = deepMerge(bv, ov);
+    else out[key] = ov; // functions, arrays, primitives: take override by reference/value
+  }
+  return out;
+}
+
+export function isDemoDataEnabled() {
+  // TODO FIX this
+  if (String(getEnv("REACT_APP_CONF_API_URL")).toLowerCase().includes("dev")) return true;
+  return String(getEnv("REACT_APP_ENABLE_DEMO_DATA")).toLowerCase() === "true";
 }

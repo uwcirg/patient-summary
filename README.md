@@ -37,13 +37,14 @@ Parameters for the app are stored in [environmental variables](http://man7.org/l
 | `REACT_APP_DASHBOARD_URL`| Define the (f)EMR URL to which the app can return to | example: https://dashboard.acc.dev.cosri.cirg.washington.edu | 
 | `REACT_APP_PROJECT_ID` | Definition of which will allow project-specific theme, logo, etc. | example: `DCW`|
 | `REACT_APP_CLIENT_ID` | Define unique client id for when launching as a confidential client | example: `summary_openid_client`
-| `REACT_APP_SECTIONS` | Definition of which sections to show in app. | default: `scoreSummary,conditions,observations,questionnaireResponses`
+| `REACT_APP_SECTIONS` | Definition of which sections to show in app. | default: `proReport`|possible sections: `proReport,scoreSummary,conditions,observations,questionnaireResponses`
 | `REACT_APP_CONF_API_URL` | Define the backend auth URL for launching as a confidential client | 
 | `REACT_APP_SYSTEM_TYPE` | Define the system type of the app | example: `development` | [`development`, `stage`, `demo`, `production`]
 | `REACT_APP_DISABLE_HEADER` | Define whether the patient info in header element should appear, default is `false` |`true`, `false`
 | `REACT_APP_DISABLE_NAV` | Define whether the navigation menu element should appear, default is `false` |`true`, `false`
 | `REACT_APP_MATOMO_SITE_ID` | Define the site id used to for tracking via MATOMO | Example: `24`
 | `REACT_APP_EPIC_QUERIES` | Define whether the site is quering data from EPIC | example: `true`, default is `false` | [`true`, `false`]
+| `REACT_APP_ENABLE_DEMO_DATA` | Define whether the app should be using fake/demo data | example: `true`, default is `false` | [`true`, `false`]
 ### Using with Public SMART Sandbox
 A public [SMART<sup>&reg;</sup> App Launcher](https://launch.smarthealthit.org/index.html) is available for sandbox tesing of SMART on FHIR apps with synthetic data.
 
