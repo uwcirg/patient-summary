@@ -154,7 +154,6 @@ export default function ScoringSummary(props) {
           fontWeight: 500,
           borderBottom: `1px solid`,
           borderBottomColor: "border.main",
-          textAlign: "center"
         },
         size: "small",
       },

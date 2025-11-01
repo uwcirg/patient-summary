@@ -24,7 +24,7 @@ const CHART_CONFIG = {
     xsChartWidth: 400,
     chartWidth: 520,
     dotColor: "#444",
-    lgChartWidth: 600,
+    lgChartWidth: 580,
     chartHeight: 250,
     xFieldKey: "date",
     xAxisTitle: "Date",

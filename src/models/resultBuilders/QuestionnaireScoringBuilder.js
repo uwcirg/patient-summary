@@ -516,9 +516,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
        // maxScore,
        // minScore,
       //  alert,
-        scoreSeverity,
+      //  scoreSeverity,
         //highSeverityScoreCutoff: config?.highSeverityScoreCutoff,
-        scoreMeaning: this.meaningFromSeverity(scoreSeverity, config),
+       // scoreMeaning: this.meaningFromSeverity(scoreSeverity, config),
         //comparisonToAlert: config?.comparisonToAlert ?? "higher",
         scoringParams: {
           //...(config?.scoringParams ?? {}),
