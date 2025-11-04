@@ -6,7 +6,6 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Questionnaire from "@models/Questionnaire";
-import { getDateDomain } from "@config/chart_config";
 import { hasData, isEmptyArray } from "@util";
 import Error from "./ErrorComponent";
 import QuestionnaireInfo from "./QuestionnaireInfo";
@@ -17,12 +16,6 @@ import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "@/consts";
 export default function Summary(props) {
   const { questionnaireId, data: summary } = props;
   const hasChart = hasData(summary?.chartData);
-  const arrDates = !isEmptyArray(summary?.chartData?.data) ? (summary?.chartData?.data)?.map((d) => d.date) : [];
-  const dates = !isEmptyArray(arrDates) ? [...new Set(arrDates)] : [];
-  let xDomain = getDateDomain(dates, {
-    padding: dates.length <= 2 ? 0.15 : 0.05,
-  });
-  console.log("chart data ", summary?.chartData, " dates ", dates, " xDomain", xDomain);
   const anchorElementStyle = {
     position: "relative",
     top: -64,
@@ -85,7 +78,6 @@ export default function Summary(props) {
             type={summary.chartType}
             data={{
               ...summary.chartData,
-              xDomain,
               lgChartWidth: 520,
             }}
           ></Chart>

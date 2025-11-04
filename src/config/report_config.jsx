@@ -3,14 +3,10 @@ import { linkIdEquals } from "@util/fhirUtil";
 import { PHQ9_SI_ANSWER_SCORE_MAPPINGS, PHQ9_SI_QUESTION_LINK_ID } from "@consts";
 import { isEmptyArray, isNumber, deepMerge } from "@util";
 import CHART_CONFIG from "./chart_config";
+import questionnaireConfigs from "./questionnaire_config";
 import { getScoreParamsFromResponses } from "@/models/resultBuilders/helpers";
 
 export const INSTRUMENT_DEFAULTS = {
-  "CIRG-PHQ9": {
-    title: "PHQ-9",
-    scoringParams: { minimumScore: 0, maximumScore: 27, highSeverityScoreCutoff: 20, comparisonToAlert: "higher" },
-    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 27, xLabel: "" },
-  },
   "CIRG-PHQ9-SI": {
     title: "Suicide Ideation",
     scoringParams: { minimumScore: 0, maximumScore: 3, highSeverityScoreCutoff: 3, comparisonToAlert: "higher" },
@@ -29,6 +25,13 @@ export const INSTRUMENT_DEFAULTS = {
   // add others as needed…
 };
 
+const getInstrumentDefault = (key) => {
+  if (INSTRUMENT_DEFAULTS[key]) return INSTRUMENT_DEFAULTS[key];
+  if (questionnaireConfigs[key]) return {
+    scoringParams: {...questionnaireConfigs[key]},
+    chartParams: questionnaireConfigs[key].chartParams??{}
+  }
+}
 const normalizeParams = (params = {}) => {
   const scoring = params.scoringParams ?? {};
   const chart = params.chartParams ?? {};
@@ -40,7 +43,6 @@ const normalizeParams = (params = {}) => {
 };
 
 export function buildReportConfig(baseConfig) {
-  // DO NOT JSON-clone; create a new object while preserving functions
   const out = {
     ...baseConfig,
     sections: baseConfig.sections?.map((section) => {
@@ -51,7 +53,7 @@ export function buildReportConfig(baseConfig) {
           const paramsByKey = { ...(table.paramsByKey ?? {}) };
 
           keys.forEach((key) => {
-            const defaults = INSTRUMENT_DEFAULTS[key] || {};
+            const defaults = getInstrumentDefault(key) || {};
             const current = paramsByKey[key] || {};
             paramsByKey[key] = normalizeParams(deepMerge(defaults, current));
           });
@@ -93,30 +95,37 @@ export const report_config_base = {
                 const HOST_ID = "CIRG-PHQ9"; // where the SI answer lives
                 const SELF_ID = "CIRG-PHQ9-SI"; // instrument defaults to use
 
-                const host = summaryData?.[HOST_ID]?.scoringSummaryData;
-                if (!host || isEmptyArray(host.responses)) return null;
+                const host = summaryData?.[HOST_ID];
+                if (!host || isEmptyArray(host?.responseData)) return null;
 
-                const siItem = host.responses.find((r) => linkIdEquals(r.id, PHQ9_SI_QUESTION_LINK_ID));
+                const currentReponseData = host.scoringSummaryData;
+                const siItem = currentReponseData.responses.find((r) => linkIdEquals(r.id, PHQ9_SI_QUESTION_LINK_ID));
                 if (!siItem) return null;
 
                 const score = PHQ9_SI_ANSWER_SCORE_MAPPINGS[String(siItem.answer).toLowerCase()];
                 if (!isNumber(score)) return null;
 
-                const { title, scoringParams, chartParams } = INSTRUMENT_DEFAULTS[SELF_ID] ?? {};
+                const { title, scoringParams, chartParams } = getInstrumentDefault(SELF_ID) ?? {};
                 const alert = score >= (scoringParams?.highSeverityScoreCutoff ?? Infinity);
-                const lastAssessed = host.lastAssessed;
+                const lastAssessed = currentReponseData.lastAssessed;
                 const meaning = siItem.answer;
                 const responseData = host.responseData ?? [];
                 const yFieldKey = "score";
                 const data = chartParams.dataFormatter(
                   responseData
-                    .map((entry) => {
+                    .map((entry, index) => {
                       if (isEmptyArray(entry.responses)) return null;
                       const hit = entry.responses.find((o) => linkIdEquals(o.id, PHQ9_SI_QUESTION_LINK_ID));
                       if (!hit) return null;
                       const s = PHQ9_SI_ANSWER_SCORE_MAPPINGS[String(hit.answer).toLowerCase()];
                       if (!isNumber(s)) return null;
-                      return { date: entry.date, [yFieldKey]: s, source: entry.source, ...scoringParams, };
+                      return {
+                        id: entry.key + "_" + SELF_ID + "_" + index,
+                        date: entry.date,
+                        [yFieldKey]: s,
+                        source: entry.source,
+                        ...scoringParams,
+                      };
                     })
                     .filter((row) => row && isNumber(row[yFieldKey])),
                 );
@@ -125,12 +134,13 @@ export const report_config_base = {
                     ...getScoreParamsFromResponses(data),
                     ...scoringParams,
                     key: "CIRG_PHQ9_SI",
+                    id: HOST_ID + "_" + host.id + "_" + SELF_ID,
                     scoringParams: {
                       scoreSeverity: alert ? "high" : "normal",
                     },
-                   // comparison,
+                    // comparison,
                     instrumentName: title,
-                    source: host?.source,
+                    source: currentReponseData?.source,
                     score,
                     alert,
                     lastAssessed,
@@ -174,13 +184,13 @@ export const report_config_base = {
           ],
         },
       ],
-    }, 
+    },
 
     {
       id: "section_health_behaviors",
       title: "Health Behavior",
       tables: [
-         {
+        {
           id: "table_art_adherence",
           layout: "simple",
           dataKeysToMatch: ["CIRG_ART_ADHERENCE"],
@@ -229,7 +239,7 @@ export const report_config_base = {
           id: "table_sexual_risk",
           layout: "simple",
           title: "Sexual Risk Behavior",
-          dataKeysToMatch: ["CIRG_SEXUAL_RISK", "CIRG_UNPROTECTED_SEX","CIRG_EXCHANGE_SEX", "CIRG_STI"],
+          dataKeysToMatch: ["CIRG_SEXUAL_RISK", "CIRG_UNPROTECTED_SEX", "CIRG_EXCHANGE_SEX", "CIRG_STI"],
           hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
           columns: [
             {
@@ -261,14 +271,14 @@ export const report_config_base = {
               ),
             },
           ],
-        }
-      ]
+        },
+      ],
     },
     {
       id: "section_psychosocial_concerns",
       title: "Psychosocial concerns and quality of life",
       tables: [
-         {
+        {
           id: "table_psychosocial_concern",
           layout: "simple",
           dataKeysToMatch: ["CIRG_PSYCHOSOCIAL_CONCERNS", "CIRG_SOCIAL_SUPPORT"],
@@ -305,8 +315,8 @@ export const report_config_base = {
             },
           ],
         },
-      ]
-    }
+      ],
+    },
   ],
 };
 

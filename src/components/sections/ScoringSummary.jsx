@@ -16,7 +16,7 @@ import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import { getResponseColumns } from "@models/resultBuilders/helpers";
 import Scoring from "@components/Score";
-import { isNumber, scrollToAnchor } from "@util";
+import { isEmptyArray, isNumber, scrollToAnchor } from "@util";
 import ResponsesViewer from "../ResponsesViewer";
 
 // tiny helper to read nested keys like "provider.name"
@@ -27,7 +27,7 @@ const getByPath = (obj, path) => {
 
 export default function ScoringSummary(props) {
   const theme = useTheme();
-  const { scoringSummaryData, disableLinks, hiddenColumns = [], columns = [] } = props;
+  const { data, disableLinks, hiddenColumns = [], columns = [] } = props;
 
   const isColVisible = (id) => !hiddenColumns?.includes(id);
 
@@ -68,7 +68,9 @@ export default function ScoringSummary(props) {
     if (!totalItems && !totalAnsweredItems) return "";
     if (!totalItems && totalAnsweredItems) return "Yes";
     if (parseInt(totalAnsweredItems) === 0 && parseInt(totalItems) === 0) return "";
-    return `${totalAnsweredItems} / ${totalItems}`;
+    if (isNumber(totalAnsweredItems) && isNumber(totalItems))
+      return `${totalAnsweredItems} / ${totalItems}`;
+    return "";
   };
 
   // -------- styles
@@ -115,7 +117,11 @@ export default function ScoringSummary(props) {
               alignItems="center"
               sx={{ width: "100%" }}
             >
-              <Scoring score={row.score} scoreParams={row.scoringParams} justifyContent="space-between" />
+              <Scoring
+                score={row.score}
+                scoreParams={{ ...row, ...row.scoringParams }}
+                justifyContent="space-between"
+              />
               <Box className="no-wrap-text muted-text" sx={{ fontSize: "0.65rem" }}>
                 {displayScoreRange(row)}
               </Box>
@@ -167,17 +173,17 @@ export default function ScoringSummary(props) {
             href={`#${row.key}`}
             className="instrument-link"
           >
-            {row.instrumentName}
+            {row.instrumentName??row.key}
           </Link>
-        ) : props.enableResponsesViewer && row?.responseData ? (
+        ) : props.enableResponsesViewer && !isEmptyArray(row?.responseData) ? (
           <ResponsesViewer
             title={row.instrumentName}
-            responsesTileTitle={row.instrumentName}
+            responsesTileTitle={row.instrumentName??row.key}
             tableData={row?.tableResponseData}
             columns={getResponseColumns(row?.responseData)}
           />
         ) : (
-          row.instrumentName
+          row.instrumentName??row.key
         ),
     },
     {
@@ -282,12 +288,12 @@ export default function ScoringSummary(props) {
 
   const renderTableBody = () => {
     const visibleColumns = EFFECTIVE_COLUMNS.filter((c) => isColVisible(c.id));
-    const hasData = scoringSummaryData && scoringSummaryData.length > 0;
+    const hasData = data && data.length > 0;
 
     return (
       <TableBody>
         {hasData ? (
-          scoringSummaryData.map((row, index) => (
+          data.map((row, index) => (
             <TableRow key={`summary_${row.key || index}_${index}`}>
               {visibleColumns.map((col) => (
                 <TableCell
@@ -329,7 +335,7 @@ export default function ScoringSummary(props) {
   };
 
   const renderSummary = () => {
-    // if (isEmptyArray(scoringSummaryData)) return <Alert severity="warning">No score summary available</Alert>;
+    // if (isEmptyArray(data)) return <Alert severity="warning">No score summary available</Alert>;
     return (
       <TableContainer
         className="table-container"
@@ -386,7 +392,7 @@ const columnShape = PropTypes.shape({
 });
 
 ScoringSummary.propTypes = {
-  scoringSummaryData: PropTypes.array,
+  data: PropTypes.array,
   disableLinks: PropTypes.bool,
   enableResponsesViewer: PropTypes.bool,
   hiddenColumns: PropTypes.arrayOf(

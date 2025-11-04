@@ -31,7 +31,7 @@ export default function PROReport() {
       >
         <ScoringSummary
           key={`reportable_table_${table.id}`}
-          scoringSummaryData={table.rows}
+          data={table.rows}
           disableLinks={true}
           enableResponsesViewer={true}
           containerStyle={{
@@ -78,7 +78,7 @@ export default function PROReport() {
         {table.layout === "simple" && (
           <ScoringSummary
             key={table.id}
-            scoringSummaryData={table.rows}
+            data={table.rows}
             disableLinks={true}
             tableStyle={{
               width: "auto",

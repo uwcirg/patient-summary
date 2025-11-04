@@ -16,7 +16,7 @@ import questionnaireConfigs from "@config/questionnaire_config";
 import {
   buildQuestionnaire,
   buildReportData,
-  buildScoringSummaryRows,
+  //buildScoringSummaryRows,
   observationsToQuestionnaireResponses,
 } from "@models/resultBuilders/helpers";
 import QuestionnaireScoringBuilder from "@models/resultBuilders/QuestionnaireScoringBuilder";
@@ -642,25 +642,23 @@ export default function useFetchResources() {
     return rows.sort((a, b) => safeDateMs(a.date) - safeDateMs(b.date));
   }, [summaryData]);
 
-  const scoringSummaryData = useMemo(() => {
-    if (!summaryData) return null;
-    const dataToUse = summaryData?.data;
-    return buildScoringSummaryRows(dataToUse);
-  }, [summaryData]);
 
   const reportData = useMemo(() => {
     if (isDemoDataEnabled()) {
       return buildReportData(demoData);
     }
-    if (!scoringSummaryData) return null;
-    const mapData = new Map(scoringSummaryData?.map((o) => [o.key, o]));
-    if (summaryData && summaryData.data) {
-      for (const key in summaryData.data) {
-        summaryData.data[key].scoringSummaryData = mapData.get(key);
-      }
-    }
+    if (!summaryData?.data) return null;
     return buildReportData(summaryData?.data);
-  }, [scoringSummaryData, summaryData]);
+  }, [summaryData]);
+
+  const allScoringSummaryData = useMemo(() => Object.keys(summaryData?.data??{})
+    .filter((key) => !!summaryData?.data[key].scoringSummaryData)
+    .map((key) => {
+      return {
+        key,
+        ...summaryData?.data[key].scoringSummaryData,
+      };
+    }), [summaryData]);
 
   const chartKeys = useMemo(() => [...new Set(allChartData?.map((o) => getDisplayQTitle(o.key)))], [allChartData]);
   const loaderErrors = useMemo(() => state.loader.filter((r) => r?.error), [state.loader]);
@@ -712,9 +710,12 @@ export default function useFetchResources() {
     // bundle
     patientBundle: patientBundle.current.entry,
 
-    // charts
+    // summary data
+    allScoringSummaryData,
     summaryData,
-    scoringSummaryData,
+    //scoringSummaryData,
+
+    // chart
     allChartData,
     chartKeys,
 

@@ -15,7 +15,7 @@ import { DEFAULT_ANSWER_OPTIONS } from "@/consts";
 import { getDateDomain } from "@/config/chart_config";
 import { findMatchingQuestionLinkIdFromCode } from "@/config/questionnaire_config";
 import { report_config } from "@/config/report_config";
-import Questionnaire from "@/models/Questionnaire";
+//import Questionnaire from "@/models/Questionnaire";
 
 /* ---------------------------------------------
  * External helpers
@@ -349,18 +349,20 @@ export function observationsToQuestionnaireResponses(observationResources, confi
  * @param {Array} rdata
  * @returns {Array}
  */
-export const sortResponsesNewestFirst = (rdata = []) =>
-  [...rdata].sort((a, b) => new Date(b?.date ?? 0).getTime() - new Date(a?.date ?? 0).getTime());
+export function sortResponsesNewestFirst(rdata = []) {
+  return [...rdata].sort((a, b) => new Date(b?.date ?? 0).getTime() - new Date(a?.date ?? 0).getTime());
+}
+/**
+ * @param {Array} rdata
+ */
+export function getMostRecentResponseRow(rdata = []) {
+  return sortResponsesNewestFirst(rdata)[0] || null;
+}
 
 /**
  * @param {Array} rdata
  */
-export const getMostRecent = (rdata = []) => sortResponsesNewestFirst(rdata)[0] || null;
-
-/**
- * @param {Array} rdata
- */
-export const getPreviousWithScore = (rdata = []) => {
+export function getPreviousResponseRowWithScore(rdata = []) {
   const rows = sortResponsesNewestFirst(rdata);
   if (isEmptyArray(rows) || rows.length < 2) return null;
   let prev = null;
@@ -376,16 +378,16 @@ export const getPreviousWithScore = (rdata = []) => {
     }
   }
   return prev;
-};
+}
 
 export function getScoreParamsFromResponses(responses) {
   if (isEmptyArray(responses)) return null;
-  const current = getMostRecent(responses);
-  const prev = getPreviousWithScore(responses);
+  const current = getMostRecentResponseRow(responses);
+  const prev = getPreviousResponseRowWithScore(responses);
   const curScore = isNumber(current?.score) ? current.score : (current?.score ?? null);
   const minScore = isNumber(current?.scoringParams?.minimumScore) ? current.scoringParams.minimumScore : 0;
   const maxScore = isNumber(current?.scoringParams?.maximumScore) ? current.scoringParams.maximumScore : null;
-  const meaning = current?.scoreMeaning ?? null;
+  const meaning = current?.meaning ?? null;
   const comparisonToAlert = current?.comparisonToAlert ?? "higher";
 
   const prevScore = isNumber(prev?.score) ? prev.score : null;
@@ -400,8 +402,10 @@ export function getScoreParamsFromResponses(responses) {
   const source = current?.source;
   const alert = isNumber(score) && score >= current?.scoringParams?.highSeverityScoreCutoff;
   const warning = isNumber(score) && score >= current?.scoringParams?.mediumSeverityScoreCutoff;
-  const totalAnswered = isNumber(current?.totalAnsweredItems) ? current.totalAnsweredItems : null;
-  const totalItems = isNumber(current?.totalItems) ? current.totalItems : null;
+  const totalAnswered = isNumber(current?.totalAnsweredItems)
+    ? current?.totalAnsweredItems
+    : null;
+  const totalItems = isNumber(current?.totalItems) ? current?.totalItems : null;
   const scoringParams = {
     ...(current?.scoringParams ?? {}),
     score,
@@ -422,48 +426,6 @@ export function getScoreParamsFromResponses(responses) {
     ...scoringParams,
     scoringParams: scoringParams,
   };
-}
-
-/**
- * Build rows from summaryData
- * @param {Object<string, any>} summaryData
- * @param {Object} [opts]
- * @param {(key:string, questionnaire?:any) => (string|null|undefined)} [opts.instrumentNameByKey]
- * @param {(iso:string|Date|null|undefined) => (string|null|undefined)} [opts.formatDate]
- * @returns {Array<Object>}
- */
-export function buildScoringSummaryRows(summaryData, opts = {}) {
-  if (!summaryData) return [];
-
-  const { instrumentNameByKey, formatDate } = opts;
-
-  return Object.keys(summaryData).map((key) => {
-    const node = summaryData[key] || {};
-    const q = node.questionnaire || null;
-    const responses = node.responseData || [];
-
-    const current = getMostRecent(responses);
-
-    const instrumentName =
-      (instrumentNameByKey && instrumentNameByKey(key, q)) || new Questionnaire(q).shortName || key;
-
-    const lastAssessedISO = current?.date ?? null;
-    const lastAssessed = lastAssessedISO
-      ? formatDate
-        ? formatDate(lastAssessedISO)
-        : new Date(lastAssessedISO).toLocaleDateString()
-      : "";
-    return {
-      ...(getScoreParamsFromResponses(responses) ?? {}),
-      key,
-      instrumentName,
-      lastAssessed,
-      responses: current?.responses,
-      responseData: node?.responseData,
-      tableResponseData: node?.tableResponseData,
-      //raw: node, // keep original if the UI needs to drill in (optional)
-    };
-  });
 }
 
 export function getResponseColumns(data) {
@@ -559,16 +521,16 @@ export function buildReportData(summaryData = {}) {
         dataKeysToMatch.forEach((key) => {
           const dataFunc = paramsByKey[key].getProcessedData;
           const processedData = dataFunc ? dataFunc(summaryData) : null;
-          const scoringSummaryData =
+          const currentData =
             summaryData[key] && summaryData[key].scoringSummaryData
               ? summaryData[key].scoringSummaryData
               : processedData?.scoringSummaryData;
           const chartData =
             summaryData[key] && summaryData[key].chartData ? summaryData[key].chartData : processedData?.chartData;
-          if (scoringSummaryData) {
+          if (currentData) {
             rows.push({
               ...(paramsByKey[key].scoringParams ?? {}),
-              ...(scoringSummaryData ?? {}),
+              ...(currentData ?? {}),
             });
           }
           if (chartData) {

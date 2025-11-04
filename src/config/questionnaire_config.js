@@ -1,11 +1,13 @@
 import { isEmptyArray } from "@util";
 import { normalizeLinkId } from "@util/fhirUtil";
+import CHART_CONFIG from "./chart_config";
 const questionnaireConfigs = {
   "CIRG-ADL-IADL": {
     key: "CIRG-ADL-IADL",
     questionnaireId: "CIRG-ADL-IADL",
     questionnaireName: "adl-iadl",
     instrumentName: "ADL-IADL",
+    title: "ADL IADL",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/adl-iadl",
     scoringQuestionId: "adl-iadls-total-score",
     scoringParams: { maximumScore: 45 },
@@ -22,33 +24,39 @@ const questionnaireConfigs = {
       "/46569-0",
     ],
     matchMode: "fuzzy",
+    chartParams: { ...CHART_CONFIG.default, xLabel: "" },
   },
   "CIRG-BEHAV5": {
     key: "CIRG-BEHAV5",
     questionnaireId: "CIRG-BEHAV5",
     questionnaireName: "behav5",
     instrumentName: "BEHAV-5",
+    title: "BEHAV-5",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/behav5",
     scoringQuestionId: "behav-8",
     scoringParams: { maximumScore: 6 },
     questionLinkIds: ["behav-1", "behav-2", "behav-3", "behav-4", "behav-5", "behav-6"],
     matchMode: "fuzzy",
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 6, xLabel: "" },
   },
   "CIRG-C-IDAS": {
     key: "CIRG-C-IDAS",
     questionnaireId: "CIRG-C-IDAS",
     questionnaireName: "c-idas",
     instrumentName: "C-IDAS",
+    title: "C-IDAS",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/c-idas",
     scoringQuestionId: "c-ids-score", // from your CQL
     scoringParams: { maximumScore: 36 },
     matchMode: "fuzzy",
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 36, xLabel: "" },
   },
   "CIRG-CP-ECOG": {
     key: "CIRG-CP-ECOG",
     questionnaireId: "CIRG-CP-ECOG",
     questionnaireName: "cp-ecog",
     instrumentName: "CP-ECOG",
+    title: "CP-ECOG",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/cp-ecog",
     scoringQuestionId: "cp-ecog-total-score",
     scoringParams: { maximumScore: 48 },
@@ -67,20 +75,14 @@ const questionnaireConfigs = {
       "/89285-1/89141-6",
       "/89285-1/89171-3",
     ],
-    // Optional: add severityBands if you have thresholds (example only)
-    // severityBands: [
-    //   { min: 37, label: 'high',     meaning: 'severe impairment' },
-    //   { min: 25, label: 'moderate', meaning: 'moderate impairment' },
-    //   { min: 13, label: 'mild',     meaning: 'mild impairment' },
-    //   { min: 0,  label: 'low',      meaning: 'minimal impairment' },
-    // ],
-    // highSeverityScoreCutoff: 37, // if you define bands/cutoff
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 48, xLabel: "" },
   },
   "CIRG-ECOG12": {
     key: "CIRG-ECOG12",
     questionnaireId: "CIRG-ECOG12",
     questionnaireName: "ecog12",
     instrumentName: "ECOG-12",
+    title: "ECOG-12",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/ecog12",
     scoringQuestionId: "ecog12-total-score",
     scoringParams: { maximumScore: 48 },
@@ -99,14 +101,7 @@ const questionnaireConfigs = {
       "/89285-1/89141-6",
       "/89285-1/89171-3",
     ],
-    // Optional: severity bands and cutoff if you have them
-    // severityBands: [
-    //   { min: 37, label: 'high',     meaning: 'severe impairment' },
-    //   { min: 25, label: 'moderate', meaning: 'moderate impairment' },
-    //   { min: 13, label: 'mild',     meaning: 'mild impairment' },
-    //   { min: 0,  label: 'low',      meaning: 'minimal impairment' },
-    // ],
-    // highSeverityScoreCutoff: 37,
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 48, xLabel: "" },
   },
   "CIRG-GAD7": {
     key: "CIRG-GAD7",
@@ -127,6 +122,7 @@ const questionnaireConfigs = {
     // optional (defaults to top band min = 15 anyway)
     highSeverityScoreCutoff: 15,
     mediumSeverityScoreCutoff: 10,
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 21, xLabel: "" },
   },
   "CIRG-GDS": {
     key: "CIRG-GDS",
@@ -154,14 +150,7 @@ const questionnaireConfigs = {
       "/48533-4",
       "/48534-2",
     ],
-    // Optional: severity mapping if desired
-    // severityBands: [
-    //   { min: 11, label: 'high',     meaning: 'severe depression' },
-    //   { min: 6,  label: 'moderate', meaning: 'moderate depression' },
-    //   { min: 1,  label: 'mild',     meaning: 'mild depression' },
-    //   { min: 0,  label: 'low',      meaning: 'no depression' },
-    // ],
-    // highSeverityScoreCutoff: 11,
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 15, xLabel: "" },
   },
   "CIRG-MINICOG": {
     key: "CIRG-MINICOG",
@@ -189,6 +178,7 @@ const questionnaireConfigs = {
     highSeverityScoreCutoff: 2, // flag when total ≤ 2 (common rule)
     comparisonToAlert: "lower",
     matchMode: "fuzzy",
+    chartParams: { ...CHART_CONFIG.default },
   },
   "CIRG-PHQ9": {
     key: "CIRG-PHQ9",
@@ -216,7 +206,7 @@ const questionnaireConfigs = {
     ],
     itemTextByLinkId: {
       "/55758-7": "PHQ-2 total score",
-      "/44261-6": "PHQ-9 total score"
+      "/44261-6": "PHQ-9 total score",
     },
     matchMode: "fuzzy",
     highSeverityScoreCutoff: 20,
@@ -228,6 +218,7 @@ const questionnaireConfigs = {
       { min: 5, label: "mild", meaning: "mild depression" },
       { min: 0, label: "low", meaning: "" },
     ],
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 27, xLabel: "" },
   },
   "CIRG-SLUMS": {
     key: "CIRG-SLUMS",
@@ -241,6 +232,7 @@ const questionnaireConfigs = {
     comparisonToAlert: "lower",
     matchMode: "fuzzy",
     // No questionLinkIds needed—SLUMS uses a single total-score field
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 30, xLabel: "" },
   },
 };
 

@@ -12,10 +12,17 @@ import {
 } from "@util";
 import Response from "@models/Response";
 import FhirResultBuilder from "./FhirResultBuilder";
-import { buildQuestionnaire, summarizeCIDASHelper, summarizeMiniCogHelper, summarizeSLUMHelper } from "./helpers";
+import {
+  buildQuestionnaire,
+  getScoreParamsFromResponses,
+  summarizeCIDASHelper,
+  summarizeMiniCogHelper,
+  summarizeSLUMHelper,
+} from "./helpers";
 import { DEFAULT_FALLBACK_SCORE_MAPS } from "@/consts";
 import questionnaireConfig from "@/config/questionnaire_config";
 import { conceptText, getQuestionnaireItemByLinkId, linkIdEquals, normalizeLinkId } from "@/util/fhirUtil";
+import { getDateDomain } from "@/config/chart_config";
 
 const RT_QR = "questionnaireresponse";
 const RT_Q = "Questionnaire";
@@ -138,6 +145,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     ).map((x) => x._qr);
   }
 
+  questionnaireIDFromQR(qr) {
+    if (!qr) return null;
+    return /^Questionnaire\//i.test(qr.questionnaire) ? qr.questionnaire.split("/")[1] : qr.questionnaire;
+  }
+
   // -------------------- Questionnaire indexing --------------------
   indexQuestionnairesInBundle(bundleOverride) {
     const idx = Object.create(null);
@@ -145,7 +157,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (!q) continue;
       if (normalizeStr(q.resourceType) === normalizeStr(RT_QR)) {
         if (q.questionnaire) {
-          const qIndex = /^Questionnaire\//i.test(q.questionnaire) ? q.questionnaire.split("/")[1] : q.questionnaire;
+          const qIndex = this.questionnaireIDFromQR(q);
           if (!idx[qIndex]) {
             if (questionnaireConfig[qIndex]) {
               idx[qIndex] = buildQuestionnaire(questionnaireConfig[qIndex]);
@@ -464,7 +476,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const scoringQuestionId = config?.scoringQuestionId;
 
-    const rows = (questionnaireResponses || []).map((qr) => {
+    const rows = (questionnaireResponses || []).map((qr, rIndex) => {
       const flat = this.flattenResponseItems(qr.item);
 
       const nonScoring = flat.filter((it) => this.isNonScoreLinkId(it.linkId, config));
@@ -498,37 +510,19 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (totalAnsweredItems === 0 && score != null) {
         totalAnsweredItems = 1;
       }
-
-      //const scoringParams = config?.scoringParams ?? {};
-      // const maxScore = scoringParams.maximumScore;
-      // const minScore = scoringParams.minimumScore ?? 0;
-      // const alert = isNumber(score) ? score > config?.highSeverityScoreCutoff : false;
-      const scoreMeaning = this.meaningFromSeverity(scoreSeverity, config);
+      const meaning = this.meaningFromSeverity(scoreSeverity, config);
       return {
         ...(config ?? {}),
-        id: qr.id,
+        id: qr.id + "_" + rIndex,
+        instrumentName: config?.instrumentName ?? this.questionnaireIDFromQR(qr),
         date: this.dateTimeText(qr.authored),
+        lastAssessed: new Date(qr.authored).toLocaleDateString(),
         source: this.getDataSource(qr),
         raw: flat,
         responses,
-        scoringQuestionScore,
         score,
-       // maxScore,
-       // minScore,
-      //  alert,
-      //  scoreSeverity,
-        //highSeverityScoreCutoff: config?.highSeverityScoreCutoff,
-       // scoreMeaning: this.meaningFromSeverity(scoreSeverity, config),
-        //comparisonToAlert: config?.comparisonToAlert ?? "higher",
-        scoringParams: {
-          //...(config?.scoringParams ?? {}),
-          ...(config?config:{}),
-          scoreSeverity,
-          scoreMeaning,
-          // highSeverityScoreCutoff: config?.highSeverityScoreCutoff,
-          // mediumSeverityScoreCutoff: config?.mediumSeverityScoreCutoff,
-          score: score,
-        },
+        meaning,
+        scoreSeverity,
         totalItems,
         totalAnsweredItems,
         authoredDate: qr.authored,
@@ -566,6 +560,17 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const answerItem = matchResponseData.responses.find((o) => this.isLinkIdEquals(o?.id, targetLinkId));
     return this._getAnswer(answerItem);
   }
+
+  _formatScoringSummaryData = (data, opts = {}) => {
+    if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
+    return {
+      ...data[0],
+      ...getScoreParamsFromResponses(data),
+      responseData: data,
+      tableResponseData: opts?.tableResponseData ?? this._formatTableResponseData(data),
+      printResponseData: opts?.printResponseData ?? this._formatPrintResponseData(data),
+    };
+  };
 
   _formatTableResponseData = (data) => {
     if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
@@ -675,36 +680,46 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const chartConfig = getChartConfig(questionnaire?.id);
     let chartData = !isEmptyArray(scoringData)
-      ? scoringData.map((item) => ({
+      ? scoringData.map((item, index) => ({
           ...item,
-          ...(item.scoringParams ?? {}),
-          date: item.date,
+          id: item.id + "_" + item.instrumentName + "_" + index,
           total: item.score,
-          source: item.source,
         }))
       : null;
+    let xDomain;
+
     if (chartData && chartConfig?.dataFormatter) {
       chartData = chartConfig.dataFormatter(chartData);
+       const arrDates = !isEmptyArray(chartData) ? chartData?.map((d) => d.date) : [];
+        const dates = !isEmptyArray(arrDates) ? [...new Set(arrDates)] : [];
+        xDomain = getDateDomain(dates, {
+          padding: dates.length <= 2 ? 0.15 : 0.05,
+        });
     }
 
-    const scoringParams = config?.scoringParams;
+    const scoringParams = config?.scoringParams??{};
     const chartParams = {
       ...chartConfig,
       ...scoringParams,
-      maximumYValue: scoringParams?.maximumScore,
-      minimumYValue: scoringParams?.minimumScore??0,
+      ...config?.chartParams??{},
+      xDomain,
     };
+
+    const tableResponseData = this._formatTableResponseData(evalData);
+    const printResponseData = this._formatPrintResponseData(evalData, config);
+    const scoringSummaryData = this._formatScoringSummaryData(evalData, { tableResponseData, printResponseData });
 
     return {
       config: config,
       chartConfig: chartParams,
       chartData: { ...chartParams, data: chartData },
       chartType: chartConfig?.type,
-      scoringData: scoringData,
-      responseData: evalData,
-      tableResponseData: this._formatTableResponseData(evalData),
-      printResponseData: this._formatPrintResponseData(evalData, config),
-      questionnaire: questionnaire,
+      responseData: evalData, // questionnaire responses
+      scoringSummaryData,
+      tableResponseData,
+      printResponseData,
+      questionnaire,
+      key: questionnaire?.id,
       error: !questionnaire ? "No associated questionnaire found" : "",
     };
   }

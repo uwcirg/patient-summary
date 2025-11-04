@@ -28,7 +28,6 @@ export default function LineCharts(props) {
     enableAxisMeaningLabels,
     enableScoreSeverityArea,
     enableScoreSeverityCutoffLine,
-    // highSeverityScoreCutoff,
     id,
     legendType,
     lgChartWidth,
@@ -123,8 +122,7 @@ export default function LineCharts(props) {
     else color = "green";
 
     // Prefer payload.id; otherwise compose a stable-ish key using source + x + index
-    const k = `dot-${payload?.id ?? `${payload?.source}-${payload?.[xFieldKey]}-${index}`}`;
-
+    const k = `dot-${payload?.id}_${payload?.key}_${payload?.source}-${payload?.[xFieldKey]}-${index}`;
     switch (payload.source) {
       case "cnics":
         return <circle key={k} cx={cx} cy={cy} r={4} fill={color} stroke={color} strokeWidth={1} />;
@@ -286,15 +284,23 @@ export default function LineCharts(props) {
       dataKey={yFieldKey}
       stroke={theme.palette.primary.main}
       dot={({ cx, cy, payload, value, index }) => {
-        if (!isEmptyArray(sources)) return <SourceDot cx={cx} cy={cy} payload={payload} index={index} />;
+        if (!isEmptyArray(sources))
+          // eslint-disable-next-line
+          return <SourceDot key={`${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />;
         let color;
         // eslint-disable-next-line
         if (payload.highSeverityScoreCutoff) {
           // eslint-disable-next-line
           color = value >= payload.highSeverityScoreCutoff ? "red" : "green";
-          return <circle key={`dot-default-${index}`} cx={cx} cy={cy} r={4} fill={color} stroke="none" />;
+          return (
+              //eslint-disable-next-line
+            <circle key={`dot-default-${payload?.id}_${index}`} cx={cx} cy={cy} r={4} fill={color} stroke="none" />
+          );
         }
-        return <circle key={`dot-default-${index}`} cx={cx} cy={cy} r={4} fill={dotColor} stroke="none" />;
+        return (
+          // eslint-disable-next-line
+          <circle key={`dot-default-${payload?.id}_${index}`} cx={cx} cy={cy} r={4} fill={dotColor} stroke="none" />
+        );
       }}
       strokeWidth={strokeWidth ? strokeWidth : 1}
     />

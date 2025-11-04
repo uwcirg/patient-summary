@@ -13,7 +13,6 @@ const renderLoader = () => (
 );
 
 const renderScoringSummary = (props) => {
-  const scoringSummaryData = props.scoringSummaryData;
   const ScoreSummary = lazy(() => import("../components/sections/ScoringSummary"));
   const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
   const chartData = props.allChartData;
@@ -58,7 +57,7 @@ const renderScoringSummary = (props) => {
             },
           }}
         >
-          <ScoreSummary scoringSummaryData={scoringSummaryData}></ScoreSummary>
+          <ScoreSummary data={props.allScoringSummaryData} disableLinks={true}></ScoreSummary>
         </Box>
       </Stack>
     </Suspense>
@@ -72,7 +71,7 @@ const renderProReport = (props) => {
       <ProReport {...props}></ProReport>
     </Suspense>
   );
-}
+};
 
 const renderConditions = (props) => {
   const Conditions = lazy(() => import("../components/sections/Conditions"));
@@ -104,7 +103,7 @@ export const sections = [
     resources: DEFAULT_RESOURCES,
     icon: (props) => <SummarizeIcon fontSize="medium" color="primary" {...props}></SummarizeIcon>,
     component: (props) => renderScoringSummary(props),
-    // default: true,
+    //default: true,
   },
   {
     id: "proReport",
@@ -113,8 +112,7 @@ export const sections = [
     icon: (props) => <BallotIcon fontSize="medium" color="primary" {...props}></BallotIcon>,
     component: (props) => renderProReport(props),
     standalone: true,
-    default: true
-
+    default: true,
   },
   {
     id: "questionnaireResponses",
@@ -122,7 +120,7 @@ export const sections = [
     resources: DEFAULT_RESOURCES,
     icon: (props) => <BallotIcon fontSize="medium" color="primary" {...props}></BallotIcon>,
     component: (props) => renderSummaries(props),
-    // default: true,
+    //default: true,
   },
   {
     id: "conditions",
