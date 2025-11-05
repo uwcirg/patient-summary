@@ -234,6 +234,12 @@ const questionnaireConfigs = {
     // No questionLinkIds needed—SLUMS uses a single total-score field
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 30, xLabel: "" },
   },
+  "CIRG-CNICS-IPV4": {
+    key: "CIRG-CNICS-IPV4",
+    instrumentName: "IPV-4",
+    title: "IPV-4",
+    matchMode: "fuzzy",
+  }
 };
 
 export const getConfigForQuestionnaire = (id) => {

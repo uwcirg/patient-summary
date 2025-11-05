@@ -15,6 +15,7 @@ import FhirResultBuilder from "./FhirResultBuilder";
 import {
   buildQuestionnaire,
   getScoreParamsFromResponses,
+  isNonScoreLinkId,
   summarizeCIDASHelper,
   summarizeMiniCogHelper,
   summarizeSLUMHelper,
@@ -201,9 +202,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
 
   // -------------------- general utils --------------------
-  dateTimeText(fhirDateTime) {
-    return fhirDateTime ?? null;
-  }
   isLinkIdEquals(a, b) {
     return linkIdEquals(a, b, this.cfg.matchMode ?? "fuzzy");
   }
@@ -213,7 +211,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const configToUse = config ? config : this.cfg;
     const scoreLinkId = configToUse?.scoringQuestionId;
     const subScoreIds = configToUse?.subScoreQuestionIds;
-    if (linkId === "introduction" || linkId.includes("ignore")) return false;
+    if (linkId === "introduction" || linkId.includes("ignore") || linkId.includes("header")) return false;
     if (!this.responseAnswerTypes.has(item.type)) return false;
     if (scoreLinkId) {
       return !this.isLinkIdEquals(item.linkId, scoreLinkId);
@@ -425,33 +423,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     });
   }
 
-  // -------------------- severity --------------------
-  severityFromScore(score, configParams) {
-    const config = configParams ?? this.cfg;
-    const bands = config?.severityBands;
-    if (isEmptyArray(bands) || !isNumber(score)) return "low";
-
-    // bands assumed sorted desc by min
-    for (const band of bands) {
-      if (score >= (band.min ?? 0)) return band.label;
-    }
-    return bands[bands.length - 1]?.label ?? "low";
-  }
-  meaningFromSeverity(sev, configParams) {
-    const config = configParams ?? this.cfg;
-    const bands = config?.severityBands;
-    if (!isEmptyArray(bands)) return bands.find((b) => b.label === sev)?.meaning ?? null;
-    return null;
-  }
-
-  isNonScoreLinkId(linkId, config = {}) {
-    if (!linkId) return false;
-    const subScoreQuestionIds = !isEmptyArray(config?.subScoringQuestionIds) ? config.subScoringQuestionIds : [];
-    return (
-      !this.isLinkIdEquals(linkId, config?.scoringQuestionId) &&
-      !subScoreQuestionIds.find((id) => this.isLinkIdEquals(id, linkId))
-    );
-  }
+  // isNonScoreLinkId(linkId, config = {}) {
+  //   if (!linkId) return false;
+  //   const subScoreQuestionIds = !isEmptyArray(config?.subScoringQuestionIds) ? config.subScoringQuestionIds : [];
+  //   return (
+  //     !this.isLinkIdEquals(linkId, config?.scoringQuestionId) &&
+  //     !subScoreQuestionIds.find((id) => this.isLinkIdEquals(id, linkId))
+  //   );
+  // }
 
   getDataSource(resource) {
     if (!resource) return "";
@@ -467,62 +446,66 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return "cnics";
   }
 
+  getScoreStatsFromQuestionnaireResponse(qr, questionnaire, config = {}) {
+    if (!qr) return null;
+    const scoreLinkIds = !isEmptyArray(config?.questionLinkIds)
+      ? config.questionLinkIds.filter((q) => isNonScoreLinkId(q, config))
+      : this.getAnswerLinkIdsByQuestionnaire(questionnaire, config);
+    const scoringQuestionId = config?.scoringQuestionId;
+    const flat = this.flattenResponseItems(qr.item);
+
+    const nonScoring = flat.filter((it) => isNonScoreLinkId(it.linkId, config));
+
+    const scoringQuestionScore = scoringQuestionId
+      ? this.getScoringByResponseItem(questionnaire, flat, scoringQuestionId)
+      : null;
+
+    const questionScores = scoreLinkIds.map((id) => this.getScoringByResponseItem(questionnaire, flat, id));
+    const allAnswered = questionScores.length > 0 && questionScores.every((v) => v != null);
+
+    let score = null;
+    if (scoringQuestionScore != null) score = scoringQuestionScore;
+    else if (nonScoring.length > 0 && allAnswered) {
+      score = questionScores.reduce((sum, n) => sum + (n ?? 0), 0);
+    }
+    let totalItems = scoreLinkIds?.length ? scoreLinkIds.length : 0;
+    let totalAnsweredItems = Math.min(nonScoring.filter((it) => this.firstAnswer(it) != null).length, totalItems);
+    if (totalItems === 0 && score != null) {
+      totalItems = 1;
+    }
+    if (totalAnsweredItems === 0 && score != null) {
+      totalAnsweredItems = 1;
+    }
+    return {
+      score,
+      totalAnsweredItems,
+      totalItems,
+    };
+  }
+
   // -------------------- public APIs --------------------
   getResponsesSummary(questionnaireResponses, questionnaire) {
     const config = this.cfg && this.cfg.questionnaireId ? this.cfg : questionnaireConfig[questionnaire?.id];
-    const scoreLinkIds = !isEmptyArray(config?.questionLinkIds)
-      ? config.questionLinkIds.filter((q) => this.isNonScoreLinkId(q, config))
-      : this.getAnswerLinkIdsByQuestionnaire(questionnaire, config);
-
-    const scoringQuestionId = config?.scoringQuestionId;
-
     const rows = (questionnaireResponses || []).map((qr, rIndex) => {
       const flat = this.flattenResponseItems(qr.item);
-
-      const nonScoring = flat.filter((it) => this.isNonScoreLinkId(it.linkId, config));
-
-      let totalItems = scoreLinkIds?.length
-        ? scoreLinkIds.length
-        : this.getAnswerLinkIdsByQuestionnaire(questionnaire, config).length;
-
-      let totalAnsweredItems = Math.min(nonScoring.filter((it) => this.firstAnswer(it) != null).length, totalItems);
-
-      const scoringQuestionScore = scoringQuestionId
-        ? this.getScoringByResponseItem(questionnaire, flat, scoringQuestionId)
-        : null;
-
-      const questionScores = scoreLinkIds.map((id) => this.getScoringByResponseItem(questionnaire, flat, id));
-      const allAnswered = questionScores.length > 0 && questionScores.every((v) => v != null);
-
-      let score = null;
-      if (scoringQuestionScore != null) score = scoringQuestionScore;
-      else if (nonScoring.length > 0 && allAnswered) {
-        score = questionScores.reduce((sum, n) => sum + (n ?? 0), 0);
-      }
-
-      const scoreSeverity = this.severityFromScore(score, config);
+      const { score, totalAnsweredItems, totalItems } = this.getScoreStatsFromQuestionnaireResponse(
+        qr,
+        questionnaire,
+        config,
+      );
       let responses = this.formattedResponses(questionnaire?.item ?? [], flat, config);
       if (isEmptyArray(responses)) responses = this.responsesOnly(flat);
-
-      if (totalItems === 0 && score != null) {
-        totalItems = 1;
-      }
-      if (totalAnsweredItems === 0 && score != null) {
-        totalAnsweredItems = 1;
-      }
-      const meaning = this.meaningFromSeverity(scoreSeverity, config);
+      //console.log("score ", score, " totalItems ", totalItems, " total answered ", totalAnsweredItems)
       return {
         ...(config ?? {}),
         id: qr.id + "_" + rIndex,
         instrumentName: config?.instrumentName ?? this.questionnaireIDFromQR(qr),
-        date: this.dateTimeText(qr.authored),
+        date: qr.authored ?? null,
         lastAssessed: new Date(qr.authored).toLocaleDateString(),
         source: this.getDataSource(qr),
         raw: flat,
         responses,
         score,
-        meaning,
-        scoreSeverity,
         totalItems,
         totalAnsweredItems,
         authoredDate: qr.authored,
@@ -565,7 +548,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
     return {
       ...data[0],
-      ...getScoreParamsFromResponses(data),
+      ...getScoreParamsFromResponses(data, opts?.config),
       responseData: data,
       tableResponseData: opts?.tableResponseData ?? this._formatTableResponseData(data),
       printResponseData: opts?.printResponseData ?? this._formatPrintResponseData(data),
@@ -690,24 +673,30 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     if (chartData && chartConfig?.dataFormatter) {
       chartData = chartConfig.dataFormatter(chartData);
-       const arrDates = !isEmptyArray(chartData) ? chartData?.map((d) => d.date) : [];
-        const dates = !isEmptyArray(arrDates) ? [...new Set(arrDates)] : [];
-        xDomain = getDateDomain(dates, {
-          padding: dates.length <= 2 ? 0.15 : 0.05,
-        });
+      const arrDates = !isEmptyArray(chartData) ? chartData?.map((d) => d.date) : [];
+      const dates = !isEmptyArray(arrDates) ? [...new Set(arrDates)] : [];
+      xDomain = getDateDomain(dates, {
+        padding: dates.length <= 2 ? 0.15 : 0.05,
+      });
     }
 
-    const scoringParams = config?.scoringParams??{};
+    const scoringParams = config?.scoringParams ?? {};
+    const { key, id, ...restOfConfig } = config ?? {};
     const chartParams = {
+      ...restOfConfig,
       ...chartConfig,
       ...scoringParams,
-      ...config?.chartParams??{},
+      ...(config?.chartParams ?? {}),
       xDomain,
     };
 
     const tableResponseData = this._formatTableResponseData(evalData);
     const printResponseData = this._formatPrintResponseData(evalData, config);
-    const scoringSummaryData = this._formatScoringSummaryData(evalData, { tableResponseData, printResponseData });
+    const scoringSummaryData = this._formatScoringSummaryData(evalData, {
+      tableResponseData,
+      printResponseData,
+      config,
+    });
 
     return {
       config: config,
@@ -739,7 +728,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (!questionnaire) continue;
 
       const summaries = this._summariesByQuestionnaireRef(qrs, questionnaire, strategyOptions);
-      if (!isEmptyArray(summaries?.responseData)) out[canonical] = summaries;
+      out[canonical] = summaries;
     }
     return out;
   }

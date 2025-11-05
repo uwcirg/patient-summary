@@ -19,7 +19,7 @@ export default {
         highSeverityScoreCutoff: 20,
         scoreSeverity: "high",
       },
-      totalAnswered: 9,
+      totalAnsweredItems: 9,
       totalItems: 9,
     },
     chartData: {
@@ -76,7 +76,7 @@ export default {
       minScore: 0,
       maxScore: 3,
       score: 3,
-      totalAnswered: 1,
+      totalAnsweredItems: 1,
       scoringParams: {
         maximumScore: 3,
         minimumScore: 0,
@@ -135,20 +135,20 @@ export default {
       meaning: "Yes",
       text: "",
       alert: true,
-      totalAnswered: 1,
+      totalAnsweredItems: 1,
       source: "cnics",
     },
   },
-  "CIRG-IPV": {
+  "CIRG-CNICS-IPV4": {
     scoringSummaryData: {
-      key: "CIRG-IPV",
+      key: "CIRG-CNICS-IPV4",
       comparison: "",
       comparisonToAlert: "",
       instrumentName: "IPV (past year)",
       lastAssessed: "2025-05-11",
       meaning: "No",
       text: "",
-      totalAnswered: 1,
+      totalAnsweredItems: 1,
       source: "cnics",
     },
   },
@@ -162,7 +162,7 @@ export default {
       meaning: "Very Low Food Security",
       text: "",
       alert: true,
-      totalAnswered: 1,
+      totalAnsweredItems: 1,
       source: "cnics",
     },
   },
@@ -176,25 +176,25 @@ export default {
       meaning: "Struggling to Survive",
       text: "",
       alert: true,
-      totalAnswered: 1,
+      totalAnsweredItems: 1,
       source: "cnics",
     },
   },
-  CIRG_SYMPTOMS: {
+  "CIRG-SYMPTOMS": {
     scoringSummaryData: {
       id: 1,
-      key: "CIRG_SYMPTOMS",
-      measure: "Current Symptoms",
+      key: "CIRG-SYMPTOMS",
+      title: "Current Symptoms",
       bothersALot: "Rash, Cough",
       bothersSome: "Sad, Headache",
       source: "cnics",
     },
   },
-  CIRG_ART_ADHERENCE: {
+  "CIRG-ART-ADHERENCE": {
     scoringSummaryData: {
       id: 22,
-      key: "CIRG_ART_ADHERENCE",
-      measure: "Last Missed Dose",
+      key: "CIRG-ART-ADHERENCE",
+      title: "Last Missed Dose",
       lastMissedDose: "Within the last week",
       source: "cnics",
     },
@@ -209,7 +209,7 @@ export default {
       lastAssessed: "2025-05-11",
       meaning: "Tobacco cigarettes: Currently",
       text: "N/A",
-      totalAnswered: 1,
+      totalAnsweredItems: 1,
     },
   },
   "CIRG-Alcohol-Use": {
@@ -231,7 +231,7 @@ export default {
         scoreSeverity: "high",
         highSeverityScoreCutoff: 35,
       },
-      totalAnswered: 10,
+      totalAnsweredItems: 10,
       totalItems: 10,
     },
     chartData: {
@@ -291,7 +291,7 @@ export default {
         minimumScore: 0,
         highSeverityScoreCutoff: 4,
       },
-      totalAnswered: 3,
+      totalAnsweredItems: 3,
       totalItems: 3,
     },
     chartData: {
@@ -339,64 +339,64 @@ export default {
       lastAssessed: "2025-05-11",
       meaning: "No",
       text: "N/A",
-      totalAnswered: 1,
+      totalAnsweredItems: 1,
     },
   },
-  CIRG_SEXUAL_RISK: {
+  "CIRG-SEXUAL-RISK": {
     scoringSummaryData: {
-      key: "CIRG_SEXUAL_RISK",
+      key: "CIRG-SEXUAL-RISK",
       id: 23,
-      measure: "# of sex partners x 3 months",
+      title: "# of sex partners x 3 months",
       result: "2",
       date: "2025-05-11",
       source: "cnics",
     },
   },
-  CIRG_UNPROTECTED_SEX: {
+  "CIRG-UNPROTECTED-SEX": {
     scoringSummaryData: {
-      key: "CIRG_UNPROTECTED_SEX",
+      key: "CIRG-UNPROTECTED-SEX",
       id: 24,
-      measure: "Unprotected sex",
+      title: "Unprotected sex",
       result: "Yes",
       date: "2025-05-11",
       source: "cnics",
     },
   },
-  CIRG_EXCHANGE_SEX: {
+  "CIRG-EXCHANGE-SEX": {
     scoringSummaryData: {
-      key: "CIRG_EXCHANGE_SEX",
+      key: "CIRG-EXCHANGE-SEX",
       id: 25,
-      measure: "Exchange sex (recent)",
+      title: "Exchange sex (recent)",
       result: "No",
       date: "2025-05-11",
       source: "cnics",
     },
   },
-  CIRG_STI: {
+  "CIRG-STI": {
     scoringSummaryData: {
-      key: "CIRG_STI",
+      key: "CIRG-STI",
       id: 26,
-      measure: "Concern for STI",
+      title: "Concern for STI",
       result: "No",
       date: "2025-05-11",
       source: "cnics",
     },
   },
-  CIRG_PSYCHOSOCIAL_CONCERNS: {
+  "CIRG-PSYCHOSOCIAL-CONCERNS": {
     scoringSummaryData: {
-      key: "CIRG_PSYCHOSOCIAL_CONCERNS",
+      key: "CIRG-PSYCHOSOCIAL-CONCERNS",
       id: 30,
-      measure: "PTSD Symptoms",
+      title: "PTSD Symptoms",
       result: "N/A",
       date: "2025-05-11",
       source: "cnics",
     },
   },
-  CIRG_SOCIAL_SUPPORT: {
+  "CIRG-SOCIAL-SUPPORT": {
     scoringSummaryData: {
-      key: "CIRG_SOCIAL_SUPPORT",
+      key: "CIRG-SOCIAL-SUPPORT",
       id: 31,
-      measure: "Social Support",
+      title: "Social Support",
       result: "N/A",
       date: "2025-05-11",
       source: "cnics",

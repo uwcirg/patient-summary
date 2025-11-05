@@ -12,16 +12,16 @@ const renderLoader = () => (
   <Loader message="Retrieving content..." styles={{ position: "relative", width: "auto", height: "auto" }}></Loader>
 );
 
-const renderScoringSummary = (props) => {
+const renderScoringSummary = ({allScoringSummaryData, allChartData, chartKeys}) => {
   const ScoreSummary = lazy(() => import("../components/sections/ScoringSummary"));
   const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
-  const chartData = props.allChartData;
-  const chartKeys = props.chartKeys;
+  // const chartData = props.allChartData;
+  // const chartKeys = props.chartKeys;
   return (
     <Suspense fallback={renderLoader()}>
       <Stack
         spacing={1}
-        direction={`${!isEmptyArray(chartData) && chartData.length < 20 ? "row" : "column"}`}
+        direction={`${!isEmptyArray(allChartData) && allChartData.length < 20 ? "row" : "column"}`}
         alignItems={"top"}
         sx={{
           gap: (theme) => theme.spacing(1),
@@ -31,7 +31,7 @@ const renderScoringSummary = (props) => {
         flexWrap={"wrap"}
         className="score-summary-wrapper"
       >
-        {!isEmptyArray(chartData) && chartKeys.length > 1 && (
+        {!isEmptyArray(allChartData) && chartKeys.length > 1 && (
           <Box
             sx={{
               flex: {
@@ -44,7 +44,7 @@ const renderScoringSummary = (props) => {
             }}
             className="chart-container-wrapper"
           >
-            <ChartSummary data={chartData} keys={chartKeys}></ChartSummary>
+            <ChartSummary data={allChartData} keys={chartKeys}></ChartSummary>
           </Box>
         )}
         <Box
@@ -57,7 +57,7 @@ const renderScoringSummary = (props) => {
             },
           }}
         >
-          <ScoreSummary data={props.allScoringSummaryData} disableLinks={true}></ScoreSummary>
+          <ScoreSummary data={allScoringSummaryData} disableLinks={true}></ScoreSummary>
         </Box>
       </Stack>
     </Suspense>
@@ -120,7 +120,7 @@ export const sections = [
     resources: DEFAULT_RESOURCES,
     icon: (props) => <BallotIcon fontSize="medium" color="primary" {...props}></BallotIcon>,
     component: (props) => renderSummaries(props),
-    //default: true,
+    // default: true,
   },
   {
     id: "conditions",

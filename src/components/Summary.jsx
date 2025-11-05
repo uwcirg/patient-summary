@@ -6,7 +6,7 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Questionnaire from "@models/Questionnaire";
-import { hasData, isEmptyArray } from "@util";
+import { hasData } from "@util";
 import Error from "./ErrorComponent";
 import QuestionnaireInfo from "./QuestionnaireInfo";
 import Responses from "./Responses";
@@ -24,7 +24,6 @@ export default function Summary(props) {
   };
   const shouldDisplayResponses = () => !summary || (summary && !summary.error);
   const getAnchorElementId = () => QUESTIONNAIRE_ANCHOR_ID_PREFIX;
-  const hasResponses = () => !isEmptyArray(summary.responseData);
 
   const renderLoader = () =>
     summary.loading && (
@@ -58,26 +57,22 @@ export default function Summary(props) {
         spacing={1}
         alignItems="flex-start"
         className="response-summary"
-        f
         flexWrap={{
           xs: "wrap",
           sm: "wrap",
           md: "nowrap",
         }}
       >
-        {!hasResponses() && <Alert severity="warning">No recorded responses</Alert>}
-        {hasResponses() && (
-          <Responses
-            data={summary}
-            questionnaireId={questionnaireId}
-            questionnaireJson={summary.questionnaire}
-          ></Responses>
-        )}
+        <Responses
+          data={summary}
+          questionnaireId={questionnaireId}
+          questionnaireJson={summary?.questionnaire}
+        ></Responses>
         {hasChart && (
           <Chart
-            type={summary.chartType}
+            type={summary?.chartType}
             data={{
-              ...summary.chartData,
+              ...(summary?.chartData ?? {}),
               lgChartWidth: 520,
             }}
           ></Chart>

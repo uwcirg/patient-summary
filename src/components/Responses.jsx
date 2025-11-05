@@ -99,12 +99,17 @@ export default function Responses(props) {
 }
 
 const dataShape = PropTypes.shape({
+  scoringSummaryData: PropTypes.object,
   responseData: PropTypes.array,
-  printResponseData: PropTypes.array,
+  printResponseData: PropTypes.shape({
+    headerRow: PropTypes.array,
+    bodyRows: PropTypes.array,
+    scoreRow: PropTypes.array
+  }),
 });
 
 Responses.propTypes = {
   questionnaireId: PropTypes.string,
   questionnaireJson: PropTypes.object,
-  data: PropTypes.arrayOf(dataShape),
+  data: dataShape,
 };

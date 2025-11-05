@@ -6,19 +6,63 @@ import CHART_CONFIG from "./chart_config";
 import questionnaireConfigs from "./questionnaire_config";
 import { getScoreParamsFromResponses } from "@/models/resultBuilders/helpers";
 
+export const getInstrumentDefaults = () => {
+  const keys = Object.keys(questionnaireConfigs);
+  return keys.map((key) => {
+    return questionnaireConfigs[key];
+  });
+};
+
 export const INSTRUMENT_DEFAULTS = {
+  ...getInstrumentDefaults(),
   "CIRG-PHQ9-SI": {
     title: "Suicide Ideation",
     scoringParams: { minimumScore: 0, maximumScore: 3, highSeverityScoreCutoff: 3, comparisonToAlert: "higher" },
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 3, xLabel: "" },
+  },
+  "CIRG-Overdose": {
+    title: "Overdose",
+  },
+  "CIRG-Food-Security": {
+    title: "Food Security",
+  },
+  "CIRG-Financial-Situation": {
+    title: "Financial Situation",
+  },
+  "CIRG-SYMPTOMS": {
+    title: "Symptoms",
+  },
+  "CIRG-ART-ADHERENCE": {
+    title: "ART Adherence",
+  },
+  "CIRG-Concurrent-Drug-Use": {
+    title: "Concurrent Drug Use",
+  },
+  "CIRG-SEXUAL-RISK": {
+    title: "Sexual Risk",
   },
   "CIRG-Alcohol-Use": {
     title: "Alcohol Score",
     scoringParams: { minimumScore: 0, maximumScore: 45, highSeverityScoreCutoff: 35 },
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 45, xLabel: "" },
   },
+  "CIRG-UNPROTECTED-SEX": {
+    title: "Unprotected Sex",
+  },
+  "CIRG-EXCHANGE-SEX": {
+    title: "Exchange Sex",
+  },
+  "CIRG-STI": {
+    title: "STI",
+  },
+  "CIRG-PSYCHOSOCIAL-CONCERNS": {
+    title: "Psychosocial Concerns",
+  },
+  "CIRG-SOCIAL-SUPPORT": {
+    title: "Social Support",
+  },
   "CIRG-Mini-Score": {
-    title: "MINI-Score",
+    title: "MINI Score",
     scoringParams: { minimumScore: 0, maximumScore: 5, highSeverityScoreCutoff: 4 },
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 5, xLabel: "" },
   },
@@ -27,11 +71,13 @@ export const INSTRUMENT_DEFAULTS = {
 
 const getInstrumentDefault = (key) => {
   if (INSTRUMENT_DEFAULTS[key]) return INSTRUMENT_DEFAULTS[key];
-  if (questionnaireConfigs[key]) return {
-    scoringParams: {...questionnaireConfigs[key]},
-    chartParams: questionnaireConfigs[key].chartParams??{}
-  }
-}
+  if (questionnaireConfigs[key])
+    return {
+      ...questionnaireConfigs[key],
+      scoringParams: { ...(questionnaireConfigs[key].scoringParams ?? {}), ...questionnaireConfigs[key] },
+      chartParams: questionnaireConfigs[key].chartParams ?? {},
+    };
+};
 const normalizeParams = (params = {}) => {
   const scoring = params.scoringParams ?? {};
   const chart = params.chartParams ?? {};
@@ -75,21 +121,17 @@ export const report_config_base = {
       title: "Urgent and Basic Needs",
       tables: [
         {
-          id: "table_urgent-basic-needs-main",
+          id: "table_urgent_basic_needs_main",
           layout: "two-columns",
           dataKeysToMatch: [
             "CIRG-PHQ9",
             "CIRG-PHQ9-SI",
-            "CIRG-IPV",
+            "CIRG-CNICS-IPV4",
             "CIRG-Overdose",
             "CIRG-Food-Security",
             "CIRG-Financial-Situation",
           ],
           paramsByKey: {
-            // Only overrides unique to this table:
-            "CIRG-PHQ9": {
-              chartParams: { title: "PHQ-9", xLabel: "" }, // (already the same as defaults; you can omit entirely)
-            },
             "CIRG-PHQ9-SI": {
               getProcessedData: (summaryData) => {
                 const HOST_ID = "CIRG-PHQ9"; // where the SI answer lives
@@ -145,7 +187,7 @@ export const report_config_base = {
                     alert,
                     lastAssessed,
                     meaning,
-                    totalAnswered: 1,
+                    totalAnsweredItems: 1,
                   },
                   chartData: {
                     ...chartParams,
@@ -169,18 +211,40 @@ export const report_config_base = {
         {
           id: "table_symptoms-bother",
           layout: "simple",
-          dataKeysToMatch: ["CIRG_SYMPTOMS"],
+          dataKeysToMatch: ["CIRG-SYMPTOMS"],
           hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
           columns: [
             {
               id: "measure",
               header: "Measure",
               align: "left",
-              accessor: "measure",
+              accessor: "title",
               headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
             },
-            { id: "bothersALot", header: "Bothers a lot", align: "right", accessor: "bothersALot" },
-            { id: "bothersSome", header: "Bothers some", align: "right", accessor: "bothersSome" },
+            {
+              id: "bothersALot",
+              header: "Bothers a lot",
+              align: "right",
+              accessor: "bothersALot",
+              renderCell: (row, value) => (
+                <Stack direction={"column"} spacing={1}>
+                  <span>{value ?? "N/A"}</span>
+                  {row.source && <span className="muted-text">{row.source}</span>}
+                </Stack>
+              ),
+            },
+            {
+              id: "bothersSome",
+              header: "Bothers some",
+              align: "right",
+              accessor: "bothersSome",
+              renderCell: (row, value) => (
+                <Stack direction={"column"} spacing={1}>
+                  <span>{value ?? "N/A"}</span>
+                  {row.source && <span className="muted-text">{row.source}</span>}
+                </Stack>
+              ),
+            },
           ],
         },
       ],
@@ -193,7 +257,7 @@ export const report_config_base = {
         {
           id: "table_art_adherence",
           layout: "simple",
-          dataKeysToMatch: ["CIRG_ART_ADHERENCE"],
+          dataKeysToMatch: ["CIRG-ART-ADHERENCE"],
           title: "ART Adherence",
           hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
           columns: [
@@ -201,7 +265,7 @@ export const report_config_base = {
               id: "measure",
               header: "Measure",
               align: "left",
-              accessor: "measure",
+              accessor: "title",
               type: "text",
               headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
             },
@@ -216,18 +280,10 @@ export const report_config_base = {
         },
         {
           id: "table_substance_use",
-          keyToMatch: "CIRG_SUBSTANCE_USE",
+          keyToMatch: "CIRG-SUBSTANCE-USE",
           title: "Substance Use",
           layout: "two-columns",
           dataKeysToMatch: ["CIRG-Nicotine-Use", "CIRG-Alcohol-Use", "CIRG-Mini-Score", "CIRG-Concurrent-Drug-Use"],
-          paramsByKey: {
-            "CIRG-Alcohol-Use": {
-              chartParams: { xLabel: "" }, // title/min/max/cutoff come from defaults
-            },
-            "CIRG-Mini-Score": {
-              chartParams: { xLabel: "" },
-            },
-          },
         },
       ],
     },
@@ -239,14 +295,14 @@ export const report_config_base = {
           id: "table_sexual_risk",
           layout: "simple",
           title: "Sexual Risk Behavior",
-          dataKeysToMatch: ["CIRG_SEXUAL_RISK", "CIRG_UNPROTECTED_SEX", "CIRG_EXCHANGE_SEX", "CIRG_STI"],
+          dataKeysToMatch: ["CIRG-SEXUAL-RISK", "CIRG-UNPROTECTED-SEX", "CIRG-EXCHANGE-SEX", "CIRG-STI"],
           hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
           columns: [
             {
               id: "measure",
               header: "Measure",
               align: "left",
-              accessor: "measure",
+              accessor: "title",
               type: "text",
               headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
             },
@@ -265,7 +321,7 @@ export const report_config_base = {
               type: "text",
               renderCell: (row, value) => (
                 <Stack direction={"column"} spacing={1}>
-                  <span>{value ?? "--"}</span>
+                  <span>{value ?? "N/A"}</span>
                   {row.source && <span className="muted-text">{row.source}</span>}
                 </Stack>
               ),
@@ -281,7 +337,7 @@ export const report_config_base = {
         {
           id: "table_psychosocial_concern",
           layout: "simple",
-          dataKeysToMatch: ["CIRG_PSYCHOSOCIAL_CONCERNS", "CIRG_SOCIAL_SUPPORT"],
+          dataKeysToMatch: ["CIRG-PSYCHOSOCIAL-CONCERNS", "CIRG-SOCIAL-SUPPORT"],
           title: "Psychosocial Concerns and Quality of Life",
           hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
           columns: [
@@ -289,7 +345,7 @@ export const report_config_base = {
               id: "measure",
               header: "Measure",
               align: "left",
-              accessor: "measure",
+              accessor: "title",
               type: "text",
               headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
             },
@@ -308,7 +364,7 @@ export const report_config_base = {
               type: "text",
               renderCell: (row, value) => (
                 <Stack direction={"column"} spacing={1}>
-                  <span>{value ?? "--"}</span>
+                  <span>{value ?? "N/A"}</span>
                   {row.source && <span className="muted-text">{row.source}</span>}
                 </Stack>
               ),

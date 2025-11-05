@@ -33,7 +33,7 @@ export function getCorrectedISODate(dateString) {
 
 export function getDisplayQTitle(questionnaireId) {
   if (!questionnaireId) return "";
-  return String(questionnaireId.replace(/cirg-/gi, "")).toUpperCase();
+  return String(questionnaireId.replace(/cirg-/gi, "").replace(/_/g, " "));
 }
 
 export function isValidDate(date) {

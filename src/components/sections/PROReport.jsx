@@ -2,20 +2,13 @@ import { report_config } from "@config/report_config";
 import React from "react";
 import PropTypes from "prop-types";
 import { Box, Stack, Typography } from "@mui/material";
-// import { hasData } from "@util";
-// import SimpleTable from "../SimpleTable";
-// import Chart from "../Chart";
 import { isEmptyArray } from "@util";
 import Chart from "../Chart";
 import Section from "../Section";
-//import SimpleTable from "../SimpleTable";
 import ScoringSummary from "./ScoringSummary";
 
 export default function PROReport() {
-  //const keys = Object.keys(summaries ?? {});
   const renderTwoColumns = (table) => {
-   // const allCharts = table.rows.filter((row) => row.chartData).map((row) => row.chartData);
-    //console.log("chart data ", allCharts);
     return (
       <Stack
         direction="row"
@@ -91,7 +84,6 @@ export default function PROReport() {
     );
   };
   return report_config.sections.map((section, index) => {
-    //if (section.layout == "simple")
     return (
       <Section
         key={`${section.id}_${index}`}

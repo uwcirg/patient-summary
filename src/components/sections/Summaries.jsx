@@ -19,7 +19,7 @@ export default function Summaries({ summaryError, summaries }) {
   return (
     <Box>
       {keys.map((questionnaireId, index) => {
-        const dataObject = summaries[questionnaireId];
+        const dataObject = summaries[questionnaireId]??{};
         return (
           <Box className="summary-container" key={`summary_${questionnaireId}_${index}`}>
             <Summary

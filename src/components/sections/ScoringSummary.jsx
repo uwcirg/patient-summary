@@ -16,7 +16,7 @@ import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import { getResponseColumns } from "@models/resultBuilders/helpers";
 import Scoring from "@components/Score";
-import { isEmptyArray, isNumber, scrollToAnchor } from "@util";
+import { getDisplayQTitle, isEmptyArray, isNumber, scrollToAnchor } from "@util";
 import ResponsesViewer from "../ResponsesViewer";
 
 // tiny helper to read nested keys like "provider.name"
@@ -63,13 +63,11 @@ export default function ScoringSummary(props) {
   };
 
   const displayNumAnswered = (row) => {
-    const totalItems = row.totalItems;
-    const totalAnsweredItems = row.totalAnswered;
+    const { totalItems, totalAnsweredItems } = row;
+    console.log("row ", row)
     if (!totalItems && !totalAnsweredItems) return "";
-    if (!totalItems && totalAnsweredItems) return "Yes";
-    if (parseInt(totalAnsweredItems) === 0 && parseInt(totalItems) === 0) return "";
-    if (isNumber(totalAnsweredItems) && isNumber(totalItems))
-      return `${totalAnsweredItems} / ${totalItems}`;
+    if (isNumber(totalAnsweredItems) && isNumber(totalItems)) return `${totalAnsweredItems} / ${totalItems}`;
+    if (totalAnsweredItems) return "Yes";
     return "";
   };
 
@@ -98,11 +96,11 @@ export default function ScoringSummary(props) {
   // -------- reusable default cell renderers
   const defaultRenderers = {
     text: (row, value) => (
-      <span className={row.alert ? "text-error" : row.warning ? "text-warning" : ""}>{value ?? "--"}</span>
+      <span className={row.alert ? "text-error" : row.warning ? "text-warning" : ""}>{value ?? "N/A"}</span>
     ),
     date: (row, value) => (
       <Stack direction={"column"} spacing={1} alignItems={"center"} justifyContent={"center"}>
-        <span>{value ?? "--"}</span>
+        <span>{value ?? "N/A"}</span>
         {row.source && <span className="muted-text">{row.source}</span>}
       </Stack>
     ),
@@ -164,8 +162,9 @@ export default function ScoringSummary(props) {
         size: "small",
       },
       // custom cell that preserves link behavior
-      renderCell: (row) =>
-        !disableLinks ? (
+      renderCell: (row) => {
+        const displayTitle = getDisplayQTitle(row.instrumentName ?? row.title ?? row.key);
+        return !disableLinks ? (
           <Link
             onClick={(e) => handleClick(e, row.key)}
             underline="none"
@@ -173,18 +172,19 @@ export default function ScoringSummary(props) {
             href={`#${row.key}`}
             className="instrument-link"
           >
-            {row.instrumentName??row.key}
+            {displayTitle}
           </Link>
         ) : props.enableResponsesViewer && !isEmptyArray(row?.responseData) ? (
           <ResponsesViewer
-            title={row.instrumentName}
-            responsesTileTitle={row.instrumentName??row.key}
+            title={displayTitle}
+            responsesTileTitle={displayTitle}
             tableData={row?.tableResponseData}
             columns={getResponseColumns(row?.responseData)}
           />
         ) : (
-          row.instrumentName??row.key
-        ),
+          displayTitle
+        );
+      },
     },
     {
       id: "numAnswered",

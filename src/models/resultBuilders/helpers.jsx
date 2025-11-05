@@ -13,9 +13,8 @@ import { getLocaleDateStringFromDate, generateUUID, isEmptyArray, isNil, isNumbe
 import Scoring from "@components/Score";
 import { DEFAULT_ANSWER_OPTIONS } from "@/consts";
 import { getDateDomain } from "@/config/chart_config";
-import { findMatchingQuestionLinkIdFromCode } from "@/config/questionnaire_config";
+import { findMatchingQuestionLinkIdFromCode, getConfigForQuestionnaire } from "@/config/questionnaire_config";
 import { report_config } from "@/config/report_config";
-//import Questionnaire from "@/models/Questionnaire";
 
 /* ---------------------------------------------
  * External helpers
@@ -57,12 +56,13 @@ export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, 
     if (!responses.length) responses = ctx.responsesOnly(flat);
 
     return {
+      ...getConfigForQuestionnaire(questionnaire?.id),
       id: qr.id,
-      date: ctx.dateTimeText(qr.authored),
+      date: qr.authored ?? null,
       responses,
       score,
       scoreSeverity,
-      scoreMeaning: ctx.meaningFromSeverity(scoreSeverity),
+      scoreMeaning: meaningFromSeverity(scoreSeverity),
       comparisonToAlert: "lower",
       scoringParams: { maximumScore: ctx.cfg.scoringParams?.maximumScore ?? 30, scoreSeverity: scoreSeverity },
       highSeverityScoreCutoff: hasLowerLevelEducation ? 19 : 20,
@@ -108,13 +108,15 @@ export function summarizeCIDASHelper(
     const totalAnsweredItems = flat.filter((it) => !linkIdEquals(it.linkId, scoringQuestionId)).length;
 
     return {
+      ...getConfigForQuestionnaire(questionnaire?.id),
       id: qr.id,
-      date: ctx.dateTimeText(qr.authored),
+      instrumentName: "C-IDAS",
+      date: qr.authored ?? null,
       responses,
       score,
       scoreSeverity,
       highSeverityScoreCutoff,
-      scoreMeaning: ctx.meaningFromSeverity(scoreSeverity),
+      scoreMeaning: meaningFromSeverity(scoreSeverity),
       alertNote: suicideScore >= 1 ? "suicide concern" : null,
       scoringParams: { maximumScore, scoreSeverity },
       totalAnsweredItems,
@@ -175,7 +177,7 @@ export function summarizeMiniCogHelper(
           ? clamp(computed, 0, 5)
           : null;
 
-    const scoreSeverity = ctx.severityFromScore(totalScore);
+    const scoreSeverity = severityFromScore(totalScore);
 
     const HIDE_IDS = new Set([
       "introduction",
@@ -192,8 +194,9 @@ export function summarizeMiniCogHelper(
     const totalAnsweredItems = flat.filter((it) => !linkIdEquals(it.linkId, totalLinkId)).length;
 
     return {
+      ...getConfigForQuestionnaire(questionnaire?.id),
       id: qr.id,
-      date: ctx.dateTimeText(qr.authored),
+      date: qr.authored ?? null,
       responses,
       scoresByLinkId: {
         [recallLinkIds[0]]: typeof recallScore === "number" ? recallScore : null,
@@ -204,7 +207,7 @@ export function summarizeMiniCogHelper(
       clock_draw_score: clockScore,
       score: totalScore,
       scoreSeverity,
-      scoreMeaning: ctx.meaningFromSeverity(scoreSeverity),
+      scoreMeaning: meaningFromSeverity(scoreSeverity),
       comparisonToAlert: "lower",
       scoringParams: { ...(ctx.cfg.scoringParams ?? { maximumScore: 5 }), scoreSeverity },
       highSeverityScoreCutoff,
@@ -250,6 +253,14 @@ export function buildQuestionnaire(resources = [], config = {}) {
     status: "active",
     date: new Date().toISOString().slice(0, 10),
     item: items,
+  };
+}
+export function getQuestionnaireResponseSkeleton(questionnaireID = "dummy101") {
+  return {
+    id: generateUUID(),
+    resourceType: "QuestionnaireResponse",
+    status: "completed",
+    questionnaire: `Questionnaire/${questionnaireID}`,
   };
 }
 
@@ -311,10 +322,8 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
   });
 
   return {
-    id: generateUUID(),
-    resourceType: "QuestionnaireResponse",
+    ...getQuestionnaireResponseSkeleton(config.questionnaireId),
     status: "completed",
-    questionnaire: `Questionnaire/${config.questionnaireId}`,
     extension,
     identifier,
     subject,
@@ -380,17 +389,40 @@ export function getPreviousResponseRowWithScore(rdata = []) {
   return prev;
 }
 
-export function getScoreParamsFromResponses(responses) {
+export function isNonScoreLinkId(linkId, config = {}) {
+  if (!linkId) return false;
+  const subScoreQuestionIds = !isEmptyArray(config?.subScoringQuestionIds) ? config.subScoringQuestionIds : [];
+  return (
+    !linkIdEquals(linkId, config?.scoringQuestionId) && !subScoreQuestionIds.find((id) => linkIdEquals(id, linkId))
+  );
+}
+
+export function severityFromScore(score, config = {}) {
+  const bands = config?.severityBands;
+  if (isEmptyArray(bands) || !isNumber(score)) return "low";
+
+  // bands assumed sorted desc by min
+  for (const band of bands) {
+    if (score >= (band.min ?? 0)) return band.label;
+  }
+  return bands[bands.length - 1]?.label ?? "low";
+}
+
+export function meaningFromSeverity(sev, config = {}) {
+  const bands = config?.severityBands;
+  if (!isEmptyArray(bands)) return bands.find((b) => b.label === sev)?.meaning ?? null;
+  return null;
+}
+
+export function getScoreParamsFromResponses(responses, config = {}) {
   if (isEmptyArray(responses)) return null;
   const current = getMostRecentResponseRow(responses);
   const prev = getPreviousResponseRowWithScore(responses);
   const curScore = isNumber(current?.score) ? current.score : (current?.score ?? null);
-  const minScore = isNumber(current?.scoringParams?.minimumScore) ? current.scoringParams.minimumScore : 0;
-  const maxScore = isNumber(current?.scoringParams?.maximumScore) ? current.scoringParams.maximumScore : null;
-  const meaning = current?.meaning ?? null;
-  const comparisonToAlert = current?.comparisonToAlert ?? "higher";
-
   const prevScore = isNumber(prev?.score) ? prev.score : null;
+  const minScore = isNumber(config?.scoringParams?.minimumScore) ? config?.scoringParams?.minimumScore : 0;
+  const maxScore = isNumber(config?.scoringParams?.maximumScore) ? config?.scoringParams?.maximumScore : null;
+  const comparisonToAlert = config?.comparisonToAlert ?? "higher";
 
   let comparison = null; // "higher" | "lower" | "equal" | null
   if (prevScore != null && curScore != null && isNumber(curScore) && isNumber(prevScore)) {
@@ -399,24 +431,22 @@ export function getScoreParamsFromResponses(responses) {
     else comparison = "equal";
   }
   const score = isNumber(curScore) ? curScore : (curScore ?? null);
+  const scoreSeverity = severityFromScore(score, config);
+  const meaning = meaningFromSeverity(scoreSeverity, config);
   const source = current?.source;
-  const alert = isNumber(score) && score >= current?.scoringParams?.highSeverityScoreCutoff;
-  const warning = isNumber(score) && score >= current?.scoringParams?.mediumSeverityScoreCutoff;
-  const totalAnswered = isNumber(current?.totalAnsweredItems)
-    ? current?.totalAnsweredItems
-    : null;
-  const totalItems = isNumber(current?.totalItems) ? current?.totalItems : null;
+  const alert = isNumber(score) && score >= config?.highSeverityScoreCutoff;
+  const warning = isNumber(score) && score >= config?.mediumSeverityScoreCutoff;
   const scoringParams = {
+    ...config,
     ...(current?.scoringParams ?? {}),
     score,
+    scoreSeverity,
     currentScore: curScore,
     previousScore: prevScore,
     alert,
     warning,
     minScore,
     maxScore,
-    totalAnswered,
-    totalItems,
     meaning,
     comparison,
     comparisonToAlert,
@@ -532,6 +562,10 @@ export function buildReportData(summaryData = {}) {
               ...(paramsByKey[key].scoringParams ?? {}),
               ...(currentData ?? {}),
             });
+          } else {
+            if (paramsByKey[key]) {
+              rows.push(paramsByKey[key]);
+            }
           }
           if (chartData) {
             charts.push({

@@ -16,7 +16,6 @@ import questionnaireConfigs from "@config/questionnaire_config";
 import {
   buildQuestionnaire,
   buildReportData,
-  //buildScoringSummaryRows,
   observationsToQuestionnaireResponses,
 } from "@models/resultBuilders/helpers";
 import QuestionnaireScoringBuilder from "@models/resultBuilders/QuestionnaireScoringBuilder";
@@ -683,7 +682,8 @@ export default function useFetchResources() {
     console.log("summaryData ", summaryData);
     // console.log("evalData ", patientBundle.current.evalResults);
     // console.log("scoringSummaryData ", scoringSummaryData);
-    console.log("reportData ", reportData);
+    // console.log("reportData ", reportData);
+    console.log("bundle ", patientBundle.current.entry)
   }
 
   return {
@@ -712,9 +712,7 @@ export default function useFetchResources() {
 
     // summary data
     allScoringSummaryData,
-    summaryData,
-    //scoringSummaryData,
-
+   
     // chart
     allChartData,
     chartKeys,
