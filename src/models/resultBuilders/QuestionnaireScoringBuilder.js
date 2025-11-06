@@ -33,6 +33,7 @@ const isQr = (res) => res && String(res.resourceType).toLowerCase() === RT_QR;
 export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   /**
    * @param {Object} config
+   * @param {string} config.key
    * @param {string} config.questionnaireId
    * @param {string} config.questionnaireName
    * @param {string} config.questionnaireUrl
@@ -40,8 +41,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
    * @param {Object} [config.scoringParams]
    * @param {string[]} [config.questionLinkIds]
    * @param {'strict'|'fuzzy'} [config.matchMode]
+   * @param {number} config.highSeverityScoreCutoff
    * @param {{min:number,label:string,meaning?:string}[]} [config.severityBands]
-   * @param {number} [config.highSeverityScoreCutoff]
    * @param {Object|Array} patientBundle
    */
   constructor(config = {}, patientBundle) {
@@ -53,6 +54,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     this.fallbackScoreMap = config?.fallbackScoreMap || DEFAULT_FALLBACK_SCORE_MAPS.default;
 
     this.cfg = {
+      key: config.key ?? "",
       questionnaireId: config.questionnaireId ?? "",
       questionnaireName: config.questionnaireName ?? "",
       questionnaireUrl: config.questionnaireUrl ?? "",
@@ -61,7 +63,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       questionLinkIds: !isEmptyArray(config.questionLinkIds) ? config.questionLinkIds : null,
       matchMode: config.matchMode ?? "fuzzy",
       severityBands: bands,
-      highSeverityScoreCutoff: config.highSeverityScoreCutoff ?? bands?.[0]?.min ?? null,
+      highSeverityScoreCutoff: config.highSeverityScoreCutoff ?? null,
     };
 
     this.patientBundle = patientBundle || null;
@@ -226,6 +228,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   questionnaireRefMatches(canonical, config) {
     const configToUse = config ? config : this.cfg;
     const ref = normalizeStr(canonical);
+    const key = normalizeStr(configToUse.key);
     const id = normalizeStr(configToUse.questionnaireId);
     const name = normalizeStr(configToUse.questionnaireName);
     const url = normalizeStr(configToUse.questionnaireUrl);
@@ -233,7 +236,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if ((configToUse.matchMode ?? "fuzzy") === "strict") {
       return (url && ref === url) || (id && ref === id) || (name && ref === name);
     }
-    return (id && fuzzyMatch(ref, id)) || (name && fuzzyMatch(ref, name)) || (url && fuzzyMatch(ref, url));
+    return (
+      (key && fuzzyMatch(ref, key)) ||
+      (id && fuzzyMatch(ref, id)) ||
+      (name && fuzzyMatch(ref, name)) ||
+      (url && fuzzyMatch(ref, url))
+    );
   }
 
   matchedResponsesByQuestionnaire(responses) {
@@ -275,6 +283,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return c ? { code: c.code ?? null, display: c.display ?? null } : null;
   }
   answerCodeableConept(ans) {
+    if (!isPlainObject(ans)) return null;
     if (!("valueCodeableConcept" in ans)) return null;
     return conceptText(ans.valueCodeableConcept);
   }
@@ -341,6 +350,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   // -------------------- scoring --------------------
   getScoringByResponseItem(questionnaire, responseItemsFlat, linkId) {
     const it = this.findResponseItemByLinkId(responseItemsFlat, linkId);
+    // console.log("linkId ", linkId, " it ", it, " responses ", responseItemsFlat)
     const ans = this.firstAnswer(it);
     if (!ans) return null;
 
@@ -353,6 +363,13 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const fromExt = this.getAnswerValueByExtension(questionnaire, coding.code);
       if (fromExt != null) return fromExt;
       if (this.fallbackScoreMap[coding.code] != null) return this.fallbackScoreMap[coding.code];
+      return ans;
+    }
+
+    if (!isPlainObject(ans)) {
+      if (this.fallbackScoreMap) return this.fallbackScoreMap[ans];
+      if (isNumber(ans)) return ans;
+      return null;
     }
 
     return null;
@@ -390,11 +407,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const matchedResponseItem = this.findResponseItemByLinkId(responseItemsFlat, q.linkId);
       const ans = this.firstAnswer(matchedResponseItem);
       return {
+        ...q,
         id: q.linkId,
         answer: this.getAnswerItemDisplayValue(ans),
         question: q.text,
         text: matchedResponseItem?.text ? matchedResponseItem?.text : "",
-        type: q.type,
       };
     });
     const allResponses = new Map();
@@ -422,15 +439,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       };
     });
   }
-
-  // isNonScoreLinkId(linkId, config = {}) {
-  //   if (!linkId) return false;
-  //   const subScoreQuestionIds = !isEmptyArray(config?.subScoringQuestionIds) ? config.subScoringQuestionIds : [];
-  //   return (
-  //     !this.isLinkIdEquals(linkId, config?.scoringQuestionId) &&
-  //     !subScoreQuestionIds.find((id) => this.isLinkIdEquals(id, linkId))
-  //   );
-  // }
 
   getDataSource(resource) {
     if (!resource) return "";
@@ -485,7 +493,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   // -------------------- public APIs --------------------
   getResponsesSummary(questionnaireResponses, questionnaire) {
-    const config = this.cfg && this.cfg.questionnaireId ? this.cfg : questionnaireConfig[questionnaire?.id];
+    const keyToUse = this.cfg?.questionnaireId??this.cfg.key;
+    const config = this.cfg ? this.cfg : questionnaireConfig[keyToUse];
     const rows = (questionnaireResponses || []).map((qr, rIndex) => {
       const flat = this.flattenResponseItems(qr.item);
       const { score, totalAnsweredItems, totalItems } = this.getScoreStatsFromQuestionnaireResponse(
@@ -697,6 +706,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       printResponseData,
       config,
     });
+    const questionnaireResponses = evalData.map((row) => ({
+      authored: row.date,
+      item: row.raw,
+    }));
 
     return {
       config: config,
@@ -708,6 +721,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       tableResponseData,
       printResponseData,
       questionnaire,
+      questionnaireResponses,
       key: questionnaire?.id,
       error: !questionnaire ? "No associated questionnaire found" : "",
     };

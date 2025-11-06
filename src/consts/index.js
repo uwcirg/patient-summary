@@ -51,8 +51,8 @@ export const FLOWSHEET_CODE_IDS = [
 export const PHQ9_SI_QUESTION_LINK_ID = "44260-8";
 
 export const PHQ9_SI_ANSWER_SCORE_MAPPINGS = {
-  "not at all": 0,
-  "several days": 1,
-  "more than half the days": 2,
-  "nearly every day": 3,
-};
+    "LA6568-5": 0,
+    "LA6569-3": 1,
+    "LA6570-1": 2,
+    "LA6571-9": 3,
+  }

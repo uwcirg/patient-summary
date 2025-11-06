@@ -64,11 +64,10 @@ export default function ScoringSummary(props) {
 
   const displayNumAnswered = (row) => {
     const { totalItems, totalAnsweredItems } = row;
-    console.log("row ", row)
-    if (!totalItems && !totalAnsweredItems) return "";
+    if (!totalItems && !totalAnsweredItems) return "No";
     if (isNumber(totalAnsweredItems) && isNumber(totalItems)) return `${totalAnsweredItems} / ${totalItems}`;
     if (totalAnsweredItems) return "Yes";
-    return "";
+    return "No";
   };
 
   // -------- styles

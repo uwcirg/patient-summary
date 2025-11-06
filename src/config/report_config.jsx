@@ -1,10 +1,12 @@
 import { Stack } from "@mui/material";
 import { linkIdEquals } from "@util/fhirUtil";
 import { PHQ9_SI_ANSWER_SCORE_MAPPINGS, PHQ9_SI_QUESTION_LINK_ID } from "@consts";
-import { isEmptyArray, isNumber, deepMerge } from "@util";
+import { getQuestionnaireResponseSkeleton } from "@models/resultBuilders/helpers";
+import QuestionnaireScoringBuilder from "@models/resultBuilders/QuestionnaireScoringBuilder";
+import { isEmptyArray, deepMerge } from "@util";
 import CHART_CONFIG from "./chart_config";
 import questionnaireConfigs from "./questionnaire_config";
-import { getScoreParamsFromResponses } from "@/models/resultBuilders/helpers";
+//import { getScoreParamsFromResponses } from "@/models/resultBuilders/helpers";
 
 export const getInstrumentDefaults = () => {
   const keys = Object.keys(questionnaireConfigs);
@@ -16,8 +18,13 @@ export const getInstrumentDefaults = () => {
 export const INSTRUMENT_DEFAULTS = {
   ...getInstrumentDefaults(),
   "CIRG-PHQ9-SI": {
+    key: "CIRG-PHQ9-SI",
     title: "Suicide Ideation",
-    scoringParams: { minimumScore: 0, maximumScore: 3, highSeverityScoreCutoff: 3, comparisonToAlert: "higher" },
+    scoringQuestionId: PHQ9_SI_QUESTION_LINK_ID,
+    fallbackScoreMap: PHQ9_SI_ANSWER_SCORE_MAPPINGS,
+    highSeverityScoreCutoff: 3,
+    comparisonToAlert: "higher",
+    scoringParams: { minimumScore: 0, maximumScore: 3 },
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 3, xLabel: "" },
   },
   "CIRG-Overdose": {
@@ -140,64 +147,81 @@ export const report_config_base = {
                 const host = summaryData?.[HOST_ID];
                 if (!host || isEmptyArray(host?.responseData)) return null;
 
-                const currentReponseData = host.scoringSummaryData;
-                const siItem = currentReponseData.responses.find((r) => linkIdEquals(r.id, PHQ9_SI_QUESTION_LINK_ID));
-                if (!siItem) return null;
-
-                const score = PHQ9_SI_ANSWER_SCORE_MAPPINGS[String(siItem.answer).toLowerCase()];
-                if (!isNumber(score)) return null;
-
-                const { title, scoringParams, chartParams } = getInstrumentDefault(SELF_ID) ?? {};
-                const alert = score >= (scoringParams?.highSeverityScoreCutoff ?? Infinity);
-                const lastAssessed = currentReponseData.lastAssessed;
-                const meaning = siItem.answer;
-                const responseData = host.responseData ?? [];
-                const yFieldKey = "score";
-                const data = chartParams.dataFormatter(
-                  responseData
-                    .map((entry, index) => {
-                      if (isEmptyArray(entry.responses)) return null;
-                      const hit = entry.responses.find((o) => linkIdEquals(o.id, PHQ9_SI_QUESTION_LINK_ID));
-                      if (!hit) return null;
-                      const s = PHQ9_SI_ANSWER_SCORE_MAPPINGS[String(hit.answer).toLowerCase()];
-                      if (!isNumber(s)) return null;
-                      return {
-                        id: entry.key + "_" + SELF_ID + "_" + index,
-                        date: entry.date,
-                        [yFieldKey]: s,
-                        source: entry.source,
-                        ...scoringParams,
-                      };
-                    })
-                    .filter((row) => row && isNumber(row[yFieldKey])),
-                );
-                return {
-                  scoringSummaryData: {
-                    ...getScoreParamsFromResponses(data),
-                    ...scoringParams,
-                    key: "CIRG_PHQ9_SI",
-                    id: HOST_ID + "_" + host.id + "_" + SELF_ID,
-                    scoringParams: {
-                      scoreSeverity: alert ? "high" : "normal",
+                const qrs = host.questionnaireResponses;
+                const bundle = qrs.map((qrs) => {
+                  return {
+                    resource: {
+                      ...getQuestionnaireResponseSkeleton(SELF_ID),
+                      authored: qrs.authored,
+                      item: qrs.item?.filter((r) => linkIdEquals(r.linkId, PHQ9_SI_QUESTION_LINK_ID)),
                     },
-                    // comparison,
-                    instrumentName: title,
-                    source: currentReponseData?.source,
-                    score,
-                    alert,
-                    lastAssessed,
-                    meaning,
-                    totalAnsweredItems: 1,
-                  },
-                  chartData: {
-                    ...chartParams,
-                    ...scoringParams,
-                    id: "CIRG_PHQ9_SI_CHART",
-                    yFieldKey,
-                    title,
-                    data,
-                  },
-                };
+                  };
+                });
+                console.log("si bundle ", bundle);
+                const qb = new QuestionnaireScoringBuilder(getInstrumentDefault(SELF_ID), bundle);
+                const siSummaryData = qb.summariesFromBundle(undefined, {}, bundle);
+                console.log("si summaryData ", siSummaryData);
+                return siSummaryData;
+
+                // const siItem = currentReponseData.responses.find((r) => linkIdEquals(r.id, PHQ9_SI_QUESTION_LINK_ID));
+                // if (!siItem) return null;
+
+                // const score = PHQ9_SI_ANSWER_SCORE_MAPPINGS[String(siItem.answer).toLowerCase()];
+                // if (!isNumber(score)) return null;
+
+                // const { title, scoringParams, chartParams } = getInstrumentDefault(SELF_ID) ?? {};
+                // const alert = score >= (scoringParams?.highSeverityScoreCutoff ?? Infinity);
+                // const lastAssessed = currentReponseData.lastAssessed;
+                // const meaning = siItem.answer;
+                // const responseData = host.responseData ?? [];
+                // const yFieldKey = "score";
+                // const data = chartParams.dataFormatter(
+                //   responseData
+                //     .map((entry, index) => {
+                //       if (isEmptyArray(entry.responses)) return null;
+                //       const hit = entry.responses.find((o) => linkIdEquals(o.id, PHQ9_SI_QUESTION_LINK_ID));
+                //       if (!hit) return null;
+                //       const s = PHQ9_SI_ANSWER_SCORE_MAPPINGS[String(hit.answer).toLowerCase()];
+                //       if (!isNumber(s)) return null;
+                //       return {
+                //         id: entry.key + "_" + SELF_ID + "_" + index,
+                //         date: entry.date,
+                //         [yFieldKey]: s,
+                //         source: entry.source,
+                //         ...scoringParams,
+                //       };
+                //     })
+                //     .filter((row) => row && isNumber(row[yFieldKey])),
+                // );
+                //   return {
+                //     scoringSummaryData: {
+                //       ...getScoreParamsFromResponses(data),
+                //       ...scoringParams,
+                //       key: "CIRG_PHQ9_SI",
+                //       id: HOST_ID + "_" + host.id + "_" + SELF_ID,
+                //       scoringParams: {
+                //         scoreSeverity: alert ? "high" : "normal",
+                //       },
+                //       // comparison,
+                //       instrumentName: title,
+                //       source: currentReponseData?.source,
+                //       score,
+                //       alert,
+                //       lastAssessed,
+                //       meaning,
+                //       totalAnsweredItems: 1,
+                //     },
+                //     chartData: {
+                //       ...chartParams,
+                //       ...scoringParams,
+                //       id: "CIRG_PHQ9_SI_CHART",
+                //       yFieldKey,
+                //       title,
+                //       data,
+                //     },
+                //   };
+                // },
+                //},
               },
             },
           },

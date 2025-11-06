@@ -323,7 +323,6 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
 
   return {
     ...getQuestionnaireResponseSkeleton(config.questionnaireId),
-    status: "completed",
     extension,
     identifier,
     subject,
@@ -398,6 +397,8 @@ export function isNonScoreLinkId(linkId, config = {}) {
 }
 
 export function severityFromScore(score, config = {}) {
+  if (config?.highSeverityScoreCutoff && score >= config?.highSeverityScoreCutoff) return "high";
+  if (config?.mediumSeverityScoreCutoff && score >= config?.mediumSeverityScoreCutoff) return "moderate";
   const bands = config?.severityBands;
   if (isEmptyArray(bands) || !isNumber(score)) return "low";
 
