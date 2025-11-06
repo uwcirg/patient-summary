@@ -63,9 +63,9 @@ export default {
       ]),
     },
   },
-  "CIRG-PHQ9-SI": {
+  "CIRG-SI": {
     scoringSummaryData: {
-      key: "CIRG-PHQ9-SI",
+      key: "CIRG-SI",
       source: "cnics",
       comparison: "higher",
       comparisonToAlert: "",
