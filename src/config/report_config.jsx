@@ -17,14 +17,15 @@ export const getInstrumentDefaults = () => {
 
 export const INSTRUMENT_DEFAULTS = {
   ...getInstrumentDefaults(),
-  "CIRG-PHQ9-SI": {
-    key: "CIRG-PHQ9-SI",
+  "CIRG-SI": {
+    key: "CIRG-SI",
+    instrumentName: "Suicide Ideation",
     title: "Suicide Ideation",
     scoringQuestionId: PHQ9_SI_QUESTION_LINK_ID,
     fallbackScoreMap: PHQ9_SI_ANSWER_SCORE_MAPPINGS,
     highSeverityScoreCutoff: 3,
     comparisonToAlert: "higher",
-    scoringParams: { minimumScore: 0, maximumScore: 3 },
+    minimumScore: 0, maximumScore: 3,
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 3, xLabel: "" },
   },
   "CIRG-Overdose": {
@@ -50,7 +51,7 @@ export const INSTRUMENT_DEFAULTS = {
   },
   "CIRG-Alcohol-Use": {
     title: "Alcohol Score",
-    scoringParams: { minimumScore: 0, maximumScore: 45, highSeverityScoreCutoff: 35 },
+    minimumScore: 0, maximumScore: 45, highSeverityScoreCutoff: 35,
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 45, xLabel: "" },
   },
   "CIRG-UNPROTECTED-SEX": {
@@ -70,7 +71,7 @@ export const INSTRUMENT_DEFAULTS = {
   },
   "CIRG-Mini-Score": {
     title: "MINI Score",
-    scoringParams: { minimumScore: 0, maximumScore: 5, highSeverityScoreCutoff: 4 },
+    minimumScore: 0, maximumScore: 5, highSeverityScoreCutoff: 4,
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 5, xLabel: "" },
   },
   // add others as needed…
@@ -81,7 +82,7 @@ const getInstrumentDefault = (key) => {
   if (questionnaireConfigs[key])
     return {
       ...questionnaireConfigs[key],
-      scoringParams: { ...(questionnaireConfigs[key].scoringParams ?? {}), ...questionnaireConfigs[key] },
+      scoringParams: questionnaireConfigs[key] ?? {},
       chartParams: questionnaireConfigs[key].chartParams ?? {},
     };
 };
@@ -132,17 +133,17 @@ export const report_config_base = {
           layout: "two-columns",
           dataKeysToMatch: [
             "CIRG-PHQ9",
-            "CIRG-PHQ9-SI",
+            "CIRG-SI",
             "CIRG-CNICS-IPV4",
             "CIRG-Overdose",
             "CIRG-Food-Security",
             "CIRG-Financial-Situation",
           ],
           paramsByKey: {
-            "CIRG-PHQ9-SI": {
+            "CIRG-SI": {
               getProcessedData: (summaryData) => {
                 const HOST_ID = "CIRG-PHQ9"; // where the SI answer lives
-                const SELF_ID = "CIRG-PHQ9-SI"; // instrument defaults to use
+                const SELF_ID = "CIRG-SI"; // instrument defaults to use
 
                 const host = summaryData?.[HOST_ID];
                 if (!host || isEmptyArray(host?.responseData)) return null;
@@ -157,71 +158,11 @@ export const report_config_base = {
                     },
                   };
                 });
-                console.log("si bundle ", bundle);
+                //console.log("si bundle ", bundle);
                 const qb = new QuestionnaireScoringBuilder(getInstrumentDefault(SELF_ID), bundle);
                 const siSummaryData = qb.summariesFromBundle(undefined, {}, bundle);
-                console.log("si summaryData ", siSummaryData);
+                //console.log("si summaryData ", siSummaryData);
                 return siSummaryData;
-
-                // const siItem = currentReponseData.responses.find((r) => linkIdEquals(r.id, PHQ9_SI_QUESTION_LINK_ID));
-                // if (!siItem) return null;
-
-                // const score = PHQ9_SI_ANSWER_SCORE_MAPPINGS[String(siItem.answer).toLowerCase()];
-                // if (!isNumber(score)) return null;
-
-                // const { title, scoringParams, chartParams } = getInstrumentDefault(SELF_ID) ?? {};
-                // const alert = score >= (scoringParams?.highSeverityScoreCutoff ?? Infinity);
-                // const lastAssessed = currentReponseData.lastAssessed;
-                // const meaning = siItem.answer;
-                // const responseData = host.responseData ?? [];
-                // const yFieldKey = "score";
-                // const data = chartParams.dataFormatter(
-                //   responseData
-                //     .map((entry, index) => {
-                //       if (isEmptyArray(entry.responses)) return null;
-                //       const hit = entry.responses.find((o) => linkIdEquals(o.id, PHQ9_SI_QUESTION_LINK_ID));
-                //       if (!hit) return null;
-                //       const s = PHQ9_SI_ANSWER_SCORE_MAPPINGS[String(hit.answer).toLowerCase()];
-                //       if (!isNumber(s)) return null;
-                //       return {
-                //         id: entry.key + "_" + SELF_ID + "_" + index,
-                //         date: entry.date,
-                //         [yFieldKey]: s,
-                //         source: entry.source,
-                //         ...scoringParams,
-                //       };
-                //     })
-                //     .filter((row) => row && isNumber(row[yFieldKey])),
-                // );
-                //   return {
-                //     scoringSummaryData: {
-                //       ...getScoreParamsFromResponses(data),
-                //       ...scoringParams,
-                //       key: "CIRG_PHQ9_SI",
-                //       id: HOST_ID + "_" + host.id + "_" + SELF_ID,
-                //       scoringParams: {
-                //         scoreSeverity: alert ? "high" : "normal",
-                //       },
-                //       // comparison,
-                //       instrumentName: title,
-                //       source: currentReponseData?.source,
-                //       score,
-                //       alert,
-                //       lastAssessed,
-                //       meaning,
-                //       totalAnsweredItems: 1,
-                //     },
-                //     chartData: {
-                //       ...chartParams,
-                //       ...scoringParams,
-                //       id: "CIRG_PHQ9_SI_CHART",
-                //       yFieldKey,
-                //       title,
-                //       data,
-                //     },
-                //   };
-                // },
-                //},
               },
             },
           },

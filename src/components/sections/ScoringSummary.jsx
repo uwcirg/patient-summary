@@ -162,7 +162,9 @@ export default function ScoringSummary(props) {
       },
       // custom cell that preserves link behavior
       renderCell: (row) => {
-        const displayTitle = getDisplayQTitle(row.instrumentName ?? row.title ?? row.key);
+        const displayTitle = getDisplayQTitle(
+          row.instrumentName ? row.instrumentName : row.title ? row.title : row.key,
+        );
         return !disableLinks ? (
           <Link
             onClick={(e) => handleClick(e, row.key)}

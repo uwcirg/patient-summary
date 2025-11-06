@@ -10,7 +10,7 @@ const questionnaireConfigs = {
     title: "ADL IADL",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/adl-iadl",
     scoringQuestionId: "adl-iadls-total-score",
-    scoringParams: { maximumScore: 45 },
+    maximumScore: 45,
     questionLinkIds: [
       "/46595-5",
       "/46597-1",
@@ -34,7 +34,7 @@ const questionnaireConfigs = {
     title: "BEHAV-5",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/behav5",
     scoringQuestionId: "behav-8",
-    scoringParams: { maximumScore: 6 },
+    maximumScore: 6,
     questionLinkIds: ["behav-1", "behav-2", "behav-3", "behav-4", "behav-5", "behav-6"],
     matchMode: "fuzzy",
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 6, xLabel: "" },
@@ -46,8 +46,8 @@ const questionnaireConfigs = {
     instrumentName: "C-IDAS",
     title: "C-IDAS",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/c-idas",
-    scoringQuestionId: "c-ids-score", // from your CQL
-    scoringParams: { maximumScore: 36 },
+    scoringQuestionId: "c-ids-score",
+    maximumScore: 36,
     matchMode: "fuzzy",
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 36, xLabel: "" },
   },
@@ -59,8 +59,8 @@ const questionnaireConfigs = {
     title: "CP-ECOG",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/cp-ecog",
     scoringQuestionId: "cp-ecog-total-score",
-    scoringParams: { maximumScore: 48 },
-    matchMode: "fuzzy", // mirrors CQL PositionOf behavior
+    maximumScore: 48,
+    matchMode: "fuzzy",
     questionLinkIds: [
       "/89286-9/89146-5",
       "/89286-9/89149-9",
@@ -85,8 +85,8 @@ const questionnaireConfigs = {
     title: "ECOG-12",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/ecog12",
     scoringQuestionId: "ecog12-total-score",
-    scoringParams: { maximumScore: 48 },
-    matchMode: "fuzzy", // aligns with PositionOf matching in CQL
+    maximumScore: 48,
+    matchMode: "fuzzy",
     questionLinkIds: [
       "/89286-9/89146-5",
       "/89286-9/89149-9",
@@ -110,7 +110,7 @@ const questionnaireConfigs = {
     instrumentName: "GAD-7",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/gad7",
     scoringQuestionId: "/70274-6",
-    scoringParams: { maximumScore: 21 },
+    maximumScore: 21,
     questionLinkIds: ["/69725-0", "/68509-9", "/69733-4", "/69734-2", "/69735-9", "/69689-8", "/69736-7"],
     matchMode: "fuzzy",
     severityBands: [
@@ -131,8 +131,8 @@ const questionnaireConfigs = {
     instrumentName: "GDS",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/gds",
     scoringQuestionId: "/48545-8",
-    scoringParams: { maximumScore: 15 },
-    matchMode: "fuzzy", // aligns with PositionOf matching in CQL
+    maximumScore: 15,
+    matchMode: "fuzzy",
     questionLinkIds: [
       "/48512-8",
       "/48513-6",
@@ -189,7 +189,7 @@ const questionnaireConfigs = {
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/phq9",
     scoringQuestionId: "/44261-6",
     subScoringQuestionIds: ["/55758-7"],
-    scoringParams: { maximumScore: 27 },
+    maximumScore: 27,
     questionLinkIds: [
       "/44250-9",
       "/44255-8",
@@ -228,7 +228,7 @@ const questionnaireConfigs = {
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/slums",
     scoringQuestionId: "/71492-3", // total score item
     questionLinkIds: ["/71492-3"],
-    scoringParams: { maximumScore: 30 },
+    maximumScore: 30,
     comparisonToAlert: "lower",
     matchMode: "fuzzy",
     // No questionLinkIds needed—SLUMS uses a single total-score field
@@ -239,7 +239,13 @@ const questionnaireConfigs = {
     instrumentName: "IPV-4",
     title: "IPV-4",
     matchMode: "fuzzy",
-  }
+    questionLinkIds: [
+      "IPV4-1",
+      "IPV4-2",
+      "IPV4-3",
+      "IPV4-4",
+    ],
+  },
 };
 
 export const getConfigForQuestionnaire = (id) => {

@@ -73,7 +73,7 @@ export default function Responses(props) {
                         scoreParams={{ ...item, ...(item.scoringParams ?? {}) }}
                       />
                     ) : (
-                      <span>--</span>
+                      <span>N/A</span>
                     )}
                   </TableCell>
                 ))}

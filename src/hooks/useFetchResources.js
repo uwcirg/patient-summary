@@ -651,7 +651,7 @@ export default function useFetchResources() {
   }, [summaryData]);
 
   const allScoringSummaryData = useMemo(() => Object.keys(summaryData?.data??{})
-    .filter((key) => !!summaryData?.data[key].scoringSummaryData)
+    .filter((key) => !!summaryData?.data[key]?.scoringSummaryData)
     .map((key) => {
       return {
         key,

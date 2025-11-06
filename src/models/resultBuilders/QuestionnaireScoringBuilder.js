@@ -1,4 +1,5 @@
 import {
+  firstNonEmpty,
   getChartConfig,
   getLocaleDateStringFromDate,
   isEmptyArray,
@@ -6,6 +7,7 @@ import {
   isNumber,
   isPlainObject,
   fuzzyMatch,
+  mergeNonEmpty,
   normalizeStr,
   objectToString,
   toFiniteNumber,
@@ -34,12 +36,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   /**
    * @param {Object} config
    * @param {string} config.key
+   * @param {string} config.title
    * @param {string} config.questionnaireId
    * @param {string} config.questionnaireName
    * @param {string} config.questionnaireUrl
    * @param {string|null} config.scoringQuestionId
    * @param {Object} [config.scoringParams]
    * @param {string[]} [config.questionLinkIds]
+   * @param {string[]}[config.subScoringQuestionIds]
    * @param {'strict'|'fuzzy'} [config.matchMode]
    * @param {number} config.highSeverityScoreCutoff
    * @param {{min:number,label:string,meaning?:string}[]} [config.severityBands]
@@ -51,16 +55,26 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const bands = !isEmptyArray(config?.severityBands) ? [...config.severityBands] : null;
     if (bands) bands.sort((a, b) => (b.min ?? 0) - (a.min ?? 0));
 
-    this.fallbackScoreMap = config?.fallbackScoreMap || DEFAULT_FALLBACK_SCORE_MAPS.default;
+    const rawFallback = config?.fallbackScoreMap ?? DEFAULT_FALLBACK_SCORE_MAPS.default;
+    this.fallbackScoreMap = Object.fromEntries(
+      Object.entries(rawFallback).map(([k, v]) => [String(k).toLowerCase(), v]),
+    );
+
+    // normalize linkIds from config once
+    const norm = (id) => (id == null ? id : normalizeLinkId(String(id)));
+    const normArr = (arr) => (isEmptyArray(arr) ? null : arr.map(norm));
 
     this.cfg = {
+      ...(config ?? {}),
       key: config.key ?? "",
+      title: config.title ?? "",
       questionnaireId: config.questionnaireId ?? "",
       questionnaireName: config.questionnaireName ?? "",
       questionnaireUrl: config.questionnaireUrl ?? "",
-      scoringQuestionId: config.scoringQuestionId ?? "",
+      scoringQuestionId: norm(config.scoringQuestionId) ?? "",
+      subScoringQuestionIds: normArr(config.subScoringQuestionIds),
       scoringParams: config.scoringParams ?? {},
-      questionLinkIds: !isEmptyArray(config.questionLinkIds) ? config.questionLinkIds : null,
+      questionLinkIds: normArr(config.questionLinkIds),
       matchMode: config.matchMode ?? "fuzzy",
       severityBands: bands,
       highSeverityScoreCutoff: config.highSeverityScoreCutoff ?? null,
@@ -163,7 +177,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           const qIndex = this.questionnaireIDFromQR(q);
           if (!idx[qIndex]) {
             if (questionnaireConfig[qIndex]) {
-              idx[qIndex] = buildQuestionnaire(questionnaireConfig[qIndex]);
+              idx[qIndex] = buildQuestionnaire([], questionnaireConfig[qIndex]);
             } else {
               idx[qIndex] = {
                 resourceType: "Questionnaire",
@@ -271,10 +285,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return out;
   }
   firstAnswer(item) {
-    return item?.answer?.[0] ?? null;
+    if (!item) return null;
+    const a = item.answer;
+    if (Array.isArray(a)) return a[0] ?? null; // FHIR: [{ valueString: ... }]
+    return a ?? null;
   }
   findResponseItemByLinkId(flatItems, linkId) {
-    return (flatItems || []).find((i) => this.isLinkIdEquals(i.linkId, linkId)) ?? null;
+    const target = normalizeLinkId(linkId);
+    return (flatItems || []).find((i) => this.isLinkIdEquals(normalizeLinkId(i.linkId), target)) ?? null;
   }
 
   // -------------------- answer readers (value[x]) --------------------
@@ -350,38 +368,47 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   // -------------------- scoring --------------------
   getScoringByResponseItem(questionnaire, responseItemsFlat, linkId) {
     const it = this.findResponseItemByLinkId(responseItemsFlat, linkId);
-    // console.log("linkId ", linkId, " it ", it, " responses ", responseItemsFlat)
+    //console.log("linkId ", linkId, " it ", it, " responses ", responseItemsFlat)
     const ans = this.firstAnswer(it);
     if (!ans) return null;
+
+    // Primitive short-circuit: numbers or strings like "Nearly every day"
+    if (!isPlainObject(ans)) {
+      const num = toFiniteNumber(ans);
+      if (num != null) return num;
+      const mapped = this.fallbackScoreMap[String(ans).toLowerCase()];
+      if (mapped != null) return mapped;
+      return null;
+    }
 
     const prim = this.answerPrimitive(ans);
     const primNum = toFiniteNumber(prim);
     if (primNum != null) return primNum;
 
     const coding = this.answerCoding(ans);
+    // console.log("ans ", ans, " coding ", coding)
     if (coding?.code) {
       const fromExt = this.getAnswerValueByExtension(questionnaire, coding.code);
       if (fromExt != null) return fromExt;
       if (this.fallbackScoreMap[coding.code] != null) return this.fallbackScoreMap[coding.code];
-      return ans;
+      //  console.log("coding code ", this.fallbackScoreMap, this.fallbackScoreMap[coding.code])
+      return coding.code;
     }
-
-    if (!isPlainObject(ans)) {
-      if (this.fallbackScoreMap) return this.fallbackScoreMap[ans];
-      if (isNumber(ans)) return ans;
-      return null;
-    }
-
     return null;
   }
 
   getAnswerItemDisplayValue(answerItem) {
     if (!answerItem) return null;
-    // Prefer human display
+    // If it's already a primitive (e.g., "Nearly every day", 2, true), just show it
+    if (!isPlainObject(answerItem)) return answerItem;
+    // Prefer human display for codings
     const coding = this.answerCoding(answerItem);
-    if (coding) return coding.display ?? this.fallbackScoreMap[coding.code] ?? null;
+    if (coding)
+      return coding.display ?? (coding.code ? this.fallbackScoreMap[String(coding.code).toLowerCase()] : null) ?? null;
+    // Then any primitive value[x]
     const prim = this.answerPrimitive(answerItem);
     if (!isNil(prim)) return prim;
+    // Then CodeableConcept text, else stringify as last resort
     const codeableValue = this.answerCodeableConept(answerItem);
     return codeableValue ?? objectToString(answerItem);
   }
@@ -410,7 +437,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         ...q,
         id: q.linkId,
         answer: this.getAnswerItemDisplayValue(ans),
-        question: q.text,
+        question:
+          q.text ??
+          (this.firstAnswer(matchedResponseItem) ? this._getQuestion(matchedResponseItem) : `Question ${q.linkId}`),
         text: matchedResponseItem?.text ? matchedResponseItem?.text : "",
       };
     });
@@ -493,8 +522,16 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   // -------------------- public APIs --------------------
   getResponsesSummary(questionnaireResponses, questionnaire) {
-    const keyToUse = this.cfg?.questionnaireId??this.cfg.key;
-    const config = this.cfg ? this.cfg : questionnaireConfig[keyToUse];
+    const keyToUse = firstNonEmpty(
+      questionnaire?.id,
+      this.cfg.questionnaireId,
+      this.cfg.key,
+      this.cfg.questionnaireName,
+      this.cfg.questionnaireUrl,
+    );
+    const fromRegistry = keyToUse ? questionnaireConfig[keyToUse] : null;
+    const config = mergeNonEmpty(this.cfg, fromRegistry);
+
     const rows = (questionnaireResponses || []).map((qr, rIndex) => {
       const flat = this.flattenResponseItems(qr.item);
       const { score, totalAnsweredItems, totalItems } = this.getScoreStatsFromQuestionnaireResponse(
@@ -654,7 +691,15 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
 
   _summariesByQuestionnaireRef(qrs, questionnaire, options = {}) {
-    const config = questionnaireConfig[questionnaire?.id] ?? this.cfg;
+    const keyToUse = firstNonEmpty(
+      questionnaire?.id,
+      this.cfg.questionnaireId,
+      this.cfg.key,
+      this.cfg.questionnaireName,
+      this.cfg.questionnaireUrl,
+    );
+    const fromRegistry = keyToUse ? questionnaireConfig[keyToUse] : null;
+    const config = mergeNonEmpty(this.cfg, fromRegistry);
 
     const strategyMap = {
       SLUM: "summarizeSLUM",
@@ -689,12 +734,15 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       });
     }
 
-    const scoringParams = config?.scoringParams ?? {};
+    // const scoringParams = config?.scoringParams ?? {};
     const { key, id, ...restOfConfig } = config ?? {};
     const chartParams = {
       ...restOfConfig,
       ...chartConfig,
-      ...scoringParams,
+      //  ...scoringParams,
+      scoringParams: {
+        ...restOfConfig,
+      },
       ...(config?.chartParams ?? {}),
       xDomain,
     };
@@ -740,7 +788,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const qrs = groups[canonical];
       const questionnaire = loader(canonical);
       if (!questionnaire) continue;
-
       const summaries = this._summariesByQuestionnaireRef(qrs, questionnaire, strategyOptions);
       out[canonical] = summaries;
     }

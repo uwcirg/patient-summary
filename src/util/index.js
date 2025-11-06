@@ -244,7 +244,7 @@ export function objectToString(value) {
       return value.toString(); // Fallback to default toString for other objects
     }
   }
-  return null;
+  return value;
 }
 
 export function shouldShowPatientInfo(client) {
@@ -335,8 +335,38 @@ export function isNil(v) {
   return v == null || v === "";
 }
 
+export function isNonEmptyString(v) {
+  return typeof v === "string" && v.trim() !== "";
+}
+export function hasContent(v) {
+  if (Array.isArray(v)) return v.length > 0;
+  if (v && typeof v === "object") return Object.keys(v).length > 0;
+  return v != null && (!isNonEmptyString(v) ? v !== "" : true);
+}
+export function firstNonEmpty(...vals) {
+  return vals.find((v) => isNonEmptyString(v));
+}
+
 export function coalesce(...vals) {
   return vals.find((v) => !isNil(v));
+}
+
+export function mergeNonEmpty(base, override = {}) {
+  const out = { ...base };
+  for (const [k, v] of Object.entries(override || {})) {
+    if (Array.isArray(v)) {
+      if (v.length > 0) out[k] = v;
+    } else if (v && typeof v === "object") {
+      if (Object.keys(v).length > 0) out[k] = v;
+    } else if (isNonEmptyString(v)) {
+      out[k] = v;
+    } else if (typeof v === "number" || typeof v === "boolean") {
+      // keep legit numbers/bools (including 0/false)
+      out[k] = v;
+    }
+    // else skip empty/nullish
+  }
+  return out;
 }
 
 export function toMaybeDate(s) {

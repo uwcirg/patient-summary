@@ -6,8 +6,6 @@ import {
   Button,
   Dialog,
   IconButton,
-  //Input,
-  //InputAdornment,
   Paper,
   Slide,
   Stack,
@@ -16,8 +14,6 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
-//import Filter from "@mui/icons-material/FilterAlt";
-//import TableRowsIcon from "@mui/icons-material/TableRows";
 import MaterialTable from "@material-table/core";
 
 /**
@@ -26,21 +22,6 @@ import MaterialTable from "@material-table/core";
 const Transition = forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
-
-/**
- * Small helpers to mirror your styling in the summary tiles
- */
-// const SummaryHeaderCell = styled("div")(({ theme }) => ({
-//   borderBottom: `1px solid ${theme?.palette?.lighter?.main ?? "#ececec"}`,
-//   backgroundColor: theme?.palette?.lightest?.main ?? "#FFF",
-//   padding: theme.spacing(1, 2),
-//   width: "100%",
-// }));
-// const SummaryBodyCell = styled("div")(({ theme }) => ({
-//   padding: theme.spacing(1, 2),
-//   width: "100%",
-//   textAlign: "left",
-// }));
 
 /**
  * Auto-generate a simple columns array from the first row of data
@@ -70,33 +51,6 @@ export default function ResponsesViewer({
 
   const resolvedHeaderBg = headerBgColor ?? (theme?.palette?.lightest?.main ? theme.palette.lightest.main : "#FFF");
 
-  // const summaryHeaderProps = useMemo(
-  //   () => ({
-  //     variant: "subtitle2",
-  //     component: "h2",
-  //     color: "secondary",
-  //     sx: { width: "100%", textAlign: "left", whiteSpace: "nowrap" },
-  //   }),
-  //   [],
-  // );
-
-  // const summaryColumnProps = useMemo(
-  //   () => ({
-  //     direction: "column",
-  //     justifyContent: "flex-start",
-  //     alignItems: "center",
-  //     sx: {
-  //       alignSelf: "stretch",
-  //       flex: 1,
-  //       whiteSpace: "nowrap",
-  //       width: "100%",
-  //       border: `1px solid ${theme?.palette?.lighter?.main ?? "#ececec"}`,
-  //       "&:first-of-type": { borderRight: 0 },
-  //       "&:last-of-type": { borderLeft: 0 },
-  //     },
-  //   }),
-  //   [theme],
-  // );
 
   // resolve columns in priority order:
   // 1) explicit columns prop
@@ -152,30 +106,12 @@ export default function ResponsesViewer({
 
   return (
     <>
-      {/* Summary tile with internal trigger button */}
-      {/* <Stack {...summaryColumnProps} className="print-hidden">
-        <SummaryHeaderCell>
-          <Typography {...summaryHeaderProps}>{responsesTileTitle}</Typography>
-        </SummaryHeaderCell>
-        <SummaryBodyCell>
-          <Button
-            color="primary"
-            title="View responses by date"
-            size="small"
-            endIcon={<TableRowsIcon fontSize="medium" />}
-            onClick={() => setOpen(true)}
-          >
-            {responsesTileTitle}
-          </Button>
-        </SummaryBodyCell>
-      </Stack> */}
       <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} gap={1}>
         <Typography variant="subtitle2">{responsesTileTitle}</Typography>
         <Button
           color="primary"
           title="View responses by date"
           size="small"
-        //  endIcon={<TableRowsIcon fontSize="small" />}
           onClick={() => setOpen(true)}
           variant="outlined"
         >
