@@ -643,7 +643,9 @@ export default function useFetchResources() {
 
   const reportData = useMemo(() => {
     if (isDemoDataEnabled()) {
-      return buildReportData(demoData);
+      return buildReportData({
+        summaryData: demoData,
+      });
     }
     if (!summaryData?.data) return null;
     return buildReportData({
