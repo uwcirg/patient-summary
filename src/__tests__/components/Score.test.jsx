@@ -11,7 +11,7 @@ import Score from "../../components/Score";
 describe("Testing Score component", () => {
   it("Renders score without score param", () => {
     render(<Score />);
-    expect(screen.getByText("--")).toBeInTheDocument();
+    expect(screen.getByText("N/A")).toBeInTheDocument();
   });
 
   it("Renders score with alert param", () => {

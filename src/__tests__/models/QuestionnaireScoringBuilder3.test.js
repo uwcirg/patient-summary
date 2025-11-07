@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import QuestionnaireScoringBuilder from "../../models/resultBuilders/QuestionnaireScoringBuilder";
-
+import { severityFromScore, meaningFromSeverity } from "../../models/resultBuilders/helpers";
 // ---------- Test helpers ----------
 const mkQR = ({ id, questionnaire, authored, status = "completed", items = [], lastUpdated }) => ({
   resourceType: "QuestionnaireResponse",
@@ -200,34 +200,47 @@ describe("QuestionnaireScoringBuilder – scoring", () => {
 });
 
 describe("QuestionnaireScoringBuilder – severity bands", () => {
-  let b;
+  // let b;
 
-  beforeEach(() => {
-    b = new QuestionnaireScoringBuilder({
-      questionnaireId: "phq9",
-      severityBands: [
-        { min: 20, label: "high", meaning: "severe" },
-        { min: 10, label: "medium", meaning: "moderate" },
-        { min: 0, label: "low", meaning: "minimal" },
-      ],
-    });
-  });
+  // beforeEach(() => {
+  //  b = new QuestionnaireScoringBuilder({
+  //     questionnaireId: "phq9",
+  //     severityBands: [
+  //       { min: 20, label: "high", meaning: "severe" },
+  //       { min: 10, label: "medium", meaning: "moderate" },
+  //       { min: 0, label: "low", meaning: "minimal" },
+  //     ],
+  //   });
+  // });
+
+  const config = {
+    scoringQuestionId: "/44261-6",
+    subScoringQuestionIds: ["/55758-7"],
+    questionnaireId: "CIRG-PHQ9",
+    highSeverityScoreCutoff: 20,
+    mediumSeverityScoreCutoff: 15,
+    severityBands: [
+      { min: 20, label: "high", meaning: "severe" },
+      { min: 10, label: "medium", meaning: "moderate" },
+      { min: 0, label: "low", meaning: "minimal" },
+    ],
+  };
 
   it("selects the first band whose min <= score (bands sorted desc)", () => {
-    expect(b.severityFromScore(22)).toBe("high");
-    expect(b.severityFromScore(15)).toBe("medium");
-    expect(b.severityFromScore(4)).toBe("low");
+    expect(severityFromScore(22, config)).toBe("high");
+    expect(severityFromScore(15, config)).toBe("moderate");
+    expect(severityFromScore(4, config)).toBe("low");
   });
 
   it("returns 'low' when bands missing or score not a number", () => {
-    const b2 = new QuestionnaireScoringBuilder({ questionnaireId: "phq9" });
+    //const b2 = new QuestionnaireScoringBuilder({ questionnaireId: "phq9" });
     // @ts-expect-error test non-number
-    expect(b2.severityFromScore("not-a-number")).toBe("low");
+    expect(severityFromScore("not-a-number")).toBe("low");
   });
 
   it("meaningFromSeverity returns associated meaning", () => {
-    expect(b.meaningFromSeverity("medium")).toBe("moderate");
-    expect(b.meaningFromSeverity("unknown")).toBeNull();
+    expect(meaningFromSeverity("medium", config)).toBe("moderate");
+    expect(meaningFromSeverity("unknown"), config).toBeNull();
   });
 });
 

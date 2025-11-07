@@ -113,6 +113,7 @@ export default function ScoringSummary(props) {
               justifyContent="space-between"
               alignItems="center"
               sx={{ width: "100%" }}
+              className="score-wrapper"
             >
               <Scoring
                 score={row.score}
@@ -289,12 +290,13 @@ export default function ScoringSummary(props) {
 
   const renderTableBody = () => {
     const visibleColumns = EFFECTIVE_COLUMNS.filter((c) => isColVisible(c.id));
-    const hasData = data && data.length > 0;
+    const dataToUse = Array.isArray(data) ? data: (data ? [data]: []);
+    const hasData = dataToUse.length > 0;
 
     return (
       <TableBody>
         {hasData ? (
-          data.map((row, index) => (
+          dataToUse.map((row, index) => (
             <TableRow key={`summary_${row.key || index}_${index}`}>
               {visibleColumns.map((col) => (
                 <TableCell
@@ -336,7 +338,6 @@ export default function ScoringSummary(props) {
   };
 
   const renderSummary = () => {
-    // if (isEmptyArray(data)) return <Alert severity="warning">No score summary available</Alert>;
     return (
       <TableContainer
         className="table-container"
@@ -393,7 +394,7 @@ const columnShape = PropTypes.shape({
 });
 
 ScoringSummary.propTypes = {
-  data: PropTypes.array,
+  data: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
   disableLinks: PropTypes.bool,
   enableResponsesViewer: PropTypes.bool,
   hiddenColumns: PropTypes.arrayOf(

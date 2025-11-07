@@ -75,7 +75,7 @@ describe("QuestionnaireScoringBuilder", () => {
     expect(qrs.map((x) => x.id)).toEqual(["r0"]);
 
     const summaries = await b.summariesFromBundleAsync(null, {}, override);
-    expect(summaries?.responseData?.map((s) => s.id)).toEqual(["r0"]);
+    expect(summaries?.responseData?.map((s) => s.id)).toEqual(["r0_0"]);
   });
 
   it("correct score, fuzzy match", () => {

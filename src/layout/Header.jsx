@@ -21,7 +21,15 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MoreIcon from "@mui/icons-material/MoreVert";
 import PrintIcon from "@mui/icons-material/LocalPrintshopOutlined";
 import DashboardIcon from "@mui/icons-material/DashboardOutlined";
-import { isImagefileExist, getEnv, getEnvProjectId, getSectionsToShow, imageOK, scrollToElement } from "../util";
+import {
+  isImagefileExist,
+  getEnv,
+  getEnvProjectId,
+  getSectionsToShow,
+  imageOK,
+  scrollToElement,
+  toAbsoluteUrl,
+} from "../util";
 import PatientInfo from "../components/PatientInfo";
 import { FhirClientContext } from "../context/FhirClientContext";
 
@@ -37,16 +45,14 @@ export default function Header(props) {
 
   const { returnURL, inEHR } = props;
   const getDesktopImgSrc = async () => {
-    const url = `/assets/${getEnvProjectId()}/img/logo.png`;
-    const isOkay = await isImagefileExist(url);
-    if (isOkay) return url;
-    return `/assets/default/img/logo.png`;
+    const projectUrl = toAbsoluteUrl(`/assets/${getEnvProjectId()}/img/logo.png`);
+    const ok = await isImagefileExist(projectUrl).catch(() => false);
+    return ok ? projectUrl : toAbsoluteUrl(`/assets/default/img/logo.png`);
   };
   const getMobileImgSrc = async () => {
-    const url = `/assets/${getEnvProjectId()}/img/logo_mobile.png`;
-    const isOkay = await isImagefileExist(url);
-    if (isOkay) return url;
-    return `/assets/default/img/logo_mobile.png`;
+    const projectUrl = toAbsoluteUrl(`/assets/${getEnvProjectId()}/img/logo_mobile.png`);
+    const ok = await isImagefileExist(projectUrl).catch(() => false);
+    return ok ? projectUrl : toAbsoluteUrl(`/assets/default/img/logo_mobile.png`);
   };
   const handleImageLoaded = (e) => {
     if (!e.target) {
@@ -277,7 +283,7 @@ export default function Header(props) {
                         <ListItemText>{section.title}</ListItemText>
                       </MenuItem>
                     ))}
-                  {shouldShowSections && <Divider sx={{display: "none"}}></Divider>}
+                  {shouldShowSections && <Divider sx={{ display: "none" }}></Divider>}
                   <MenuItem>
                     {renderPrintButton({
                       variant: "text",
@@ -310,13 +316,10 @@ export default function Header(props) {
     }
   };
 
-  const handleWindowResize = () => {
-    setMobileMenuOpen(false);
-  };
-
   useEffect(() => {
-    window.addEventListener("resize", () => handleWindowResize());
-    return window.removeEventListener("resize", handleWindowResize, true);
+    const onResize = () => setMobileMenuOpen(false);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   useEffect(() => {

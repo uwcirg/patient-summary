@@ -131,6 +131,19 @@ export function callback(callbackFunc, params) {
   callbackFunc(params);
 }
 
+export function toAbsoluteUrl (path) {
+  try {
+    const base =
+      (typeof window !== "undefined" && window.location?.origin) ||
+      (typeof document !== "undefined" && document.baseURI) ||
+      (typeof import.meta !== "undefined" && import.meta.env?.BASE_URL) ||
+      "http://localhost"; // test fallback
+    return new URL(path, base).toString();
+  } catch {
+    // Absolute already or cannot resolve — just return as-is
+    return path;
+  }
+};
 export async function fetchEnvData() {
   return new Promise((resolve) => {
     const nodeEnvs = getNodeProcessEnvs();

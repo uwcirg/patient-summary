@@ -532,7 +532,7 @@ export function getResponseColumns(data) {
     },
     ...dates.map((item, index) => ({
       id: `date_${item.id}_${index}`,
-      title: `${getLocaleDateStringFromDate(item.date)} ${item.source ? " ( " + item.source + " ) ": ""}`,
+      title: `${getLocaleDateStringFromDate(item.date)} ${item.source ? " ( " + item.source + " ) ": ""}`.trim(),
       field: item.id, // the row is expected to have row[item.id]
       cellStyle: {
         minWidth: "148px",

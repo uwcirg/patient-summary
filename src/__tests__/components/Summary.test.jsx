@@ -7,6 +7,7 @@ import { describe, it, expect } from "vitest";
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import Responses from "../../components/Responses";
+import PHQ9Data from "../mockfiles/MockPHQ9SummaryData.json";
 
 describe("Testing Summary component", () => {
   it("Renders summary - empty data set", () => {
@@ -28,75 +29,7 @@ describe("Testing Summary component", () => {
   });
 
   it("Render summary - non-empty data set", () => {
-    const dummyData = {
-      responseData: [
-        {
-          date: "2022-07-22",
-          responses: [
-            {
-              id: "minicog-question1",
-              answer: 2,
-              value: {
-                value: 2,
-              },
-              question: "Word Recall (0-3 points)",
-              text: "Word Recall (0-3 points)",
-            },
-            {
-              id: "minicog-question2",
-              answer: 0,
-              value: {
-                value: 0,
-              },
-              question: "Clock Draw (0 or 2 points)",
-              text: "Clock Draw (0 or 2 points)",
-            },
-            {
-              id: "minicog-total-score",
-              answer: 2,
-              value: {
-                value: 2,
-              },
-              question: "<b>Total Score (0 - 5 points)</b>",
-              text: "Total Score (0 - 5 points)",
-            },
-          ],
-        },
-        {
-          date: "2022-07-12",
-          responses: [
-            {
-              id: "minicog-question1",
-              answer: 2,
-              value: {
-                value: 2,
-              },
-              question: "Word Recall (0-3 points)",
-              text: "Word Recall (0-3 points)",
-            },
-            {
-              id: "minicog-question2",
-              answer: 2,
-              value: {
-                value: 2,
-              },
-              question: "Clock Draw (0 or 2 points)",
-              text: "Clock Draw (0 or 2 points)",
-            },
-            {
-              id: "minicog-total-score",
-              answer: 4,
-              value: {
-                value: 4,
-              },
-              question: "<b>Total Score (0 - 5 points)</b>",
-              text: "Total Score (0 - 5 points)",
-            },
-          ],
-        },
-      ],
-    };
-    render(<Responses data={dummyData} />);
+    render(<Responses data={PHQ9Data} />);
     expect(screen.getByText("View")).toBeInTheDocument();
   });
 });

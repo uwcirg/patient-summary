@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { observationsToQuestionnaireResponse } from "../../models/resultBuilders/helpers.js";
+import { observationsToQuestionnaireResponse } from "../../models/resultBuilders/helpers.jsx";
 import questionnaireConfigs from "../../config/questionnaire_config.js";
 
 describe("Observations To QuestionnaireResponses", () => {
-  it("return correct valueCoding answer value from obs matched id in PHQ9", () => {
+  it("return correct valueQuantity answer value from obs matched id in PHQ9", () => {
     const group = [
       {
         resourceType: "Observation",
@@ -37,11 +37,9 @@ describe("Observations To QuestionnaireResponses", () => {
     const results = (qr?.item ?? []).flatMap((it) => it.answer ?? []);
     expect(results).toEqual([
       {
-        valueCoding: {
-          code: "LA6571-9",
-          display: "Nearly every day",
-          system: "http://loinc.org",
-        },
+        valueQuantity: {
+          value: 3,
+        }
       },
     ]);
   });

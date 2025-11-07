@@ -18,13 +18,13 @@ const mkState = (baseOverrides = {}, loader = []) => ({
 });
 
 describe("combined reducer", () => {
-  it("loader scope: INIT_TRACKING → ERROR → COMPLETE", () => {
+  it("loader scope: UPSERT_MANY", () => {
     const initial = mkState();
 
     // INIT_TRACKING
     const afterInit = reducer(initial, {
       scope: "loader",
-      type: "INIT_TRACKING",
+      type: "UPSERT_MANY",
       items: [
         { id: "Questionnaire", title: "Questionnaire", complete: false, error: false },
         { id: "QuestionnaireResponse", title: "QuestionnaireResponse", complete: false, error: false },

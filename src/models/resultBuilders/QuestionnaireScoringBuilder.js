@@ -522,6 +522,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     }
     return {
       score,
+      scoringQuestionScore,
       totalAnsweredItems,
       totalItems,
     };
@@ -541,7 +542,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const rows = (questionnaireResponses || []).map((qr, rIndex) => {
       const flat = this.flattenResponseItems(qr.item);
-      const { score, totalAnsweredItems, totalItems } = this.getScoreStatsFromQuestionnaireResponse(
+      const { score, scoringQuestionScore, totalAnsweredItems, totalItems } = this.getScoreStatsFromQuestionnaireResponse(
         qr,
         questionnaire,
         config,
@@ -563,6 +564,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         raw: flat,
         responses,
         score,
+        scoringQuestionScore,
         totalItems,
         totalAnsweredItems,
         authoredDate: qr.authored,
@@ -675,7 +677,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const first = data[0];
     const headerRow = [
       "Questions",
-      `${getLocaleDateStringFromDate(first.date)} ${first.source ? "(" + first.source + ")" : ""}`,
+      `${getLocaleDateStringFromDate(first.date)} ${first.source ? "(" + first.source + ")" : ""}`.trim(),
     ];
     const bodyRows = (first.responses || []).map((row) => [
       this._getQuestion(row),

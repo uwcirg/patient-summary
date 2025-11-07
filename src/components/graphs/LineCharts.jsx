@@ -80,11 +80,28 @@ export default function LineCharts(props) {
     </Typography>
   );
 
-  const allTicks =
+  const uniqSorted = (arr) => {
+    if (!Array.isArray(arr)) return arr;
+    const s = new Set();
+    for (const v of arr) if (Number.isFinite(v)) s.add(v);
+    return Array.from(s).sort((a, b) => a - b);
+  };
+
+  // Build candidate ticks (months every 6) only when we have a numeric domain
+  const allTicksRaw =
     Array.isArray(xDomain) && typeof xDomain[0] === "number"
       ? buildTimeTicks(xDomain, { unit: "month", step: 6 }) // or step: 3 for quarters
       : undefined;
-  const ticks = allTicks ? thinTicksToFit(allTicks, (ms) => fmtMonthYear.format(ms), chartWidth /* px */) : undefined;
+
+  // 1) Ensure numeric & unique; 2) Clamp to domain; 3) Sort; 4) Thin to fit; 5) Dedupe again (belt & suspenders)
+  const clampedAll = allTicksRaw ? allTicksRaw.filter((t) => t >= xDomain[0] && t <= xDomain[1]) : undefined;
+
+  const allTicks = clampedAll ? uniqSorted(clampedAll) : undefined;
+
+  const ticksRaw = allTicks ? thinTicksToFit(allTicks, (ms) => fmtMonthYear.format(ms), chartWidth) : undefined;
+
+  // Final ticks to render (unique & sorted)
+  const ticks = ticksRaw ? uniqSorted(ticksRaw) : undefined;
 
   const renderXAxis = () => (
     <XAxis
@@ -293,7 +310,7 @@ export default function LineCharts(props) {
           // eslint-disable-next-line
           color = value >= payload.highSeverityScoreCutoff ? "red" : "green";
           return (
-              //eslint-disable-next-line
+            //eslint-disable-next-line
             <circle key={`dot-default-${payload?.id}_${index}`} cx={cx} cy={cy} r={4} fill={color} stroke="none" />
           );
         }
