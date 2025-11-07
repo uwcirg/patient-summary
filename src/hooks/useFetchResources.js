@@ -691,7 +691,7 @@ export default function useFetchResources() {
     // console.log("evalData ", patientBundle.current.evalResults);
     // console.log("scoringSummaryData ", scoringSummaryData);
     // console.log("reportData ", reportData);
-    console.log("bundle ", patientBundle.current.entry);
+    //console.log("bundle ", patientBundle.current.entry);
   }
 
   return {

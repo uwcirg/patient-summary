@@ -18,8 +18,6 @@ import FhirResultBuilder from "./FhirResultBuilder";
 import {
   buildQuestionnaire,
   getScoreParamsFromResponses,
-  isNonScoreLinkId,
-  severityFromScore,
   summarizeCIDASHelper,
   summarizeMiniCogHelper,
   summarizeSLUMHelper,
@@ -239,6 +237,13 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     }
     return true;
   }
+  isNonScoreLinkId(linkId, config = {}) {
+    if (!linkId) return false;
+    const subScoreQuestionIds = !isEmptyArray(config?.subScoringQuestionIds) ? config.subScoringQuestionIds : [];
+    return (
+      !linkIdEquals(linkId, config?.scoringQuestionId) && !subScoreQuestionIds.find((id) => linkIdEquals(id, linkId))
+    );
+  }
 
   // -------------------- Questionnaire matching --------------------
   questionnaireRefMatches(canonical, config) {
@@ -300,7 +305,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   // -------------------- answer readers (value[x]) --------------------
   answerCoding(ans) {
     const c = ans?.valueCoding;
-    return c ? { code: c.code ?? null, display: c.display ?? null } : null;
+    return c ? c : null;
   }
   answerCodeableConept(ans) {
     if (!isPlainObject(ans)) return null;
@@ -340,8 +345,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     let found = null;
     const readOrdinalExt = (opt) => {
       const ext = (opt.extension || []).find((e) => e.url === "http://hl7.org/fhir/StructureDefinition/ordinalValue");
-      const v = ext?.valueInteger ?? ext?.valueDecimal ?? null;
-      return v == null ? null : Number(v);
+      return this.answerPrimitive(ext);
     };
     const walk = (items = []) => {
       for (const it of items) {
@@ -354,9 +358,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
               return;
             }
           }
-          if (!c && (opt.valueInteger != null || opt.valueDecimal != null)) {
-            const v = opt.valueInteger ?? opt.valueDecimal;
-            if (found == null) found = Number(v);
+          if (!c && this.answerPrimitive(opt)) {
+            const v = this.answerPrimitive(opt);
+            if (found == null) found = v;
           }
         }
         if (found == null && !isEmptyArray(it.item)) walk(it.item);
@@ -391,11 +395,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     // console.log("ans ", ans, " coding ", coding)
     if (coding?.code) {
       const fromExt = this.getAnswerValueByExtension(questionnaire, coding.code);
-      if (fromExt != null) return fromExt;
+      if (fromExt != null && isNumber(fromExt)) return fromExt;
       const codeKey = String(coding.code).toLowerCase();
       if (this.fallbackScoreMap[codeKey] != null) return this.fallbackScoreMap[codeKey];
       //  console.log("coding code ", this.fallbackScoreMap, this.fallbackScoreMap[coding.code])
-      return coding.code;
+      return isNumber(coding.code) ? coding.code : null;
     }
     return null;
   }
@@ -489,12 +493,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   getScoreStatsFromQuestionnaireResponse(qr, questionnaire, config = {}) {
     if (!qr) return null;
     const scoreLinkIds = !isEmptyArray(config?.questionLinkIds)
-      ? config.questionLinkIds.filter((q) => isNonScoreLinkId(q, config))
+      ? config.questionLinkIds.filter((q) => this.isNonScoreLinkId(q, config))
       : this.getAnswerLinkIdsByQuestionnaire(questionnaire, config);
     const scoringQuestionId = config?.scoringQuestionId;
     const flat = this.flattenResponseItems(qr.item);
 
-    const nonScoring = flat.filter((it) => isNonScoreLinkId(it.linkId, config));
+    const nonScoring = flat.filter((it) => this.isNonScoreLinkId(it.linkId, config));
 
     const scoringQuestionScore = scoringQuestionId
       ? this.getScoringByResponseItem(questionnaire, flat, scoringQuestionId)
@@ -542,7 +546,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         questionnaire,
         config,
       );
-      let responses = this.formattedResponses(questionnaire?.item ?? [], flat, config);
+      const source = this.getDataSource(qr);
+      let responses = this.formattedResponses(questionnaire?.item ?? [], flat, config).map((item) => {
+        item.source = source;
+        return item;
+      });
       if (isEmptyArray(responses)) responses = this.responsesOnly(flat);
       //console.log("score ", score, " totalItems ", totalItems, " total answered ", totalAnsweredItems)
       return {
@@ -551,12 +559,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         instrumentName: config?.instrumentName ?? this.questionnaireIDFromQR(qr),
         date: qr.authored ?? null,
         lastAssessed: new Date(qr.authored).toLocaleDateString(),
-        source: this.getDataSource(qr),
+        source,
         raw: flat,
         responses,
-        scoringParams: {
-          scoreSeverity: severityFromScore(score, config)
-        },
         score,
         totalItems,
         totalAnsweredItems,
@@ -647,6 +652,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           }
         }
         row.question = sample ? this._getQuestion(sample) : question ? question : `Question ${qid}`;
+        row.source = sample?.source;
         for (const d of formattedData) {
           // this is the row data for the date and id of a response set that has the requsite linkId
           row[d.id] = this._getAnswerByTargetLinkIdFromResponseData(sample.id, data, d.id);
@@ -667,7 +673,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     // Current implementation prints only the first column/date
     const first = data[0];
-    const headerRow = ["Questions", getLocaleDateStringFromDate(first.date)];
+    const headerRow = [
+      "Questions",
+      `${getLocaleDateStringFromDate(first.date)} ${first.source ? "(" + first.source + ")" : ""}`,
+    ];
     const bodyRows = (first.responses || []).map((row) => [
       this._getQuestion(row),
       this._getAnswerByTargetLinkIdFromResponseData(row.id, data, first.id),

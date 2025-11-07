@@ -429,14 +429,6 @@ export function getPreviousResponseRowWithScore(rdata = []) {
   return prev;
 }
 
-export function isNonScoreLinkId(linkId, config = {}) {
-  if (!linkId) return false;
-  const subScoreQuestionIds = !isEmptyArray(config?.subScoringQuestionIds) ? config.subScoringQuestionIds : [];
-  return (
-    !linkIdEquals(linkId, config?.scoringQuestionId) && !subScoreQuestionIds.find((id) => linkIdEquals(id, linkId))
-  );
-}
-
 export function severityFromScore(score, config = {}) {
   if (config?.highSeverityScoreCutoff && score >= config?.highSeverityScoreCutoff) return "high";
   if (config?.mediumSeverityScoreCutoff && score >= config?.mediumSeverityScoreCutoff) return "moderate";
@@ -503,7 +495,9 @@ export function getScoreParamsFromResponses(responses, config = {}) {
 export function getResponseColumns(data) {
   if (isEmptyArray(data)) return [];
 
-  const dates = data?.map((item) => ({ date: item.date, id: item.id })) ?? [];
+  const sources = [...new Set(data.filter((item) => !!item.source).map((item) => item.source))];
+  const dates =
+    data?.map((item) => ({ date: item.date, id: item.id, source: sources.length > 1 ? item.source : null })) ?? [];
 
   // tiny safe normalizer to avoid raw objects rendering
   const normalize = (v) => {
@@ -538,7 +532,7 @@ export function getResponseColumns(data) {
     },
     ...dates.map((item, index) => ({
       id: `date_${item.id}_${index}`,
-      title: getLocaleDateStringFromDate(item.date),
+      title: `${getLocaleDateStringFromDate(item.date)} ${item.source ? " ( " + item.source + " ) ": ""}`,
       field: item.id, // the row is expected to have row[item.id]
       cellStyle: {
         minWidth: "148px",
@@ -558,7 +552,7 @@ export function getResponseColumns(data) {
               instrumentId={rowDataItem.instrumentId}
               score={rowDataItem.score}
               // pass only the params object; Scoring already expects an object here
-              scoreParams={rowDataItem}
+              scoreParams={{ ...rowDataItem, ...(rowDataItem?.scoringParams ?? {}) }}
             />
           );
         }

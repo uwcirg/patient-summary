@@ -116,7 +116,7 @@ export default function ScoringSummary(props) {
             >
               <Scoring
                 score={row.score}
-                scoreParams={{ ...row, ...row.scoringParams }}
+                scoreParams={{ ...row, ...(row.scoringParams??{}) }}
                 justifyContent="space-between"
               />
               <Box className="no-wrap-text muted-text" sx={{ fontSize: "0.65rem" }}>
