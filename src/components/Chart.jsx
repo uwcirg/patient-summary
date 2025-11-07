@@ -23,7 +23,8 @@ const Chart = (props) => {
   //   window.addEventListener("resize", resizeEvent);
   //   return () => window.removeEventListener("resize", resizeEvent);
   // }, []);
-  return (
+  const {key, ...rest} = props.data;
+   return (
     <div
       className="chart__container"
       style={{
@@ -36,8 +37,8 @@ const Chart = (props) => {
       }}
       ref={chartRef}
     >
-      {props.type === "linechart" && <LineChart {...props.data}></LineChart>}
-      {props.type === "barchart" && <BarChart {...props.data}></BarChart>}
+      {props.type === "linechart" && <LineChart {...rest}></LineChart>}
+      {props.type === "barchart" && <BarChart {...rest}></BarChart>}
       {eligibleCharts.indexOf(props.type) === -1 && <Error message="Graph type specified is not available."></Error>}
       {/* other types of graph go here */}
     </div>
@@ -45,6 +46,7 @@ const Chart = (props) => {
 };
 Chart.propTypes = {
   data: PropTypes.shape({
+    key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     data: PropTypes.array,
     type: PropTypes.string,

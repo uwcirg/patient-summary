@@ -1,12 +1,11 @@
 import { Stack } from "@mui/material";
-import { linkIdEquals } from "@util/fhirUtil";
-import { PHQ9_SI_ANSWER_SCORE_MAPPINGS, PHQ9_SI_QUESTION_LINK_ID } from "@consts";
-import { getQuestionnaireResponseSkeleton } from "@models/resultBuilders/helpers";
+// import { linkIdEquals } from "@util/fhirUtil";
+// import { PHQ9_SI_ANSWER_SCORE_MAPPINGS, PHQ9_SI_QUESTION_LINK_ID } from "@consts";
+// import { getQuestionnaireResponseSkeleton } from "@models/resultBuilders/helpers";
 import QuestionnaireScoringBuilder from "@models/resultBuilders/QuestionnaireScoringBuilder";
-import { isEmptyArray, deepMerge } from "@util";
+import { deepMerge } from "@util";
 import CHART_CONFIG from "./chart_config";
 import questionnaireConfigs from "./questionnaire_config";
-//import { getScoreParamsFromResponses } from "@/models/resultBuilders/helpers";
 
 export const getInstrumentDefaults = () => {
   const keys = Object.keys(questionnaireConfigs);
@@ -17,17 +16,6 @@ export const getInstrumentDefaults = () => {
 
 export const INSTRUMENT_DEFAULTS = {
   ...getInstrumentDefaults(),
-  "CIRG-SI": {
-    key: "CIRG-SI",
-    instrumentName: "Suicide Ideation",
-    title: "Suicide Ideation",
-    scoringQuestionId: PHQ9_SI_QUESTION_LINK_ID,
-    fallbackScoreMap: PHQ9_SI_ANSWER_SCORE_MAPPINGS,
-    highSeverityScoreCutoff: 3,
-    comparisonToAlert: "higher",
-    minimumScore: 0, maximumScore: 3,
-    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 3, xLabel: "" },
-  },
   "CIRG-Overdose": {
     title: "Overdose",
   },
@@ -51,7 +39,9 @@ export const INSTRUMENT_DEFAULTS = {
   },
   "CIRG-Alcohol-Use": {
     title: "Alcohol Score",
-    minimumScore: 0, maximumScore: 45, highSeverityScoreCutoff: 35,
+    minimumScore: 0,
+    maximumScore: 45,
+    highSeverityScoreCutoff: 35,
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 45, xLabel: "" },
   },
   "CIRG-UNPROTECTED-SEX": {
@@ -71,7 +61,9 @@ export const INSTRUMENT_DEFAULTS = {
   },
   "CIRG-Mini-Score": {
     title: "MINI Score",
-    minimumScore: 0, maximumScore: 5, highSeverityScoreCutoff: 4,
+    minimumScore: 0,
+    maximumScore: 5,
+    highSeverityScoreCutoff: 4,
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 5, xLabel: "" },
   },
   // add others as needed…
@@ -141,27 +133,13 @@ export const report_config_base = {
           ],
           paramsByKey: {
             "CIRG-SI": {
-              getProcessedData: (summaryData) => {
-                const HOST_ID = "CIRG-PHQ9"; // where the SI answer lives
+              getProcessedData: (opts = {}) => {
+                const { summaryData, bundle } = opts;
                 const SELF_ID = "CIRG-SI"; // instrument defaults to use
-
-                const host = summaryData?.[HOST_ID];
-                if (!host || isEmptyArray(host?.responseData)) return null;
-
-                const qrs = host.questionnaireResponses;
-                const bundle = qrs.map((qrs) => {
-                  return {
-                    resource: {
-                      ...getQuestionnaireResponseSkeleton(SELF_ID),
-                      authored: qrs.authored,
-                      item: qrs.item?.filter((r) => linkIdEquals(r.linkId, PHQ9_SI_QUESTION_LINK_ID)),
-                    },
-                  };
-                });
-                //console.log("si bundle ", bundle);
-                const qb = new QuestionnaireScoringBuilder(getInstrumentDefault(SELF_ID), bundle);
-                const siSummaryData = qb.summariesFromBundle(undefined, {}, bundle);
-                //console.log("si summaryData ", siSummaryData);
+                if (summaryData && summaryData[SELF_ID]) return summaryData[SELF_ID];
+                const config = getInstrumentDefault(SELF_ID);
+                const qb = new QuestionnaireScoringBuilder(config, bundle);
+                const siSummaryData = qb._summariesByQuestionnaireRef(bundle);
                 return siSummaryData;
               },
             },

@@ -4,6 +4,7 @@ import {
   getLocaleDateStringFromDate,
   isEmptyArray,
   isNil,
+  isNonEmptyString,
   isNumber,
   isPlainObject,
   fuzzyMatch,
@@ -18,11 +19,12 @@ import {
   buildQuestionnaire,
   getScoreParamsFromResponses,
   isNonScoreLinkId,
+  severityFromScore,
   summarizeCIDASHelper,
   summarizeMiniCogHelper,
   summarizeSLUMHelper,
 } from "./helpers";
-import { DEFAULT_FALLBACK_SCORE_MAPS } from "@/consts";
+import { DEFAULT_FALLBACK_SCORE_MAPS, DEFAULT_VAL_TO_LOIN_CODE } from "@/consts";
 import questionnaireConfig from "@/config/questionnaire_config";
 import { conceptText, getQuestionnaireItemByLinkId, linkIdEquals, normalizeLinkId } from "@/util/fhirUtil";
 import { getDateDomain } from "@/config/chart_config";
@@ -390,7 +392,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (coding?.code) {
       const fromExt = this.getAnswerValueByExtension(questionnaire, coding.code);
       if (fromExt != null) return fromExt;
-      if (this.fallbackScoreMap[coding.code] != null) return this.fallbackScoreMap[coding.code];
+      const codeKey = String(coding.code).toLowerCase();
+      if (this.fallbackScoreMap[codeKey] != null) return this.fallbackScoreMap[codeKey];
       //  console.log("coding code ", this.fallbackScoreMap, this.fallbackScoreMap[coding.code])
       return coding.code;
     }
@@ -551,6 +554,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         source: this.getDataSource(qr),
         raw: flat,
         responses,
+        scoringParams: {
+          scoreSeverity: severityFromScore(score, config)
+        },
         score,
         totalItems,
         totalAnsweredItems,
@@ -690,6 +696,72 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return summarizeMiniCogHelper(this, qrs, questionnaire, opts);
   }
 
+  // Inside QuestionnaireScoringBuilder
+
+  /**
+   * Build synthetic QuestionnaireResponses that keep only one source linkId
+   * from a host questionnaire’s responses (e.g., PHQ-9 → keep /44260-8 for CIRG-SI).
+   *
+   * Input: hostQrs = array of real QuestionnaireResponses (PHQ-9).
+   * Output: array of synthetic QRs for targetQuestionnaireId containing ONLY linkId.
+   */
+  buildDerivedSingleLinkQrs(
+    hostQrs = [],
+    {
+      linkId, // e.g. "/44260-8"
+      targetQuestionnaireId, // e.g. "CIRG-SI"
+      normalizeAnswerToCoding = (ans) => {
+        // Default: map free-text to valueCoding(code/display = lowercased text)
+        if (isNonEmptyString(ans) && DEFAULT_VAL_TO_LOIN_CODE[normalizeStr(ans.toLowerCase())])
+          return { valueCoding: DEFAULT_VAL_TO_LOIN_CODE[normalizeStr(ans.toLowerCase())] };
+        const display = String(ans ?? "");
+        const code = display.trim().toLowerCase();
+        return { valueCoding: { system: "local/derived", code, display } };
+      },
+    } = {},
+  ) {
+    if (!linkId || !targetQuestionnaireId) return [];
+
+    const out = [];
+    const formattedQrs = (hostQrs || [])
+      .map((qr) => {
+        if (qr.resource) return qr.resource;
+        return qr;
+      })
+      .filter((o) => (o.resourceType = "QuestionnaireResponse"));
+    for (const qr of formattedQrs) {
+      // locate the item by linkId in the *FHIR* shape (qr.item[].answer[*].valueX)
+      const it = (qr.item || []).find((i) => this.isLinkIdEquals(i.linkId, linkId));
+      if (!it) continue;
+      if (!qr.authored) continue;
+
+      // normalize answer - FHIR value[x]
+      let answers = [];
+      // tolerate "flattened" shapes or proper FHIR shape
+      if (Array.isArray(it.answer) && it.answer.length && typeof it.answer[0] === "object") {
+        answers = it.answer;
+      } else {
+        // non-FHIR shape (answer: "Nearly every day") - convert
+        answers = [normalizeAnswerToCoding(it.answer)];
+      }
+
+      out.push({
+        resourceType: "QuestionnaireResponse",
+        id: `${qr.id}_${targetQuestionnaireId}`,
+        meta: qr.meta,
+        questionnaire: `Questionnaire/${targetQuestionnaireId}`,
+        status: "completed",
+        subject: qr.subject,
+        authored: qr.authored,
+        author: qr.author,
+        item: [{ linkId, text: it.text || linkId, answer: answers }],
+      });
+    }
+    return out;
+  }
+
+  // Inside QuestionnaireScoringBuilder._summariesByQuestionnaireRef(qrs, questionnaire, options = {})
+
   _summariesByQuestionnaireRef(qrs, questionnaire, options = {}) {
     const keyToUse = firstNonEmpty(
       questionnaire?.id,
@@ -701,16 +773,58 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const fromRegistry = keyToUse ? questionnaireConfig[keyToUse] : null;
     const config = mergeNonEmpty(this.cfg, fromRegistry);
 
-    const strategyMap = {
-      SLUM: "summarizeSLUM",
-      CIDAS: "summarizeCIDAS",
-      MINICOG: "summarizeMiniCog",
-    };
+    //console.log("key ", keyToUse, " config actually used ", config, " qrs ", qrs);
+
+    // If this instrument is defined as "derived" from a host instrument,
+    // synthesize single-link QRs from the host QRs *when needed*.
+    if (config?.deriveFrom?.linkId && !isEmptyArray(config?.deriveFrom?.hostIds)) {
+      const { linkId, hostIds, normalizeAnswerToCoding } = config.deriveFrom;
+
+      // If caller passed QRs that already belong to this instrument, proceed as usual.
+      // But if QRs actually look like host QRs (or are empty), try to derive.
+      const looksLikeHost = (arr) =>
+        (arr || []).some((qr) => {
+          const q = qr?.resource?.questionnaire || "";
+          return hostIds.some((hid) => this.questionnaireRefMatches(q, { questionnaireId: hid, matchMode: "fuzzy" }));
+        });
+
+      if (!qrs?.length || looksLikeHost(qrs)) {
+        // We need host QRs. If caller gave us host QRs directly, use them.
+        // Otherwise pull them from the bundle groups this instance can see.
+        let hostQrs = [];
+        if (looksLikeHost(qrs)) {
+          hostQrs = qrs;
+        } else {
+          // Search bundle for host groups
+          const groups = this.fromBundleGrouped({ completedOnly: true });
+          for (const k of Object.keys(groups)) {
+            if (hostIds.some((hid) => this.questionnaireRefMatches(k, { questionnaireId: hid, matchMode: "fuzzy" }))) {
+              hostQrs.push(...groups[k]);
+            }
+          }
+        }
+
+        // Build synthetic QRs carrying only the target linkId for THIS instrument
+        const derivedQrs = this.buildDerivedSingleLinkQrs(hostQrs, {
+          linkId,
+          targetQuestionnaireId: questionnaire?.id || config?.questionnaireId || config?.key || "DERIVED",
+          normalizeAnswerToCoding,
+        });
+
+        // Swap in derived QRs for the rest of the pipeline
+        qrs = derivedQrs;
+      }
+    }
+    // === END derived ===========================================================
+
+    // choose summarization strategy
+    const strategyMap = { SLUM: "summarizeSLUM", CIDAS: "summarizeCIDAS", MINICOG: "summarizeMiniCog" };
     const selectedKey = Object.keys(strategyMap).find((k) => this.questionnaireRefMatches(k, config));
     const evalData = selectedKey
       ? this[strategyMap[selectedKey]](qrs, questionnaire, options)
       : this.getResponsesSummary(qrs, questionnaire);
 
+    // compute scoring/series/params/chart domain/etc.
     const scoringData = !isEmptyArray(evalData)
       ? evalData.filter((item) => item && !isEmptyArray(item.responses) && isNumber(item.score) && item.date)
       : null;
@@ -723,29 +837,18 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           total: item.score,
         }))
       : null;
-    let xDomain;
 
+    let xDomain;
     if (chartData && chartConfig?.dataFormatter) {
       chartData = chartConfig.dataFormatter(chartData);
       const arrDates = !isEmptyArray(chartData) ? chartData?.map((d) => d.date) : [];
       const dates = !isEmptyArray(arrDates) ? [...new Set(arrDates)] : [];
-      xDomain = getDateDomain(dates, {
-        padding: dates.length <= 2 ? 0.15 : 0.05,
-      });
+      xDomain = getDateDomain(dates, { padding: dates.length <= 2 ? 0.15 : 0.05 });
     }
 
-    // const scoringParams = config?.scoringParams ?? {};
+    const scoringParams = config?.scoringParams ?? {};
     const { key, id, ...restOfConfig } = config ?? {};
-    const chartParams = {
-      ...restOfConfig,
-      ...chartConfig,
-      //  ...scoringParams,
-      scoringParams: {
-        ...restOfConfig,
-      },
-      ...(config?.chartParams ?? {}),
-      xDomain,
-    };
+    const chartParams = { ...restOfConfig, ...chartConfig, ...scoringParams, ...(config?.chartParams ?? {}), xDomain };
 
     const tableResponseData = this._formatTableResponseData(evalData);
     const printResponseData = this._formatPrintResponseData(evalData, config);
@@ -754,22 +857,17 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       printResponseData,
       config,
     });
-    const questionnaireResponses = evalData.map((row) => ({
-      authored: row.date,
-      item: row.raw,
-    }));
 
     return {
       config: config,
       chartConfig: chartParams,
       chartData: { ...chartParams, data: chartData },
       chartType: chartConfig?.type,
-      responseData: evalData, // questionnaire responses
+      responseData: evalData,
       scoringSummaryData,
       tableResponseData,
       printResponseData,
       questionnaire,
-      questionnaireResponses,
       key: questionnaire?.id,
       error: !questionnaire ? "No associated questionnaire found" : "",
     };

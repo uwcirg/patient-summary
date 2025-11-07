@@ -357,16 +357,13 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
       text: text ? text : getDefaultQuestionItemText(normalizeLinkId(lid)),
     };
     if (!isNil(objAns)) {
-      console.log("WTF ", objAns);
-
       item.answer = Array.isArray(objAns) ? objAns : isPlainObject(objAns) ? new Array(objAns) : [objAns];
-      console.log("answer object ", item.answer);
     }
     return item;
   });
 
   return {
-    ...getQuestionnaireResponseSkeleton(config?.questionnaireId??config?.key),
+    ...getQuestionnaireResponseSkeleton(config?.questionnaireId ?? config?.key),
     extension,
     identifier,
     subject,
@@ -573,7 +570,7 @@ export function getResponseColumns(data) {
   ];
 }
 
-export function buildReportData(summaryData = {}) {
+export function buildReportData({ summaryData = {}, bundle = [] }) {
   let skeleton = report_config;
   skeleton.sections.forEach((section) => {
     const tables = section.tables;
@@ -595,7 +592,7 @@ export function buildReportData(summaryData = {}) {
         });
         dataKeysToMatch.forEach((key) => {
           const dataFunc = paramsByKey[key].getProcessedData;
-          const processedData = dataFunc ? dataFunc(summaryData) : null;
+          const processedData = dataFunc ? dataFunc({ summaryData, bundle }) : null;
           const currentData =
             summaryData[key] && summaryData[key].scoringSummaryData
               ? summaryData[key].scoringSummaryData

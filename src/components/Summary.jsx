@@ -73,7 +73,9 @@ export default function Summary(props) {
             type={summary?.chartType}
             data={{
               ...(summary?.chartData ?? {}),
+              title: "",
               lgChartWidth: 520,
+              chartHeight: 220
             }}
           ></Chart>
         )}

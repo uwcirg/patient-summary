@@ -1,6 +1,7 @@
 import { isEmptyArray } from "@util";
 import { normalizeLinkId } from "@util/fhirUtil";
 import CHART_CONFIG from "./chart_config";
+import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS } from "@/consts";
 const questionnaireConfigs = {
   "CIRG-ADL-IADL": {
     key: "CIRG-ADL-IADL",
@@ -218,7 +219,7 @@ const questionnaireConfigs = {
       { min: 5, label: "mild", meaning: "mild depression" },
       { min: 0, label: "low", meaning: "" },
     ],
-    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 27, xLabel: "" },
+    chartParams: { ...CHART_CONFIG.default, title: "PHQ-9", minimumYValue: 0, maximumYValue: 27, xLabel: "" },
   },
   "CIRG-SLUMS": {
     key: "CIRG-SLUMS",
@@ -232,19 +233,33 @@ const questionnaireConfigs = {
     comparisonToAlert: "lower",
     matchMode: "fuzzy",
     // No questionLinkIds needed—SLUMS uses a single total-score field
-    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 30, xLabel: "" },
+    chartParams: { ...CHART_CONFIG.default, title: "SLUMS", minimumYValue: 0, maximumYValue: 30, xLabel: "" },
+  },
+  "CIRG-SI": {
+    key: "CIRG-SI",
+    instrumentName: "Suicide Ideation",
+    title: "Suicide Ideation",
+    scoringQuestionId: PHQ9_SI_QUESTION_LINK_ID,
+    fallbackScoreMap: PHQ9_SI_ANSWER_SCORE_MAPPINGS,
+    highSeverityScoreCutoff: 3,
+    comparisonToAlert: "higher",
+    minimumScore: 0,
+    maximumScore: 3,
+    // normal instrument defaults you already have, plus:
+    deriveFrom: {
+      hostIds: ["CIRG-PHQ9"], // one or many hosts
+      linkId: "/44260-8", // the single item to keep
+      // optional: override how free-text maps to valueCoding
+      //normalizeAnswerToCoding: (ans) => ({ valueCoding: { system: "...", code: ..., display: ... }})
+    },
+    chartParams: { ...CHART_CONFIG.default, title: "Suicide Ideation", minimumYValue: 0, maximumYValue: 3, xLabel: "" },
   },
   "CIRG-CNICS-IPV4": {
     key: "CIRG-CNICS-IPV4",
     instrumentName: "IPV-4",
     title: "IPV-4",
     matchMode: "fuzzy",
-    questionLinkIds: [
-      "IPV4-1",
-      "IPV4-2",
-      "IPV4-3",
-      "IPV4-4",
-    ],
+    questionLinkIds: ["IPV4-1", "IPV4-2", "IPV4-3", "IPV4-4"],
   },
 };
 

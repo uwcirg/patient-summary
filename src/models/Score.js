@@ -1,7 +1,11 @@
+import { severityFromScore } from "./resultBuilders/helpers";
 class Score {
   constructor(score, scoreParams = {}) {
     this.score = score;
-    this.severity = scoreParams && scoreParams.scoreSeverity ? String(scoreParams.scoreSeverity).toLowerCase() : null;
+    this.severity =
+      scoreParams && scoreParams.scoreSeverity
+        ? String(scoreParams.scoreSeverity).toLowerCase()
+        : severityFromScore(score, scoreParams);
     this.scoreParams = scoreParams;
   }
   static range = ["high", "moderate", "moderately high"];

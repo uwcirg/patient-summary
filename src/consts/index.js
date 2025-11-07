@@ -18,6 +18,10 @@ export const DEFAULT_VAL_TO_LOIN_CODE = {
   1: { system: "http://loinc.org", code: "LA6569-3", display: "Several days" },
   2: { system: "http://loinc.org", code: "LA6570-1", display: "More than half the days" },
   3: { system: "http://loinc.org", code: "LA6571-9", display: "Nearly every day" },
+  "not at all": { system: "http://loinc.org", code: "LA6568-5", display: "Not at all" },
+  "several days": { system: "http://loinc.org", code: "LA6569-3", display: "Several days" },
+  "more than half the days": { system: "http://loinc.org", code: "LA6570-1", display: "More than half the days" },
+  "nearly every day": { system: "http://loinc.org", code: "LA6571-9", display: "Nearly every day" },
 };
 // --- questionnaire response answer code -> value maps ---
 export const DEFAULT_FALLBACK_SCORE_MAPS = {
@@ -26,6 +30,10 @@ export const DEFAULT_FALLBACK_SCORE_MAPS = {
     "LA6569-3": 1,
     "LA6570-1": 2,
     "LA6571-9": 3,
+    "lA6568-5": 0,
+    "lA6569-3": 1,
+    "lA6570-1": 2,
+    "lA6571-9": 3,
     0: 0,
     1: 1,
     2: 2,
@@ -58,17 +66,4 @@ export const FLOWSHEET_CODE_IDS = [
 
 export const PHQ9_SI_QUESTION_LINK_ID = "44260-8";
 
-export const PHQ9_SI_ANSWER_SCORE_MAPPINGS = {
-  "LA6568-5": 0,
-  "LA6569-3": 1,
-  "LA6570-1": 2,
-  "LA6571-9": 3,
-  0: 0,
-  1: 1,
-  2: 2,
-  3: 3,
-  "not at all": 0,
-  "several days": 1,
-  "more than half the days": 2,
-  "nearly every day": 3,
-};
+export const PHQ9_SI_ANSWER_SCORE_MAPPINGS = DEFAULT_FALLBACK_SCORE_MAPS.default; // extended if needed

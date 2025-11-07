@@ -641,23 +641,29 @@ export default function useFetchResources() {
     return rows.sort((a, b) => safeDateMs(a.date) - safeDateMs(b.date));
   }, [summaryData]);
 
-
   const reportData = useMemo(() => {
     if (isDemoDataEnabled()) {
       return buildReportData(demoData);
     }
     if (!summaryData?.data) return null;
-    return buildReportData(summaryData?.data);
+    return buildReportData({
+      summaryData: summaryData?.data,
+      bundle: patientBundle.current.entry,
+    });
   }, [summaryData]);
 
-  const allScoringSummaryData = useMemo(() => Object.keys(summaryData?.data??{})
-    .filter((key) => !!summaryData?.data[key]?.scoringSummaryData)
-    .map((key) => {
-      return {
-        key,
-        ...summaryData?.data[key].scoringSummaryData,
-      };
-    }), [summaryData]);
+  const allScoringSummaryData = useMemo(
+    () =>
+      Object.keys(summaryData?.data ?? {})
+        .filter((key) => !!summaryData?.data[key]?.scoringSummaryData)
+        .map((key) => {
+          return {
+            key,
+            ...summaryData?.data[key].scoringSummaryData,
+          };
+        }),
+    [summaryData],
+  );
 
   const chartKeys = useMemo(() => [...new Set(allChartData?.map((o) => getDisplayQTitle(o.key)))], [allChartData]);
   const loaderErrors = useMemo(() => state.loader.filter((r) => r?.error), [state.loader]);
@@ -683,7 +689,7 @@ export default function useFetchResources() {
     // console.log("evalData ", patientBundle.current.evalResults);
     // console.log("scoringSummaryData ", scoringSummaryData);
     // console.log("reportData ", reportData);
-    console.log("bundle ", patientBundle.current.entry)
+    console.log("bundle ", patientBundle.current.entry);
   }
 
   return {
@@ -712,7 +718,7 @@ export default function useFetchResources() {
 
     // summary data
     allScoringSummaryData,
-   
+
     // chart
     allChartData,
     chartKeys,

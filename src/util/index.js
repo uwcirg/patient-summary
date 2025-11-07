@@ -41,6 +41,7 @@ export function isValidDate(date) {
 }
 
 export function getChartConfig(questionnaireId) {
+  if (!questionnaireId) return ChartConfig["default"];
   const qChartConfig = ChartConfig[questionnaireId.toLowerCase()];
   if (qChartConfig) return { ...ChartConfig["default"], ...qChartConfig };
   const matchItems = Object.values(ChartConfig);
