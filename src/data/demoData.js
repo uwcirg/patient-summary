@@ -190,10 +190,10 @@ export default {
       source: "cnics",
     },
   },
-  "CIRG-ART-ADHERENCE": {
+  "CIRG-Last-Missed-Dose": {
     scoringSummaryData: {
       id: 22,
-      key: "CIRG-ART-ADHERENCE",
+      key: "CIRG-Last-Missed-Dose",
       title: "Last Missed Dose",
       lastMissedDose: "Within the last week",
       source: "cnics",
@@ -342,9 +342,9 @@ export default {
       totalAnsweredItems: 1,
     },
   },
-  "CIRG-SEXUAL-RISK": {
+  "CIRG-SEXUAL-PARTNERS": {
     scoringSummaryData: {
-      key: "CIRG-SEXUAL-RISK",
+      key: "CIRG-SEXUAL-PARTNERS",
       id: 23,
       title: "# of sex partners x 3 months",
       result: "2",

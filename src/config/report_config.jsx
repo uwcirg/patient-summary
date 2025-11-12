@@ -25,24 +25,61 @@ export const INSTRUMENT_DEFAULTS = {
   "CIRG-Financial-Situation": {
     title: "Financial Situation",
   },
+  "CIRG-Fall-Risk": {
+    title: "Fall Risk",
+  },
+  "CIRG-Shortness-of-Breath": {
+    title: "Shortness of breath",
+  },
   "CIRG-SYMPTOMS": {
     title: "Symptoms",
   },
-  "CIRG-ART-ADHERENCE": {
-    title: "ART Adherence",
+  "CIRG-SRS": {
+    title: "Self Rating Scale (SRS)",
   },
-  "CIRG-CNICS-ASSIST-Polysub": {
-    title: "Concurrent Drug Use",
+  "CIRG-Last-Missed-Dose": {
+    title: "Last Missed Dose",
   },
-  "CIRG-SEXUAL-RISK": {
-    title: "Sexual Risk",
+  "CIRG-VAS": {
+    title: "VAS",
+  },
+  "CIRG-Nicotine-Use": {
+    title: "Nicotine Use",
   },
   "CIRG-Alcohol-Use": {
-    title: "Alcohol Score",
+    title: "Alcohol Score (Audit)",
     minimumScore: 0,
     maximumScore: 45,
     highSeverityScoreCutoff: 35,
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 45, xLabel: "" },
+  },
+  "CIRG-Mini-Score": {
+    title: "MINI Score",
+    minimumScore: 0,
+    maximumScore: 5,
+    highSeverityScoreCutoff: 4,
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 5, xLabel: "" },
+  },
+  "CIRG-Drug-Use": {
+    title: "Drug Use",
+  },
+  "CIRG-CNICS-ASSIST-Polysub": {
+    title: "Concurrent Drug Use",
+  },
+  "CIRG-IDU": {
+    title: "IDU",
+  },
+  "CIRG-Concurrent-IDU": {
+    title: "Concurrent IDU",
+  },
+  "CIRG-Naloxone-Access": {
+    title: "Naloxone Access"
+  },
+  "CIRG-Fentanyl-Strip-Access": {
+    title: "Fentanyl Test Strip Access"
+  },
+  "CIRG-SEXUAL-PARTNERS": {
+    title: "# of Sex Partners x 3 months",
   },
   "CIRG-UNPROTECTED-SEX": {
     title: "Unprotected Sex",
@@ -53,19 +90,18 @@ export const INSTRUMENT_DEFAULTS = {
   "CIRG-STI": {
     title: "STI",
   },
-  "CIRG-PSYCHOSOCIAL-CONCERNS": {
-    title: "Psychosocial Concerns",
-  },
   "CIRG-SOCIAL-SUPPORT": {
     title: "Social Support",
   },
-  "CIRG-Mini-Score": {
-    title: "MINI Score",
-    minimumScore: 0,
-    maximumScore: 5,
-    highSeverityScoreCutoff: 4,
-    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 5, xLabel: "" },
+  "CIRG-HIV-Stigma": {
+    title: "HIV Stigma"
   },
+  "CIRG-PC-PTSD": {
+    title: "PTSD Symptoms"
+  },
+  "CIRG-HRQOL": {
+    title: "HRQOL"
+  }
   // add others as needed…
 };
 
@@ -130,6 +166,8 @@ export const report_config_base = {
             "CIRG-CNICS-ASSIST-OD",
             "CIRG-Food-Security",
             "CIRG-Financial-Situation",
+            "CIRG-Fall-Risk",
+            "CIRG-Shortness-of-Breath",
           ],
           paramsByKey: {
             "CIRG-SI": {
@@ -200,7 +238,7 @@ export const report_config_base = {
         {
           id: "table_art_adherence",
           layout: "simple",
-          dataKeysToMatch: ["CIRG-ART-ADHERENCE"],
+          dataKeysToMatch: ["CIRG-SRS", "CIRG-Last-Missed-Dose", "CIRG-VAS"],
           title: "ART Adherence",
           hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
           columns: [
@@ -226,9 +264,59 @@ export const report_config_base = {
           keyToMatch: "CIRG-SUBSTANCE-USE",
           title: "Substance Use",
           layout: "two-columns",
-          dataKeysToMatch: ["CIRG-Nicotine-Use", "CIRG-Alcohol-Use", "CIRG-Mini-Score", "CIRG-CNICS-ASSIST-Polysub"],
+          dataKeysToMatch: [
+            "CIRG-Nicotine-Use",
+            "CIRG-Alcohol-Use",
+            "CIRG-Mini-Score",
+            "CIRG-Drug-Use",
+            "CIRG-CNICS-ASSIST-Polysub",
+            "CIRG-IDU",
+            "CIRG-Concurrent-IDU",
+          ],
         },
       ],
+    },
+    {
+      id: "section_harm_reduction",
+      title: "Harm Reduction",
+      tables: [
+         {
+          id: "table_naloxone_access",
+          layout: "simple",
+          dataKeysToMatch: ["CIRG-Naloxone-Access", "CIRG-Fentanyl-Strip-Access"],
+          hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
+          columns: [
+            {
+              id: "measure",
+              header: "Measure",
+              align: "left",
+              accessor: "title",
+              type: "text",
+              headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
+            },
+            {
+              id: "result",
+              header: "Result",
+              align: "left",
+              accessor: "result",
+              type: "text",
+            },
+            {
+              id: "date",
+              header: "Last Done",
+              align: "left",
+              accessor: "date",
+              type: "text",
+              renderCell: (row, value) => (
+                <Stack direction={"column"} spacing={1}>
+                  <span>{value ?? "N/A"}</span>
+                  {row.source && <span className="muted-text">{row.source}</span>}
+                </Stack>
+              ),
+            },
+          ],
+        },
+      ]
     },
     {
       id: "section_sexual_risks",
@@ -238,7 +326,7 @@ export const report_config_base = {
           id: "table_sexual_risk",
           layout: "simple",
           title: "Sexual Risk Behavior",
-          dataKeysToMatch: ["CIRG-SEXUAL-RISK", "CIRG-UNPROTECTED-SEX", "CIRG-EXCHANGE-SEX", "CIRG-STI"],
+          dataKeysToMatch: ["CIRG-SEXUAL-PARTNERS", "CIRG-UNPROTECTED-SEX", "CIRG-EXCHANGE-SEX", "CIRG-STI"],
           hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
           columns: [
             {
@@ -280,7 +368,7 @@ export const report_config_base = {
         {
           id: "table_psychosocial_concern",
           layout: "simple",
-          dataKeysToMatch: ["CIRG-PSYCHOSOCIAL-CONCERNS", "CIRG-SOCIAL-SUPPORT"],
+          dataKeysToMatch: ["CIRG-SOCIAL-SUPPORT", "CIRG-HIV-Stigma", "CIRG-PC-PTSD", "CIRG-HRQOL"],
           title: "Psychosocial Concerns and Quality of Life",
           hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
           columns: [
