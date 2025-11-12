@@ -264,6 +264,7 @@ const questionnaireConfigs = {
     instrumentName: "IPV-4",
     title: "IPV-4",
     matchMode: "fuzzy",
+    linkIdMatchMode: "strict",
     questionLinkIds: ["IPV4-1", "IPV4-2", "IPV4-3", "IPV4-4"],
   },
   "CIRG-CNICS-ASSIST-OD": {
@@ -276,6 +277,7 @@ const questionnaireConfigs = {
     displayMeaningNotScore: true,
     scoringQuestionId: "ASSIST-OD-ever",
     questionLinkIds: ["ASSIST-OD-ever", "ASSIST-OD-recent", "ASSIST-OD-narcan"],
+    linkIdMatchMode: "strict",
     fallbackScoreMap: {
       "assist-od-ever-0": 1,
       "Assist-od-ever-1": 0,
@@ -295,6 +297,7 @@ const questionnaireConfigs = {
     displayMeaningNotScore: true,
     scoringQuestionId: "ASSIST-Polysub",
     questionLinkIds: ["ASSIST-Polysub", "ASSIST-Polysub-freq", "ASSIST-Polysub-inject", "ASSIST-Polysub-inject-alt"],
+    linkIdMatchMode: "strict",
     fallbackScoreMap: {
       "assist-polysub-0": 1,
       "assist-polysub-1": 0,

@@ -45,6 +45,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
    * @param {string[]} [config.questionLinkIds]
    * @param {string[]}[config.subScoringQuestionIds]
    * @param {'strict'|'fuzzy'} [config.matchMode]
+   * @param {'strict'|'fuzzy'} [config.linkIdMatchMode]
    * @param {number} config.highSeverityScoreCutoff
    * @param {{min:number,label:string,meaning?:string}[]} [config.severityBands]
    * @param {Object|Array} patientBundle
@@ -76,6 +77,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       scoringParams: config.scoringParams ?? {},
       questionLinkIds: normArr(config.questionLinkIds),
       matchMode: config.matchMode ?? "fuzzy",
+      linkIdMatchMode: config.linkIdMatchMode ?? "fuzzy",
       severityBands: bands,
       highSeverityScoreCutoff: config.highSeverityScoreCutoff ?? null,
     };
@@ -218,8 +220,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
 
   // -------------------- general utils --------------------
-  isLinkIdEquals(a, b) {
-    return linkIdEquals(a, b, this.cfg.matchMode ?? "fuzzy");
+  isLinkIdEquals(a, b, config = {}) {
+    const configToUse = config ? config : this.cfg;
+    return linkIdEquals(a, b, configToUse.linkIdMatchMode ?? "fuzzy");
   }
   isResponseQuestionItem(item, config) {
     if (!item || !item.linkId) return false;
@@ -230,10 +233,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (linkId === "introduction" || linkId.includes("ignore") || linkId.includes("header")) return false;
     if (!this.responseAnswerTypes.has(item.type)) return false;
     if (scoreLinkId) {
-      return !this.isLinkIdEquals(item.linkId, scoreLinkId);
+      return !this.isLinkIdEquals(item.linkId, scoreLinkId, config);
     }
     if (!isEmptyArray(subScoreIds)) {
-      return !subScoreIds.find((id) => this.isLinkIdEquals(id, item.linkId));
+      return !subScoreIds.find((id) => this.isLinkIdEquals(id, item.linkId, config));
     }
     return true;
   }
@@ -298,9 +301,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (Array.isArray(a)) return a[0] ?? null; // FHIR: [{ valueString: ... }]
     return a ?? null;
   }
-  findResponseItemByLinkId(flatItems, linkId) {
+  findResponseItemByLinkId(flatItems, linkId, config = {}) {
     const target = normalizeLinkId(linkId);
-    return (flatItems || []).find((i) => this.isLinkIdEquals(normalizeLinkId(i.linkId), target)) ?? null;
+    return (flatItems || []).find((i) => this.isLinkIdEquals(normalizeLinkId(i.linkId), target, config)) ?? null;
   }
 
   // -------------------- answer readers (value[x]) --------------------
@@ -374,7 +377,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   // -------------------- scoring --------------------
   getScoringByResponseItem(questionnaire, responseItemsFlat, linkId, config = {}) {
-    const it = this.findResponseItemByLinkId(responseItemsFlat, linkId);
+    const it = this.findResponseItemByLinkId(responseItemsFlat, linkId, config);
     //console.log("linkId ", linkId, " it ", it, " responses ", responseItemsFlat)
     const ans = this.firstAnswer(it);
     if (ans == null) return null;
@@ -444,7 +447,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     walk(questionnaireItems);
 
     const questionnaireItemList = list.map((q) => {
-      const matchedResponseItem = this.findResponseItemByLinkId(responseItemsFlat, q.linkId);
+      const matchedResponseItem = this.findResponseItemByLinkId(responseItemsFlat, q.linkId, config);
       const ans = this.firstAnswer(matchedResponseItem);
       return {
         ...q,
@@ -603,10 +606,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     );
   }
 
-  _getAnswerByTargetLinkIdFromResponseData(targetLinkId, responseData, responses_id) {
+  _getAnswerByTargetLinkIdFromResponseData(targetLinkId, responseData, responses_id, config = {}) {
     const matchResponseData = (responseData || []).find((item) => item.id === responses_id);
     if (!matchResponseData || isEmptyArray(matchResponseData.responses)) return "--";
-    const answerItem = matchResponseData.responses.find((o) => this.isLinkIdEquals(o?.id, targetLinkId));
+    const answerItem = matchResponseData.responses.find((o) => this.isLinkIdEquals(o?.id, targetLinkId, config));
     return this._getAnswer(answerItem);
   }
 
@@ -622,7 +625,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     };
   };
 
-  _formatTableResponseData = (data) => {
+  _formatTableResponseData = (data, config) => {
     if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
 
     const formattedData = data.map((item) => ({ date: item.date, id: item.id, raw: item }));
@@ -630,23 +633,26 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     // Use the row with max responses as the “schema”
     const anchorRowData = [...data].sort((a, b) => (b.responses?.length || 0) - (a.responses?.length || 0))[0];
     if (!anchorRowData || isEmptyArray(anchorRowData.responses)) return null;
+    console.log("answerRowData ", anchorRowData)
 
     // Build a set of all question ids
     let qIds = Array.from(new Set(anchorRowData.responses.map((r) => r.id))),
-      configToUse;
-
-    if (data[0].questionnaireId) configToUse = questionnaireConfig[data[0].questionnaireId];
-    if (isEmptyArray(qIds) && configToUse && configToUse.questionLinkIds) qIds = configToUse.questionLinkIds;
+      configToUse = config;
+    if (!configToUse) {
+      if (data[0].questionnaireId) configToUse = questionnaireConfig[data[0].questionnaireId];
+      if (isEmptyArray(qIds) && configToUse && configToUse.questionLinkIds) qIds = configToUse.questionLinkIds;
+    }
     const result = [...qIds]
-      .filter((id) => !configToUse || !this.isLinkIdEquals(configToUse.scoringQuestionId, id))
+     // .filter((id) => !configToUse || !this.isLinkIdEquals(configToUse.scoringQuestionId, id, configToUse))
       .map((qid) => {
         const row = {};
         // Question text from first available response carrying that qid
         const sample =
-          (anchorRowData.responses || []).find((r) => this.isLinkIdEquals(r.id, qid)) ||
-          (data.find((d) => (d.responses || []).some((r) => this.isLinkIdEquals(r.id, qid)))?.responses || []).find(
-            (r) => this.isLinkIdEquals(r.id, qid),
-          );
+          (anchorRowData.responses || []).find((r) => this.isLinkIdEquals(r.id, qid, configToUse)) ||
+          (
+            data.find((d) => (d.responses || []).some((r) => this.isLinkIdEquals(r.id, qid, configToUse)))?.responses ||
+            []
+          ).find((r) => this.isLinkIdEquals(r.id, qid, configToUse));
         row.id = qid;
         let question = "";
         const qItem = getQuestionnaireItemByLinkId(anchorRowData.questionnaire, qid);
@@ -655,7 +661,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         }
         if (!question && configToUse?.itemTextByLinkId) {
           for (const key in configToUse?.itemTextByLinkId) {
-            if (this.isLinkIdEquals(key, qid)) {
+            if (this.isLinkIdEquals(key, qid, configToUse)) {
               question = configToUse?.itemTextByLinkId[qid];
               break;
             }
@@ -665,7 +671,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         row.source = sample?.source;
         for (const d of formattedData) {
           // this is the row data for the date and id of a response set that has the requsite linkId
-          row[d.id] = this._getAnswerByTargetLinkIdFromResponseData(sample.id, data, d.id);
+          row[d.id] = this._getAnswerByTargetLinkIdFromResponseData(sample.id, data, d.id, configToUse);
         }
         return row;
       });
@@ -689,7 +695,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     ];
     const bodyRows = (first.responses || []).map((row) => [
       this._getQuestion(row),
-      this._getAnswerByTargetLinkIdFromResponseData(row.id, data, first.id),
+      this._getAnswerByTargetLinkIdFromResponseData(row.id, data, first.id, params),
     ]);
     const scoreRow = this._hasScoreData(data) ? [{ score: first.score, scoreParams: params }] : null;
 
@@ -870,7 +876,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const { key, id, ...restOfConfig } = config ?? {};
     const chartParams = { ...restOfConfig, ...chartConfig, ...scoringParams, ...(config?.chartParams ?? {}), xDomain };
 
-    const tableResponseData = this._formatTableResponseData(evalData);
+    const tableResponseData = this._formatTableResponseData(evalData, config);
     const printResponseData = this._formatPrintResponseData(evalData, config);
     const scoringSummaryData = this._formatScoringSummaryData(evalData, {
       tableResponseData,
