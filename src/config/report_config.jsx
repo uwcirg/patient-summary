@@ -16,7 +16,7 @@ export const getInstrumentDefaults = () => {
 
 export const INSTRUMENT_DEFAULTS = {
   ...getInstrumentDefaults(),
-  "CIRG-Overdose": {
+  "CIRG-CNICS-ASSIST-OD": {
     title: "Overdose",
   },
   "CIRG-Food-Security": {
@@ -31,7 +31,7 @@ export const INSTRUMENT_DEFAULTS = {
   "CIRG-ART-ADHERENCE": {
     title: "ART Adherence",
   },
-  "CIRG-Concurrent-Drug-Use": {
+  "CIRG-CNICS-ASSIST-Polysub": {
     title: "Concurrent Drug Use",
   },
   "CIRG-SEXUAL-RISK": {
@@ -127,7 +127,7 @@ export const report_config_base = {
             "CIRG-PHQ9",
             "CIRG-SI",
             "CIRG-CNICS-IPV4",
-            "CIRG-Overdose",
+            "CIRG-CNICS-ASSIST-OD",
             "CIRG-Food-Security",
             "CIRG-Financial-Situation",
           ],
@@ -226,7 +226,7 @@ export const report_config_base = {
           keyToMatch: "CIRG-SUBSTANCE-USE",
           title: "Substance Use",
           layout: "two-columns",
-          dataKeysToMatch: ["CIRG-Nicotine-Use", "CIRG-Alcohol-Use", "CIRG-Mini-Score", "CIRG-Concurrent-Drug-Use"],
+          dataKeysToMatch: ["CIRG-Nicotine-Use", "CIRG-Alcohol-Use", "CIRG-Mini-Score", "CIRG-CNICS-ASSIST-Polysub"],
         },
       ],
     },

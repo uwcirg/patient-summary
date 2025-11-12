@@ -125,9 +125,9 @@ export default {
       ]),
     },
   },
-  "CIRG-Overdose": {
+  "CIRG-CNICS-ASSIST-OD": {
     scoringSummaryData: {
-      key: "CIRG-Overdose",
+      key: "CIRG-CNICS-ASSIST-OD",
       comparison: "",
       comparisonToAlert: "",
       instrumentName: "Overdose (recent)",
@@ -329,9 +329,9 @@ export default {
       ]),
     },
   },
-  "CIRG-Concurrent-Drug-Use": {
+  "CIRG-CNICS-ASSIST-Polysub": {
     scoringSummaryData: {
-      key: "CIRG-Concurrent-Drug-Use",
+      key: "CIRG-CNICS-ASSIST-Polysub",
       source: "cnics",
       comparison: "",
       comparisonToAlert: "",

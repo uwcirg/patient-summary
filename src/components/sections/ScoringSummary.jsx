@@ -104,6 +104,7 @@ export default function ScoringSummary(props) {
       </Stack>
     ),
     score: (row) => {
+      if (row.displayMeaningNotScore) return <Box className="muted-text text-center">N/A</Box>;
       return (
         <>
           {isNumber(row.score) && (
@@ -117,7 +118,7 @@ export default function ScoringSummary(props) {
             >
               <Scoring
                 score={row.score}
-                scoreParams={{ ...row, ...(row.scoringParams??{}) }}
+                scoreParams={{ ...row, ...(row.scoringParams ?? {}) }}
                 justifyContent="space-between"
               />
               <Box className="no-wrap-text muted-text" sx={{ fontSize: "0.65rem" }}>
@@ -125,7 +126,7 @@ export default function ScoringSummary(props) {
               </Box>
             </Stack>
           )}
-          {row.text && (
+          {!isNumber(row.score) && row.text && (
             <Stack justifyContent="space-between" alignItems="center">
               <Box sx={{ color: row.alert ? "error.main" : row.warning ? "warning.main" : "#444" }}>{row.text}</Box>
             </Stack>
@@ -164,7 +165,7 @@ export default function ScoringSummary(props) {
       // custom cell that preserves link behavior
       renderCell: (row) => {
         const displayTitle = getDisplayQTitle(
-          row.instrumentName ? row.instrumentName : row.title ? row.title : row.key,
+          row.title ? row.title : row.instrumentName ? row.instrumentName : row.key,
         );
         return !disableLinks ? (
           <Link
@@ -290,7 +291,7 @@ export default function ScoringSummary(props) {
 
   const renderTableBody = () => {
     const visibleColumns = EFFECTIVE_COLUMNS.filter((c) => isColVisible(c.id));
-    const dataToUse = Array.isArray(data) ? data: (data ? [data]: []);
+    const dataToUse = Array.isArray(data) ? data : data ? [data] : [];
     const hasData = dataToUse.length > 0;
 
     return (

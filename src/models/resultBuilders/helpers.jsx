@@ -482,6 +482,7 @@ export function getScoreParamsFromResponses(responses, config = {}) {
     minScore,
     maxScore,
     meaning,
+    text: meaning,
     comparison,
     comparisonToAlert,
     source,
@@ -532,7 +533,7 @@ export function getResponseColumns(data) {
     },
     ...dates.map((item, index) => ({
       id: `date_${item.id}_${index}`,
-      title: `${getLocaleDateStringFromDate(item.date)} ${item.source ? " ( " + item.source + " ) ": ""}`.trim(),
+      title: `${getLocaleDateStringFromDate(item.date)} ${item.source ? " ( " + item.source + " ) " : ""}`.trim(),
       field: item.id, // the row is expected to have row[item.id]
       cellStyle: {
         minWidth: "148px",
@@ -591,8 +592,9 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
             summaryData[key] && summaryData[key].scoringSummaryData
               ? summaryData[key].scoringSummaryData
               : processedData?.scoringSummaryData;
-          const chartData =
-            summaryData[key] && summaryData[key].chartData ? summaryData[key].chartData : processedData?.chartData;
+          const chartData = summaryData[key] && summaryData[key].chartData
+              ? summaryData[key].chartData
+              : processedData?.chartData;
           if (currentData) {
             rows.push({
               ...(paramsByKey[key].scoringParams ?? {}),

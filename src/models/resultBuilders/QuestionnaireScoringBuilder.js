@@ -239,6 +239,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
   isNonScoreLinkId(linkId, config = {}) {
     if (!linkId) return false;
+    if (config?.questionLinkIds?.indexOf(linkId) !== -1) return true;
     const subScoreQuestionIds = !isEmptyArray(config?.subScoringQuestionIds) ? config.subScoringQuestionIds : [];
     return (
       !linkIdEquals(linkId, config?.scoringQuestionId) && !subScoreQuestionIds.find((id) => linkIdEquals(id, linkId))
@@ -372,17 +373,21 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
 
   // -------------------- scoring --------------------
-  getScoringByResponseItem(questionnaire, responseItemsFlat, linkId) {
+  getScoringByResponseItem(questionnaire, responseItemsFlat, linkId, config = {}) {
     const it = this.findResponseItemByLinkId(responseItemsFlat, linkId);
     //console.log("linkId ", linkId, " it ", it, " responses ", responseItemsFlat)
     const ans = this.firstAnswer(it);
-    if (!ans) return null;
-
+    if (ans == null) return null;
+    return this.getScoreByAnswerItem(ans, questionnaire, config);
+  }
+  getScoreByAnswerItem(ans, questionnaire, config = {}) {
+    if (ans == null) return null;
+    const fallbackScoreMap = config?.fallbackScoreMap ? config?.fallbackScoreMap : this.fallbackScoreMap;
     // Primitive short-circuit: numbers or strings like "Nearly every day"
     if (!isPlainObject(ans)) {
       const num = toFiniteNumber(ans);
       if (num != null) return num;
-      const mapped = this.fallbackScoreMap[String(ans).toLowerCase()];
+      const mapped = fallbackScoreMap[String(ans).toLowerCase()];
       if (mapped != null) return mapped;
       return null;
     }
@@ -397,21 +402,22 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const fromExt = this.getAnswerValueByExtension(questionnaire, coding.code);
       if (fromExt != null && isNumber(fromExt)) return fromExt;
       const codeKey = String(coding.code).toLowerCase();
-      if (this.fallbackScoreMap[codeKey] != null) return this.fallbackScoreMap[codeKey];
-      //  console.log("coding code ", this.fallbackScoreMap, this.fallbackScoreMap[coding.code])
+      if (fallbackScoreMap[codeKey] != null) return fallbackScoreMap[codeKey];
+      //  console.log("coding code ", fallbackScoreMap, fallbackScoreMap[coding.code])
       return isNumber(coding.code) ? coding.code : null;
     }
     return null;
   }
 
-  getAnswerItemDisplayValue(answerItem) {
+  getAnswerItemDisplayValue(answerItem, config = {}) {
     if (!answerItem) return null;
+    const fallbackScoreMap = config?.fallbackScoreMap ? config?.fallbackScoreMap : this.fallbackScoreMap;
     // If it's already a primitive (e.g., "Nearly every day", 2, true), just show it
     if (!isPlainObject(answerItem)) return answerItem;
     // Prefer human display for codings
     const coding = this.answerCoding(answerItem);
     if (coding)
-      return coding.display ?? (coding.code ? this.fallbackScoreMap[String(coding.code).toLowerCase()] : null) ?? null;
+      return coding.display ?? (coding.code ? fallbackScoreMap[String(coding.code).toLowerCase()] : null) ?? null;
     // Then any primitive value[x]
     const prim = this.answerPrimitive(answerItem);
     if (!isNil(prim)) return prim;
@@ -426,7 +432,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       isEmptyArray(questionnaireItems) ||
       !questionnaireItems.some((item) => responseItemsFlat?.find((o) => o.linkId === item.linkId))
     )
-      return this.responsesOnly(responseItemsFlat);
+      return this.responsesOnly(responseItemsFlat, config);
     const configToUse = config ? config : this.cfg;
     const list = [];
     const walk = (items = []) => {
@@ -443,7 +449,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       return {
         ...q,
         id: q.linkId,
-        answer: this.getAnswerItemDisplayValue(ans),
+        answer: this.getAnswerItemDisplayValue(ans, config),
         question:
           q.text ??
           (this.firstAnswer(matchedResponseItem) ? this._getQuestion(matchedResponseItem) : `Question ${q.linkId}`),
@@ -456,7 +462,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       ...(responseItemsFlat ?? []).map((item, index) => {
         if (!item.id) item.id = item.linkId;
         const ans = this.firstAnswer(item);
-        item.answer = this.getAnswerItemDisplayValue(ans);
+        item.answer = this.getAnswerItemDisplayValue(ans, config);
         item.question = item.text ?? `Question ${index}`;
         return item;
       }),
@@ -464,12 +470,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return Array.from(allResponses.values());
   }
 
-  responsesOnly(responseItemsFlat = []) {
+  responsesOnly(responseItemsFlat = [], config = {}) {
     return (responseItemsFlat || []).map((item) => {
       const ans = this.firstAnswer(item);
       return {
         id: item.linkId,
-        answer: this.getAnswerItemDisplayValue(ans) ?? null,
+        answer: this.getAnswerItemDisplayValue(ans, config) ?? null,
         question: item.text,
         text: item.text,
       };
@@ -501,10 +507,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const nonScoring = flat.filter((it) => this.isNonScoreLinkId(it.linkId, config));
 
     const scoringQuestionScore = scoringQuestionId
-      ? this.getScoringByResponseItem(questionnaire, flat, scoringQuestionId)
+      ? this.getScoringByResponseItem(questionnaire, flat, scoringQuestionId, config)
       : null;
 
-    const questionScores = scoreLinkIds.map((id) => this.getScoringByResponseItem(questionnaire, flat, id));
+    const questionScores = scoreLinkIds.map((id) => this.getScoringByResponseItem(questionnaire, flat, id, config));
     const allAnswered = questionScores.length > 0 && questionScores.every((v) => v != null);
 
     let score = null;
@@ -542,17 +548,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const rows = (questionnaireResponses || []).map((qr, rIndex) => {
       const flat = this.flattenResponseItems(qr.item);
-      const { score, scoringQuestionScore, totalAnsweredItems, totalItems } = this.getScoreStatsFromQuestionnaireResponse(
-        qr,
-        questionnaire,
-        config,
-      );
+      const { score, scoringQuestionScore, totalAnsweredItems, totalItems } =
+        this.getScoreStatsFromQuestionnaireResponse(qr, questionnaire, config);
       const source = this.getDataSource(qr);
       let responses = this.formattedResponses(questionnaire?.item ?? [], flat, config).map((item) => {
         item.source = source;
         return item;
       });
-      if (isEmptyArray(responses)) responses = this.responsesOnly(flat);
+      if (isEmptyArray(responses)) responses = this.responsesOnly(flat, config);
       //console.log("score ", score, " totalItems ", totalItems, " total answered ", totalAnsweredItems)
       return {
         ...(config ?? {}),
@@ -593,7 +596,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return !isEmptyArray(data) && !!data.find((item) => !isEmptyArray(item.responses));
   }
   _hasScoreData(data) {
-    return !isEmptyArray(data) && !!data.find((item) => isNumber(item.score));
+    return (
+      !isEmptyArray(data) &&
+      !data.find((item) => item.displayMeaningNotScore) &&
+      !!data.find((item) => isNumber(item.score))
+    );
   }
 
   _getAnswerByTargetLinkIdFromResponseData(targetLinkId, responseData, responses_id) {
@@ -608,6 +615,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return {
       ...data[0],
       ...getScoreParamsFromResponses(data, opts?.config),
+      displayMeaningOnly: !this._hasScoreData(data),
       responseData: data,
       tableResponseData: opts?.tableResponseData ?? this._formatTableResponseData(data),
       printResponseData: opts?.printResponseData ?? this._formatPrintResponseData(data),
@@ -836,9 +844,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       : this.getResponsesSummary(qrs, questionnaire);
 
     // compute scoring/series/params/chart domain/etc.
-    const scoringData = !isEmptyArray(evalData)
-      ? evalData.filter((item) => item && !isEmptyArray(item.responses) && isNumber(item.score) && item.date)
-      : null;
+    const scoringData =
+      !config?.skipChart && !isEmptyArray(evalData)
+        ? evalData.filter((item) => item && !isEmptyArray(item.responses) && isNumber(item.score) && item.date)
+        : null;
 
     const chartConfig = getChartConfig(questionnaire?.id);
     let chartData = !isEmptyArray(scoringData)
