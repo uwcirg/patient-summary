@@ -105,6 +105,9 @@ const CHART_CONFIG = {
 };
 export default CHART_CONFIG;
 
+export const SUCCESS_COLOR = "green";
+export const ALERT_COLOR = "#b71c1c";
+
 export const COLORS = [
   "#3E517A",
   "#1976d2",

@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import { Typography, Box } from "@mui/material";
 import { BarChart, Bar, CartesianGrid, Cell, Label, Tooltip, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { useMemo } from "react";
+import {SUCCESS_COLOR, ALERT_COLOR} from "@config/chart_config";
 
 export default function BarCharts(props) {
   const {
@@ -100,8 +101,8 @@ export default function BarCharts(props) {
               {parsed.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  stroke={entry[yFieldKey] >= entry.highSeverityScoreCutoff ? "#b71c1c" : "green"}
-                  fill={entry[yFieldKey] >= entry.highSeverityScoreCutoff ? "#b71c1c" : "green"}
+                  stroke={entry[yFieldKey] >= entry.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR}
+                  fill={entry[yFieldKey] >= entry.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR}
                 />
               ))}
             </Bar>
