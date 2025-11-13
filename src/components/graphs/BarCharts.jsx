@@ -100,8 +100,8 @@ export default function BarCharts(props) {
               {parsed.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  stroke={entry[yFieldKey] >= entry.highSeverityScoreCutoff ? "red" : "green"}
-                  fill={entry[yFieldKey] >= entry.highSeverityScoreCutoff ? "red" : "green"}
+                  stroke={entry[yFieldKey] >= entry.highSeverityScoreCutoff ? "#b71c1c" : "green"}
+                  fill={entry[yFieldKey] >= entry.highSeverityScoreCutoff ? "#b71c1c" : "green"}
                 />
               ))}
             </Bar>
