@@ -248,7 +248,7 @@ export default function LineCharts(props) {
         label: "CNICS",
         icon: (
           <svg width="16" height="16">
-            <circle cx="8" cy="8" r="4" fill="green" />
+            <circle cx="8" cy="8" r="4" fill="#444" />
           </svg>
         ),
       },
@@ -257,7 +257,7 @@ export default function LineCharts(props) {
         label: "Epic",
         icon: (
           <svg width="16" height="16">
-            <rect x="4" y="4" width="8" height="8" fill="green" />
+            <rect x="4" y="4" width="8" height="8" fill="#444" />
           </svg>
         ),
       },

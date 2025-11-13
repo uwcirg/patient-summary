@@ -29,13 +29,16 @@ export default function ScoringSummary(props) {
   const theme = useTheme();
   const { data, disableLinks, hiddenColumns = [], columns = [] } = props;
 
-  const isColVisible = (id) => !hiddenColumns?.includes(id);
+  const isColVisible = (id) => {
+    if (id === "measure") return true;
+    return !hiddenColumns?.includes(id);
+  };
 
   const iconProps = { fontSize: "small", sx: { verticalAlign: "middle" } };
   const getDisplayIcon = (row) => {
     const comparison = row?.comparison;
     const comparisonToAlert = row?.comparisonToAlert;
-    if (!comparison) return "";
+    if (!comparison) return null;
     if (comparison === "equal") return <HorizontalRuleIcon {...iconProps} />;
     if (comparisonToAlert === "lower") {
       if (comparison === "lower") return <SouthIcon color="error" {...iconProps} />;
@@ -95,16 +98,16 @@ export default function ScoringSummary(props) {
   // -------- reusable default cell renderers
   const defaultRenderers = {
     text: (row, value) => (
-      <span className={row.alert ? "text-error" : row.warning ? "text-warning" : ""}>{value ?? "N/A"}</span>
+      <span className={row.alert ? "text-error" : row.warning ? "text-warning" : "muted-text"}>{value ?? "N/A"}</span>
     ),
     date: (row, value) => (
       <Stack direction={"column"} spacing={1} alignItems={"center"} justifyContent={"center"}>
-        <span>{value ? getCorrectedISODate(value) : "N/A"}</span>
+        {value ? getCorrectedISODate(value) : ""}
         {row.source && <span className="muted-text">{row.source}</span>}
       </Stack>
     ),
     score: (row) => {
-      if (row.displayMeaningNotScore) return <Box className="muted-text text-center">N/A</Box>;
+      if (row.displayMeaningNotScore) return null;
       return (
         <>
           {isNumber(row.score) && (
@@ -131,7 +134,7 @@ export default function ScoringSummary(props) {
               <Box sx={{ color: row.alert ? "error.main" : row.warning ? "warning.main" : "#444" }}>{row.text}</Box>
             </Stack>
           )}
-          {!isNumber(row.score) && !row.text && <Box className="muted-text text-center">N/A</Box>}
+          {/* {!isNumber(row.score) && !row.text && <Box className="muted-text text-center">N/A</Box>} */}
         </>
       );
     },
@@ -235,9 +238,6 @@ export default function ScoringSummary(props) {
   ];
 
   // ----- merge defaults with user-provided columns by id
-  // Rules:
-  //  - If user column id matches default: shallow-merge (user overrides fields), keeps order of DEFAULT_COLUMNS
-  //  - Any extra user columns (unknown ids) are appended at the end (in user-provided order)
   const defaultById = Object.fromEntries(DEFAULT_COLUMNS.map((c) => [c.id, c]));
   const userById = Object.fromEntries((columns || []).map((c) => [c.id, c]));
 
@@ -252,11 +252,35 @@ export default function ScoringSummary(props) {
   const extras = (columns || []).filter((c) => !defaultById[c.id]);
   const EFFECTIVE_COLUMNS = [...merged, ...extras];
 
+  // ----- visible columns with fallback when everything is hidden
+  const allVisibleColumns = EFFECTIVE_COLUMNS.filter((c) => isColVisible(c.id));
+  const firstColumn = EFFECTIVE_COLUMNS.find((c) => c.id === "measure") || EFFECTIVE_COLUMNS[0];
+
+  const NO_DATA_COLUMN = {
+    id: "__noData",
+    header: "No Data",
+    align: "center",
+    headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
+    cellProps: { sx: baseCellStyle, size: "small" },
+    renderCell: () => (
+      <Box className="muted-text text-center" sx={{ fontStyle: "italic" }}>
+        No Data
+      </Box>
+    ),
+  };
+
+  const visibleColumns =
+    allVisibleColumns.length === 0
+      ? firstColumn
+        ? [firstColumn, NO_DATA_COLUMN]
+        : [NO_DATA_COLUMN]
+      : allVisibleColumns;
+
   // ----- table sections
   const renderTableHeader = () => (
     <TableHead>
       <TableRow sx={{ backgroundColor: "lightest.main" }}>
-        {EFFECTIVE_COLUMNS.filter((c) => isColVisible(c.id)).map((col) => (
+        {visibleColumns.map((col) => (
           <TableCell
             key={`header_${col.id}`}
             {...defaultHeaderCellProps}
@@ -290,7 +314,6 @@ export default function ScoringSummary(props) {
   };
 
   const renderTableBody = () => {
-    const visibleColumns = EFFECTIVE_COLUMNS.filter((c) => isColVisible(c.id));
     const dataToUse = Array.isArray(data) ? data : data ? [data] : [];
     const hasData = dataToUse.length > 0;
 

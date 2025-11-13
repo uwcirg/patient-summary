@@ -633,8 +633,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     // Use the row with max responses as the “schema”
     const anchorRowData = [...data].sort((a, b) => (b.responses?.length || 0) - (a.responses?.length || 0))[0];
     if (!anchorRowData || isEmptyArray(anchorRowData.responses)) return null;
-    console.log("answerRowData ", anchorRowData)
-
     // Build a set of all question ids
     let qIds = Array.from(new Set(anchorRowData.responses.map((r) => r.id))),
       configToUse = config;
