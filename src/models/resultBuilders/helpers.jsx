@@ -468,8 +468,8 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   const scoreSeverity = severityFromScore(score, config);
   const meaning = meaningFromSeverity(scoreSeverity, config);
   const source = current?.source;
-  const alert = isNumber(score) && score >= config?.highSeverityScoreCutoff;
-  const warning = isNumber(score) && score >= config?.mediumSeverityScoreCutoff;
+  const alert = isNumber(score) && config?.highSeverityScoreCutoff && score >= config?.highSeverityScoreCutoff;
+  const warning = isNumber(score) && config?.mediumSeverityScoreCutoff && score >= config?.mediumSeverityScoreCutoff;
   const scoringParams = {
     ...config,
     // ...(current?.scoringParams ?? {}),
@@ -592,9 +592,8 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
             summaryData[key] && summaryData[key].scoringSummaryData
               ? summaryData[key].scoringSummaryData
               : processedData?.scoringSummaryData;
-          const chartData = summaryData[key] && summaryData[key].chartData
-              ? summaryData[key].chartData
-              : processedData?.chartData;
+          const chartData =
+            summaryData[key] && summaryData[key].chartData ? summaryData[key].chartData : processedData?.chartData;
           if (currentData) {
             rows.push({
               ...(paramsByKey[key].scoringParams ?? {}),

@@ -73,6 +73,7 @@ export default function PROReport() {
             key={table.id}
             data={table.rows}
             disableLinks={true}
+            enableResponsesViewer={true}
             tableStyle={{
               width: "auto",
             }}

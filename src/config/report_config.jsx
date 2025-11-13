@@ -96,7 +96,7 @@ export const INSTRUMENT_DEFAULTS = {
   "CIRG-HIV-Stigma": {
     title: "HIV Stigma"
   },
-  "CIRG-PC-PTSD": {
+  "CIRG-PC-PTSD-5": {
     title: "PTSD Symptoms"
   },
   "CIRG-HRQOL": {
@@ -367,40 +367,34 @@ export const report_config_base = {
       tables: [
         {
           id: "table_psychosocial_concern",
-          layout: "simple",
-          dataKeysToMatch: ["CIRG-SOCIAL-SUPPORT", "CIRG-HIV-Stigma", "CIRG-PC-PTSD", "CIRG-HRQOL"],
+          layout: "two-columns",
+          dataKeysToMatch: ["CIRG-SOCIAL-SUPPORT", "CIRG-HIV-Stigma", "CIRG-PC-PTSD-5", "CIRG-HRQOL"],
           title: "Psychosocial Concerns and Quality of Life",
-          hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
-          columns: [
-            {
-              id: "measure",
-              header: "Measure",
-              align: "left",
-              accessor: "title",
-              type: "text",
-              headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
-            },
-            {
-              id: "result",
-              header: "Result",
-              align: "left",
-              accessor: "result",
-              type: "text",
-            },
-            {
-              id: "date",
-              header: "Last Done",
-              align: "left",
-              accessor: "date",
-              type: "text",
-              renderCell: (row, value) => (
-                <Stack direction={"column"} spacing={1}>
-                  <span>{value ?? "N/A"}</span>
-                  {row.source && <span className="muted-text">{row.source}</span>}
-                </Stack>
-              ),
-            },
-          ],
+          //hiddenColumns: ["id", "meaning", "comparison"],
+          // columns: [
+          //   {
+          //     id: "measure",
+          //     header: "Measure",
+          //     align: "left",
+          //     accessor: "title",
+          //     type: "text",
+          //     headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
+          //   },
+          //   {
+          //     id: "result",
+          //     header: "Result",
+          //     align: "left",
+          //     accessor: "score",
+          //     type: "text",
+          //   },
+          //   {
+          //     id: "date",
+          //     header: "Last Done",
+          //     align: "left",
+          //     accessor: "date",
+          //     type: "date"
+          //   },
+          // ],
         },
       ],
     },

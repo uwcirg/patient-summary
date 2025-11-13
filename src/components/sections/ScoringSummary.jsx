@@ -16,7 +16,7 @@ import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import { getResponseColumns } from "@models/resultBuilders/helpers";
 import Scoring from "@components/Score";
-import { getDisplayQTitle, isEmptyArray, isNumber, scrollToAnchor } from "@util";
+import { getCorrectedISODate, getDisplayQTitle, isEmptyArray, isNumber, scrollToAnchor } from "@util";
 import ResponsesViewer from "../ResponsesViewer";
 
 // tiny helper to read nested keys like "provider.name"
@@ -99,7 +99,7 @@ export default function ScoringSummary(props) {
     ),
     date: (row, value) => (
       <Stack direction={"column"} spacing={1} alignItems={"center"} justifyContent={"center"}>
-        <span>{value ?? "N/A"}</span>
+        <span>{value ? getCorrectedISODate(value) : "N/A"}</span>
         {row.source && <span className="muted-text">{row.source}</span>}
       </Stack>
     ),
