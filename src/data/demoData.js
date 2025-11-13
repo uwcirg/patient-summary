@@ -398,8 +398,6 @@ export default {
       id: 31,
       title: "Social Support",
       result: "N/A",
-      date: "2025-05-11",
-      source: "cnics",
     },
   },
 };
