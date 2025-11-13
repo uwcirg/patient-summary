@@ -14,7 +14,6 @@ export default function BarCharts(props) {
     xFieldKey, // "date"
     xLabel,
     maximumYValue,
-    highScore,
     minimumYValue,
     yFieldKey, // "total", "score", etc.
     tooltipLabelFormatter,
@@ -47,7 +46,7 @@ export default function BarCharts(props) {
   const renderXAxis = () => (
     <XAxis
       dataKey={xFieldKey}
-      type="number" 
+      type="number"
       scale="time" // time scale
       domain={["dataMin", "dataMax"]}
       height={108}
@@ -101,8 +100,8 @@ export default function BarCharts(props) {
               {parsed.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  stroke={entry[yFieldKey] >= highScore ? "red" : "green"}
-                  fill={entry[yFieldKey] >= highScore ? "red" : "green"}
+                  stroke={entry[yFieldKey] >= entry.highSeverityScoreCutoff ? "red" : "green"}
+                  fill={entry[yFieldKey] >= entry.highSeverityScoreCutoff ? "red" : "green"}
                 />
               ))}
             </Bar>
