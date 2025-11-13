@@ -133,7 +133,7 @@ export default function LineCharts(props) {
     if (cx == null || cy == null) return null;
 
     let color;
-    if (payload.highSeverityScoreCutoff && payload[yFieldKey] >= payload.highSeverityScoreCutoff) color = "red";
+    if (payload.highSeverityScoreCutoff && payload[yFieldKey] >= payload.highSeverityScoreCutoff) color = "#b71c1c";
     else if (payload.mediumSeverityScoreCutoff && payload[yFieldKey] >= payload.mediumSeverityScoreCutoff)
       color = "orange";
     else color = "green";
@@ -177,9 +177,9 @@ export default function LineCharts(props) {
               } = e;
               if (configData) {
                 if (configData.comparisonToAlert === "lower") {
-                  if (value <= parseInt(configData.highSeverityScoreCutoff)) color = "red";
+                  if (value <= parseInt(configData.highSeverityScoreCutoff)) color = "#b71c1c";
                 } else {
-                  if (value >= parseInt(configData.highSeverityScoreCutoff)) color = "red";
+                  if (value >= parseInt(configData.highSeverityScoreCutoff)) color = "#b71c1c";
                 }
               }
               e["fill"] = color;
@@ -308,7 +308,7 @@ export default function LineCharts(props) {
         // eslint-disable-next-line
         if (payload.highSeverityScoreCutoff) {
           // eslint-disable-next-line
-          color = value >= payload.highSeverityScoreCutoff ? "red" : "green";
+          color = value >= payload.highSeverityScoreCutoff ? "#b71c1c" : "green";
           return (
             //eslint-disable-next-line
             <circle key={`dot-default-${payload?.id}_${index}`} cx={cx} cy={cy} r={4} fill={color} stroke="none" />
@@ -329,12 +329,12 @@ export default function LineCharts(props) {
     if (!data.find((item) => item.scoreSeverity)) return null;
     const configData = data.find((item) => item && item.comparisonToAlert) ?? {};
     return (
-      <ReferenceLine y={0} stroke={configData.comparisonToAlert === "lower" ? "red" : "green"} strokeWidth={0}>
+      <ReferenceLine y={0} stroke={configData.comparisonToAlert === "lower" ? "#b71c1c" : "green"} strokeWidth={0}>
         <Label
           value={configData.comparisonToAlert === "lower" ? "Worst" : "Best"}
           fontSize="12px"
           fontWeight={500}
-          fill={configData.comparisonToAlert === "lower" ? "red" : "green"}
+          fill={configData.comparisonToAlert === "lower" ? "#b71c1c" : "green"}
           position="insideTopLeft"
         />
       </ReferenceLine>
@@ -350,14 +350,14 @@ export default function LineCharts(props) {
       <ReferenceLine
         y={maxYValue}
         x={100}
-        stroke={configData.comparisonToAlert === "lower" ? "green" : "red"}
+        stroke={configData.comparisonToAlert === "lower" ? "green" : "#b71c1c"}
         strokeWidth={0}
       >
         <Label
           value={configData.comparisonToAlert === "lower" ? "Best" : "Worst"}
           fontSize="12px"
           fontWeight={500}
-          fill={configData.comparisonToAlert === "lower" ? "green" : "red"}
+          fill={configData.comparisonToAlert === "lower" ? "green" : "#b71c1c"}
           position="insideBottomLeft"
         />
       </ReferenceLine>
@@ -369,7 +369,7 @@ export default function LineCharts(props) {
     if (!data || !data.length) return null;
     const configData = data.find((item) => item && item.highSeverityScoreCutoff);
     if (!configData) return null;
-    return <ReferenceLine y={configData.highSeverityScoreCutoff} stroke="red" strokeWidth={1} strokeDasharray="3 3" />;
+    return <ReferenceLine y={configData.highSeverityScoreCutoff} stroke="#b71c1c" strokeWidth={1} strokeDasharray="3 3" />;
   };
 
   const renderScoreSeverityArea = () => {
