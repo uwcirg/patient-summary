@@ -66,6 +66,7 @@ export default {
   "CIRG-SI": {
     scoringSummaryData: {
       key: "CIRG-SI",
+      id: "3208363_0",
       source: "cnics",
       comparison: "higher",
       comparisonToAlert: "",
@@ -83,6 +84,43 @@ export default {
         scoreSeverity: "high",
         highSeverityScoreCutoff: 3,
       },
+      tableResponseData: [
+        {
+          id: "/44260-8",
+          question: "Thoughts that you would be better off dead or of hurting yourself in some way",
+          source: "cnics",
+          "3208363_CIRG-SI_4": "Nearly every day",
+          "3208364_CIRG-SI_3": "More than half the days",
+          "3208364_CIRG-SI_2": "More than half the days",
+          "3208364_CIRG-SI_1": "Several days",
+        },
+      ],
+      responseData: [
+        {
+          id: "3208363_CIRG-SI_4",
+          date: "2025-05-11",
+          source: "cnics",
+          score: 3,
+        },
+        {
+          id: "3208364_CIRG-SI_3",
+          date: "2024-09-11",
+          source: "epic",
+          score: 2,
+        },
+        {
+          id: "3208364_CIRG-SI_2",
+          date: "2023-08-08",
+          source: "cnics",
+          score: 2,
+        },
+        {
+          id: "3208364_CIRG-SI_1",
+          date: "2023-01-08",
+          source: "cnics",
+          score: 1,
+        },
+      ],
     },
     chartData: {
       ...CHART_CONFIG.default,

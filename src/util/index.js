@@ -54,12 +54,8 @@ export function getChartConfig(questionnaireId) {
   return ChartConfig["default"];
 }
 
-export function getEnvAboutTitle() {
-  return getEnv("REACT_APP_ABOUT_TITLE") || "UCSD CNICS PRO Summary";
-}
-
-export function getEnvAboutTextBody() {
-  return getEnv("REACT_APP_ABOUT_BODY_TEXT");
+export function getEnvAboutContent() {
+  return getEnv("REACT_APP_ABOUT_CONTENT");
 }
 
 export function getEnvAppTitle() {

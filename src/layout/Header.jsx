@@ -24,8 +24,6 @@ import PrintIcon from "@mui/icons-material/LocalPrintshopOutlined";
 import DashboardIcon from "@mui/icons-material/DashboardOutlined";
 import {
   isImagefileExist,
-  getEnvAboutTextBody,
-  getEnvAboutTitle,
   getEnvAppTitle,
   getEnvProjectId,
   getSectionsToShow,
@@ -33,10 +31,9 @@ import {
   scrollToElement,
   toAbsoluteUrl,
 } from "../util";
-import PatientInfo from "../components/PatientInfo";
 import { FhirClientContext } from "../context/FhirClientContext";
-import SimpleModal from "../components/SimpleModal";
-import Version from "../components/Version";
+import About from "../components/About";
+import PatientInfo from "../components/PatientInfo";
 
 export default function Header(props) {
   const theme = useTheme();
@@ -328,31 +325,30 @@ export default function Header(props) {
     </>
   );
   const renderAboutModal = () => {
-    const bodyText = getEnvAboutTextBody();
-    return (
-      <SimpleModal open={aboutModalOpen} onClose={() => setAboutModalOpen(false)}>
-        <Box>
-          <Typography variant="h5">{getEnvAboutTitle()}</Typography>
-          {bodyText && <div dangerouslySetInnerHTML={{ __html: bodyText }} />}
-          {!bodyText && (
-            <Box>
-              <p>
-                More information <a href="https://sites.uab.edu/cnics/">here</a>
-              </p>
-              <p>
-                <a href="mailto:cnicspros@cirg.uw.edu">cnicspros@cirg.uw.edu</a>
-              </p>
-              <Stack flexDirection={"row"} justifyContent={"space-between"} alignItems={"center"} sx={{mt: 4}}>
-                <Version />
-                <Button variant="outlined" fontSize="small" onClick={() => setAboutModalOpen(false)}>
-                  Close
-                </Button>
-              </Stack>
-            </Box>
-          )}
-        </Box>
-      </SimpleModal>
-    );
+    return <About open={aboutModalOpen} onClose={() => setAboutModalOpen(false)}></About>
+    // const content = getEnvAboutContent();
+    // return (
+    //   <SimpleModal open={aboutModalOpen} onClose={() => setAboutModalOpen(false)}>
+    //       {content && <div dangerouslySetInnerHTML={{ __html: content }} />}
+    //       {!content && (
+    //         <Box>
+    //           <Typography variant="h5">UCSD CNICS PRO Summary</Typography>
+    //           <p>
+    //             More information <a href="https://sites.uab.edu/cnics/">here</a>
+    //           </p>
+    //           <p>
+    //             <a href="mailto:cnicspros@cirg.uw.edu">cnicspros@cirg.uw.edu</a>
+    //           </p>
+    //           <Stack flexDirection={"row"} justifyContent={"space-between"} alignItems={"center"} sx={{mt: 4}}>
+    //             <Version />
+    //             <Button variant="outlined" fontSize="small" onClick={() => setAboutModalOpen(false)}>
+    //               Close
+    //             </Button>
+    //           </Stack>
+    //         </Box>
+    //       )}
+    //   </SimpleModal>
+    // );
   };
   const handleMobileMenuClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) {

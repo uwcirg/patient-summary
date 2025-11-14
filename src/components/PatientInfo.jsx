@@ -1,62 +1,46 @@
-import dayjs from "dayjs";
+//import dayjs from "dayjs";
 import React from "react";
 import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
+import Patient from "@/models/Patent";
 
 export default function PatientInfo(props) {
   const theme = useTheme();
-  const mutecColor =
-    theme && theme.palette.muted && theme.palette.muted.main
-      ? theme.palette.muted.main
-      : "#777";
   const { patient } = props;
-  const hasPatientName = () => {
-    return patient && patient.name && patient.name.length;
-  };
+  const patientObj = new Patient(patient);
   const getPatientName = () => {
-    if (!hasPatientName()) return "Patient name unknown";
-    const familyName = patient.name[0].family ? patient.name[0].family : "";
-    const givenName =
-      patient.name[0].given && patient.name[0].given.length
-        ? patient.name[0].given[0]
-        : "";
-    return [familyName, givenName].join(", ");
+    return patientObj.name ?? "unknown";
   };
   const getPatientDob = () => {
-    if (!patient || !patient.birthDate) return "--";
-    return patient.birthDate;
+    return patientObj.dob ?? "--";
   };
   const getPatientAge = () => {
-    const dob = getPatientDob();
-    if (!dob || dob === "--") return "--";
-    const today = new Date().toLocaleDateString("en-us");
-    const date1 = dayjs(today);
-    const date2 = dayjs(dob);
-    return date1.diff(date2, "year");
+    return patientObj.age ?? "--";
   };
-  // const getPatientGender = () => {
-  //   if (!patient.gender) return "--";
-  //   return patient.gender;
-  // };
-
-  const renderMRN = () => (
-    // TODO: use real data
-    <Box>
-      <Typography component="span" sx={{ color: mutecColor, marginLeft: "2px" }} variant="body2">
-        MRN: {" "}
-      </Typography>
-      <Typography component="span" variant="body2">U112233</Typography>
-    </Box>
-  );
+  const renderMRN = () => {
+    if (!patientObj.mrn) return "--";
+    return (
+      <Box>
+        <Typography component="span" sx={{ color: "muted.main", marginLeft: "2px" }} variant="body2">
+          MRN:{" "}
+        </Typography>
+        <Typography component="span" variant="body2">
+          {patientObj.mrn}
+        </Typography>
+      </Box>
+    );
+  };
   const renderDOB = () => (
     <Box>
-      <Typography component="span" sx={{ color: mutecColor }} variant="body2">
+      <Typography component="span" sx={{ color: "muted.main" }} variant="body2">
         dob:{" "}
       </Typography>
-      <Typography component="span" variant="body2">{getPatientDob()}</Typography>
+      <Typography component="span" variant="body2">
+        {getPatientDob()}
+      </Typography>
     </Box>
   );
   const renderAge = () => (
@@ -64,7 +48,7 @@ export default function PatientInfo(props) {
       <Typography
         component="span"
         sx={{
-          color: mutecColor,
+          color: "muted.main",
         }}
         variant="body2"
       >
@@ -75,41 +59,18 @@ export default function PatientInfo(props) {
       </Typography>
     </Box>
   );
-  // const renderGender = () => (
-  //   <Box>
-  //     <Typography component="span" sx={{ color: theme.palette.muted.main }}>
-  //       gender:{" "}
-  //     </Typography>
-  //     <Typography component="span" sx={{ textTransform: "capitalize" }}>
-  //       {getPatientGender()}
-  //     </Typography>
-  //   </Box>
-  // );
   if (!patient) return null;
   return (
-    <Box
-      className="patientinfo-container"
-      sx={{ marginLeft: theme.spacing(1), padding: theme.spacing(0.25, 0, 0.25) }}
-    >
+    <Box className="patientinfo-container" sx={{ marginLeft: theme.spacing(1), padding: theme.spacing(0.25, 0, 0.25) }}>
       <Stack spacing={1} direction="row" alignItems="center">
-        <Typography
-          component="span"
-          className="patient-name"
-          sx={{fontWeight: 500}}
-        >
+        <Typography component="span" className="patient-name" sx={{ fontWeight: 500 }}>
           {getPatientName()}
         </Typography>
         {renderMRN()}
       </Stack>
-      <Stack
-        spacing={1}
-        direction="row"
-        alignItems="center"
-        className="patient-dob-container"
-      >
+      <Stack spacing={1} direction="row" alignItems="center" className="patient-dob-container">
         {renderDOB()}
         {renderAge()}
-        {/* {renderGender()} */}
       </Stack>
     </Box>
   );

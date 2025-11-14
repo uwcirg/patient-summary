@@ -49,6 +49,8 @@ export default function ResponsesViewer({
   const theme = useTheme();
   const [open, setOpen] = useState(false);
 
+  console.log("columns ", columns)
+
   const resolvedHeaderBg = headerBgColor ?? (theme?.palette?.lightest?.main ? theme.palette.lightest.main : "#FFF");
 
 
@@ -188,7 +190,7 @@ export default function ResponsesViewer({
 
 ResponsesViewer.propTypes = {
   title: PropTypes.node.isRequired,
-  tableData: PropTypes.array, // usually data?.tableResponseData
+  tableData: PropTypes.array,
   columns: PropTypes.array, // optional, if omitted we'll auto-build simple columns
   headerBgColor: PropTypes.string, // optional
   buttonLabel: PropTypes.string, // optional ("View" default)

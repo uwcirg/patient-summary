@@ -8,11 +8,11 @@ const style = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: 400,
+  width: 420,
   bgcolor: "background.paper",
   border: "2px solid #ececec",
-  boxShadow: 24,
-  p: 4,
+  boxShadow: 12,
+  p: 3,
 };
 
 export default function SimpleModal({ open, onClose, children }) {
