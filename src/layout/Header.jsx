@@ -335,15 +335,20 @@ export default function Header(props) {
           <Typography variant="h5">{getEnvAboutTitle()}</Typography>
           {bodyText && <div dangerouslySetInnerHTML={{ __html: bodyText }} />}
           {!bodyText && (
-            <>
+            <Box>
               <p>
                 More information <a href="https://sites.uab.edu/cnics/">here</a>
               </p>
               <p>
                 <a href="mailto:cnicspros@cirg.uw.edu">cnicspros@cirg.uw.edu</a>
               </p>
-              <Version />
-            </>
+              <Stack flexDirection={"row"} justifyContent={"space-between"} alignItems={"center"} sx={{mt: 4}}>
+                <Version />
+                <Button variant="outlined" fontSize="small" onClick={() => setAboutModalOpen(false)}>
+                  Close
+                </Button>
+              </Stack>
+            </Box>
           )}
         </Box>
       </SimpleModal>
