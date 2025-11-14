@@ -475,6 +475,6 @@ export function deepMerge(base = {}, override = {}) {
 
 export function isDemoDataEnabled() {
   // TODO FIX this
-  if (String(getEnv("REACT_APP_CONF_API_URL")).toLowerCase().includes("dev")) return true;
+ // if (String(getEnv("REACT_APP_CONF_API_URL")).toLowerCase().includes("dev")) return true;
   return String(getEnv("REACT_APP_ENABLE_DEMO_DATA")).toLowerCase() === "true";
 }
