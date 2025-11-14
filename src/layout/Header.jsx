@@ -8,6 +8,7 @@ import IconButton from "@mui/material/IconButton";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
 import { Divider } from "@mui/material";
 import Grow from "@mui/material/Grow";
+import InfoIcon from "@mui/icons-material/InfoOutlined";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import MenuItem from "@mui/material/MenuItem";
@@ -23,7 +24,9 @@ import PrintIcon from "@mui/icons-material/LocalPrintshopOutlined";
 import DashboardIcon from "@mui/icons-material/DashboardOutlined";
 import {
   isImagefileExist,
-  getEnv,
+  getEnvAboutTextBody,
+  getEnvAboutTitle,
+  getEnvAppTitle,
   getEnvProjectId,
   getSectionsToShow,
   imageOK,
@@ -32,11 +35,14 @@ import {
 } from "../util";
 import PatientInfo from "../components/PatientInfo";
 import { FhirClientContext } from "../context/FhirClientContext";
+import SimpleModal from "../components/SimpleModal";
+import Version from "../components/Version";
 
 export default function Header(props) {
   const theme = useTheme();
   const { patient } = useContext(FhirClientContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const anchorRef = useRef(null);
   const desktopImgRef = useRef(null);
   const mobileImgRef = useRef(null);
@@ -68,15 +74,15 @@ export default function Header(props) {
   const shouldHideReturnButton = () => !returnURL || inEHR;
 
   const renderTitle = () => {
-    const appTitle = getEnv("REACT_APP_TITLE") || "Patient Summary";
+    const appTitle = getEnvAppTitle();
     return (
       <>
         <Typography
-          variant="h4"
+          variant="h5"
           component="h1"
           color="primary"
           sx={{
-            fontSize: inEHR ? "1.6rem" : "1.8rem",
+            fontSize: "1.3rem",
             display: inEHR ? "block" : { xs: "none", sm: "none", md: "block" },
           }}
           className="print-hidden"
@@ -158,6 +164,23 @@ export default function Header(props) {
       );
   };
   const renderPatientInfo = () => <PatientInfo patient={patient}></PatientInfo>;
+  const renderAboutButton = (props) => {
+    return (
+      <Button
+        className="print-hidden"
+        onClick={() => setAboutModalOpen(true)}
+        startIcon={<InfoIcon></InfoIcon>}
+        size="medium"
+        variant="outlined"
+        sx={{
+          backgroundColor: "#FFF",
+        }}
+        {...props}
+      >
+        About
+      </Button>
+    );
+  };
   const renderPrintButton = (props) => {
     return (
       <Button
@@ -212,6 +235,7 @@ export default function Header(props) {
       >
         {!shouldHideReturnButton() && renderReturnButton()}
         {renderPrintButton()}
+        {renderAboutButton()}
       </Stack>
     );
   };
@@ -289,6 +313,12 @@ export default function Header(props) {
                       variant: "text",
                     })}
                   </MenuItem>
+                  <Divider></Divider>
+                  <MenuItem>
+                    {renderAboutButton({
+                      variant: "text",
+                    })}
+                  </MenuItem>
                 </MenuList>
               </ClickAwayListener>
             </Paper>
@@ -297,6 +327,28 @@ export default function Header(props) {
       </Popper>
     </>
   );
+  const renderAboutModal = () => {
+    const bodyText = getEnvAboutTextBody();
+    return (
+      <SimpleModal open={aboutModalOpen} onClose={() => setAboutModalOpen(false)}>
+        <Box>
+          <Typography variant="h5">{getEnvAboutTitle()}</Typography>
+          {bodyText && <div dangerouslySetInnerHTML={{ __html: bodyText }} />}
+          {!bodyText && (
+            <>
+              <p>
+                More information <a href="https://sites.uab.edu/cnics/">here</a>
+              </p>
+              <p>
+                <a href="mailto:cnicspros@cirg.uw.edu">cnicspros@cirg.uw.edu</a>
+              </p>
+              <Version />
+            </>
+          )}
+        </Box>
+      </SimpleModal>
+    );
+  };
   const handleMobileMenuClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) {
       return;
@@ -363,6 +415,7 @@ export default function Header(props) {
               {renderDesktopMenu()}
             </Stack>
             {renderMobileMenu()}
+            {renderAboutModal()}
           </Stack>
         </Toolbar>
       </AppBar>

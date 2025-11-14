@@ -54,6 +54,18 @@ export function getChartConfig(questionnaireId) {
   return ChartConfig["default"];
 }
 
+export function getEnvAboutTitle() {
+  return getEnv("REACT_APP_ABOUT_TITLE") || "UCSD CNICS PRO Summary";
+}
+
+export function getEnvAboutTextBody() {
+  return getEnv("REACT_APP_ABOUT_BODY_TEXT");
+}
+
+export function getEnvAppTitle() {
+  return getEnv("REACT_APP_TITLE") || "CNICS HIV Patient Reported Outcomes Summary";
+}
+
 export function getEnvQuestionnaireList() {
   const configList = getEnv("REACT_APP_QUESTIONNAIRES");
   if (configList)
@@ -131,7 +143,7 @@ export function callback(callbackFunc, params) {
   callbackFunc(params);
 }
 
-export function toAbsoluteUrl (path) {
+export function toAbsoluteUrl(path) {
   try {
     const base =
       (typeof window !== "undefined" && window.location?.origin) ||
@@ -143,7 +155,7 @@ export function toAbsoluteUrl (path) {
     // Absolute already or cannot resolve — just return as-is
     return path;
   }
-};
+}
 export async function fetchEnvData() {
   return new Promise((resolve) => {
     const nodeEnvs = getNodeProcessEnvs();
