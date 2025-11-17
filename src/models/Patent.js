@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { isEmptyArray } from "../util";
+import { getEnv, isEmptyArray } from "../util";
 class Patient {
   constructor(dataObj) {
     this.data = Object.assign({}, dataObj);
@@ -25,8 +25,10 @@ class Patient {
   }
   get mrn() {
     if (!this.data || isEmptyArray(this.data.identifier)) return "";
-    // TODO check config
-    const match = this.data.identifier.find((o) => o.system === "http://hospital.smarthealthit.org");
+    const envSystem = getEnv("REACT_APP_LAUNCH_FHIR_MRN_SYSTEM");
+    const match = this.data.identifier.find(
+      (o) => o.system === (envSystem ? envSystem : "http://hospital.smarthealthit.org"),
+    );
     if (match) return match.value;
     return "";
   }
