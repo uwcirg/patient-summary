@@ -442,9 +442,13 @@ export function severityFromScore(score, config = {}) {
   return bands[bands.length - 1]?.label ?? "low";
 }
 
-export function meaningFromSeverity(sev, config = {}) {
+export function meaningFromSeverity(sev, config = {}, responses = []) {
   const bands = config?.severityBands;
-  if (!isEmptyArray(bands)) return bands.find((b) => b.label === sev)?.meaning ?? null;
+  if (!isEmptyArray(bands))
+    return (
+      bands.find((b) => b.label === sev)?.meaning ??
+      (config?.fallbackMeaningFunc ? config.fallbackMeaningFunc(sev, responses) : null)
+    );
   return null;
 }
 
@@ -466,7 +470,7 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   }
   const score = isNumber(curScore) ? curScore : (curScore ?? null);
   const scoreSeverity = severityFromScore(score, config);
-  const meaning = meaningFromSeverity(scoreSeverity, config);
+  const meaning = meaningFromSeverity(scoreSeverity, config, current?.responses);
   const source = current?.source;
   const alert = isNumber(score) && config?.highSeverityScoreCutoff && score >= config?.highSeverityScoreCutoff;
   const warning = isNumber(score) && config?.mediumSeverityScoreCutoff && score >= config?.mediumSeverityScoreCutoff;

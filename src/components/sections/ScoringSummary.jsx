@@ -211,10 +211,19 @@ export default function ScoringSummary(props) {
     {
       id: "meaning",
       header: "Meaning",
-      align: "center",
+      align: "left",
       headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
       cellProps: { sx: baseCellStyle, size: "small", className: "capitalized-text" },
-      accessor: (row) => (row.meaning ? row.meaning : (row.scoreMeaning ?? "")),
+      accessor: (row) =>
+        row.meaning
+          ? row.meaning.includes(",")
+            ? row.meaning.split(",").map((m, index) => (
+                <Box sx={{ mb: 0.3 }} key={`${row.id}_meaning_${index}`}>
+                  {m}
+                </Box>
+              ))
+            : row.meaning
+          : "",
       type: "text",
     },
     {

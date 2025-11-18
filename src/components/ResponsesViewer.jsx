@@ -49,8 +49,6 @@ export default function ResponsesViewer({
   const theme = useTheme();
   const [open, setOpen] = useState(false);
 
-  console.log("columns ", columns)
-
   const resolvedHeaderBg = headerBgColor ?? (theme?.palette?.lightest?.main ? theme.palette.lightest.main : "#FFF");
 
 

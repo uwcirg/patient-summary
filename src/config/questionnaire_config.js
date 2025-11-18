@@ -1,5 +1,5 @@
 import { isEmptyArray } from "@util";
-import { normalizeLinkId } from "@util/fhirUtil";
+import { normalizeLinkId, linkIdEquals } from "@util/fhirUtil";
 import CHART_CONFIG from "./chart_config";
 import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS } from "@/consts";
 const questionnaireConfigs = {
@@ -93,13 +93,51 @@ const questionnaireConfigs = {
     ],
     skipChart: true,
   },
-   "CIRG-CNICS-IPV4": {
+  "CIRG-CNICS-IPV4": {
     key: "CIRG-CNICS-IPV4",
     instrumentName: "IPV-4",
     title: "IPV-4",
     matchMode: "fuzzy",
     linkIdMatchMode: "strict",
     questionLinkIds: ["IPV4-1", "IPV4-2", "IPV4-3", "IPV4-4"],
+    highSeverityScoreCutoff: 1,
+    displayMeaningNotScore: true,
+    fallbackScoreMap: {
+      "ipv4-1-0": 1,
+      "ipv4-1-1": 0,
+      "ipv4-2-0": 1,
+      "ipv4-2-1": 0,
+      "ipv4-3-0": 1,
+      "ipv4-3-1": 0,
+      "ipv4-4-0": 1,
+      "ipv4-4-1": 0,
+    },
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      if (!severity || severity === "low") return "";
+      //console.log("severity ", severity, "responses ", responses);
+      let arrMeanings = [];
+      responses.forEach((response) => {
+        if (linkIdEquals(response.linkId, "IPV4-1") && String(response.answer).toLowerCase() === "yes") {
+          arrMeanings.push("Felt trapped");
+        }
+        if (linkIdEquals(response.linkId, "IPV4-2") && String(response.answer).toLowerCase() === "yes") {
+          arrMeanings.push("Fearful of harm");
+        }
+        if (linkIdEquals(response.linkId, "IPV4-3") && String(response.answer).toLowerCase() === "yes") {
+          arrMeanings.push("Sexual violence");
+        }
+        if (linkIdEquals(response.linkId, "IPV4-4") && String(response.answer).toLowerCase() === "yes") {
+          arrMeanings.push("Physical violence");
+        }
+      });
+      return arrMeanings.join(", ");
+    },
+    severityBands: [
+      { min: 1, label: "high" },
+      { min: 0, label: "low" },
+    ],
+    skipChart: true,
   },
   "CIRG-CP-ECOG": {
     key: "CIRG-CP-ECOG",
@@ -230,7 +268,7 @@ const questionnaireConfigs = {
     matchMode: "fuzzy",
     chartParams: { ...CHART_CONFIG.default },
   },
-   "CIRG-PC-PTSD-5": {
+  "CIRG-PC-PTSD-5": {
     key: "CIRG-PC-PTSD-5",
     questionnaireId: "CIRG-PC-PTSD-5",
     questionnaireName: "CIRG-PC-PTSD-5",

@@ -8,7 +8,7 @@ import {
   isNumber,
   isPlainObject,
   fuzzyMatch,
-  mergeNonEmpty,
+  //mergeNonEmpty,
   normalizeStr,
   objectToString,
   toFiniteNumber,
@@ -48,6 +48,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
    * @param {'strict'|'fuzzy'} [config.linkIdMatchMode]
    * @param {number} config.highSeverityScoreCutoff
    * @param {{min:number,label:string,meaning?:string}[]} [config.severityBands]
+   * @param {function} config.fallbackMeaningFunc
    * @param {Object|Array} patientBundle
    */
   constructor(config = {}, patientBundle) {
@@ -80,6 +81,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       linkIdMatchMode: config.linkIdMatchMode ?? "fuzzy",
       severityBands: bands,
       highSeverityScoreCutoff: config.highSeverityScoreCutoff ?? null,
+      fallbackMeaningFunc: config.fallbackMeaningFunc ?? null
     };
 
     this.patientBundle = patientBundle || null;
@@ -400,13 +402,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (primNum != null) return primNum;
 
     const coding = this.answerCoding(ans);
-    // console.log("ans ", ans, " coding ", coding)
+    //console.log("ans ", ans, " coding ", coding)
     if (coding?.code) {
       const fromExt = this.getAnswerValueByExtension(questionnaire, coding.code);
       if (fromExt != null && isNumber(fromExt)) return fromExt;
       const codeKey = String(coding.code).toLowerCase();
+      //console.log("code ", codeKey, " result ", fallbackScoreMap[codeKey])
       if (fallbackScoreMap[codeKey] != null) return fallbackScoreMap[codeKey];
-      //  console.log("coding code ", fallbackScoreMap, fallbackScoreMap[coding.code])
+      //console.log("coding code ", fallbackScoreMap, fallbackScoreMap[coding.code])
       return isNumber(coding.code) ? coding.code : null;
     }
     return null;
@@ -515,7 +518,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const questionScores = scoreLinkIds.map((id) => this.getScoringByResponseItem(questionnaire, flat, id, config));
     const allAnswered = questionScores.length > 0 && questionScores.every((v) => v != null);
-
+    // console.log("scoreLinkIds ", scoreLinkIds, " questionScores ", questionScores)
     let score = null;
     if (scoringQuestionScore != null) score = scoringQuestionScore;
     else if (nonScoring.length > 0 && allAnswered) {
@@ -547,7 +550,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       this.cfg.questionnaireUrl,
     );
     const fromRegistry = keyToUse ? questionnaireConfig[keyToUse] : null;
-    const config = mergeNonEmpty(this.cfg, fromRegistry);
+   // const config = mergeNonEmpty(this.cfg, fromRegistry);
+   const config = fromRegistry ? fromRegistry: this.cfg;
 
     const rows = (questionnaireResponses || []).map((qr, rIndex) => {
       const flat = this.flattenResponseItems(qr.item);
@@ -567,7 +571,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         date: qr.authored ?? null,
         lastAssessed: new Date(qr.authored).toLocaleDateString(),
         source,
-        raw: flat,
         responses,
         score,
         scoringQuestionScore,
@@ -794,7 +797,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       this.cfg.questionnaireUrl,
     );
     const fromRegistry = keyToUse ? questionnaireConfig[keyToUse] : null;
-    const config = mergeNonEmpty(this.cfg, fromRegistry);
+    const config = fromRegistry ? fromRegistry : this.config;
 
     //console.log("key ", keyToUse, " config actually used ", config, " qrs ", qrs);
 
