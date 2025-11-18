@@ -12,7 +12,7 @@ export default function PatientInfo(props) {
   const { patient } = props;
   const patientObj = new Patient(patient);
   const getPatientName = () => {
-    return patientObj.name ?? "unknown";
+    return patientObj.name ? patientObj.name : "Patient name unknown";
   };
   const getPatientDob = () => {
     return patientObj.dob ?? "--";

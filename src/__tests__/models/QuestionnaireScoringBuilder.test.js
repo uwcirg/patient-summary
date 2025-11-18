@@ -63,13 +63,13 @@ const BUNDLE = { resourceType: "Bundle", entry: [{ resource: Q }, { resource: QR
 
 describe("QuestionnaireScoringBuilder", () => {
   it("uses patientBundle by default and sorts newest-first", () => {
-    const b = new QuestionnaireScoringBuilder({ questionnaireUrl: Q.url, matchMode: "strict" }, BUNDLE);
+    const b = new QuestionnaireScoringBuilder({ questionnaireUrl: Q.url, questionnaireMatchMode: "strict" }, BUNDLE);
     const qrs = b.fromBundleForThisQuestionnaire();
     expect(qrs.map((x) => x.id)).toEqual(["r1", "r0"]);
   });
 
   it("override bundle narrows results", async () => {
-    const b = new QuestionnaireScoringBuilder({ questionnaireUrl: Q.url, matchMode: "strict" }, BUNDLE);
+    const b = new QuestionnaireScoringBuilder({ questionnaireUrl: Q.url, questionnaireMatchMode: "strict" }, BUNDLE);
     const override = { resourceType: "Bundle", entry: [{ resource: Q }, { resource: QR0 }] };
     const qrs = b.fromBundleForThisQuestionnaire({ completedOnly: true }, override);
     expect(qrs.map((x) => x.id)).toEqual(["r0"]);
@@ -137,7 +137,7 @@ describe("QuestionnaireScoringBuilder", () => {
 
   it("index resolves Questionnaire", () => {
     const b = new QuestionnaireScoringBuilder(
-      { questionnaireId: Q.id, questionnaireUrl: Q.url, matchMode: "strict" },
+      { questionnaireId: Q.id, questionnaireUrl: Q.url, questionnaireMatchMode: "strict" },
       BUNDLE,
     );
     const idx = b.indexQuestionnairesInBundle();

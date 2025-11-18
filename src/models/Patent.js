@@ -12,12 +12,12 @@ class Patient {
     return [familyName, givenName].join(", ").trim();
   }
   get dob() {
-    if (!this.data || !this.data.birthDate) return "";
+    if (!this.data || !this.data.birthDate) return null;
     return this.data.birthDate;
   }
   get age() {
     const dob = this.dob;
-    if (!dob) return "";
+    if (!dob) return null;
     const today = new Date().toLocaleDateString("en-us");
     const date1 = dayjs(today);
     const date2 = dayjs(dob);

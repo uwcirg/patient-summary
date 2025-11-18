@@ -62,7 +62,7 @@ function buildBundle({ count = 25, seed = 7 }) {
 describe("QuestionnaireScoringBuilder smoke (randomized, deterministic)", () => {
   it.skip("sync & async paths sort newest-first and respect bundle override", async () => {
     const { bundle, questionnaire, expectedNewestFirst } = buildBundle({ count: 25, seed: 99 });
-    const b = new QuestionnaireScoringBuilder({ questionnaireUrl: questionnaire.url, matchMode: "strict" }, bundle);
+    const b = new QuestionnaireScoringBuilder({ questionnaireUrl: questionnaire.url, questionnaireMatchMode: "strict" }, bundle);
 
     const qrs = b.fromBundleForThisQuestionnaire();
     expect(qrs.map((x) => x.id)).toEqual(expectedNewestFirst);

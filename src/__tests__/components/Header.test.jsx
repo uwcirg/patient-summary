@@ -13,7 +13,9 @@ vi.mock("../../util", () => ({
   getSectionsToShow: vi.fn(() => []), // no sections for mobile list
   imageOK: vi.fn(() => true),
   scrollToElement: vi.fn(),
-  toAbsoluteUrl: vi.fn()
+  toAbsoluteUrl: vi.fn(),
+  getEnvAppTitle: vi.fn(() => "Patient Summary"),
+  getEnvAboutContent: vi.fn(() => "About content")
 }));
 
 vi.mock("../../components/PatientInfo", () => ({

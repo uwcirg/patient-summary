@@ -31,6 +31,7 @@ const RT_QR = "questionnaireresponse";
 const RT_Q = "Questionnaire";
 
 const isQr = (res) => res && String(res.resourceType).toLowerCase() === RT_QR;
+const normalizeObjectKeys = (o) => o ? Object.fromEntries(Object.entries(o).map(([k, v]) => [String(k).toLowerCase(), v])) : null;
 
 export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   /**
@@ -44,7 +45,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
    * @param {Object} [config.scoringParams]
    * @param {string[]} [config.questionLinkIds]
    * @param {string[]}[config.subScoringQuestionIds]
-   * @param {'strict'|'fuzzy'} [config.matchMode]
+   * @param {'strict'|'fuzzy'} [config.questionnaireMatchMode]
    * @param {'strict'|'fuzzy'} [config.linkIdMatchMode]
    * @param {number} config.highSeverityScoreCutoff
    * @param {{min:number,label:string,meaning?:string}[]} [config.severityBands]
@@ -58,9 +59,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (bands) bands.sort((a, b) => (b.min ?? 0) - (a.min ?? 0));
 
     const rawFallback = config?.fallbackScoreMap ?? DEFAULT_FALLBACK_SCORE_MAPS.default;
-    this.fallbackScoreMap = Object.fromEntries(
-      Object.entries(rawFallback).map(([k, v]) => [String(k).toLowerCase(), v]),
-    );
+    this.fallbackScoreMap = normalizeObjectKeys(rawFallback);
 
     // normalize linkIds from config once
     const norm = (id) => (id == null ? id : normalizeLinkId(String(id)));
@@ -77,11 +76,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       subScoringQuestionIds: normArr(config.subScoringQuestionIds),
       scoringParams: config.scoringParams ?? {},
       questionLinkIds: normArr(config.questionLinkIds),
-      matchMode: config.matchMode ?? "fuzzy",
+      questionnaireMatchMode: config.questionnaireMatchMode ?? "fuzzy",
       linkIdMatchMode: config.linkIdMatchMode ?? "fuzzy",
       severityBands: bands,
       highSeverityScoreCutoff: config.highSeverityScoreCutoff ?? null,
-      fallbackMeaningFunc: config.fallbackMeaningFunc ?? null
+      fallbackMeaningFunc: config.fallbackMeaningFunc ?? null,
     };
 
     this.patientBundle = patientBundle || null;
@@ -260,7 +259,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const name = normalizeStr(configToUse.questionnaireName);
     const url = normalizeStr(configToUse.questionnaireUrl);
 
-    if ((configToUse.matchMode ?? "fuzzy") === "strict") {
+    if ((configToUse.questionnaireMatchMode ?? "fuzzy") === "strict") {
       return (url && ref === url) || (id && ref === id) || (name && ref === name);
     }
     return (
@@ -387,7 +386,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
   getScoreByAnswerItem(ans, questionnaire, config = {}) {
     if (ans == null) return null;
-    const fallbackScoreMap = config?.fallbackScoreMap ? config?.fallbackScoreMap : this.fallbackScoreMap;
+    const fallbackScoreMap = normalizeObjectKeys(config?.fallbackScoreMap ? config?.fallbackScoreMap : this.fallbackScoreMap);
     // Primitive short-circuit: numbers or strings like "Nearly every day"
     if (!isPlainObject(ans)) {
       const num = toFiniteNumber(ans);
@@ -417,7 +416,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   getAnswerItemDisplayValue(answerItem, config = {}) {
     if (!answerItem) return null;
-    const fallbackScoreMap = config?.fallbackScoreMap ? config?.fallbackScoreMap : this.fallbackScoreMap;
+    const fallbackScoreMap = normalizeObjectKeys(config?.fallbackScoreMap ? config?.fallbackScoreMap : this.fallbackScoreMap);
     // If it's already a primitive (e.g., "Nearly every day", 2, true), just show it
     if (!isPlainObject(answerItem)) return answerItem;
     // Prefer human display for codings
@@ -550,8 +549,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       this.cfg.questionnaireUrl,
     );
     const fromRegistry = keyToUse ? questionnaireConfig[keyToUse] : null;
-   // const config = mergeNonEmpty(this.cfg, fromRegistry);
-   const config = fromRegistry ? fromRegistry: this.cfg;
+    // const config = mergeNonEmpty(this.cfg, fromRegistry);
+    const config = fromRegistry ? fromRegistry : this.cfg;
 
     const rows = (questionnaireResponses || []).map((qr, rIndex) => {
       const flat = this.flattenResponseItems(qr.item);
@@ -644,7 +643,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (isEmptyArray(qIds) && configToUse && configToUse.questionLinkIds) qIds = configToUse.questionLinkIds;
     }
     const result = [...qIds]
-     // .filter((id) => !configToUse || !this.isLinkIdEquals(configToUse.scoringQuestionId, id, configToUse))
+      // .filter((id) => !configToUse || !this.isLinkIdEquals(configToUse.scoringQuestionId, id, configToUse))
       .map((qid) => {
         const row = {};
         // Question text from first available response carrying that qid
@@ -811,7 +810,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const looksLikeHost = (arr) =>
         (arr || []).some((qr) => {
           const q = qr?.resource?.questionnaire || "";
-          return hostIds.some((hid) => this.questionnaireRefMatches(q, { questionnaireId: hid, matchMode: "fuzzy" }));
+          return hostIds.some((hid) =>
+            this.questionnaireRefMatches(q, { questionnaireId: hid, questionnaireMatchMode: "fuzzy" }),
+          );
         });
 
       if (!qrs?.length || looksLikeHost(qrs)) {
@@ -824,7 +825,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           // Search bundle for host groups
           const groups = this.fromBundleGrouped({ completedOnly: true });
           for (const k of Object.keys(groups)) {
-            if (hostIds.some((hid) => this.questionnaireRefMatches(k, { questionnaireId: hid, matchMode: "fuzzy" }))) {
+            if (
+              hostIds.some((hid) =>
+                this.questionnaireRefMatches(k, { questionnaireId: hid, questionnaireMatchMode: "fuzzy" }),
+              )
+            ) {
               hostQrs.push(...groups[k]);
             }
           }

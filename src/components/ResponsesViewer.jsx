@@ -106,8 +106,8 @@ export default function ResponsesViewer({
 
   return (
     <>
-      <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} gap={1}>
-        <Typography variant="subtitle2">{responsesTileTitle}</Typography>
+      <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} gap={0.5}>
+        <Typography variant="subtitle2" sx={{textAlign: "center"}}>{responsesTileTitle}</Typography>
         <Button
           color="primary"
           title="View responses by date"

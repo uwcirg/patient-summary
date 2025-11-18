@@ -325,30 +325,7 @@ export default function Header(props) {
     </>
   );
   const renderAboutModal = () => {
-    return <About open={aboutModalOpen} onClose={() => setAboutModalOpen(false)}></About>
-    // const content = getEnvAboutContent();
-    // return (
-    //   <SimpleModal open={aboutModalOpen} onClose={() => setAboutModalOpen(false)}>
-    //       {content && <div dangerouslySetInnerHTML={{ __html: content }} />}
-    //       {!content && (
-    //         <Box>
-    //           <Typography variant="h5">UCSD CNICS PRO Summary</Typography>
-    //           <p>
-    //             More information <a href="https://sites.uab.edu/cnics/">here</a>
-    //           </p>
-    //           <p>
-    //             <a href="mailto:cnicspros@cirg.uw.edu">cnicspros@cirg.uw.edu</a>
-    //           </p>
-    //           <Stack flexDirection={"row"} justifyContent={"space-between"} alignItems={"center"} sx={{mt: 4}}>
-    //             <Version />
-    //             <Button variant="outlined" fontSize="small" onClick={() => setAboutModalOpen(false)}>
-    //               Close
-    //             </Button>
-    //           </Stack>
-    //         </Box>
-    //       )}
-    //   </SimpleModal>
-    // );
+    return <About open={aboutModalOpen} onClose={() => setAboutModalOpen(false)}></About>;
   };
   const handleMobileMenuClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) {

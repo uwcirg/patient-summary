@@ -1,4 +1,4 @@
-// Helper to make a response item in the same shape your code expects
+// Helper to make a response item in the same shape the code expects
 const mkResp = ({
   date,                       // ISO date string
   score,                      // number
@@ -141,5 +141,5 @@ export const scoringSummaryDataFixture = {
   },
 };
 
-// Named helper if you want a fresh copy in tests
+// Named helper if want a fresh copy in tests
 export const makeScoringSummaryDataFixture = () => JSON.parse(JSON.stringify(scoringSummaryDataFixture));
