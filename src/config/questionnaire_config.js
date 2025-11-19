@@ -351,6 +351,7 @@ const questionnaireConfigs = {
     ],
     minimumScore: 0,
     maximumScore: 3,
+    displayMeaningNotScore: true,
     // normal instrument defaults you already have, plus:
     deriveFrom: {
       hostIds: ["CIRG-PHQ9"], // one or many hosts
