@@ -146,6 +146,9 @@ p {
     margin-right: 0 !important;
   }
 }
+.MuiButtonBase-root.MuiTableSortLabel-root {
+    white-space: pre;
+}
 .recharts-legend-item-text {
   white-space: nowrap;
   color: rgb(120, 40, 31);
