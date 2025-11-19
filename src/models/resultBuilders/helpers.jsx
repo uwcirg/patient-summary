@@ -116,7 +116,7 @@ export function summarizeCIDASHelper(
       score,
       scoreSeverity,
       highSeverityScoreCutoff,
-      scoreMeaning: meaningFromSeverity(scoreSeverity),
+      meaning: meaningFromSeverity(scoreSeverity),
       alertNote: suicideScore >= 1 ? "suicide concern" : null,
       scoringParams: { ...ctx.config, maximumScore, scoreSeverity },
       totalAnsweredItems,
@@ -207,7 +207,7 @@ export function summarizeMiniCogHelper(
       clock_draw_score: clockScore,
       score: totalScore,
       scoreSeverity,
-      scoreMeaning: meaningFromSeverity(scoreSeverity),
+      meaning: meaningFromSeverity(scoreSeverity),
       comparisonToAlert: "lower",
       scoringParams: { ...(ctx.cfg ?? { maximumScore: 5 }), scoreSeverity },
       highSeverityScoreCutoff,
@@ -450,6 +450,38 @@ export function meaningFromSeverity(sev, config = {}, responses = []) {
       (config?.fallbackMeaningFunc ? config.fallbackMeaningFunc(sev, responses) : null)
     );
   return null;
+}
+
+export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, config = {}, ctx) {
+  const scoreLinkIds = !isEmptyArray(config?.questionLinkIds)
+    ? config.questionLinkIds.filter((q) => ctx.isNonScoreLinkId(q, config))
+    : ctx.getAnswerLinkIdsByQuestionnaire(questionnaire, config);
+
+  const scoringQuestionId = config?.scoringQuestionId;
+
+  const scoringQuestionScore = scoringQuestionId
+    ? ctx.getScoringByResponseItem(questionnaire, responseItemsFlat, scoringQuestionId, config)
+    : null;
+
+  const questionScores = scoreLinkIds.map((id) =>
+    ctx.getScoringByResponseItem(questionnaire, responseItemsFlat, id, config),
+  );
+
+  const allAnswered = questionScores.length > 0 && questionScores.every((v) => v != null);
+
+  let score = null;
+  if (scoringQuestionScore != null) {
+    score = scoringQuestionScore;
+  } else if (allAnswered) {
+    score = questionScores.reduce((sum, n) => sum + (n ?? 0), 0);
+  }
+
+  return {
+    score,
+    scoringQuestionScore,
+    questionScores,
+    scoreLinkIds,
+  };
 }
 
 export function getScoreParamsFromResponses(responses, config = {}) {
