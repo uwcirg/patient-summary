@@ -22,7 +22,7 @@ export const INSTRUMENT_DEFAULTS = {
   "CIRG-Food-Security": {
     title: "Food Security",
   },
-  "CIRG-Financial-Situation": {
+  "CIRG-CNICS-FINANCIAL": {
     title: "Financial Situation",
   },
   "CIRG-Fall-Risk": {
@@ -165,7 +165,7 @@ export const report_config_base = {
             "CIRG-CNICS-IPV4",
             "CIRG-CNICS-ASSIST-OD",
             "CIRG-Food-Security",
-            "CIRG-Financial-Situation",
+            "CIRG-CNICS-FINANCIAL",
             "CIRG-Fall-Risk",
             "CIRG-Shortness-of-Breath",
           ],

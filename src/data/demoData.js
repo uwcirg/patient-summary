@@ -204,9 +204,9 @@ export default {
       source: "cnics",
     },
   },
-  "CIRG-Financial-Situation": {
+  "CIRG-CNICS-FINANCIAL": {
     scoringSummaryData: {
-      key: "CIRG-Financial-Situation",
+      key: "CIRG-CNICS-FINANCIAL",
       comparison: "",
       comparisonToAlert: "",
       instrumentName: "Financial Situation",

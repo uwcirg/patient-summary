@@ -3,7 +3,6 @@ import {
   conceptText,
   getDefaultQuestionItemText,
   getValidObservationsForQRs,
-  // getValueFromResource,
   getResourcesByResourceType,
   linkIdEquals,
   normalizeLinkId,
@@ -13,7 +12,10 @@ import { getLocaleDateStringFromDate, generateUUID, isEmptyArray, isNil, isNumbe
 import Scoring from "@components/Score";
 import { DEFAULT_ANSWER_OPTIONS } from "@/consts";
 import { getDateDomain } from "@/config/chart_config";
-import { findMatchingQuestionLinkIdFromCode, getConfigForQuestionnaire } from "@/config/questionnaire_config";
+import questionnaireConfigs, {
+  findMatchingQuestionLinkIdFromCode,
+  getConfigForQuestionnaire,
+} from "@/config/questionnaire_config";
 import { report_config } from "@/config/report_config";
 
 /* ---------------------------------------------
@@ -24,7 +26,6 @@ import { report_config } from "@/config/report_config";
 
 /** SLUMS (education-aware) */
 export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, opts = {}) {
-  const SCORING_QID = ctx.cfg.scoringQuestionId || "71492-3";
   const conditions = opts.conditions || getResourcesByResourceType(ctx.patientBundle);
   const hasLowerLevelEducation = !isEmptyArray(conditions)
     ? conditions.some((c) =>
@@ -34,13 +35,11 @@ export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, 
 
   const rows = (questionnaireResponses || []).map((qr) => {
     const flat = ctx.flattenResponseItems(qr.item || []);
-    let score = ctx.getScoringByResponseItem(questionnaire, flat, SCORING_QID);
-    if (typeof score !== "number") {
-      const formatted = ctx.formattedResponses(questionnaire?.item ?? [], flat);
-      const firstAns = formatted?.[0]?.answer;
-      const parsed = Number(firstAns);
-      score = Number.isFinite(parsed) ? parsed : null;
-    }
+    const { score, totalAnsweredItems, totalItems } = ctx.getScoreStatsFromQuestionnaireResponse(
+      qr,
+      questionnaire,
+      questionnaireConfigs["CIRG_SLUMS"],
+    );
 
     const educationLevel = hasLowerLevelEducation ? "low" : "high";
     let scoreSeverity = "low";
@@ -48,9 +47,6 @@ export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, 
       if (educationLevel === "low" && score <= 19) scoreSeverity = "high";
       else if (educationLevel === "high" && score <= 20) scoreSeverity = "high";
     }
-
-    const totalItems = ctx.getAnswerLinkIdsByQuestionnaire(questionnaire).length;
-    const totalAnsweredItems = flat.filter((it) => !linkIdEquals(it.linkId, SCORING_QID)).length;
 
     let responses = ctx.formattedResponses(questionnaire?.item ?? null, flat);
     if (!responses.length) responses = ctx.responsesOnly(flat);
@@ -83,29 +79,25 @@ export function summarizeCIDASHelper(
   questionnaireResponses,
   questionnaire,
   {
-    itemLinkIds,
     suicideLinkId = "cs-idas-15",
-    scoringQuestionId = ctx.cfg.scoringQuestionId || "c-ids-score",
     maximumScore = 36,
     highSeverityScoreCutoff = 19,
   } = {},
 ) {
-  const DEFAULT_IDS = Array.from({ length: 18 }, (_, i) => `cs-idas-${i + 1}`);
-  const IDS = Array.isArray(itemLinkIds) && itemLinkIds.length ? itemLinkIds : DEFAULT_IDS;
   const coalesceNum = (n, fb = 0) => (typeof n === "number" && Number.isFinite(n) ? n : fb);
 
   const rows = (questionnaireResponses || []).map((qr) => {
     const flat = ctx.flattenResponseItems(qr.item || []);
 
-    const perItemScores = IDS.map((id) => coalesceNum(ctx.getScoringByResponseItem(questionnaire, flat, id), 0));
-    const score = perItemScores.reduce((a, b) => a + b, 0);
+    const { score, totalAnsweredItems, totalItems } = ctx.getScoreStatsFromQuestionnaireResponse(
+      qr,
+      questionnaire,
+      questionnaireConfigs["CIRG-C-IDAS"],
+    );
 
     const suicideScore = coalesceNum(ctx.getScoringByResponseItem(questionnaire, flat, suicideLinkId), 0);
     const scoreSeverity = score > 18 || suicideScore >= 1 ? "high" : "low";
-
     const responses = ctx.formattedResponses(questionnaire?.item ?? [], flat);
-    const totalItems = ctx.getAnswerLinkIdsByQuestionnaire(questionnaire).length;
-    const totalAnsweredItems = flat.filter((it) => !linkIdEquals(it.linkId, scoringQuestionId)).length;
 
     return {
       ...getConfigForQuestionnaire(questionnaire?.id),
@@ -145,7 +137,6 @@ export function summarizeMiniCogHelper(
 
   const rows = (questionnaireResponses || []).map((qr) => {
     const flat = ctx.flattenResponseItems(qr.item || []);
-
     // Recall score
     let recallScore = null;
     if (recallLinkIds.length === 1) {
@@ -532,9 +523,7 @@ export function getScoreParamsFromResponses(responses, config = {}) {
 export function getResponseColumns(data) {
   if (isEmptyArray(data)) return [];
 
-  const sources = [...new Set(data.filter((item) => !!item.source).map((item) => item.source))];
-  const dates =
-    data?.map((item) => ({ date: item.date, id: item.id, source: sources.length > 1 ? item.source : null })) ?? [];
+  const dates = data?.map((item) => ({ date: item.date, id: item.id, source: item.source })) ?? [];
 
   // tiny safe normalizer to avoid raw objects rendering
   const normalize = (v) => {

@@ -98,7 +98,7 @@ export default function ScoringSummary(props) {
   // -------- reusable default cell renderers
   const defaultRenderers = {
     text: (row, value) => (
-      <span className={row.alert ? "text-error" : row.warning ? "text-warning" : "muted-text"}>{value ?? "N/A"}</span>
+      <span className={row.alert ? "text-error" : row.warning ? "text-warning" : (!value ? "muted-text" : "")}>{value ?? "N/A"}</span>
     ),
     date: (row, value) => (
       <Stack direction={"column"} spacing={1} alignItems={"center"} justifyContent={"center"}>

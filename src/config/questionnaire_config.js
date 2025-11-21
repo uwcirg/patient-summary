@@ -93,6 +93,42 @@ const questionnaireConfigs = {
     ],
     skipChart: true,
   },
+  "CIRG-CNICS-FINANCIAL": {
+    key: "CIRG-CNICS-FINANCIAL",
+    instrumentName: "CNICS Financial Situation Questionnaire",
+    title: "Financial Situation",
+    questionnaireMatchMode: "fuzzy",
+    highSeverityScoreCutoff: 1,
+    comparisonToAlert: "higher",
+    displayMeaningNotScore: true,
+    scoringQuestionId: "FINANCIAL-0",
+    questionLinkIds: ["FINANCIAL-0"],
+    linkIdMatchMode: "strict",
+    fallbackScoreMap: {
+      "FINANCIAL-0-0": 1,
+      "FINANCIAL-0-1": 0,
+      "FINANCIAL-0-2": 0,
+      "FINANCIAL-0-3": 0,
+    },
+    severityBands: [
+      { min: 1, label: "high" },
+      { min: 0, label: "low" },
+    ],
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      if (!severity) return "";
+      //console.log("severity ", severity, "responses ", responses);
+      let meaning = "";
+      responses.forEach((response) => {
+        if (meaning) return true;
+        if (response.answer) {
+          meaning = response.answer.split(",")[0];
+        }
+      });
+      return meaning;
+    },
+    skipChart: true,
+  },
   "CIRG-CNICS-IPV4": {
     key: "CIRG-CNICS-IPV4",
     instrumentName: "IPV-4",

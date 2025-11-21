@@ -229,6 +229,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
   isResponseQuestionItem(item, config) {
     if (!item || !item.linkId) return false;
+    if (item.readOnly) return false;
     const linkId = String(item.linkId).toLowerCase();
     const configToUse = config ? config : this.cfg;
     const scoreLinkId = configToUse?.scoringQuestionId;
@@ -473,8 +474,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       ...(responseItemsFlat ?? []).map((item, index) => {
         if (!item.id) item.id = item.linkId;
         const ans = this.firstAnswer(item);
+        const coding = this.answerCoding(ans);
         item.answer = this.getAnswerItemDisplayValue(ans, config);
         item.question = item.text ?? `Question ${index}`;
+        item.code = coding ? coding.code : null;
         return item;
       }),
     ].forEach((item) => allResponses.set(normalizeLinkId(item.id), item));
@@ -484,11 +487,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   responsesOnly(responseItemsFlat = [], config = {}) {
     return (responseItemsFlat || []).map((item) => {
       const ans = this.firstAnswer(item);
+      const coding = this.answerCoding(ans);
       return {
         id: item.linkId,
         answer: this.getAnswerItemDisplayValue(ans, config) ?? null,
         question: item.text,
-        text: item.text,
+        code: coding ? coding.code : null,
       };
     });
   }
