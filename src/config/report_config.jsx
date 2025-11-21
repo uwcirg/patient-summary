@@ -25,6 +25,9 @@ export const INSTRUMENT_DEFAULTS = {
   "CIRG-CNICS-FINANCIAL": {
     title: "Financial Situation",
   },
+  "CIRG-CNICS-HOUSING": {
+    title: "Housing",
+  },
   "CIRG-Fall-Risk": {
     title: "Fall Risk",
   },
@@ -166,6 +169,7 @@ export const report_config_base = {
             "CIRG-CNICS-ASSIST-OD",
             "CIRG-Food-Security",
             "CIRG-CNICS-FINANCIAL",
+            "CIRG-CNICS-HOUSING",
             "CIRG-Fall-Risk",
             "CIRG-Shortness-of-Breath",
           ],
