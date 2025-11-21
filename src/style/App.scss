@@ -104,6 +104,9 @@ p {
 .text-right {
   text-align: right;
 }
+.text-normal {
+  color: #000000de;
+}
 .text-success {
   color: $success-color;
 }
@@ -352,7 +355,7 @@ p {
   .MuiAccordionSummary-root {
     padding: 0 !important;
     background-color: transparent !important;
-    color: #444 !important;
+    color: #000000de !important;
     svg {
       display: none !important;
     }
@@ -368,7 +371,7 @@ p {
     box-shadow: none !important;
   }
   .MuiTab-root.Mui-selected {
-    color: #444 !important;
+    color: #000000de !important;
     padding-bottom: 0 !important;
     border-bottom: 2px solid $border-color;
   }

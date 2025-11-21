@@ -18,7 +18,8 @@ export default function PROReport() {
         flexWrap={{
           xs: "wrap",
           sm: "wrap",
-          md: "nowrap",
+          md: "wrap",
+          lg: "nowrap"
         }}
         key={`wrapper_${table.id}`}
       >

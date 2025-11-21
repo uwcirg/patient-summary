@@ -482,3 +482,11 @@ export function isDemoDataEnabled() {
   // if (String(getEnv("REACT_APP_CONF_API_URL")).toLowerCase().includes("dev")) return true;
   return String(getEnv("REACT_APP_ENABLE_DEMO_DATA")).toLowerCase() === "true";
 }
+
+const domParser = new DOMParser();
+export function hasHtmlTags(text) {
+  if (!text) return false;
+  const doc = domParser.parseFromString(text, "text/html");
+  // Check if the body contains any child elements (excluding script tags)
+  return doc.body.children.length > 0;
+}

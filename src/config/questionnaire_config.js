@@ -129,7 +129,7 @@ const questionnaireConfigs = {
     },
     skipChart: true,
   },
-   "CIRG-CNICS-HOUSING": {
+  "CIRG-CNICS-HOUSING": {
     key: "CIRG-CNICS-HOUSING",
     instrumentName: "CNICS Housing Measure",
     title: "Housing",
@@ -156,14 +156,16 @@ const questionnaireConfigs = {
       let arrMeaning = [];
       responses.forEach((response) => {
         if (response.answer) {
-          arrMeaning.push(removeParentheses(response.answer));
+          if (linkIdEquals(response.id, "HOUSING-0")) {
+            arrMeaning.push("<span class='text-normal'>" + removeParentheses(response.answer) + "</span>");
+          } else arrMeaning.push(response.answer);
         }
       });
       return arrMeaning.join(",");
     },
     skipChart: true,
   },
-   "CIRG-CNICS-FOOD": {
+  "CIRG-CNICS-FOOD": {
     key: "CIRG-CNICS-FOOD",
     instrumentName: "CNICS Food Security Questionnaire",
     title: "Food Security",
@@ -177,7 +179,7 @@ const questionnaireConfigs = {
     linkIdMatchMode: "strict",
     severityBands: [
       { min: 2, label: "high", meaning: "Low Food Security" },
-      { min: 0, label: "low", meaning: ""},
+      { min: 0, label: "low", meaning: "" },
     ],
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";

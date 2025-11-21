@@ -480,6 +480,30 @@ export function calculateQuestionnaireScore(questionnaire, qnr, responseItemsFla
     scoreLinkIds,
   };
 }
+function validateAndNormalizeFHIRPath(expression, options = {}) {
+  const { autoFix = false, throwOnError = true } = options;
+
+  const hasResourceVar = /%resource\b/.test(expression);
+
+  if (hasResourceVar) {
+    if (autoFix) {
+      console.warn("Auto-fixing: Removing %resource from expression");
+      return expression.replace(/%resource\./g, "");
+    }
+
+    if (throwOnError) {
+      throw new Error(
+        "Invalid expression: %resource variable is not available. " +
+          'Use implicit context instead (e.g., "item.where(...)" instead of "%resource.item.where(...)")',
+      );
+    }
+
+    return null; // Indicate validation failure
+  }
+
+  return expression;
+}
+
 export function getValueByExpression(linkId, questionnaire, qnr) {
   if (!linkId || !questionnaire) return null;
   const matchedQuestionItem = questionnaire.item?.find(
@@ -492,14 +516,25 @@ export function getValueByExpression(linkId, questionnaire, qnr) {
   if (!matchedQuestionItem) return null;
   //console.log("matched ", matchedQuestionItem, " qnr ", qnr);
   //console.log("qnr ", qnr)
-  const evalExpression = (matchedQuestionItem.extension[0].valueExpression?.expression ?? "").replace(
-    /%resource/gi,
-    "QuestionnaireResponse",
+
+  const evalExpression = validateAndNormalizeFHIRPath(
+    matchedQuestionItem.extension[0].valueExpression?.expression ?? "",
+    {
+      autoFix: true,
+      throwOnError: false,
+    },
   );
 
   let evalResult;
   try {
-    evalResult = fhirpath.evaluate(qnr, evalExpression, null, fhirpath_r4_model);
+    evalResult = fhirpath.evaluate(
+      qnr,
+      evalExpression,
+      {
+        "%resource": qnr,
+      },
+      fhirpath_r4_model,
+    );
   } catch (e) {
     console.error("Unable to evaluate expression ", evalExpression, e);
   }

@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
-//import Alert from "@mui/material/Alert";
 import Link from "@mui/material/Link";
 import Box from "@mui/material/Box";
 import Table from "@mui/material/Table";
@@ -16,7 +15,7 @@ import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import { getResponseColumns } from "@models/resultBuilders/helpers";
 import Scoring from "@components/Score";
-import { getCorrectedISODate, getDisplayQTitle, isEmptyArray, isNumber, scrollToAnchor } from "@util";
+import { getCorrectedISODate, getDisplayQTitle, hasHtmlTags, isEmptyArray, isNumber, scrollToAnchor } from "@util";
 import ResponsesViewer from "../ResponsesViewer";
 
 // tiny helper to read nested keys like "provider.name"
@@ -99,7 +98,9 @@ export default function ScoringSummary(props) {
   // -------- reusable default cell renderers
   const defaultRenderers = {
     text: (row, value) => (
-      <span className={row.alert ? "text-error" : row.warning ? "text-warning" : (!value ? "muted-text" : "")}>{value ?? "N/A"}</span>
+      <span className={row.alert ? "text-error" : row.warning ? "text-warning" : !value ? "muted-text" : ""}>
+        {value ?? "N/A"}
+      </span>
     ),
     date: (row, value) => (
       <Stack direction={"column"} spacing={1} alignItems={"center"} justifyContent={"center"}>
@@ -179,7 +180,7 @@ export default function ScoringSummary(props) {
             href={`#${row.key}`}
             className="instrument-link"
           >
-            {displayTitle} {row.subtitle ? row.subtitle: ""}
+            {displayTitle} {row.subtitle ? row.subtitle : ""}
           </Link>
         ) : props.enableResponsesViewer && !isEmptyArray(row?.responseData) ? (
           <ResponsesViewer
@@ -219,11 +220,21 @@ export default function ScoringSummary(props) {
       accessor: (row) =>
         row.meaning
           ? row.meaning.includes(",")
-            ? row.meaning.split(",").map((m, index) => (
-                <Box sx={{ mb: 0.3 }} key={`${row.id}_meaning_${index}`}>
-                  {m}
-                </Box>
-              ))
+            ? row.meaning.split(",").map((m, index) => {
+                if (hasHtmlTags)
+                  return (
+                    <Box
+                      sx={{ mb: 0.4 }}
+                      key={`${row.id}_meaning_${index}`}
+                      dangerouslySetInnerHTML={{ __html: m }}
+                    ></Box>
+                  );
+                return (
+                  <Box sx={{ mb: 0.4 }} key={`${row.id}_meaning_${index}`}>
+                    {m}
+                  </Box>
+                );
+              })
             : row.meaning
           : "",
       type: "text",
