@@ -55,7 +55,7 @@ export default function PROReport() {
         {table.title && (
           <Typography
             variant="body1"
-            component="h4"
+            component="h3"
             color="accent"
             sx={{
               marginBottom: 1,

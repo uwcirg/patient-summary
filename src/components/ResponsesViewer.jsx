@@ -97,10 +97,14 @@ export default function ResponsesViewer({
     <>
       <Stack direction={"column"} justifyContent={"space-between"} alignItems={"center"} gap={1}>
         <Box>
-          <Typography variant="subtitle2" sx={{ textAlign: "center"}}>
+          <Typography component="h3" variant="subtitle2" sx={{ textAlign: "center" }}>
             {responsesTileTitle}
           </Typography>
-          {subtitle && <Typography variant="caption">{subtitle}</Typography>}
+          {subtitle && (
+            <Typography component="h4" variant="caption">
+              {subtitle}
+            </Typography>
+          )}
         </Box>
         <Button
           color="link"
@@ -108,7 +112,7 @@ export default function ResponsesViewer({
           size="small"
           onClick={() => setOpen(true)}
           variant="outlined"
-          sx={{fontSize: "0.8rem"}}
+          sx={{ fontSize: "0.8rem" }}
         >
           View
         </Button>
