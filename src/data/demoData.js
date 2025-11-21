@@ -190,9 +190,9 @@ export default {
       source: "cnics",
     },
   },
-  "CIRG-Food-Security": {
+  "CIRG-CNICS-FOOD": {
     scoringSummaryData: {
-      key: "CIRG-Food-Security",
+      key: "CIRG-CNICS-FOOD",
       comparison: "",
       comparisonToAlert: "",
       instrumentName: "Food Security",

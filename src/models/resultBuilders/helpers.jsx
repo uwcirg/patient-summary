@@ -18,6 +18,12 @@ import questionnaireConfigs, {
 } from "@/config/questionnaire_config";
 import { report_config } from "@/config/report_config";
 
+// eslint-disable-next-line no-undef
+const fhirpath = require("fhirpath");
+// For FHIR model data (choice type support) pull in the model file:
+// eslint-disable-next-line no-undef
+const fhirpath_r4_model = require("fhirpath/fhir-context/r4");
+
 /* ---------------------------------------------
  * External helpers
  * Each helper receives a `ctx` (the builder instance)
@@ -78,11 +84,7 @@ export function summarizeCIDASHelper(
   ctx,
   questionnaireResponses,
   questionnaire,
-  {
-    suicideLinkId = "cs-idas-15",
-    maximumScore = 36,
-    highSeverityScoreCutoff = 19,
-  } = {},
+  { suicideLinkId = "cs-idas-15", maximumScore = 36, highSeverityScoreCutoff = 19 } = {},
 ) {
   const coalesceNum = (n, fb = 0) => (typeof n === "number" && Number.isFinite(n) ? n : fb);
 
@@ -443,16 +445,20 @@ export function meaningFromSeverity(sev, config = {}, responses = []) {
   return null;
 }
 
-export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, config = {}, ctx) {
+export function calculateQuestionnaireScore(questionnaire, qnr, responseItemsFlat, config = {}, ctx) {
   const scoreLinkIds = !isEmptyArray(config?.questionLinkIds)
     ? config.questionLinkIds.filter((q) => ctx.isNonScoreLinkId(q, config))
     : ctx.getAnswerLinkIdsByQuestionnaire(questionnaire, config);
 
   const scoringQuestionId = config?.scoringQuestionId;
 
-  const scoringQuestionScore = scoringQuestionId
+  let scoringQuestionScore = scoringQuestionId
     ? ctx.getScoringByResponseItem(questionnaire, responseItemsFlat, scoringQuestionId, config)
     : null;
+  if (!scoringQuestionScore) {
+    //get by valueExpression
+    scoringQuestionScore = getValueByExpression(scoringQuestionId, questionnaire, qnr);
+  }
 
   const questionScores = scoreLinkIds.map((id) =>
     ctx.getScoringByResponseItem(questionnaire, responseItemsFlat, id, config),
@@ -473,6 +479,32 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
     questionScores,
     scoreLinkIds,
   };
+}
+export function getValueByExpression(linkId, questionnaire, qnr) {
+  if (!linkId || !questionnaire) return null;
+  const matchedQuestionItem = questionnaire.item?.find(
+    (o) =>
+      linkIdEquals(o.linkId, linkId) &&
+      o.extension?.find(
+        (e) => e.valueExpression && e.valueExpression?.expression && e.valueExpression?.language === "text/fhirpath",
+      ),
+  );
+  if (!matchedQuestionItem) return null;
+  //console.log("matched ", matchedQuestionItem, " qnr ", qnr);
+  //console.log("qnr ", qnr)
+  const evalExpression = (matchedQuestionItem.extension[0].valueExpression?.expression ?? "").replace(
+    /%resource/gi,
+    "QuestionnaireResponse",
+  );
+
+  let evalResult;
+  try {
+    evalResult = fhirpath.evaluate(qnr, evalExpression, null, fhirpath_r4_model);
+  } catch (e) {
+    console.error("Unable to evaluate expression ", evalExpression, e);
+  }
+  if (!isEmptyArray(evalResult)) return evalResult[0];
+  return null;
 }
 
 export function getScoreParamsFromResponses(responses, config = {}) {
@@ -495,7 +527,12 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   const scoreSeverity = severityFromScore(score, config);
   const meaning = meaningFromSeverity(scoreSeverity, config, current?.responses);
   const source = current?.source;
-  const alert = isNumber(score) && config?.highSeverityScoreCutoff && score >= config?.highSeverityScoreCutoff;
+  let alert = isNumber(score) && config?.highSeverityScoreCutoff && score >= config?.highSeverityScoreCutoff;
+  if (!alert && isNumber(score) && config?.alertQuestionId) {
+    //
+    console.log("current ", current);
+    alert = getValueByExpression(config?.alertQuestionId, current?.questionnaire, current?.questionnaireResponse);
+  }
   const warning = isNumber(score) && config?.mediumSeverityScoreCutoff && score >= config?.mediumSeverityScoreCutoff;
   const scoringParams = {
     ...config,

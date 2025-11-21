@@ -1,17 +1,6 @@
 import React, { useMemo, useState, forwardRef } from "react";
 import PropTypes from "prop-types";
-import {
-  AppBar,
-  Box,
-  Button,
-  Dialog,
-  IconButton,
-  Paper,
-  Slide,
-  Stack,
-  Toolbar,
-  Typography,
-} from "@mui/material";
+import { AppBar, Box, Button, Dialog, IconButton, Paper, Slide, Stack, Toolbar, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import MaterialTable from "@material-table/core";
@@ -38,10 +27,11 @@ function buildBasicColumns(tableData) {
 
 export default function ResponsesViewer({
   title,
+  subtitle,
   tableData = [],
   columns,
   headerBgColor,
- // buttonLabel = "View",
+  // buttonLabel = "View",
   // Optional advanced mode:
   buildColumns, // (optional) function: () => columns[]
   responsesTileTitle = "Responses", // header above the button, mirrors your summary tile
@@ -50,7 +40,6 @@ export default function ResponsesViewer({
   const [open, setOpen] = useState(false);
 
   const resolvedHeaderBg = headerBgColor ?? (theme?.palette?.lightest?.main ? theme.palette.lightest.main : "#FFF");
-
 
   // resolve columns in priority order:
   // 1) explicit columns prop
@@ -106,14 +95,20 @@ export default function ResponsesViewer({
 
   return (
     <>
-      <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} gap={0.5}>
-        <Typography variant="subtitle2" sx={{textAlign: "center"}}>{responsesTileTitle}</Typography>
+      <Stack direction={"column"} justifyContent={"space-between"} alignItems={"center"} gap={1}>
+        <Box>
+          <Typography variant="subtitle2" sx={{ textAlign: "center"}}>
+            {responsesTileTitle}
+          </Typography>
+          {subtitle && <Typography variant="caption">{subtitle}</Typography>}
+        </Box>
         <Button
-          color="primary"
+          color="link"
           title="View responses by date"
           size="small"
           onClick={() => setOpen(true)}
           variant="outlined"
+          sx={{fontSize: "0.8rem"}}
         >
           View
         </Button>
@@ -187,7 +182,8 @@ export default function ResponsesViewer({
 }
 
 ResponsesViewer.propTypes = {
-  title: PropTypes.node.isRequired,
+  title: PropTypes.string.isRequired,
+  subtitle: PropTypes.string,
   tableData: PropTypes.array,
   columns: PropTypes.array, // optional, if omitted we'll auto-build simple columns
   headerBgColor: PropTypes.string, // optional

@@ -16,18 +16,6 @@ export const getInstrumentDefaults = () => {
 
 export const INSTRUMENT_DEFAULTS = {
   ...getInstrumentDefaults(),
-  "CIRG-CNICS-ASSIST-OD": {
-    title: "Overdose",
-  },
-  "CIRG-Food-Security": {
-    title: "Food Security",
-  },
-  "CIRG-CNICS-FINANCIAL": {
-    title: "Financial Situation",
-  },
-  "CIRG-CNICS-HOUSING": {
-    title: "Housing",
-  },
   "CIRG-Fall-Risk": {
     title: "Fall Risk",
   },
@@ -167,7 +155,7 @@ export const report_config_base = {
             "CIRG-SI",
             "CIRG-CNICS-IPV4",
             "CIRG-CNICS-ASSIST-OD",
-            "CIRG-Food-Security",
+            "CIRG-CNICS-FOOD",
             "CIRG-CNICS-FINANCIAL",
             "CIRG-CNICS-HOUSING",
             "CIRG-Fall-Risk",

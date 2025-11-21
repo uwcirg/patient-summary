@@ -1,4 +1,4 @@
-import { isEmptyArray } from "@util";
+import { isEmptyArray, removeParentheses } from "@util";
 import { normalizeLinkId, linkIdEquals } from "@util/fhirUtil";
 import CHART_CONFIG from "./chart_config";
 import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS } from "@/consts";
@@ -126,6 +126,69 @@ const questionnaireConfigs = {
         }
       });
       return meaning;
+    },
+    skipChart: true,
+  },
+   "CIRG-CNICS-HOUSING": {
+    key: "CIRG-CNICS-HOUSING",
+    instrumentName: "CNICS Housing Measure",
+    title: "Housing",
+    subtitle: "Past month",
+    questionnaireMatchMode: "fuzzy",
+    displayMeaningNotScore: true,
+    questionLinkIds: ["HOUSING-0", "HOUSING-1"],
+    linkIdMatchMode: "strict",
+    highSeverityScoreCutoff: 1,
+    scoringQuestionId: "HOUSING-1",
+    fallbackScoreMap: {
+      "HOUSING-1-0": 1,
+      "HOUSING-1-1": 1,
+      "HOUSING-1-2": 0,
+      "HOUSING-1-3": 0,
+    },
+    severityBands: [
+      { min: 1, label: "high" },
+      { min: 0, label: "low" },
+    ],
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      if (!severity) return "";
+      let arrMeaning = [];
+      responses.forEach((response) => {
+        if (response.answer) {
+          arrMeaning.push(removeParentheses(response.answer));
+        }
+      });
+      return arrMeaning.join(",");
+    },
+    skipChart: true,
+  },
+   "CIRG-CNICS-FOOD": {
+    key: "CIRG-CNICS-FOOD",
+    instrumentName: "CNICS Food Security Questionnaire",
+    title: "Food Security",
+    questionnaireMatchMode: "fuzzy",
+    displayMeaningNotScore: true,
+    questionLinkIds: ["FOOD-0", "FOOD-1"],
+    scoringQuestionId: "FOOD-score",
+    alertQuestionId: "FOOD-critical-flag",
+    //TODO remove this when alert flag issue is fixed
+    highSeverityScoreCutoff: 2,
+    linkIdMatchMode: "strict",
+    severityBands: [
+      { min: 2, label: "high", meaning: "Low Food Security" },
+      { min: 0, label: "low", meaning: ""},
+    ],
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      if (!severity) return "";
+      let arrMeaning = [];
+      responses.forEach((response) => {
+        if (response.answer) {
+          arrMeaning.push(removeParentheses(response.answer));
+        }
+      });
+      return arrMeaning.join(",");
     },
     skipChart: true,
   },

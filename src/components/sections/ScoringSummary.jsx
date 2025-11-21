@@ -179,11 +179,12 @@ export default function ScoringSummary(props) {
             href={`#${row.key}`}
             className="instrument-link"
           >
-            {displayTitle}
+            {displayTitle} {row.subtitle ? row.subtitle: ""}
           </Link>
         ) : props.enableResponsesViewer && !isEmptyArray(row?.responseData) ? (
           <ResponsesViewer
             title={displayTitle}
+            subtitle={row.subtitle}
             responsesTileTitle={displayTitle}
             tableData={row?.tableResponseData}
             columns={getResponseColumns(row?.responseData)}

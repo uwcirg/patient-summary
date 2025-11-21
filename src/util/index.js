@@ -473,8 +473,12 @@ export function deepMerge(base = {}, override = {}) {
   return out;
 }
 
+export function removeParentheses(text) {
+  return text.replace(/\s*\([^)]*\)/g, "").trim();
+}
+
 export function isDemoDataEnabled() {
   // TODO FIX this
- // if (String(getEnv("REACT_APP_CONF_API_URL")).toLowerCase().includes("dev")) return true;
+  // if (String(getEnv("REACT_APP_CONF_API_URL")).toLowerCase().includes("dev")) return true;
   return String(getEnv("REACT_APP_ENABLE_DEMO_DATA")).toLowerCase() === "true";
 }

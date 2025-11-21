@@ -8,7 +8,6 @@ import {
   isNumber,
   isPlainObject,
   fuzzyMatch,
-  //mergeNonEmpty,
   normalizeStr,
   objectToString,
   toFiniteNumber,
@@ -40,6 +39,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
    * @param {Object} config
    * @param {string} config.key
    * @param {string} config.title
+   * @param {string} config.subtitle
    * @param {string} config.questionnaireId
    * @param {string} config.questionnaireName
    * @param {string} config.questionnaireUrl
@@ -71,6 +71,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       ...(config ?? {}),
       key: config.key ?? "",
       title: config.title ?? "",
+      subtitle: config.title ?? "",
       questionnaireId: config.questionnaireId ?? "",
       questionnaireName: config.questionnaireName ?? "",
       questionnaireUrl: config.questionnaireUrl ?? "",
@@ -489,6 +490,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const ans = this.firstAnswer(item);
       const coding = this.answerCoding(ans);
       return {
+        ...item,
         id: item.linkId,
         answer: this.getAnswerItemDisplayValue(ans, config) ?? null,
         question: item.text,
@@ -537,6 +539,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const { score, scoringQuestionScore, scoreLinkIds } = calculateQuestionnaireScore(
       questionnaire,
+      qr,
       flat,
       config,
       this,
@@ -591,6 +594,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         lastUpdated: qr.meta?.lastUpdated,
         config: config,
         questionnaire: questionnaire,
+        questionnaireResponse: qr
       };
     });
 

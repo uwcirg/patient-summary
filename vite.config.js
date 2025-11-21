@@ -26,7 +26,7 @@ export default defineConfig({
           return true;
         }
       },
-    }),
+    })
   ],
   resolve: {
     alias: {
