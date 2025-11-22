@@ -28,6 +28,8 @@ export default function ScoringSummary(props) {
   const theme = useTheme();
   const { data, disableLinks, hiddenColumns = [], columns = [] } = props;
 
+  const hiddenColumnIdsInMobile = ["comparison", "numAnswered"];
+
   const isColVisible = (id) => {
     if (id === "measure") return true;
     return !hiddenColumns?.includes(id);
@@ -80,9 +82,9 @@ export default function ScoringSummary(props) {
   const baseCellStyle = {
     borderRight: `1px solid`,
     borderColor: "border.main",
-    whiteSpace: "nowrap",
+    whiteSpace: { xs: "normal", sm: "nowrap" }, // 🟡 allow wrapping on phones
     lineHeight: 1.4,
-    fontSize: "0.8rem",
+    fontSize: { xs: "0.75rem", sm: "0.8rem" }, // optional: slightly smaller on xs
     wordBreak: "break-word",
     padding: theme.spacing(0.75, 1),
     verticalAlign: "center",
@@ -313,6 +315,9 @@ export default function ScoringSummary(props) {
               ...(col.sticky ? stickyStyle : {}),
               ...(col.headerProps?.sx || {}),
               ...(col.width ? { width: col.width } : {}),
+              ...(hiddenColumnIdsInMobile.indexOf(col.id) !== -1
+                ? { display: { xs: "none", md: "table-cell" } } // hide “Meaning” on small devices
+                : {}),
             }}
           >
             {col.header}
@@ -354,6 +359,9 @@ export default function ScoringSummary(props) {
                     ...baseCellStyle,
                     ...(col.sticky ? stickyStyle : {}),
                     ...(col.cellProps?.sx || {}),
+                    ...(hiddenColumnIdsInMobile.indexOf(col.id) !== -1
+                      ? { display: { xs: "none", md: "table-cell" } } // hide “Meaning” on small devices
+                      : {}),
                   }}
                 >
                   {renderCell(col, row)}
@@ -390,9 +398,10 @@ export default function ScoringSummary(props) {
         sx={{
           padding: 0,
           height: "100%",
-          overflow: "hidden",
-          maxWidth: { xs: "420px", sm: "100%" },
-          position: { xs: "initial", sm: "relative" },
+          overflowX: "auto",
+          overflowY: "hidden",
+          maxWidth: "100%",
+          position: { xs: "static", sm: "relative" },
           marginLeft: { sm: 0 },
           borderRadius: 0,
           alignSelf: "stretch",
@@ -403,7 +412,7 @@ export default function ScoringSummary(props) {
             borderStyle: "solid",
             borderWidth: "1px",
             borderColor: "border.main",
-            tableLayout: "fixed",
+            tableLayout: { xs: "auto", sm: "fixed" },
             width: "100%",
             height: "100%",
             ...(props.tableStyle ?? {}),
