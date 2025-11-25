@@ -1,4 +1,5 @@
 import {
+  deepMerge,
   firstNonEmpty,
   getChartConfig,
   getLocaleDateStringFromDate,
@@ -464,31 +465,31 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       }
     };
     walk(questionnaireItems);
-
     const questionnaireItemList = list.map((q) => {
       const matchedResponseItem = this.findResponseItemByLinkId(responseItemsFlat, q.linkId, config);
       const ans = this.firstAnswer(matchedResponseItem);
-      return {
-        ...q,
-        id: q.linkId,
-        answer: this.getAnswerItemDisplayValue(ans, config),
-        question:
-          q.text ??
-          (this.firstAnswer(matchedResponseItem) ? this._getQuestion(matchedResponseItem) : `Question ${q.linkId}`),
-        text: matchedResponseItem?.text ? matchedResponseItem?.text : "",
-      };
+      let returnObject = deepMerge({}, matchedResponseItem);
+      returnObject.id = q.linkId;
+      returnObject.answer = this.getAnswerItemDisplayValue(ans, config);
+      returnObject.question =
+        q.text ??
+        (this.firstAnswer(matchedResponseItem) ? this._getQuestion(matchedResponseItem) : `Question ${q.linkId}`);
+      returnObject.text = matchedResponseItem?.text ? matchedResponseItem?.text : "";
+      return returnObject;
     });
     const allResponses = new Map();
     [
       ...questionnaireItemList,
       ...(responseItemsFlat ?? []).map((item, index) => {
-        if (!item.id) item.id = item.linkId;
+        let returnObject = deepMerge({}, item);
+        if (!returnObject.id) returnObject.id = item.linkId;
         const ans = this.firstAnswer(item);
         const coding = this.answerCoding(ans);
-        item.answer = this.getAnswerItemDisplayValue(ans, config);
-        item.question = item.text ?? `Question ${index}`;
-        item.code = coding ? coding.code : null;
-        return item;
+        returnObject.answer = this.getAnswerItemDisplayValue(ans, config);
+        returnObject.question = item.text ?? `Question ${index}`;
+        returnObject.code = coding ? coding.code : null;
+        returnObject.rawAnswer = item.answer;
+        return returnObject;
       }),
     ].forEach((item) => allResponses.set(normalizeLinkId(item.id), item));
     return Array.from(allResponses.values());

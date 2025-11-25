@@ -463,8 +463,8 @@ export const isPlainObject = (v) =>
 
 // deep merge that preserves functions and arrays (arrays are replaced by override)
 export function deepMerge(base = {}, override = {}) {
-  const out = { ...base };
-  for (const key of Object.keys(override)) {
+  const out = { ...base??{} };
+  for (const key of Object.keys(override??{})) {
     const bv = out[key];
     const ov = override[key];
     if (isPlainObject(bv) && isPlainObject(ov)) out[key] = deepMerge(bv, ov);
