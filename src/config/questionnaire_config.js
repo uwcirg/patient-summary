@@ -110,23 +110,60 @@ const questionnaireConfigs = {
       "FINANCIAL-0-2": 0,
       "FINANCIAL-0-3": 0,
     },
-    severityBands: [
-      { min: 1, label: "high" },
-      { min: 0, label: "low" },
-    ],
-    fallbackMeaningFunc: function (severity, responses) {
-      if (isEmptyArray(responses)) return "";
-      if (!severity) return "";
-      //console.log("severity ", severity, "responses ", responses);
-      let meaning = "";
-      responses.forEach((response) => {
-        if (meaning) return true;
-        if (response.answer) {
-          meaning = response.answer.split(",")[0];
-        }
-      });
-      return meaning;
-    },
+    // severityBands: [
+    //   { min: 1, label: "high" },
+    //   { min: 0, label: "low" },
+    // ],
+    alertQuestionId: "FINANCIAL-critical-flag",
+    meaningQuestionId: "FINANCIAL-score-label",
+    // fallbackMeaningFunc: function (severity, responses) {
+    //   if (isEmptyArray(responses)) return "";
+    //   if (!severity) return "";
+    //   //console.log("severity ", severity, "responses ", responses);
+    //   let meaning = "";
+    //   responses.forEach((response) => {
+    //     if (meaning) return true;
+    //     if (response.answer) {
+    //       meaning = response.answer.split(",")[0];
+    //     }
+    //   });
+    //   return meaning;
+    // },
+    skipChart: true,
+  },
+  "CIRG-CNICS-FOOD": {
+    key: "CIRG-CNICS-FOOD",
+    instrumentName: "CNICS Food Security Questionnaire",
+    title: "Food Security",
+    questionnaireMatchMode: "fuzzy",
+    displayMeaningNotScore: true,
+    questionLinkIds: ["FOOD-0", "FOOD-1"],
+    scoringQuestionId: "FOOD-score",
+    alertQuestionId: "FOOD-critical-flag",
+    meaningQuestionId: "FOOD-score-label",
+    //TODO remove this when alert flag issue is fixed
+    //highSeverityScoreCutoff: 2,
+    linkIdMatchMode: "strict",
+    // severityBands: [
+    //   { min: 2, label: "high" },
+    //   { min: 0, label: "low" },
+    // ],
+    // fallbackMeaningFunc: function (severity, responses) {
+    //   if (isEmptyArray(responses)) return "";
+    //   if (!severity) return "";
+    //   const match = responses.find(o => linkIdEquals(o.id, "FOOD-score-label"));
+    //   if (match && !isEmptyArray(match.answer)) {
+    //     return getValueText(match.answer[0]);
+    //   }
+    //   return "";
+    //   // let arrMeaning = [];
+    //   // responses.forEach((response) => {
+    //   //   if (response.answer) {
+    //   //     arrMeaning.push(removeParentheses(response.answer));
+    //   //   }
+    //   // });
+    //   // return arrMeaning.join(",");
+    // },
     skipChart: true,
   },
   "CIRG-CNICS-HOUSING": {
@@ -159,35 +196,6 @@ const questionnaireConfigs = {
           if (linkIdEquals(response.id, "HOUSING-0")) {
             arrMeaning.push("<span class='text-normal'>" + removeParentheses(response.answer) + "</span>");
           } else arrMeaning.push(response.answer);
-        }
-      });
-      return arrMeaning.join(",");
-    },
-    skipChart: true,
-  },
-  "CIRG-CNICS-FOOD": {
-    key: "CIRG-CNICS-FOOD",
-    instrumentName: "CNICS Food Security Questionnaire",
-    title: "Food Security",
-    questionnaireMatchMode: "fuzzy",
-    displayMeaningNotScore: true,
-    questionLinkIds: ["FOOD-0", "FOOD-1"],
-    scoringQuestionId: "FOOD-score",
-    alertQuestionId: "FOOD-critical-flag",
-    //TODO remove this when alert flag issue is fixed
-    highSeverityScoreCutoff: 2,
-    linkIdMatchMode: "strict",
-    severityBands: [
-      { min: 2, label: "high", meaning: "Low Food Security" },
-      { min: 0, label: "low", meaning: "" },
-    ],
-    fallbackMeaningFunc: function (severity, responses) {
-      if (isEmptyArray(responses)) return "";
-      if (!severity) return "";
-      let arrMeaning = [];
-      responses.forEach((response) => {
-        if (response.answer) {
-          arrMeaning.push(removeParentheses(response.answer));
         }
       });
       return arrMeaning.join(",");
@@ -453,7 +461,6 @@ const questionnaireConfigs = {
     minimumScore: 0,
     maximumScore: 3,
     displayMeaningNotScore: true,
-    // normal instrument defaults you already have, plus:
     deriveFrom: {
       hostIds: ["CIRG-PHQ9"], // one or many hosts
       linkId: "/44260-8", // the single item to keep

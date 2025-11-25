@@ -436,13 +436,16 @@ export function severityFromScore(score, config = {}) {
 }
 
 export function meaningFromSeverity(sev, config = {}, responses = []) {
+  if (config?.fallbackMeaningFunc && typeof config.fallbackMeaningFunc === "function") {
+    return config.fallbackMeaningFunc(sev, responses);
+  }
+  const valueFromMeaningQuestionId = responses?.find((o) =>
+    linkIdEquals(o.id, config?.meaningQuestionId, config?.linkIdMatchMode),
+  )?.answer?.replace(/"/g, "");
+  // console.log("meaning qid ", config?.meaningQuestionId, " valueFromMeaningQuestionId ", valueFromMeaningQuestionId);
+  if (valueFromMeaningQuestionId) return valueFromMeaningQuestionId;
   const bands = config?.severityBands;
-  if (!isEmptyArray(bands))
-    return (
-      bands.find((b) => b.label === sev)?.meaning ??
-      (config?.fallbackMeaningFunc ? config.fallbackMeaningFunc(sev, responses) : null)
-    );
-  return null;
+  return bands?.find((b) => b.label === sev)?.meaning ?? "";
 }
 
 export function calculateQuestionnaireScore(questionnaire, qnr, responseItemsFlat, config = {}, ctx) {
@@ -455,13 +458,13 @@ export function calculateQuestionnaireScore(questionnaire, qnr, responseItemsFla
   if (isEmptyArray(scoreLinkIds) && scoringQuestionId) {
     scoreLinkIds = [scoringQuestionId];
   }
-  
+
   let scoringQuestionScore = scoringQuestionId
     ? ctx.getScoringByResponseItem(questionnaire, responseItemsFlat, scoringQuestionId, config)
     : null;
   if (!scoringQuestionScore) {
     //get by valueExpression
-    scoringQuestionScore = getValueByExpression(scoringQuestionId, questionnaire, qnr);
+    scoringQuestionScore = getValueByExpression(scoringQuestionId, questionnaire, qnr, config);
   }
 
   const questionScores = scoreLinkIds.map((id) =>
@@ -508,11 +511,11 @@ function validateAndNormalizeFHIRPath(expression, options = {}) {
   return expression;
 }
 
-export function getValueByExpression(linkId, questionnaire, qnr) {
+export function getValueByExpression(linkId, questionnaire, qnr, config) {
   if (!linkId || !questionnaire) return null;
   const matchedQuestionItem = questionnaire.item?.find(
     (o) =>
-      linkIdEquals(o.linkId, linkId) &&
+      linkIdEquals(o.linkId, linkId, config?.linkIdMatchMode) &&
       o.extension?.find(
         (e) => e.valueExpression && e.valueExpression?.expression && e.valueExpression?.language === "text/fhirpath",
       ),
@@ -546,6 +549,21 @@ export function getValueByExpression(linkId, questionnaire, qnr) {
   return null;
 }
 
+export function getAlertFromMostRecentResponse(current, config = {}) {
+  if (!current) return false;
+  //console.log("current ", current);
+  let alert =
+    isNumber(current?.score) && config?.highSeverityScoreCutoff && current.score >= config?.highSeverityScoreCutoff;
+  if (!alert && config?.alertQuestionId) {
+    alert = current?.responses?.find((o) => linkIdEquals(o.id, config.alertQuestionId, config?.linkIdMatchMode))?.answer ?? alert;
+  }
+  if (!alert && config?.alertQuestionId) {
+    alert = getValueByExpression(config?.alertQuestionId, current?.questionnaire, current?.questionnaireResponse, config);
+  }
+  //console.log("alert ", alert);
+  return alert;
+}
+
 export function getScoreParamsFromResponses(responses, config = {}) {
   if (isEmptyArray(responses)) return null;
   const current = getMostRecentResponseRow(responses);
@@ -566,12 +584,7 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   const scoreSeverity = severityFromScore(score, config);
   const meaning = meaningFromSeverity(scoreSeverity, config, current?.responses);
   const source = current?.source;
-  let alert = isNumber(score) && config?.highSeverityScoreCutoff && score >= config?.highSeverityScoreCutoff;
-  if (!alert && isNumber(score) && config?.alertQuestionId) {
-    //
-    console.log("current ", current);
-    alert = getValueByExpression(config?.alertQuestionId, current?.questionnaire, current?.questionnaireResponse);
-  }
+  const alert = getAlertFromMostRecentResponse(current, config);
   const warning = isNumber(score) && config?.mediumSeverityScoreCutoff && score >= config?.mediumSeverityScoreCutoff;
   const scoringParams = {
     ...config,

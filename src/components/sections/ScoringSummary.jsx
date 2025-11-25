@@ -221,7 +221,7 @@ export default function ScoringSummary(props) {
       cellProps: { sx: baseCellStyle, size: "small", className: "capitalized-text" },
       accessor: (row) =>
         row.meaning
-          ? row.meaning.includes(",")
+          ? String(row.meaning).includes(",")
             ? row.meaning.split(",").map((m, index) => {
                 if (hasHtmlTags)
                   return (
