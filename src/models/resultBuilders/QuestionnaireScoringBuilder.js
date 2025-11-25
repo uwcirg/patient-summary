@@ -393,6 +393,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const fallbackScoreMap = normalizeObjectKeys(
       config?.fallbackScoreMap ? config?.fallbackScoreMap : this.fallbackScoreMap,
     );
+    // console.log("ans ", ans)
     // Primitive short-circuit: numbers or strings like "Nearly every day"
     if (!isPlainObject(ans)) {
       const num = toFiniteNumber(ans);
@@ -404,6 +405,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const prim = this.answerPrimitive(ans);
     const primNum = toFiniteNumber(prim);
+    //console.log("prim ", primNum);
     if (primNum != null) return primNum;
 
     const coding = this.answerCoding(ans);
@@ -778,6 +780,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
       // normalize answer - FHIR value[x]
       let answers = [];
+      //console.log("it ? ", it.answer)
       // tolerate "flattened" shapes or proper FHIR shape
       if (Array.isArray(it.answer) && it.answer.length && typeof it.answer[0] === "object") {
         answers = it.answer;
@@ -789,6 +792,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       out.push({
         resourceType: "QuestionnaireResponse",
         id: `${qr.id}_${targetQuestionnaireId}`,
+        identifier: qr.identifier,
         meta: qr.meta,
         questionnaire: `Questionnaire/${targetQuestionnaireId}`,
         status: "completed",

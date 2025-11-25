@@ -51,8 +51,8 @@ function runPhase1Once(key, fn) {
     try {
       return await fn();
     } finally {
-      // keep cached; delete if you want re-runs post-settle:
-      // PHASE1_FLIGHTS.delete(key);
+      // Clean up after settling to prevent memory leaks
+      setTimeout(() => PHASE1_FLIGHTS.delete(key), 5000);
     }
   })();
   PHASE1_FLIGHTS.set(key, p);
@@ -290,6 +290,28 @@ export default function useFetchResources() {
   // refresh bump controls recomputation of configured types
   const [bump, setBump] = useState(0);
 
+  // Memoized getSummaries with simple caching
+  const summariesCache = useRef(new Map());
+  const getSummariesMemoized = useCallback((bundle) => {
+    // Create a simple cache key based on bundle entry count and first/last resource ids
+    const cacheKey = `${bundle.length}-${bundle[0]?.resource?.id || ''}-${bundle[bundle.length - 1]?.resource?.id || ''}`;
+    
+    if (summariesCache.current.has(cacheKey)) {
+      return summariesCache.current.get(cacheKey);
+    }
+    
+    const result = getSummaries(bundle);
+    
+    // Keep cache size reasonable (only store last 10 results)
+    if (summariesCache.current.size > 10) {
+      const firstKey = summariesCache.current.keys().next().value;
+      summariesCache.current.delete(firstKey);
+    }
+    
+    summariesCache.current.set(cacheKey, result);
+    return result;
+  }, []);
+
   // refresh
   const refresh = useCallback(() => {
     dispatchBase({ type: "RESET" });
@@ -316,6 +338,15 @@ export default function useFetchResources() {
   const phase1KeyRef = useRef(phase1Key);
   useEffect(() => {
     phase1KeyRef.current = phase1Key;
+  }, [phase1Key]);
+
+  // Clean up phase1 cache on unmount
+  useEffect(() => {
+    return () => {
+      if (phase1Key) {
+        PHASE1_FLIGHTS.delete(phase1Key);
+      }
+    };
   }, [phase1Key]);
 
   useQuery(
@@ -484,17 +515,13 @@ export default function useFetchResources() {
         const { questionnaires, questionnaireResponses, qListToLoad, exactMatchById } = payload || {};
 
         // mark base as completed
-        setTimeout(
-          () =>
-            dispatchBase({
-              type: "RESULTS",
-              questionnaireList: qListToLoad,
-              questionnaires,
-              questionnaireResponses,
-              exactMatchById,
-            }),
-          250,
-        );
+        dispatchBase({
+          type: "RESULTS",
+          questionnaireList: qListToLoad,
+          questionnaires,
+          questionnaireResponses,
+          exactMatchById,
+        });
 
         // compute extra resource types for phase-2
         const haveTypes = [
@@ -522,7 +549,11 @@ export default function useFetchResources() {
 
         // If nothing to fetch, summary can finalize now
         if (isEmptyArray(extrasWanted)) {
-          dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: getSummaries(patientBundle.current.entry) });
+          dispatchLoader({ 
+            type: "COMPLETE", 
+            id: SUMMARY_DATA_KEY, 
+            data: getSummariesMemoized(patientBundle.current.entry) 
+          });
           return;
         }
 
@@ -600,11 +631,12 @@ export default function useFetchResources() {
       ...DEFAULT_QUERY_PARAMS,
       enabled: readyForExtras,
       onSuccess: () => {
-        setTimeout(
-          () =>
-            dispatchLoader({ type: "COMPLETE", id: SUMMARY_DATA_KEY, data: getSummaries(patientBundle.current.entry) }),
-          250,
-        );
+        // Removed setTimeout - React 18 batches automatically
+        dispatchLoader({ 
+          type: "COMPLETE", 
+          id: SUMMARY_DATA_KEY, 
+          data: getSummariesMemoized(patientBundle.current.entry) 
+        });
       },
       onError: (e) => {
         dispatchBase({ type: "ERROR", errorMessage: e?.message ?? String(e) });
@@ -619,27 +651,28 @@ export default function useFetchResources() {
     isEmptyArray(toBeLoadedResources) || !toBeLoadedResources.find((o) => !o.complete) || !!fatalError;
   const isReady = base.complete && (phase2DoneOrSkipped || isEmptyArray(extraTypes)) && !base.error;
 
+  // depend on specific values instead of entire array
+  const summaryDataItem = toBeLoadedResources.find((r) => r.id === SUMMARY_DATA_KEY);
   const summaryData = useMemo(() => {
-    const found = toBeLoadedResources.find((r) => r.id === SUMMARY_DATA_KEY);
-    if (!found || !found.data || found.error) return null;
-    const keys = Object.keys(found.data);
+    if (!summaryDataItem || !summaryDataItem.data || summaryDataItem.error) return null;
+    const keys = Object.keys(summaryDataItem.data);
     const hasAnyUseful = !!keys.find(
-      (key) => found.data[key] && (found.data[key].error || !isEmptyArray(found.data[key].responseData)),
+      (key) => summaryDataItem.data[key] && (summaryDataItem.data[key].error || !isEmptyArray(summaryDataItem.data[key].responseData)),
     );
-    return hasAnyUseful ? found : null;
-  }, [toBeLoadedResources]);
+    return hasAnyUseful ? summaryDataItem : null;
+  }, [summaryDataItem]);
 
   const allChartData = useMemo(() => {
-    if (!summaryData) return null;
-    const dataToUse = summaryData?.data ? JSON.parse(JSON.stringify(summaryData?.data)) : null;
-    const keys = Object.keys(dataToUse ?? []);
+    if (!summaryData?.data) return null;
+    const dataToUse = summaryData.data;
+    const keys = Object.keys(dataToUse);
     const rows = keys.flatMap((key) => {
       const d = dataToUse[key];
       if (!d || isEmptyArray(d.chartData?.data)) return [];
       return d.chartData.data.map((o) => ({ ...o, key, [getDisplayQTitle(key)]: o.score }));
     });
     return rows.sort((a, b) => safeDateMs(a.date) - safeDateMs(b.date));
-  }, [summaryData]);
+  }, [summaryData?.data]);
 
   const reportData = useMemo(() => {
     if (isDemoDataEnabled()) {
@@ -652,7 +685,7 @@ export default function useFetchResources() {
       summaryData: summaryData?.data,
       bundle: patientBundle.current.entry,
     });
-  }, [summaryData]);
+  }, [summaryData?.data]);
 
   const allScoringSummaryData = useMemo(
     () =>
@@ -664,24 +697,31 @@ export default function useFetchResources() {
             ...summaryData?.data[key].scoringSummaryData,
           };
         }),
-    [summaryData],
+    [summaryData?.data],
   );
 
   const chartKeys = useMemo(() => [...new Set(allChartData?.map((o) => getDisplayQTitle(o.key)))], [allChartData]);
+  
   const loaderErrors = useMemo(() => state.loader.filter((r) => r?.error), [state.loader]);
   const baseData = useMemo(() => base, [base]);
-  const errorMessages = [
-    ...(base.error ? [base.errorMessage] : []),
-    ...(fatalError ? [fatalError] : []),
-    ...loaderErrors
-      .map((r) => {
-        if (r.errorMessage.includes(" | ")) {
-          return r.errorMessage.split(" | ").map((m) => `${r.title || r.id}: ${m || "Unknown error"}`);
+  
+  // error message collection 
+  const errorMessages = useMemo(() => {
+    const errors = [];
+    if (base.error) errors.push(base.errorMessage);
+    if (fatalError) errors.push(fatalError);
+    for (const r of loaderErrors) {
+      if (r.errorMessage && r.errorMessage.includes(" | ")) {
+        const messages = r.errorMessage.split(" | ");
+        for (const m of messages) {
+          errors.push(`${r.title || r.id}: ${m || "Unknown error"}`);
         }
-        return `${r.title || r.id}: ${r.errorMessage || "Unknown error"}`;
-      })
-      .flat(),
-  ];
+      } else {
+        errors.push(`${r.title || r.id}: ${r.errorMessage || "Unknown error"}`);
+      }
+    }
+    return errors;
+  }, [base.error, base.errorMessage, fatalError, loaderErrors]);
 
   const hasError = errorMessages.length > 0;
   const errorSeverity = fatalError ? "error" : "warning";

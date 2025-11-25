@@ -446,12 +446,16 @@ export function meaningFromSeverity(sev, config = {}, responses = []) {
 }
 
 export function calculateQuestionnaireScore(questionnaire, qnr, responseItemsFlat, config = {}, ctx) {
-  const scoreLinkIds = !isEmptyArray(config?.questionLinkIds)
+  let scoreLinkIds = !isEmptyArray(config?.questionLinkIds)
     ? config.questionLinkIds.filter((q) => ctx.isNonScoreLinkId(q, config))
     : ctx.getAnswerLinkIdsByQuestionnaire(questionnaire, config);
 
   const scoringQuestionId = config?.scoringQuestionId;
 
+  if (isEmptyArray(scoreLinkIds) && scoringQuestionId) {
+    scoreLinkIds = [scoringQuestionId];
+  }
+  
   let scoringQuestionScore = scoringQuestionId
     ? ctx.getScoringByResponseItem(questionnaire, responseItemsFlat, scoringQuestionId, config)
     : null;

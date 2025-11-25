@@ -170,7 +170,7 @@ export const report_config_base = {
                 const config = getInstrumentDefault(SELF_ID);
                 const qb = new QuestionnaireScoringBuilder(config, bundle);
                 const siSummaryData = qb._summariesByQuestionnaireRef(bundle);
-                //console.log("siSummary ", siSummaryData)
+                console.log("siSummary ", siSummaryData)
                 return siSummaryData;
               },
             },

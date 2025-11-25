@@ -67,7 +67,7 @@ export default function LineCharts(props) {
   maxYValue = !data || maxYValue === -Infinity ? null : maxYValue;
 
   const defaultOptions = {
-    activeDot: { r: 6 },
+    activeDot: false,
     dot: { strokeWidth: 2 },
     isAnimationActive: false,
     animationBegin: 350,
@@ -128,10 +128,10 @@ export default function LineCharts(props) {
   const yTicks = maxYValue ? range(minYValue ?? 0, maxYValue) : range(minYValue ?? 0, 50);
 
   // ----- KEY-SAFE CUSTOM DOT -----
-  const SourceDot = ({ cx, cy, payload, index }) => {
+  const SourceDot = ({ cx, cy, payload, index, params }) => {
     if (isEmptyArray(sources)) return null;
     if (cx == null || cy == null) return null;
-
+    const useParams = params ? params : {};
     let color;
     if (payload.highSeverityScoreCutoff && payload[yFieldKey] >= payload.highSeverityScoreCutoff) color = ALERT_COLOR;
     else if (payload.mediumSeverityScoreCutoff && payload[yFieldKey] >= payload.mediumSeverityScoreCutoff)
@@ -142,13 +142,22 @@ export default function LineCharts(props) {
     const k = `dot-${payload?.id}_${payload?.key}_${payload?.source}-${payload?.[xFieldKey]}-${index}`;
     switch (payload.source) {
       case "cnics":
-        return <circle key={k} cx={cx} cy={cy} r={4} fill={color} stroke={color} strokeWidth={1} />;
+        return <circle key={k} cx={cx} cy={cy} r={useParams.r ?? 4} fill={color} stroke={color} strokeWidth={1} />;
       case "epic":
         return (
-          <rect key={k} x={cx - 2} y={cy - 2} width={6} height={6} fill={color} stroke={color} strokeWidth={1.5} />
+          <rect
+            key={k}
+            x={cx - 2}
+            y={cy - 2}
+            width={useParams.width ?? 6}
+            height={useParams.height ?? 6}
+            fill={color}
+            stroke={color}
+            strokeWidth={1.5}
+          />
         );
       default:
-        return <circle key={k} cx={cx} cy={cy} r={4} fill={color} />;
+        return <circle key={k} cx={cx} cy={cy} r={useParams.r ?? 4} fill={color} />;
     }
   };
 
@@ -157,6 +166,7 @@ export default function LineCharts(props) {
     cy: PropTypes.number,
     payload: PropTypes.object,
     index: PropTypes.number,
+    params: PropTypes.object,
   };
   // --------------------------------
 
@@ -300,6 +310,33 @@ export default function LineCharts(props) {
       type="monotone"
       dataKey={yFieldKey}
       stroke={theme.palette.primary.main}
+      activeDot={(dotProps) => {
+        const { cx, cy, payload, value, index } = dotProps;
+
+        // source-based shapes (hover version – slightly bigger from SourceDot's isActive)
+        if (!isEmptyArray(sources)) {
+          return (
+            <SourceDot
+              cx={cx}
+              cy={cy}
+              payload={payload}
+              index={index}
+              isActive
+              params={{ r: 5, width: 9, height: 9 }}
+            />
+          );
+        }
+
+        // fallback: severity-based active circles
+        let color = dotColor;
+        // eslint-disable-next-line
+        if (payload.highSeverityScoreCutoff) {
+          // eslint-disable-next-line
+          color = value >= payload.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR;
+        }
+
+        return <circle cx={cx} cy={cy} r={5} fill={color} stroke="none" />;
+      }}
       dot={({ cx, cy, payload, value, index }) => {
         if (!isEmptyArray(sources))
           // eslint-disable-next-line
@@ -374,7 +411,12 @@ export default function LineCharts(props) {
     const configData = data.find((item) => item && item.highSeverityScoreCutoff);
     if (!configData) return null;
     return (
-      <ReferenceLine y={configData.highSeverityScoreCutoff} stroke={ALERT_COLOR} strokeWidth={1} strokeDasharray="3 3" />
+      <ReferenceLine
+        y={configData.highSeverityScoreCutoff}
+        stroke={ALERT_COLOR}
+        strokeWidth={1}
+        strokeDasharray="3 3"
+      />
     );
   };
 

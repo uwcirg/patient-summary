@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { isEmptyArray, getDateObjectInLocalDateTime } from "@util";
+import { isEmptyArray, getDateObjectInLocalDateTime, getLocaleDateStringFromDate} from "@util";
 
 const Rect = (props) => {
   const { cx, cy, color, value } = props;
@@ -57,7 +57,7 @@ const CHART_CONFIG = {
       return d.toLocaleString("en-US", { month: "short", year: "2-digit" });
     },
     tooltipLabelFormatter: (value, data) => {
-      if (!isEmptyArray(data) && value > 0) return new Date(value).toISOString().substring(0, 10);
+      if (!isEmptyArray(data) && value > 0) return getLocaleDateStringFromDate(value);
       return "";
     },
   },
