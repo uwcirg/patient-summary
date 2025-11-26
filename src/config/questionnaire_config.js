@@ -1,4 +1,4 @@
-import { isEmptyArray, removeParentheses } from "@util";
+import { isEmptyArray } from "@util";
 import { linkIdEquals } from "@util/fhirUtil";
 import CHART_CONFIG from "./chart_config";
 import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS } from "@/consts";
@@ -137,18 +137,18 @@ const questionnaireConfigs = {
     displayMeaningNotScore: true,
     questionLinkIds: ["HOUSING-0", "HOUSING-1"],
     linkIdMatchMode: "strict",
-    highSeverityScoreCutoff: 1,
-    scoringQuestionId: "HOUSING-1",
-    fallbackScoreMap: {
-      "HOUSING-1-0": 1,
-      "HOUSING-1-1": 1,
-      "HOUSING-1-2": 0,
-      "HOUSING-1-3": 0,
-    },
-    severityBands: [
-      { min: 1, label: "high" },
-      { min: 0, label: "low" },
-    ],
+    // highSeverityScoreCutoff: 1,
+    // scoringQuestionId: "HOUSING-1",
+    // fallbackScoreMap: {
+    //   "HOUSING-1-0": 1,
+    //   "HOUSING-1-1": 1,
+    //   "HOUSING-1-2": 0,
+    //   "HOUSING-1-3": 0,
+    // },
+    // severityBands: [
+    //   { min: 1, label: "high" },
+    //   { min: 0, label: "low" },
+    // ],
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
       if (!severity) return "";
@@ -156,11 +156,12 @@ const questionnaireConfigs = {
       responses.forEach((response) => {
         if (response.answer) {
           if (linkIdEquals(response.id, "HOUSING-0")) {
-            arrMeaning.push("<span class='text-normal'>" + removeParentheses(response.answer) + "</span>");
+            return true;
+           // arrMeaning.push("<span class='text-normal'>" + removeParentheses(response.answer) + "</span>");
           } else arrMeaning.push(response.answer);
         }
       });
-      return arrMeaning.join(",");
+      return arrMeaning.join("|");
     },
     skipChart: true,
   },
@@ -203,7 +204,7 @@ const questionnaireConfigs = {
           arrMeanings.push("Physical violence");
         }
       });
-      return arrMeanings.join(", ");
+      return arrMeanings.join("|");
     },
     severityBands: [
       { min: 1, label: "high" },

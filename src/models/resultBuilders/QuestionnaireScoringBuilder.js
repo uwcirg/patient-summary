@@ -467,13 +467,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     walk(questionnaireItems);
     const questionnaireItemList = list.map((q) => {
       const matchedResponseItem = this.findResponseItemByLinkId(responseItemsFlat, q.linkId, config);
-      const ans = this.firstAnswer(matchedResponseItem);
+      const ans = matchedResponseItem?.answer??[];
+      console.log(ans)
       let returnObject = deepMerge({}, matchedResponseItem);
       returnObject.id = q.linkId;
-      returnObject.answer = this.getAnswerItemDisplayValue(ans, config);
+      returnObject.answer = ans.map((o) => this.getAnswerItemDisplayValue(o, config)).join("\n");
       returnObject.question =
         q.text ??
-        (this.firstAnswer(matchedResponseItem) ? this._getQuestion(matchedResponseItem) : `Question ${q.linkId}`);
+        (!isEmptyArray(matchedResponseItem) ? this._getQuestion(matchedResponseItem[0]) : `Question ${q.linkId}`);
       returnObject.text = matchedResponseItem?.text ? matchedResponseItem?.text : "";
       return returnObject;
     });
@@ -483,9 +484,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       ...(responseItemsFlat ?? []).map((item, index) => {
         let returnObject = deepMerge({}, item);
         if (!returnObject.id) returnObject.id = item.linkId;
-        const ans = this.firstAnswer(item);
-        const coding = this.answerCoding(ans);
-        returnObject.answer = this.getAnswerItemDisplayValue(ans, config);
+        const ans = item.answer ?? [];
+        const coding = this.answerCoding(this.firstAnswer(ans))
+        returnObject.answer = ans.map((o) => this.getAnswerItemDisplayValue(o, config)).join("\n");
         returnObject.question = item.text ?? `Question ${index}`;
         returnObject.code = coding ? coding.code : null;
         returnObject.rawAnswer = item.answer;
@@ -497,12 +498,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   responsesOnly(responseItemsFlat = [], config = {}) {
     return (responseItemsFlat || []).map((item) => {
-      const ans = this.firstAnswer(item);
-      const coding = this.answerCoding(ans);
+      const ans = item.answer ?? [];
+      const coding = this.answerCoding(this.firstAnswer(ans));
       return {
         ...item,
         id: item.linkId,
-        answer: this.getAnswerItemDisplayValue(ans, config) ?? null,
+        answer: ans.map(o => this.getAnswerItemDisplayValue(o, config)).join("\n"),
         question: item.text,
         code: coding ? coding.code : null,
       };

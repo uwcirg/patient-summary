@@ -136,6 +136,10 @@ p {
       max-height: calc(100vh - 120px);
     }
   }
+  td:not(:first-of-type) {
+    white-space: pre;
+    vertical-align: top;
+  }
 }
 
 .table-cell-item {
