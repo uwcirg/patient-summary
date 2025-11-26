@@ -217,9 +217,10 @@ export function summarizeMiniCogHelper(
 /* --------------------------- build questionnaire based on config/params --------------------------- */
 export function buildQuestionnaire(resources = [], config = {}) {
   const qLinkIdList = config.questionLinkIds || [];
+
   const items = qLinkIdList.map((lid, idx) => {
     const opts = config.answerOptionsByLinkId?.[lid] ?? DEFAULT_ANSWER_OPTIONS;
-    const match = resources.find((o) => findMatchingQuestionLinkIdFromCode(o, qLinkIdList));
+    const match = resources.find((o) => findMatchingQuestionLinkIdFromCode(o, qLinkIdList, config));
     const defaultQText = getDefaultQuestionItemText(lid, idx);
     const text = match ? conceptText(match) : (config.itemTextByLinkId?.[lid] ?? defaultQText);
     return makeQuestionItem(lid, text, opts);
@@ -324,7 +325,7 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
     let lid = normalizeLinkId(
       config.getLinkId
         ? config.getLinkId(obs, config)
-        : (findMatchingQuestionLinkIdFromCode(obs, qLinkIdList) ?? obs.id),
+        : (findMatchingQuestionLinkIdFromCode(obs, qLinkIdList, config) ?? obs.id),
     );
     if (!lid) continue;
     const ans = defaultAnswerMapperFromObservation(obs);
@@ -439,9 +440,9 @@ export function meaningFromSeverity(sev, config = {}, responses = []) {
   if (config?.fallbackMeaningFunc && typeof config.fallbackMeaningFunc === "function") {
     return config.fallbackMeaningFunc(sev, responses);
   }
-  const valueFromMeaningQuestionId = responses?.find((o) =>
-    linkIdEquals(o.id, config?.meaningQuestionId, config?.linkIdMatchMode),
-  )?.answer?.replace(/"/g, "");
+  const valueFromMeaningQuestionId = responses
+    ?.find((o) => linkIdEquals(o.id, config?.meaningQuestionId, config?.linkIdMatchMode))
+    ?.answer?.replace(/"/g, "");
   // console.log("meaning qid ", config?.meaningQuestionId, " valueFromMeaningQuestionId ", valueFromMeaningQuestionId);
   if (valueFromMeaningQuestionId) return valueFromMeaningQuestionId;
   const bands = config?.severityBands;
@@ -555,10 +556,17 @@ export function getAlertFromMostRecentResponse(current, config = {}) {
   let alert =
     isNumber(current?.score) && config?.highSeverityScoreCutoff && current.score >= config?.highSeverityScoreCutoff;
   if (!alert && config?.alertQuestionId) {
-    alert = current?.responses?.find((o) => linkIdEquals(o.id, config.alertQuestionId, config?.linkIdMatchMode))?.answer ?? alert;
+    alert =
+      current?.responses?.find((o) => linkIdEquals(o.id, config.alertQuestionId, config?.linkIdMatchMode))?.answer ??
+      alert;
   }
   if (!alert && config?.alertQuestionId) {
-    alert = getValueByExpression(config?.alertQuestionId, current?.questionnaire, current?.questionnaireResponse, config);
+    alert = getValueByExpression(
+      config?.alertQuestionId,
+      current?.questionnaire,
+      current?.questionnaireResponse,
+      config,
+    );
   }
   //console.log("alert ", alert);
   return alert;

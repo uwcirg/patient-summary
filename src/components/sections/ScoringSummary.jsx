@@ -78,14 +78,14 @@ export default function ScoringSummary(props) {
   // -------- styles
   const defaultTableCellProps = { size: "small" };
   const defaultHeaderCellProps = { ...defaultTableCellProps, align: "center", variant: "head" };
-  const cellWhiteSpaceStyle = { wordBreak: "break-word", whiteSpace: "normal" };
+  const cellWhiteSpaceStyle = { wordBreak: "normal", whiteSpace: "normal" };
   const baseCellStyle = {
     borderRight: `1px solid`,
     borderColor: "border.main",
     whiteSpace: { xs: "normal", sm: "nowrap" }, // 🟡 allow wrapping on phones
     lineHeight: 1.4,
     fontSize: { xs: "0.75rem", sm: "0.8rem" }, // optional: slightly smaller on xs
-    wordBreak: "break-word",
+    wordBreak: "normal",
     padding: theme.spacing(0.75, 1),
     verticalAlign: "center",
     ...cellWhiteSpaceStyle,
@@ -226,13 +226,13 @@ export default function ScoringSummary(props) {
                 if (hasHtmlTags)
                   return (
                     <Box
-                      sx={{ mb: 0.4 }}
+                      className="table-cell-item"
                       key={`${row.id}_meaning_${index}`}
                       dangerouslySetInnerHTML={{ __html: m }}
                     ></Box>
                   );
                 return (
-                  <Box sx={{ mb: 0.4 }} key={`${row.id}_meaning_${index}`}>
+                  <Box className="table-cell-item" key={`${row.id}_meaning_${index}`}>
                     {m}
                   </Box>
                 );

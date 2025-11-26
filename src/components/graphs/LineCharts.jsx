@@ -216,26 +216,19 @@ export default function LineCharts(props) {
   );
 
   const renderLegend = () => {
-    const hasCnics = sources.includes("cnics");
-    const hasEpic = sources.includes("epic");
-    const hasBothSources = hasCnics && hasEpic;
-
-    if (!hasBothSources) {
-      if (isEmptyArray(sources)) {
-        return (
-          <Legend
-            formatter={(value) => (
-              <span style={{ marginRight: "8px", fontSize: "14px" }}>{value.replace(/_/g, " ")}</span>
-            )}
-            iconSize={12}
-            wrapperStyle={{ bottom: "12px" }}
-          />
-        );
-      }
-      return null; // don't render SourceLegend if not both
+    if (isEmptyArray(sources)) {
+      return (
+        <Legend
+          formatter={(value) => (
+            <span style={{ marginRight: "8px", fontSize: "14px" }}>{value.replace(/_/g, " ")}</span>
+          )}
+          iconSize={12}
+          wrapperStyle={{ bottom: "12px" }}
+        />
+      );
     }
 
-    // show SourceLegend only if both cnics and epic exist
+    // show SourceLegend only if cnics or epic exists
     return (
       <Legend
         verticalAlign="top"
@@ -252,8 +245,11 @@ export default function LineCharts(props) {
   };
 
   const SourceLegend = () => {
-    const items = [
-      {
+    const hasCnics = sources.includes("cnics");
+    const hasEpic = sources.includes("epic");
+    let items = [];
+    if (hasCnics) {
+      items.push({
         key: "cnics",
         label: "CNICS",
         icon: (
@@ -261,8 +257,10 @@ export default function LineCharts(props) {
             <circle cx="8" cy="8" r="4" fill="#444" />
           </svg>
         ),
-      },
-      {
+      });
+    }
+    if (hasEpic) {
+      items.push({
         key: "epic",
         label: "Epic",
         icon: (
@@ -270,8 +268,9 @@ export default function LineCharts(props) {
             <rect x="4" y="4" width="8" height="8" fill="#444" />
           </svg>
         ),
-      },
-    ];
+      });
+    }
+
     return (
       <div style={{ display: "flex", gap: 16, alignItems: "center", padding: "4px 8px" }}>
         {items.map((it) => (

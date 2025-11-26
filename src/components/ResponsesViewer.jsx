@@ -39,7 +39,7 @@ export default function ResponsesViewer({
   const theme = useTheme();
   const [open, setOpen] = useState(false);
 
-  const resolvedHeaderBg = headerBgColor ?? (theme?.palette?.lightest?.main ? theme.palette.lightest.main : "#FFF");
+  const resolvedHeaderBg = headerBgColor ?? (theme?.palette?.background?.main ? theme.palette.background.main : "#FFF");
 
   // resolve columns in priority order:
   // 1) explicit columns prop

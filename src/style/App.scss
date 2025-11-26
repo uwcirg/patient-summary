@@ -1,5 +1,5 @@
 // $chart-background-color: #fbfcff;
- $chart-background-color: #FFF;
+$chart-background-color: #fff;
 $muted-text-color: #4f4d4d;
 $border-color: #ececec;
 $app-background-color: #faf9fa;
@@ -138,6 +138,13 @@ p {
   }
 }
 
+.table-cell-item {
+  &:not(:last-of-type) {
+    margin-bottom: 4px;
+    word-break: normal;
+  }
+}
+
 .MuiButton-contained,
 .MuiButton-outlined {
   border-radius: 24px !important;
@@ -150,7 +157,7 @@ p {
   }
 }
 .MuiButtonBase-root.MuiTableSortLabel-root {
-    white-space: pre;
+  white-space: pre;
 }
 .recharts-legend-item-text {
   white-space: nowrap;
@@ -291,7 +298,7 @@ p {
   }
   .score-summary-wrapper {
     .recharts-legend-wrapper {
-       top: 8px !important;
+      top: 8px !important;
     }
   }
   .recharts-legend-item-text {

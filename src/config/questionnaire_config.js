@@ -1,5 +1,5 @@
 import { isEmptyArray, removeParentheses } from "@util";
-import { normalizeLinkId, linkIdEquals } from "@util/fhirUtil";
+import { linkIdEquals } from "@util/fhirUtil";
 import CHART_CONFIG from "./chart_config";
 import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS } from "@/consts";
 const questionnaireConfigs = {
@@ -110,25 +110,8 @@ const questionnaireConfigs = {
       "FINANCIAL-0-2": 0,
       "FINANCIAL-0-3": 0,
     },
-    // severityBands: [
-    //   { min: 1, label: "high" },
-    //   { min: 0, label: "low" },
-    // ],
     alertQuestionId: "FINANCIAL-critical-flag",
     meaningQuestionId: "FINANCIAL-score-label",
-    // fallbackMeaningFunc: function (severity, responses) {
-    //   if (isEmptyArray(responses)) return "";
-    //   if (!severity) return "";
-    //   //console.log("severity ", severity, "responses ", responses);
-    //   let meaning = "";
-    //   responses.forEach((response) => {
-    //     if (meaning) return true;
-    //     if (response.answer) {
-    //       meaning = response.answer.split(",")[0];
-    //     }
-    //   });
-    //   return meaning;
-    // },
     skipChart: true,
   },
   "CIRG-CNICS-FOOD": {
@@ -141,29 +124,7 @@ const questionnaireConfigs = {
     scoringQuestionId: "FOOD-score",
     alertQuestionId: "FOOD-critical-flag",
     meaningQuestionId: "FOOD-score-label",
-    //TODO remove this when alert flag issue is fixed
-    //highSeverityScoreCutoff: 2,
     linkIdMatchMode: "strict",
-    // severityBands: [
-    //   { min: 2, label: "high" },
-    //   { min: 0, label: "low" },
-    // ],
-    // fallbackMeaningFunc: function (severity, responses) {
-    //   if (isEmptyArray(responses)) return "";
-    //   if (!severity) return "";
-    //   const match = responses.find(o => linkIdEquals(o.id, "FOOD-score-label"));
-    //   if (match && !isEmptyArray(match.answer)) {
-    //     return getValueText(match.answer[0]);
-    //   }
-    //   return "";
-    //   // let arrMeaning = [];
-    //   // responses.forEach((response) => {
-    //   //   if (response.answer) {
-    //   //     arrMeaning.push(removeParentheses(response.answer));
-    //   //   }
-    //   // });
-    //   // return arrMeaning.join(",");
-    // },
     skipChart: true,
   },
   "CIRG-CNICS-HOUSING": {
@@ -475,13 +436,15 @@ const questionnaireConfigs = {
 export const getConfigForQuestionnaire = (id) => {
   return questionnaireConfigs[String(id).toUpperCase()] || null;
 };
-export function findMatchingQuestionLinkIdFromCode(resource, linkIdList) {
+export function findMatchingQuestionLinkIdFromCode(resource, linkIdList, config) {
   if (!resource) return null;
   if (!resource?.code?.coding) return null;
   if (isEmptyArray(linkIdList)) return null;
 
   for (const coding of resource.code.coding) {
-    const match = linkIdList.find((id) => normalizeLinkId(id) === normalizeLinkId(coding.code));
+    const match = linkIdList.find((id) =>
+      linkIdEquals(String(id), String(coding.code), config?.linkIdMatchMode ?? "fuzzy"),
+    );
     if (match) {
       return match;
     }
