@@ -791,5 +791,5 @@ export default function useFetchResources() {
   };
 }
 
-// Export reducer for unit tests if desired
+// Export reducer for unit tests
 export { reducer };
