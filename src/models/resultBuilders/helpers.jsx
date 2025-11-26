@@ -18,12 +18,6 @@ import questionnaireConfigs, {
 } from "@/config/questionnaire_config";
 import { report_config } from "@/config/report_config";
 
-// eslint-disable-next-line no-undef
-const fhirpath = require("fhirpath");
-// For FHIR model data (choice type support) pull in the model file:
-// eslint-disable-next-line no-undef
-const fhirpath_r4_model = require("fhirpath/fhir-context/r4");
-
 /* ---------------------------------------------
  * External helpers
  * Each helper receives a `ctx` (the builder instance)
@@ -463,10 +457,6 @@ export function calculateQuestionnaireScore(questionnaire, qnr, responseItemsFla
   let scoringQuestionScore = scoringQuestionId
     ? ctx.getScoringByResponseItem(questionnaire, responseItemsFlat, scoringQuestionId, config)
     : null;
-  if (!scoringQuestionScore) {
-    //get by valueExpression
-    scoringQuestionScore = getValueByExpression(scoringQuestionId, questionnaire, qnr, config);
-  }
 
   const questionScores = scoreLinkIds.map((id) =>
     ctx.getScoringByResponseItem(questionnaire, responseItemsFlat, id, config),
@@ -488,67 +478,6 @@ export function calculateQuestionnaireScore(questionnaire, qnr, responseItemsFla
     scoreLinkIds,
   };
 }
-function validateAndNormalizeFHIRPath(expression, options = {}) {
-  const { autoFix = false, throwOnError = true } = options;
-
-  const hasResourceVar = /%resource\b/.test(expression);
-
-  if (hasResourceVar) {
-    if (autoFix) {
-      console.warn("Auto-fixing: Removing %resource from expression");
-      return expression.replace(/%resource\./g, "");
-    }
-
-    if (throwOnError) {
-      throw new Error(
-        "Invalid expression: %resource variable is not available. " +
-          'Use implicit context instead (e.g., "item.where(...)" instead of "%resource.item.where(...)")',
-      );
-    }
-
-    return null; // Indicate validation failure
-  }
-
-  return expression;
-}
-
-export function getValueByExpression(linkId, questionnaire, qnr, config) {
-  if (!linkId || !questionnaire) return null;
-  const matchedQuestionItem = questionnaire.item?.find(
-    (o) =>
-      linkIdEquals(o.linkId, linkId, config?.linkIdMatchMode) &&
-      o.extension?.find(
-        (e) => e.valueExpression && e.valueExpression?.expression && e.valueExpression?.language === "text/fhirpath",
-      ),
-  );
-  if (!matchedQuestionItem) return null;
-  //console.log("matched ", matchedQuestionItem, " qnr ", qnr);
-  //console.log("qnr ", qnr)
-
-  const evalExpression = validateAndNormalizeFHIRPath(
-    matchedQuestionItem.extension[0].valueExpression?.expression ?? "",
-    {
-      autoFix: true,
-      throwOnError: false,
-    },
-  );
-
-  let evalResult;
-  try {
-    evalResult = fhirpath.evaluate(
-      qnr,
-      evalExpression,
-      {
-        "%resource": qnr,
-      },
-      fhirpath_r4_model,
-    );
-  } catch (e) {
-    console.error("Unable to evaluate expression ", evalExpression, e);
-  }
-  if (!isEmptyArray(evalResult)) return evalResult[0];
-  return null;
-}
 
 export function getAlertFromMostRecentResponse(current, config = {}) {
   if (!current) return false;
@@ -559,14 +488,6 @@ export function getAlertFromMostRecentResponse(current, config = {}) {
     alert =
       current?.responses?.find((o) => linkIdEquals(o.id, config.alertQuestionId, config?.linkIdMatchMode))?.answer ??
       alert;
-  }
-  if (!alert && config?.alertQuestionId) {
-    alert = getValueByExpression(
-      config?.alertQuestionId,
-      current?.questionnaire,
-      current?.questionnaireResponse,
-      config,
-    );
   }
   //console.log("alert ", alert);
   return alert;

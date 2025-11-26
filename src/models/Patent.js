@@ -26,8 +26,9 @@ class Patient {
   get mrn() {
     if (!this.data || isEmptyArray(this.data.identifier)) return "";
     const envSystem = getEnv("REACT_APP_LAUNCH_FHIR_MRN_SYSTEM");
+    const systems = envSystem? envSystem.split(",") : ["http://hospital.smarthealthit.org"];
     const match = this.data.identifier.find(
-      (o) => o.system === (envSystem ? envSystem : "http://hospital.smarthealthit.org"),
+      (o) => o.system && systems.includes(o.system),
     );
     if (match) return match.value;
     return "";
