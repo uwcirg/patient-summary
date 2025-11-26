@@ -294,20 +294,20 @@ export default function useFetchResources() {
   const summariesCache = useRef(new Map());
   const getSummariesMemoized = useCallback((bundle) => {
     // Create a simple cache key based on bundle entry count and first/last resource ids
-    const cacheKey = `${bundle.length}-${bundle[0]?.resource?.id || ''}-${bundle[bundle.length - 1]?.resource?.id || ''}`;
-    
+    const cacheKey = `${bundle.length}-${bundle[0]?.resource?.id || ""}-${bundle[bundle.length - 1]?.resource?.id || ""}`;
+
     if (summariesCache.current.has(cacheKey)) {
       return summariesCache.current.get(cacheKey);
     }
-    
+
     const result = getSummaries(bundle);
-    
+
     // Keep cache size reasonable (only store last 10 results)
     if (summariesCache.current.size > 10) {
       const firstKey = summariesCache.current.keys().next().value;
       summariesCache.current.delete(firstKey);
     }
-    
+
     summariesCache.current.set(cacheKey, result);
     return result;
   }, []);
@@ -460,28 +460,44 @@ export default function useFetchResources() {
           if (isEmptyArray(qListToLoad)) {
             dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
           } else {
-            const qPath = getFHIRResourcePath(pid, QUESTIONNAIRE_DATA_KEY, {
-              questionnaireList: qListToLoad,
-              exactMatchById: exactMatchById,
-            });
+            let qPaths = [];
 
-            const qTask = {
-              id: QUESTIONNAIRE_DATA_KEY,
-              promise: client.request(
+            if (exactMatchById) {
+              // 1 request per Questionnaire id
+              qPaths = qListToLoad.map((qid) =>
+                getFHIRResourcePath(pid, QUESTIONNAIRE_DATA_KEY, {
+                  questionnaireList: [qid], // IMPORTANT: single id only
+                  exactMatchById,
+                }),
+              );
+            } else {
+              // non-Epic / fuzzy name search can still use a single search
+              qPaths = [
+                getFHIRResourcePath(pid, QUESTIONNAIRE_DATA_KEY, {
+                  questionnaireList: qListToLoad,
+                  exactMatchById,
+                }),
+              ];
+            }
+
+            const qPromises = qPaths.map((qPath) =>
+              client.request(
                 { url: qPath, header: NO_CACHE_HEADER },
                 { pageLimit: 0, onPage: processPage(client, qResources) },
               ),
-              onErrorMessage: "Questionnaire request failed",
-            };
+            );
 
-            const [qResult] = await Promise.allSettled([qTask.promise]);
-            if (qResult.status === "fulfilled") {
-              dispatchLoader({ type: "COMPLETE", id: qTask.id });
+            const qResults = await Promise.allSettled(qPromises);
+
+            const anySuccess = qResults.some((r) => r.status === "fulfilled");
+            if (anySuccess) {
+              dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
             } else {
+              const firstErr = qResults.find((r) => r.status === "rejected");
               dispatchLoader({
                 type: "ERROR",
-                id: qTask.id,
-                errorMessage: qResult.reason?.message || qTask.onErrorMessage,
+                id: QUESTIONNAIRE_DATA_KEY,
+                errorMessage: firstErr?.reason?.message || "Questionnaire request failed",
               });
             }
           }
@@ -549,10 +565,10 @@ export default function useFetchResources() {
 
         // If nothing to fetch, summary can finalize now
         if (isEmptyArray(extrasWanted)) {
-          dispatchLoader({ 
-            type: "COMPLETE", 
-            id: SUMMARY_DATA_KEY, 
-            data: getSummariesMemoized(patientBundle.current.entry) 
+          dispatchLoader({
+            type: "COMPLETE",
+            id: SUMMARY_DATA_KEY,
+            data: getSummariesMemoized(patientBundle.current.entry),
           });
           return;
         }
@@ -632,10 +648,10 @@ export default function useFetchResources() {
       enabled: readyForExtras,
       onSuccess: () => {
         // Removed setTimeout - React 18 batches automatically
-        dispatchLoader({ 
-          type: "COMPLETE", 
-          id: SUMMARY_DATA_KEY, 
-          data: getSummariesMemoized(patientBundle.current.entry) 
+        dispatchLoader({
+          type: "COMPLETE",
+          id: SUMMARY_DATA_KEY,
+          data: getSummariesMemoized(patientBundle.current.entry),
         });
       },
       onError: (e) => {
@@ -657,7 +673,9 @@ export default function useFetchResources() {
     if (!summaryDataItem || !summaryDataItem.data || summaryDataItem.error) return null;
     const keys = Object.keys(summaryDataItem.data);
     const hasAnyUseful = !!keys.find(
-      (key) => summaryDataItem.data[key] && (summaryDataItem.data[key].error || !isEmptyArray(summaryDataItem.data[key].responseData)),
+      (key) =>
+        summaryDataItem.data[key] &&
+        (summaryDataItem.data[key].error || !isEmptyArray(summaryDataItem.data[key].responseData)),
     );
     return hasAnyUseful ? summaryDataItem : null;
   }, [summaryDataItem]);
@@ -701,11 +719,11 @@ export default function useFetchResources() {
   );
 
   const chartKeys = useMemo(() => [...new Set(allChartData?.map((o) => getDisplayQTitle(o.key)))], [allChartData]);
-  
+
   const loaderErrors = useMemo(() => state.loader.filter((r) => r?.error), [state.loader]);
   const baseData = useMemo(() => base, [base]);
-  
-  // error message collection 
+
+  // error message collection
   const errorMessages = useMemo(() => {
     const errors = [];
     if (base.error) errors.push(base.errorMessage);

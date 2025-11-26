@@ -77,6 +77,7 @@ export function getFHIRResourceQueryParams(resourceType, options) {
   const envCategory = getEnv("REACT_APP_FHIR_CAREPLAN_CATEGORY");
   const envObCategories = getEnv("REACT_APP_FHIR_OBSERVATION_CATEGORIES");
   const observationCategories = envObCategories ? envObCategories : DEFAULT_OBSERVATION_CATEGORIES;
+
   switch (String(resourceType).toLowerCase()) {
     case "careplan":
       if (queryOptions.patientId) {
@@ -86,18 +87,27 @@ export function getFHIRResourceQueryParams(resourceType, options) {
         paramsObj["category:text"] = envCategory;
       }
       break;
-    case "questionnaire":
-      if (!isEmptyArray(queryOptions.questionnaireList)) {
-        let qList = queryOptions.questionnaireList.join(",");
-        paramsObj[queryOptions.exactMatchById ? "_id" : "name:contains"] = qList;
+
+    case "questionnaire": {
+      const list = queryOptions.questionnaireList || [];
+      if (!isEmptyArray(list)) {
+        if (queryOptions.exactMatchById) {
+          // Expect caller to give a single id; we use the first one.
+          paramsObj["_id"] = list[0];
+        } else {
+          paramsObj["name:contains"] = list.join(",");
+        }
       }
       break;
+    }
+
     case "observation":
       paramsObj["category"] = observationCategories;
       if (queryOptions.patientId) {
         paramsObj["patient"] = `Patient/${queryOptions.patientId}`;
       }
       break;
+
     default:
       if (queryOptions.patientId) {
         paramsObj["patient"] = `Patient/${queryOptions.patientId}`;
@@ -115,26 +125,61 @@ export function getFHIRResourcePath(patientId, resourceType, options) {
 export function getFHIRResourcePaths(patientId, resourceTypesToLoad, options) {
   if (!patientId) return [];
   if (isEmptyArray(resourceTypesToLoad)) return [];
+
   return resourceTypesToLoad
     .filter((resource) => !!resource)
-    .map((resource) => {
+    .flatMap((resource) => {
+      const resourceLower = String(resource).toLowerCase();
+
+      // SPECIAL CASE: Questionnaire + exactMatchById -> build one path per id
+      if (
+        resourceLower === "questionnaire" &&
+        options?.exactMatchById &&
+        !isEmptyArray(options.questionnaireList)
+      ) {
+        return options.questionnaireList.map((qid) => {
+          let path = `/${resource}`;
+          const paramsObj = getFHIRResourceQueryParams(resource, {
+            ...options,
+            questionnaireList: [qid],    // single id
+            patientId,
+          });
+
+          if (paramsObj && !isEmptyArray(Object.keys(paramsObj))) {
+            const searchParams = new URLSearchParams(paramsObj);
+            if (Array.from(searchParams).length) {
+              path += "?" + searchParams.toString();
+            }
+          }
+
+          return {
+            resourceType: resource,
+            resourcePath: path,
+          };
+        });
+      }
+
+      // default behavior for everything else
       let path = `/${resource}`;
       const paramsObj = getFHIRResourceQueryParams(resource, {
         ...(options ? options : {}),
-        patientId: patientId,
+        patientId,
       });
+
       if (paramsObj && !isEmptyArray(Object.keys(paramsObj))) {
         const searchParams = new URLSearchParams(paramsObj);
-        if (searchParams) {
+        if (searchParams && Array.from(searchParams).length) {
           path = path + "?" + searchParams.toString();
         }
       }
+
       return {
         resourceType: resource,
         resourcePath: path,
       };
     });
 }
+
 
 export function getResourcesByResourceType(patientBundle, resourceType) {
   if (isEmptyArray(patientBundle)) return null;
