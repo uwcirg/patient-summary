@@ -200,18 +200,6 @@ describe("QuestionnaireScoringBuilder – scoring", () => {
 });
 
 describe("QuestionnaireScoringBuilder – severity bands", () => {
-  // let b;
-
-  // beforeEach(() => {
-  //  b = new QuestionnaireScoringBuilder({
-  //     questionnaireId: "phq9",
-  //     severityBands: [
-  //       { min: 20, label: "high", meaning: "severe" },
-  //       { min: 10, label: "medium", meaning: "moderate" },
-  //       { min: 0, label: "low", meaning: "minimal" },
-  //     ],
-  //   });
-  // });
 
   const config = {
     scoringQuestionId: "/44261-6",

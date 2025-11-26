@@ -73,7 +73,7 @@ export default function ResponsesViewer({
     return field.split(".").reduce((acc, k) => (acc == null ? acc : acc[k]), row);
   };
 
-  // wherever you compute columns in ResponsesViewer:
+  // compute columns in ResponsesViewer:
   const safeColumns = React.useMemo(() => {
     const cols = Array.isArray(resolvedColumns) ? resolvedColumns : [];
     return cols.map((col) => {
@@ -189,9 +189,9 @@ ResponsesViewer.propTypes = {
   title: PropTypes.string.isRequired,
   subtitle: PropTypes.string,
   tableData: PropTypes.array,
-  columns: PropTypes.array, // optional, if omitted we'll auto-build simple columns
+  columns: PropTypes.array, // optional, if omitted, auto-build simple columns
   headerBgColor: PropTypes.string, // optional
   buttonLabel: PropTypes.string, // optional ("View" default)
-  buildColumns: PropTypes.func, // optional advanced hook to compute columns
+  buildColumns: PropTypes.func, // optional hook to compute columns
   responsesTileTitle: PropTypes.node, // optional ("Responses" default)
 };

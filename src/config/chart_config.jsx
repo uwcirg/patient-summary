@@ -160,7 +160,7 @@ Rect.propTypes = {
 };
 
 /**
- * Compute a safe, padded Recharts domain for an array of timestamps (ms).
+ * Compute a safe, padded domain for an array of timestamps (ms).
  * - Empty array => ["auto","auto"] (or [0,1] if allowAutoFallback=false)
  * - Single date  => expands by ±singlePointWindowDays
  * - Multiple     => padded by `padding` fraction

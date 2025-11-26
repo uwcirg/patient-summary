@@ -1,7 +1,4 @@
 import { Stack } from "@mui/material";
-// import { linkIdEquals } from "@util/fhirUtil";
-// import { PHQ9_SI_ANSWER_SCORE_MAPPINGS, PHQ9_SI_QUESTION_LINK_ID } from "@consts";
-// import { getQuestionnaireResponseSkeleton } from "@models/resultBuilders/helpers";
 import QuestionnaireScoringBuilder from "@models/resultBuilders/QuestionnaireScoringBuilder";
 import { deepMerge } from "@util";
 import CHART_CONFIG from "./chart_config";

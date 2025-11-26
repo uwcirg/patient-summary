@@ -23,9 +23,6 @@ vi.mock("../../components/PatientInfo", () => ({
   default: () => <div data-testid="patient-info" />,
 }));
 
-// (Optional) If you ever see base-URL issues in jsdom, uncomment:
-// Object.defineProperty(window, "location", { value: new URL("http://localhost/") });
-
 function renderWithProviders(ui) {
   return render(
     <FhirClientContext.Provider value={{ patient: {}}}>

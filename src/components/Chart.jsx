@@ -1,30 +1,13 @@
-import React, { useRef, 
-  //useEffect 
-  } from "react";
+import React, { useRef } from "react";
 import PropTypes from "prop-types";
 import Error from "./ErrorComponent";
 import BarChart from "./graphs/BarCharts";
 import LineChart from "./graphs/LineCharts";
-//let resizeChartTimeoutId = 0;
 const Chart = (props) => {
   const eligibleCharts = ["linechart", "barchart"];
   const chartRef = useRef();
- // const CHART_SPACING = 280;
-
-  // useEffect(() => {
-  //   const resizeEvent = () => {
-  //     clearTimeout(resizeChartTimeoutId);
-  //     resizeChartTimeoutId = setTimeout(() => {
-  //       if (chartRef.current) {
-  //         chartRef.current.style.height = window.innerHeight - CHART_SPACING + "px";
-  //       }
-  //     }, 250);
-  //   };
-  //   window.addEventListener("resize", resizeEvent);
-  //   return () => window.removeEventListener("resize", resizeEvent);
-  // }, []);
-  const {key, ...rest} = props.data;
-   return (
+  const { key, ...rest } = props.data;
+  return (
     <div
       className="chart__container"
       style={{
@@ -32,8 +15,6 @@ const Chart = (props) => {
           sm: "100%",
           md: "50%",
         },
-     // height: window.innerHeight - CHART_SPACING + "px",
-       // minHeight: props.data && props.data.chartHeight ? props.data.chartHeight + "px" : "520px",
       }}
       ref={chartRef}
     >
