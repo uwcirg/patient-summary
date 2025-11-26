@@ -78,14 +78,14 @@ export default function ScoringSummary(props) {
   // -------- styles
   const defaultTableCellProps = { size: "small" };
   const defaultHeaderCellProps = { ...defaultTableCellProps, align: "center", variant: "head" };
-  const cellWhiteSpaceStyle = { wordBreak: "normal", whiteSpace: "normal" };
+  const cellWhiteSpaceStyle = { wordBreak: "break-word", whiteSpace: "normal" };
   const baseCellStyle = {
     borderRight: `1px solid`,
     borderColor: "border.main",
     whiteSpace: { xs: "normal", sm: "nowrap" }, // 🟡 allow wrapping on phones
     lineHeight: 1.4,
     fontSize: { xs: "0.75rem", sm: "0.8rem" }, // optional: slightly smaller on xs
-    wordBreak: "normal",
+    wordBreak: "break-word",
     padding: theme.spacing(0.75, 1),
     verticalAlign: "center",
     ...cellWhiteSpaceStyle,

@@ -43,8 +43,8 @@ export default function QuestionnaireInfo(props) {
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle
           sx={{
-            backgroundColor: theme.palette.primary
-              ? theme.palette.primary.main
+            backgroundColor: theme?.palette?.primary
+              ? theme?.palette?.primary?.main
               : "#444",
             color: "#FFF",
           }}

@@ -31,7 +31,7 @@ export default function Responses(props) {
     return (
       <Box className="print-only responses-table-container" sx={{ marginTop: theme.spacing(2) }}>
         <Table aria-label="responses table" size="small" role="table" sx={{ tableLayout: "fixed", width: "100%" }}>
-          <TableHead sx={{ backgroundColor: theme?.palette?.dark ? theme.palette.dark.main : "#444" }}>
+          <TableHead sx={{ backgroundColor: theme?.palette?.dark ? theme?.palette?.dark?.main : "#444" }}>
             <TableRow>
               {headerRow.map((item, index) => (
                 <TableCell key={`header_${index}`}>{item}</TableCell>

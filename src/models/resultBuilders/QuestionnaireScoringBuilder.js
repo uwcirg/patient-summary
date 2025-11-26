@@ -699,7 +699,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         row.source = sample?.source;
         for (const d of formattedData) {
           // this is the row data for the date and id of a response set that has the requsite linkId
-          row[d.id] = this._getAnswerByTargetLinkIdFromResponseData(sample.id, data, d.id, configToUse);
+          row[d.id] = this._getAnswerByTargetLinkIdFromResponseData(sample?.id, data, d.id, configToUse);
         }
         //console.log("sample " , sample, " row ", row, " response row? ", this.isResponseQuestionItem(row, configToUse));
         return row;

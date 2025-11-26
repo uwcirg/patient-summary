@@ -446,7 +446,7 @@ export function meaningFromSeverity(sev, config = {}, responses = []) {
   // console.log("meaning qid ", config?.meaningQuestionId, " valueFromMeaningQuestionId ", valueFromMeaningQuestionId);
   if (valueFromMeaningQuestionId) return valueFromMeaningQuestionId;
   const bands = config?.severityBands;
-  return bands?.find((b) => b.label === sev)?.meaning ?? "";
+  return bands?.find((b) => b.label === sev)?.meaning ?? null;
 }
 
 export function calculateQuestionnaireScore(questionnaire, qnr, responseItemsFlat, config = {}, ctx) {
