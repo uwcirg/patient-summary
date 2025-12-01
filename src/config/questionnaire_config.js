@@ -121,11 +121,38 @@ const questionnaireConfigs = {
     title: "Food Security",
     questionnaireMatchMode: "fuzzy",
     displayMeaningNotScore: true,
-    questionLinkIds: ["FOOD-0", "FOOD-1"],
     scoringQuestionId: "FOOD-score",
     alertQuestionId: "FOOD-critical-flag",
     meaningQuestionId: "FOOD-score-label",
     linkIdMatchMode: "strict",
+    skipChart: true,
+  },
+  "CIRG-CNICS-FROP-Com": {
+    key: "CIRG-CNICS-FROP-Com",
+    instrumentName: "Falls Risk for Older People in the Community (FROP-Com)",
+    title: "Falls",
+    subtitle: "Past year",
+    questionnaireMatchMode: "fuzzy",
+    displayMeaningNotScore: true,
+    questionLinkIds: ["FROP-Com-0", "FROP-Com-1"],
+    linkIdMatchMode: "strict",
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      if (!severity) return "";
+      let arrMeaning = [];
+      responses.forEach((response) => {
+        const answered = response.answer != null && response.answer !== undefined;
+        if (linkIdEquals(response.id, "FROP-Com-0")) {
+          arrMeaning.push(answered ? response.answer.replace(/\bfalls?\b/g, "").trim() : "");
+        }
+        if (linkIdEquals(response.id, "FROP-Com-1")) {
+          if (answered) {
+            arrMeaning.push("E/D visit: " + response.answer);
+          }
+        }
+      });
+      return arrMeaning.join("|");
+    },
     skipChart: true,
   },
   "CIRG-CNICS-HOUSING": {
@@ -157,7 +184,7 @@ const questionnaireConfigs = {
         if (response.answer) {
           if (linkIdEquals(response.id, "HOUSING-0")) {
             return true;
-           // arrMeaning.push("<span class='text-normal'>" + removeParentheses(response.answer) + "</span>");
+            // arrMeaning.push("<span class='text-normal'>" + removeParentheses(response.answer) + "</span>");
           } else arrMeaning.push(response.answer);
         }
       });
@@ -172,7 +199,6 @@ const questionnaireConfigs = {
     subtitle: "Past year",
     questionnaireMatchMode: "fuzzy",
     linkIdMatchMode: "strict",
-    questionLinkIds: ["IPV4-1", "IPV4-2", "IPV4-3", "IPV4-4"],
     highSeverityScoreCutoff: 1,
     displayMeaningNotScore: true,
     fallbackScoreMap: {
@@ -188,7 +214,6 @@ const questionnaireConfigs = {
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
       if (!severity || severity === "low") return "";
-      //console.log("severity ", severity, "responses ", responses);
       let arrMeanings = [];
       responses.forEach((response) => {
         if (linkIdEquals(response.linkId, "IPV4-1") && String(response.answer).toLowerCase() === "yes") {
@@ -209,6 +234,26 @@ const questionnaireConfigs = {
     severityBands: [
       { min: 1, label: "high" },
       { min: 0, label: "low" },
+    ],
+    skipChart: true,
+  },
+   "CIRG-CNICS-Symptoms": {
+    key: "CIRG-CNICS-Symptoms",
+    instrumentName: "CNICS Symptoms Checklist",
+    title: "Current Symptoms",
+    subtitle: "From {date} assessment",
+    questionnaireMatchMode: "fuzzy",
+    linkIdMatchMode: "strict",
+    displayMeaningNotScore: true,
+    columns: [
+      {
+        linkId: "Symptoms-bothers-a-lot",
+        id: "bothersALot"
+      },
+      {
+        linkId: "Symptoms-bothers-some",
+        id: "bothersSome"
+      }
     ],
     skipChart: true,
   },

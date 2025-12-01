@@ -430,9 +430,9 @@ export function severityFromScore(score, config = {}) {
   return bands[bands.length - 1]?.label ?? "low";
 }
 
-export function meaningFromSeverity(sev, config = {}, responses = []) {
+export function meaningFromSeverity(sev, config = {}, responses = [], summaryObject = {}) {
   if (config?.fallbackMeaningFunc && typeof config.fallbackMeaningFunc === "function") {
-    return config.fallbackMeaningFunc(sev, responses);
+    return config.fallbackMeaningFunc(sev, responses, summaryObject);
   }
   const valueFromMeaningQuestionId = responses
     ?.find((o) => linkIdEquals(o.id, config?.meaningQuestionId, config?.linkIdMatchMode))
@@ -511,7 +511,7 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   }
   const score = isNumber(curScore) ? curScore : (curScore ?? null);
   const scoreSeverity = severityFromScore(score, config);
-  const meaning = meaningFromSeverity(scoreSeverity, config, current?.responses);
+  const meaning = meaningFromSeverity(scoreSeverity, config, current?.responses, current);
   const source = current?.source;
   const alert = getAlertFromMostRecentResponse(current, config);
   const warning = isNumber(score) && config?.mediumSeverityScoreCutoff && score >= config?.mediumSeverityScoreCutoff;

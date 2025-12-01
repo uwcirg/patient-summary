@@ -490,3 +490,9 @@ export function hasHtmlTags(text) {
   // Check if the body contains any child elements (excluding script tags)
   return doc.body.children.length > 0;
 }
+export function stripHtmlTags(html) {
+  if (!html) return html;
+  const doc = domParser.parseFromString(html, "text/html");
+  return doc.body.textContent || "";
+}
+

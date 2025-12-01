@@ -218,10 +218,10 @@ export default {
       source: "cnics",
     },
   },
-  "CIRG-SYMPTOMS": {
+  "CIRG-CNICS-Symptoms": {
     scoringSummaryData: {
       id: 1,
-      key: "CIRG-SYMPTOMS",
+      key: "CIRG-CNICS-Symptoms",
       title: "Current Symptoms",
       bothersALot: "Rash, Cough",
       bothersSome: "Sad, Headache",

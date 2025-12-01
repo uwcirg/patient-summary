@@ -13,9 +13,6 @@ export const getInstrumentDefaults = () => {
 
 export const INSTRUMENT_DEFAULTS = {
   ...getInstrumentDefaults(),
-  "CIRG-Fall-Risk": {
-    title: "Fall Risk",
-  },
   "CIRG-Shortness-of-Breath": {
     title: "Shortness of breath",
   },
@@ -61,10 +58,10 @@ export const INSTRUMENT_DEFAULTS = {
     title: "Concurrent IDU",
   },
   "CIRG-Naloxone-Access": {
-    title: "Naloxone Access"
+    title: "Naloxone Access",
   },
   "CIRG-Fentanyl-Strip-Access": {
-    title: "Fentanyl Test Strip Access"
+    title: "Fentanyl Test Strip Access",
   },
   "CIRG-SEXUAL-PARTNERS": {
     title: "# of Sex Partners x 3 months",
@@ -82,14 +79,14 @@ export const INSTRUMENT_DEFAULTS = {
     title: "Social Support",
   },
   "CIRG-HIV-Stigma": {
-    title: "HIV Stigma"
+    title: "HIV Stigma",
   },
   "CIRG-PC-PTSD-5": {
-    title: "PTSD Symptoms"
+    title: "PTSD Symptoms",
   },
   "CIRG-HRQOL": {
-    title: "HRQOL"
-  }
+    title: "HRQOL",
+  },
   // add others as needed…
 };
 
@@ -155,7 +152,7 @@ export const report_config_base = {
             "CIRG-CNICS-FOOD",
             "CIRG-CNICS-FINANCIAL",
             "CIRG-CNICS-HOUSING",
-            "CIRG-Fall-Risk",
+            "CIRG-CNICS-FROP-Com",
             "CIRG-Shortness-of-Breath",
           ],
           paramsByKey: {
@@ -167,7 +164,7 @@ export const report_config_base = {
                 const config = getInstrumentDefault(SELF_ID);
                 const qb = new QuestionnaireScoringBuilder(config, bundle);
                 const siSummaryData = qb._summariesByQuestionnaireRef(bundle);
-                console.log("siSummary ", siSummaryData)
+                console.log("siSummary ", siSummaryData);
                 return siSummaryData;
               },
             },
@@ -182,24 +179,21 @@ export const report_config_base = {
         {
           id: "table_symptoms-bother",
           layout: "simple",
-          dataKeysToMatch: ["CIRG-SYMPTOMS"],
+          dataKeysToMatch: ["CIRG-CNICS-Symptoms"],
           hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
           columns: [
             {
-              id: "measure",
-              header: "Measure",
-              align: "left",
-              accessor: "title",
-              headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
-            },
-            {
               id: "bothersALot",
               header: "Bothers a lot",
-              align: "right",
+              align: "left",
               accessor: "bothersALot",
+              cellProps: {
+                sx: { verticalAlign: "top", lineHeight: 1.5 },
+              },
               renderCell: (row, value) => (
-                <Stack direction={"column"} spacing={1}>
-                  <span>{value ?? "N/A"}</span>
+                <Stack direction={"column"} spacing={1} sx={{ whiteSpace: "pre-line" }} justifyContent={"flex-start"}>
+                  {value && value.split(",").join("\n")}
+                  {!value && <span className="muted-text">N/A</span>}
                   {row.source && <span className="muted-text">{row.source}</span>}
                 </Stack>
               ),
@@ -207,11 +201,15 @@ export const report_config_base = {
             {
               id: "bothersSome",
               header: "Bothers some",
-              align: "right",
+              align: "left",
               accessor: "bothersSome",
+              cellProps: {
+                sx: { verticalAlign: "top", lineHeight: 1.5 },
+              },
               renderCell: (row, value) => (
-                <Stack direction={"column"} spacing={1}>
-                  <span>{value ?? "N/A"}</span>
+                <Stack direction={"column"} spacing={1} sx={{ whiteSpace: "pre-line" }} justifyContent={"flex-start"}>
+                  {value && value.split(",").join("\n")}
+                  {!value && <span className="muted-text">N/A</span>}
                   {row.source && <span className="muted-text">{row.source}</span>}
                 </Stack>
               ),
@@ -270,7 +268,7 @@ export const report_config_base = {
       id: "section_harm_reduction",
       title: "Harm Reduction",
       tables: [
-         {
+        {
           id: "table_naloxone_access",
           layout: "simple",
           dataKeysToMatch: ["CIRG-Naloxone-Access", "CIRG-Fentanyl-Strip-Access"],
@@ -306,7 +304,7 @@ export const report_config_base = {
             },
           ],
         },
-      ]
+      ],
     },
     {
       id: "section_sexual_risks",

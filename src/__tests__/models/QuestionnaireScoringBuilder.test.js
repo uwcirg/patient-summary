@@ -132,7 +132,7 @@ describe("QuestionnaireScoringBuilder", () => {
     );
     const override = { resourceType: "Bundle", entry: [{ resource: QR_INTEGER }] };
     const summaries = b.summariesFromBundle(Q, { completedOnly: true }, override);
-    expect(summaries?.responseData[0]?.responses[0].answer).toEqual(12);
+    expect(parseInt(summaries?.responseData[0]?.responses[0].answer)).toEqual(12);
   });
 
   it("index resolves Questionnaire", () => {

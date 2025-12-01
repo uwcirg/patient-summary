@@ -11,6 +11,7 @@ import {
   fuzzyMatch,
   normalizeStr,
   objectToString,
+  stripHtmlTags,
   toFiniteNumber,
 } from "@util";
 import Response from "@models/Response";
@@ -440,7 +441,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     // Prefer human display for codings
     const coding = this.answerCoding(answerItem);
     if (coding)
-      return coding.display ?? (coding.code ? fallbackScoreMap[String(coding.code).toLowerCase()] : null) ?? null;
+      return (
+        stripHtmlTags(coding.display) ??
+        (coding.code ? fallbackScoreMap[String(coding.code).toLowerCase()] : null) ??
+        null
+      );
     // Then any primitive value[x]
     const prim = this.answerPrimitive(answerItem);
     if (!isNil(prim)) return prim;
@@ -456,6 +461,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       !questionnaireItems.some((item) => responseItemsFlat?.find((o) => o.linkId === item.linkId))
     )
       return this.responsesOnly(responseItemsFlat, config);
+
+    if (isEmptyArray(responseItemsFlat)) return [];
     const configToUse = config ? config : this.cfg;
     const list = [];
     const walk = (items = []) => {
@@ -467,43 +474,56 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     walk(questionnaireItems);
     const questionnaireItemList = list.map((q) => {
       const matchedResponseItem = this.findResponseItemByLinkId(responseItemsFlat, q.linkId, config);
-      const ans = matchedResponseItem?.answer??[];
-      console.log(ans)
+      const ans = matchedResponseItem?.answer;
       let returnObject = deepMerge({}, matchedResponseItem);
       returnObject.id = q.linkId;
-      returnObject.answer = ans.map((o) => this.getAnswerItemDisplayValue(o, config)).join("\n");
+      returnObject.answer = ans?.map((o) => this.getAnswerItemDisplayValue(o, config)).join("\n");
+      returnObject.rawAnswer = matchedResponseItem?.answer ?? [];
       returnObject.question =
         q.text ??
         (!isEmptyArray(matchedResponseItem) ? this._getQuestion(matchedResponseItem[0]) : `Question ${q.linkId}`);
-      returnObject.text = matchedResponseItem?.text ? matchedResponseItem?.text : "";
+      returnObject.text = matchedResponseItem?.text ? stripHtmlTags(matchedResponseItem?.text) : "";
       return returnObject;
     });
-    const allResponses = new Map();
-    [
-      ...questionnaireItemList,
-      ...(responseItemsFlat ?? []).map((item, index) => {
-        let returnObject = deepMerge({}, item);
-        if (!returnObject.id) returnObject.id = item.linkId;
-        const ans = item.answer ?? [];
-        const coding = this.answerCoding(this.firstAnswer(ans))
-        returnObject.answer = ans.map((o) => this.getAnswerItemDisplayValue(o, config)).join("\n");
-        returnObject.question = item.text ?? `Question ${index}`;
-        returnObject.code = coding ? coding.code : null;
-        returnObject.rawAnswer = item.answer;
-        return returnObject;
-      }),
-    ].forEach((item) => allResponses.set(normalizeLinkId(item.id), item));
-    return Array.from(allResponses.values());
+    if (!isEmptyArray(questionnaireItemList)) return questionnaireItemList;
+    return (responseItemsFlat ?? []).map((item, index) => {
+      let returnObject = deepMerge({}, item);
+      if (!returnObject.id) returnObject.id = item.linkId;
+      const ans = item.answer;
+      const coding = this.answerCoding(this.firstAnswer(ans));
+      returnObject.answer = ans?.map((o) => this.getAnswerItemDisplayValue(o, config)).join("\n");
+      returnObject.question = item.text ?? `Question ${index}`;
+      returnObject.code = coding ? coding.code : null;
+      returnObject.rawAnswer = item.answer;
+      return returnObject;
+    });
+    // const allResponses = new Map();
+    // [
+    //   ...questionnaireItemList,
+    //   ...(responseItemsFlat ?? []).map((item, index) => {
+    //     let returnObject = deepMerge({}, item);
+    //     if (!returnObject.id) returnObject.id = item.linkId;
+    //     const ans = item.answer ?? [];
+    //     const coding = this.answerCoding(this.firstAnswer(ans))
+    //     returnObject.answer = ans.map((o) => this.getAnswerItemDisplayValue(o, config)).join("\n");
+    //     returnObject.question = item.text ?? `Question ${index}`;
+    //     returnObject.code = coding ? coding.code : null;
+    //     returnObject.rawAnswer = item.answer;
+    //     return returnObject;
+    //   }),
+    // ].forEach((item) => allResponses.set(normalizeLinkId(item.id), item));
+    // return Array.from(allResponses.values());
   }
 
   responsesOnly(responseItemsFlat = [], config = {}) {
     return (responseItemsFlat || []).map((item) => {
-      const ans = item.answer ?? [];
+      const ans = item.answer;
       const coding = this.answerCoding(this.firstAnswer(ans));
       return {
         ...item,
         id: item.linkId,
-        answer: ans.map(o => this.getAnswerItemDisplayValue(o, config)).join("\n"),
+        answer: ans?.map((o) => this.getAnswerItemDisplayValue(o, config)).join("\n"),
+        rawAnswer: item.answer,
         question: item.text,
         code: coding ? coding.code : null,
       };
@@ -565,6 +585,19 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return { score, scoringQuestionScore, totalAnsweredItems, totalItems };
   }
 
+  getColumnObjects(columns, qr, config = {}) {
+    if (isEmptyArray(columns) || !qr) return {};
+    let out = {};
+    const qrItems = qr.item || [];
+    for (const col of columns) {
+      if (!col?.id) continue;
+      const matchItem = qrItems.find((it) => this.isLinkIdEquals(it.linkId, col.linkId));
+      const ans = matchItem?.answer;
+      out[col.id] = matchItem ? ans?.map((o) => this.getAnswerItemDisplayValue(o, config)).join("\n") : null;
+    }
+    return out;
+  }
+
   // -------------------- public APIs --------------------
   getResponsesSummary(questionnaireResponses, questionnaire) {
     const keyToUse = firstNonEmpty(
@@ -591,6 +624,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       //console.log("score ", score, " totalItems ", totalItems, " total answered ", totalAnsweredItems)
       return {
         ...(config ?? {}),
+        ...(config?.columns ? this.getColumnObjects(config.columns, qr, config) : {}),
         id: qr.id + "_" + rIndex,
         instrumentName: config?.instrumentName ?? this.questionnaireIDFromQR(qr),
         date: qr.authored ?? null,
@@ -644,9 +678,13 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   _formatScoringSummaryData = (data, opts = {}) => {
     if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
+    const subtitle = opts?.config?.subtitle
+      ? opts?.config?.subtitle.replace("{date}", getLocaleDateStringFromDate(data[0].date))
+      : "";
     return {
       ...data[0],
       ...getScoreParamsFromResponses(data, opts?.config),
+      subtitle,
       displayMeaningOnly: !this._hasScoreData(data),
       responseData: data,
       tableResponseData: opts?.tableResponseData ?? this._formatTableResponseData(data),
