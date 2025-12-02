@@ -31,6 +31,7 @@ export default function LineCharts(props) {
     id,
     legendType,
     lgChartWidth,
+    mdChartWidth,
     maximumYValue,
     minimumYValue,
     showTicks,
@@ -440,6 +441,7 @@ export default function LineCharts(props) {
           width: {
             xs: MIN_CHART_WIDTH,
             sm: chartWidth,
+            md: mdChartWidth ? mdChartWidth : chartWidth,
             lg: lgChartWidth ? lgChartWidth : chartWidth,
           },
           height: chartHeight ? chartHeight : "calc(100% - 40px)",
@@ -450,7 +452,7 @@ export default function LineCharts(props) {
             data={data}
             margin={{
               top: 20,
-              right: 40,
+              right: 20,
               left: 0,
               bottom: 20,
             }}
@@ -485,6 +487,7 @@ LineCharts.propTypes = {
   highSeverityScoreCutoff: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   legendType: PropTypes.string,
+  mdChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   lgChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   maximumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   minimumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),

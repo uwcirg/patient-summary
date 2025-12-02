@@ -16,9 +16,6 @@ export const INSTRUMENT_DEFAULTS = {
   "CIRG-Shortness-of-Breath": {
     title: "Shortness of breath",
   },
-  "CIRG-SYMPTOMS": {
-    title: "Symptoms",
-  },
   "CIRG-SRS": {
     title: "Self Rating Scale (SRS)",
   },
@@ -80,9 +77,6 @@ export const INSTRUMENT_DEFAULTS = {
   },
   "CIRG-HIV-Stigma": {
     title: "HIV Stigma",
-  },
-  "CIRG-PC-PTSD-5": {
-    title: "PTSD Symptoms",
   },
   "CIRG-HRQOL": {
     title: "HRQOL",
@@ -180,7 +174,7 @@ export const report_config_base = {
           id: "table_symptoms-bother",
           layout: "simple",
           dataKeysToMatch: ["CIRG-CNICS-Symptoms"],
-          hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
+          hiddenColumns: ["id", "source", "lastAssessed", "numAnswered", "scoreMeaning", "comparison"],
           columns: [
             {
               id: "measure",
@@ -236,7 +230,7 @@ export const report_config_base = {
           layout: "simple",
           dataKeysToMatch: ["CIRG-SRS", "CIRG-Last-Missed-Dose", "CIRG-VAS"],
           title: "ART Adherence",
-          hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
+          hiddenColumns: ["id", "source", "lastAssessed", "numAnswered", "scoreMeaning", "comparison"],
           columns: [
             {
               id: "measure",
@@ -280,7 +274,7 @@ export const report_config_base = {
           id: "table_naloxone_access",
           layout: "simple",
           dataKeysToMatch: ["CIRG-Naloxone-Access", "CIRG-Fentanyl-Strip-Access"],
-          hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
+          hiddenColumns: ["id", "source", "lastAssessed", "numAnswered", "scoreMeaning", "comparison"],
           columns: [
             {
               id: "measure",
@@ -323,7 +317,7 @@ export const report_config_base = {
           layout: "simple",
           title: "Sexual Risk Behavior",
           dataKeysToMatch: ["CIRG-SEXUAL-PARTNERS", "CIRG-UNPROTECTED-SEX", "CIRG-EXCHANGE-SEX", "CIRG-STI"],
-          hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
+          hiddenColumns: ["id", "source", "lastAssessed", "numAnswered", "scoreMeaning", "comparison"],
           columns: [
             {
               id: "measure",
@@ -366,31 +360,6 @@ export const report_config_base = {
           layout: "two-columns",
           dataKeysToMatch: ["CIRG-SOCIAL-SUPPORT", "CIRG-HIV-Stigma", "CIRG-PC-PTSD-5", "CIRG-HRQOL"],
           title: "Psychosocial Concerns and Quality of Life",
-          //hiddenColumns: ["id", "meaning", "comparison"],
-          // columns: [
-          //   {
-          //     id: "measure",
-          //     header: "Measure",
-          //     align: "left",
-          //     accessor: "title",
-          //     type: "text",
-          //     headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
-          //   },
-          //   {
-          //     id: "result",
-          //     header: "Result",
-          //     align: "left",
-          //     accessor: "score",
-          //     type: "text",
-          //   },
-          //   {
-          //     id: "date",
-          //     header: "Last Done",
-          //     align: "left",
-          //     accessor: "date",
-          //     type: "date"
-          //   },
-          // ],
         },
       ],
     },

@@ -105,9 +105,13 @@ export default function ScoringSummary(props) {
       </span>
     ),
     date: (row, value) => (
-      <Stack direction={"column"} spacing={1} alignItems={"center"} justifyContent={"center"}>
-        {value ? getCorrectedISODate(value) : ""}
-        {row.source && <span className="muted-text">{row.source}</span>}
+      <Stack direction={"column"} spacing={1} alignItems={"space-between"} justifyContent={"space-between"}>
+        <Box>{value ? getCorrectedISODate(value) : ""}</Box>
+        {row.source && (
+          <Box className="muted-text" sx={{ mt: 1 }}>
+            {row.source}
+          </Box>
+        )}
       </Stack>
     ),
     score: (row) => {
@@ -144,6 +148,30 @@ export default function ScoringSummary(props) {
     },
   };
 
+  const renderMeaning = (row) => {
+    if (!row.meaning) return null;
+
+    const parts = String(row.meaning).includes("|") ? row.meaning.split("|") : [row.meaning];
+
+    return (
+      <Box className="meaning-wrapper">
+        {parts.map((m, index) => {
+          const key = `${row.id}_meaning_${index}`;
+          const cellClass = row.alert ? "text-danger" : row.warning ? "text-warning" : "";
+          // If your hasHtmlTags helper checks for HTML, call it with the string
+          if (hasHtmlTags && hasHtmlTags(m)) {
+            return <Box className={`table-cell-item ${cellClass}`} key={key} dangerouslySetInnerHTML={{ __html: m }} />;
+          }
+          return (
+            <Box className={`table-cell-item ${cellClass}`} key={key}>
+              {m}
+            </Box>
+          );
+        })}
+      </Box>
+    );
+  };
+
   // -------- original columns ------------
   const DEFAULT_COLUMNS = [
     {
@@ -156,6 +184,7 @@ export default function ScoringSummary(props) {
           ...stickyStyle,
           minHeight: { xs: theme.spacing(4), sm: "auto" },
           backgroundColor: "lightest.main",
+          textAlign: "left",
         },
         ...defaultHeaderCellProps,
       },
@@ -167,10 +196,10 @@ export default function ScoringSummary(props) {
           borderBottom: `1px solid`,
           borderBottomColor: "border.main",
           verticalAlign: "top",
+          textAlign: "left",
         },
         size: "small",
       },
-      // custom cell that preserves link behavior
       renderCell: (row) => {
         const displayTitle = getDisplayQTitle(
           row.title ? row.title : row.instrumentName ? row.instrumentName : row.key,
@@ -202,46 +231,38 @@ export default function ScoringSummary(props) {
       id: "numAnswered",
       header: "Answered",
       align: "center",
-      headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
-      cellProps: { sx: baseCellStyle, size: "small" },
+      width: "15%",
+      headerProps: {
+        sx: baseCellStyle,
+        ...defaultHeaderCellProps,
+        whiteSpace: "nowrap",
+        padding: theme.spacing(0.5, 0.5),
+      },
+      cellProps: { sx: baseCellStyle, whiteSpace: "nowrap", padding: theme.spacing(0.5, 0.5) },
+      size: "small",
       renderCell: (row) => displayNumAnswered(row),
     },
     {
-      id: "score",
-      header: "Score",
+      id: "scoreMeaning",
+      header: "Score / Meaning",
       align: "center",
       headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
-      cellProps: { sx: baseCellStyle, size: "small", align: "left" },
-      type: "score",
+      cellProps: {
+        sx: {
+          ...baseCellStyle,
+          // allow wrapping so score + meaning can stack
+          whiteSpace: "normal",
+        },
+        size: "small",
+      },
+      renderCell: (row) => (
+        <Stack sx={{ width: "100%" }} spacing={1} alignItems={"center"}>
+          {defaultRenderers.score(row)}
+          {renderMeaning(row)}
+        </Stack>
+      ),
     },
-    {
-      id: "meaning",
-      header: "Meaning",
-      align: "left",
-      headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
-      cellProps: { sx: baseCellStyle, size: "small", className: "capitalized-text" },
-      accessor: (row) =>
-        row.meaning
-          ? String(row.meaning).includes("|")
-            ? row.meaning.split("|").map((m, index) => {
-                if (hasHtmlTags)
-                  return (
-                    <Box
-                      className="table-cell-item"
-                      key={`${row.id}_meaning_${index}`}
-                      dangerouslySetInnerHTML={{ __html: m }}
-                    ></Box>
-                  );
-                return (
-                  <Box className="table-cell-item" key={`${row.id}_meaning_${index}`}>
-                    {m}
-                  </Box>
-                );
-              })
-            : row.meaning
-          : "",
-      type: "text",
-    },
+
     {
       id: "lastAssessed",
       header: "Last Done",
@@ -251,7 +272,6 @@ export default function ScoringSummary(props) {
       cellProps: { sx: baseCellStyle, size: "small" },
       accessor: (row) => (row.lastAssessed ? row.lastAssessed : (row.date ?? "")),
     },
-
     {
       id: "comparison",
       header: "Change from Last",
@@ -438,7 +458,7 @@ export default function ScoringSummary(props) {
 
 const columnShape = PropTypes.shape({
   id: PropTypes.string.isRequired,
-  header: PropTypes.node.isRequired,
+  header: PropTypes.node,
   accessor: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
   renderCell: PropTypes.func, // (row, value) => node
   headerProps: PropTypes.object,
@@ -454,7 +474,7 @@ ScoringSummary.propTypes = {
   disableLinks: PropTypes.bool,
   enableResponsesViewer: PropTypes.bool,
   hiddenColumns: PropTypes.arrayOf(
-    PropTypes.oneOf(["id", "source", "measure", "lastAssessed", "score", "numAnswered", "meaning", "comparison"]),
+    PropTypes.oneOf(["id", "source", "measure", "lastAssessed", "score", "numAnswered", "scoreMeaning", "comparison"]),
   ),
   columns: PropTypes.arrayOf(columnShape),
   emptyMessage: PropTypes.string,

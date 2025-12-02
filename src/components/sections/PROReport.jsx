@@ -12,13 +12,12 @@ export default function PROReport() {
     return (
       <Stack
         direction="row"
-        spacing={1}
         alignItems="center"
         className="response-summary"
         flexWrap={{
           xs: "wrap",
           sm: "wrap",
-          md: "wrap",
+          md: "nowrap",
           lg: "nowrap"
         }}
         key={`wrapper_${table.id}`}
