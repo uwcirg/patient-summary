@@ -11,7 +11,6 @@ import {
   fuzzyMatch,
   normalizeStr,
   objectToString,
-  stripHtmlTags,
   toFiniteNumber,
 } from "@util";
 import Response from "@models/Response";
@@ -431,27 +430,50 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return null;
   }
 
-  getAnswerItemDisplayValue(answerItem, config = {}) {
-    if (!answerItem) return null;
-    const fallbackScoreMap = normalizeObjectKeys(
-      config?.fallbackScoreMap ? config?.fallbackScoreMap : this.fallbackScoreMap,
-    );
-    // If it's already a primitive (e.g., "Nearly every day", 2, true), just show it
-    if (!isPlainObject(answerItem)) return answerItem;
-    // Prefer human display for codings
-    const coding = this.answerCoding(answerItem);
-    if (coding)
-      return (
-        stripHtmlTags(coding.display) ??
-        (coding.code ? fallbackScoreMap[String(coding.code).toLowerCase()] : null) ??
-        null
-      );
-    // Then any primitive value[x]
-    const prim = this.answerPrimitive(answerItem);
-    if (!isNil(prim)) return prim;
-    // Then CodeableConcept text, else stringify as last resort
-    const codeableValue = this.answerCodeableConept(answerItem);
-    return codeableValue ?? objectToString(answerItem);
+  getAnswerItemDisplayValue(answerItem, opts = {}) {
+    if (answerItem == null) return null;
+
+    const fallbackScoreMap = normalizeObjectKeys(opts?.fallbackScoreMap ?? this.fallbackScoreMap);
+
+    // Helper to handle a *single* answer item
+    const getSingleDisplayValue = (item) => {
+      if (item == null) return null;
+
+      // If it's already a primitive (e.g., "Nearly every day", 2, true), just show it
+      if (!isPlainObject(item)) return item;
+
+      // Prefer human display for codings
+      const coding = this.answerCoding(item);
+      if (coding) {
+        const normalizedCode = coding.code != null ? String(coding.code).toLowerCase() : null;
+
+        return coding.display ?? (normalizedCode ? fallbackScoreMap[normalizedCode] : null) ?? null;
+      }
+
+      // Then any primitive value[x]
+      const prim = this.answerPrimitive(item);
+      if (!isNil(prim)) return prim;
+
+      // Then CodeableConcept text, else stringify as last resort
+      const codeableValue = this.answerCodeableConept(item);
+      return codeableValue ?? objectToString(item);
+    };
+
+    // If the answer item is an array, map over it
+    if (Array.isArray(answerItem)) {
+      const values = answerItem.map(getSingleDisplayValue).filter((v) => !isNil(v) && v !== "");
+
+      if (!values.length) return null;
+
+      // Allow caller to get back an array instead of a string
+      if (opts.returnArray) return values;
+
+      const joinWith = opts.joinWith ?? "\n";
+      return values.join(joinWith);
+    }
+
+    // Otherwise treat it as a single item
+    return getSingleDisplayValue(answerItem);
   }
 
   // -------------------- formatting --------------------
@@ -477,12 +499,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const ans = matchedResponseItem?.answer;
       let returnObject = deepMerge({}, matchedResponseItem);
       returnObject.id = q.linkId;
-      returnObject.answer = ans?.map((o) => this.getAnswerItemDisplayValue(o, config)).join("\n");
+      returnObject.answer = this.getAnswerItemDisplayValue(ans, config);
       returnObject.rawAnswer = matchedResponseItem?.answer ?? [];
       returnObject.question =
         q.text ??
         (!isEmptyArray(matchedResponseItem) ? this._getQuestion(matchedResponseItem[0]) : `Question ${q.linkId}`);
-      returnObject.text = matchedResponseItem?.text ? stripHtmlTags(matchedResponseItem?.text) : "";
+      returnObject.text = matchedResponseItem?.text ? matchedResponseItem?.text : "";
       return returnObject;
     });
     if (!isEmptyArray(questionnaireItemList)) return questionnaireItemList;
@@ -491,28 +513,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (!returnObject.id) returnObject.id = item.linkId;
       const ans = item.answer;
       const coding = this.answerCoding(this.firstAnswer(ans));
-      returnObject.answer = ans?.map((o) => this.getAnswerItemDisplayValue(o, config)).join("\n");
+      returnObject.answer = this.getAnswerItemDisplayValue(ans, config)
       returnObject.question = item.text ?? `Question ${index}`;
       returnObject.code = coding ? coding.code : null;
       returnObject.rawAnswer = item.answer;
       return returnObject;
     });
-    // const allResponses = new Map();
-    // [
-    //   ...questionnaireItemList,
-    //   ...(responseItemsFlat ?? []).map((item, index) => {
-    //     let returnObject = deepMerge({}, item);
-    //     if (!returnObject.id) returnObject.id = item.linkId;
-    //     const ans = item.answer ?? [];
-    //     const coding = this.answerCoding(this.firstAnswer(ans))
-    //     returnObject.answer = ans.map((o) => this.getAnswerItemDisplayValue(o, config)).join("\n");
-    //     returnObject.question = item.text ?? `Question ${index}`;
-    //     returnObject.code = coding ? coding.code : null;
-    //     returnObject.rawAnswer = item.answer;
-    //     return returnObject;
-    //   }),
-    // ].forEach((item) => allResponses.set(normalizeLinkId(item.id), item));
-    // return Array.from(allResponses.values());
   }
 
   responsesOnly(responseItemsFlat = [], config = {}) {
@@ -522,7 +528,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       return {
         ...item,
         id: item.linkId,
-        answer: ans?.map((o) => this.getAnswerItemDisplayValue(o, config)).join("\n"),
+        answer: this.getAnswerItemDisplayValue(ans, config),
         rawAnswer: item.answer,
         question: item.text,
         code: coding ? coding.code : null,
@@ -593,7 +599,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (!col?.id) continue;
       const matchItem = qrItems.find((it) => this.isLinkIdEquals(it.linkId, col.linkId));
       const ans = matchItem?.answer;
-      out[col.id] = matchItem ? ans?.map((o) => this.getAnswerItemDisplayValue(o, config)).join("\n") : null;
+      out[col.id] = matchItem ? this.getAnswerItemDisplayValue(ans, config) : null;
     }
     return out;
   }
@@ -628,7 +634,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         id: qr.id + "_" + rIndex,
         instrumentName: config?.instrumentName ?? this.questionnaireIDFromQR(qr),
         date: qr.authored ?? null,
-        lastAssessed: new Date(qr.authored).toLocaleDateString(),
         source,
         responses,
         score,
@@ -676,11 +681,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return this._getAnswer(answerItem);
   }
 
+  _normalizeDisplay(text, row) {
+    if (!text) return "";
+    return text.replace("{date}", row?.date ? getLocaleDateStringFromDate(row?.date) : "recent");
+  }
+
   _formatScoringSummaryData = (data, opts = {}) => {
     if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
-    const subtitle = opts?.config?.subtitle
-      ? opts?.config?.subtitle.replace("{date}", getLocaleDateStringFromDate(data[0].date))
-      : "";
+    const subtitle = opts?.config?.subtitle ? this._normalizeDisplay(opts?.config?.subtitle, data[0]) : "";
     return {
       ...data[0],
       ...getScoreParamsFromResponses(data, opts?.config),

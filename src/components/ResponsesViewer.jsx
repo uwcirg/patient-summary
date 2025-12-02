@@ -95,9 +95,9 @@ export default function ResponsesViewer({
 
   return (
     <>
-      <Stack direction={"column"} justifyContent={"space-between"} alignItems={"center"} gap={1}>
-        <Box>
-          <Typography component="h3" variant="subtitle2" sx={{ textAlign: "center" }}>
+      <Stack direction={"column"} justifyContent={"space-between"} alignItems={"flex-start"} gap={1}>
+        <Box sx={{ width: "100%" }}>
+          <Typography component="h3" variant="subtitle2" sx={{ textAlign: "left" }}>
             {responsesTileTitle}
           </Typography>
           {subtitle && (

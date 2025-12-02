@@ -32,7 +32,7 @@ export default function PROReport() {
             alignSelf: "stretch",
           }}
         ></ScoringSummary>
-        <Box sx={{ order: 0 }}>
+        <Box>
           {!isEmptyArray(table.charts) &&
             table.charts.map((chartData, index) => {
               if (isEmptyArray(chartData?.data)) return null;

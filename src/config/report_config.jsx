@@ -183,6 +183,14 @@ export const report_config_base = {
           hiddenColumns: ["id", "source", "lastAssessed", "score", "numAnswered", "meaning", "comparison"],
           columns: [
             {
+              id: "measure",
+              cellProps: {
+                sx: {
+                  align: "left"
+                }
+              }
+            },
+            {
               id: "bothersALot",
               header: "Bothers a lot",
               align: "left",

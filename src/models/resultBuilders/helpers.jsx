@@ -8,7 +8,15 @@ import {
   normalizeLinkId,
   makeQuestionItem,
 } from "@util/fhirUtil";
-import { getLocaleDateStringFromDate, generateUUID, isEmptyArray, isNil, isNumber, isPlainObject } from "@util";
+import {
+  getLocaleDateStringFromDate,
+  generateUUID,
+  isEmptyArray,
+  isNil,
+  isNumber,
+  isPlainObject,
+  stripHtmlTags,
+} from "@util";
 import Scoring from "@components/Score";
 import { DEFAULT_ANSWER_OPTIONS } from "@/consts";
 import { getDateDomain } from "@/config/chart_config";
@@ -602,7 +610,7 @@ export function getResponseColumns(data) {
         }
 
         // string answers render directly; everything else is safely stringified
-        return typeof rowDataItem === "string" ? rowDataItem : normalize(rowDataItem);
+        return typeof rowDataItem === "string" ? stripHtmlTags(rowDataItem) : normalize(rowDataItem);
       },
     })),
   ];
