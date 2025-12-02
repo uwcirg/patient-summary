@@ -16,7 +16,14 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { ALERT_COLOR, SUCCESS_COLOR, buildTimeTicks, fmtMonthYear, thinTicksToFit } from "@config/chart_config";
+import {
+  ALERT_COLOR,
+  SUCCESS_COLOR,
+  WARNING_COLOR,
+  buildTimeTicks,
+  fmtMonthYear,
+  thinTicksToFit,
+} from "@config/chart_config";
 import { generateUUID, isEmptyArray, range } from "@/util";
 
 export default function LineCharts(props) {
@@ -136,7 +143,7 @@ export default function LineCharts(props) {
     let color;
     if (payload.highSeverityScoreCutoff && payload[yFieldKey] >= payload.highSeverityScoreCutoff) color = ALERT_COLOR;
     else if (payload.mediumSeverityScoreCutoff && payload[yFieldKey] >= payload.mediumSeverityScoreCutoff)
-      color = "orange";
+      color = WARNING_COLOR;
     else color = SUCCESS_COLOR;
 
     // Prefer payload.id; otherwise compose a stable-ish key using source + x + index

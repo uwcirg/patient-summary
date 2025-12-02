@@ -1,4 +1,4 @@
-import { Stack } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import QuestionnaireScoringBuilder from "@models/resultBuilders/QuestionnaireScoringBuilder";
 import { deepMerge } from "@util";
 import CHART_CONFIG from "./chart_config";
@@ -180,9 +180,9 @@ export const report_config_base = {
               id: "measure",
               cellProps: {
                 sx: {
-                  align: "left"
-                }
-              }
+                  align: "left",
+                },
+              },
             },
             {
               id: "bothersALot",
@@ -209,10 +209,14 @@ export const report_config_base = {
                 sx: { verticalAlign: "top", lineHeight: 1.5 },
               },
               renderCell: (row, value) => (
-                <Stack direction={"column"} spacing={1} sx={{ whiteSpace: "pre-line" }} justifyContent={"flex-start"}>
-                  {value && value.split(",").join("\n")}
-                  {!value && <span className="muted-text">N/A</span>}
-                  {row.source && <span className="muted-text">{row.source}</span>}
+                <Stack direction={"column"} sx={{ whiteSpace: "pre-line" }} justifyContent={"flex-start"}>
+                  <Box>{value && value.split(",").join("\n")}</Box>
+                  {!value && <Box className="muted-text">N/A</Box>}
+                  {row.source && (
+                    <Box className="muted-text" sx={{ mt: 1 }}>
+                      {row.source}
+                    </Box>
+                  )}
                 </Stack>
               ),
             },
@@ -298,7 +302,7 @@ export const report_config_base = {
               accessor: "date",
               type: "text",
               renderCell: (row, value) => (
-                <Stack direction={"column"} spacing={1}>
+                <Stack direction={"column"}>
                   <span>{value ?? "N/A"}</span>
                   {row.source && <span className="muted-text">{row.source}</span>}
                 </Stack>
@@ -342,8 +346,12 @@ export const report_config_base = {
               type: "text",
               renderCell: (row, value) => (
                 <Stack direction={"column"} spacing={1}>
-                  <span>{value ?? "N/A"}</span>
-                  {row.source && <span className="muted-text">{row.source}</span>}
+                  <Box>{value ?? "N/A"}</Box>
+                  {row.source && (
+                    <Box className="muted-text" sx={{ mt: 2 }}>
+                      {row.source}
+                    </Box>
+                  )}
                 </Stack>
               ),
             },

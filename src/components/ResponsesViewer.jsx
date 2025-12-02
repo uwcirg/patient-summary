@@ -31,7 +31,8 @@ export default function ResponsesViewer({
   tableData = [],
   columns,
   headerBgColor,
-  // buttonLabel = "View",
+  buttonStyle,
+  buttonLabel = "View",
   // Optional advanced mode:
   buildColumns, // (optional) function: () => columns[]
   responsesTileTitle = "Responses", // header above the button, mirrors your summary tile
@@ -39,7 +40,7 @@ export default function ResponsesViewer({
   const theme = useTheme();
   const [open, setOpen] = useState(false);
 
-  const resolvedHeaderBg = headerBgColor ?? (theme?.palette?.background?.main ? theme.palette.background.main : "#FFF");
+  const resolvedHeaderBg = headerBgColor ?? "#FFF";
 
   // resolve columns in priority order:
   // 1) explicit columns prop
@@ -95,9 +96,15 @@ export default function ResponsesViewer({
 
   return (
     <>
-      <Stack direction={"column"} justifyContent={"space-between"} alignItems={"flex-start"} gap={1}>
+      <Stack
+        sx={{ height: "100%" }}
+        direction={"column"}
+        justifyContent={"space-between"}
+        alignItems={"flex-start"}
+        gap={1}
+      >
         <Box sx={{ width: "100%" }}>
-          <Typography component="h3" variant="subtitle2" sx={{ textAlign: "left" }}>
+          <Typography component="h3" variant="subtitle2" sx={{ textAlign: "center" }}>
             {responsesTileTitle}
           </Typography>
           {subtitle && (
@@ -112,9 +119,9 @@ export default function ResponsesViewer({
           size="small"
           onClick={() => setOpen(true)}
           variant="outlined"
-          sx={{ fontSize: "0.8rem" }}
+          sx={{ fontSize: "0.8rem", ...((typeof buttonStyle === "object" && buttonStyle) || {}) }}
         >
-          View
+          {buttonLabel}
         </Button>
       </Stack>
 
@@ -149,7 +156,7 @@ export default function ResponsesViewer({
             p: theme.spacing(2),
             width: "100%",
             [theme.breakpoints.up("md")]: { width: "95%" },
-            [theme.breakpoints.up("lg")]: { width: "80%" },
+            [theme.breakpoints.up("lg")]: { width: "85%" },
             overflowX: "auto",
             position: "relative",
           }}
@@ -172,7 +179,7 @@ export default function ResponsesViewer({
                 position: "sticky",
                 top: 0,
                 zIndex: 998,
-                borderRight: "1px solid #ececec",
+                borderRight: "2px solid #ececec",
               },
               rowStyle: (rowData) => ({
                 backgroundColor: rowData.tableData.index % 2 === 0 ? "#f4f4f6" : "#fff",
@@ -192,6 +199,7 @@ ResponsesViewer.propTypes = {
   columns: PropTypes.array, // optional, if omitted, auto-build simple columns
   headerBgColor: PropTypes.string, // optional
   buttonLabel: PropTypes.string, // optional ("View" default)
+  buttonStyle: PropTypes.object, // optional style object for the button
   buildColumns: PropTypes.func, // optional hook to compute columns
   responsesTileTitle: PropTypes.node, // optional ("Responses" default)
 };
