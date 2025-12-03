@@ -286,19 +286,43 @@ export default function ScoringSummary(props) {
   ];
 
   // ----- merge defaults with user-provided columns by id
+  // ----- merge defaults with user-provided columns by id, and use
+  // the `columns` prop as the primary ordering when provided
+  const userColumns = Array.isArray(columns) ? columns : [];
+
   const defaultById = Object.fromEntries(DEFAULT_COLUMNS.map((c) => [c.id, c]));
-  const userById = Object.fromEntries((columns || []).map((c) => [c.id, c]));
+  const userById = Object.fromEntries(userColumns.map((c) => [c.id, c]));
 
-  const merged = DEFAULT_COLUMNS.map((d) => {
-    const u = userById[d.id];
-    if (!u) return d;
-    const m = { ...d, ...(u || {}) };
-    if ((u.accessor || u.type) && !u.renderCell) delete m.renderCell;
-    return m;
-  });
+  const mergeColumn = (defaultCol, userCol) => {
+    if (!defaultCol && !userCol) return null;
+    // Start with whichever exists
+    let merged = defaultCol ? { ...defaultCol, ...(userCol || {}) } : { ...userCol };
 
-  const extras = (columns || []).filter((c) => !defaultById[c.id]);
-  const EFFECTIVE_COLUMNS = [...merged, ...extras];
+    // If user supplies a new accessor or type but no renderCell,
+    // drop the default renderCell to let type/accessor drive rendering.
+    if (userCol && (userCol.accessor || userCol.type) && !userCol.renderCell) {
+      delete merged.renderCell;
+    }
+    return merged;
+  };
+
+  // Build a map of all effective columns by id (defaults + user extra columns)
+  const effectiveById = {};
+  const allIds = new Set([...Object.keys(defaultById), ...Object.keys(userById)]);
+  for (const id of allIds) {
+    effectiveById[id] = mergeColumn(defaultById[id], userById[id]);
+  }
+
+  // 1) Columns in the order the user specified (for both defaults and extras)
+  const orderedFromUser = userColumns.map((c) => effectiveById[c.id]).filter(Boolean);
+
+  // 2) Any remaining default columns that the user did *not* mention at all,
+  //     in their original DEFAULT_COLUMNS order
+  const remainingDefaults = DEFAULT_COLUMNS.filter((c) => !userById[c.id])
+    .map((c) => effectiveById[c.id])
+    .filter(Boolean);
+
+  const EFFECTIVE_COLUMNS = [...orderedFromUser, ...remainingDefaults];
 
   // ----- visible columns with fallback when everything is hidden
   const allVisibleColumns = EFFECTIVE_COLUMNS.filter((c) => isColVisible(c.id));

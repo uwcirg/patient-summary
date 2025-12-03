@@ -1,135 +1,6 @@
 import { Box, Stack } from "@mui/material";
-import QuestionnaireScoringBuilder from "@models/resultBuilders/QuestionnaireScoringBuilder";
-import { deepMerge } from "@util";
-import CHART_CONFIG from "./chart_config";
-import questionnaireConfigs from "./questionnaire_config";
 
-export const getInstrumentDefaults = () => {
-  const keys = Object.keys(questionnaireConfigs);
-  return keys.map((key) => {
-    return questionnaireConfigs[key];
-  });
-};
-
-export const INSTRUMENT_DEFAULTS = {
-  ...getInstrumentDefaults(),
-  "CIRG-Shortness-of-Breath": {
-    title: "Shortness of breath",
-  },
-  "CIRG-SRS": {
-    title: "Self Rating Scale (SRS)",
-  },
-  "CIRG-Last-Missed-Dose": {
-    title: "Last Missed Dose",
-  },
-  "CIRG-VAS": {
-    title: "VAS",
-  },
-  "CIRG-Nicotine-Use": {
-    title: "Nicotine Use",
-  },
-  "CIRG-Alcohol-Use": {
-    title: "Alcohol Score (Audit)",
-    minimumScore: 0,
-    maximumScore: 45,
-    highSeverityScoreCutoff: 35,
-    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 45, xLabel: "" },
-  },
-  "CIRG-Mini-Score": {
-    title: "MINI Score",
-    minimumScore: 0,
-    maximumScore: 5,
-    highSeverityScoreCutoff: 4,
-    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 5, xLabel: "" },
-  },
-  "CIRG-Drug-Use": {
-    title: "Drug Use",
-  },
-  "CIRG-CNICS-ASSIST-Polysub": {
-    title: "Concurrent Drug Use",
-  },
-  "CIRG-IDU": {
-    title: "IDU",
-  },
-  "CIRG-Concurrent-IDU": {
-    title: "Concurrent IDU",
-  },
-  "CIRG-Naloxone-Access": {
-    title: "Naloxone Access",
-  },
-  "CIRG-Fentanyl-Strip-Access": {
-    title: "Fentanyl Test Strip Access",
-  },
-  "CIRG-SEXUAL-PARTNERS": {
-    title: "# of Sex Partners x 3 months",
-  },
-  "CIRG-UNPROTECTED-SEX": {
-    title: "Unprotected Sex",
-  },
-  "CIRG-EXCHANGE-SEX": {
-    title: "Exchange Sex",
-  },
-  "CIRG-STI": {
-    title: "STI",
-  },
-  "CIRG-SOCIAL-SUPPORT": {
-    title: "Social Support",
-  },
-  "CIRG-HIV-Stigma": {
-    title: "HIV Stigma",
-  },
-  "CIRG-HRQOL": {
-    title: "HRQOL",
-  },
-  // add others as needed…
-};
-
-const getInstrumentDefault = (key) => {
-  if (INSTRUMENT_DEFAULTS[key]) return INSTRUMENT_DEFAULTS[key];
-  if (questionnaireConfigs[key])
-    return {
-      ...questionnaireConfigs[key],
-      scoringParams: questionnaireConfigs[key] ?? {},
-      chartParams: questionnaireConfigs[key].chartParams ?? {},
-    };
-};
-const normalizeParams = (params = {}) => {
-  const scoring = params.scoringParams ?? {};
-  const chart = params.chartParams ?? {};
-  const chartWithCutoff =
-    chart.highSeverityScoreCutoff == null
-      ? { ...chart, highSeverityScoreCutoff: scoring.highSeverityScoreCutoff }
-      : chart;
-  return { ...params, scoringParams: scoring, chartParams: chartWithCutoff };
-};
-
-export function buildReportConfig(baseConfig) {
-  const out = {
-    ...baseConfig,
-    sections: baseConfig.sections?.map((section) => {
-      const nextSection = {
-        ...section,
-        tables: section.tables?.map((table) => {
-          const keys = table.dataKeysToMatch ?? (table.keyToMatch ? [table.keyToMatch] : []);
-          const paramsByKey = { ...(table.paramsByKey ?? {}) };
-
-          keys.forEach((key) => {
-            const defaults = getInstrumentDefault(key) || {};
-            const current = paramsByKey[key] || {};
-            paramsByKey[key] = normalizeParams(deepMerge(defaults, current));
-          });
-
-          return { ...table, paramsByKey };
-        }),
-      };
-      return nextSection;
-    }),
-  };
-
-  return out;
-}
-
-export const report_config_base = {
+export const report_config = {
   sections: [
     {
       id: "section_urgent-basic-needs",
@@ -149,20 +20,6 @@ export const report_config_base = {
             "CIRG-CNICS-FROP-Com",
             "CIRG-Shortness-of-Breath",
           ],
-          paramsByKey: {
-            "CIRG-SI": {
-              getProcessedData: (opts = {}) => {
-                const { summaryData, bundle } = opts;
-                const SELF_ID = "CIRG-SI"; // instrument defaults to use
-                if (summaryData && summaryData[SELF_ID]) return summaryData[SELF_ID];
-                const config = getInstrumentDefault(SELF_ID);
-                const qb = new QuestionnaireScoringBuilder(config, bundle);
-                const siSummaryData = qb._summariesByQuestionnaireRef(bundle);
-                console.log("siSummary ", siSummaryData);
-                return siSummaryData;
-              },
-            },
-          },
         },
       ],
     },
@@ -193,10 +50,14 @@ export const report_config_base = {
                 sx: { verticalAlign: "top", lineHeight: 1.5 },
               },
               renderCell: (row, value) => (
-                <Stack direction={"column"} spacing={1} sx={{ whiteSpace: "pre-line" }} justifyContent={"flex-start"}>
-                  {value && value.split(",").join("\n")}
-                  {!value && <span className="muted-text">N/A</span>}
-                  {row.source && <span className="muted-text">{row.source}</span>}
+                <Stack direction={"column"} sx={{ whiteSpace: "pre-line" }} justifyContent={"space-between"}>
+                  <Box>{value && value.split(",").join("\n")}</Box>
+                  {!value && <Box className="muted-text">N/A</Box>}
+                  {row.source && (
+                    <Box className="muted-text" sx={{ mt: 1 }}>
+                      {row.source}
+                    </Box>
+                  )}
                 </Stack>
               ),
             },
@@ -234,21 +95,16 @@ export const report_config_base = {
           layout: "simple",
           dataKeysToMatch: ["CIRG-SRS", "CIRG-Last-Missed-Dose", "CIRG-VAS"],
           title: "ART Adherence",
-          hiddenColumns: ["id", "source", "lastAssessed", "numAnswered", "scoreMeaning", "comparison"],
+          hiddenColumns: ["id", "source", "numAnswered", "scoreMeaning", "comparison"],
           columns: [
             {
               id: "measure",
-              header: "Measure",
-              align: "left",
-              accessor: "title",
-              type: "text",
-              headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
             },
             {
-              id: "lastMissedDose",
-              header: "Last Missed Dose",
+              id: "result",
+              header: "Result",
               align: "left",
-              accessor: "lastMissedDose",
+              accessor: "result",
               type: "text",
             },
           ],
@@ -374,5 +230,4 @@ export const report_config_base = {
   ],
 };
 
-export const report_config = buildReportConfig(report_config_base);
-export default report_config;
+// export const report_config = buildReportConfig(report_config_base);

@@ -23,8 +23,9 @@ import { getDateDomain } from "@/config/chart_config";
 import questionnaireConfigs, {
   findMatchingQuestionLinkIdFromCode,
   getConfigForQuestionnaire,
+  getProcessedQuestionnaireData,
 } from "@/config/questionnaire_config";
-import { report_config } from "@/config/report_config";
+import { report_config} from "@/config/report_config";
 
 /* ---------------------------------------------
  * External helpers
@@ -637,29 +638,28 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
           padding: dates.length <= 2 ? 0.15 : 0.05,
         });
         dataKeysToMatch.forEach((key) => {
-          const dataFunc = paramsByKey[key].getProcessedData;
-          const processedData = dataFunc ? dataFunc({ summaryData, bundle }) : null;
-          const currentData =
-            summaryData[key] && summaryData[key].scoringSummaryData
-              ? summaryData[key].scoringSummaryData
-              : processedData?.scoringSummaryData;
+          const matchData = summaryData[key];
+          // const dataFunc = matchData?.config?.getProcessedData;
+          const processedData = getProcessedQuestionnaireData(key, { summaryData, bundle });
+          let currentData = matchData && matchData.scoringSummaryData ? matchData.scoringSummaryData : null;
+          if (!currentData) {
+            const processedData = getProcessedQuestionnaireData(key, { summaryData, bundle });
+            currentData = processedData?.scoringSummaryData;
+          }
+          // console.log("key ", key, " currentData ", currentData, " processedData ", processedData);
           const chartData =
             summaryData[key] && summaryData[key].chartData ? summaryData[key].chartData : processedData?.chartData;
-          if (currentData) {
+          //if (currentData) {
             rows.push({
-              ...(paramsByKey[key].scoringParams ?? {}),
-              ...(currentData ?? {}),
+              ...(paramsByKey[key]?.scoringParams ?? {}),
+              ...(currentData ?? paramsByKey[key]??{}),
             });
-          } else {
-            if (paramsByKey[key]) {
-              rows.push(paramsByKey[key]);
-            }
-          }
+         //}
           if (chartData) {
             charts.push({
               ...(chartData?.scoringParams ?? {}),
               xDomain,
-              ...(paramsByKey[key].chartParams ?? {}),
+              ...(paramsByKey[key]?.chartParams ?? {}),
               ...(chartData ?? {}),
             });
           }

@@ -2,6 +2,7 @@ import { isEmptyArray } from "@util";
 import { linkIdEquals } from "@util/fhirUtil";
 import CHART_CONFIG from "./chart_config";
 import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS } from "@/consts";
+import QuestionnaireScoringBuilder from "@/models/resultBuilders/QuestionnaireScoringBuilder";
 const questionnaireConfigs = {
   "CIRG-ADL-IADL": {
     key: "CIRG-ADL-IADL",
@@ -237,7 +238,7 @@ const questionnaireConfigs = {
     ],
     skipChart: true,
   },
-   "CIRG-CNICS-Symptoms": {
+  "CIRG-CNICS-Symptoms": {
     key: "CIRG-CNICS-Symptoms",
     instrumentName: "CNICS Symptoms Checklist",
     title: "Current Symptoms",
@@ -248,12 +249,12 @@ const questionnaireConfigs = {
     columns: [
       {
         linkId: "Symptoms-bothers-a-lot",
-        id: "bothersALot"
+        id: "bothersALot",
       },
       {
         linkId: "Symptoms-bothers-some",
-        id: "bothersSome"
-      }
+        id: "bothersSome",
+      },
     ],
     skipChart: true,
   },
@@ -478,12 +479,164 @@ const questionnaireConfigs = {
       // optional: override how free-text maps to valueCoding
       //normalizeAnswerToCoding: (ans) => ({ valueCoding: { system: "...", code: ..., display: ... }})
     },
-    chartParams: { ...CHART_CONFIG.default, title: "Suicide Ideation", minimumYValue: 0, maximumYValue: 3, xLabel: "", yLabel: "value" },
+    chartParams: {
+      ...CHART_CONFIG.default,
+      title: "Suicide Ideation",
+      minimumYValue: 0,
+      maximumYValue: 3,
+      xLabel: "",
+      yLabel: "value",
+    },
+  },
+
+  //TODO, implement those
+  "CIRG-CNICS-ARV": {
+    key: "CIRG-CNICS-ARV",
+    questionnaireId: "CIRG-CNICS-ARV",
+    title: "CNICS Antiretroviral (ARV) medications and adherence",
+    instrumentName: "CIRG-CNICS-ARV",
+  },
+  "CIRG-SHORTNESS-OF-BREATH": {
+    title: "Shortness of breath",
+  },
+  "CIRG-SRS": {
+    key: "CIRG-SRS",
+    title: "Self Rating Scale (SRS)",
+    instrumentName: "Self Rating Scale (SRS)",
+    displayMeaningNotScore: true,
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-ARV"], // one or many hosts
+      linkId: "ARV-SRS", // the single item to keep
+    },
+    columns: [
+      {
+        linkId: "SARV-SRS",
+        id: "result",
+      },
+    ],
+    skipChart: true,
+  },
+  "CIRG-LAST-MISSED-DOSE": {
+    key: "CIRG-LAST-MISSED-DOSE",
+    title: "Last Missed Dose",
+    instrumentName: "Last Missed Dose",
+    displayMeaningNotScore: true,
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-ARV"], // one or many hosts
+      linkId: "ARV-last-missed", // the single item to keep
+    },
+    columns: [
+      {
+        linkId: "ARV-last-missed",
+        id: "result",
+      },
+    ],
+    skipChart: true,
+  },
+  "CIRG-VAS": {
+    key: "CIRG-VAS",
+    title: "Visual Analog Scale",
+    subtitle: "percentage",
+    instrumentName: "VAS",
+    displayMeaningNotScore: true,
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-ARV"], // one or many hosts
+      linkId: "ARV-VAS", // the single item to keep
+    },
+    columns: [
+      {
+        linkId: "ARV-VAS",
+        id: "result",
+      },
+    ],
+    skipChart: true,
+  },
+  "CIRG-NICOTINE-USE": {
+    key: "CIRG-NICOTINE-USE",
+    title: "Nicotine Use",
+  },
+  "CIRG-ALCOHOL-USE": {
+    title: "Alcohol Score (Audit)",
+    key: "CIRG-ALCOHOL-USE",
+    instrumentName: "Alcohol Use",
+    minimumScore: 0,
+    maximumScore: 45,
+    highSeverityScoreCutoff: 35,
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 45, xLabel: "" },
+  },
+  "CIRG-MINI-SCORE": {
+    key: "CIRG-MINI-SCORE",
+    instrumentName: "MINI Score",
+    title: "MINI Score",
+    minimumScore: 0,
+    maximumScore: 5,
+    highSeverityScoreCutoff: 4,
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 5, xLabel: "" },
+  },
+  "CIRG-DRUG-USE": {
+    key: "CIRG-DRUG-USE",
+    instrumentName: "Drug Use",
+    title: "Drug Use",
+  },
+  "CIRG-IDU": {
+    key: "CIRG-IDU",
+    instrumentName: "IDU",
+    title: "IDU",
+  },
+  "CIRG-CONCURRENT-IDU": {
+    key: "CIRG-CONCURRENT-IDU",
+    instrumentName: "Concurrent IDU",
+    title: "Concurrent IDU",
+  },
+  "CIRG-NALOXONE-ACCESS": {
+    key: "CIRG-NALOXONE-ACCESS",
+    instrumentName: "Naloxone Access",
+    title: "Naloxone Access",
+  },
+  "CIRG-FENTANYL-STRIP-ACCESS": {
+    key: "CIRG-FENTANYL-STRIP-ACCESS",
+    instrumentName: "Fentanyl Test Strip Access",
+    title: "Fentanyl Test Strip Access",
+  },
+  "CIRG-SEXUAL-PARTNERS": {
+    key: "CIRG-SEXUAL-PARTNERS",
+    instrumentName: "Number of Sexual Partners",
+    title: "# of Sex Partners x 3 months",
+  },
+  "CIRG-UNPROTECTED-SEX": {
+    key: "CIRG-UNPRTECTED-SEX",
+    instrumentName: "Unprotected Sex",
+    title: "Unprotected Sex",
+  },
+  "CIRG-EXCHANGE-SEX": {
+    key: "CIRG-EXCHANGE-SEX",
+    insturmentName: "Exchange Sex",
+    title: "Exchange Sex",
+  },
+  "CIRG-STI": {
+    key: "CIRG-STI",
+    instrumentName: "STI",
+    title: "STI",
+  },
+  "CIRG-SOCIAL-SUPPORT": {
+    key: "CIRG-SOCIAL-SUPPORT",
+    instrumentName: "Social Support",
+    title: "Social Support",
+  },
+  "CIRG-HIV-STIGMA": {
+    key: "CIRG-HIV-STIGMA",
+    instrumentName: "HIV Stigma",
+    title: "HIV Stigma",
+  },
+  "CIRG-HRQOL": {
+    key: "CIRG-HRQOL",
+    instrumentName: "HRQOL",
+    title: "HRQOL",
   },
 };
 
 export const getConfigForQuestionnaire = (id) => {
-  return questionnaireConfigs[String(id).toUpperCase()] || null;
+  return questionnaireConfigs[String(id)] || questionnaireConfigs[String(id).toUpperCase()] || null;
 };
 export function findMatchingQuestionLinkIdFromCode(resource, linkIdList, config) {
   if (!resource) return null;
@@ -498,8 +651,18 @@ export function findMatchingQuestionLinkIdFromCode(resource, linkIdList, config)
       return match;
     }
   }
-
   return null; // no match found
+}
+export function getProcessedQuestionnaireData(questionnaireId, opts = {}) {
+  const { summaryData, bundle } = opts;
+  if (summaryData && summaryData[questionnaireId]) return summaryData[questionnaireId];
+  const config = summaryData?.questionnaireId?.config || getConfigForQuestionnaire(questionnaireId);
+  if (!config) return null;
+  const qb = new QuestionnaireScoringBuilder(config, bundle);
+  const processedSummaryData = qb._summariesByQuestionnaireRef(bundle);
+  return processedSummaryData && processedSummaryData?.scoringSummaryData
+    ? processedSummaryData
+    : { ...config, config, scoringSummaryData: config };
 }
 
 export default questionnaireConfigs;

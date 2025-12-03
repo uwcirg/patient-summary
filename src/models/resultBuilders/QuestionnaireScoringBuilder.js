@@ -513,7 +513,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (!returnObject.id) returnObject.id = item.linkId;
       const ans = item.answer;
       const coding = this.answerCoding(this.firstAnswer(ans));
-      returnObject.answer = this.getAnswerItemDisplayValue(ans, config)
+      returnObject.answer = this.getAnswerItemDisplayValue(ans, config);
       returnObject.question = item.text ?? `Question ${index}`;
       returnObject.code = coding ? coding.code : null;
       returnObject.rawAnswer = item.answer;
@@ -751,7 +751,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         //console.log("sample " , sample, " row ", row, " response row? ", this.isResponseQuestionItem(row, configToUse));
         return row;
       });
-    // .filter((r) => this.isResponseQuestionItem(r, configToUse));
 
     if (this._hasScoreData(data)) {
       const scoringRow = { question: "Score", id: `score_${data.map((o) => o.id).join("")}` };
@@ -877,7 +876,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const fromRegistry = keyToUse ? questionnaireConfig[keyToUse] : null;
     const config = fromRegistry ? fromRegistry : this.config;
 
-    //console.log("key ", keyToUse, " config actually used ", config, " qrs ", qrs);
+    // console.log("key ", keyToUse, " config actually used ", config, " qrs ", qrs);
 
     // If this instrument is defined as "derived" from a host instrument,
     // synthesize single-link QRs from the host QRs *when needed*.
@@ -944,7 +943,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     let chartData = !isEmptyArray(scoringData)
       ? scoringData.map((item, index) => ({
           ...item,
-          ...getScoreParamsFromResponses([item], config),
+          ...getScoreParamsFromResponses(scoringData.slice(index), config),
           id: item.id + "_" + item.instrumentName + "_" + index,
           total: item.score,
         }))
@@ -981,7 +980,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       printResponseData,
       questionnaire,
       key: questionnaire?.id,
-      error: !questionnaire ? "No associated questionnaire found" : "",
+      error: !config?.deriveFrom && !questionnaire ? "No associated questionnaire found" : "",
     };
   }
 
