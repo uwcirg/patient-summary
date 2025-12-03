@@ -25,7 +25,7 @@ import questionnaireConfigs, {
   getConfigForQuestionnaire,
   getProcessedQuestionnaireData,
 } from "@/config/questionnaire_config";
-import { report_config} from "@/config/report_config";
+import { report_config } from "@/config/report_config";
 
 /* ---------------------------------------------
  * External helpers
@@ -443,11 +443,12 @@ export function meaningFromSeverity(sev, config = {}, responses = [], summaryObj
   if (config?.fallbackMeaningFunc && typeof config.fallbackMeaningFunc === "function") {
     return config.fallbackMeaningFunc(sev, responses, summaryObject);
   }
-  const valueFromMeaningQuestionId = responses
-    ?.find((o) => linkIdEquals(o.id, config?.meaningQuestionId, config?.linkIdMatchMode))
-    ?.answer?.replace(/"/g, "");
+  //console.log("summaryObject ", summaryObject);
+  const valueFromMeaningQuestionId = responses?.find((o) =>
+    linkIdEquals(o.id, config?.meaningQuestionId, config?.linkIdMatchMode),
+  )?.answer;
   // console.log("meaning qid ", config?.meaningQuestionId, " valueFromMeaningQuestionId ", valueFromMeaningQuestionId);
-  if (valueFromMeaningQuestionId) return valueFromMeaningQuestionId;
+  if (valueFromMeaningQuestionId) return valueFromMeaningQuestionId.replace(/"/g, "");
   const bands = config?.severityBands;
   return bands?.find((b) => b.label === sev)?.meaning ?? null;
 }
@@ -624,47 +625,43 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
     if (isEmptyArray(tables)) return true;
     tables.forEach((table) => {
       const dataKeysToMatch = table.dataKeysToMatch;
-      const paramsByKey = table.paramsByKey ?? {};
       let rows = [];
       let charts = [];
-      if (!isEmptyArray(dataKeysToMatch)) {
-        const arrDates = dataKeysToMatch.flatMap((key) => {
-          const d = summaryData[key];
-          if (!d || isEmptyArray(d.chartData?.data)) return [];
-          return d.chartData.data.map((o) => o.date);
-        });
-        const dates = !isEmptyArray(arrDates) ? [...new Set(arrDates)] : [];
-        let xDomain = getDateDomain(dates, {
-          padding: dates.length <= 2 ? 0.15 : 0.05,
-        });
-        dataKeysToMatch.forEach((key) => {
-          const matchData = summaryData[key];
-          // const dataFunc = matchData?.config?.getProcessedData;
-          const processedData = getProcessedQuestionnaireData(key, { summaryData, bundle });
-          let currentData = matchData && matchData.scoringSummaryData ? matchData.scoringSummaryData : null;
-          if (!currentData) {
-            const processedData = getProcessedQuestionnaireData(key, { summaryData, bundle });
-            currentData = processedData?.scoringSummaryData;
-          }
-          // console.log("key ", key, " currentData ", currentData, " processedData ", processedData);
-          const chartData =
-            summaryData[key] && summaryData[key].chartData ? summaryData[key].chartData : processedData?.chartData;
-          //if (currentData) {
-            rows.push({
-              ...(paramsByKey[key]?.scoringParams ?? {}),
-              ...(currentData ?? paramsByKey[key]??{}),
-            });
-         //}
-          if (chartData) {
-            charts.push({
-              ...(chartData?.scoringParams ?? {}),
-              xDomain,
-              ...(paramsByKey[key]?.chartParams ?? {}),
-              ...(chartData ?? {}),
-            });
-          }
-        });
+      if (isEmptyArray(dataKeysToMatch)) {
+        return true;
       }
+      const arrDates = dataKeysToMatch.flatMap((key) => {
+        const d = summaryData[key];
+        if (!d || isEmptyArray(d.chartData?.data)) return [];
+        return d.chartData.data.map((o) => o.date);
+      });
+      const dates = !isEmptyArray(arrDates) ? [...new Set(arrDates)] : [];
+      let xDomain = getDateDomain(dates, {
+        padding: dates.length <= 2 ? 0.15 : 0.05,
+      });
+      dataKeysToMatch.forEach((key) => {
+        const matchData = summaryData[key];
+        // const dataFunc = matchData?.config?.getProcessedData;
+        const processedData = getProcessedQuestionnaireData(key, { summaryData, bundle });
+        let currentData = matchData && matchData.scoringSummaryData ? matchData.scoringSummaryData : null;
+        if (!currentData) {
+          const processedData = getProcessedQuestionnaireData(key, { summaryData, bundle });
+          currentData = processedData?.scoringSummaryData;
+        }
+        // console.log("key ", key, " currentData ", currentData, " processedData ", processedData);
+        const chartData =
+          summaryData[key] && summaryData[key].chartData ? summaryData[key].chartData : processedData?.chartData;
+        rows.push({
+          ...(currentData ?? {}),
+        });
+        if (chartData) {
+          charts.push({
+            ...(chartData?.scoringParams ?? {}),
+            ...(chartData ?? {}),
+            xDomain,
+          });
+        }
+      });
       table.rows = rows;
       table.charts = charts;
     });

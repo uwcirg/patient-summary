@@ -103,8 +103,6 @@ const questionnaireConfigs = {
     highSeverityScoreCutoff: 1,
     comparisonToAlert: "higher",
     displayMeaningNotScore: true,
-    scoringQuestionId: "FINANCIAL-0",
-    questionLinkIds: ["FINANCIAL-0"],
     linkIdMatchMode: "strict",
     fallbackScoreMap: {
       "FINANCIAL-0-0": 1,
@@ -135,7 +133,6 @@ const questionnaireConfigs = {
     subtitle: "Past year",
     questionnaireMatchMode: "fuzzy",
     displayMeaningNotScore: true,
-    questionLinkIds: ["FROP-Com-0", "FROP-Com-1"],
     linkIdMatchMode: "strict",
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
@@ -163,20 +160,7 @@ const questionnaireConfigs = {
     subtitle: "Past month",
     questionnaireMatchMode: "fuzzy",
     displayMeaningNotScore: true,
-    questionLinkIds: ["HOUSING-0", "HOUSING-1"],
     linkIdMatchMode: "strict",
-    // highSeverityScoreCutoff: 1,
-    // scoringQuestionId: "HOUSING-1",
-    // fallbackScoreMap: {
-    //   "HOUSING-1-0": 1,
-    //   "HOUSING-1-1": 1,
-    //   "HOUSING-1-2": 0,
-    //   "HOUSING-1-3": 0,
-    // },
-    // severityBands: [
-    //   { min: 1, label: "high" },
-    //   { min: 0, label: "low" },
-    // ],
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
       if (!severity) return "";
@@ -185,7 +169,6 @@ const questionnaireConfigs = {
         if (response.answer) {
           if (linkIdEquals(response.id, "HOUSING-0")) {
             return true;
-            // arrMeaning.push("<span class='text-normal'>" + removeParentheses(response.answer) + "</span>");
           } else arrMeaning.push(response.answer);
         }
       });
