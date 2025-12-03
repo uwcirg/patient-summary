@@ -478,7 +478,7 @@ const questionnaireConfigs = {
       // optional: override how free-text maps to valueCoding
       //normalizeAnswerToCoding: (ans) => ({ valueCoding: { system: "...", code: ..., display: ... }})
     },
-    chartParams: { ...CHART_CONFIG.default, title: "Suicide Ideation", minimumYValue: 0, maximumYValue: 3, xLabel: "" },
+    chartParams: { ...CHART_CONFIG.default, title: "Suicide Ideation", minimumYValue: 0, maximumYValue: 3, xLabel: "", yLabel: "value" },
   },
 };
 

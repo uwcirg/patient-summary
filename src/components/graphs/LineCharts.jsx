@@ -246,7 +246,7 @@ export default function LineCharts(props) {
           <div style={{ marginBottom: multiValues.length > 1 ? 8 : 0 }}>
             {score != null && (
               <div>
-                <span style={{ color: FONT_COLOR }}>score:</span> {String(score)}
+                <span style={{ color: FONT_COLOR }}>{yLabel?yLabel:"score"}:</span> {String(score)}
               </div>
             )}
             {meaning && (
