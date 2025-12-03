@@ -376,12 +376,15 @@ export default function ScoringSummary(props) {
   );
 
   const renderCell = (col, row) => {
-    const value =
+    let value =
       typeof col.accessor === "function"
         ? col.accessor(row)
         : typeof col.accessor === "string"
           ? getByPath(row, col.accessor)
           : undefined;
+    if (typeof col.formatter === "function") {
+      value = col.formatter(row, value);
+    }
 
     if (typeof col.renderCell === "function") return col.renderCell(row, value);
     if (col.type && defaultRenderers[col.type]) return defaultRenderers[col.type](row, value);
