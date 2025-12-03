@@ -54,6 +54,7 @@ export default function LineCharts(props) {
     xsChartWidth,
     yFieldKey,
     yLabel,
+    yLabelVisible,
     yLineFields,
     yTickFormatter,
   } = props;
@@ -181,7 +182,7 @@ export default function LineCharts(props) {
   const renderYAxis = () => (
     <YAxis
       domain={yDomain}
-      label={yLabel ? { value: yLabel, angle: -90, position: "insideLeft" } : null}
+      label={yLabel & yLabelVisible ? { value: yLabel, angle: -90, position: "insideLeft" } : null}
       minTickGap={8}
       tickLine={{ stroke: "#FFF" }}
       stroke="#FFF"
@@ -592,6 +593,7 @@ LineCharts.propTypes = {
   xsChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yLabel: PropTypes.string,
+  yLabelVisible: PropTypes.bool,
   yLineFields: PropTypes.array,
   yTickFormatter: PropTypes.func,
 };
