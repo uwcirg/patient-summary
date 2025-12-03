@@ -477,6 +477,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
 
   getAnswerByResponseLinkId(linkId, responseItemsFlat, config = {}) {
+    if (isEmptyArray(responseItemsFlat)) return null;
     // console.log("responseItemsFlat ", responseItemsFlat, " linkId ", linkId, " config ", config);
     const it = this.findResponseItemByLinkId(responseItemsFlat, linkId, config);
     if (it == null) return null;
@@ -534,6 +535,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
 
   responsesOnly(responseItemsFlat = [], config = {}) {
+    if (isEmptyArray(responseItemsFlat)) return [];
     return (responseItemsFlat || []).map((item) => {
       const ans = item.answer;
       const coding = this.answerCoding(this.firstAnswer(ans));

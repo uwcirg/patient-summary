@@ -176,7 +176,6 @@ export const report_config = {
         {
           id: "table_sexual_risk",
           layout: "simple",
-          title: "Sexual Risk Behavior",
           dataKeysToMatch: ["CIRG-SEXUAL-PARTNERS", "CIRG-UNPROTECTED-SEX", "CIRG-EXCHANGE-SEX", "CIRG-STI"],
           hiddenColumns: ["id", "source", "lastAssessed", "numAnswered", "scoreMeaning", "comparison"],
           columns: [
@@ -224,11 +223,8 @@ export const report_config = {
           id: "table_psychosocial_concern",
           layout: "two-columns",
           dataKeysToMatch: ["CIRG-SOCIAL-SUPPORT", "CIRG-HIV-Stigma", "CIRG-PC-PTSD-5", "CIRG-HRQOL"],
-          title: "Psychosocial Concerns and Quality of Life",
         },
       ],
     },
   ],
 };
-
-// export const report_config = buildReportConfig(report_config_base);

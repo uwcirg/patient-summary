@@ -634,7 +634,7 @@ export function findMatchingQuestionLinkIdFromCode(resource, linkIdList, config)
       return match;
     }
   }
-  return null; // no match found
+  return null;
 }
 export function getProcessedQuestionnaireData(questionnaireId, opts = {}) {
   const { summaryData, bundle } = opts;
