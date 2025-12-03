@@ -119,6 +119,7 @@ export default function ResponsesViewer({
           size="small"
           onClick={() => setOpen(true)}
           variant="outlined"
+          className="print-hidden"
           sx={{ fontSize: "0.8rem", ...((typeof buttonStyle === "object" && buttonStyle) || {}) }}
         >
           {buttonLabel}
