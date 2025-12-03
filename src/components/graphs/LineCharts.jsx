@@ -249,7 +249,7 @@ export default function LineCharts(props) {
                 <span style={{ color: FONT_COLOR }}>score:</span> {String(score)}
               </div>
             )}
-            {meaning != null && (
+            {meaning && (
               <div>
                 <span style={{ color: FONT_COLOR }}>meaning:</span> {String(meaning)}
               </div>

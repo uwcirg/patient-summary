@@ -944,7 +944,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     let chartData = !isEmptyArray(scoringData)
       ? scoringData.map((item, index) => ({
           ...item,
-          ...getScoreParamsFromResponses(scoringData, config),
+          ...getScoreParamsFromResponses([item], config),
           id: item.id + "_" + item.instrumentName + "_" + index,
           total: item.score,
         }))

@@ -437,7 +437,7 @@ const questionnaireConfigs = {
       { min: 15, label: "moderately high", meaning: "Moderately severe depression" },
       { min: 10, label: "moderate", meaning: "Moderate depression" },
       { min: 5, label: "mild", meaning: "Mild depression" },
-      { min: 0, label: "low", meaning: "" },
+      { min: 0, label: "low", meaning: "Minimal depression" },
     ],
     chartParams: { ...CHART_CONFIG.default, title: "PHQ-9", minimumYValue: 0, maximumYValue: 27, xLabel: "" },
   },
