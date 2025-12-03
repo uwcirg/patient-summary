@@ -27,9 +27,6 @@ export default function PROReport() {
           data={table.rows}
           disableLinks={true}
           enableResponsesViewer={true}
-          containerStyle={{
-            alignSelf: "stretch",
-          }}
         ></ScoringSummary>
         <Box>
           {!isEmptyArray(table.charts) &&

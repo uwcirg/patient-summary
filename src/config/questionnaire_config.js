@@ -465,9 +465,9 @@ const questionnaireConfigs = {
     highSeverityScoreCutoff: 3,
     comparisonToAlert: "higher",
     severityBands: [
-      { min: 3, label: "high", meaning: "nearly every day" },
-      { min: 2, label: "moderate", meaning: "more than half the days" },
-      { min: 0, label: "low", meaning: "No" },
+      { min: 3, label: "high", meaning: "Nearly every day" },
+      { min: 2, label: "moderate", meaning: "More than half the days" },
+      { min: 0, label: "low", meaning: "Not at all" },
     ],
     minimumScore: 0,
     maximumScore: 3,

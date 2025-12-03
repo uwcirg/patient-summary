@@ -82,7 +82,7 @@ export default function ScoringSummary(props) {
   const baseCellStyle = {
     borderRight: `1px solid`,
     borderColor: "border.main",
-    whiteSpace: { xs: "normal", sm: "nowrap" }, // 🟡 allow wrapping on phones
+    whiteSpace: { xs: "normal", sm: "nowrap" }, // allow wrapping on phones
     lineHeight: 1.4,
     fontSize: { xs: "0.75rem", sm: "0.8rem" }, // optional: slightly smaller on xs
     wordBreak: "break-word",
@@ -197,7 +197,7 @@ export default function ScoringSummary(props) {
           borderBottomColor: "border.main",
           verticalAlign: "top",
           textAlign: "center",
-          height: "100%"
+          height: "100%",
         },
         size: "small",
       },
@@ -222,7 +222,7 @@ export default function ScoringSummary(props) {
             responsesTileTitle={displayTitle}
             tableData={row?.tableResponseData}
             columns={getResponseColumns(row?.responseData)}
-            buttonStyle={{width: "100%"}}
+            buttonStyle={{ width: "100%" }}
           />
         ) : (
           displayTitle
@@ -235,12 +235,13 @@ export default function ScoringSummary(props) {
       align: "center",
       width: "15%",
       headerProps: {
-        sx: baseCellStyle,
+        sx: {
+          ...baseCellStyle,
+          padding: theme.spacing(0.5),
+        },
         ...defaultHeaderCellProps,
-        whiteSpace: "nowrap",
-        padding: theme.spacing(0.5, 0.5),
       },
-      cellProps: { sx: baseCellStyle, whiteSpace: "nowrap", padding: theme.spacing(0.5, 0.5) },
+      cellProps: { sx: { ...baseCellStyle, whiteSpace: "nowrap", padding: theme.spacing(0.5) } },
       size: "small",
       renderCell: (row) => displayNumAnswered(row),
     },
