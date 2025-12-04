@@ -125,14 +125,9 @@ export const report_config = {
             "CIRG-Concurrent-IDU",
           ],
         },
-      ],
-    },
-    {
-      id: "section_harm_reduction",
-      title: "Harm Reduction",
-      tables: [
-        {
+         {
           id: "table_naloxone_access",
+          title: "Harm Reduction",
           layout: "simple",
           dataKeysToMatch: ["CIRG-Naloxone-Access", "CIRG-Fentanyl-Strip-Access"],
           hiddenColumns: ["id", "source", "lastAssessed", "numAnswered", "scoreMeaning", "comparison"],
@@ -167,14 +162,9 @@ export const report_config = {
             },
           ],
         },
-      ],
-    },
-    {
-      id: "section_sexual_risks",
-      title: "Sexual Risk Behavior",
-      tables: [
-        {
+         {
           id: "table_sexual_risk",
+          title: "Sexual Risk Behavior",
           layout: "simple",
           dataKeysToMatch: ["CIRG-SEXUAL-PARTNERS", "CIRG-UNPROTECTED-SEX", "CIRG-EXCHANGE-SEX", "CIRG-STI"],
           hiddenColumns: ["id", "source", "lastAssessed", "numAnswered", "scoreMeaning", "comparison"],
@@ -213,14 +203,9 @@ export const report_config = {
             },
           ],
         },
-      ],
-    },
-    {
-      id: "section_psychosocial_concerns",
-      title: "Psychosocial concerns and quality of life",
-      tables: [
-        {
+         {
           id: "table_psychosocial_concern",
+          title: "Psychosocial concerns and quality of life",
           layout: "two-columns",
           dataKeysToMatch: ["CIRG-SOCIAL-SUPPORT", "CIRG-HIV-Stigma", "CIRG-PC-PTSD-5", "CIRG-HRQOL"],
         },
