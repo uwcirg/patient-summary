@@ -58,7 +58,7 @@ export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, 
     }
 
     let responses = ctx.formattedResponses(questionnaire?.item ?? null, flat);
-    if (!responses.length) responses = ctx.responsesOnly(flat);
+    if (isEmptyArray(responses)) responses = ctx.responsesOnly(flat);
 
     return {
       ...getConfigForQuestionnaire(questionnaire?.id),
@@ -115,7 +115,7 @@ export function summarizeCIDASHelper(
       highSeverityScoreCutoff,
       meaning: meaningFromSeverity(scoreSeverity),
       alertNote: suicideScore >= 1 ? "suicide concern" : null,
-      scoringParams: { ...ctx.config, maximumScore, scoreSeverity },
+      scoringParams: { ...ctx.cfg, maximumScore, scoreSeverity },
       totalAnsweredItems,
       totalItems,
       authoredDate: qr.authored,
@@ -184,9 +184,9 @@ export function summarizeMiniCogHelper(
     ]);
 
     let responses = ctx.formattedResponses(questionnaire?.item ?? [], flat).filter((r) => !HIDE_IDS.has(r.id));
-    if (!responses.length) responses = ctx.responsesOnly(flat);
+    if (isEmptyArray(responses)) responses = ctx.responsesOnly(flat);
 
-    const totalItems = ctx.getAnswerLinkIdsByQuestionnaire(questionnaire).length;
+    const totalItems = (ctx.getAnswerLinkIdsByQuestionnaire(questionnaire) || []).length;
     const totalAnsweredItems = flat.filter((it) => !linkIdEquals(it.linkId, totalLinkId)).length;
 
     return {
@@ -287,7 +287,7 @@ export function defaultAnswerMapperFromObservation(obs) {
   if (obs.valueTime) return { valueTime: obs.valueTime };
 
   // CodeableConcept → valueCoding (pick first coding)
-  if (obs.valueCodeableConcept?.coding?.length) {
+  if (!isEmptyArray(obs.valueCodeableConcept?.coding)) {
     const { system, code, display } = obs.valueCodeableConcept.coding[0];
     const coding = {};
     if (system !== undefined) coding.system = system;
@@ -298,6 +298,10 @@ export function defaultAnswerMapperFromObservation(obs) {
 
   // String
   if (typeof obs.valueString === "string") return { valueString: obs.valueString };
+
+  if (obs.id) {
+    console.warn(`defaultAnswerMapperFromObservation: Unrecognized value type for observation ${obs.id}`, obs);
+  }
 
   // Fallback: no answer
   return null;
@@ -332,7 +336,7 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
     );
     if (!lid) continue;
     const ans = defaultAnswerMapperFromObservation(obs);
-    if (!isNil(ans)) answersByLinkId.set(lid, ans);
+    if (!isNil(ans) && isPlainObject(ans)) answersByLinkId.set(lid, ans);
     textByLinkId.set(lid, conceptText(obs.code));
   }
 
@@ -354,7 +358,7 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
       text: text ? text : getDefaultQuestionItemText(normalizeLinkId(lid)),
     };
     if (!isNil(objAns)) {
-      item.answer = Array.isArray(objAns) ? objAns : isPlainObject(objAns) ? new Array(objAns) : [objAns];
+      item.answer = Array.isArray(objAns) ? objAns : [objAns];
     }
     return item;
   });
@@ -377,8 +381,12 @@ export function observationsToQuestionnaireResponses(observationResources, confi
     const byGroup = new Map();
     for (const o of observations || []) {
       const key = o.effectiveDateTime || o.issued || o.encounter?.reference || "unknown";
-      if (!byGroup.has(key)) byGroup.set(key, []);
-      byGroup.get(key).push(o);
+      const group = byGroup.get(key);
+      if (group) {
+        group.push(o);
+      } else {
+        byGroup.set(key, [o]);
+      }
     }
     return byGroup;
   };
@@ -443,11 +451,10 @@ export function meaningFromSeverity(sev, config = {}, responses = [], summaryObj
   if (config?.fallbackMeaningFunc && typeof config.fallbackMeaningFunc === "function") {
     return config.fallbackMeaningFunc(sev, responses, summaryObject);
   }
-  //console.log("summaryObject ", summaryObject);
-  const valueFromMeaningQuestionId = responses?.find((o) =>
+  const valueFromMeaningQuestionId = (responses || []).find((o) =>
     linkIdEquals(o.id, config?.meaningQuestionId, config?.linkIdMatchMode),
   )?.answer;
-  // console.log("meaning qid ", config?.meaningQuestionId, " valueFromMeaningQuestionId ", valueFromMeaningQuestionId);
+
   if (valueFromMeaningQuestionId) return valueFromMeaningQuestionId.replace(/"/g, "");
   const bands = config?.severityBands;
   return bands?.find((b) => b.label === sev)?.meaning ?? null;
@@ -491,15 +498,13 @@ export function calculateQuestionnaireScore(questionnaire, qnr, responseItemsFla
 
 export function getAlertFromMostRecentResponse(current, config = {}) {
   if (!current) return false;
-  //console.log("current ", current);
   let alert =
     isNumber(current?.score) && config?.highSeverityScoreCutoff && current.score >= config?.highSeverityScoreCutoff;
   if (!alert && config?.alertQuestionId) {
     alert =
-      current?.responses?.find((o) => linkIdEquals(o.id, config.alertQuestionId, config?.linkIdMatchMode))?.answer ??
+      current?.responses?.find((o) => linkIdEquals(o.id, config?.alertQuestionId, config?.linkIdMatchMode))?.answer ??
       alert;
   }
-  //console.log("alert ", alert);
   return alert;
 }
 
@@ -507,7 +512,7 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   if (isEmptyArray(responses)) return null;
   const current = getMostRecentResponseRow(responses);
   const prev = getPreviousResponseRowWithScore(responses);
-  const curScore = isNumber(current?.score) ? current.score : (current?.score ?? null);
+  const curScore = isNumber(current?.score) ? current.score : null;
   const prevScore = isNumber(prev?.score) ? prev.score : null;
   const minScore = isNumber(config?.minimumScore) ? config?.minimumScore : 0;
   const maxScore = isNumber(config?.maximumScore) ? config?.maximumScore : null;
@@ -519,7 +524,7 @@ export function getScoreParamsFromResponses(responses, config = {}) {
     else if (curScore < prevScore) comparison = "lower";
     else comparison = "equal";
   }
-  const score = isNumber(curScore) ? curScore : (curScore ?? null);
+  const score = curScore;
   const scoreSeverity = severityFromScore(score, config);
   const meaning = meaningFromSeverity(scoreSeverity, config, current?.responses, current);
   const source = current?.source;
@@ -527,7 +532,6 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   const warning = isNumber(score) && config?.mediumSeverityScoreCutoff && score >= config?.mediumSeverityScoreCutoff;
   const scoringParams = {
     ...config,
-    // ...(current?.scoringParams ?? {}),
     score,
     scoreSeverity,
     currentScore: curScore,
@@ -620,6 +624,10 @@ export function getResponseColumns(data) {
 
 export function buildReportData({ summaryData = {}, bundle = [] }) {
   let skeleton = report_config;
+  if (!skeleton || !skeleton.sections || !Array.isArray(skeleton.sections)) {
+    console.error("buildReportData: Invalid report_config structure");
+    return skeleton || { sections: [] };
+  }
   skeleton.sections.forEach((section) => {
     const tables = section.tables;
     if (isEmptyArray(tables)) return true;
@@ -641,14 +649,11 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
       });
       dataKeysToMatch.forEach((key) => {
         const matchData = summaryData[key];
-        // const dataFunc = matchData?.config?.getProcessedData;
         const processedData = getProcessedQuestionnaireData(key, { summaryData, bundle });
         let currentData = matchData && matchData.scoringSummaryData ? matchData.scoringSummaryData : null;
         if (!currentData) {
-          const processedData = getProcessedQuestionnaireData(key, { summaryData, bundle });
           currentData = processedData?.scoringSummaryData;
         }
-        // console.log("key ", key, " currentData ", currentData, " processedData ", processedData);
         const chartData =
           summaryData[key] && summaryData[key].chartData ? summaryData[key].chartData : processedData?.chartData;
         rows.push({

@@ -137,12 +137,6 @@ export default function ScoringSummary(props) {
               </Box>
             </Stack>
           )}
-          {!isNumber(row.score) && row.text && (
-            <Stack justifyContent="space-between" alignItems="center">
-              <Box sx={{ color: row.alert ? "error.main" : row.warning ? "warning.main" : "#444" }}>{row.text}</Box>
-            </Stack>
-          )}
-          {/* {!isNumber(row.score) && !row.text && <Box className="muted-text text-center">N/A</Box>} */}
         </>
       );
     },
@@ -158,7 +152,6 @@ export default function ScoringSummary(props) {
         {parts.map((m, index) => {
           const key = `${row.id}_meaning_${index}`;
           const cellClass = row.alert ? "text-danger" : row.warning ? "text-warning" : "";
-          // If your hasHtmlTags helper checks for HTML, call it with the string
           if (hasHtmlTags && hasHtmlTags(m)) {
             return <Box className={`table-cell-item ${cellClass}`} key={key} dangerouslySetInnerHTML={{ __html: m }} />;
           }

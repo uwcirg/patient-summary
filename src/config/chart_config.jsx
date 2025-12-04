@@ -31,9 +31,10 @@ const CHART_CONFIG = {
     xAxisTitle: "Date",
     yAxisTitle: "Score",
     yFieldKey: "total",
-    // yLabel: "score",
-    yLabel: "",
-    xLabel: "",
+    yLabel: "score",
+    xLabel: "date",
+    yLabelVisible: false,
+    xLabelVisible: false,
     legendType: "none",
     showTicks: false,
     dataFormatter: (data) => {

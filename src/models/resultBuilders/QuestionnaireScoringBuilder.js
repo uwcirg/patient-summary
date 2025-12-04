@@ -107,13 +107,26 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   _bundleEntries(bundleOverride) {
     const b = bundleOverride || this.patientBundle;
     if (!b) return [];
+
+    let entries = [];
+
     // Array of {resource} entries OR bare resources
     if (Array.isArray(b)) {
-      return b.map((x) => (x && x.resource ? x.resource : x)).filter((r) => r && r.resourceType);
+      // prevent mutation of original array
+      entries = [...b].map((x) => (x && x.resource ? x.resource : x)).filter((r) => r && r.resourceType);
     }
     // Proper Bundle
-    if (!isEmptyArray(b?.entry)) return b.entry.map((e) => e.resource).filter(Boolean);
-    return [];
+    else if (!isEmptyArray(b?.entry)) {
+      // prevent mutation of original array
+      entries = [...b.entry].map((e) => e.resource).filter(Boolean);
+    }
+
+    // Warn about large bundles
+    if (entries.length > 1000) {
+      console.warn(`_bundleEntries: processing large bundle with ${entries.length} entries`);
+    }
+
+    return entries;
   }
 
   fromBundle(bundleOverride) {
@@ -137,12 +150,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     // newest-first within each group
     for (const k of Object.keys(groups)) {
-      const list = groups[k].map((qr) => ({
+      const list = groups[k];
+      if (isEmptyArray(list)) continue;
+      const mapped = list.map((qr) => ({
         authoredDate: qr.authored ?? null,
         lastUpdated: qr.meta?.lastUpdated ?? null,
         _qr: qr,
       }));
-      groups[k] = this.sortByNewestAuthoredOrUpdated(list).map((x) => x._qr);
+      groups[k] = this.sortByNewestAuthoredOrUpdated(mapped).map((x) => x._qr);
     }
     return groups;
   }
@@ -226,9 +241,13 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   // -------------------- general utils --------------------
   isLinkIdEquals(a, b, config = {}) {
+    // Ensure both inputs are normalized before comparison
+    const normalizedA = normalizeLinkId(a);
+    const normalizedB = normalizeLinkId(b);
     const configToUse = config ? config : this.cfg;
-    return linkIdEquals(a, b, configToUse.linkIdMatchMode ?? "fuzzy");
+    return linkIdEquals(normalizedA, normalizedB, configToUse.linkIdMatchMode ?? "fuzzy");
   }
+
   isResponseQuestionItem(item, config) {
     if (!item) return false;
     if (item.readOnly) return false;
@@ -294,9 +313,16 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
 
   // -------------------- QR item helpers --------------------
-  flattenResponseItems(items = []) {
+  flattenResponseItems(items = [], maxDepth = 100) {
     const out = [];
+    let depth = 0;
+
     const walk = (arr) => {
+      if (depth++ > maxDepth) {
+        console.warn("flattenResponseItems: max depth exceeded, possible circular reference");
+        return;
+      }
+
       for (const it of arr || []) {
         out.push(it);
         if (!isEmptyArray(it.item)) walk(it.item);
@@ -304,8 +330,15 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           if (!isEmptyArray(ans.item)) walk(ans.item);
         }
       }
+      depth--;
     };
+
     walk(items);
+
+    if (out.length > 10000) {
+      console.warn(`flattenResponseItems: large result set (${out.length} items)`);
+    }
+
     return out;
   }
   firstAnswer(item) {
@@ -324,7 +357,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const c = ans?.valueCoding;
     return c ? c : null;
   }
-  answerCodeableConept(ans) {
+  answerCodeableConcept(ans) {
     if (!isPlainObject(ans)) return null;
     if (!("valueCodeableConcept" in ans)) return null;
     return conceptText(ans.valueCodeableConcept);
@@ -358,7 +391,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
 
   getAnswerValueByExtension(questionnaire, code) {
-    if (!questionnaire?.item) return null;
+    if (!questionnaire?.item) {
+      console.warn("getAnswerValueByExtension: questionnaire or questionnaire.item is missing");
+      return null;
+    }
+    if (!code) {
+      console.warn("getAnswerValueByExtension: code parameter is required");
+      return null;
+    }
     let found = null;
     const readOrdinalExt = (opt) => {
       const ext = (opt.extension || []).find((e) => e.url === "http://hl7.org/fhir/StructureDefinition/ordinalValue");
@@ -385,13 +425,16 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       }
     };
     walk(questionnaire.item);
+    if (found === null) {
+      console.warn(`getAnswerValueByExtension: no value found for code "${code}"`);
+    }
     return found;
   }
 
   // -------------------- scoring --------------------
   getScoringByResponseItem(questionnaire, responseItemsFlat, linkId, config = {}) {
     const it = this.findResponseItemByLinkId(responseItemsFlat, linkId, config);
-    //console.log("linkId ", linkId, " it ", it, " responses ", responseItemsFlat)
+    if (it == null) return null;
     const ans = this.firstAnswer(it);
     if (ans == null) return null;
     return this.getScoreByAnswerItem(ans, questionnaire, config);
@@ -401,7 +444,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const fallbackScoreMap = normalizeObjectKeys(
       config?.fallbackScoreMap ? config?.fallbackScoreMap : this.fallbackScoreMap,
     );
-    // console.log("ans ", ans)
     // Primitive short-circuit: numbers or strings like "Nearly every day"
     if (!isPlainObject(ans)) {
       const num = toFiniteNumber(ans);
@@ -413,18 +455,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const prim = this.answerPrimitive(ans);
     const primNum = toFiniteNumber(prim);
-    //console.log("prim ", primNum);
     if (primNum != null) return primNum;
 
     const coding = this.answerCoding(ans);
-    //console.log("ans ", ans, " coding ", coding)
     if (coding?.code) {
       const fromExt = this.getAnswerValueByExtension(questionnaire, coding.code);
       if (fromExt != null && isNumber(fromExt)) return fromExt;
       const codeKey = String(coding.code).toLowerCase();
-      //console.log("code ", codeKey, " result ", fallbackScoreMap[codeKey])
       if (fallbackScoreMap[codeKey] != null) return fallbackScoreMap[codeKey];
-      //console.log("coding code ", fallbackScoreMap, fallbackScoreMap[coding.code])
       return isNumber(coding.code) ? coding.code : null;
     }
     return null;
@@ -446,7 +484,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const coding = this.answerCoding(item);
       if (coding) {
         const normalizedCode = coding.code != null ? String(coding.code).toLowerCase() : null;
-
         return coding.display ?? (normalizedCode ? fallbackScoreMap[normalizedCode] : null) ?? null;
       }
 
@@ -455,7 +492,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (!isNil(prim)) return prim;
 
       // Then CodeableConcept text, else stringify as last resort
-      const codeableValue = this.answerCodeableConept(item);
+      const codeableValue = this.answerCodeableConcept(item);
       return codeableValue ?? objectToString(item);
     };
 
@@ -477,8 +514,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
 
   getAnswerByResponseLinkId(linkId, responseItemsFlat, config = {}) {
-    if (isEmptyArray(responseItemsFlat)) return null;
-    // console.log("responseItemsFlat ", responseItemsFlat, " linkId ", linkId, " config ", config);
+    if (!linkId || isEmptyArray(responseItemsFlat)) return null;
     const it = this.findResponseItemByLinkId(responseItemsFlat, linkId, config);
     if (it == null) return null;
     return this.getAnswerItemDisplayValue(this.firstAnswer(it), config);
@@ -522,13 +558,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (!returnObject.id) returnObject.id = item.linkId;
       if (!this.isResponseQuestionItem(item, configToUse)) returnObject.readOnly = true;
       const ans = item.answer;
-      const coding = this.answerCoding(this.firstAnswer(ans));
       if (this.isResponseQuestionItem(item, config)) {
         item.readOnly = true;
       }
       returnObject.answer = this.getAnswerItemDisplayValue(ans, config);
       returnObject.question = item.text ?? `Question ${index}`;
-      returnObject.code = coding ? coding.code : null;
       returnObject.rawAnswer = item.answer;
       return returnObject;
     });
@@ -538,14 +572,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (isEmptyArray(responseItemsFlat)) return [];
     return (responseItemsFlat || []).map((item) => {
       const ans = item.answer;
-      const coding = this.answerCoding(this.firstAnswer(ans));
       return {
         ...item,
         id: item.linkId,
         answer: this.getAnswerItemDisplayValue(ans, config),
         rawAnswer: item.answer,
         question: item.text,
-        code: coding ? coding.code : null,
       };
     });
   }
@@ -628,7 +660,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       this.cfg.questionnaireUrl,
     );
     const fromRegistry = keyToUse ? questionnaireConfig[keyToUse] : null;
-    // const config = mergeNonEmpty(this.cfg, fromRegistry);
     const config = fromRegistry ? fromRegistry : this.cfg;
 
     const rows = (questionnaireResponses || []).map((qr, rIndex) => {
@@ -642,7 +673,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       });
       if (isEmptyArray(responses)) responses = this.responsesOnly(flat, config);
 
-      //console.log("score ", score, " totalItems ", totalItems, " total answered ", totalAnsweredItems)
       return {
         ...(config ?? {}),
         ...(config?.columns ? this.getColumnObjects(config.columns, qr, config) : {}),
@@ -730,9 +760,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (data[0].questionnaireId) configToUse = questionnaireConfig[data[0].questionnaireId];
     }
     if (configToUse && configToUse.questionLinkIds) qIds = configToUse.questionLinkIds;
-    if (isEmptyArray(qIds)) qIds = Array.from(new Set(anchorRowData.responses.map((r) => r.id)));
+    if (isEmptyArray(qIds)) {
+      qIds = Array.from(new Set(anchorRowData.responses.map((r) => r.id).filter((id) => id != null)));
+    }
     const result = [...qIds]
-      // .filter((id) => !configToUse || !this.isLinkIdEquals(configToUse.scoringQuestionId, id, configToUse))
       .map((qid) => {
         const row = {};
         // Question text from first available response carrying that qid
@@ -742,7 +773,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
             data.find((d) => (d.responses || []).some((r) => this.isLinkIdEquals(r.id, qid, configToUse)))?.responses ||
             []
           ).find((r) => this.isLinkIdEquals(r.id, qid, configToUse));
-        //console.log("qid ", qid, " sample ", sample);
         row.id = qid;
         row.linkId = qid;
         let question = "";
@@ -765,7 +795,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           // this is the row data for the date and id of a response set that has the requsite linkId
           row[d.id] = this._getAnswerByTargetLinkIdFromResponseData(sample?.id, data, d.id, configToUse);
         }
-        //console.log("sample " , sample, " row ", row, " response row? ", this.isResponseQuestionItem(row, configToUse));
         return row;
       })
       .filter((r) => !r.readOnly);
@@ -847,7 +876,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         if (qr.resource) return qr.resource;
         return qr;
       })
-      .filter((o) => (o.resourceType = "QuestionnaireResponse"));
+      .filter((o) => o.resourceType === "QuestionnaireResponse");
     for (const qr of formattedQrs) {
       // locate the item by linkId in the *FHIR* shape (qr.item[].answer[*].valueX)
       const it = (qr.item || []).find((i) => this.isLinkIdEquals(i.linkId, linkId));
@@ -856,7 +885,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
       // normalize answer - FHIR value[x]
       let answers = [];
-      //console.log("it ? ", it.answer)
       // tolerate "flattened" shapes or proper FHIR shape
       if (Array.isArray(it.answer) && it.answer.length && typeof it.answer[0] === "object") {
         answers = it.answer;
@@ -892,9 +920,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       this.cfg.questionnaireUrl,
     );
     const fromRegistry = keyToUse ? questionnaireConfig[keyToUse] : null;
-    const config = fromRegistry ? fromRegistry : this.config;
-
-    // console.log("key ", keyToUse, " config actually used ", config, " qrs ", qrs);
+    const config = fromRegistry ? fromRegistry : this.cfg;
 
     // If this instrument is defined as "derived" from a host instrument,
     // synthesize single-link QRs from the host QRs *when needed*.
@@ -906,7 +932,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       // But if QRs actually look like host QRs (or are empty), try to derive.
       const looksLikeHost = (arr) =>
         (arr || []).some((qr) => {
-          const q = qr?.resource?.questionnaire || "";
+          const q = qr?.resource?.questionnaire || qr?.questionnaire || "";
           return hostIds.some((hid) =>
             this.questionnaireRefMatches(q, { questionnaireId: hid, questionnaireMatchMode: "fuzzy" }),
           );

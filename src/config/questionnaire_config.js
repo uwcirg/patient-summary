@@ -3,6 +3,34 @@ import { linkIdEquals } from "@util/fhirUtil";
 import CHART_CONFIG from "./chart_config";
 import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS } from "@/consts";
 import QuestionnaireScoringBuilder from "@/models/resultBuilders/QuestionnaireScoringBuilder";
+/**
+ * @param {string} key
+ * @param {string} title (from Questionnaire resource)
+ * @param {string} subtitle
+ * @param {string} questionnaireId
+ * @param {string} questionnaireName
+ * @param {string} questionnaireUrl
+ * @param {string|null} scoringQuestionId linkId of the question used for scoring
+ * @param {string[]} [questionLinkIds] optional, linkIds of questions to include, usually specified if linkId can be different for a question /1111 or 1111
+ * @param {string[]}[subScoringQuestionIds] optional, linkIds of sub-questions to include for scoring breakdowns
+ * @param {'strict'|'fuzzy'} [questionnaireMatchMode] used when matching a Questionnaire FHIR resource to this config
+ * @param {'strict'|'fuzzy'} [linkIdMatchMode]
+ * @param {number} highSeverityScoreCutoff
+ * @param {number} maximumScore
+ * @param {number} minimumScore
+ * @param {Object} [fallbackScoreMap] map of linkId to score
+ * @param {{min:number,label:string,meaning?:string}[]} [config.severityBands]
+ * @param {function} fallbackMeaningFunc
+ * @param {boolean} displayMeaningNotScore
+ * @param {string[]} [recallLinkIds] for Mini-Cog: linkIds for recall items
+ * @param {string} [clockLinkId] for Mini-Cog: linkId for clock drawing item
+ * @param {string[]} [recallCorrectCodes] for Mini-Cog: coded answers that count as correct for recall items
+ * @param {string[]} [recallCorrectStrings] for Mini-Cog: string answers that count as correct for recall items
+ * @param {Object} [clockScoreMap] for Mini-Cog: map of clock drawing answer to score
+ * @param {Object[]} [columns] additional columns to extract from responses
+ * @param {boolean} [skipChart] if true, do not render chart for this questionnaire
+ * @param {Object|Array} chartParams params for charting line/bar graphs
+ */
 const questionnaireConfigs = {
   "CIRG-ADL-IADL": {
     key: "CIRG-ADL-IADL",
@@ -63,7 +91,6 @@ const questionnaireConfigs = {
     comparisonToAlert: "higher",
     displayMeaningNotScore: true,
     scoringQuestionId: "ASSIST-OD-ever",
-    questionLinkIds: ["ASSIST-OD-ever", "ASSIST-OD-recent", "ASSIST-OD-narcan"],
     linkIdMatchMode: "strict",
     fallbackScoreMap: {
       "assist-od-ever-0": 1,
@@ -83,7 +110,6 @@ const questionnaireConfigs = {
     highSeverityScoreCutoff: 1,
     displayMeaningNotScore: true,
     scoringQuestionId: "ASSIST-Polysub",
-    questionLinkIds: ["ASSIST-Polysub", "ASSIST-Polysub-freq", "ASSIST-Polysub-inject", "ASSIST-Polysub-inject-alt"],
     linkIdMatchMode: "strict",
     fallbackScoreMap: {
       "assist-polysub-0": 1,
@@ -471,8 +497,6 @@ const questionnaireConfigs = {
       yLabel: "value",
     },
   },
-
-  //TODO, implement those
   "CIRG-CNICS-ARV": {
     key: "CIRG-CNICS-ARV",
     questionnaireId: "CIRG-CNICS-ARV",
@@ -556,6 +580,8 @@ const questionnaireConfigs = {
     highSeverityScoreCutoff: 4,
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 5, xLabel: "" },
   },
+
+  //TODO, implement those
   "CIRG-DRUG-USE": {
     key: "CIRG-DRUG-USE",
     instrumentName: "Drug Use",
@@ -619,7 +645,12 @@ const questionnaireConfigs = {
 };
 
 export const getConfigForQuestionnaire = (id) => {
-  return questionnaireConfigs[String(id)] || questionnaireConfigs[String(id).toUpperCase()] || null;
+  return (
+    questionnaireConfigs[String(id)] ||
+    questionnaireConfigs[String(id).toUpperCase()] ||
+    questionnaireConfigs[String(id).toLowerCase()] ||
+    null
+  );
 };
 export function findMatchingQuestionLinkIdFromCode(resource, linkIdList, config) {
   if (!resource) return null;

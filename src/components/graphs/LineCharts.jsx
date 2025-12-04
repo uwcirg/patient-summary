@@ -48,6 +48,7 @@ export default function LineCharts(props) {
     xTickLabelAngle,
     xFieldKey,
     xLabel,
+    xLabelVisible,
     xDomain,
     xTickFormatter,
     xTickStyle,
@@ -129,7 +130,7 @@ export default function LineCharts(props) {
       connectNulls={false}
       ticks={ticks}
     >
-      {xLabel && <Label value={xLabel} offset={-8} position="insideBottom" />}
+      {xLabel && xLabelVisible && <Label value={xLabel} offset={-8} position="insideBottom" />}
     </XAxis>
   );
 
@@ -587,13 +588,14 @@ LineCharts.propTypes = {
   xDomain: PropTypes.array,
   xFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   xLabel: PropTypes.string,
+  yLabelVisible: PropTypes.bool,
   xTickLabelAngle: PropTypes.number,
   xTickFormatter: PropTypes.func,
   xTickStyle: PropTypes.object,
   xsChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yLabel: PropTypes.string,
-  yLabelVisible: PropTypes.bool,
+  xLabelVisible: PropTypes.bool,
   yLineFields: PropTypes.array,
   yTickFormatter: PropTypes.func,
 };

@@ -1,5 +1,5 @@
 import { report_config } from "@config/report_config";
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import PropTypes from "prop-types";
 import { Box, Stack, Typography } from "@mui/material";
 import { isEmptyArray } from "@util";
@@ -7,19 +7,41 @@ import Chart from "../Chart";
 import Section from "../Section";
 import ScoringSummary from "./ScoringSummary";
 
+// Move styles outside component
+const sectionWrapperSx = {
+  alignSelf: "stretch",
+  padding: (theme) => theme.spacing(0, 1),
+};
+
+const titleSx = {
+  marginBottom: 1,
+  fontWeight: 500,
+  borderBottomStyle: "solid",
+  borderBottomWidth: "1px",
+  borderBottomColor: "#ececec",
+};
+
+const sectionSx = {
+  padding: (theme) => theme.spacing(1),
+};
+
+const tableStyle = { width: "auto" };
+
+const flexWrapConfig = {
+  xs: "wrap",
+  sm: "wrap",
+  md: "nowrap",
+  lg: "nowrap"
+};
+
 export default function PROReport() {
-  const renderTwoColumns = (table) => {
+  const renderTwoColumns = useCallback((table) => {
     return (
       <Stack
         direction="row"
         alignItems="center"
         className="response-summary"
-        flexWrap={{
-          xs: "wrap",
-          sm: "wrap",
-          md: "nowrap",
-          lg: "nowrap"
-        }}
+        flexWrap={flexWrapConfig}
         key={`wrapper_${table.id}`}
       >
         <ScoringSummary
@@ -27,25 +49,29 @@ export default function PROReport() {
           data={table.rows}
           disableLinks={true}
           enableResponsesViewer={true}
-        ></ScoringSummary>
+        />
         <Box>
           {!isEmptyArray(table.charts) &&
             table.charts.map((chartData, index) => {
               if (isEmptyArray(chartData?.data)) return null;
-              return <Chart key={`chart_${table.id}_${chartData?.id}_${index}`} type={chartData?.type} data={chartData}></Chart>;
+              return (
+                <Chart 
+                  key={`chart_${table.id}_${chartData?.id}_${index}`} 
+                  type={chartData?.type} 
+                  data={chartData}
+                />
+              );
             })}
         </Box>
       </Stack>
     );
-  };
-  const renderTable = (table) => {
+  }, []);
+
+  const renderTable = useCallback((table) => {
     return (
       <Box
-        sx={{
-          marginBottom: (theme) => theme.spacing(2),
-          alignSelf: "stretch",
-          padding: (theme) => theme.spacing(0, 1),
-        }}
+        className="section-wrapper"
+        sx={sectionWrapperSx}
         key={table.id}
       >
         {table.title && (
@@ -53,14 +79,7 @@ export default function PROReport() {
             variant="body1"
             component="h3"
             color="accent"
-            sx={{
-              marginBottom: 1,
-              marginLeft: 1,
-              fontWeight: 500,
-              borderBottomStyle: "solid",
-              borderBottomWidth: "2px",
-              borderBottomColor: "#ececec",
-            }}
+            sx={titleSx}
           >
             {table.title}
           </Typography>
@@ -71,37 +90,30 @@ export default function PROReport() {
             data={table.rows}
             disableLinks={true}
             enableResponsesViewer={true}
-            tableStyle={{
-              width: "auto",
-            }}
+            tableStyle={tableStyle}
             {...table}
-          ></ScoringSummary>
+          />
         )}
         {table.layout === "two-columns" && renderTwoColumns(table)}
       </Box>
     );
-  };
-  return report_config.sections.map((section, index) => {
-    return (
+  }, [renderTwoColumns]);
+
+  const sections = useMemo(() => {
+    return report_config.sections.map((section, index) => (
       <Section
         key={`${section.id}_${index}`}
         section={{
           id: section.id,
           title: section.title,
-          body: (
-            <>
-              {section.tables.map((table) => {
-                return renderTable(table);
-              })}
-            </>
-          ),
+          body: section.tables.map((table) => renderTable(table)),
         }}
-        sx={{
-          padding: (theme) => theme.spacing(1),
-        }}
-      ></Section>
-    );
-  });
+        sx={sectionSx}
+      />
+    ));
+  }, [renderTable]);
+
+  return sections;
 }
 
 PROReport.propTypes = {

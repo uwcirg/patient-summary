@@ -1,12 +1,5 @@
 import { getEnv, getSectionsToShow, isEmptyArray, isNil, hasValue, isNumber } from "./index.js";
-import {
-  DEFAULT_OBSERVATION_CATEGORIES,
-  // DEFAULT_VAL_TO_LOIN_CODE,
-  FLOWSHEET_CODE_IDS,
-  FLOWSHEET_SYSTEM,
-  // LOINC_CODE_LINK_ID_MAPPINGS,
-} from "@/consts/index.js";
-// import { questionTextsByLoincCode } from "@/consts";
+import { DEFAULT_OBSERVATION_CATEGORIES, FLOWSHEET_CODE_IDS, FLOWSHEET_SYSTEM } from "@/consts/index.js";
 
 /*
  * @param client, FHIR client object
@@ -132,16 +125,12 @@ export function getFHIRResourcePaths(patientId, resourceTypesToLoad, options) {
       const resourceLower = String(resource).toLowerCase();
 
       // SPECIAL CASE: Questionnaire + exactMatchById -> build one path per id
-      if (
-        resourceLower === "questionnaire" &&
-        options?.exactMatchById &&
-        !isEmptyArray(options.questionnaireList)
-      ) {
+      if (resourceLower === "questionnaire" && options?.exactMatchById && !isEmptyArray(options.questionnaireList)) {
         return options.questionnaireList.map((qid) => {
           let path = `/${resource}`;
           const paramsObj = getFHIRResourceQueryParams(resource, {
             ...options,
-            questionnaireList: [qid],    // single id
+            questionnaireList: [qid], // single id
             patientId,
           });
 
@@ -179,7 +168,6 @@ export function getFHIRResourcePaths(patientId, resourceTypesToLoad, options) {
       };
     });
 }
-
 
 export function getResourcesByResourceType(patientBundle, resourceType) {
   if (isEmptyArray(patientBundle)) return null;

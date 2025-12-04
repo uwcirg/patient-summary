@@ -15,8 +15,6 @@ const renderLoader = () => (
 const renderScoringSummary = ({allScoringSummaryData, allChartData, chartKeys}) => {
   const ScoreSummary = lazy(() => import("../components/sections/ScoringSummary"));
   const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
-  // const chartData = props.allChartData;
-  // const chartKeys = props.chartKeys;
   return (
     <Suspense fallback={renderLoader()}>
       <Stack

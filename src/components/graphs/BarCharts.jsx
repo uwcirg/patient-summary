@@ -14,6 +14,7 @@ export default function BarCharts(props) {
     xTickFormatter,
     xFieldKey, // "date"
     xLabel,
+    xLabelVisible,
     maximumYValue,
     minimumYValue,
     yFieldKey, // "total", "score", etc.
@@ -56,7 +57,7 @@ export default function BarCharts(props) {
       tickMargin={12}
       interval="preserveStartEnd"
     >
-      {xLabel && <Label value={xLabel} offset={-8} position="insideBottom" />}
+      {xLabel && xLabelVisible && <Label value={xLabel} offset={-8} position="insideBottom" />}
     </XAxis>
   );
 
@@ -121,6 +122,7 @@ BarCharts.propTypes = {
   xTickFormatter: PropTypes.func,
   xFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   xLabel: PropTypes.string,
+  xLabelVisible: PropTypes.bool,
   minimumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   maximumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
