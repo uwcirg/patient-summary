@@ -459,10 +459,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const coding = this.answerCoding(ans);
     if (coding?.code) {
-      const fromExt = this.getAnswerValueByExtension(questionnaire, coding.code);
-      if (fromExt != null && isNumber(fromExt)) return fromExt;
       const codeKey = String(coding.code).toLowerCase();
       if (fallbackScoreMap[codeKey] != null) return fallbackScoreMap[codeKey];
+      const fromExt = this.getAnswerValueByExtension(questionnaire, coding.code);
+      if (fromExt != null && isNumber(fromExt)) return fromExt;
       return isNumber(coding.code) ? coding.code : null;
     }
     return null;
