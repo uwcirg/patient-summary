@@ -1,4 +1,5 @@
 import React from "react";
+import DOMPurify from "dompurify";
 import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
 import Link from "@mui/material/Link";
@@ -40,14 +41,14 @@ export default function ScoringSummary(props) {
     const comparison = row?.comparison;
     const comparisonToAlert = row?.comparisonToAlert;
     if (!comparison) return null;
-    if (comparison === "equal") return <HorizontalRuleIcon {...iconProps} />;
+    if (comparison === "equal") return <HorizontalRuleIcon ariaLabel="No change" {...iconProps} />;
     if (comparisonToAlert === "lower") {
-      if (comparison === "lower") return <SouthIcon color="error" {...iconProps} />;
-      if (comparison === "higher") return <NorthIcon color="info" {...iconProps} />;
+      if (comparison === "lower") return <SouthIcon color="error" ariaLabel="Change to worse" {...iconProps} />;
+      if (comparison === "higher") return <NorthIcon color="info" ariaLabel="Change to better" {...iconProps} />;
       return comparison;
     } else {
-      if (comparison === "higher") return <NorthIcon color="error" {...iconProps} />;
-      if (comparison === "lower") return <SouthIcon color="info" {...iconProps} />;
+      if (comparison === "higher") return <NorthIcon color="error" ariaLabel="Change to worse" {...iconProps} />;
+      if (comparison === "lower") return <SouthIcon color="info" ariaLabel="Change to better" {...iconProps} />;
       return comparison;
     }
   };
@@ -152,8 +153,19 @@ export default function ScoringSummary(props) {
         {parts.map((m, index) => {
           const key = `${row.id}_meaning_${index}`;
           const cellClass = row.alert ? "text-danger" : row.warning ? "text-warning" : "";
-          if (hasHtmlTags && hasHtmlTags(m)) {
-            return <Box className={`table-cell-item ${cellClass}`} key={key} dangerouslySetInnerHTML={{ __html: m }} />;
+          if (hasHtmlTags(m)) {
+            // Sanitize HTML to prevent XSS attacks
+            const sanitized = DOMPurify.sanitize(m, {
+              ALLOWED_TAGS: ["b", "i", "em", "strong", "br", "span", "div", "p"],
+              ALLOWED_ATTR: ["class"],
+            });
+            return (
+              <Box
+                className={`table-cell-item ${cellClass}`}
+                key={key}
+                dangerouslySetInnerHTML={{ __html: sanitized }}
+              />
+            );
           }
           return (
             <Box className={`table-cell-item ${cellClass}`} key={key}>
@@ -163,6 +175,21 @@ export default function ScoringSummary(props) {
         })}
       </Box>
     );
+  };
+
+  const getTitle = (row) => {
+    if (row.title) {
+      return row.title;
+    } else if (row.instrumentName) {
+      return row.instrumentName;
+    } else if (row.key) {
+      return row.key;
+    } else {
+      if (row.questionnaire && row.questionnaire.title) {
+        return row.questionnaire.title;
+      }
+    }
+    return "Untitled Measure";
   };
 
   // -------- original columns ------------
@@ -195,9 +222,7 @@ export default function ScoringSummary(props) {
         size: "small",
       },
       renderCell: (row) => {
-        const displayTitle = getDisplayQTitle(
-          row.title ? row.title : row.instrumentName ? row.instrumentName : row.key,
-        );
+        const displayTitle = getDisplayQTitle(getTitle(row));
         return !disableLinks ? (
           <Link
             onClick={(e) => handleClick(e, row.key)}
@@ -266,7 +291,7 @@ export default function ScoringSummary(props) {
       type: "date",
       headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
       cellProps: { sx: baseCellStyle, size: "small" },
-      accessor: (row) => (row.lastAssessed ? row.lastAssessed : (row.date ?? "")),
+      accessor: (row) => row.lastAssessed ?? row.date ?? "",
     },
     {
       id: "comparison",

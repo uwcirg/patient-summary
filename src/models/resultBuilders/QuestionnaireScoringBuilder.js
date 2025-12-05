@@ -688,7 +688,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         authoredDate: qr.authored,
         lastUpdated: qr.meta?.lastUpdated,
         config: config,
-        questionnaire: questionnaire,
+        questionnaire,
         questionnaireResponse: qr,
       };
     });
