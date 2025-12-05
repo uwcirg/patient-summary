@@ -247,6 +247,34 @@ const questionnaireConfigs = {
     ],
     skipChart: true,
   },
+   "CIRG-CNICS-Smoking": {
+    key: "CIRG-CNICS-Smoking",
+    instrumentName: "CNICS Smoking",
+    title: "Nicotine Use",
+    questionnaireMatchMode: "fuzzy",
+    displayMeaningNotScore: true,
+    linkIdMatchMode: "strict",
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      if (!severity) return "";
+      let arrMeaning = [];
+      responses.forEach((response) => {
+        const answered = response.answer != null && response.answer !== undefined;
+        if (linkIdEquals(response.id, "Smoking-Tobacco-Cigs-Summary")) {
+          if (answered) {
+            arrMeaning.push("Tobacco cigarettes: " + response.answer);
+          }
+        }
+        if (linkIdEquals(response.id, "E-Cigarettes-Summary")) {
+          if (answered) {
+            arrMeaning.push("E-Cigarettes: " + response.answer);
+          }
+        }
+      });
+      return arrMeaning.join("|");
+    },
+    skipChart: true,
+  },
   "CIRG-CNICS-Symptoms": {
     key: "CIRG-CNICS-Symptoms",
     instrumentName: "CNICS Symptoms Checklist",
@@ -557,10 +585,6 @@ const questionnaireConfigs = {
       },
     ],
     skipChart: true,
-  },
-  "CIRG-NICOTINE-USE": {
-    key: "CIRG-NICOTINE-USE",
-    title: "Nicotine Use",
   },
   "CIRG-ALCOHOL-USE": {
     title: "Alcohol Score (Audit)",

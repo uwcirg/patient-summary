@@ -116,7 +116,7 @@ export const report_config = {
           title: "Substance Use",
           layout: "two-columns",
           dataKeysToMatch: [
-            "CIRG-Nicotine-Use",
+            "CIRG-CNICS-Smoking",
             "CIRG-Alcohol-Use",
             "CIRG-Mini-Score",
             "CIRG-Drug-Use",

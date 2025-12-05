@@ -237,9 +237,9 @@ export default {
       source: "cnics",
     },
   },
-  "CIRG-Nicotine-Use": {
+  "CIRG-CNICS-Smoking": {
     scoringSummaryData: {
-      key: "CIRG-Nicotine-Use",
+      key: "CIRG-CNICS-Smoking",
       source: "cnics",
       comparison: "",
       comparisonToAlert: "",
