@@ -3,6 +3,7 @@ import { Typography, Box } from "@mui/material";
 import { BarChart, Bar, CartesianGrid, Cell, Label, Tooltip, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { useMemo } from "react";
 import {SUCCESS_COLOR, ALERT_COLOR} from "@config/chart_config";
+import CustomTooltip from "./CustomTooltip";
 
 export default function BarCharts(props) {
   const {
@@ -14,6 +15,7 @@ export default function BarCharts(props) {
     xTickFormatter,
     xFieldKey, // "date"
     xLabel,
+    yLabel,
     xLabelVisible,
     maximumYValue,
     minimumYValue,
@@ -70,6 +72,7 @@ export default function BarCharts(props) {
       animationBegin={500}
       animationDuration={550}
       labelFormatter={tooltipLabelFormatter}
+      content={(props) => <CustomTooltip {...props} yFieldKey={yFieldKey} xFieldKey={xFieldKey} yLabel={yLabel} />}
     />
   );
 
@@ -126,6 +129,7 @@ BarCharts.propTypes = {
   minimumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   maximumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  yLabel: PropTypes.string,
   tooltipLabelFormatter: PropTypes.func,
   data: PropTypes.array,
 };

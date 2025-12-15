@@ -41,14 +41,14 @@ export default function ScoringSummary(props) {
     const comparison = row?.comparison;
     const comparisonToAlert = row?.comparisonToAlert;
     if (!comparison) return null;
-    if (comparison === "equal") return <HorizontalRuleIcon ariaLabel="No change" {...iconProps} />;
+    if (comparison === "equal") return <HorizontalRuleIcon aria-label="No change" {...iconProps} />;
     if (comparisonToAlert === "lower") {
-      if (comparison === "lower") return <SouthIcon color="error" ariaLabel="Change to worse" {...iconProps} />;
-      if (comparison === "higher") return <NorthIcon color="info" ariaLabel="Change to better" {...iconProps} />;
+      if (comparison === "lower") return <SouthIcon color="error" aria-label="Change to worse" {...iconProps} />;
+      if (comparison === "higher") return <NorthIcon color="info" aria-label="Change to better" {...iconProps} />;
       return comparison;
     } else {
-      if (comparison === "higher") return <NorthIcon color="error" ariaLabel="Change to worse" {...iconProps} />;
-      if (comparison === "lower") return <SouthIcon color="info" ariaLabel="Change to better" {...iconProps} />;
+      if (comparison === "higher") return <NorthIcon color="error" aria-label="Change to worse" {...iconProps} />;
+      if (comparison === "lower") return <SouthIcon color="info" aria-label="Change to better" {...iconProps} />;
       return comparison;
     }
   };

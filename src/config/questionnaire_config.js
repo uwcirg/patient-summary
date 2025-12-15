@@ -432,12 +432,16 @@ const questionnaireConfigs = {
     title: "PTSD Symptoms",
     subtitle: "Past month",
     maximumScore: 5,
-    highSeverityScoreCutoff: 4,
+    highSeverityScoreCutoff: 3,
+    severityBands: [
+      { min: 3, label: "high", meaning: "Positive screen" },
+      { min: 0, label: "low", meaning: "Negative screen" },
+    ],
     comparisonToAlert: "higher",
     questionnaireMatchMode: "fuzzy",
     questionLinkIds: ["/102012-2", "/102013-0", "/102014-8", "/102015-5", "/102016-3"],
     scoringQuestionId: "/102017-1",
-    chartParams: { ...CHART_CONFIG.default, title: "PTSD", minimumYValue: 0, maximumYValue: 5, xLabel: "" },
+    chartParams: { ...CHART_CONFIG.default, title: "PTSD", minimumYValue: 0, maximumYValue: 5, xLabel: "", type: "barchart" },
   },
   "CIRG-PHQ9": {
     key: "CIRG-PHQ9",
@@ -505,6 +509,7 @@ const questionnaireConfigs = {
     severityBands: [
       { min: 3, label: "high", meaning: "Nearly every day" },
       { min: 2, label: "moderate", meaning: "More than half the days" },
+      { min: 1, label: "mild", meaning: "Several days" },
       { min: 0, label: "low", meaning: "Not at all" },
     ],
     minimumScore: 0,
