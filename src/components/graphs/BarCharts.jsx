@@ -89,10 +89,10 @@ export default function BarCharts(props) {
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
           <BarChart
             margin={{
-              top: 20,
-              right: 40,
-              left: 0,
-              bottom: 20,
+              top: 10,
+              right: 20,
+              left: 20,
+              bottom: 10,
             }}
             data={parsed}
             style={{ width: "100%", maxWidth: "700px", aspectRatio: 1.618 }}
@@ -101,7 +101,7 @@ export default function BarCharts(props) {
             {renderXAxis()}
             {renderYAxis()}
             {renderToolTip()}
-            <Bar dataKey={yFieldKey} barSize={20}>
+            <Bar dataKey={yFieldKey} barSize={12} minPointSize={4}>
               {parsed.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
