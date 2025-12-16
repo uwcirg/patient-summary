@@ -24,41 +24,79 @@ export default function BarCharts(props) {
     data = [],
   } = props;
 
+  const deduplicatedData = useMemo(() => {
+    if (!data || data.length === 0) return [];
+
+    const grouped = data.reduce((acc, item) => {
+      const timestamp =
+        item[xFieldKey] instanceof Date ? item[xFieldKey].valueOf() : new Date(item[xFieldKey]).valueOf();
+
+      if (!acc[timestamp]) {
+        acc[timestamp] = [];
+      }
+      acc[timestamp].push(item);
+      return acc;
+    }, {});
+
+    // For each timestamp, decide how to combine duplicates:
+    return Object.entries(grouped).map(([timestamp, items]) => {
+      console.log("timestamp ", timestamp);
+      if (items.length === 1) return items[0];
+
+      // Take the latest (last) entry
+      return items[items.length - 1];
+    });
+  }, [data, xFieldKey]);
+
   // Convert date strings -> timestamps once
   const parsed = useMemo(
     () =>
-      data.map((d) => ({
+      deduplicatedData.map((d) => ({
         ...d,
-        [xFieldKey]: d[xFieldKey] instanceof Date ? d[xFieldKey].getTime() : new Date(d[xFieldKey]).getTime(), // yields ms since epoch
+        [xFieldKey]: d[xFieldKey] instanceof Date ? d[xFieldKey].getTime() : new Date(d[xFieldKey]).getTime(),
       })),
-    [data, xFieldKey],
+    [deduplicatedData, xFieldKey],
   );
 
-  // Calculate dynamic bar size based on time range
+  // Calculate dynamic bar size with minimum threshold
   const dynamicBarSize = useMemo(() => {
-    if (parsed.length < 2) return 12; // Default for single point
+    if (parsed.length < 2) return 20;
 
     const timestamps = parsed.map((d) => d[xFieldKey]).sort((a, b) => a - b);
-    const minTimestamp = timestamps[0];
-    const maxTimestamp = timestamps[timestamps.length - 1];
-    const timeRange = maxTimestamp - minTimestamp;
 
-    // Calculate average time gap between consecutive points
-    let totalGaps = 0;
+    // Find the MINIMUM gap
+    let minGap = Infinity;
     for (let i = 1; i < timestamps.length; i++) {
-      totalGaps += timestamps[i] - timestamps[i - 1];
+      const gap = timestamps[i] - timestamps[i - 1];
+      if (gap > 0) {
+        minGap = Math.min(minGap, gap);
+      }
     }
-    const avgGap = totalGaps / (timestamps.length - 1);
 
-    // Estimate chart width (use a reasonable default if dynamic sizing)
-    const estimatedChartWidth = chartWidth || 600;
+    if (minGap === Infinity) return 20;
 
-    // Calculate pixels per millisecond
-    const pixelsPerMs = estimatedChartWidth / timeRange;
+    const timeRange = timestamps[timestamps.length - 1] - timestamps[0];
+    const estimatedChartWidth = (chartWidth || 600) - 40;
 
-    // Bar size should be a percentage of the average gap
-    // Use 20-30% of average gap, with min/max bounds
-    const calculatedBarSize = Math.min(Math.max(avgGap * pixelsPerMs * 0.25, 12), 36);
+    // Calculate what percentage of the time range the minimum gap represents
+    const gapRatio = minGap / timeRange;
+
+    // Bars should take up a reasonable portion of screen space
+    // If minGap is 0.002% of timeRange, we still want visible bars
+    const targetBarWidth = Math.max(
+      gapRatio * estimatedChartWidth * 0.5, // Proportional sizing
+      20, // Minimum visible size
+    );
+
+    const calculatedBarSize = Math.min(targetBarWidth, 60);
+
+    console.log("Dynamic bar size calculation:", {
+      minGap: `${minGap}ms (${(minGap / 1000).toFixed(1)}s)`,
+      timeRange: `${timeRange}ms (${(timeRange / (1000 * 60 * 60 * 24)).toFixed(1)} days)`,
+      gapRatio: `${(gapRatio * 100).toFixed(4)}%`,
+      estimatedChartWidth,
+      calculatedBarSize,
+    });
 
     return calculatedBarSize;
   }, [parsed, xFieldKey, chartWidth]);
@@ -66,19 +104,15 @@ export default function BarCharts(props) {
   // Calculate domain padding
   const xAxisDomain = useMemo(() => {
     if (parsed.length === 0) return ["dataMin", "dataMax"];
-    
-    const timestamps = parsed.map(d => d[xFieldKey]).sort((a, b) => a - b);
+
+    const timestamps = parsed.map((d) => d[xFieldKey]).sort((a, b) => a - b);
     const timeRange = timestamps[timestamps.length - 1] - timestamps[0];
     const estimatedChartWidth = chartWidth || 600;
     const pixelsPerMs = estimatedChartWidth / timeRange;
-    const barWidthInMs = (dynamicBarSize / 2) / pixelsPerMs;
-    
-    return [
-      (dataMin) => dataMin - barWidthInMs,
-      (dataMax) => dataMax + barWidthInMs
-    ];
-  }, [parsed, xFieldKey, chartWidth, dynamicBarSize]);
+    const barWidthInMs = dynamicBarSize / 2 / pixelsPerMs;
 
+    return [(dataMin) => dataMin - barWidthInMs, (dataMax) => dataMax + barWidthInMs];
+  }, [parsed, xFieldKey, chartWidth, dynamicBarSize]);
 
   const MIN_CHART_WIDTH = xsChartWidth ?? 400;
 
@@ -147,7 +181,7 @@ export default function BarCharts(props) {
             {renderXAxis()}
             {renderYAxis()}
             {renderToolTip()}
-            <Bar dataKey={yFieldKey} barSize={dynamicBarSize} minPointSize={4}>
+            <Bar dataKey={yFieldKey} maxBarSize={dynamicBarSize} barCategoryGap="20%" minPointSize={4}>
               {parsed.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
