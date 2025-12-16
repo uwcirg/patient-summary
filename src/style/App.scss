@@ -241,11 +241,18 @@ p {
   @page {
     margin: 2mm 2mm 2mm 2mm;
   }
+  header {
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+  h1, h2 {
+    font-size: 1.1rem !important;
+  }
+  h3, h4, h5 {
+    font-size: 1rem !important;
+  }
   .summaries {
     background-color: $summary-container-background-color;
-    h3 {
-      font-size: 1rem;
-    }
   }
   .scoring-summary-table {
     // page-break-after: always;
@@ -338,10 +345,10 @@ p {
   // .summary-container:not(:last-of-type) {
   //   page-break-after: always;
   // }
-  .accordion-wrapper:not(:last-of-type),
-  .summary-container:not(:last-of-type) {
-    page-break-after: always;
-  }
+  // .accordion-wrapper:not(:last-of-type),
+  // .summary-container:not(:last-of-type) {
+  //   page-break-after: always;
+  // }
   .MuiToolbar-root {
     background-color: $default-print-background-color !important;
     box-shadow: none !important;
