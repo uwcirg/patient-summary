@@ -32,7 +32,7 @@ export default function ResponsesViewer({
   columns,
   headerBgColor,
   buttonStyle,
-  buttonLabel = "View",
+  buttonLabel = "Details",
   // Optional advanced mode:
   buildColumns, // (optional) function: () => columns[]
   responsesTileTitle = "Responses", // header above the button, mirrors your summary tile
