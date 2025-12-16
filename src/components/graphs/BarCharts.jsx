@@ -95,7 +95,7 @@ export default function BarCharts(props) {
               bottom: 10,
             }}
             data={parsed}
-            style={{ width: "100%", maxWidth: "700px", aspectRatio: 1.618 }}
+            style={{ width: "100%", maxWidth: "650px" }}
           >
             <CartesianGrid strokeDasharray="2 2" horizontal={false} vertical={false} fill="#fdfbfbff" />
             {renderXAxis()}

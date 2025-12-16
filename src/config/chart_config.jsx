@@ -26,7 +26,7 @@ const CHART_CONFIG = {
     dotColor: "#444",
     lgChartWidth: 540,
     mdChartWidth: 480,
-    chartHeight: 250,
+    chartHeight: 240,
     xFieldKey: "date",
     xAxisTitle: "Date",
     yAxisTitle: "Score",

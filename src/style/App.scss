@@ -353,6 +353,10 @@ p {
     background-color: $default-print-background-color !important;
     box-shadow: none !important;
   }
+  .MuiAccordionSummary-root {
+    padding: 0;
+    min-height: auto;
+  }
   .response-summary {
     flex-wrap: wrap !important;
   }
