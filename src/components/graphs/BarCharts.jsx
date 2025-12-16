@@ -58,7 +58,7 @@ export default function BarCharts(props) {
 
     // Bar size should be a percentage of the average gap
     // Use 20-30% of average gap, with min/max bounds
-    const calculatedBarSize = Math.min(Math.max(avgGap * pixelsPerMs * 0.2, 8), 40);
+    const calculatedBarSize = Math.min(Math.max(avgGap * pixelsPerMs * 0.25, 12), 36);
 
     return calculatedBarSize;
   }, [parsed, xFieldKey, chartWidth]);
