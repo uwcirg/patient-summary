@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import { Typography, Box } from "@mui/material";
 import { BarChart, Bar, CartesianGrid, Cell, Label, Tooltip, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { useMemo } from "react";
-import {SUCCESS_COLOR, ALERT_COLOR} from "@config/chart_config";
+import { SUCCESS_COLOR, ALERT_COLOR } from "@config/chart_config";
 import CustomTooltip from "./CustomTooltip";
 
 export default function BarCharts(props) {
@@ -34,6 +34,52 @@ export default function BarCharts(props) {
     [data, xFieldKey],
   );
 
+  // Calculate dynamic bar size based on time range
+  const dynamicBarSize = useMemo(() => {
+    if (parsed.length < 2) return 12; // Default for single point
+
+    const timestamps = parsed.map((d) => d[xFieldKey]).sort((a, b) => a - b);
+    const minTimestamp = timestamps[0];
+    const maxTimestamp = timestamps[timestamps.length - 1];
+    const timeRange = maxTimestamp - minTimestamp;
+
+    // Calculate average time gap between consecutive points
+    let totalGaps = 0;
+    for (let i = 1; i < timestamps.length; i++) {
+      totalGaps += timestamps[i] - timestamps[i - 1];
+    }
+    const avgGap = totalGaps / (timestamps.length - 1);
+
+    // Estimate chart width (use a reasonable default if dynamic sizing)
+    const estimatedChartWidth = chartWidth || 600;
+
+    // Calculate pixels per millisecond
+    const pixelsPerMs = estimatedChartWidth / timeRange;
+
+    // Bar size should be a percentage of the average gap
+    // Use 20-30% of average gap, with min/max bounds
+    const calculatedBarSize = Math.min(Math.max(avgGap * pixelsPerMs * 0.2, 8), 40);
+
+    return calculatedBarSize;
+  }, [parsed, xFieldKey, chartWidth]);
+
+  // Calculate domain padding
+  const xAxisDomain = useMemo(() => {
+    if (parsed.length === 0) return ["dataMin", "dataMax"];
+    
+    const timestamps = parsed.map(d => d[xFieldKey]).sort((a, b) => a - b);
+    const timeRange = timestamps[timestamps.length - 1] - timestamps[0];
+    const estimatedChartWidth = chartWidth || 600;
+    const pixelsPerMs = estimatedChartWidth / timeRange;
+    const barWidthInMs = (dynamicBarSize / 2) / pixelsPerMs;
+    
+    return [
+      (dataMin) => dataMin - barWidthInMs,
+      (dataMax) => dataMax + barWidthInMs
+    ];
+  }, [parsed, xFieldKey, chartWidth, dynamicBarSize]);
+
+
   const MIN_CHART_WIDTH = xsChartWidth ?? 400;
 
   let maxYValue = maximumYValue ?? parsed.reduce((m, d) => Math.max(m, Number(d?.[yFieldKey] ?? -Infinity)), -Infinity);
@@ -52,7 +98,7 @@ export default function BarCharts(props) {
       dataKey={xFieldKey}
       type="number"
       scale="time" // time scale
-      domain={["dataMin", "dataMax"]}
+      domain={xAxisDomain}
       height={108}
       tick={{ fontSize: 12, fontWeight: 500, textAnchor: "middle" }} // no nested "style" object
       tickFormatter={(ts) => (xTickFormatter ? xTickFormatter(ts) : new Date(ts).toLocaleDateString())}
@@ -101,7 +147,7 @@ export default function BarCharts(props) {
             {renderXAxis()}
             {renderYAxis()}
             {renderToolTip()}
-            <Bar dataKey={yFieldKey} barSize={12} minPointSize={4}>
+            <Bar dataKey={yFieldKey} barSize={dynamicBarSize} minPointSize={4}>
               {parsed.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
