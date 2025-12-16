@@ -528,6 +528,7 @@ const questionnaireConfigs = {
       maximumYValue: 3,
       xLabel: "",
       yLabel: "value",
+      type: "barchart",
     },
   },
   "CIRG-CNICS-ARV": {
