@@ -97,8 +97,8 @@ const questionnaireConfigs = {
       "Assist-od-ever-1": 0,
     },
     severityBands: [
-      { min: 1, label: "high", meaning: "Yes" },
-      { min: 0, label: "low", meaning: "No" },
+      { min: 1, label: "high", meaning: "Yes, overdose" },
+      { min: 0, label: "low", meaning: "No overdose" },
     ],
     skipChart: true,
   },
@@ -293,6 +293,24 @@ const questionnaireConfigs = {
         id: "bothersSome",
       },
     ],
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      let arrMeaning = [];
+      responses.forEach((response) => {
+        const answered = response.answer != null && response.answer !== undefined;
+        if (linkIdEquals(response.id, "Symptoms-bothers-a-lot")) {
+          if (answered) {
+            arrMeaning.push("Bothers a lot: " + response.answer);
+          }
+        }
+        if (linkIdEquals(response.id, "Symptoms-bothers-some")) {
+          if (answered) {
+            arrMeaning.push("Bothers some: " + response.answer);
+          }
+        }
+      });
+      return arrMeaning.join("|");
+    },
     skipChart: true,
   },
   "CIRG-CP-ECOG": {

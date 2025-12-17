@@ -1,5 +1,4 @@
 import React from "react";
-import DOMPurify from "dompurify";
 import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
 import Link from "@mui/material/Link";
@@ -16,8 +15,9 @@ import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import { getResponseColumns } from "@models/resultBuilders/helpers";
 import Scoring from "@components/Score";
-import { getDisplayQTitle, getLocaleDateStringFromDate, hasHtmlTags, isEmptyArray, isNumber, scrollToAnchor } from "@util";
+import { getDisplayQTitle, getLocaleDateStringFromDate, isEmptyArray, isNumber, scrollToAnchor } from "@util";
 import ResponsesViewer from "../ResponsesViewer";
+import Meaning from "../Meaning";
 
 // tiny helper to read nested keys like "provider.name"
 const getByPath = (obj, path) => {
@@ -143,40 +143,6 @@ export default function ScoringSummary(props) {
     },
   };
 
-  const renderMeaning = (row) => {
-    if (!row.meaning) return null;
-
-    const parts = String(row.meaning).includes("|") ? row.meaning.split("|") : [row.meaning];
-
-    return (
-      <Box className="meaning-wrapper">
-        {parts.map((m, index) => {
-          const key = `${row.id}_meaning_${index}`;
-          const cellClass = row.alert ? "text-danger" : row.warning ? "text-warning" : "";
-          if (hasHtmlTags(m)) {
-            // Sanitize HTML to prevent XSS attacks
-            const sanitized = DOMPurify.sanitize(m, {
-              ALLOWED_TAGS: ["b", "i", "em", "strong", "br", "span", "div", "p"],
-              ALLOWED_ATTR: ["class"],
-            });
-            return (
-              <Box
-                className={`table-cell-item ${cellClass}`}
-                key={key}
-                dangerouslySetInnerHTML={{ __html: sanitized }}
-              />
-            );
-          }
-          return (
-            <Box className={`table-cell-item ${cellClass}`} key={key}>
-              {m}
-            </Box>
-          );
-        })}
-      </Box>
-    );
-  };
-
   const getTitle = (row) => {
     if (row.title) {
       return row.title;
@@ -279,7 +245,7 @@ export default function ScoringSummary(props) {
       renderCell: (row) => (
         <Stack sx={{ width: "100%" }} spacing={1} alignItems={"center"}>
           {defaultRenderers.score(row)}
-          {renderMeaning(row)}
+          <Meaning id={row.id ?? row.key} meaning={row.meaning} alert={row.alert} warning={row.warning} />
         </Stack>
       ),
     },

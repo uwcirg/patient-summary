@@ -27,24 +27,23 @@ export default function BarCharts(props) {
   const deduplicatedData = useMemo(() => {
     if (!data || data.length === 0) return [];
 
-    const grouped = data.reduce((acc, item) => {
+    const seen = new Map();
+
+    return data.map((item) => {
       const timestamp =
-        item[xFieldKey] instanceof Date ? item[xFieldKey].valueOf() : new Date(item[xFieldKey]).valueOf();
+        item[xFieldKey] instanceof Date ? item[xFieldKey].getTime() : new Date(item[xFieldKey]).getTime();
 
-      if (!acc[timestamp]) {
-        acc[timestamp] = [];
-      }
-      acc[timestamp].push(item);
-      return acc;
-    }, {});
+      const count = seen.get(timestamp) || 0;
+      seen.set(timestamp, count + 1);
 
-    // For each timestamp, decide how to combine duplicates:
-    return Object.entries(grouped).map(([timestamp, items]) => {
-      console.log("timestamp ", timestamp);
-      if (items.length === 1) return items[0];
+      // Add 5 second offset for each duplicate (5000ms)
+      const adjustedTimestamp = timestamp + count * 5000;
 
-      // Take the latest (last) entry
-      return items[items.length - 1];
+      return {
+        ...item,
+        duplicate: true,
+        [xFieldKey]: adjustedTimestamp,
+      };
     });
   }, [data, xFieldKey]);
 
@@ -88,7 +87,7 @@ export default function BarCharts(props) {
       20, // Minimum visible size
     );
 
-    const calculatedBarSize = Math.min(targetBarWidth, 60);
+    const calculatedBarSize = Math.min(targetBarWidth, 48);
 
     console.log("Dynamic bar size calculation:", {
       minGap: `${minGap}ms (${(minGap / 1000).toFixed(1)}s)`,

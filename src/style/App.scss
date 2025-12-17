@@ -1,7 +1,7 @@
 // $chart-background-color: #fbfcff;
 $chart-background-color: #fff;
 $muted-text-color: #4f4d4d;
-$border-color: #ececec;
+$border-color: rgba(224, 224, 224, 1);
 $app-background-color: #faf9fa;
 $summary-container-background-color: #fff;
 $default-print-background-color: #fff;
@@ -144,6 +144,30 @@ p {
     white-space: pre;
     vertical-align: top;
   }
+  :is(tr):has(+ tr:has(.score-wrapper), + tr:has(.meaning-wrapper)) {
+    td {
+      border-bottom: 0;
+    }
+  }
+  tr:has(.text-readonly) {
+    td {
+      border-left: 0;
+      background-color: #fff;
+     // font-style: italic;
+      color: $muted-text-color;
+      line-height: 1.5;
+      padding-left: 8px;
+    }
+    td:first-of-type {
+      border-right: 0 !important;
+      background-color: #fff;
+    }
+  }
+  tr:has(.score-wrapper, .meaning-wrapper) {
+    td {
+      background-color: #fff;
+    }
+  }
 }
 
 .table-cell-item {
@@ -245,10 +269,13 @@ p {
     box-shadow: none !important;
     border: 0 !important;
   }
-  h1, h2 {
+  h1,
+  h2 {
     font-size: 1.1rem !important;
   }
-  h3, h4, h5 {
+  h3,
+  h4,
+  h5 {
     font-size: 1rem !important;
   }
   .summaries {

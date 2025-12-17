@@ -1,4 +1,5 @@
 import React from "react";
+import Stack from "@mui/material/Stack";
 import {
   conceptText,
   getDefaultQuestionItemText,
@@ -15,9 +16,11 @@ import {
   isNil,
   isNumber,
   isPlainObject,
+  normalizeStr,
   stripHtmlTags,
 } from "@util";
 import Scoring from "@components/Score";
+import Meaning from "@components/Meaning";
 import { DEFAULT_ANSWER_OPTIONS } from "@/consts";
 import { getDateDomain } from "@/config/chart_config";
 import questionnaireConfigs, {
@@ -501,9 +504,10 @@ export function getAlertFromMostRecentResponse(current, config = {}) {
   let alert =
     isNumber(current?.score) && config?.highSeverityScoreCutoff && current.score >= config?.highSeverityScoreCutoff;
   if (!alert && config?.alertQuestionId) {
-    alert =
+    alert = !!(
       current?.responses?.find((o) => linkIdEquals(o.id, config?.alertQuestionId, config?.linkIdMatchMode))?.answer ??
-      alert;
+      alert
+    );
   }
   return alert;
 }
@@ -575,17 +579,23 @@ export function getResponseColumns(data) {
         position: "sticky",
         left: 0,
         backgroundColor: "#FFF",
-        borderRight: "1px solid #ececec",
+        borderRight: "1px solid rgba(224, 224, 224, 1)",
         minWidth: "200px",
       },
       render: (rowData) => {
-        const q = rowData?.question;
-        if (typeof q === "string" && q.toLowerCase() === "score") {
+        const q = rowData?.question ?? "";
+        const config = rowData?.config;
+        if (
+          typeof q === "string" &&
+          (normalizeStr(q).includes("score") ||
+            normalizeStr(q).includes("meaning") ||
+            normalizeStr(q) === normalizeStr(config?.title))
+        ) {
           return <b>{q}</b>;
         }
         // fall back to normalized string if not a plain string
-        if (typeof q !== "string") return normalize(q);
-        return <span dangerouslySetInnerHTML={{ __html: q }} />;
+        if (typeof q !== "string") return stripHtmlTags(normalize(q));
+        return stripHtmlTags(q);
       },
     },
     ...dates.map((item, index) => ({
@@ -598,25 +608,33 @@ export function getResponseColumns(data) {
       },
       render: (rowData) => {
         const rowDataItem = rowData?.[item.id];
-
+        if (rowData.readOnly) return <span className="text-readonly"></span>;
         // explicit placeholders prevent React from trying to render objects
         if (!rowDataItem || String(rowDataItem) === "null" || String(rowDataItem) === "undefined") return "—";
 
-        // numeric score path (your happy path)
+        // numeric score path
         if (isNumber(rowDataItem.score)) {
+          const { key, ...params } = rowDataItem.scoringParams ?? {};
           return (
-            <Scoring
-              // instrumentId is optional; provide if you have it on the cell
-              instrumentId={rowDataItem.instrumentId}
-              score={rowDataItem.score}
-              // pass only the params object; Scoring already expects an object here
-              scoreParams={{ ...rowDataItem, ...(rowDataItem?.scoringParams ?? {}) }}
-            />
+            <Stack gap={1} className="score-wrapper">
+              <Scoring
+                // instrumentId is optional; provide if we have it on the cell
+                instrumentId={rowDataItem.instrumentId}
+                score={rowDataItem.score}
+                // pass only the params object; Scoring already expects an object here
+                scoreParams={{ ...rowDataItem, ...params }}
+              />
+              {rowDataItem.scoringParams && <Meaning {...params}></Meaning>}
+            </Stack>
           );
         }
-
+        const contentToRender = typeof rowDataItem === "string" ? stripHtmlTags(rowDataItem) : normalize(rowDataItem);
+        if (rowDataItem.hasMeaning) {
+          const { key, ...rest } = rowDataItem;
+          return <Meaning {...rest}></Meaning>;
+        }
         // string answers render directly; everything else is safely stringified
-        return typeof rowDataItem === "string" ? stripHtmlTags(rowDataItem) : normalize(rowDataItem);
+        return contentToRender;
       },
     })),
   ];

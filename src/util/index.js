@@ -410,7 +410,7 @@ export function toMillis(s) {
 }
 
 export function normalizeStr(s) {
-  return (s ?? "").toString().trim().toLowerCase();
+  return stripHtmlTags((s ?? "").toString().trim().toLowerCase());
 }
 
 export function fuzzyMatch(a, b) {

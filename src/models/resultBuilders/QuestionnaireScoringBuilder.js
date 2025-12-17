@@ -248,6 +248,19 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return linkIdEquals(normalizedA, normalizedB, configToUse.linkIdMatchMode ?? "fuzzy");
   }
 
+  isHelpQuestionItem(item) {
+    if (!item) return false;
+    return (
+      !isEmptyArray(item.extension) &&
+      item.extension.find((o) => o.valueCodeableConcept?.coding?.find((o) => o.code === "help"))
+    );
+  }
+
+  isValueExpressionQuestionItem(item) {
+    if (!item) return false;
+    return !isEmptyArray(item.extension) && item.extension.find((o) => o.valueExpression);
+  }
+
   isResponseQuestionItem(item, config) {
     if (!item) return false;
     if (item.readOnly) return false;
@@ -258,7 +271,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (
       linkId === "introduction" ||
       linkId.includes("ignore") ||
-      linkId.includes("header") ||
+      // linkId.includes("header") ||
       linkId.includes("score-label") ||
       linkId.includes("critical-flag")
     )
@@ -545,7 +558,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       returnObject.id = q.linkId;
       returnObject.answer = this.getAnswerItemDisplayValue(ans, config);
       returnObject.rawAnswer = matchedResponseItem?.answer ?? [];
-      if (!this.isResponseQuestionItem(matchedResponseItem, configToUse)) returnObject.readOnly = true;
+      if (!this.isResponseQuestionItem(q, configToUse)) returnObject.readOnly = true;
+      if (this.isValueExpressionQuestionItem(q)) returnObject.isValueExpression = true;
+      if (this.isHelpQuestionItem(q)) q.isHelp = true;
       returnObject.question =
         q.text ??
         (!isEmptyArray(matchedResponseItem) ? this._getQuestion(matchedResponseItem[0]) : `Question ${q.linkId}`);
@@ -558,9 +573,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (!returnObject.id) returnObject.id = item.linkId;
       if (!this.isResponseQuestionItem(item, configToUse)) returnObject.readOnly = true;
       const ans = item.answer;
-      if (this.isResponseQuestionItem(item, config)) {
-        item.readOnly = true;
-      }
+
       returnObject.answer = this.getAnswerItemDisplayValue(ans, config);
       returnObject.question = item.text ?? `Question ${index}`;
       returnObject.rawAnswer = item.answer;
@@ -679,6 +692,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         id: qr.id + "_" + rIndex,
         instrumentName: config?.instrumentName ?? this.questionnaireIDFromQR(qr),
         date: qr.authored ?? null,
+        displayDate: getLocaleDateStringFromDate(qr.authored),
         source,
         responses,
         score,
@@ -718,6 +732,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       !!data.find((item) => isNumber(item.score))
     );
   }
+  _hasMeaningData(data) {
+    return !isEmptyArray(data) && data.find((item) => item.displayMeaningNotScore);
+  }
 
   _getAnswerByTargetLinkIdFromResponseData(targetLinkId, responseData, responses_id, config = {}) {
     const matchResponseData = (responseData || []).find((item) => item.id === responses_id);
@@ -748,7 +765,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   _formatTableResponseData = (data, config) => {
     if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
 
-    const formattedData = data.map((item) => ({ date: item.date, id: item.id, raw: item }));
+    const formattedData = data.map((item) => {
+      return { ...item, raw: item };
+    });
 
     // Use the row with max responses as the “schema”
     const anchorRowData = [...data].sort((a, b) => (b.responses?.length || 0) - (a.responses?.length || 0))[0];
@@ -791,18 +810,45 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         row.question = sample ? this._getQuestion(sample) : question ? question : `Question ${qid}`;
         row.source = sample?.source;
         row.readOnly = sample?.readOnly || false;
+        row.isValueExpression = sample?.isValueExpression || false;
+        row.isHelp = sample?.isHelp || false;
+        row.config = configToUse;
         for (const d of formattedData) {
           // this is the row data for the date and id of a response set that has the requsite linkId
           row[d.id] = this._getAnswerByTargetLinkIdFromResponseData(sample?.id, data, d.id, configToUse);
+          row[`${d.id}_data`] = getScoreParamsFromResponses([d], configToUse);
         }
         return row;
       })
-      .filter((r) => !r.readOnly);
+      .filter((r) => !r.isValueExpression && !r.isHelp);
 
     if (this._hasScoreData(data)) {
-      const scoringRow = { question: "Score", id: `score_${data.map((o) => o.id).join("")}` };
-      for (const item of data) scoringRow[item.id] = { ...item, score: item.score };
+      const scoringRow = {
+        question: "Score / Meaning",
+        id: `score_${data.map((o) => o.id).join("")}`,
+        config: configToUse,
+      };
+      for (const item of data)
+        scoringRow[item.id] = {
+          ...getScoreParamsFromResponses([item], configToUse),
+          score: item.score,
+          meaning: item.meaning,
+        };
       result.push(scoringRow);
+    }
+    if (this._hasMeaningData(data)) {
+      const meaningRow = {
+        question: "Score / Meaning",
+        id: `meaning_${data.map((o) => o.id).join("")}`,
+        config: configToUse,
+      };
+      for (const item of data)
+        meaningRow[item.id] = {
+          ...getScoreParamsFromResponses([item], configToUse),
+          score: null,
+          hasMeaning: true,
+        };
+      result.push(meaningRow);
     }
     return result;
   };
