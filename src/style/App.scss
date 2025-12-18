@@ -385,7 +385,7 @@ p {
     min-height: auto;
   }
   .response-summary {
-    flex-wrap: wrap !important;
+    display: block !important;
   }
   .error-container {
     h1,

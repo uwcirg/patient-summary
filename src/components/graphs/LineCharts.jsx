@@ -62,6 +62,7 @@ export default function LineCharts(props) {
   } = props;
 
   const theme = useTheme();
+  const CUT_OFF_YEAR = 5;
 
   const sources = React.useMemo(() => {
     const set = new Set();
@@ -69,13 +70,186 @@ export default function LineCharts(props) {
     return Array.from(set);
   }, [data]);
 
+  const getDotColor = (entry, baseColor) => {
+    // If no duplicates on this day, use base color
+    if (!entry._duplicateCount || entry._duplicateCount === 1) {
+      return baseColor;
+    }
+
+    // For duplicates, adjust the brightness based on index
+    const hexToRgb = (hex) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result
+        ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16),
+          }
+        : null;
+    };
+
+    const rgbToHex = (r, g, b) => {
+      return (
+        "#" +
+        [r, g, b]
+          .map((x) => {
+            const hex = Math.round(x).toString(16);
+            return hex.length === 1 ? "0" + hex : hex;
+          })
+          .join("")
+      );
+    };
+
+    const adjustBrightness = (color, amount) => {
+      const rgb = hexToRgb(color);
+      if (!rgb) return color;
+
+      return rgbToHex(
+        Math.min(255, Math.max(0, rgb.r + amount)),
+        Math.min(255, Math.max(0, rgb.g + amount)),
+        Math.min(255, Math.max(0, rgb.b + amount)),
+      );
+    };
+
+    // Adjust brightness: first dot darker, last dot lighter
+    const brightnessStep = 30; // Adjust this value for more/less variation
+    const adjustment = (entry._duplicateIndex - Math.floor(entry._duplicateCount / 2)) * brightnessStep;
+
+    return adjustBrightness(baseColor, adjustment);
+  };
+
+  // Process data to add jitter for overlapping points on the same calendar day
+  // Process data to add jitter for overlapping points on the same calendar day
+  const processedData = React.useMemo(() => {
+    if (!data || !Array.isArray(data)) return [];
+
+    // Calculate the time range of the data
+    const timestamps = data.map((d) => d[xFieldKey]).filter((t) => t !== undefined && t !== null);
+
+    if (timestamps.length === 0) return [];
+
+    const minTimestamp = Math.min(...timestamps);
+    const maxTimestamp = Math.max(...timestamps);
+    const timeRangeMs = maxTimestamp - minTimestamp;
+
+    // Dynamic spread width: use 0.5% of total time range, with min/max bounds
+    const minSpread = 2 * 60 * 60 * 1000; // Minimum: 4 hours
+    const maxSpread = 7 * 24 * 60 * 60 * 1000; // Maximum: 7 days
+    const dynamicSpreadWidth = Math.max(minSpread, Math.min(maxSpread, timeRangeMs * 0.005));
+
+    console.log("LineChart - Dynamic spread calculation:", {
+      timeRangeDays: (timeRangeMs / (24 * 60 * 60 * 1000)).toFixed(1),
+      spreadWidthHours: (dynamicSpreadWidth / (60 * 60 * 1000)).toFixed(1),
+    });
+
+    // Group by DATE only (ignoring time)
+    const groups = {};
+    data.forEach((d) => {
+      const timestamp = d[xFieldKey];
+      if (timestamp !== undefined && timestamp !== null) {
+        // Round to start of day (midnight)
+        const dateOnly = new Date(timestamp);
+        dateOnly.setHours(0, 0, 0, 0);
+        const dayKey = dateOnly.getTime();
+
+        if (!groups[dayKey]) groups[dayKey] = [];
+        groups[dayKey].push(d);
+      }
+    });
+
+    // Add jitter offset for points on the same day
+    return data.map((d) => {
+      const timestamp = d[xFieldKey];
+      if (timestamp === undefined || timestamp === null) return d;
+
+      // Get the day key for this point
+      const dateOnly = new Date(timestamp);
+      dateOnly.setHours(0, 0, 0, 0);
+      const dayKey = dateOnly.getTime();
+
+      const group = groups[dayKey];
+      if (!group || group.length === 1) return d;
+
+      const index = group.indexOf(d);
+      // Use dynamic spread width
+      const offset = (index - (group.length - 1) / 2) * (dynamicSpreadWidth / group.length);
+
+      return {
+        ...d,
+        [xFieldKey]: timestamp + offset,
+        originalDate: timestamp, // preserve original for tooltip
+        _duplicateIndex: index,
+        _duplicateCount: group.length,
+      };
+    });
+  }, [data, xFieldKey]);
+
+  // Filter and track if data was truncated
+  const { filteredData, wasTruncated, truncationDate } = React.useMemo(() => {
+    if (!processedData || processedData.length === 0) {
+      return { filteredData: [], wasTruncated: false, truncationDate: null };
+    }
+
+    // Calculate cutoff years ago from today
+    const yearsAgo = new Date();
+    yearsAgo.setFullYear(yearsAgo.getFullYear() - CUT_OFF_YEAR);
+    const cutoffTimestamp = yearsAgo.getTime();
+
+    // Check if any data was truncated
+    const hasOlderData = processedData.some((d) => {
+      const timestamp = d.originalDate || d[xFieldKey];
+      return timestamp < cutoffTimestamp;
+    });
+
+    // Filter data based on cutoff
+    const filtered = processedData.filter((d) => {
+      const timestamp = d.originalDate || d[xFieldKey];
+      return timestamp >= cutoffTimestamp;
+    });
+
+    return {
+      filteredData: filtered,
+      wasTruncated: hasOlderData,
+      truncationDate: hasOlderData ? cutoffTimestamp : null,
+    };
+  }, [processedData, xFieldKey]);
+
+  // Calculate fixed domain from cutoff to now (overrides xDomain prop if truncation is active)
+  const calculatedXDomain = React.useMemo(() => {
+    // If we have a custom xDomain prop and no truncation, use it
+    if (xDomain && !wasTruncated) return xDomain;
+
+    // Otherwise calculate domain from cutoff to now
+    const now = new Date().getTime();
+    const yearsAgo = new Date();
+    yearsAgo.setFullYear(yearsAgo.getFullYear() - CUT_OFF_YEAR);
+    const cutoffTimestamp = yearsAgo.getTime();
+
+    // Add padding (e.g., 1 month = ~30 days)
+    const paddingMs = 30 * 24 * 60 * 60 * 1000;
+
+    return [cutoffTimestamp - paddingMs, now + paddingMs];
+  }, [xDomain, wasTruncated]);
+
+  // React.useEffect(() => {
+  //   console.log("LineChart - Truncation Debug:", {
+  //     originalDataLength: processedData?.length,
+  //     filteredDataLength: filteredData?.length,
+  //     wasTruncated,
+  //     truncationDate: truncationDate ? new Date(truncationDate).toLocaleDateString() : null,
+  //     oldestDataPoint: processedData?.[0]
+  //       ? new Date(processedData[0].originalDate || processedData[0][xFieldKey]).toLocaleDateString()
+  //       : null,
+  //   });
+  // }, [processedData, filteredData, wasTruncated, truncationDate, xFieldKey]);
+
   const hasMultipleYFields = () => yLineFields && yLineFields.length > 0;
 
   let maxYValue = maximumYValue
     ? maximumYValue
-    : data?.reduce((m, d) => Math.max(m, Number(d[yFieldKey] ?? -Infinity)), -Infinity);
-  let minYValue = minimumYValue ?? data?.reduce((min, d) => Math.min(min, d[yFieldKey]), Infinity);
-  maxYValue = !data || maxYValue === -Infinity ? null : maxYValue;
+    : filteredData?.reduce((m, d) => Math.max(m, Number(d[yFieldKey] ?? -Infinity)), -Infinity);
+  let minYValue = minimumYValue ?? filteredData?.reduce((min, d) => Math.min(min, d[yFieldKey]), Infinity);
+  maxYValue = !filteredData || maxYValue === -Infinity ? null : maxYValue;
 
   const defaultOptions = {
     activeDot: false,
@@ -100,8 +274,8 @@ export default function LineCharts(props) {
 
   // Build candidate ticks (months every 6) only when we have a numeric domain
   const allTicksRaw =
-    Array.isArray(xDomain) && typeof xDomain[0] === "number"
-      ? buildTimeTicks(xDomain, { unit: "month", step: 6 }) // or step: 3 for quarters
+    Array.isArray(calculatedXDomain) && typeof calculatedXDomain[0] === "number"
+      ? buildTimeTicks(calculatedXDomain, { unit: "month", step: 6 })
       : undefined;
 
   // 1) Ensure numeric & unique; 2) Clamp to domain; 3) Sort; 4) Thin to fit; 5) Dedupe again (belt & suspenders)
@@ -114,11 +288,32 @@ export default function LineCharts(props) {
   // Final ticks to render (unique & sorted)
   const ticks = ticksRaw ? uniqSorted(ticksRaw) : undefined;
 
+  // Deduplicate ticks by calendar day (safeguard against duplicate date labels)
+  const dedupedTicks = React.useMemo(() => {
+    if (!ticks) return ticks;
+
+    const uniqueDays = new Set();
+    const result = [];
+
+    for (const tick of ticks) {
+      const dateOnly = new Date(tick);
+      dateOnly.setHours(0, 0, 0, 0);
+      const dayKey = dateOnly.getTime();
+
+      if (!uniqueDays.has(dayKey)) {
+        uniqueDays.add(dayKey);
+        result.push(tick);
+      }
+    }
+
+    return result;
+  }, [ticks]);
+
   const renderXAxis = () => (
     <XAxis
       dataKey={xFieldKey}
       height={108}
-      domain={xDomain ? xDomain : ["dataMin", "dataMax"]}
+      domain={calculatedXDomain}
       textAnchor="end"
       type="number"
       allowDataOverflow={false}
@@ -129,7 +324,7 @@ export default function LineCharts(props) {
       scale="time"
       angle={xTickLabelAngle ?? 0}
       connectNulls={false}
-      ticks={ticks}
+      ticks={dedupedTicks}
     >
       {xLabel && xLabelVisible && <Label value={xLabel} offset={-8} position="insideBottom" />}
     </XAxis>
@@ -138,37 +333,67 @@ export default function LineCharts(props) {
   const yDomain = maxYValue ? [minYValue ?? 0, maxYValue] : [minYValue ?? 0, "auto"];
   const yTicks = maxYValue ? range(minYValue ?? 0, maxYValue) : range(minYValue ?? 0, 50);
 
-  // ----- KEY-SAFE CUSTOM DOT -----
+  // ----- KEY-SAFE CUSTOM DOT WITH STROKE -----
   const SourceDot = ({ cx, cy, payload, index, params }) => {
     if (isEmptyArray(sources)) return null;
     if (cx == null || cy == null) return null;
     const useParams = params ? params : {};
-    let color;
-    if (payload.highSeverityScoreCutoff && payload[yFieldKey] >= payload.highSeverityScoreCutoff) color = ALERT_COLOR;
-    else if (payload.mediumSeverityScoreCutoff && payload[yFieldKey] >= payload.mediumSeverityScoreCutoff)
-      color = WARNING_COLOR;
-    else color = SUCCESS_COLOR;
 
-    // Prefer payload.id; otherwise compose a stable-ish key using source + x + index
+    // Determine base color first
+    let baseColor;
+    if (payload.highSeverityScoreCutoff && payload[yFieldKey] >= payload.highSeverityScoreCutoff)
+      baseColor = ALERT_COLOR;
+    else if (payload.mediumSeverityScoreCutoff && payload[yFieldKey] >= payload.mediumSeverityScoreCutoff)
+      baseColor = WARNING_COLOR;
+    else baseColor = SUCCESS_COLOR;
+
+    // Apply duplicate coloring
+    const color = getDotColor(payload, baseColor);
+
     const k = `dot-${payload?.id}_${payload?.key}_${payload?.source}-${payload?.[xFieldKey]}-${index}`;
+
+    // White stroke for better visibility
+    const strokeColor = "#fff";
+    const strokeWidth = 2;
+
     switch (payload.source) {
       case "cnics":
-        return <circle key={k} cx={cx} cy={cy} r={useParams.r ?? 4} fill={color} stroke={color} strokeWidth={1} />;
+        return (
+          <circle
+            key={k}
+            cx={cx}
+            cy={cy}
+            r={useParams.r ?? 4}
+            fill={color}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+          />
+        );
       case "epic":
         return (
           <rect
             key={k}
-            x={cx - 2}
-            y={cy - 2}
-            width={useParams.width ?? 6}
-            height={useParams.height ?? 6}
+            x={cx - (useParams.width ?? 8) / 2}
+            y={cy - (useParams.height ?? 8) / 2}
+            width={useParams.width ?? 8}
+            height={useParams.height ?? 8}
             fill={color}
-            stroke={color}
-            strokeWidth={1.5}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
           />
         );
       default:
-        return <circle key={k} cx={cx} cy={cy} r={useParams.r ?? 4} fill={color} />;
+        return (
+          <circle
+            key={k}
+            cx={cx}
+            cy={cy}
+            r={useParams.r ?? 4}
+            fill={color}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+          />
+        );
     }
   };
 
@@ -191,7 +416,7 @@ export default function LineCharts(props) {
       tick={
         showTicks
           ? (e) => {
-              const configData = data.find((item) => item.highSeverityScoreCutoff);
+              const configData = filteredData.find((item) => item.highSeverityScoreCutoff);
               let color = "#666";
               const {
                 payload: { value },
@@ -222,8 +447,24 @@ export default function LineCharts(props) {
       labelStyle={{ fontSize: "10px" }}
       animationBegin={500}
       animationDuration={550}
-      labelFormatter={tooltipLabelFormatter}
-      content={(props) => <CustomTooltip {...props} yFieldKey={yFieldKey} xFieldKey={xFieldKey} yLabel={yLabel} />}
+      // Use originalDate in tooltip if available
+      labelFormatter={(value, payload) => {
+        if (tooltipLabelFormatter) {
+          // eslint-disable-next-line
+          const originalValue = payload?.[0]?.payload?.originalDate ?? value;
+          return tooltipLabelFormatter(originalValue, payload);
+        }
+        return value;
+      }}
+      content={(props) => (
+        <CustomTooltip
+          {...props}
+          yFieldKey={yFieldKey}
+          xFieldKey={xFieldKey}
+          xLabelKey="originalDate"
+          yLabel={yLabel}
+        />
+      )}
     />
   );
 
@@ -266,7 +507,7 @@ export default function LineCharts(props) {
         label: "CNICS",
         icon: (
           <svg width="16" height="16">
-            <circle cx="8" cy="8" r="4" fill="#444" />
+            <circle cx="8" cy="8" r="4" fill="#444" stroke="#fff" strokeWidth="2" />
           </svg>
         ),
       });
@@ -277,7 +518,7 @@ export default function LineCharts(props) {
         label: "Epic",
         icon: (
           <svg width="16" height="16">
-            <rect x="4" y="4" width="8" height="8" fill="#444" />
+            <rect x="4" y="4" width="8" height="8" fill="#444" stroke="#fff" strokeWidth="2" />
           </svg>
         ),
       });
@@ -287,7 +528,7 @@ export default function LineCharts(props) {
       <div style={{ display: "flex", gap: 16, alignItems: "center", padding: "4px 8px" }}>
         {items.map((it) => (
           <div
-            key={it.key} // simple, stable
+            key={it.key}
             style={{ display: "flex", gap: 2, alignItems: "center" }}
             aria-label={`${it.label} legend item`}
           >
@@ -324,7 +565,7 @@ export default function LineCharts(props) {
       activeDot={(dotProps) => {
         const { cx, cy, payload, value, index } = dotProps;
 
-        // source-based shapes (hover version – slightly bigger from SourceDot's isActive)
+        // source-based shapes (hover version)
         if (!isEmptyArray(sources)) {
           return (
             <SourceDot
@@ -338,33 +579,46 @@ export default function LineCharts(props) {
           );
         }
 
-        // fallback: severity-based active circles
-        let color = dotColor;
+        // fallback: severity-based active circles with duplicate coloring
+        let baseColor = dotColor;
         // eslint-disable-next-line
         if (payload.highSeverityScoreCutoff) {
           // eslint-disable-next-line
-          color = value >= payload.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR;
+          baseColor = value >= payload.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR;
         }
+        const color = getDotColor(payload, baseColor);
 
-        return <circle cx={cx} cy={cy} r={5} fill={color} stroke="none" />;
+        return <circle cx={cx} cy={cy} r={5} fill={color} stroke="#fff" strokeWidth={2} />;
       }}
       dot={({ cx, cy, payload, value, index }) => {
         if (!isEmptyArray(sources))
           // eslint-disable-next-line
           return <SourceDot key={`${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />;
-        let color;
+
+        // Determine base color
+        let baseColor;
         // eslint-disable-next-line
         if (payload.highSeverityScoreCutoff) {
           // eslint-disable-next-line
-          color = value >= payload.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR;
-          return (
-            //eslint-disable-next-line
-            <circle key={`dot-default-${payload?.id}_${index}`} cx={cx} cy={cy} r={4} fill={color} stroke="none" />
-          );
+          baseColor = value >= payload.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR;
+        } else {
+          baseColor = dotColor;
         }
+
+        // Apply duplicate coloring
+        const color = getDotColor(payload, baseColor);
+
         return (
+          <circle
           // eslint-disable-next-line
-          <circle key={`dot-default-${payload?.id}_${index}`} cx={cx} cy={cy} r={4} fill={dotColor} stroke="none" />
+            key={`dot-default-${payload?.id}_${index}`}
+            cx={cx}
+            cy={cy}
+            r={4}
+            fill={color}
+            stroke="#fff"
+            strokeWidth={2}
+          />
         );
       }}
       strokeWidth={strokeWidth ? strokeWidth : 1}
@@ -373,9 +627,9 @@ export default function LineCharts(props) {
 
   const renderMinScoreMeaningLabel = () => {
     if (!maxYValue) return null;
-    if (!data || !data.length) return null;
-    if (!data.find((item) => item.scoreSeverity)) return null;
-    const configData = data.find((item) => item && item.comparisonToAlert) ?? {};
+    if (!filteredData || !filteredData.length) return null;
+    if (!filteredData.find((item) => item.scoreSeverity)) return null;
+    const configData = filteredData.find((item) => item && item.comparisonToAlert) ?? {};
     return (
       <ReferenceLine
         y={0}
@@ -395,9 +649,9 @@ export default function LineCharts(props) {
 
   const renderMaxScoreMeaningLabel = () => {
     if (!maxYValue) return null;
-    if (!data || !data.length) return null;
-    if (!data.find((item) => item.scoreSeverity)) return null;
-    const configData = data.find((item) => item && item.comparisonToAlert) ?? {};
+    if (!filteredData || !filteredData.length) return null;
+    if (!filteredData.find((item) => item.scoreSeverity)) return null;
+    const configData = filteredData.find((item) => item && item.comparisonToAlert) ?? {};
     return (
       <ReferenceLine
         y={maxYValue}
@@ -418,8 +672,8 @@ export default function LineCharts(props) {
 
   const renderScoreSeverityCutoffLine = () => {
     if (!maxYValue) return null;
-    if (!data || !data.length) return null;
-    const configData = data.find((item) => item && item.highSeverityScoreCutoff);
+    if (!filteredData || !filteredData.length) return null;
+    const configData = filteredData.find((item) => item && item.highSeverityScoreCutoff);
     if (!configData) return null;
     return (
       <ReferenceLine
@@ -433,13 +687,33 @@ export default function LineCharts(props) {
 
   const renderScoreSeverityArea = () => {
     if (!maxYValue) return null;
-    if (!data || !data.length) return null;
-    const configData = data.find((item) => item && item.highSeverityScoreCutoff);
+    if (!filteredData || !filteredData.length) return null;
+    const configData = filteredData.find((item) => item && item.highSeverityScoreCutoff);
     if (!configData) return null;
     if (configData.comparisonToAlert === "lower") {
       return <ReferenceArea y2={configData.highSeverityScoreCutoff} fill="#FCE3DA" fillOpacity={0.3} />;
     }
     return <ReferenceArea y1={configData.highSeverityScoreCutoff} fill="#FCE3DA" fillOpacity={0.3} />;
+  };
+
+  const renderTruncationLine = () => {
+    if (!wasTruncated || !truncationDate) return null;
+
+    return (
+      <ReferenceLine
+        x={truncationDate}
+        stroke="#999"
+        strokeWidth={2}
+        strokeDasharray="3 3"
+        label={{
+          value: "data truncated",
+          position: "top",
+          fill: "#666",
+          fontSize: 10,
+          fontWeight: 500,
+        }}
+      />
+    );
   };
 
   const MIN_CHART_WIDTH = xsChartWidth ? xsChartWidth : 400;
@@ -460,9 +734,9 @@ export default function LineCharts(props) {
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
           <LineChart
-            data={data}
+            data={filteredData}
             margin={{
-              top: 10,
+              top: 28,
               right: 20,
               left: 20,
               bottom: 10,
@@ -472,6 +746,7 @@ export default function LineCharts(props) {
             <CartesianGrid strokeDasharray="2 2" horizontal={false} vertical={false} fill="#fdfbfbff" />
             {renderXAxis()}
             {renderYAxis()}
+            {renderTruncationLine()}
             {enableScoreSeverityCutoffLine && renderScoreSeverityCutoffLine()}
             {enableScoreSeverityArea && renderScoreSeverityArea()}
             {renderToolTip()}

@@ -1,14 +1,15 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { getLocaleDateStringFromDate } from "@/util";
-export default function CustomTooltip({ xFieldKey, active, payload, tooltipLabelFormatter, yFieldKey, yLabel }) {
+export default function CustomTooltip({ xFieldKey, xLabelKey, active, payload, tooltipLabelFormatter, yFieldKey, yLabel }) {
   if (!active || !payload || !payload.length) return null;
 
   // The original data object for this x-position
   const d = payload[0].payload ?? {};
-  const rawDate = d[xFieldKey] ?? d.date;
+  const rawDate = d[xLabelKey] ?? d[xFieldKey]  ?? d.date;
   const meaning = d.meaning ?? d.scoreMeaning ?? d.label;
   const score = d[yFieldKey] ?? d.score;
+  console.log("payload ", d)
 
   // use provided formatter; else a default
   const fmtDate =
@@ -81,6 +82,7 @@ CustomTooltip.propTypes = {
   // the x-value for this tooltip (e.g. date)
   label: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   xFieldKey: PropTypes.string,
+  xLabelKey: PropTypes.string,
   yLabel: PropTypes.string,
   yFieldKey: PropTypes.string,
   tooltipLabelFormatter: PropTypes.func,
