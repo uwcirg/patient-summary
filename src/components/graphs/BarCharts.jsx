@@ -80,7 +80,7 @@ export default function BarCharts(props) {
     };
 
     // Adjust brightness: first bar darker, last bar lighter
-    const brightnessStep = 30; // Adjust this value for more/less variation
+    const brightnessStep = 5; // Adjust this value for more/less variation
     const adjustment = (entry._duplicateIndex - Math.floor(entry._duplicateCount / 2)) * brightnessStep;
 
     return adjustBrightness(baseColor, adjustment);
@@ -275,7 +275,7 @@ export default function BarCharts(props) {
   const MIN_CHART_WIDTH = xsChartWidth ?? 400;
 
   let maxYValue = maximumYValue ?? parsed.reduce((m, d) => Math.max(m, Number(d?.[yFieldKey] ?? -Infinity)), -Infinity);
-  let minYValue = minimumYValue ?? data?.reduce((min, d) => Math.min(min, d[yFieldKey]), Infinity);
+  let minYValue = minimumYValue ?? parsed?.reduce((min, d) => Math.min(min, d[yFieldKey]), Infinity);
   maxYValue = parsed.length === 0 || maxYValue === -Infinity ? null : maxYValue;
   const yDomain = maxYValue ? [minYValue, maxYValue] : [minYValue, "auto"];
 
@@ -343,7 +343,7 @@ export default function BarCharts(props) {
     return (
       <ReferenceLine
         x={truncationDate}
-        stroke="#999" // Bright red for testing
+        stroke="#999" 
         strokeWidth={3}
         strokeDasharray="3 3"
         label={{
@@ -363,9 +363,10 @@ export default function BarCharts(props) {
       <Box
         sx={{
           width: { xs: MIN_CHART_WIDTH, sm: chartWidth, lg: lgChartWidth ?? chartWidth },
-          height: 250,
+          height: 240,
         }}
         key={id}
+        className="chart-wrapper"
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
           <BarChart
@@ -383,7 +384,7 @@ export default function BarCharts(props) {
             {renderXAxis()}
             {renderYAxis()}
             {renderToolTip()}
-            <Bar dataKey={yFieldKey} maxBarSize={dynamicBarSize} barCategoryGap="20%" minPointSize={4}>
+            <Bar dataKey={yFieldKey} barSize={dynamicBarSize} maxBarSize={dynamicBarSize} barCategoryGap="20%" minPointSize={4}>
               {parsed.map((entry, index) => {
                 const baseColor = entry[yFieldKey] >= entry.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR;
                 const barColor = getBarColor(entry, baseColor);

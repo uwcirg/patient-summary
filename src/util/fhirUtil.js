@@ -237,6 +237,7 @@ export function conceptText(c) {
   if (!c) return null;
   if (typeof c.text === "string" && c.text.trim()) return c.text;
   if (c.text?.value) return c.text.value;
+  if (c.code?.text) return c.code.text;
   const codings = !isEmptyArray(c.coding) ? c.coding : [];
   for (let i = 0; i < codings.length; i++) {
     const d = codings[i]?.display ?? (codings[i]?.display?.value ? codings[i]?.display?.value : "");

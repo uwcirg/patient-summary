@@ -226,7 +226,10 @@ export function buildQuestionnaire(resources = [], config = {}) {
 
   const items = qLinkIdList.map((lid, idx) => {
     const opts = config.answerOptionsByLinkId?.[lid] ?? DEFAULT_ANSWER_OPTIONS;
-    const match = resources.find((o) => findMatchingQuestionLinkIdFromCode(o, qLinkIdList, config));
+    const match = resources.find((o) =>
+      findMatchingQuestionLinkIdFromCode(o, [lid] , { linkIdMatchMode: "strict" }),
+    );
+    console.log("lid ", lid, match)
     const defaultQText = getDefaultQuestionItemText(lid, idx);
     const text = match ? conceptText(match) : (config.itemTextByLinkId?.[lid] ?? defaultQText);
     return makeQuestionItem(lid, text, opts);

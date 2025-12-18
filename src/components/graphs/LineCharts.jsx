@@ -112,14 +112,13 @@ export default function LineCharts(props) {
     };
 
     // Adjust brightness: first dot darker, last dot lighter
-    const brightnessStep = 30; // Adjust this value for more/less variation
+    const brightnessStep = 5; // Adjust this value for more/less variation
     const adjustment = (entry._duplicateIndex - Math.floor(entry._duplicateCount / 2)) * brightnessStep;
 
     return adjustBrightness(baseColor, adjustment);
   };
 
-  // Process data to add jitter for overlapping points on the same calendar day
-  // Process data to add jitter for overlapping points on the same calendar day
+  // Process data to add jitter for overlapping points on the same calendar day AND same y-value
   const processedData = React.useMemo(() => {
     if (!data || !Array.isArray(data)) return [];
 
@@ -133,8 +132,8 @@ export default function LineCharts(props) {
     const timeRangeMs = maxTimestamp - minTimestamp;
 
     // Dynamic spread width: use 0.5% of total time range, with min/max bounds
-    const minSpread = 2 * 60 * 60 * 1000; // Minimum: 4 hours
-    const maxSpread = 7 * 24 * 60 * 60 * 1000; // Maximum: 7 days
+    const minSpread = 2 * 60 * 60 * 1000; // Minimum: 2 hours
+    const maxSpread = 6 * 24 * 60 * 60 * 1000; // Maximum: 6 days
     const dynamicSpreadWidth = Math.max(minSpread, Math.min(maxSpread, timeRangeMs * 0.005));
 
     console.log("LineChart - Dynamic spread calculation:", {
@@ -142,36 +141,50 @@ export default function LineCharts(props) {
       spreadWidthHours: (dynamicSpreadWidth / (60 * 60 * 1000)).toFixed(1),
     });
 
-    // Group by DATE only (ignoring time)
+    // Group by DATE AND Y-VALUE (to find true overlaps)
     const groups = {};
     data.forEach((d) => {
       const timestamp = d[xFieldKey];
-      if (timestamp !== undefined && timestamp !== null) {
+      const yValue = d[yFieldKey];
+
+      if (timestamp !== undefined && timestamp !== null && yValue !== undefined && yValue !== null) {
         // Round to start of day (midnight)
         const dateOnly = new Date(timestamp);
         dateOnly.setHours(0, 0, 0, 0);
         const dayKey = dateOnly.getTime();
 
-        if (!groups[dayKey]) groups[dayKey] = [];
-        groups[dayKey].push(d);
+        // Create composite key: date + y-value
+        const compositeKey = `${dayKey}_${yValue}`;
+
+        if (!groups[compositeKey]) groups[compositeKey] = [];
+        groups[compositeKey].push(d);
       }
     });
 
-    // Add jitter offset for points on the same day
+    // Add jitter offset ONLY for points with same date AND same y-value
     return data.map((d) => {
       const timestamp = d[xFieldKey];
-      if (timestamp === undefined || timestamp === null) return d;
+      const yValue = d[yFieldKey];
 
-      // Get the day key for this point
+      if (timestamp === undefined || timestamp === null || yValue === undefined || yValue === null) {
+        return d;
+      }
+
+      // Get the composite key for this point
       const dateOnly = new Date(timestamp);
       dateOnly.setHours(0, 0, 0, 0);
       const dayKey = dateOnly.getTime();
+      const compositeKey = `${dayKey}_${yValue}`;
 
-      const group = groups[dayKey];
-      if (!group || group.length === 1) return d;
+      const group = groups[compositeKey];
 
+      // If only one point with this date+y-value combination, no jitter needed
+      if (!group || group.length === 1) {
+        return d;
+      }
+
+      // Multiple points with same date AND same y-value - apply jitter
       const index = group.indexOf(d);
-      // Use dynamic spread width
       const offset = (index - (group.length - 1) / 2) * (dynamicSpreadWidth / group.length);
 
       return {
@@ -182,7 +195,7 @@ export default function LineCharts(props) {
         _duplicateCount: group.length,
       };
     });
-  }, [data, xFieldKey]);
+  }, [data, xFieldKey, yFieldKey]);
 
   // Filter and track if data was truncated
   const { filteredData, wasTruncated, truncationDate } = React.useMemo(() => {
@@ -279,7 +292,9 @@ export default function LineCharts(props) {
       : undefined;
 
   // 1) Ensure numeric & unique; 2) Clamp to domain; 3) Sort; 4) Thin to fit; 5) Dedupe again (belt & suspenders)
-  const clampedAll = allTicksRaw ? allTicksRaw.filter((t) => t >= xDomain[0] && t <= xDomain[1]) : undefined;
+  const clampedAll = allTicksRaw
+    ? allTicksRaw.filter((t) => t >= calculatedXDomain[0] && t <= calculatedXDomain[1])
+    : undefined;
 
   const allTicks = clampedAll ? uniqSorted(clampedAll) : undefined;
 
@@ -409,7 +424,7 @@ export default function LineCharts(props) {
   const renderYAxis = () => (
     <YAxis
       domain={yDomain}
-      label={yLabel & yLabelVisible ? { value: yLabel, angle: -90, position: "insideLeft" } : null}
+      label={yLabel && yLabelVisible ? { value: yLabel, angle: -90, position: "insideLeft" } : null}
       minTickGap={8}
       tickLine={{ stroke: "#FFF" }}
       stroke="#FFF"
@@ -610,7 +625,7 @@ export default function LineCharts(props) {
 
         return (
           <circle
-          // eslint-disable-next-line
+            // eslint-disable-next-line
             key={`dot-default-${payload?.id}_${index}`}
             cx={cx}
             cy={cy}
@@ -731,6 +746,7 @@ export default function LineCharts(props) {
           },
           height: chartHeight ? chartHeight : "calc(100% - 40px)",
         }}
+        className="chart-wrapper"
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
           <LineChart

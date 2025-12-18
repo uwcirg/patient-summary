@@ -9,7 +9,6 @@ export default function CustomTooltip({ xFieldKey, xLabelKey, active, payload, t
   const rawDate = d[xLabelKey] ?? d[xFieldKey]  ?? d.date;
   const meaning = d.meaning ?? d.scoreMeaning ?? d.label;
   const score = d[yFieldKey] ?? d.score;
-  console.log("payload ", d)
 
   // use provided formatter; else a default
   const fmtDate =
