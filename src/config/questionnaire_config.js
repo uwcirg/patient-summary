@@ -522,7 +522,8 @@ const questionnaireConfigs = {
     scoringQuestionId: PHQ9_SI_QUESTION_LINK_ID,
     questionLInkIds: [PHQ9_SI_QUESTION_LINK_ID],
     fallbackScoreMap: PHQ9_SI_ANSWER_SCORE_MAPPINGS,
-    highSeverityScoreCutoff: 2,
+    highSeverityScoreCutoff: 3,
+    mediumSeverityScoreCutoff: 2,
     comparisonToAlert: "higher",
     severityBands: [
       { min: 3, label: "high", meaning: "Nearly every day" },
