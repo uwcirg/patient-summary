@@ -269,6 +269,9 @@ p {
     box-shadow: none !important;
     border: 0 !important;
   }
+  html, body {
+    font-size: 12px;
+  }
   h1,
   h2 {
     font-size: 1.1rem !important;
@@ -321,6 +324,10 @@ p {
     width: 100% !important;
     background-color: $default-print-background-color !important;
     page-break-inside: avoid;
+    padding: 0;
+    h1, h2, h3, h4 {
+      text-align: left !important;
+    }
   }
   .table-container {
     width: 100% !important;
@@ -382,7 +389,7 @@ p {
   }
   .MuiAccordionSummary-root {
     padding: 0;
-    min-height: auto;
+    min-height: 0 !important;
   }
   .response-summary {
     display: block !important;
