@@ -261,28 +261,29 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return !isEmptyArray(item.extension) && item.extension.find((o) => o.valueExpression);
   }
 
-  isResponseQuestionItem(item, config) {
+  isResponseQuestionItem(item) {
     if (!item) return false;
     if (item.readOnly) return false;
+    if (this.isValueExpressionQuestionItem(item)) return false;
     const linkId = String(item.linkId).toLowerCase();
-    const configToUse = config ? config : this.cfg;
-    const scoreLinkId = configToUse?.scoringQuestionId;
-    const subScoreIds = configToUse?.subScoreQuestionIds;
+    //const configToUse = config ? config : this.cfg;
+    // const scoreLinkId = configToUse?.scoringQuestionId;
+    // const subScoreIds = configToUse?.subScoreQuestionIds;
     if (
       linkId === "introduction" ||
       linkId.includes("ignore") ||
-      // linkId.includes("header") ||
+      linkId.includes("header") ||
       linkId.includes("score-label") ||
       linkId.includes("critical-flag")
     )
       return false;
     if (item.type && !this.responseAnswerTypes.has(item.type)) return false;
-    if (scoreLinkId) {
-      return !this.isLinkIdEquals(item.linkId, scoreLinkId, config);
-    }
-    if (!isEmptyArray(subScoreIds)) {
-      return !subScoreIds.find((id) => this.isLinkIdEquals(id, item.linkId, config));
-    }
+    // if (scoreLinkId) {
+    //   return !this.isLinkIdEquals(item.linkId, scoreLinkId, config);
+    // }
+    // if (!isEmptyArray(subScoreIds)) {
+    //   return !subScoreIds.find((id) => this.isLinkIdEquals(id, item.linkId, config));
+    // }
     return true;
   }
   isNonScoreLinkId(linkId, config = {}) {
@@ -1163,3 +1164,4 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return this._summariesByQuestionnaireRef(qrs, q, strategyOptions);
   }
 }
+
