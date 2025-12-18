@@ -90,11 +90,14 @@ const questionnaireConfigs = {
     highSeverityScoreCutoff: 1,
     comparisonToAlert: "higher",
     displayMeaningNotScore: true,
-    scoringQuestionId: "ASSIST-OD-ever",
+    scoringQuestionId: "ASSIST-OD-recent",
     linkIdMatchMode: "strict",
     fallbackScoreMap: {
-      "assist-od-ever-0": 1,
-      "Assist-od-ever-1": 0,
+      "assist-od-recent-0": 0,
+      "assist-od-recent-1": 1,
+      "assist-od-recent-2": 2,
+      "assist-od-recent-3": 3,
+      "assist-od-recent-4": 4,
     },
     severityBands: [
       { min: 1, label: "high", meaning: "Yes, overdose" },
