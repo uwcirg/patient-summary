@@ -3,6 +3,180 @@ import { linkIdEquals } from "@util/fhirUtil";
 import CHART_CONFIG from "./chart_config";
 import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS } from "@/consts";
 import QuestionnaireScoringBuilder from "@/models/resultBuilders/QuestionnaireScoringBuilder";
+
+function normalizeInstrumentConfigKeys(config) {
+  if (!config || typeof config !== "object") return config;
+
+  const questionLinkIds =
+    config.questionLinkIds ??
+    config.questionLInkIds ?? // typo support
+    [];
+
+  return {
+    ...config,
+    questionLinkIds: Array.isArray(questionLinkIds) ? questionLinkIds : [questionLinkIds],
+  };
+}
+
+function deriveCutoffsFromBands(config, { highLabel = "high", mediumLabel = "moderate" } = {}) {
+  const bands = config?.severityBands;
+  if (isEmptyArray(bands)) return config;
+
+  const minForLabel = (label) => bands.find((b) => b?.label === label)?.min;
+
+  return {
+    ...config,
+    highSeverityScoreCutoff: config.highSeverityScoreCutoff ?? minForLabel(highLabel),
+    mediumSeverityScoreCutoff: config.mediumSeverityScoreCutoff ?? minForLabel(mediumLabel),
+  };
+}
+
+function assertCutoffsMatchBands(
+  config,
+  { highLabel = "high", mediumLabel = "moderate", strict = true, epsilon = 0 } = {},
+) {
+  const bands = config?.severityBands;
+  if (isEmptyArray(bands)) return;
+  if (config?.comparisonToAlert === "lower") return; // TODO add assert for this type of comparison, see MINICOG
+
+  const minForLabel = (label) => bands.find((b) => b?.label === label)?.min;
+  const problems = [];
+
+  const highMin = minForLabel(highLabel);
+  if (highMin != null && config?.highSeverityScoreCutoff != null) {
+    if (Math.abs(config.highSeverityScoreCutoff - highMin) > epsilon) {
+      problems.push(`highSeverityScoreCutoff (${config.highSeverityScoreCutoff}) != "${highLabel}" min (${highMin})`);
+    }
+  }
+
+  const mediumMin = minForLabel(mediumLabel);
+  if (mediumMin != null && config?.mediumSeverityScoreCutoff != null) {
+    if (Math.abs(config.mediumSeverityScoreCutoff - mediumMin) > epsilon) {
+      problems.push(
+        `mediumSeverityScoreCutoff (${config.mediumSeverityScoreCutoff}) != "${mediumLabel}" min (${mediumMin})`,
+      );
+    }
+  }
+
+  if (problems.length) {
+    const msg = `[${config?.key ?? "instrument"}] cutoff mismatch:\n- ${problems.join("\n- ")}`;
+    if (strict) throw new Error(msg);
+    console.warn(msg, config);
+  }
+}
+
+function bootstrapInstrumentConfig(config) {
+  let out = normalizeInstrumentConfigKeys(config);
+  out = deriveCutoffsFromBands(out);
+
+  // validate once (dev only)
+  const envDefined = typeof import.meta.env !== "undefined" && import.meta.env;
+  // enviroment variables as defined in Node
+  if (envDefined && import.meta.env["NODE_ENV"] !== "production") {
+    assertCutoffsMatchBands(out, { strict: true });
+    assertDeriveFromConfigIsConsistent(out, {
+      strict: true,
+      allowQuestionLinkIdsSameAsDerived: true, // set to false if never want questionLinkIds present when deriveFrom is set (even if it equals the derived linkId)
+    });
+    warnIfScoringIdsAreInQuestionLinkIds(out); // warn only
+  }
+  return out;
+}
+
+function assertDeriveFromConfigIsConsistent(config, { strict = true, allowQuestionLinkIdsSameAsDerived = true } = {}) {
+  const derive = config?.deriveFrom;
+  if (!derive) return;
+
+  const hasHostIds = Array.isArray(derive.hostIds) && derive.hostIds.length > 0;
+  const hasLinkId = typeof derive.linkId === "string" && derive.linkId.trim().length > 0;
+
+  // only validate when deriveFrom is actually configured
+  if (!hasHostIds && !hasLinkId) return;
+
+  // 1) questionLinkIds should not be used with deriveFrom (or it will be ignored)
+  const qids = config?.questionLinkIds;
+  if (!isEmptyArray(qids)) {
+    const ok =
+      allowQuestionLinkIdsSameAsDerived &&
+      qids.length === 1 &&
+      hasLinkId &&
+      linkIdEquals(String(qids[0]), String(derive.linkId), config?.linkIdMatchMode ?? "fuzzy");
+
+    if (!ok) {
+      const msg =
+        `[${config?.key ?? "instrument"}] deriveFrom is set (hostIds/linkId), so questionLinkIds must be omitted/empty ` +
+        `(or it will be ignored). Found questionLinkIds=${JSON.stringify(qids)} deriveFrom.linkId=${JSON.stringify(
+          derive.linkId,
+        )}`;
+      if (strict) throw new Error(msg);
+      console.warn(msg, config);
+    }
+  }
+
+  // 2) scoringQuestionId should match deriveFrom.linkId (if both specified)
+  if (hasLinkId) {
+    const scoringId = config?.scoringQuestionId;
+    if (!scoringId) return;
+    if (typeof scoringId === "string" && scoringId.trim().length > 0) {
+      const matches = linkIdEquals(String(scoringId), String(derive.linkId), config?.linkIdMatchMode ?? "fuzzy");
+      if (!matches) {
+        const msg =
+          `[${config?.key ?? "instrument"}] scoringQuestionId must match deriveFrom.linkId for derived instruments. ` +
+          `scoringQuestionId=${JSON.stringify(scoringId)} deriveFrom.linkId=${JSON.stringify(derive.linkId)}`;
+        if (strict) throw new Error(msg);
+        console.warn(msg, config);
+      }
+    } else {
+      // If want to require scoringQuestionId whenever deriveFrom.linkId exists, enforce it here:
+      const msg =
+        `[${config?.key ?? "instrument"}] deriveFrom.linkId is set, but scoringQuestionId is missing. ` +
+        `Set scoringQuestionId to deriveFrom.linkId (${JSON.stringify(derive.linkId)}).`;
+      if (strict) throw new Error(msg);
+      console.warn(msg, config);
+    }
+  }
+}
+
+function warnIfScoringIdsAreInQuestionLinkIds(config) {
+  const qids = Array.isArray(config?.questionLinkIds) ? config.questionLinkIds : [];
+  if (qids.length === 0) return;
+
+  const mode = config?.linkIdMatchMode ?? "fuzzy";
+
+  const scoringId = typeof config?.scoringQuestionId === "string" ? config.scoringQuestionId : null;
+  const subIds = Array.isArray(config?.subScoringQuestionIds) ? config.subScoringQuestionIds : [];
+
+  const contained = [];
+
+  if (scoringId) {
+    const found = qids.find((qid) => linkIdEquals(String(qid), String(scoringId), mode));
+    if (found) contained.push({ type: "scoringQuestionId", id: scoringId, matched: found });
+  }
+
+  for (const sid of subIds) {
+    if (!sid) continue;
+    const found = qids.find((qid) => linkIdEquals(String(qid), String(sid), mode));
+    if (found) contained.push({ type: "subScoringQuestionIds", id: sid, matched: found });
+  }
+
+  if (contained.length) {
+    console.warn(
+      `[${config?.key ?? "instrument"}] questionLinkIds contains scoring id(s). ` +
+        `This can cause confusion or double counting. ` +
+        `Consider removing these from questionLinkIds.`,
+      { contained, questionLinkIds: qids },
+    );
+  }
+}
+
+function bootstrapInstrumentConfigMap(map) {
+  const out = {};
+  for (const [key, cfg] of Object.entries(map ?? {})) {
+    out[key] = bootstrapInstrumentConfig({ key, ...cfg });
+  }
+  return out;
+}
+
 /**
  * @param {string} key
  * @param {string} title (from Questionnaire resource)
@@ -31,7 +205,7 @@ import QuestionnaireScoringBuilder from "@/models/resultBuilders/QuestionnaireSc
  * @param {boolean} [skipChart] if true, do not render chart for this questionnaire
  * @param {Object|Array} chartParams params for charting line/bar graphs
  */
-const questionnaireConfigs = {
+const questionnaireConfigsRaw = {
   "CIRG-ADL-IADL": {
     key: "CIRG-ADL-IADL",
     questionnaireId: "CIRG-ADL-IADL",
@@ -250,7 +424,7 @@ const questionnaireConfigs = {
     ],
     skipChart: true,
   },
-   "CIRG-CNICS-Smoking": {
+  "CIRG-CNICS-Smoking": {
     key: "CIRG-CNICS-Smoking",
     instrumentName: "CNICS Smoking",
     title: "Nicotine Use",
@@ -453,16 +627,23 @@ const questionnaireConfigs = {
     title: "PTSD Symptoms",
     subtitle: "Past month",
     maximumScore: 5,
-    highSeverityScoreCutoff: 3,
+    highSeverityScoreCutoff: 1,
     severityBands: [
-      { min: 3, label: "high", meaning: "Positive screen" },
+      { min: 1, label: "high", meaning: "Positive screen" },
       { min: 0, label: "low", meaning: "Negative screen" },
     ],
     comparisonToAlert: "higher",
     questionnaireMatchMode: "fuzzy",
     questionLinkIds: ["/102012-2", "/102013-0", "/102014-8", "/102015-5", "/102016-3"],
     scoringQuestionId: "/102017-1",
-    chartParams: { ...CHART_CONFIG.default, title: "PTSD", minimumYValue: 0, maximumYValue: 5, xLabel: "", type: "barchart" },
+    chartParams: {
+      ...CHART_CONFIG.default,
+      title: "PTSD",
+      minimumYValue: 0,
+      maximumYValue: 5,
+      xLabel: "",
+      type: "barchart",
+    },
   },
   "CIRG-PHQ9": {
     key: "CIRG-PHQ9",
@@ -523,7 +704,6 @@ const questionnaireConfigs = {
     instrumentName: "Suicide Ideation",
     title: "Suicide Ideation",
     scoringQuestionId: PHQ9_SI_QUESTION_LINK_ID,
-    questionLInkIds: [PHQ9_SI_QUESTION_LINK_ID],
     fallbackScoreMap: PHQ9_SI_ANSWER_SCORE_MAPPINGS,
     highSeverityScoreCutoff: 3,
     mediumSeverityScoreCutoff: 2,
@@ -539,7 +719,7 @@ const questionnaireConfigs = {
     displayMeaningNotScore: true,
     deriveFrom: {
       hostIds: ["CIRG-PHQ9"], // one or many hosts
-      linkId: "/44260-8", // the single item to keep
+      linkId: PHQ9_SI_QUESTION_LINK_ID, // the single item to keep
       // optional: override how free-text maps to valueCoding
       //normalizeAnswerToCoding: (ans) => ({ valueCoding: { system: "...", code: ..., display: ... }})
     },
@@ -731,4 +911,5 @@ export function getProcessedQuestionnaireData(questionnaireId, opts = {}) {
     : { ...config, config, scoringSummaryData: config };
 }
 
+const questionnaireConfigs = bootstrapInstrumentConfigMap(questionnaireConfigsRaw);
 export default questionnaireConfigs;

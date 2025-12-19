@@ -86,7 +86,7 @@ export default function BarCharts(props) {
     return adjustBrightness(baseColor, adjustment);
   };
 
-  // Process data to separate bars on the same calendar day
+  // Process data to separate bars on the same calendar day AND same y-value
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return [];
 
@@ -99,8 +99,6 @@ export default function BarCharts(props) {
     const timeRangeMs = maxTimestamp - minTimestamp;
 
     // Dynamic spread width: use 0.5% of total time range, with min/max bounds
-    // For 3 years: 3 years * 0.005 = ~5.5 days
-    // For 1 month: 1 month * 0.005 = ~36 minutes (capped at minSpread)
     const minSpread = 2 * 60 * 60 * 1000; // Minimum: 2 hours
     const maxSpread = 7 * 24 * 60 * 60 * 1000; // Maximum: 7 days
     const dynamicSpreadWidth = Math.max(minSpread, Math.min(maxSpread, timeRangeMs * 0.005));
@@ -110,7 +108,7 @@ export default function BarCharts(props) {
       spreadWidthHours: (dynamicSpreadWidth / (60 * 60 * 1000)).toFixed(1),
     });
 
-    // Group by calendar day (ignoring time)
+    // Group by calendar day only (ignoring time and y-value)
     const groups = {};
     data.forEach((item) => {
       const timestamp =
@@ -170,7 +168,7 @@ export default function BarCharts(props) {
       return timestamp < cutoffTimestamp;
     });
 
-    // Filter the PROCESSED data to last 2 years
+    // Filter the PROCESSED data to last years
     const filtered = processedData.filter((item) => {
       const timestamp = item.originalTimestamp || item[xFieldKey];
       return timestamp >= cutoffTimestamp;
@@ -183,18 +181,6 @@ export default function BarCharts(props) {
     };
   }, [data, processedData, xFieldKey]);
 
-  // React.useEffect(() => {
-  //   console.log("BarChart - Truncation Debug:", {
-  //     originalDataLength: processedData?.length,
-  //     filteredDataLength: filteredData?.length,
-  //     wasTruncated,
-  //     truncationDate: truncationDate ? new Date(truncationDate).toLocaleDateString() : null,
-  //     oldestDataPoint: processedData?.[0]
-  //       ? new Date(processedData[0].originalDate || processedData[0][xFieldKey]).toLocaleDateString()
-  //       : null,
-  //   });
-  // }, [processedData, filteredData, wasTruncated, truncationDate, xFieldKey]);
-
   // Convert date strings -> timestamps once
   const parsed = useMemo(
     () =>
@@ -205,41 +191,13 @@ export default function BarCharts(props) {
     [filteredData, xFieldKey],
   );
 
-  // Calculate dynamic bar size with minimum threshold
+  // Fixed bar size for consistent visibility across time ranges
   const dynamicBarSize = useMemo(() => {
-    if (parsed.length < 2) return 20;
+    // Use a fixed, reasonable bar size that will always be visible
+    return 30;
+  }, []);
 
-    const timestamps = parsed.map((d) => d[xFieldKey]).sort((a, b) => a - b);
-
-    // Find the MINIMUM gap
-    let minGap = Infinity;
-    for (let i = 1; i < timestamps.length; i++) {
-      const gap = timestamps[i] - timestamps[i - 1];
-      if (gap > 0) {
-        minGap = Math.min(minGap, gap);
-      }
-    }
-
-    if (minGap === Infinity) return 20;
-
-    const timeRange = timestamps[timestamps.length - 1] - timestamps[0];
-    const estimatedChartWidth = (chartWidth || 600) - 40;
-
-    // Calculate what percentage of the time range the minimum gap represents
-    const gapRatio = minGap / timeRange;
-
-    // Bars should take up a reasonable portion of screen space
-    const targetBarWidth = Math.max(
-      gapRatio * estimatedChartWidth * 0.5, // Proportional sizing
-      20, // Minimum visible size
-    );
-
-    const calculatedBarSize = Math.min(targetBarWidth, 48);
-
-    return calculatedBarSize;
-  }, [parsed, xFieldKey, chartWidth]);
-
-  // Calculate domain padding
+  // Calculate domain with fixed range from cutoff to now (matches LineChart)
   const xAxisDomain = useMemo(() => {
     if (parsed.length === 0) return ["dataMin", "dataMax"];
 
@@ -249,7 +207,7 @@ export default function BarCharts(props) {
     const cutoffTimestamp = cutoffYearsAgo.getTime();
 
     // Add padding (e.g., 1 month = ~30 days)
-    const paddingMs = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+    const paddingMs = 30 * 24 * 60 * 60 * 1000;
 
     return [
       cutoffTimestamp - paddingMs, // Start: cutoff minus padding
@@ -331,20 +289,15 @@ export default function BarCharts(props) {
   );
 
   const renderTruncationLine = () => {
-    console.log("BarChart - renderTruncationLine called:", { wasTruncated, truncationDate });
-
     if (!wasTruncated || !truncationDate) {
-      console.log("BarChart - Not rendering line:", { wasTruncated, truncationDate });
       return null;
     }
-
-    console.log("BarChart - Rendering truncation line at:", new Date(truncationDate).toLocaleDateString());
 
     return (
       <ReferenceLine
         x={truncationDate}
-        stroke="#999" 
-        strokeWidth={3}
+        stroke="#999"
+        strokeWidth={2}
         strokeDasharray="3 3"
         label={{
           value: "data truncated",
@@ -363,7 +316,7 @@ export default function BarCharts(props) {
       <Box
         sx={{
           width: { xs: MIN_CHART_WIDTH, sm: chartWidth, lg: lgChartWidth ?? chartWidth },
-          height: 240,
+          height: 250,
         }}
         key={id}
         className="chart-wrapper"
@@ -384,7 +337,7 @@ export default function BarCharts(props) {
             {renderXAxis()}
             {renderYAxis()}
             {renderToolTip()}
-            <Bar dataKey={yFieldKey} barSize={dynamicBarSize} maxBarSize={dynamicBarSize} barCategoryGap="20%" minPointSize={4}>
+            <Bar dataKey={yFieldKey} maxBarSize={dynamicBarSize} barCategoryGap="20%" minPointSize={4}>
               {parsed.map((entry, index) => {
                 const baseColor = entry[yFieldKey] >= entry.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR;
                 const barColor = getBarColor(entry, baseColor);

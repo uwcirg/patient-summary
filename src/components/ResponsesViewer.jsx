@@ -182,9 +182,9 @@ export default function ResponsesViewer({
                 zIndex: 998,
                 borderRight: "2px solid #ececec",
               },
-              rowStyle: (rowData) => ({
-                backgroundColor: rowData.tableData.index % 2 === 0 ? "#f4f4f6" : "#fff",
-              }),
+              // rowStyle: (rowData) => ({
+              //   backgroundColor: rowData.tableData.index % 2 === 0 ? "#f4f4f6" : "#fff",
+              // }),
             }}
           />
         </Box>

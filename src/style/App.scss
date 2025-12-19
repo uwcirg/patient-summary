@@ -6,6 +6,7 @@ $app-background-color: #faf9fa;
 $summary-container-background-color: #fff;
 $default-print-background-color: #fff;
 $default-print-color: #444;
+$row-background-color: #f5f6f9;
 $success-color: #1d771d;
 $header-height: 52px;
 
@@ -157,6 +158,7 @@ p {
       color: $muted-text-color;
       line-height: 1.5;
       padding-left: 8px;
+      background-color: $row-background-color !important;
     }
     td:first-of-type {
       border-right: 0 !important;
@@ -263,11 +265,14 @@ p {
 
 @media print {
   @page {
-    margin: 2mm 2mm 2mm 2mm;
+    margin: 1mm 1mm 1mm 1mm;
   }
   header {
     box-shadow: none !important;
     border: 0 !important;
+    .logo {
+      height: 32px !important;
+    }
   }
   html, body {
     font-size: 12px;
@@ -320,7 +325,7 @@ p {
     }
   }
   .chart-wrapper {
-    height: 200px !important;
+    height: 210px !important;
     padding: 0;
     margin: 0;
   }

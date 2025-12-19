@@ -29,7 +29,7 @@ export default function ScoringSummary(props) {
   const theme = useTheme();
   const { data, disableLinks, hiddenColumns = [], columns = [] } = props;
 
-  const hiddenColumnIdsInMobile = ["comparison", "numAnswered"];
+  const hiddenColumnIdsInMobile = ["numAnswered"];
 
   const isColVisible = (id) => {
     if (id === "measure") return true;
@@ -109,7 +109,7 @@ export default function ScoringSummary(props) {
       <Stack direction={"column"} spacing={1} alignItems={"space-between"} justifyContent={"space-between"}>
         <Box>{value ? getLocaleDateStringFromDate(value) : ""}</Box>
         {row.source && (
-          <Box className="muted-text" sx={{ mt: 1 }}>
+          <Box className="muted-text" sx={{ mt: 1, "@media print": {mt: 0} }}>
             {row.source}
           </Box>
         )}

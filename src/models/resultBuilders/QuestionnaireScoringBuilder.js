@@ -406,7 +406,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   getAnswerValueByExtension(questionnaire, code) {
     if (!questionnaire?.item) {
-      console.warn("getAnswerValueByExtension: questionnaire or questionnaire.item is missing");
+      console.warn("getAnswerValueByExtension: questionnaire or questionnaire.item is missing.");
       return null;
     }
     if (!code) {
@@ -439,9 +439,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       }
     };
     walk(questionnaire.item);
-    if (found === null) {
-      console.warn(`getAnswerValueByExtension: no value found for code "${code}"`);
-    }
+    // if (found === null) {
+    //   console.warn(`getAnswerValueByExtension: no value found for code "${code}"`);
+    // }
     return found;
   }
 
@@ -473,10 +473,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const coding = this.answerCoding(ans);
     if (coding?.code) {
-      const codeKey = String(coding.code).toLowerCase();
-      if (fallbackScoreMap[codeKey] != null) return fallbackScoreMap[codeKey];
       const fromExt = this.getAnswerValueByExtension(questionnaire, coding.code);
       if (fromExt != null && isNumber(fromExt)) return fromExt;
+      const codeKey = String(coding.code).toLowerCase();
+      if (fallbackScoreMap[codeKey] != null) return fallbackScoreMap[codeKey];
       return isNumber(coding.code) ? coding.code : null;
     }
     return null;
@@ -564,7 +564,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (this.isHelpQuestionItem(q)) q.isHelp = true;
       returnObject.question =
         q.text ??
-        (!isEmptyArray(matchedResponseItem) ? this._getQuestion(matchedResponseItem[0]) : `Question ${q.linkId}`);
+        (!isEmptyArray(matchedResponseItem)
+          ? this._getQuestion(matchedResponseItem[0], configToUse)
+          : `Question ${q.linkId}`);
       returnObject.text = matchedResponseItem?.text ? matchedResponseItem?.text : "";
       return returnObject;
     });
@@ -632,11 +634,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (!qr) return null;
 
     const flat = this.flattenResponseItems(qr.item);
-    const nonScoring = flat.filter((it) => this.isNonScoreLinkId(it.linkId, config));
+    const nonScoring = flat.filter((it) => this.isResponseQuestionItem(it));
 
     const { score, scoringQuestionScore, scoreLinkIds } = calculateQuestionnaireScore(
       questionnaire,
-      qr,
       flat,
       config,
       this,
@@ -715,12 +716,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   _isPromise(x) {
     return !!x && typeof x.then === "function";
   }
-  _getAnswer(response) {
-    const o = new Response(response);
+  _getAnswer(response, config) {
+    const o = new Response(response, config);
     return o.answerText ? o.answerText : "--";
   }
-  _getQuestion(item) {
-    const o = new Response(item);
+  _getQuestion(item, config) {
+    const o = new Response(item, config);
     return o.questionText;
   }
   _hasResponseData(data) {
@@ -733,7 +734,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       !!data.find((item) => isNumber(item.score))
     );
   }
-  _hasMeaningData(data) {
+  _hasMeaningOnlyData(data) {
     return !isEmptyArray(data) && data.find((item) => item.displayMeaningNotScore);
   }
 
@@ -741,7 +742,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const matchResponseData = (responseData || []).find((item) => item.id === responses_id);
     if (!matchResponseData || isEmptyArray(matchResponseData.responses)) return "--";
     const answerItem = matchResponseData.responses.find((o) => this.isLinkIdEquals(o?.id, targetLinkId, config));
-    return this._getAnswer(answerItem);
+    return this._getAnswer(answerItem, config);
   }
 
   _normalizeDisplay(text, row) {
@@ -756,7 +757,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       ...data[0],
       ...getScoreParamsFromResponses(data, opts?.config),
       subtitle,
-      displayMeaningOnly: !this._hasScoreData(data),
+      displayMeaningOnly: this._hasMeaningOnlyData(data),
       responseData: data,
       tableResponseData: opts?.tableResponseData ?? this._formatTableResponseData(data),
       printResponseData: opts?.printResponseData ?? this._formatPrintResponseData(data),
@@ -797,18 +798,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         row.linkId = qid;
         let question = "";
         const qItem = getQuestionnaireItemByLinkId(anchorRowData.questionnaire, qid);
-        if (qItem && qItem.text) {
-          question = qItem.text;
+        if (qItem) {
+          question = this._getQuestion(qItem);
         }
-        if (!question && configToUse?.itemTextByLinkId) {
-          for (const key in configToUse?.itemTextByLinkId) {
-            if (this.isLinkIdEquals(key, qid, configToUse)) {
-              question = configToUse?.itemTextByLinkId[qid];
-              break;
-            }
-          }
-        }
-        row.question = sample ? this._getQuestion(sample) : question ? question : `Question ${qid}`;
+        row.question = sample ? this._getQuestion(sample, configToUse) : question ? question : `Question ${qid}`;
         row.source = sample?.source;
         row.readOnly = sample?.readOnly || false;
         row.isValueExpression = sample?.isValueExpression || false;
@@ -822,22 +815,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         return row;
       })
       .filter((r) => !r.isValueExpression && !r.isHelp);
-
-    if (this._hasScoreData(data)) {
-      const scoringRow = {
-        question: "Score / Meaning",
-        id: `score_${data.map((o) => o.id).join("")}`,
-        config: configToUse,
-      };
-      for (const item of data)
-        scoringRow[item.id] = {
-          ...getScoreParamsFromResponses([item], configToUse),
-          score: item.score,
-          meaning: item.meaning,
-        };
-      result.push(scoringRow);
-    }
-    if (this._hasMeaningData(data)) {
+    if (this._hasMeaningOnlyData(data)) {
       const meaningRow = {
         question: "Score / Meaning",
         id: `meaning_${data.map((o) => o.id).join("")}`,
@@ -850,6 +828,19 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           hasMeaning: true,
         };
       result.push(meaningRow);
+    } else if (this._hasScoreData(data)) {
+      const scoringRow = {
+        question: "Score / Meaning",
+        id: `score_${data.map((o) => o.id).join("")}`,
+        config: configToUse,
+      };
+      for (const item of data)
+        scoringRow[item.id] = {
+          ...getScoreParamsFromResponses([item], configToUse),
+          score: item.score,
+          meaning: item.meaning,
+        };
+      result.push(scoringRow);
     }
     return result;
   };
@@ -864,7 +855,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       `${getLocaleDateStringFromDate(first.date)} ${first.source ? "(" + first.source + ")" : ""}`.trim(),
     ];
     const bodyRows = (first.responses || []).map((row) => [
-      this._getQuestion(row),
+      this._getQuestion(row, params),
       this._getAnswerByTargetLinkIdFromResponseData(row.id, data, first.id, params),
     ]);
     const scoreRow = this._hasScoreData(data) ? [{ score: first.score, scoreParams: params }] : null;
@@ -1164,4 +1155,3 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return this._summariesByQuestionnaireRef(qrs, q, strategyOptions);
   }
 }
-

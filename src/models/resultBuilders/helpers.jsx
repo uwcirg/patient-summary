@@ -226,10 +226,7 @@ export function buildQuestionnaire(resources = [], config = {}) {
 
   const items = qLinkIdList.map((lid, idx) => {
     const opts = config.answerOptionsByLinkId?.[lid] ?? DEFAULT_ANSWER_OPTIONS;
-    const match = resources.find((o) =>
-      findMatchingQuestionLinkIdFromCode(o, [lid] , { linkIdMatchMode: "strict" }),
-    );
-    console.log("lid ", lid, match)
+    const match = resources.find((o) => findMatchingQuestionLinkIdFromCode(o, [lid], { linkIdMatchMode: "strict" }));
     const defaultQText = getDefaultQuestionItemText(lid, idx);
     const text = match ? conceptText(match) : (config.itemTextByLinkId?.[lid] ?? defaultQText);
     return makeQuestionItem(lid, text, opts);
@@ -402,7 +399,7 @@ export function observationsToQuestionnaireResponses(observationResources, confi
     const qr = observationsToQuestionnaireResponse(group, config);
     if (qr) out.push(qr);
   }
-  return out.sort((a, b) => String(a.authored).localeCompare(String(b.authored)));
+  return out.sort((a, b) => new Date(a.authored ?? 0) - new Date(b.authored ?? 0));
 }
 
 /**
@@ -441,8 +438,9 @@ export function getPreviousResponseRowWithScore(rdata = []) {
 }
 
 export function severityFromScore(score, config = {}) {
-  if (config?.highSeverityScoreCutoff && score >= config?.highSeverityScoreCutoff) return "high";
-  if (config?.mediumSeverityScoreCutoff && score >= config?.mediumSeverityScoreCutoff) return "moderate";
+  if (!isNumber(score)) return "low";
+  if (config?.highSeverityScoreCutoff != null && score >= config.highSeverityScoreCutoff) return "high";
+  if (config?.mediumSeverityScoreCutoff != null && score >= config.mediumSeverityScoreCutoff) return "moderate";
   const bands = config?.severityBands;
   if (isEmptyArray(bands) || !isNumber(score)) return "low";
 
@@ -461,12 +459,12 @@ export function meaningFromSeverity(sev, config = {}, responses = [], summaryObj
     linkIdEquals(o.id, config?.meaningQuestionId, config?.linkIdMatchMode),
   )?.answer;
 
-  if (valueFromMeaningQuestionId) return valueFromMeaningQuestionId.replace(/"/g, "");
+  if (valueFromMeaningQuestionId != null) return String(valueFromMeaningQuestionId).replace(/"/g, "");
   const bands = config?.severityBands;
   return bands?.find((b) => b.label === sev)?.meaning ?? null;
 }
 
-export function calculateQuestionnaireScore(questionnaire, qnr, responseItemsFlat, config = {}, ctx) {
+export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, config = {}, ctx = {}) {
   let scoreLinkIds = !isEmptyArray(config?.questionLinkIds)
     ? config.questionLinkIds.filter((q) => ctx.isNonScoreLinkId(q, config))
     : ctx.getAnswerLinkIdsByQuestionnaire(questionnaire, config);
@@ -505,7 +503,9 @@ export function calculateQuestionnaireScore(questionnaire, qnr, responseItemsFla
 export function getAlertFromMostRecentResponse(current, config = {}) {
   if (!current) return false;
   let alert =
-    isNumber(current?.score) && config?.highSeverityScoreCutoff && current.score >= config?.highSeverityScoreCutoff;
+    isNumber(current?.score) &&
+    config?.highSeverityScoreCutoff != null &&
+    current.score >= config?.highSeverityScoreCutoff;
   if (!alert && config?.alertQuestionId) {
     alert = !!(
       current?.responses?.find((o) => linkIdEquals(o.id, config?.alertQuestionId, config?.linkIdMatchMode))?.answer ??
@@ -536,7 +536,8 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   const meaning = meaningFromSeverity(scoreSeverity, config, current?.responses, current);
   const source = current?.source;
   const alert = getAlertFromMostRecentResponse(current, config);
-  const warning = isNumber(score) && config?.mediumSeverityScoreCutoff && score >= config?.mediumSeverityScoreCutoff;
+  const warning =
+    isNumber(score) && config?.mediumSeverityScoreCutoff != null && score >= config?.mediumSeverityScoreCutoff;
   const scoringParams = {
     ...config,
     score,
@@ -583,7 +584,7 @@ export function getResponseColumns(data) {
         left: 0,
         backgroundColor: "#FFF",
         borderRight: "1px solid rgba(224, 224, 224, 1)",
-        minWidth: "200px",
+        minWidth: "220px",
       },
       render: (rowData) => {
         const q = rowData?.question ?? "";
@@ -614,7 +615,10 @@ export function getResponseColumns(data) {
         if (rowData.readOnly) return <span className="text-readonly"></span>;
         // explicit placeholders prevent React from trying to render objects
         if (!rowDataItem || String(rowDataItem) === "null" || String(rowDataItem) === "undefined") return "—";
-
+        if (rowDataItem.hasMeaning) {
+          const { key, ...rest } = rowDataItem;
+          return <Meaning {...rest}></Meaning>;
+        }
         // numeric score path
         if (isNumber(rowDataItem.score)) {
           const { key, ...params } = rowDataItem.scoringParams ?? {};
@@ -632,10 +636,6 @@ export function getResponseColumns(data) {
           );
         }
         const contentToRender = typeof rowDataItem === "string" ? stripHtmlTags(rowDataItem) : normalize(rowDataItem);
-        if (rowDataItem.hasMeaning) {
-          const { key, ...rest } = rowDataItem;
-          return <Meaning {...rest}></Meaning>;
-        }
         // string answers render directly; everything else is safely stringified
         return contentToRender;
       },
@@ -644,7 +644,7 @@ export function getResponseColumns(data) {
 }
 
 export function buildReportData({ summaryData = {}, bundle = [] }) {
-  let skeleton = report_config;
+  let skeleton = Object.assign({}, report_config);
   if (!skeleton || !skeleton.sections || !Array.isArray(skeleton.sections)) {
     console.error("buildReportData: Invalid report_config structure");
     return skeleton || { sections: [] };
