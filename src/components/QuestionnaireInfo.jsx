@@ -38,14 +38,12 @@ export default function QuestionnaireInfo(props) {
         title={`click to learn more about ${questionnaireTitle}`}
         edge="end"
       >
-        <HelpIcon color="info"></HelpIcon>
+        <HelpIcon color="info" {...(props.iconProps ? props.iconProps : {})}></HelpIcon>
       </IconButton>
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle
           sx={{
-            backgroundColor: theme?.palette?.primary
-              ? theme?.palette?.primary?.main
-              : "#444",
+            backgroundColor: theme?.palette?.primary ? theme?.palette?.primary?.main : "#444",
             color: "#FFF",
           }}
         >
@@ -69,4 +67,5 @@ export default function QuestionnaireInfo(props) {
 
 QuestionnaireInfo.propTypes = {
   questionnaireJson: PropTypes.object,
+  iconProps: PropTypes.object,
 };

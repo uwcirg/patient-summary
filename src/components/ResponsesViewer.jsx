@@ -4,6 +4,7 @@ import { AppBar, Box, Button, Dialog, IconButton, Paper, Slide, Stack, Toolbar, 
 import { useTheme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import MaterialTable from "@material-table/core";
+import QuestionnaireInfo from "./QuestionnaireInfo";
 
 /**
  * Local transition for the full-screen dialog
@@ -36,6 +37,7 @@ export default function ResponsesViewer({
   // Optional advanced mode:
   buildColumns, // (optional) function: () => columns[]
   responsesTileTitle = "Responses", // header above the button, mirrors your summary tile
+  questionnaire, // questionnaire JSON, for info popup
 }) {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
@@ -139,9 +141,23 @@ export default function ResponsesViewer({
             <IconButton edge="start" color="inherit" onClick={() => setOpen(false)} aria-label="close">
               <CloseIcon />
             </IconButton>
+
             <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-              {title}
+              <Stack gap={1} alignItems={"center"} direction={"row"}>
+                {title}
+                {questionnaire && (
+                  <QuestionnaireInfo
+                    questionnaireJson={questionnaire}
+                    iconProps={{
+                      sx: {
+                        color: "#eaedef",
+                      },
+                    }}
+                  ></QuestionnaireInfo>
+                )}
+              </Stack>
             </Typography>
+
             <Button color="inherit" onClick={() => setOpen(false)}>
               Close
             </Button>
@@ -203,4 +219,5 @@ ResponsesViewer.propTypes = {
   buttonStyle: PropTypes.object, // optional style object for the button
   buildColumns: PropTypes.func, // optional hook to compute columns
   responsesTileTitle: PropTypes.node, // optional ("Responses" default)
+  questionnaire: PropTypes.object, // optional, questionnaire JSON object
 };

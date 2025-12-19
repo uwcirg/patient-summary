@@ -293,8 +293,8 @@ const questionnaireConfigsRaw = {
       "assist-polysub-1": 0,
     },
     severityBands: [
-      { min: 1, label: "high", meaning: "Yes" },
-      { min: 0, label: "low", meaning: "No" },
+      { min: 1, label: "high", meaning: "Yes, concurrent drug use" },
+      { min: 0, label: "low", meaning: "No, no concurrent drug use" },
     ],
     skipChart: true,
   },
