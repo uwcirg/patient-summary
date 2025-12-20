@@ -53,6 +53,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
    * @param {number} config.highSeverityScoreCutoff
    * @param {{min:number,label:string,meaning?:string}[]} [config.severityBands]
    * @param {function} config.fallbackMeaningFunc
+   * @param {array} config.excludeQuestionLinkIdPatterns
    * @param {Object|Array} patientBundle
    */
   constructor(config = {}, patientBundle) {
@@ -85,11 +86,13 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       severityBands: bands,
       highSeverityScoreCutoff: config.highSeverityScoreCutoff ?? null,
       fallbackMeaningFunc: config.fallbackMeaningFunc ?? null,
+      excludeQuestionLinkIdPatterns: config.excludeQuestionLinkIdPatterns ?? null,
     };
 
     this.patientBundle = patientBundle || null;
     this.responseAnswerTypes = new Set([
       "boolean",
+      "choice",
       "decimal",
       "coding",
       "integer",
@@ -98,7 +101,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       "time",
       "string",
       "text",
-      "choice",
       "open-choice",
     ]);
   }
@@ -258,10 +260,13 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   isValueExpressionQuestionItem(item) {
     if (!item) return false;
-    return !isEmptyArray(item.extension) && item.extension.find((o) => o.valueExpression);
+    return (
+      !isEmptyArray(item.extension) &&
+      item.extension.find((o) => o.valueExpression && o.url?.includes("calculatedExpression"))
+    );
   }
 
-  isResponseQuestionItem(item) {
+  isResponseQuestionItem(item, config = {}) {
     if (!item) return false;
     if (item.readOnly) return false;
     if (this.isValueExpressionQuestionItem(item)) return false;
@@ -278,6 +283,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     )
       return false;
     if (item.type && !this.responseAnswerTypes.has(item.type)) return false;
+    const patterns = (config?.excludeQuestionLinkIdPatterns ?? []).map((s) => String(s).toLowerCase());
+    if (patterns.some((p) => linkId.includes(p))) return false;
     // if (scoreLinkId) {
     //   return !this.isLinkIdEquals(item.linkId, scoreLinkId, config);
     // }
@@ -634,7 +641,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (!qr) return null;
 
     const flat = this.flattenResponseItems(qr.item);
-    const nonScoring = flat.filter((it) => this.isResponseQuestionItem(it));
+    const nonScoring = flat.filter((it) => this.isResponseQuestionItem(it, config));
 
     const { score, scoringQuestionScore, scoreLinkIds } = calculateQuestionnaireScore(
       questionnaire,

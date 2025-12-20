@@ -204,6 +204,7 @@ function bootstrapInstrumentConfigMap(map) {
  * @param {Object[]} [columns] additional columns to extract from responses
  * @param {boolean} [skipChart] if true, do not render chart for this questionnaire
  * @param {Object|Array} chartParams params for charting line/bar graphs
+ * @param {array} excludeQuestionLinkIdPatterns param for pattern in link Id to exclude as a response item
  */
 const questionnaireConfigsRaw = {
   "CIRG-ADL-IADL": {
@@ -431,6 +432,7 @@ const questionnaireConfigsRaw = {
     questionnaireMatchMode: "fuzzy",
     displayMeaningNotScore: true,
     linkIdMatchMode: "strict",
+    excludeQuestionLinkIdPatterns: ["summary"],
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
       if (!severity) return "";
@@ -651,6 +653,7 @@ const questionnaireConfigsRaw = {
     questionnaireName: "phq9",
     instrumentName: "Patient Health Questionnaire-9 (PHQ-9)",
     title: "PHQ-9",
+    subtitle: "Last two weeks",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/phq9",
     scoringQuestionId: "/44261-6",
     subScoringQuestionIds: ["/55758-7"],
@@ -703,6 +706,7 @@ const questionnaireConfigsRaw = {
     key: "CIRG-SI",
     instrumentName: "Suicide Ideation",
     title: "Suicide Ideation",
+    subtitle: "Last two weeks",
     scoringQuestionId: PHQ9_SI_QUESTION_LINK_ID,
     fallbackScoreMap: PHQ9_SI_ANSWER_SCORE_MAPPINGS,
     highSeverityScoreCutoff: 3,
@@ -794,14 +798,14 @@ const questionnaireConfigsRaw = {
     ],
     skipChart: true,
   },
-  "CIRG-ALCOHOL-USE": {
+  "CIRG-CNICS-AUDIT": {
     title: "Alcohol Score (Audit)",
-    key: "CIRG-ALCOHOL-USE",
+    key: "CIRG-CNICS-AUDIT",
     instrumentName: "Alcohol Use",
     minimumScore: 0,
-    maximumScore: 45,
-    highSeverityScoreCutoff: 35,
-    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 45, xLabel: "" },
+    maximumScore: 38,
+    scoringQuestionId: "AUDIT-score",
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 38, xLabel: "" },
   },
   "CIRG-MINI-SCORE": {
     key: "CIRG-MINI-SCORE",

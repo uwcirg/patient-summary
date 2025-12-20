@@ -263,9 +263,9 @@ export default {
       totalAnsweredItems: 1,
     },
   },
-  "CIRG-Alcohol-Use": {
+  "CIRG-CNICS-AUDIT": {
     scoringSummaryData: {
-      key: "CIRG-Alcohol-Use",
+      key: "CIRG-CNICS-AUDIT",
       source: "cnics",
       comparison: "higher",
       comparisonToAlert: "",

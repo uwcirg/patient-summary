@@ -205,7 +205,7 @@ export default function ScoringSummary(props) {
             subtitle={row.subtitle}
             responsesTileTitle={displayTitle}
             tableData={row?.tableResponseData}
-            columns={getResponseColumns(row?.responseData)}
+            columns={getResponseColumns(row?.responseData, row)}
             questionnaire={row?.questionnaire}
             buttonStyle={{ width: "100%", maxWidth: 108, margin: "auto" }}
           />

@@ -560,7 +560,7 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   };
 }
 
-export function getResponseColumns(data) {
+export function getResponseColumns(data, config = {}) {
   if (isEmptyArray(data)) return [];
 
   const dates = data?.map((item) => ({ date: item.date, id: item.id, source: item.source })) ?? [];
@@ -576,7 +576,7 @@ export function getResponseColumns(data) {
 
   return [
     {
-      title: "Questions",
+      title: "Questions" + (config?.subtitle ? "\n ( " + config.subtitle + " )" : ""),
       field: "question",
       filtering: false,
       cellStyle: {
