@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import React, { useMemo } from "react";
-import { SUCCESS_COLOR, ALERT_COLOR } from "@config/chart_config";
+import { SUCCESS_COLOR, ALERT_COLOR, buildTimeTicks, fmtMonthYear, thinTicksToFit } from "@config/chart_config";
 import CustomTooltip from "./CustomTooltip";
 
 export default function BarCharts(props) {
@@ -23,6 +23,7 @@ export default function BarCharts(props) {
     xsChartWidth,
     chartWidth,
     lgChartWidth,
+    xDomain,
     xTickFormatter,
     xFieldKey, // "date"
     xLabel,
@@ -199,6 +200,16 @@ export default function BarCharts(props) {
 
   // Calculate domain with fixed range from cutoff to now (matches LineChart)
   const xAxisDomain = useMemo(() => {
+    // If custom xDomain is provided, use it
+    if (xDomain) {
+      console.log("BarChart using custom xDomain:", {
+        start: new Date(xDomain[0]).toLocaleDateString(),
+        end: new Date(xDomain[1]).toLocaleDateString(),
+        rawDomain: xDomain,
+      });
+      return xDomain;
+    }
+
     if (parsed.length === 0) return ["dataMin", "dataMax"];
 
     const now = new Date().getTime();
@@ -209,26 +220,46 @@ export default function BarCharts(props) {
     // Add padding (e.g., 1 month = ~30 days)
     const paddingMs = 30 * 24 * 60 * 60 * 1000;
 
-    return [
-      cutoffTimestamp - paddingMs, // Start: cutoff minus padding
-      now + paddingMs, // End: now plus padding
-    ];
-  }, [parsed.length]);
+    const domain = [cutoffTimestamp - paddingMs, now + paddingMs];
 
-  // Calculate unique date ticks (one per calendar day)
-  const uniqueDateTicks = useMemo(() => {
-    if (parsed.length === 0) return undefined;
-
-    const uniqueDays = new Set();
-    parsed.forEach((item) => {
-      const timestamp = item.originalTimestamp || item[xFieldKey];
-      const dateOnly = new Date(timestamp);
-      dateOnly.setHours(0, 0, 0, 0);
-      uniqueDays.add(dateOnly.getTime());
+    console.log("BarChart domain:", {
+      start: new Date(domain[0]).toLocaleDateString(),
+      end: new Date(domain[1]).toLocaleDateString(),
+      rawDomain: domain,
     });
 
-    return Array.from(uniqueDays).sort((a, b) => a - b);
-  }, [parsed, xFieldKey]);
+    return domain;
+  }, [parsed.length, xDomain]);
+
+  // Calculate unique date ticks (one per calendar day)
+  const calculatedTicks = useMemo(() => {
+    if (parsed.length === 0) return undefined;
+
+    // 1. Build regular 6-month interval ticks
+    const allTicksRaw =
+      Array.isArray(xAxisDomain) && typeof xAxisDomain[0] === "number"
+        ? buildTimeTicks(xAxisDomain, { unit: "month", step: 6 })
+        : undefined;
+
+    if (!allTicksRaw) return undefined;
+
+    // Clamp to domain
+    const clampedAll = allTicksRaw.filter((t) => t >= xAxisDomain[0] && t <= xAxisDomain[1]);
+
+    // Ensure unique and sorted
+    const uniqSorted = (arr) => {
+      const s = new Set();
+      for (const v of arr) if (Number.isFinite(v)) s.add(v);
+      return Array.from(s).sort((a, b) => a - b);
+    };
+
+    const allTicks = uniqSorted(clampedAll);
+
+    // Thin ticks to fit
+    const ticksRaw = thinTicksToFit(allTicks, (ms) => fmtMonthYear.format(ms), chartWidth);
+
+    return uniqSorted(ticksRaw);
+  }, [parsed.length, xAxisDomain, chartWidth]);
 
   const MIN_CHART_WIDTH = xsChartWidth ?? 400;
 
@@ -253,7 +284,7 @@ export default function BarCharts(props) {
       tick={{ fontSize: 12, fontWeight: 500, textAnchor: "middle" }}
       tickFormatter={(ts) => (xTickFormatter ? xTickFormatter(ts) : new Date(ts).toLocaleDateString())}
       tickMargin={12}
-      ticks={uniqueDateTicks}
+      ticks={calculatedTicks}
       interval="preserveStartEnd"
     >
       {xLabel && xLabelVisible && <Label value={xLabel} offset={-8} position="insideBottom" />}
@@ -355,6 +386,7 @@ export default function BarCharts(props) {
 BarCharts.propTypes = {
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   title: PropTypes.string,
+  xDomain: PropTypes.array,
   xsChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   chartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   lgChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),

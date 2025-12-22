@@ -230,7 +230,14 @@ export default function LineCharts(props) {
   // Calculate fixed domain from cutoff to now (overrides xDomain prop if truncation is active)
   const calculatedXDomain = React.useMemo(() => {
     // If we have a custom xDomain prop and no truncation, use it
-    if (xDomain && !wasTruncated) return xDomain;
+    if (xDomain && !wasTruncated) {
+      console.log("LineChart using custom xDomain:", {
+        start: new Date(xDomain[0]).toLocaleDateString(),
+        end: new Date(xDomain[1]).toLocaleDateString(),
+        rawDomain: xDomain,
+      });
+      return xDomain;
+    }
 
     // Otherwise calculate domain from cutoff to now
     const now = new Date().getTime();
@@ -241,7 +248,15 @@ export default function LineCharts(props) {
     // Add padding (e.g., 1 month = ~30 days)
     const paddingMs = 30 * 24 * 60 * 60 * 1000;
 
-    return [cutoffTimestamp - paddingMs, now + paddingMs];
+    const domain = [cutoffTimestamp - paddingMs, now + paddingMs];
+
+    console.log("LineChart calculated domain:", {
+      start: new Date(domain[0]).toLocaleDateString(),
+      end: new Date(domain[1]).toLocaleDateString(),
+      rawDomain: domain,
+    });
+
+    return domain;
   }, [xDomain, wasTruncated]);
 
   // React.useEffect(() => {

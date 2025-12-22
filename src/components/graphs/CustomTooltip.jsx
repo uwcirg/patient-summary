@@ -13,7 +13,7 @@ export default function CustomTooltip({ xFieldKey, xLabelKey, active, payload, t
   // use provided formatter; else a default
   const fmtDate =
     (typeof tooltipLabelFormatter === "function" && tooltipLabelFormatter(rawDate)) ||
-    (rawDate ? getLocaleDateStringFromDate(rawDate) : "—");
+    (rawDate ? getLocaleDateStringFromDate(rawDate, "YYYY-MM-DD HH:mm") : "—");
 
   // if multiple lines, payload will have one entry per series
   const multiValues = payload.map((p, i) => ({
