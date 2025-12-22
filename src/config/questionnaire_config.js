@@ -801,14 +801,14 @@ const questionnaireConfigsRaw = {
     skipChart: true,
   },
   "CIRG-CNICS-AUDIT": {
-    title: "Alcohol Score (Audit)",
+    title: "Alcohol Score (AUDIT)",
     subtitle: "Past 12 months",
     key: "CIRG-CNICS-AUDIT",
-    instrumentName: "Alcohol Use",
+    instrumentName: "CNICS AUDIT (alcohol consumption questions)",
     minimumScore: 0,
     maximumScore: 38,
     scoringQuestionId: "AUDIT-score",
-    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 38, xLabel: "" },
+    chartParams: { ...CHART_CONFIG.default, title: "Alcohol Score", minimumYValue: 0, maximumYValue: 38, xLabel: "" },
   },
   "CIRG-MINI-SCORE": {
     key: "CIRG-MINI-SCORE",

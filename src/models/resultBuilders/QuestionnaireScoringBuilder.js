@@ -1050,9 +1050,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       xDomain = getDateDomain(dates, { padding: dates.length <= 2 ? 0.15 : 0.05 });
     }
 
-    const scoringParams = config?.scoringParams ?? {};
     const { key, id, ...restOfConfig } = config ?? {};
-    const chartParams = { ...chartConfig, ...scoringParams, ...restOfConfig, ...(config?.chartParams ?? {}), xDomain };
+    const chartParams = { ...chartConfig, ...restOfConfig, ...(restOfConfig?.chartParams ?? {}), xDomain };
 
     const tableResponseData = this._formatTableResponseData(evalData, config);
     const printResponseData = this._formatPrintResponseData(evalData, config);
