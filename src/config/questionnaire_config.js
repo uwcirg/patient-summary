@@ -203,6 +203,7 @@ function bootstrapInstrumentConfigMap(map) {
  * @param {Object} [clockScoreMap] for Mini-Cog: map of clock drawing answer to score
  * @param {Object[]} [columns] additional columns to extract from responses
  * @param {boolean} [skipChart] if true, do not render chart for this questionnaire
+ * @param {boolean} [skipMeaningScoreRow] if true, the score/ meaning row in the responses table will not be rendered
  * @param {Object|Array} chartParams params for charting line/bar graphs
  * @param {array} excludeQuestionLinkIdPatterns param for pattern in link Id to exclude as a response item
  */
@@ -278,13 +279,14 @@ const questionnaireConfigsRaw = {
       { min: 1, label: "high", meaning: "Yes, overdose" },
       { min: 0, label: "low", meaning: "No overdose" },
     ],
+    meaningRowLabel: "Summary",
     skipChart: true,
   },
   "CIRG-CNICS-ASSIST-Polysub": {
     key: "CIRG-CNICS-ASSIST-Polysub",
     instrumentName: "CNICS Polysubstance Use",
     title: "Concurrent Drug Use",
-    subtitle: "Past 3 weeks",
+    subtitle: "Past 3 months",
     questionnaireMatchMode: "fuzzy",
     highSeverityScoreCutoff: 1,
     displayMeaningNotScore: true,
@@ -298,6 +300,7 @@ const questionnaireConfigsRaw = {
       { min: 1, label: "high", meaning: "Yes, concurrent drug use" },
       { min: 0, label: "low", meaning: "No, no concurrent drug use" },
     ],
+    meaningRowLabel: "Summary",
     skipChart: true,
   },
   "CIRG-CNICS-FINANCIAL": {
@@ -330,6 +333,7 @@ const questionnaireConfigsRaw = {
     alertQuestionId: "FOOD-critical-flag",
     meaningQuestionId: "FOOD-score-label",
     linkIdMatchMode: "strict",
+    meaningRowLabel: "Summary",
     skipChart: true,
   },
   "CIRG-CNICS-FROP-Com": {
@@ -357,6 +361,7 @@ const questionnaireConfigsRaw = {
       });
       return arrMeaning.join("|");
     },
+    meaningRowLabel: "Summary",
     skipChart: true,
   },
   "CIRG-CNICS-HOUSING": {
@@ -380,6 +385,7 @@ const questionnaireConfigsRaw = {
       });
       return arrMeaning.join("|");
     },
+    meaningRowLabel: "Summary",
     skipChart: true,
   },
   "CIRG-CNICS-IPV4": {
@@ -425,6 +431,7 @@ const questionnaireConfigsRaw = {
       { min: 1, label: "high" },
       { min: 0, label: "low" },
     ],
+    meaningRowLabel: "Summary",
     skipChart: true,
   },
   "CIRG-CNICS-Smoking": {
@@ -454,6 +461,7 @@ const questionnaireConfigsRaw = {
       });
       return arrMeaning.join("|");
     },
+    meaningRowLabel: "Summary",
     skipChart: true,
   },
   "CIRG-CNICS-Symptoms": {
@@ -464,6 +472,7 @@ const questionnaireConfigsRaw = {
     questionnaireMatchMode: "fuzzy",
     linkIdMatchMode: "strict",
     displayMeaningNotScore: true,
+    meaningRowLabel: "Summary",
     columns: [
       {
         linkId: "Symptoms-bothers-a-lot",
@@ -750,6 +759,7 @@ const questionnaireConfigsRaw = {
   "CIRG-SRS": {
     key: "CIRG-SRS",
     title: "Self Rating Scale (SRS)",
+    subtitle: "Past 4 weeks",
     instrumentName: "Self Rating Scale (SRS)",
     displayMeaningNotScore: true,
     deriveFrom: {
@@ -762,11 +772,13 @@ const questionnaireConfigsRaw = {
         id: "result",
       },
     ],
+    skipMeaningScoreRow: true,
     skipChart: true,
   },
   "CIRG-LAST-MISSED-DOSE": {
     key: "CIRG-LAST-MISSED-DOSE",
     title: "Last Missed Dose",
+    subtitle: "Past 4 weeks",
     instrumentName: "Last Missed Dose",
     displayMeaningNotScore: true,
     deriveFrom: {
@@ -779,12 +791,13 @@ const questionnaireConfigsRaw = {
         id: "result",
       },
     ],
+    skipMeaningScoreRow: true,
     skipChart: true,
   },
   "CIRG-VAS": {
     key: "CIRG-VAS",
     title: "Visual Analog Scale",
-    subtitle: "percentage",
+    subtitle: "Past 4 weeks",
     instrumentName: "VAS",
     displayMeaningNotScore: true,
     deriveFrom: {
@@ -797,6 +810,7 @@ const questionnaireConfigsRaw = {
         id: "result",
       },
     ],
+    skipMeaningScoreRow: true,
     skipChart: true,
   },
   "CIRG-CNICS-AUDIT": {

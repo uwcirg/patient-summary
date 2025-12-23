@@ -826,9 +826,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         return row;
       })
       .filter((r) => !r.isValueExpression && !r.isHelp);
-    if (this._hasMeaningOnlyData(data)) {
+    if (!configToUse?.skipMeaningScoreRow && this._hasMeaningOnlyData(data)) {
       const meaningRow = {
-        question: "Score / Meaning",
+        question: configToUse?.meaningRowLabel ? configToUse.meaningRowLabel : "Score / Meaning",
         id: `meaning_${data.map((o) => o.id).join("")}`,
         config: configToUse,
       };
@@ -839,7 +839,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           hasMeaning: true,
         };
       result.push(meaningRow);
-    } else if (this._hasScoreData(data)) {
+    } else if (!configToUse?.skipMeaningScoreRow && this._hasScoreData(data)) {
       const scoringRow = {
         question: "Score / Meaning",
         id: `score_${data.map((o) => o.id).join("")}`,
