@@ -8,6 +8,8 @@ $default-print-background-color: #fff;
 $default-print-color: #444;
 $row-background-color: #f5f6f9;
 $success-color: #1d771d;
+$danger-background-color: #f3e2e233;
+$warning-background-color: #f7d0b01a;
 $header-height: 52px;
 
 html {
@@ -131,6 +133,14 @@ p {
 .questionnaire-title::first-letter {
   text-transform: capitalize;
 }
+.scoring-summary-table {
+  td:has(.text-warning) {
+    background-color: $warning-background-color;
+  }
+  td:has(.text-danger) {
+    background-color: $danger-background-color;
+  }
+}
 .responses-container {
   position: relative;
   .table-root {
@@ -154,7 +164,7 @@ p {
     td {
       border-left: 0;
       background-color: #fff;
-     // font-style: italic;
+      // font-style: italic;
       color: $muted-text-color;
       line-height: 1.5;
       padding-left: 8px;
@@ -274,7 +284,8 @@ p {
       height: 32px !important;
     }
   }
-  html, body {
+  html,
+  body {
     font-size: 12px;
   }
   h1,
@@ -335,7 +346,10 @@ p {
     background-color: $default-print-background-color !important;
     page-break-inside: avoid;
     padding: 0;
-    h1, h2, h3, h4 {
+    h1,
+    h2,
+    h3,
+    h4 {
       text-align: left !important;
     }
   }

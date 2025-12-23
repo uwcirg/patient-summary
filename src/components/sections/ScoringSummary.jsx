@@ -3,12 +3,14 @@ import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
 import Link from "@mui/material/Link";
 import Box from "@mui/material/Box";
+import Divider from "@mui/material/Divider";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 import NorthIcon from "@mui/icons-material/North";
@@ -71,7 +73,20 @@ export default function ScoringSummary(props) {
     const { totalItems, totalAnsweredItems } = row;
     if (!totalItems && !totalAnsweredItems) return "No";
     if (totalItems === 1 && totalAnsweredItems === 1) return "Yes";
-    if (isNumber(totalAnsweredItems) && isNumber(totalItems)) return `${totalAnsweredItems} / ${totalItems}`;
+    if (isNumber(totalAnsweredItems) && isNumber(totalItems))
+      return (
+        <Stack
+          alignItems="center"
+          justifyContent="center"
+          spacing={0.4}
+          aria-label={`${totalAnsweredItems} of ${totalItems} items answered`}
+          role="img"
+        >
+          <Typography variant="body2">{totalAnsweredItems}</Typography>
+          <Divider flexItem sx={{ width: 24, alignSelf: "auto", backgroundColor: "rgba(107, 104, 104, 0.87)" }} />
+          <Typography variant="body2">{totalItems}</Typography>
+        </Stack>
+      );
     if (totalAnsweredItems) return "Yes";
     return "No";
   };
@@ -109,7 +124,7 @@ export default function ScoringSummary(props) {
       <Stack direction={"column"} spacing={1} alignItems={"space-between"} justifyContent={"space-between"}>
         <Box>{value ? getLocaleDateStringFromDate(value) : ""}</Box>
         {row.source && (
-          <Box className="muted-text" sx={{ mt: 1, "@media print": {mt: 0} }}>
+          <Box className="muted-text" sx={{ mt: 1, "@media print": { mt: 0 } }}>
             {row.source}
           </Box>
         )}
