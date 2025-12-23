@@ -821,7 +821,8 @@ const questionnaireConfigsRaw = {
     minimumScore: 0,
     maximumScore: 38,
     scoringQuestionId: "AUDIT-score",
-    chartParams: { ...CHART_CONFIG.default, title: "Alcohol Score", minimumYValue: 0, maximumYValue: 38, xLabel: "" },
+    //chartParams: { ...CHART_CONFIG.default, title: "Alcohol Score", minimumYValue: 0, maximumYValue: 38, xLabel: "" },
+    skipChart: true
   },
   "CIRG-MINI-SCORE": {
     key: "CIRG-MINI-SCORE",

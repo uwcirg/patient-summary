@@ -584,7 +584,7 @@ export function getResponseColumns(data, config = {}) {
         left: 0,
         backgroundColor: "#FFF",
         borderRight: "1px solid rgba(224, 224, 224, 1)",
-        minWidth: "220px",
+        minWidth: "240px",
       },
       render: (rowData) => {
         const q = rowData?.question ?? "";

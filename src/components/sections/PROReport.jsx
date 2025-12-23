@@ -25,7 +25,7 @@ const sectionSx = {
   padding: (theme) => theme.spacing(1),
 };
 
-const tableStyle = { width: "auto" };
+const tableStyle = { width: "auto", minWidth: "50%" };
 
 const flexWrapConfig = {
   xs: "wrap",
