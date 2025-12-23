@@ -614,6 +614,7 @@ export function getResponseColumns(data, config = {}) {
       render: (rowData) => {
         const rowDataItem = rowData?.[item.id];
         if (rowData.readOnly) return <span className="text-readonly"></span>;
+        if (isNumber(rowDataItem)) return rowDataItem;
         // explicit placeholders prevent React from trying to render objects
         if (!rowDataItem || String(rowDataItem) === "null" || String(rowDataItem) === "undefined") return "—";
         if (rowDataItem.hasMeaning) {

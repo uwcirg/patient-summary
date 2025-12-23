@@ -427,11 +427,6 @@ export default function useFetchResources() {
 
         // initially populated with pre-load questionnaire list
         let qIds = [...preloadList];
-        // Determine Questionnaire list & fetch (if not already fetched via preload parallel path)
-        const matchedQIds = matchedQRs?.map((it) => it.questionnaire?.split("/")[1]) ?? [];
-        const uniqueQIds = [...new Set([...qIds, ...matchedQIds])];
-        const qListToLoad = hasPreload ? preloadList : uniqueQIds;
-
         const syntheticQs = [],
           syntheticQRs = [];
 
@@ -446,6 +441,7 @@ export default function useFetchResources() {
               if (!hit) continue;
               const builtQ = buildQuestionnaire(obResources, cfg);
               const builtQRs = observationsToQuestionnaireResponses(obResources, cfg) || [];
+              console.log("matching cfg ", cfg);
               console.log("builtQ ", builtQ);
               console.log("builtQRs ", builtQRs);
               syntheticQs.push(builtQ);
@@ -454,6 +450,12 @@ export default function useFetchResources() {
             }
           }
         }
+        // Determine Questionnaire list & fetch (if not already fetched via preload parallel path)
+        const matchedQIds = matchedQRs?.map((it) => it.questionnaire?.split("/")[1]) ?? [];
+        const uniqueQIds = [...new Set([...qIds, ...matchedQIds])];
+        const qListToLoad = hasPreload ? preloadList : uniqueQIds;
+        console.log("qListToLoad ", qListToLoad);
+
         matchedQRs = [...matchedQRs, ...syntheticQRs];
 
         if (wantQ) {
@@ -503,10 +505,11 @@ export default function useFetchResources() {
           }
         }
 
-        const questionnaires = [
+        let questionnaires = [
           ...getFhirResourcesFromQueryResult(syntheticQs),
           ...getFhirResourcesFromQueryResult(qResources),
         ];
+        questionnaires = Array.from(new Map(questionnaires.map((item) => [item.resource.id, item])).values());
         const questionnaireResponses = getFhirResourcesFromQueryResult(matchedQRs);
 
         // seed bundle

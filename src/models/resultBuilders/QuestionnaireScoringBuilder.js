@@ -641,7 +641,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (!qr) return null;
 
     const flat = this.flattenResponseItems(qr.item);
-    const nonScoring = flat.filter((it) => this.isResponseQuestionItem(it, config));
 
     const { score, scoringQuestionScore, scoreLinkIds } = calculateQuestionnaireScore(
       questionnaire,
@@ -651,7 +650,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     );
 
     let totalItems = scoreLinkIds?.length ?? 0;
-    let totalAnsweredItems = Math.min(nonScoring.filter((it) => this.firstAnswer(it) != null).length, totalItems);
+
+    // Count answered among the scoreLinkIds (which come from the Questionnaire and exclude readOnly/valueExpression)
+    let totalAnsweredItems = (scoreLinkIds || []).reduce((n, linkId) => {
+      const it = this.findResponseItemByLinkId(flat, linkId, config);
+      return n + (this.firstAnswer(it) != null ? 1 : 0);
+    }, 0);
 
     if (totalItems === 0 && score != null) totalItems = 1;
     if (totalAnsweredItems === 0 && score != null) totalAnsweredItems = 1;

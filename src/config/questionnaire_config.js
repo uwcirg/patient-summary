@@ -336,7 +336,7 @@ const questionnaireConfigsRaw = {
     key: "CIRG-CNICS-FROP-Com",
     instrumentName: "Falls Risk for Older People in the Community (FROP-Com)",
     title: "Falls",
-    subtitle: "Past year",
+    subtitle: "Past 12 months",
     questionnaireMatchMode: "fuzzy",
     displayMeaningNotScore: true,
     linkIdMatchMode: "strict",
@@ -722,7 +722,6 @@ const questionnaireConfigsRaw = {
     ],
     minimumScore: 0,
     maximumScore: 3,
-    displayMeaningNotScore: true,
     deriveFrom: {
       hostIds: ["CIRG-PHQ9"], // one or many hosts
       linkId: PHQ9_SI_QUESTION_LINK_ID, // the single item to keep
