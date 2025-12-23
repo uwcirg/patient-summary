@@ -83,7 +83,7 @@ export default function ScoringSummary(props) {
           role="img"
         >
           <Typography variant="body2">{totalAnsweredItems}</Typography>
-          <Divider flexItem sx={{ width: 24, alignSelf: "auto", backgroundColor: "rgba(107, 104, 104, 0.87)" }} />
+          <Divider flexItem sx={{ width: 24, alignSelf: "auto", backgroundColor: "rgba(132, 129, 129, 0.6)" }} />
           <Typography variant="body2">{totalItems}</Typography>
         </Stack>
       );

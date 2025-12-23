@@ -814,13 +814,32 @@ const questionnaireConfigsRaw = {
     skipChart: true,
   },
   "CIRG-CNICS-AUDIT": {
-    title: "Alcohol Score (AUDIT)",
+    title: "Alcohol Score",
     subtitle: "Past 12 months",
     key: "CIRG-CNICS-AUDIT",
     instrumentName: "CNICS AUDIT (alcohol consumption questions)",
     minimumScore: 0,
     maximumScore: 38,
-    scoringQuestionId: "AUDIT-score",
+    //scoringQuestionId: "AUDIT-score",
+    displayMeaningNotScore: true,
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      let arrMeaning = [];
+      responses.forEach((response) => {
+        const answered = response.answer != null && response.answer !== undefined;
+        if (linkIdEquals(response.id, "AUDIT-C-score")) {
+          if (answered) {
+            arrMeaning.push(response.answer + " (AUDIT-C)");
+          }
+        }
+        if (linkIdEquals(response.id, "AUDIT-score")) {
+          if (answered) {
+            arrMeaning.push(response.answer + " (AUDIT)");
+          }
+        }
+      });
+      return arrMeaning.join("|");
+    },
     //chartParams: { ...CHART_CONFIG.default, title: "Alcohol Score", minimumYValue: 0, maximumYValue: 38, xLabel: "" },
     skipChart: true
   },
