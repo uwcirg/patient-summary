@@ -48,7 +48,7 @@ export default function CustomTooltip({
             </div>
           )}
           {meaning && (
-            <div className="meaning-item" style={{ whiteSpace: "pre-wrap" }}>
+            <div className="meaning-item" style={{ whiteSpace: "pre-line" }}>
               <span style={{ color: FONT_COLOR }}>
                 meaning:
               </span>{" "}

@@ -131,7 +131,7 @@ p {
   }
 }
 .meaning-item {
-  white-space: pre;
+  white-space: pre-line;
 }
 .questionnaire-title::first-letter {
   text-transform: capitalize;
@@ -155,7 +155,7 @@ p {
     vertical-align: top;
   }
   td:not(:first-of-type) {
-    white-space: pre;
+    white-space: pre-line;
     vertical-align: top;
   }
   :is(tr):has(+ tr:has(.score-wrapper), + tr:has(.meaning-wrapper)) {
@@ -204,7 +204,7 @@ p {
   }
 }
 .MuiButtonBase-root.MuiTableSortLabel-root {
-  white-space: pre;
+  white-space: pre-line;
 }
 .recharts-legend-item-text {
   white-space: nowrap;
