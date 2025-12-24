@@ -609,6 +609,7 @@ export function getResponseColumns(data, config = {}) {
           (normalizeStr(q).includes("score") ||
             normalizeStr(q).includes("meaning") ||
             normalizeStr(q) === "summary" ||
+            normalizeStr(q) === "status" ||
             normalizeStr(q) === normalizeStr(config?.title))
         ) {
           return <b>{q}</b>;

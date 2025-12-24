@@ -1,6 +1,6 @@
 import { isEmptyArray } from "@util";
 import { linkIdEquals } from "@util/fhirUtil";
-import CHART_CONFIG, {SUCCESS_COLOR} from "./chart_config";
+import CHART_CONFIG, { SUCCESS_COLOR } from "./chart_config";
 import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS } from "@/consts";
 import QuestionnaireScoringBuilder from "@/models/resultBuilders/QuestionnaireScoringBuilder";
 
@@ -356,17 +356,17 @@ const questionnaireConfigsRaw = {
       if (isEmptyArray(responses)) return "";
       if (!severity) return "";
       let arrMeaning = [];
-      responses.forEach((response) => {
-        const answered = response.answer != null && response.answer !== undefined;
-        if (linkIdEquals(response.id, "FROP-Com-0", "strict")) {
-          arrMeaning.push(answered ? response.answer.replace(/\bfalls?\b/g, "").trim() : "");
-        }
-        if (linkIdEquals(response.id, "FROP-Com-1", "strict")) {
-          if (answered) {
-            arrMeaning.push("E/D visit: " + response.answer);
-          }
-        }
-      });
+      const fallResponse = responses.find((response) => linkIdEquals(response.id, "FROP-Com-0", "strict"));
+      const numFalls = fallResponse?.answer != null && fallResponse.answer !== undefined ? fallResponse.answer : null;
+      if (numFalls !== null) {
+        arrMeaning.push(`Number of falls: ${numFalls.replace(/\bfalls?\b/g, "").trim()}`);
+      }
+      const edVisitResponse = responses.find((response) => linkIdEquals(response.id, "FROP-Com-1", "strict"));
+      const edVisit =
+        edVisitResponse?.answer != null && edVisitResponse.answer !== undefined ? edVisitResponse.answer : null;
+      if (edVisit !== null) {
+        arrMeaning.push(`E/D visit: ${edVisit}`);
+      }
       return arrMeaning.join("|");
     },
     meaningRowLabel: "Summary",
@@ -383,17 +383,12 @@ const questionnaireConfigsRaw = {
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
       if (!severity) return "";
-      let arrMeaning = [];
-      responses.forEach((response) => {
-        if (response.answer) {
-          if (linkIdEquals(response.id, "HOUSING-0", "strict")) {
-            return true;
-          } else arrMeaning.push(response.answer);
-        }
-      });
-      return arrMeaning.join("|");
+      const housingResponse = responses.find((response) => linkIdEquals(response.id, "HOUSING-1", "strict"));
+      const housingAnswer =
+        housingResponse?.answer != null && housingResponse.answer !== undefined ? housingResponse.answer : null;
+      return housingAnswer;
     },
-    meaningRowLabel: "Summary",
+    meaningRowLabel: "Status",
     skipChart: true,
   },
   "CIRG-CNICS-IPV4": {
@@ -418,22 +413,26 @@ const questionnaireConfigsRaw = {
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
       if (!severity || severity === "low") return "";
-      let arrMeanings = [];
-      responses.forEach((response) => {
-        if (linkIdEquals(response.linkId, "IPV4-1", "strict") && String(response.answer).toLowerCase() === "yes") {
-          arrMeanings.push("Felt trapped");
-        }
-        if (linkIdEquals(response.linkId, "IPV4-2", "strict") && String(response.answer).toLowerCase() === "yes") {
-          arrMeanings.push("Fearful of harm");
-        }
-        if (linkIdEquals(response.linkId, "IPV4-3", "strict") && String(response.answer).toLowerCase() === "yes") {
-          arrMeanings.push("Sexual violence");
-        }
-        if (linkIdEquals(response.linkId, "IPV4-4", "strict") && String(response.answer).toLowerCase() === "yes") {
-          arrMeanings.push("Physical violence");
-        }
-      });
-      return arrMeanings.join("|");
+      //let arrMeanings = [];
+      const answerMapping = {
+        "IPV4-1": "Felt trapped",
+        "IPV4-2": "Fearful of harm",
+        "IPV4-3": "Sexual violence",
+        "IPV4-4": "Physical violence",
+      };
+      const answers = responses
+        .filter((response) => {
+          return (
+            (response.answer != null &&
+              response.answer !== undefined &&
+              linkIdEquals(response.linkId, "IPV4-1", "strict")) ||
+            linkIdEquals(response.linkId, "IPV4-2", "strict") ||
+            linkIdEquals(response.linkId, "IPV4-3", "strict") ||
+            linkIdEquals(response.linkId, "IPV4-4", "strict")
+          );
+        })
+        .map((response) => answerMapping[response.linkId]);
+      return answers.join("|");
     },
     severityBands: [
       { min: 1, label: "high" },
@@ -454,19 +453,22 @@ const questionnaireConfigsRaw = {
       if (isEmptyArray(responses)) return "";
       if (!severity) return "";
       let arrMeaning = [];
-      responses.forEach((response) => {
-        const answered = response.answer != null && response.answer !== undefined;
-        if (linkIdEquals(response.id, "Smoking-Tobacco-Cigs-Summary", "strict")) {
-          if (answered) {
-            arrMeaning.push("Tobacco cigarettes: " + response.answer);
-          }
-        }
-        if (linkIdEquals(response.id, "E-Cigarettes-Summary", "strict")) {
-          if (answered) {
-            arrMeaning.push("E-Cigarettes: " + response.answer);
-          }
-        }
-      });
+      const tobaccoUseResponse = responses.find((response) =>
+        linkIdEquals(response.id, "Smoking-Tobacco-Cigs-Summary", "strict"),
+      );
+      const eCigUseResponse = responses.find((response) => linkIdEquals(response.id, "E-Cigarettes-Summary", "strict"));
+      const tobaccoUseAnswer =
+        tobaccoUseResponse?.answer != null && tobaccoUseResponse.answer !== undefined
+          ? tobaccoUseResponse.answer
+          : null;
+      const eCigUseAnswer =
+        eCigUseResponse?.answer != null && eCigUseResponse.answer !== undefined ? eCigUseResponse.answer : null;
+      if (tobaccoUseAnswer) {
+        arrMeaning.push("Tobacco cigarettes: " + tobaccoUseAnswer);
+      }
+      if (eCigUseAnswer) {
+        arrMeaning.push("E-Cigarettes: " + eCigUseAnswer);
+      }
       return arrMeaning.join("|");
     },
     meaningRowLabel: "Summary",
@@ -493,20 +495,27 @@ const questionnaireConfigsRaw = {
     ],
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
-      let arrMeaning = [];
-      responses.forEach((response) => {
-        const answered = response.answer != null && response.answer !== undefined;
-        if (linkIdEquals(response.id, "Symptoms-bothers-a-lot", "strict")) {
-          if (answered) {
-            arrMeaning.push("Bothers a lot: " + response.answer);
-          }
-        }
-        if (linkIdEquals(response.id, "Symptoms-bothers-some", "strict")) {
-          if (answered) {
-            arrMeaning.push("Bothers some: " + response.answer);
-          }
-        }
-      });
+      const arrMeaning = [];
+      const bothersALotResponse = responses.find((response) =>
+        linkIdEquals(response.id, "Symptoms-bothers-a-lot", "strict"),
+      );
+      const bothersALotAnswer =
+        bothersALotResponse?.answer != null && bothersALotResponse.answer !== undefined
+          ? bothersALotResponse.answer
+          : null;
+      const bothersSomeResponse = responses.find((response) =>
+        linkIdEquals(response.id, "Symptoms-bothers-some", "strict"),
+      );
+      const bothersSomeAnswer =
+        bothersSomeResponse?.answer != null && bothersSomeResponse.answer !== undefined
+          ? bothersSomeResponse.answer
+          : null;
+      if (bothersALotAnswer) {
+        arrMeaning.push("Bothers a lot: " + bothersALotAnswer);
+      }
+      if (bothersSomeAnswer) {
+        arrMeaning.push("Bothers some: " + bothersSomeAnswer);
+      }
       return arrMeaning.join("|");
     },
     skipChart: true,
