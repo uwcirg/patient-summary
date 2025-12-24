@@ -47,7 +47,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
    * @param {string|null} config.scoringQuestionId
    * @param {Object} [config.scoringParams]
    * @param {string[]} [config.questionLinkIds]
-   * @param {string[]}[config.subScoringQuestionIds]
+   * @param {Object}[config.subScoringQuestions]
    * @param {'strict'|'fuzzy'} [config.questionnaireMatchMode]
    * @param {'strict'|'fuzzy'} [config.linkIdMatchMode]
    * @param {number} config.highSeverityScoreCutoff
@@ -78,7 +78,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       questionnaireName: config.questionnaireName ?? "",
       questionnaireUrl: config.questionnaireUrl ?? "",
       scoringQuestionId: norm(config.scoringQuestionId) ?? "",
-      subScoringQuestionIds: normArr(config.subScoringQuestionIds),
+      subScoringQuestions: config.subScoringQuestions,
       scoringParams: config.scoringParams ?? {},
       questionLinkIds: normArr(config.questionLinkIds),
       questionnaireMatchMode: config.questionnaireMatchMode ?? "fuzzy",
@@ -296,7 +296,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   isNonScoreLinkId(linkId, config = {}) {
     if (!linkId) return false;
     if (config?.questionLinkIds?.indexOf(linkId) !== -1) return true;
-    const subScoreQuestionIds = !isEmptyArray(config?.subScoringQuestionIds) ? config.subScoringQuestionIds : [];
+    const subScoreQuestionIds = !isEmptyArray(config?.subScoringQuestions)
+      ? config.subScoringQuestions.map((o) => o.linkId)
+      : [];
     return (
       !linkIdEquals(linkId, config?.scoringQuestionId) && !subScoreQuestionIds.find((id) => linkIdEquals(id, linkId))
     );
@@ -642,7 +644,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const flat = this.flattenResponseItems(qr.item);
 
-    const { score, scoringQuestionScore, scoreLinkIds } = calculateQuestionnaireScore(
+    const { score, subScores, scoringQuestionScore, scoreLinkIds } = calculateQuestionnaireScore(
       questionnaire,
       flat,
       config,
@@ -660,7 +662,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (totalItems === 0 && score != null) totalItems = 1;
     if (totalAnsweredItems === 0 && score != null) totalAnsweredItems = 1;
 
-    return { score, scoringQuestionScore, totalAnsweredItems, totalItems };
+    return { score, subScores, scoringQuestionScore, totalAnsweredItems, totalItems };
   }
 
   getColumnObjects(columns, qr, config = {}) {
@@ -690,7 +692,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const rows = (questionnaireResponses || []).map((qr, rIndex) => {
       const flat = this.flattenResponseItems(qr.item);
-      const { score, scoringQuestionScore, totalAnsweredItems, totalItems } =
+      const { score, subScores, scoringQuestionScore, totalAnsweredItems, totalItems } =
         this.getScoreStatsFromQuestionnaireResponse(qr, questionnaire, config);
       const source = this.getDataSource(qr);
       let responses = this.formattedResponses(questionnaire?.item ?? [], flat, config).map((item) => {
@@ -710,6 +712,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         responses,
         score,
         scoringQuestionScore,
+        subScores,
         totalItems,
         totalAnsweredItems,
         authoredDate: qr.authored,

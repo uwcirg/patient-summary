@@ -144,7 +144,7 @@ function warnIfScoringIdsAreInQuestionLinkIds(config) {
   const mode = config?.linkIdMatchMode ?? "fuzzy";
 
   const scoringId = typeof config?.scoringQuestionId === "string" ? config.scoringQuestionId : null;
-  const subIds = Array.isArray(config?.subScoringQuestionIds) ? config.subScoringQuestionIds : [];
+  const subIds = Array.isArray(config?.subScoringQuestions) ? config.subScoringQuestions.map((o) => o.linkId) : [];
 
   const contained = [];
 
@@ -186,7 +186,7 @@ function bootstrapInstrumentConfigMap(map) {
  * @param {string} questionnaireUrl
  * @param {string|null} scoringQuestionId linkId of the question used for scoring
  * @param {string[]} [questionLinkIds] optional, linkIds of questions to include, usually specified if linkId can be different for a question /1111 or 1111
- * @param {string[]}[subScoringQuestionIds] optional, linkIds of sub-questions to include for scoring breakdowns
+ * @param {string[]}[subScoringQuestions] optional, object of sub-questions to include for scoring breakdowns
  * @param {'strict'|'fuzzy'} [questionnaireMatchMode] used when matching a Questionnaire FHIR resource to this config
  * @param {'strict'|'fuzzy'} [linkIdMatchMode]
  * @param {number} highSeverityScoreCutoff
@@ -194,8 +194,8 @@ function bootstrapInstrumentConfigMap(map) {
  * @param {number} minimumScore
  * @param {Object} [fallbackScoreMap] map of linkId to score
  * @param {{min:number,label:string,meaning?:string}[]} [config.severityBands]
- * @param {function} fallbackMeaningFunc
- * @param {boolean} displayMeaningNotScore
+ * @param {function} fallbackMeaningFunc function to derive meaning from severity and responses
+ * @param {boolean} displayMeaningNotScore if true, display meaning/label instead of numeric score
  * @param {string[]} [recallLinkIds] for Mini-Cog: linkIds for recall items
  * @param {string} [clockLinkId] for Mini-Cog: linkId for clock drawing item
  * @param {string[]} [recallCorrectCodes] for Mini-Cog: coded answers that count as correct for recall items
@@ -205,6 +205,14 @@ function bootstrapInstrumentConfigMap(map) {
  * @param {boolean} [skipChart] if true, do not render chart for this questionnaire
  * @param {boolean} [skipMeaningScoreRow] if true, the score/ meaning row in the responses table will not be rendered
  * @param {Object|Array} chartParams params for charting line/bar graphs
+ * @param {function} valueFormatter function to format score value for display
+ * @param {Object} deriveFrom configuration for deriving score from other questionnaire(s)
+ * @param {string[]} [deriveFrom.hostIds] questionnaire keys/ids to derive from
+ * @param {string} [deriveFrom.linkId] linkId of the question in the host questionnaire(s) to derive from
+ * @param {boolean} [deriveFrom.usePreviousScore] if true, use previous score from host questionnaire(s) instead of current score
+ * @param {string} [meaningQuestionId] linkId of question that contains meaning/label for the score
+ * @param {string} [alertQuestionId] linkId of question that contains alert/critical flag
+ * @param {function} yFieldValueFormatter function to format score value for chart y-axis
  * @param {array} excludeQuestionLinkIdPatterns param for pattern in link Id to exclude as a response item
  */
 const questionnaireConfigsRaw = {
@@ -667,7 +675,12 @@ const questionnaireConfigsRaw = {
     subtitle: "Last two weeks",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/phq9",
     scoringQuestionId: "/44261-6",
-    subScoringQuestionIds: ["/55758-7"],
+    subScoringQuestions: [
+      {
+        key: "PHQ-2",
+        linkId: "/55758-7",
+      },
+    ],
     maximumScore: 27,
     questionLinkIds: [
       "/44250-9",
@@ -830,6 +843,16 @@ const questionnaireConfigsRaw = {
     minimumScore: 0,
     maximumScore: 38,
     //scoringQuestionId: "AUDIT-score",
+    subScoringQuestions: [
+      {
+        key: "AUDIT-C-score",
+        linkId: "AUDIT-C-score",
+      },
+      {
+        key: "AUDIT-score",
+        linkId: "AUDIT-score",
+      },
+    ],
     displayMeaningNotScore: true,
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";

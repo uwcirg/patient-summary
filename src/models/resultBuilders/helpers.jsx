@@ -492,11 +492,26 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
     score = questionScores.reduce((sum, n) => sum + (n ?? 0), 0);
   }
 
+  const subScores = {};
+  const subDefs = config?.subScoringQuestions;
+
+  if (!isEmptyArray(subDefs)) {
+    for (const def of subDefs) {
+      const k = def?.key ?? def?.linkId;
+      const linkId = def?.linkId;
+      if (!k || !linkId) continue;
+
+      const v = ctx.getScoringByResponseItem(questionnaire, responseItemsFlat, linkId, config);
+      subScores[k] = v ?? null;
+    }
+  }
+
   return {
     score,
     scoringQuestionScore,
     questionScores,
     scoreLinkIds,
+    subScores
   };
 }
 
