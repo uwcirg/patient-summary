@@ -199,6 +199,7 @@ export default function ScoringSummary(props) {
           verticalAlign: "top",
           textAlign: "center",
           height: "100%",
+          minWidth: "132px"
         },
         size: "small",
       },

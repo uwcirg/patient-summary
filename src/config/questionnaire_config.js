@@ -388,7 +388,7 @@ const questionnaireConfigsRaw = {
         housingResponse?.answer != null && housingResponse.answer !== undefined ? housingResponse.answer : null;
       return housingAnswer;
     },
-    meaningRowLabel: "Status",
+    meaningRowLabel: "Summary",
     skipChart: true,
   },
   "CIRG-CNICS-IPV4": {

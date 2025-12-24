@@ -91,6 +91,7 @@ p {
 }
 .flex {
   display: flex !important;
+  gap: 4px;
 }
 .muted-text {
   color: $muted-text-color;

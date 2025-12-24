@@ -511,7 +511,7 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
     scoringQuestionScore,
     questionScores,
     scoreLinkIds,
-    subScores
+    subScores,
   };
 }
 
@@ -671,6 +671,16 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
   skeleton.sections.forEach((section) => {
     const tables = section.tables;
     if (isEmptyArray(tables)) return true;
+    const keysToMatch = tables.map((table) => table.dataKeysToMatch ?? []).flat();
+    const arrDates = keysToMatch.flatMap((key) => {
+      const d = summaryData[key];
+      if (!d || isEmptyArray(d.chartData?.data)) return [];
+      return d.chartData.data.map((o) => o.date);
+    });
+    const dates = !isEmptyArray(arrDates) ? [...new Set(arrDates)] : [];
+    let xDomain = getDateDomain(dates, {
+      padding: dates.length <= 2 ? 0.25 : 0.05,
+    });
     tables.forEach((table) => {
       const dataKeysToMatch = table.dataKeysToMatch;
       let rows = [];
@@ -678,15 +688,6 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
       if (isEmptyArray(dataKeysToMatch)) {
         return true;
       }
-      const arrDates = dataKeysToMatch.flatMap((key) => {
-        const d = summaryData[key];
-        if (!d || isEmptyArray(d.chartData?.data)) return [];
-        return d.chartData.data.map((o) => o.date);
-      });
-      const dates = !isEmptyArray(arrDates) ? [...new Set(arrDates)] : [];
-      let xDomain = getDateDomain(dates, {
-        padding: dates.length <= 2 ? 0.15 : 0.05,
-      });
       dataKeysToMatch.forEach((key) => {
         const matchData = summaryData[key];
         const processedData = getProcessedQuestionnaireData(key, { summaryData, bundle });

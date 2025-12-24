@@ -48,10 +48,10 @@ export default function CustomTooltip({
             </div>
           )}
           {meaning && (
-            <div className="meaning-item" style={{ whiteSpace: "pre-line" }}>
+            <div className="meaning-item flex" style={{ whiteSpace: "pre-line" }}>
               <span style={{ color: FONT_COLOR }}>
                 meaning:
-              </span>{" "}
+              </span>
               <span>{String(meaning)}</span>
             </div>
           )}
