@@ -1,14 +1,24 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { getLocaleDateStringFromDate } from "@/util";
-export default function CustomTooltip({ xFieldKey, xLabelKey, active, payload, tooltipLabelFormatter, yFieldKey, yLabel }) {
+export default function CustomTooltip({
+  xFieldKey,
+  xLabelKey,
+  active,
+  payload,
+  yFieldValueFormatter,
+  tooltipLabelFormatter,
+  yFieldKey,
+  yLabel,
+}) {
   if (!active || !payload || !payload.length) return null;
 
   // The original data object for this x-position
   const d = payload[0].payload ?? {};
-  const rawDate = d[xLabelKey] ?? d[xFieldKey]  ?? d.date;
+  const rawDate = d[xLabelKey] ?? d[xFieldKey] ?? d.date;
   const meaning = d.meaning ?? d.scoreMeaning ?? d.label;
-  const score = d[yFieldKey] ?? d.score;
+  const scoreRaw = d[yFieldKey] ?? d.score;
+  const scoreDisplay = typeof yFieldValueFormatter === "function" ? yFieldValueFormatter(scoreRaw, d) : scoreRaw;
 
   // use provided formatter; else a default
   const fmtDate =
@@ -30,11 +40,11 @@ export default function CustomTooltip({ xFieldKey, xLabelKey, active, payload, t
       <div className="tooltip-label">{fmtDate}</div>
 
       {/* Single-series summary line (falls back to multi if present) */}
-      {meaning != null || score != null ? (
+      {meaning != null || scoreDisplay != null ? (
         <div style={{ marginBottom: multiValues.length > 1 ? 8 : 0 }}>
-          {score != null && (
+          {scoreDisplay != null && (
             <div>
-              <span style={{ color: FONT_COLOR }}>{yLabel ? yLabel : "score"}:</span> {String(score)}
+              <span style={{ color: FONT_COLOR }}>{yLabel ? yLabel : "score"}:</span> {String(scoreDisplay)}
             </div>
           )}
           {meaning && (
@@ -85,4 +95,5 @@ CustomTooltip.propTypes = {
   yLabel: PropTypes.string,
   yFieldKey: PropTypes.string,
   tooltipLabelFormatter: PropTypes.func,
+  yFieldValueFormatter: PropTypes.func,
 };

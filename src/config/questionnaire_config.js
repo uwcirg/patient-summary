@@ -799,7 +799,7 @@ const questionnaireConfigsRaw = {
     title: "Visual Analog Scale",
     subtitle: "Past 4 weeks",
     instrumentName: "VAS",
-    displayMeaningNotScore: true,
+    scoringQuestionId: "ARV-VAS",
     deriveFrom: {
       hostIds: ["CIRG-CNICS-ARV"], // one or many hosts
       linkId: "ARV-VAS", // the single item to keep
@@ -810,8 +810,17 @@ const questionnaireConfigsRaw = {
         id: "result",
       },
     ],
-    skipMeaningScoreRow: true,
-    skipChart: true,
+    valueFormatter: (value) => (value ? `${value} %` : ""),
+    chartParams: {
+      ...CHART_CONFIG.default,
+      title: "ART Adherence (VAS)",
+      minimumYValue: 0,
+      maximumYValue: 100,
+      xLabel: "",
+      yLabel: "value",
+      yFieldValueFormatter: (value) => (value ? `${value} %` : ""),
+      type: "barchart",
+    },
   },
   "CIRG-CNICS-AUDIT": {
     title: "Alcohol Score",
@@ -841,7 +850,7 @@ const questionnaireConfigsRaw = {
       return arrMeaning.join("|");
     },
     //chartParams: { ...CHART_CONFIG.default, title: "Alcohol Score", minimumYValue: 0, maximumYValue: 38, xLabel: "" },
-    skipChart: true
+    skipChart: true,
   },
   "CIRG-MINI-SCORE": {
     key: "CIRG-MINI-SCORE",

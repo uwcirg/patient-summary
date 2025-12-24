@@ -92,9 +92,9 @@ export const report_config = {
       tables: [
         {
           id: "table_art_adherence",
-          layout: "simple",
+          layout: "two-columns",
           dataKeysToMatch: ["CIRG-SRS", "CIRG-Last-Missed-Dose", "CIRG-VAS"],
-          title: "Antiretroviral Adherence",
+          title: "Antiretroviral (ART) Adherence",
           hiddenColumns: ["id", "source", "numAnswered", "scoreMeaning", "comparison"],
           columns: [
             {

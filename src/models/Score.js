@@ -1,3 +1,4 @@
+import { isNumber } from "@util";
 import { severityFromScore } from "./resultBuilders/helpers";
 class Score {
   constructor(score, scoreParams = {}) {
@@ -26,6 +27,11 @@ class Score {
 
   get previousScore() {
     return this.scoreParams?.previousScore;
+  }
+
+  get displayValue() {
+    const formatter = this.scoreParams?.valueFormatter;
+    return isNumber(this.score) ? (formatter? formatter(this.score): this.score): "N/A";
   }
 
   get textColorClass() {

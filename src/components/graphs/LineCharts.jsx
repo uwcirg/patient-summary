@@ -48,6 +48,7 @@ export default function LineCharts(props) {
     tooltipLabelFormatter,
     xTickLabelAngle,
     xFieldKey,
+    yFieldValueFormatter,
     xLabel,
     xLabelVisible,
     xDomain,
@@ -355,6 +356,7 @@ export default function LineCharts(props) {
       angle={xTickLabelAngle ?? 0}
       connectNulls={false}
       ticks={dedupedTicks}
+      padding={{ left: 30, right: 30 }}
     >
       {xLabel && xLabelVisible && <Label value={xLabel} offset={-8} position="insideBottom" />}
     </XAxis>
@@ -493,6 +495,7 @@ export default function LineCharts(props) {
           xFieldKey={xFieldKey}
           xLabelKey="originalDate"
           yLabel={yLabel}
+          yFieldValueFormatter={yFieldValueFormatter}
         />
       )}
     />
@@ -814,6 +817,7 @@ LineCharts.propTypes = {
   tooltipLabelFormatter: PropTypes.func,
   xDomain: PropTypes.array,
   xFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  yFieldValueFormatter: PropTypes.func,
   xLabel: PropTypes.string,
   yLabelVisible: PropTypes.bool,
   xTickLabelAngle: PropTypes.number,

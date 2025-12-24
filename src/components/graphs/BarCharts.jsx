@@ -26,6 +26,7 @@ export default function BarCharts(props) {
     xDomain,
     xTickFormatter,
     xFieldKey, // "date"
+    yFieldValueFormatter,
     xLabel,
     yLabel,
     xLabelVisible,
@@ -101,7 +102,7 @@ export default function BarCharts(props) {
 
     // Dynamic spread width: use 0.5% of total time range, with min/max bounds
     const minSpread = 2 * 60 * 60 * 1000; // Minimum: 2 hours
-    const maxSpread = 7 * 24 * 60 * 60 * 1000; // Maximum: 7 days
+    const maxSpread = 6 * 24 * 60 * 60 * 1000; // Maximum: 6 days
     const dynamicSpreadWidth = Math.max(minSpread, Math.min(maxSpread, timeRangeMs * 0.005));
 
     console.log("BarChart - Dynamic spread calculation:", {
@@ -203,6 +204,7 @@ export default function BarCharts(props) {
     // If custom xDomain is provided, use it
     if (xDomain) {
       console.log("BarChart using custom xDomain:", {
+        title: title,
         start: new Date(xDomain[0]).toLocaleDateString(),
         end: new Date(xDomain[1]).toLocaleDateString(),
         rawDomain: xDomain,
@@ -229,7 +231,7 @@ export default function BarCharts(props) {
     });
 
     return domain;
-  }, [parsed.length, xDomain]);
+  }, [parsed.length, xDomain, title]);
 
   // Calculate unique date ticks (one per calendar day)
   const calculatedTicks = useMemo(() => {
@@ -286,6 +288,7 @@ export default function BarCharts(props) {
       tickMargin={12}
       ticks={calculatedTicks}
       interval="preserveStartEnd"
+      padding={{ left: 30, right: 30 }}
     >
       {xLabel && xLabelVisible && <Label value={xLabel} offset={-8} position="insideBottom" />}
     </XAxis>
@@ -314,6 +317,7 @@ export default function BarCharts(props) {
           xLabelKey="originalTimestamp"
           xFieldKey={xFieldKey}
           yLabel={yLabel}
+          yFieldValueFormatter={yFieldValueFormatter}
         />
       )}
     />
@@ -392,6 +396,7 @@ BarCharts.propTypes = {
   lgChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   xTickFormatter: PropTypes.func,
   xFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  yFieldValueFormatter: PropTypes.func,
   xLabel: PropTypes.string,
   xLabelVisible: PropTypes.bool,
   minimumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),

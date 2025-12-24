@@ -1056,7 +1056,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const { key, id, ...restOfConfig } = config ?? {};
     const chartParams = { ...chartConfig, ...restOfConfig, ...(restOfConfig?.chartParams ?? {}), xDomain };
-
     const tableResponseData = this._formatTableResponseData(evalData, config);
     const printResponseData = this._formatPrintResponseData(evalData, config);
     const scoringSummaryData = this._formatScoringSummaryData(evalData, {

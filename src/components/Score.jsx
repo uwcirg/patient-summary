@@ -4,14 +4,12 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import ErrorIcon from "@mui/icons-material/Error";
 import WarningIcon from "@mui/icons-material/ReportProblem";
-import { isNumber } from "@util";
 import Score from "@models/Score";
 
 export default function Scoring(props) {
   const { score, justifyContent, alignItems, scoreParams } = props;
   const oScore = new Score(score, scoreParams);
-  const getScoreDisplay = () => <span data-testid="score">{isNumber(score) ? score : "N/A"}</span>;
-
+  const getScoreDisplay = () => oScore.displayValue;
   // display alert icon for score that has high severity
   if (oScore.isInRange()) {
     const renderIcon = () => {
