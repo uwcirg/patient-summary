@@ -713,6 +713,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         score,
         scoringQuestionScore,
         subScores,
+        ...(subScores ?? {}),
         totalItems,
         totalAnsweredItems,
         authoredDate: qr.authored,

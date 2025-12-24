@@ -1,6 +1,6 @@
 import { isEmptyArray } from "@util";
 import { linkIdEquals } from "@util/fhirUtil";
-import CHART_CONFIG from "./chart_config";
+import CHART_CONFIG, {SUCCESS_COLOR} from "./chart_config";
 import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS } from "@/consts";
 import QuestionnaireScoringBuilder from "@/models/resultBuilders/QuestionnaireScoringBuilder";
 
@@ -358,10 +358,10 @@ const questionnaireConfigsRaw = {
       let arrMeaning = [];
       responses.forEach((response) => {
         const answered = response.answer != null && response.answer !== undefined;
-        if (linkIdEquals(response.id, "FROP-Com-0")) {
+        if (linkIdEquals(response.id, "FROP-Com-0", "strict")) {
           arrMeaning.push(answered ? response.answer.replace(/\bfalls?\b/g, "").trim() : "");
         }
-        if (linkIdEquals(response.id, "FROP-Com-1")) {
+        if (linkIdEquals(response.id, "FROP-Com-1", "strict")) {
           if (answered) {
             arrMeaning.push("E/D visit: " + response.answer);
           }
@@ -386,7 +386,7 @@ const questionnaireConfigsRaw = {
       let arrMeaning = [];
       responses.forEach((response) => {
         if (response.answer) {
-          if (linkIdEquals(response.id, "HOUSING-0")) {
+          if (linkIdEquals(response.id, "HOUSING-0", "strict")) {
             return true;
           } else arrMeaning.push(response.answer);
         }
@@ -420,16 +420,16 @@ const questionnaireConfigsRaw = {
       if (!severity || severity === "low") return "";
       let arrMeanings = [];
       responses.forEach((response) => {
-        if (linkIdEquals(response.linkId, "IPV4-1") && String(response.answer).toLowerCase() === "yes") {
+        if (linkIdEquals(response.linkId, "IPV4-1", "strict") && String(response.answer).toLowerCase() === "yes") {
           arrMeanings.push("Felt trapped");
         }
-        if (linkIdEquals(response.linkId, "IPV4-2") && String(response.answer).toLowerCase() === "yes") {
+        if (linkIdEquals(response.linkId, "IPV4-2", "strict") && String(response.answer).toLowerCase() === "yes") {
           arrMeanings.push("Fearful of harm");
         }
-        if (linkIdEquals(response.linkId, "IPV4-3") && String(response.answer).toLowerCase() === "yes") {
+        if (linkIdEquals(response.linkId, "IPV4-3", "strict") && String(response.answer).toLowerCase() === "yes") {
           arrMeanings.push("Sexual violence");
         }
-        if (linkIdEquals(response.linkId, "IPV4-4") && String(response.answer).toLowerCase() === "yes") {
+        if (linkIdEquals(response.linkId, "IPV4-4", "strict") && String(response.answer).toLowerCase() === "yes") {
           arrMeanings.push("Physical violence");
         }
       });
@@ -456,12 +456,12 @@ const questionnaireConfigsRaw = {
       let arrMeaning = [];
       responses.forEach((response) => {
         const answered = response.answer != null && response.answer !== undefined;
-        if (linkIdEquals(response.id, "Smoking-Tobacco-Cigs-Summary")) {
+        if (linkIdEquals(response.id, "Smoking-Tobacco-Cigs-Summary", "strict")) {
           if (answered) {
             arrMeaning.push("Tobacco cigarettes: " + response.answer);
           }
         }
-        if (linkIdEquals(response.id, "E-Cigarettes-Summary")) {
+        if (linkIdEquals(response.id, "E-Cigarettes-Summary", "strict")) {
           if (answered) {
             arrMeaning.push("E-Cigarettes: " + response.answer);
           }
@@ -496,12 +496,12 @@ const questionnaireConfigsRaw = {
       let arrMeaning = [];
       responses.forEach((response) => {
         const answered = response.answer != null && response.answer !== undefined;
-        if (linkIdEquals(response.id, "Symptoms-bothers-a-lot")) {
+        if (linkIdEquals(response.id, "Symptoms-bothers-a-lot", "strict")) {
           if (answered) {
             arrMeaning.push("Bothers a lot: " + response.answer);
           }
         }
-        if (linkIdEquals(response.id, "Symptoms-bothers-some")) {
+        if (linkIdEquals(response.id, "Symptoms-bothers-some", "strict")) {
           if (answered) {
             arrMeaning.push("Bothers some: " + response.answer);
           }
@@ -842,7 +842,7 @@ const questionnaireConfigsRaw = {
     instrumentName: "CNICS AUDIT (alcohol consumption questions)",
     minimumScore: 0,
     maximumScore: 38,
-    //scoringQuestionId: "AUDIT-score",
+    scoringQuestionId: "AUDIT-score",
     subScoringQuestions: [
       {
         key: "AUDIT-C-score",
@@ -854,26 +854,60 @@ const questionnaireConfigsRaw = {
       },
     ],
     displayMeaningNotScore: true,
+    linkIdMatchMode: "strict",
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
       let arrMeaning = [];
-      responses.forEach((response) => {
-        const answered = response.answer != null && response.answer !== undefined;
-        if (linkIdEquals(response.id, "AUDIT-C-score")) {
-          if (answered) {
-            arrMeaning.push(response.answer + " (AUDIT-C)");
-          }
-        }
-        if (linkIdEquals(response.id, "AUDIT-score")) {
-          if (answered) {
-            arrMeaning.push(response.answer + " (AUDIT)");
-          }
-        }
-      });
+      const scoreToReportResponse = responses.find((response) =>
+        linkIdEquals(response.id, "AUDIT-qnr-to-report", "strict"),
+      );
+      const scoreToReport = scoreToReportResponse ? scoreToReportResponse.answer : null;
+      const interpretationResponse = responses.find((response) =>
+        linkIdEquals(
+          response.id,
+          scoreToReport === "AUDIT-C" ? "AUDIT-C-score-interpretation" : "AUDIT-score-interpretation",
+          "strict",
+        ),
+      );
+      const interpretation = interpretationResponse ? interpretationResponse.answer : null;
+      const auditCResponse = responses.find((response) => linkIdEquals(response.id, "AUDIT-C-score", "strict"));
+      const auditCScore = auditCResponse ? parseInt(auditCResponse.answer, 10) : null;
+      const auditResponse = responses.find((response) => linkIdEquals(response.id, "AUDIT-score", "strict"));
+      const auditScore = auditResponse ? parseInt(auditResponse.answer, 10) : null;
+      if (scoreToReport === "AUDIT-C" && auditCScore != null) {
+        arrMeaning.push(auditCScore + " (AUDIT-C)");
+      } else if (scoreToReport === "AUDIT" && auditScore != null) {
+        arrMeaning.push(auditScore + " (AUDIT)");
+      }
+      if (!isEmptyArray(arrMeaning) && interpretation) {
+        arrMeaning.push(interpretation);
+      }
       return arrMeaning.join("|");
     },
-    //chartParams: { ...CHART_CONFIG.default, title: "Alcohol Score", minimumYValue: 0, maximumYValue: 38, xLabel: "" },
-    skipChart: true,
+    chartParams: {
+      ...CHART_CONFIG.default,
+      title: "Alcohol Score",
+      minimumYValue: 0,
+      maximumYValue: 38,
+      xLabel: "",
+      scoringQuestionId: "AUDIT-score",
+      yLineFields: [
+        {
+          key: "AUDIT-C-score",
+          color: "#3b82f6", // bloo
+          strokeWidth: 2,
+          legendType: "line",
+          //strokeDasharray: "2 2", // dashed line
+        },
+        {
+          key: "AUDIT-score",
+          color: SUCCESS_COLOR, // green
+          strokeWidth: 2,
+          legendType: "line",
+        },
+      ],
+    },
+    // skipChart: true,
   },
   "CIRG-MINI-SCORE": {
     key: "CIRG-MINI-SCORE",

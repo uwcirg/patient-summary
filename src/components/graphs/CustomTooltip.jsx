@@ -16,7 +16,7 @@ export default function CustomTooltip({
   // The original data object for this x-position
   const d = payload[0].payload ?? {};
   const rawDate = d[xLabelKey] ?? d[xFieldKey] ?? d.date;
-  const meaning = d.meaning ?? d.scoreMeaning ?? d.label;
+  const meaning = (d.meaning ?? d.scoreMeaning ?? d.label ?? "").replace(/\|/g, "\n");
   const scoreRaw = d[yFieldKey] ?? d.score;
   const scoreDisplay = typeof yFieldValueFormatter === "function" ? yFieldValueFormatter(scoreRaw, d) : scoreRaw;
 
@@ -48,8 +48,11 @@ export default function CustomTooltip({
             </div>
           )}
           {meaning && (
-            <div>
-              <span style={{ color: FONT_COLOR }}>meaning:</span> {String(meaning)}
+            <div className="meaning-item" style={{ whiteSpace: "pre-wrap" }}>
+              <span style={{ color: FONT_COLOR }}>
+                meaning:
+              </span>{" "}
+              <span>{String(meaning)}</span>
             </div>
           )}
         </div>

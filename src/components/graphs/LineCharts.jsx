@@ -502,6 +502,7 @@ export default function LineCharts(props) {
   );
 
   const renderLegend = () => {
+  
     if (isEmptyArray(sources)) {
       return (
         <Legend
@@ -514,7 +515,7 @@ export default function LineCharts(props) {
       );
     }
 
-    // show SourceLegend only if cnics or epic exists
+    // Has sources - show source legend
     return (
       <Legend
         verticalAlign="top"
@@ -525,12 +526,12 @@ export default function LineCharts(props) {
           right: 36,
           width: "auto",
         }}
-        content={(legendProps) => <SourceLegend {...legendProps} sources={sources} />}
+        content={(legendProps) => <CustomLegend {...legendProps} sources={sources} />}
       />
     );
   };
 
-  const SourceLegend = () => {
+  const CustomLegend = (payload) => {
     const hasCnics = sources.includes("cnics");
     const hasEpic = sources.includes("epic");
     let items = [];
@@ -556,7 +557,8 @@ export default function LineCharts(props) {
         ),
       });
     }
-
+    //eslint-disable-next-line
+    const points = payload && !isEmptyArray(payload.payload) ? payload.payload : [];
     return (
       <div style={{ display: "flex", gap: 16, alignItems: "center", padding: "4px 8px" }}>
         {items.map((it) => (
@@ -566,12 +568,45 @@ export default function LineCharts(props) {
             aria-label={`${it.label} legend item`}
           >
             {it.icon}
-            <span style={{ fontSize: 12, color: "#444" }}>{it.label}</span>
+            <span style={{ fontSize: 10, color: "#444" }}>{it.label}</span>
           </div>
         ))}
+        {points.length > 1 && (
+          <div style={{ marginLeft: 16, fontSize: 10, color: "#444" }}>
+            {points.map((entry, index) => (
+              <div key={`item-${index}`} style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
+                <svg width="16" height="16" style={{ marginRight: 4 }}>
+                  <line
+                    x1="0"
+                    y1="8"
+                    x2="16"
+                    y2="8"
+                    stroke={entry.color}
+                    strokeWidth="2"
+                    strokeDasharray={entry.payload.strokeDasharray || "0"}
+                  />
+                </svg>
+                <span style={{ fontSize: 12 }}>{entry.value.replace(/[_,-]/g, " ")}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
+
+  // const renderCustomLegend = (props) => {
+  //   const { payload } = props;
+  //   return (
+  //     <ul>
+  //       {payload.map((entry, index) => (
+  //         <li key={`item-${index}`} style={{ color: entry.color }}>
+  //           {entry.value}
+  //         </li>
+  //       ))}
+  //     </ul>
+  //   );
+  // };
 
   const renderMultipleLines = () =>
     yLineFields.map((item, index) => (
@@ -582,6 +617,7 @@ export default function LineCharts(props) {
         type="monotone"
         dataKey={item.key}
         stroke={item.color}
+        fill={item.fill ? item.fill : item.color}
         strokeWidth={item.strokeWidth ? item.strokeWidth : 2}
         strokeDasharray={item.strokeDasharray ? item.strokeDasharray : 0}
         legendType={item.legendType ? item.legendType : "line"}

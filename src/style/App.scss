@@ -130,6 +130,9 @@ p {
     }
   }
 }
+.meaning-item {
+  white-space: pre;
+}
 .questionnaire-title::first-letter {
   text-transform: capitalize;
 }
