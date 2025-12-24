@@ -34,7 +34,7 @@ const flexWrapConfig = {
   lg: "nowrap"
 };
 
-export default function PROReport() {
+export default function PROReport(props) {
   const renderTwoColumns = useCallback((table) => {
     return (
       <Stack
@@ -49,6 +49,7 @@ export default function PROReport() {
           data={table.rows}
           disableLinks={true}
           enableResponsesViewer={true}
+          questionnaires={props.questionnaires}
         />
         <Box>
           {!isEmptyArray(table.charts) &&
@@ -65,7 +66,7 @@ export default function PROReport() {
         </Box>
       </Stack>
     );
-  }, []);
+  }, [props.questionnaires]);
 
   const renderTable = useCallback((table) => {
     return (
@@ -91,13 +92,14 @@ export default function PROReport() {
             disableLinks={true}
             enableResponsesViewer={true}
             tableStyle={tableStyle}
+            questionnaires={props.questionnaires}
             {...table}
           />
         )}
         {table.layout === "two-columns" && renderTwoColumns(table)}
       </Box>
     );
-  }, [renderTwoColumns]);
+  }, [renderTwoColumns, props.questionnaires]);
 
   const sections = useMemo(() => {
     return report_config.sections.map((section, index) => (
@@ -117,5 +119,5 @@ export default function PROReport() {
 }
 
 PROReport.propTypes = {
-  summaries: PropTypes.object,
+  questionnaires: PropTypes.array,
 };

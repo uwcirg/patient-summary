@@ -15,7 +15,7 @@ import Stack from "@mui/material/Stack";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
-import { getResponseColumns } from "@models/resultBuilders/helpers";
+import { getQuestionnaireFromRowData, getResponseColumns } from "@models/resultBuilders/helpers";
 import Scoring from "@components/Score";
 import { getDisplayQTitle, getLocaleDateStringFromDate, isEmptyArray, isNumber, scrollToAnchor } from "@util";
 import ResponsesViewer from "../ResponsesViewer";
@@ -199,7 +199,7 @@ export default function ScoringSummary(props) {
           verticalAlign: "top",
           textAlign: "center",
           height: "100%",
-          minWidth: "132px"
+          minWidth: "132px",
         },
         size: "small",
       },
@@ -222,7 +222,7 @@ export default function ScoringSummary(props) {
             responsesTileTitle={displayTitle}
             tableData={row?.tableResponseData}
             columns={getResponseColumns(row?.responseData, row)}
-            questionnaire={row?.questionnaire}
+            questionnaire={getQuestionnaireFromRowData(row, props.questionnaires)}
             buttonStyle={{ width: "100%", maxWidth: 108, margin: "auto" }}
           />
         ) : (
@@ -511,4 +511,5 @@ ScoringSummary.propTypes = {
   emptyMessage: PropTypes.string,
   tableStyle: PropTypes.object,
   containerStyle: PropTypes.object,
+  questionnaires: PropTypes.array,
 };

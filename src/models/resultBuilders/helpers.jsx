@@ -574,6 +574,18 @@ export function getScoreParamsFromResponses(responses, config = {}) {
     scoringParams: scoringParams,
   };
 }
+export function getQuestionnaireFromRowData(rowData, qResources = []) {
+  if (!rowData) return null;
+  if (rowData.questionnaire) return rowData.questionnaire;
+  const id = rowData.deriveFrom && rowData.deriveFrom.hostIds ? rowData.deriveFrom.hostIds : null;
+  const matchedResources = getResourcesByResourceType(qResources, "questionnaire");
+  if (!id || isEmptyArray(matchedResources)) return null;
+  if (Array.isArray(id)) {
+    if (!isEmptyArray(id)) return matchedResources.find((q) => id[0].includes(q?.id));
+    return null;
+  }
+  return matchedResources.find((q) => id.includes(q?.id));
+}
 
 export function getResponseColumns(data, config = {}) {
   if (isEmptyArray(data)) return [];
