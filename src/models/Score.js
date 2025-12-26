@@ -31,7 +31,7 @@ class Score {
 
   get displayValue() {
     const formatter = this.scoreParams?.valueFormatter;
-    return isNumber(this.score) ? (formatter? formatter(this.score): this.score): "N/A";
+    return isNumber(this.score) ? (formatter? formatter(this.score): this.score): "";
   }
 
   get textColorClass() {

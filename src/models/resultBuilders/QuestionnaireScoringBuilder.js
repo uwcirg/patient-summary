@@ -8,6 +8,7 @@ import {
   isNonEmptyString,
   isNumber,
   isPlainObject,
+  isValidDate,
   fuzzyMatch,
   normalizeStr,
   objectToString,
@@ -18,14 +19,26 @@ import FhirResultBuilder from "./FhirResultBuilder";
 import {
   buildQuestionnaire,
   calculateQuestionnaireScore,
+  getComparisonDisplayIconByRow,
+  getNumAnsweredDisplayByRow,
+  getResponseColumns,
   getScoreParamsFromResponses,
+  getScoreRangeDisplayByRow,
+  getQuestionnaireFromRowData,
   summarizeCIDASHelper,
   summarizeMiniCogHelper,
   summarizeSLUMHelper,
+  getTitleByRow,
 } from "./helpers";
 import { DEFAULT_FALLBACK_SCORE_MAPS, DEFAULT_VAL_TO_LOIN_CODE } from "@/consts";
 import questionnaireConfig from "@/config/questionnaire_config";
-import { conceptText, getQuestionnaireItemByLinkId, linkIdEquals, normalizeLinkId } from "@/util/fhirUtil";
+import {
+  conceptText,
+  getQuestionnaireItemByLinkId,
+  getResourcesByResourceType,
+  linkIdEquals,
+  normalizeLinkId,
+} from "@/util/fhirUtil";
 import { getDateDomain } from "@/config/chart_config";
 
 const RT_QR = "questionnaireresponse";
@@ -708,6 +721,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         instrumentName: config?.instrumentName ?? this.questionnaireIDFromQR(qr),
         date: qr.authored ?? null,
         displayDate: getLocaleDateStringFromDate(qr.authored),
+        columnDisplayDate: `${getLocaleDateStringFromDate(qr.authored, "YYYY-MM-DD HH:mm")} ${source ? "\n\r" + source : ""}`.trim(),
         source,
         responses,
         score,
@@ -721,6 +735,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         config: config,
         questionnaire,
         questionnaireResponse: qr,
+        patientBundle: this.patientBundle,
       };
     });
 
@@ -768,14 +783,28 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   _formatScoringSummaryData = (data, opts = {}) => {
     if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
     const subtitle = opts?.config?.subtitle ? this._normalizeDisplay(opts?.config?.subtitle, data[0]) : "";
+    const scoreParams = getScoreParamsFromResponses(data, opts?.config);
+    const dataProps = { ...data[0], ...scoreParams }
     return {
       ...data[0],
-      ...getScoreParamsFromResponses(data, opts?.config),
+      ...scoreParams,
+      comparisonIcon: getComparisonDisplayIconByRow(
+        dataProps,
+        { fontSize: "small", sx: { verticalAlign: "middle" } },
+      ),
+      numAnsweredDisplay: getNumAnsweredDisplayByRow(dataProps),
+      scoreRangeDisplay: getScoreRangeDisplayByRow(dataProps),
+      rowTitle:  getTitleByRow(dataProps),
       subtitle,
+      responseColumns: getResponseColumns(data, data[0]),
       displayMeaningOnly: this._hasMeaningOnlyData(data),
       responseData: data,
       tableResponseData: opts?.tableResponseData ?? this._formatTableResponseData(data),
       printResponseData: opts?.printResponseData ?? this._formatPrintResponseData(data),
+      questionnaire: getQuestionnaireFromRowData(
+        data[0],
+        getResourcesByResourceType(this.patientBundle, "Questionnaire"),
+      ),
     };
   };
 
@@ -1037,7 +1066,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     // compute scoring/series/params/chart domain/etc.
     const scoringData =
       !config?.skipChart && !isEmptyArray(evalData)
-        ? evalData.filter((item) => item && !isEmptyArray(item.responses) && isNumber(item.score) && item.date)
+        ? evalData.filter(
+            (item) => item && !isEmptyArray(item.responses) && isNumber(item.score) && isValidDate(item.date),
+          )
         : null;
 
     const chartConfig = getChartConfig(questionnaire?.id);

@@ -37,7 +37,18 @@ export function getDisplayQTitle(questionnaireId) {
 }
 
 export function isValidDate(date) {
-  return date && Object.prototype.toString.call(date) === "[object Date]" && !isNaN(date);
+  // If it's already a Date object, check if it's valid
+  if (Object.prototype.toString.call(date) === "[object Date]") {
+    return !isNaN(date);
+  }
+
+  // If it's a string, try to parse it
+  if (typeof date === "string") {
+    const parsed = new Date(date);
+    return !isNaN(parsed);
+  }
+
+  return false;
 }
 
 export function getChartConfig(questionnaireId) {
@@ -463,8 +474,8 @@ export const isPlainObject = (v) =>
 
 // deep merge that preserves functions and arrays (arrays are replaced by override)
 export function deepMerge(base = {}, override = {}) {
-  const out = { ...base??{} };
-  for (const key of Object.keys(override??{})) {
+  const out = { ...(base ?? {}) };
+  for (const key of Object.keys(override ?? {})) {
     const bv = out[key];
     const ov = override[key];
     if (isPlainObject(bv) && isPlainObject(ov)) out[key] = deepMerge(bv, ov);
@@ -495,4 +506,3 @@ export function stripHtmlTags(html) {
   const doc = domParser.parseFromString(html, "text/html");
   return doc.body.textContent || "";
 }
-

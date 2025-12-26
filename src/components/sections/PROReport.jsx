@@ -1,6 +1,5 @@
 import { report_config } from "@config/report_config";
 import React, { useMemo, useCallback } from "react";
-import PropTypes from "prop-types";
 import { Box, Stack, Typography } from "@mui/material";
 import { isEmptyArray } from "@util";
 import Chart from "../Chart";
@@ -34,7 +33,7 @@ const flexWrapConfig = {
   lg: "nowrap"
 };
 
-export default function PROReport(props) {
+export default function PROReport() {
   const renderTwoColumns = useCallback((table) => {
     return (
       <Stack
@@ -49,7 +48,6 @@ export default function PROReport(props) {
           data={table.rows}
           disableLinks={true}
           enableResponsesViewer={true}
-          questionnaires={props.questionnaires}
         />
         <Box>
           {!isEmptyArray(table.charts) &&
@@ -66,7 +64,7 @@ export default function PROReport(props) {
         </Box>
       </Stack>
     );
-  }, [props.questionnaires]);
+  }, []);
 
   const renderTable = useCallback((table) => {
     return (
@@ -92,14 +90,13 @@ export default function PROReport(props) {
             disableLinks={true}
             enableResponsesViewer={true}
             tableStyle={tableStyle}
-            questionnaires={props.questionnaires}
             {...table}
           />
         )}
         {table.layout === "two-columns" && renderTwoColumns(table)}
       </Box>
     );
-  }, [renderTwoColumns, props.questionnaires]);
+  }, [renderTwoColumns]);
 
   const sections = useMemo(() => {
     return report_config.sections.map((section, index) => (
@@ -118,6 +115,3 @@ export default function PROReport(props) {
   return sections;
 }
 
-PROReport.propTypes = {
-  questionnaires: PropTypes.array,
-};

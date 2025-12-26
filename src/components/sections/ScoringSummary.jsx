@@ -3,21 +3,15 @@ import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
 import Link from "@mui/material/Link";
 import Box from "@mui/material/Box";
-import Divider from "@mui/material/Divider";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
-import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
-import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
-import NorthIcon from "@mui/icons-material/North";
-import SouthIcon from "@mui/icons-material/South";
-import { getQuestionnaireFromRowData, getResponseColumns } from "@models/resultBuilders/helpers";
 import Scoring from "@components/Score";
-import { getDisplayQTitle, getLocaleDateStringFromDate, isEmptyArray, isNumber, scrollToAnchor } from "@util";
+import { isEmptyArray, scrollToAnchor } from "@util";
 import ResponsesViewer from "../ResponsesViewer";
 import Meaning from "../Meaning";
 
@@ -38,57 +32,9 @@ export default function ScoringSummary(props) {
     return !hiddenColumns?.includes(id);
   };
 
-  const iconProps = { fontSize: "small", sx: { verticalAlign: "middle" } };
-  const getDisplayIcon = (row) => {
-    const comparison = row?.comparison;
-    const comparisonToAlert = row?.comparisonToAlert;
-    if (!comparison) return null;
-    if (comparison === "equal") return <HorizontalRuleIcon aria-label="No change" {...iconProps} />;
-    if (comparisonToAlert === "lower") {
-      if (comparison === "lower") return <SouthIcon color="error" aria-label="Change to worse" {...iconProps} />;
-      if (comparison === "higher") return <NorthIcon color="info" aria-label="Change to better" {...iconProps} />;
-      return comparison;
-    } else {
-      if (comparison === "higher") return <NorthIcon color="error" aria-label="Change to worse" {...iconProps} />;
-      if (comparison === "lower") return <SouthIcon color="info" aria-label="Change to better" {...iconProps} />;
-      return comparison;
-    }
-  };
-
   const handleClick = (e, anchorElementId) => {
     e.preventDefault();
     scrollToAnchor(anchorElementId);
-  };
-
-  const displayScoreRange = (row) => {
-    const { minScore, maxScore, minimumScore, maximumScore } = row;
-    const minScoreToUse = isNumber(minScore) ? minScore : isNumber(minimumScore) ? minimumScore : 0;
-    const maxScoreToUse = isNumber(maxScore) ? maxScore : isNumber(maximumScore) ? maximumScore : 0;
-    if (!isNumber(minScoreToUse) || !isNumber(maxScoreToUse)) return "";
-    if (minScoreToUse === maxScoreToUse) return "";
-    return `( ${minScoreToUse} - ${maxScoreToUse} )`;
-  };
-
-  const displayNumAnswered = (row) => {
-    const { totalItems, totalAnsweredItems } = row;
-    if (!totalItems && !totalAnsweredItems) return "No";
-    if (totalItems === 1 && totalAnsweredItems === 1) return "Yes";
-    if (isNumber(totalAnsweredItems) && isNumber(totalItems))
-      return (
-        <Stack
-          alignItems="center"
-          justifyContent="center"
-          spacing={0.4}
-          aria-label={`${totalAnsweredItems} of ${totalItems} items answered`}
-          role="img"
-        >
-          <Typography variant="body2">{totalAnsweredItems}</Typography>
-          <Divider flexItem sx={{ width: 24, alignSelf: "auto", backgroundColor: "rgba(132, 129, 129, 0.6)" }} />
-          <Typography variant="body2">{totalItems}</Typography>
-        </Stack>
-      );
-    if (totalAnsweredItems) return "Yes";
-    return "No";
   };
 
   // -------- styles
@@ -120,9 +66,9 @@ export default function ScoringSummary(props) {
         {value ?? "N/A"}
       </span>
     ),
-    date: (row, value) => (
+    date: (row) => (
       <Stack direction={"column"} spacing={1} alignItems={"space-between"} justifyContent={"space-between"}>
-        <Box>{value ? getLocaleDateStringFromDate(value) : ""}</Box>
+        <Box>{row.displayDate}</Box>
         {row.source && (
           <Box className="muted-text" sx={{ mt: 1, "@media print": { mt: 0 } }}>
             {row.source}
@@ -131,46 +77,26 @@ export default function ScoringSummary(props) {
       </Stack>
     ),
     score: (row) => {
-      if (row.displayMeaningNotScore) return null;
       return (
-        <>
-          {isNumber(row.score) && (
-            <Stack
-              direction="column"
-              spacing={0.75}
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ width: "100%" }}
-              className="score-wrapper"
-            >
-              <Scoring
-                score={row.score}
-                scoreParams={{ ...row, ...(row.scoringParams ?? {}) }}
-                justifyContent="space-between"
-              />
-              <Box className="no-wrap-text muted-text" sx={{ fontSize: "0.7rem" }}>
-                {displayScoreRange(row)}
-              </Box>
-            </Stack>
-          )}
-        </>
+        <Stack
+          direction="column"
+          spacing={0.75}
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ width: "100%" }}
+          className="score-wrapper"
+        >
+          <Scoring
+            score={row.score}
+            scoreParams={{ ...row, ...(row.scoringParams ?? {}) }}
+            justifyContent="space-between"
+          />
+          <Box className="no-wrap-text muted-text" sx={{ fontSize: "0.7rem" }}>
+            {row.scoreRangeDisplay}
+          </Box>
+        </Stack>
       );
     },
-  };
-
-  const getTitle = (row) => {
-    if (row.title) {
-      return row.title;
-    } else if (row.instrumentName) {
-      return row.instrumentName;
-    } else if (row.key) {
-      return row.key;
-    } else {
-      if (row.questionnaire && row.questionnaire.title) {
-        return row.questionnaire.title;
-      }
-    }
-    return "Untitled Measure";
   };
 
   // -------- original columns ------------
@@ -204,7 +130,6 @@ export default function ScoringSummary(props) {
         size: "small",
       },
       renderCell: (row) => {
-        const displayTitle = getDisplayQTitle(getTitle(row));
         return !disableLinks ? (
           <Link
             onClick={(e) => handleClick(e, row.key)}
@@ -213,20 +138,20 @@ export default function ScoringSummary(props) {
             href={`#${row.key}`}
             className="instrument-link"
           >
-            {displayTitle} {row.subtitle ? row.subtitle : ""}
+            {row.rowTitle} {row.subtitle ? row.subtitle : ""}
           </Link>
         ) : props.enableResponsesViewer && !isEmptyArray(row?.responseData) ? (
           <ResponsesViewer
-            title={displayTitle}
+            title={row.rowTitle}
             subtitle={row.subtitle}
-            responsesTileTitle={displayTitle}
+            responsesTileTitle={row.rowTitle}
             tableData={row?.tableResponseData}
-            columns={getResponseColumns(row?.responseData, row)}
-            questionnaire={getQuestionnaireFromRowData(row, props.questionnaires)}
+            columns={row?.responseColumns}
+            questionnaire={row.questionnaire}
             buttonStyle={{ width: "100%", maxWidth: 108, margin: "auto" }}
           />
         ) : (
-          displayTitle
+          row.rowTitle + (row.subtitle ? "( " + row.subtitle + " ) " : "")
         );
       },
     },
@@ -244,7 +169,7 @@ export default function ScoringSummary(props) {
       },
       cellProps: { sx: { ...baseCellStyle, whiteSpace: "nowrap", padding: theme.spacing(0.5) } },
       size: "small",
-      renderCell: (row) => displayNumAnswered(row),
+      renderCell: (row) => row.numAnsweredDisplay,
     },
     {
       id: "scoreMeaning",
@@ -261,7 +186,7 @@ export default function ScoringSummary(props) {
       },
       renderCell: (row) => (
         <Stack sx={{ width: "100%" }} spacing={1} alignItems={"center"}>
-          {defaultRenderers.score(row)}
+          {!row.displayMeaningNotScore && defaultRenderers.score(row)}
           <Meaning id={row.id ?? row.key} meaning={row.meaning} alert={row.alert} warning={row.warning} />
         </Stack>
       ),
@@ -282,11 +207,10 @@ export default function ScoringSummary(props) {
       align: "center",
       headerProps: { sx: { ...baseCellStyle, borderRightWidth: 0 }, ...defaultHeaderCellProps },
       cellProps: { sx: { ...baseCellStyle, borderRightWidth: 0 }, size: "small" },
-      renderCell: (row) => getDisplayIcon(row),
+      renderCell: (row) => row.comparisonIcon,
     },
   ];
 
-  // ----- merge defaults with user-provided columns by id
   // ----- merge defaults with user-provided columns by id, and use
   // the `columns` prop as the primary ordering when provided
   const userColumns = Array.isArray(columns) ? columns : [];

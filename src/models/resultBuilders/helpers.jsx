@@ -1,5 +1,10 @@
 import React from "react";
+import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
+import NorthIcon from "@mui/icons-material/North";
+import SouthIcon from "@mui/icons-material/South";
 import {
   conceptText,
   getDefaultQuestionItemText,
@@ -10,8 +15,8 @@ import {
   makeQuestionItem,
 } from "@util/fhirUtil";
 import {
-  getLocaleDateStringFromDate,
   generateUUID,
+  getDisplayQTitle,
   isEmptyArray,
   isNil,
   isNumber,
@@ -587,10 +592,81 @@ export function getQuestionnaireFromRowData(rowData, qResources = []) {
   return matchedResources.find((q) => id.includes(q?.id));
 }
 
+export function getComparisonDisplayIconByRow(row, iconProps = {}) {
+  const comparison = row?.comparison;
+  const comparisonToAlert = row?.comparisonToAlert;
+  if (!comparison) return null;
+  if (comparison === "equal") return <HorizontalRuleIcon aria-label="No change" {...iconProps} />;
+  if (comparisonToAlert === "lower") {
+    if (comparison === "lower") return <SouthIcon color="error" aria-label="Change to worse" {...iconProps} />;
+    if (comparison === "higher") return <NorthIcon color="info" aria-label="Change to better" {...iconProps} />;
+    return comparison;
+  } else {
+    if (comparison === "higher") return <NorthIcon color="error" aria-label="Change to worse" {...iconProps} />;
+    if (comparison === "lower") return <SouthIcon color="info" aria-label="Change to better" {...iconProps} />;
+    return comparison;
+  }
+}
+
+export function getScoreRangeDisplayByRow(row) {
+  if (!row) return "";
+  const { minScore, maxScore, minimumScore, maximumScore } = row;
+  const minScoreToUse = isNumber(minScore) ? minScore : isNumber(minimumScore) ? minimumScore : 0;
+  const maxScoreToUse = isNumber(maxScore) ? maxScore : isNumber(maximumScore) ? maximumScore : 0;
+  if (!isNumber(minScoreToUse) || !isNumber(maxScoreToUse)) return "";
+  if (minScoreToUse === maxScoreToUse) return "";
+  return `( ${minScoreToUse} - ${maxScoreToUse} )`;
+}
+
+export function getNumAnsweredDisplayByRow(row) {
+  if (!row) return "";
+  const { totalItems, totalAnsweredItems } = row;
+  if (!totalItems && !totalAnsweredItems) return "No";
+  if (totalItems === 1 && totalAnsweredItems === 1) return "Yes";
+  if (isNumber(totalAnsweredItems) && isNumber(totalItems))
+    return (
+      <Stack
+        alignItems="center"
+        justifyContent="center"
+        spacing={0.4}
+        aria-label={`${totalAnsweredItems} of ${totalItems} items answered`}
+        role="img"
+      >
+        <Typography variant="body2">{totalAnsweredItems}</Typography>
+        <Divider flexItem sx={{ width: 24, alignSelf: "auto", backgroundColor: "rgba(132, 129, 129, 0.6)" }} />
+        <Typography variant="body2">{totalItems}</Typography>
+      </Stack>
+    );
+  if (totalAnsweredItems) return "Yes";
+  return "No";
+}
+
+export function getTitleByRow(row) {
+  if (!row) return "Untitled Measure";
+  let title = "";
+  if (row.title) {
+    title = row.title;
+  } else if (row.instrumentName) {
+    title = row.instrumentName;
+  } else if (row.key) {
+    title = row.key;
+  } else {
+    if (row.questionnaire && row.questionnaire.title) {
+      title = row.questionnaire.title;
+    }
+  }
+  if (title) return getDisplayQTitle(title);
+  return "Untitled Measure";
+}
+
 export function getResponseColumns(data, config = {}) {
   if (isEmptyArray(data)) return [];
 
-  const dates = data?.map((item) => ({ date: item.date, id: item.id, source: item.source })) ?? [];
+  const dates =
+    data?.map((item) => {
+      const { key, id, ...rest } = item ?? {};
+      return { id: item.id, key: item.key, ...rest };
+    }) ?? [];
 
   // tiny safe normalizer to avoid raw objects rendering
   const normalize = (v) => {
@@ -633,8 +709,7 @@ export function getResponseColumns(data, config = {}) {
     },
     ...dates.map((item, index) => ({
       id: `date_${item.id}_${index}`,
-      title:
-        `${getLocaleDateStringFromDate(item.date, "YYYY-MM-DD HH:mm")} ${item.source ? "\n\r" + item.source : ""}`.trim(),
+      title: item.columnDisplayDate,
       field: item.id, // the row is expected to have row[item.id]
       cellStyle: {
         minWidth: "148px",

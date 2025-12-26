@@ -413,7 +413,6 @@ const questionnaireConfigsRaw = {
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
       if (!severity || severity === "low") return "";
-      //let arrMeanings = [];
       const answerMapping = {
         "IPV4-1": "Felt trapped",
         "IPV4-2": "Fearful of harm",
@@ -434,6 +433,7 @@ const questionnaireConfigsRaw = {
         .map((response) => answerMapping[response.linkId]);
       return answers.join("|");
     },
+    alertQuestionId: "IPV4-critical",
     severityBands: [
       { min: 1, label: "high" },
       { min: 0, label: "low" },
