@@ -138,7 +138,7 @@ export default function ScoringSummary(props) {
             href={`#${row.key}`}
             className="instrument-link"
           >
-            {row.rowTitle} {row.subtitle ? row.subtitle : ""}
+            {row.rowTitle??row.title} {row.subtitle ? row.subtitle : ""}
           </Link>
         ) : props.enableResponsesViewer && !isEmptyArray(row?.responseData) ? (
           <ResponsesViewer
@@ -151,7 +151,7 @@ export default function ScoringSummary(props) {
             buttonStyle={{ width: "100%", maxWidth: 108, margin: "auto" }}
           />
         ) : (
-          row.rowTitle + (row.subtitle ? "( " + row.subtitle + " ) " : "")
+          (row.rowTitle??row.title) + (row.subtitle ? "( " + row.subtitle + " ) " : "")
         );
       },
     },
