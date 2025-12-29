@@ -1023,7 +1023,7 @@ export function getProcessedQuestionnaireData(questionnaireId, opts = {}) {
   const processedSummaryData = qb._summariesByQuestionnaireRef(bundle);
   return processedSummaryData && processedSummaryData?.scoringSummaryData
     ? processedSummaryData
-    : { ...config, config, scoringSummaryData: config };
+    : { ...config, config, scoringSummaryData: { ...config, hasData: false } };
 }
 
 const questionnaireConfigs = bootstrapInstrumentConfigMap(questionnaireConfigsRaw);

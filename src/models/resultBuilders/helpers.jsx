@@ -238,13 +238,14 @@ export function buildQuestionnaire(resources = [], config = {}) {
   });
 
   // optional total score item (readOnly)
-  if (config.scoringQuestionId) {
+  const scoringQuestionId = getScoringLinkIdFromConfig(config);
+  if (scoringQuestionId) {
     items.push({
-      linkId: config.scoringQuestionId,
+      linkId: scoringQuestionId,
       type: "decimal",
       text: "Total score",
       readOnly: true,
-      code: [{ system: "http://loinc.org", code: normalizeLinkId(config.scoringQuestionId) }],
+      code: [{ system: "http://loinc.org", code: scoringQuestionId, display: "Total score" }],
     });
   }
 
@@ -351,11 +352,9 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
   const answerLinkIdList = Array.from(answersByLinkId.keys());
 
   let qLinkIds = !isEmptyArray(answerLinkIdList) ? answerLinkIdList : qLinkIdList || [];
-  if (
-    config?.scoringQuestionId &&
-    !qLinkIds.find((qid) => normalizeLinkId(qid) === normalizeLinkId(config?.scoringQuestionId))
-  ) {
-    qLinkIds.push(normalizeLinkId(config.scoringQuestionId));
+  const scoringQuestionId = getScoringLinkIdFromConfig(config);
+  if (scoringQuestionId && !qLinkIds.find((qid) => normalizeLinkId(qid) === normalizeLinkId(scoringQuestionId))) {
+    qLinkIds.push(normalizeLinkId(scoringQuestionId));
   }
 
   const items = [...new Set(qLinkIds)].map((lid) => {
@@ -469,12 +468,19 @@ export function meaningFromSeverity(sev, config = {}, responses = [], summaryObj
   return bands?.find((b) => b.label === sev)?.meaning ?? null;
 }
 
-export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, config = {}, ctx = {}) {
-  let scoreLinkIds = !isEmptyArray(config?.questionLinkIds)
-    ? config.questionLinkIds.filter((q) => ctx.isNonScoreLinkId(q, config))
-    : ctx.getAnswerLinkIdsByQuestionnaire(questionnaire, config);
+export function getScoringLinkIdFromConfig(config = {}) {
+  return normalizeLinkId(config?.scoringQuestionId ? config?.scoringQuestionId : config?.deriveFrom?.linkId);
+}
 
-  const scoringQuestionId = config?.scoringQuestionId;
+export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, config = {}, ctx = {}) {
+  const linkIds = config?.questionLinkIds ? config.questionLinkIds.map((id) => normalizeLinkId(id)) : [];
+  let scoreLinkIds = !isEmptyArray(linkIds)
+    ? linkIds.filter((q) => ctx.isNonScoreLinkId(q, config))
+    : !config?.deriveFrom?.linkId
+      ? ctx.getAnswerLinkIdsByQuestionnaire(questionnaire, config)
+      : [];
+
+  const scoringQuestionId = getScoringLinkIdFromConfig(config);
 
   if (isEmptyArray(scoreLinkIds) && scoringQuestionId) {
     scoreLinkIds = [scoringQuestionId];
@@ -609,7 +615,7 @@ export function getComparisonDisplayIconByRow(row, iconProps = {}) {
 }
 
 export function getScoreRangeDisplayByRow(row) {
-  if (!row) return "";
+  if (!row) return null;
   const { minScore, maxScore, minimumScore, maximumScore } = row;
   const minScoreToUse = isNumber(minScore) ? minScore : isNumber(minimumScore) ? minimumScore : 0;
   const maxScoreToUse = isNumber(maxScore) ? maxScore : isNumber(maximumScore) ? maximumScore : 0;
@@ -619,7 +625,7 @@ export function getScoreRangeDisplayByRow(row) {
 }
 
 export function getNumAnsweredDisplayByRow(row) {
-  if (!row) return "";
+  if (!row) return null;
   const { totalItems, totalAnsweredItems } = row;
   if (!totalItems && !totalAnsweredItems) return "No";
   if (totalItems === 1 && totalAnsweredItems === 1) return "Yes";
@@ -760,7 +766,7 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
     if (isEmptyArray(tables)) return true;
     const keysToMatch = tables.map((table) => table.dataKeysToMatch ?? []).flat();
     const arrDates = keysToMatch.flatMap((key) => {
-      const d = summaryData[key];
+      const d = summaryData ? summaryData[key] : null;
       if (!d || isEmptyArray(d.chartData?.data)) return [];
       return d.chartData.data.map((o) => o.date);
     });
@@ -782,6 +788,7 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
         if (!currentData) {
           currentData = processedData?.scoringSummaryData;
         }
+        console.log("buildReportData: key=", key, " currentData=", currentData, " processedData=", processedData);
         const chartData =
           summaryData[key] && summaryData[key].chartData ? summaryData[key].chartData : processedData?.chartData;
         rows.push({

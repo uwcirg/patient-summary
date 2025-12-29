@@ -10,6 +10,7 @@ import TableHead from "@mui/material/TableHead";
 import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
 import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import Scoring from "@components/Score";
 import { isEmptyArray, scrollToAnchor } from "@util";
 import ResponsesViewer from "../ResponsesViewer";
@@ -130,6 +131,7 @@ export default function ScoringSummary(props) {
         size: "small",
       },
       renderCell: (row) => {
+        const title = row.rowTitle ?? row.title;
         return !disableLinks ? (
           <Link
             onClick={(e) => handleClick(e, row.key)}
@@ -138,11 +140,11 @@ export default function ScoringSummary(props) {
             href={`#${row.key}`}
             className="instrument-link"
           >
-            {row.rowTitle??row.title} {row.subtitle ? row.subtitle : ""}
+            {title} {row.subtitle ? row.subtitle : ""}
           </Link>
         ) : props.enableResponsesViewer && !isEmptyArray(row?.responseData) ? (
           <ResponsesViewer
-            title={row.rowTitle}
+            title={title}
             subtitle={row.subtitle}
             responsesTileTitle={row.rowTitle}
             tableData={row?.tableResponseData}
@@ -151,7 +153,9 @@ export default function ScoringSummary(props) {
             buttonStyle={{ width: "100%", maxWidth: 108, margin: "auto" }}
           />
         ) : (
-          (row.rowTitle??row.title) + (row.subtitle ? "( " + row.subtitle + " ) " : "")
+          <Typography component="h3" variant="subtitle2" sx={{ textAlign: "center" }}>
+            {title}
+          </Typography>
         );
       },
     },
@@ -169,7 +173,10 @@ export default function ScoringSummary(props) {
       },
       cellProps: { sx: { ...baseCellStyle, whiteSpace: "nowrap", padding: theme.spacing(0.5) } },
       size: "small",
-      renderCell: (row) => row.numAnsweredDisplay,
+      renderCell: (row) =>
+        row.numAnsweredDisplay
+          ? row.numAnsweredDisplay
+          : defaultRenderers.text(row, row.hasData != null && !row.hasData ? "No Data" : ""),
     },
     {
       id: "scoreMeaning",

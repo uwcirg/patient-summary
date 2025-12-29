@@ -29,6 +29,7 @@ import {
   summarizeMiniCogHelper,
   summarizeSLUMHelper,
   getTitleByRow,
+  getScoringLinkIdFromConfig,
 } from "./helpers";
 import { DEFAULT_FALLBACK_SCORE_MAPS, DEFAULT_VAL_TO_LOIN_CODE } from "@/consts";
 import questionnaireConfig from "@/config/questionnaire_config";
@@ -312,8 +313,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const subScoreQuestionIds = !isEmptyArray(config?.subScoringQuestions)
       ? config.subScoringQuestions.map((o) => o.linkId)
       : [];
+    const scoringLinkId = getScoringLinkIdFromConfig(config)
     return (
-      !linkIdEquals(linkId, config?.scoringQuestionId) && !subScoreQuestionIds.find((id) => linkIdEquals(id, linkId))
+      !linkIdEquals(linkId, scoringLinkId) && !subScoreQuestionIds.find((id) => linkIdEquals(id, linkId))
     );
   }
 
@@ -798,6 +800,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       subtitle,
       responseColumns: getResponseColumns(data, data[0]),
       displayMeaningOnly: this._hasMeaningOnlyData(data),
+      hasData: !isEmptyArray(data),
       responseData: data,
       tableResponseData: opts?.tableResponseData ?? this._formatTableResponseData(data),
       printResponseData: opts?.printResponseData ?? this._formatPrintResponseData(data),

@@ -701,7 +701,7 @@ export default function useFetchResources() {
         summaryData: demoData,
       });
     }
-    if (!summaryData?.data) return null;
+   // if (!summaryData?.data) return null;
     return buildReportData({
       summaryData: summaryData?.data,
       bundle: patientBundle.current.entry,
