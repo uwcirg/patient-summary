@@ -325,25 +325,24 @@ export default {
       ]),
     },
   },
-  "CIRG-Mini-Score": {
+  "CIRG-CNICS-MINI": {
     scoringSummaryData: {
-      key: "CIRG-Mini-Score",
+      key: "CIRG-CNICS-MINI",
       source: "cnics",
       comparison: "higher",
       comparisonToAlert: "",
       instrumentName: "MINI Score",
       lastAssessed: "2025-05-11",
-      maxScore: 5,
+      maxScore: 7,
       meaning: "Dependent Drinker",
       minScore: 0,
       score: 3,
       scoringParams: {
-        maximumScore: 5,
+        maximumScore: 7,
         minimumScore: 0,
-        highSeverityScoreCutoff: 4,
       },
-      totalAnsweredItems: 3,
-      totalItems: 3,
+      totalAnsweredItems: 13,
+      totalItems: 13,
     },
     chartData: {
       ...CHART_CONFIG.default,

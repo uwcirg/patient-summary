@@ -918,14 +918,17 @@ const questionnaireConfigsRaw = {
     },
     // skipChart: true,
   },
-  "CIRG-MINI-SCORE": {
-    key: "CIRG-MINI-SCORE",
+  "CIRG-CNICS-MINI": {
+    key: "CIRG-CNICS-MINI",
     instrumentName: "MINI Score",
     title: "MINI Score",
     minimumScore: 0,
-    maximumScore: 5,
-    highSeverityScoreCutoff: 4,
-    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 5, xLabel: "" },
+    maximumScore: 7,
+    scoringQuestionId: "MINI-score",
+    meaningQuestionId: "MINI-score-interpretation",
+    excludeQuestionLinkIdPatterns: ["MINI-score-ignoring-skipped"],
+    linkIdMatchMode: "strict",
+    chartParams: { ...CHART_CONFIG.default, title: "MINI Score", minimumYValue: 0, maximumYValue: 7, xLabel: "" },
   },
 
   //TODO, implement those

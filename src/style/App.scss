@@ -146,8 +146,9 @@ p {
   }
   tr:has(.no-data-wrapper) {
     td:not(:first-of-type) {
-      border-right: 0 !important;
+    //  border-right: 0 !important;
       color: $muted-text-color;
+      font-style: italic;
     }
   }
 }

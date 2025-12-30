@@ -289,7 +289,7 @@ export default function LineCharts(props) {
   };
 
   const renderTitle = () => (
-    <Typography variant="subtitle1" component="h4" color="secondary" sx={{ textAlign: "center", marginTop: 1 }}>
+    <Typography variant="subtitle1" component="h4" color="secondary" sx={{ textAlign: "center" }}>
       {title}
     </Typography>
   );

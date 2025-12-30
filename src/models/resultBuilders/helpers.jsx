@@ -52,11 +52,13 @@ export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, 
 
   const rows = (questionnaireResponses || []).map((qr) => {
     const flat = ctx.flattenResponseItems(qr.item || []);
-    const { score, totalAnsweredItems, totalItems } = ctx.getScoreStatsFromQuestionnaireResponse(
+    const stats = ctx.getScoreStatsFromQuestionnaireResponse(
       qr,
       questionnaire,
       questionnaireConfigs["CIRG_SLUMS"],
     );
+
+    const { score, totalAnsweredItems, totalItems } = stats;
 
     const educationLevel = hasLowerLevelEducation ? "low" : "high";
     let scoreSeverity = "low";
@@ -73,6 +75,7 @@ export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, 
       id: qr.id,
       date: qr.authored ?? null,
       responses,
+      ...stats,
       score,
       scoreSeverity,
       scoreMeaning: meaningFromSeverity(scoreSeverity),
@@ -496,11 +499,13 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
 
   const allAnswered = questionScores.length > 0 && questionScores.every((v) => v != null);
 
-  let score = null;
+  let score = null, rawScore = ctx.getAnswerByResponseLinkId(scoringQuestionId, responseItemsFlat, config)
   if (scoringQuestionScore != null) {
     score = scoringQuestionScore;
   } else if (allAnswered) {
     score = questionScores.reduce((sum, n) => sum + (n ?? 0), 0);
+  } else {
+    score = rawScore
   }
 
   const subScores = {};
@@ -518,6 +523,7 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
   }
 
   return {
+    rawScore,
     score,
     scoringQuestionScore,
     questionScores,
@@ -545,8 +551,8 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   if (isEmptyArray(responses)) return null;
   const current = getMostRecentResponseRow(responses);
   const prev = getPreviousResponseRowWithScore(responses);
-  const curScore = isNumber(current?.score) ? current.score : null;
-  const prevScore = isNumber(prev?.score) ? prev.score : null;
+  const curScore = current.score != null ? current.score : null;
+  const prevScore = prev?.score != null ? prev.score : null;
   const minScore = isNumber(config?.minimumScore) ? config?.minimumScore : 0;
   const maxScore = isNumber(config?.maximumScore) ? config?.maximumScore : null;
   const comparisonToAlert = config?.comparisonToAlert ?? "higher";
@@ -567,6 +573,7 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   const scoringParams = {
     ...config,
     score,
+    rawScore: current?.rawScore,
     scoreSeverity,
     currentScore: curScore,
     previousScore: prevScore,
@@ -616,7 +623,8 @@ export function getComparisonDisplayIconByRow(row, iconProps = {}) {
 
 export function getScoreRangeDisplayByRow(row) {
   if (!row) return null;
-  const { minScore, maxScore, minimumScore, maximumScore } = row;
+  const { minScore, maxScore, minimumScore, maximumScore, score } = row;
+  if (score == null) return "";
   const minScoreToUse = isNumber(minScore) ? minScore : isNumber(minimumScore) ? minimumScore : 0;
   const maxScoreToUse = isNumber(maxScore) ? maxScore : isNumber(maximumScore) ? maximumScore : 0;
   if (!isNumber(minScoreToUse) || !isNumber(maxScoreToUse)) return "";
@@ -666,7 +674,7 @@ export function getTitleByRow(row) {
 }
 
 export function getNoDataDisplay() {
-  return <span className="no-data-wrapper">No Data</span>;
+  return <span className="no-data-wrapper">No data</span>;
 }
 
 export function getResponseColumns(data, config = {}) {
@@ -736,7 +744,7 @@ export function getResponseColumns(data, config = {}) {
           return <Meaning {...rest}></Meaning>;
         }
         // numeric score path
-        if (isNumber(rowDataItem.score)) {
+        if (rowDataItem.score != null) {
           const { key, ...params } = rowDataItem.scoringParams ?? {};
           return (
             <Stack gap={1} className="score-wrapper">
@@ -792,7 +800,6 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
         if (!currentData) {
           currentData = processedData?.scoringSummaryData;
         }
-        console.log("buildReportData: key=", key, " currentData=", currentData, " processedData=", processedData);
         const chartData =
           summaryData[key] && summaryData[key].chartData ? summaryData[key].chartData : processedData?.chartData;
         rows.push({

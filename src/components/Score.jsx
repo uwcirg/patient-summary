@@ -8,6 +8,7 @@ import Score from "@models/Score";
 
 export default function Scoring(props) {
   const { score, justifyContent, alignItems, scoreParams } = props;
+  console.log("Score params in Scoring component:", scoreParams);
   const oScore = new Score(score, scoreParams);
   const getScoreDisplay = () => oScore.displayValue;
   // display alert icon for score that has high severity

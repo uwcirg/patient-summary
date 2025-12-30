@@ -119,7 +119,7 @@ export const report_config = {
           dataKeysToMatch: [
             "CIRG-CNICS-Smoking",
             "CIRG-CNICS-AUDIT",
-            "CIRG-Mini-Score",
+            "CIRG-CNICS-MINI",
             "CIRG-Drug-Use",
             "CIRG-CNICS-ASSIST-Polysub",
             "CIRG-IDU",

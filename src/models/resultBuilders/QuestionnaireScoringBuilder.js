@@ -313,10 +313,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const subScoreQuestionIds = !isEmptyArray(config?.subScoringQuestions)
       ? config.subScoringQuestions.map((o) => o.linkId)
       : [];
-    const scoringLinkId = getScoringLinkIdFromConfig(config)
-    return (
-      !linkIdEquals(linkId, scoringLinkId) && !subScoreQuestionIds.find((id) => linkIdEquals(id, linkId))
-    );
+    const scoringLinkId = getScoringLinkIdFromConfig(config);
+    return !linkIdEquals(linkId, scoringLinkId) && !subScoreQuestionIds.find((id) => linkIdEquals(id, linkId));
   }
 
   // -------------------- Questionnaire matching --------------------
@@ -659,12 +657,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const flat = this.flattenResponseItems(qr.item);
 
-    const { score, subScores, scoringQuestionScore, scoreLinkIds } = calculateQuestionnaireScore(
-      questionnaire,
-      flat,
-      config,
-      this,
-    );
+    const stats = calculateQuestionnaireScore(questionnaire, flat, config, this);
+    const { score, rawScore, subScores, scoringQuestionScore, scoreLinkIds } = stats;
 
     let totalItems = scoreLinkIds?.length ?? 0;
 
@@ -677,7 +671,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (totalItems === 0 && score != null) totalItems = 1;
     if (totalAnsweredItems === 0 && score != null) totalAnsweredItems = 1;
 
-    return { score, subScores, scoringQuestionScore, totalAnsweredItems, totalItems };
+    return { ...stats, score, rawScore, subScores, scoringQuestionScore, totalAnsweredItems, totalItems };
   }
 
   getColumnObjects(columns, qr, config = {}) {
@@ -707,7 +701,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const rows = (questionnaireResponses || []).map((qr, rIndex) => {
       const flat = this.flattenResponseItems(qr.item);
-      const { score, subScores, scoringQuestionScore, totalAnsweredItems, totalItems } =
+      const { score, rawScore, subScores, scoringQuestionScore, totalAnsweredItems, totalItems } =
         this.getScoreStatsFromQuestionnaireResponse(qr, questionnaire, config);
       const source = this.getDataSource(qr);
       let responses = this.formattedResponses(questionnaire?.item ?? [], flat, config).map((item) => {
@@ -723,9 +717,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         instrumentName: config?.instrumentName ?? this.questionnaireIDFromQR(qr),
         date: qr.authored ?? null,
         displayDate: getLocaleDateStringFromDate(qr.authored),
-        columnDisplayDate: `${getLocaleDateStringFromDate(qr.authored, "YYYY-MM-DD HH:mm")} ${source ? "\n\r" + source : ""}`.trim(),
+        columnDisplayDate:
+          `${getLocaleDateStringFromDate(qr.authored, "YYYY-MM-DD HH:mm")} ${source ? "\n\r" + source : ""}`.trim(),
         source,
         responses,
+        rawScore,
         score,
         scoringQuestionScore,
         subScores,
@@ -763,7 +759,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return (
       !isEmptyArray(data) &&
       !data.find((item) => item.displayMeaningNotScore) &&
-      !!data.find((item) => isNumber(item.score))
+      !!data.find((item) => item.score != null)
     );
   }
   _hasMeaningOnlyData(data) {
@@ -786,17 +782,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
     const subtitle = opts?.config?.subtitle ? this._normalizeDisplay(opts?.config?.subtitle, data[0]) : "";
     const scoreParams = getScoreParamsFromResponses(data, opts?.config);
-    const dataProps = { ...data[0], ...scoreParams }
+    const dataProps = { ...data[0], ...scoreParams };
     return {
       ...data[0],
       ...scoreParams,
-      comparisonIcon: getComparisonDisplayIconByRow(
-        dataProps,
-        { fontSize: "small", sx: { verticalAlign: "middle" } },
-      ),
+      comparisonIcon: getComparisonDisplayIconByRow(dataProps, { fontSize: "small", sx: { verticalAlign: "middle" } }),
       numAnsweredDisplay: getNumAnsweredDisplayByRow(dataProps),
       scoreRangeDisplay: getScoreRangeDisplayByRow(dataProps),
-      rowTitle:  getTitleByRow(dataProps),
+      rowTitle: getTitleByRow(dataProps),
       subtitle,
       responseColumns: getResponseColumns(data, data[0]),
       displayMeaningOnly: this._hasMeaningOnlyData(data),
