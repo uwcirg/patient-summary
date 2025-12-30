@@ -434,10 +434,6 @@ const questionnaireConfigsRaw = {
       return answers.join("|");
     },
     alertQuestionId: "IPV4-critical",
-    severityBands: [
-      { min: 1, label: "high" },
-      { min: 0, label: "low" },
-    ],
     meaningRowLabel: "Summary",
     skipChart: true,
   },

@@ -9,7 +9,6 @@ import ScoringSummary from "./ScoringSummary";
 // Move styles outside component
 const sectionWrapperSx = {
   alignSelf: "stretch",
-  padding: (theme) => theme.spacing(0, 1),
 };
 
 const titleSx = {
@@ -17,7 +16,7 @@ const titleSx = {
   fontWeight: 500,
   // borderBottomStyle: "solid",
   // borderBottomWidth: "1px",
-  backgroundColor: "#eeeff3",
+  backgroundColor: "#f9fafb",
   padding: (theme) => theme.spacing(0.5, 1),
 };
 
@@ -50,6 +49,7 @@ export default function PROReport() {
           data={table.rows}
           disableLinks={true}
           enableResponsesViewer={true}
+          containerStyle={{alignSelf: "stretch"}}
         />
         <Box sx={{marginTop: 1}}>
           {!isEmptyArray(table.charts) &&

@@ -20,6 +20,7 @@ import {
   buildQuestionnaire,
   calculateQuestionnaireScore,
   getComparisonDisplayIconByRow,
+  getNormalizedRowTitleDisplay,
   getNumAnsweredDisplayByRow,
   getResponseColumns,
   getScoreParamsFromResponses,
@@ -428,11 +429,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   getAnswerValueByExtension(questionnaire, code) {
     if (!questionnaire?.item) {
-      console.warn("getAnswerValueByExtension: questionnaire or questionnaire.item is missing.");
+      //console.warn("getAnswerValueByExtension: questionnaire or questionnaire.item is missing.");
       return null;
     }
     if (!code) {
-      console.warn("getAnswerValueByExtension: code parameter is required");
+      //console.warn("getAnswerValueByExtension: code parameter is required");
       return null;
     }
     let found = null;
@@ -773,16 +774,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return this._getAnswer(answerItem, config);
   }
 
-  _normalizeDisplay(text, row) {
-    if (!text) return "";
-    return text.replace("{date}", row?.date ? getLocaleDateStringFromDate(row?.date) : "recent");
-  }
 
   _formatScoringSummaryData = (data, opts = {}) => {
     if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
-    const subtitle = opts?.config?.subtitle ? this._normalizeDisplay(opts?.config?.subtitle, data[0]) : "";
+    const subtitle = opts?.config?.subtitle ? getNormalizedRowTitleDisplay(opts?.config?.subtitle, data[0]) : "";
     const scoreParams = getScoreParamsFromResponses(data, opts?.config);
-    const dataProps = { ...data[0], ...scoreParams };
+    const dataProps = { responses: data[0].responses, ...data[0], ...scoreParams };
     const displayMeaningOnly = this._hasMeaningOnlyData(data);
     return {
       ...data[0],
@@ -867,8 +864,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       for (const item of data)
         meaningRow[item.id] = {
           ...getScoreParamsFromResponses([item], configToUse),
-          score: null,
-          hasMeaning: true,
+          hasMeaningOnly: true,
         };
       result.push(meaningRow);
     } else if (!configToUse?.skipMeaningScoreRow && this._hasScoreData(data)) {

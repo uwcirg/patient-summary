@@ -138,6 +138,12 @@ p {
   text-transform: capitalize;
 }
 .scoring-summary-table {
+  th {
+    font-weight: 400 !important;
+  }
+}
+.responses-container,
+.scoring-summary-table {
   td:has(.text-warning) {
     background-color: $warning-background-color;
   }
@@ -145,15 +151,18 @@ p {
     background-color: $danger-background-color;
   }
   tr:has(.no-data-wrapper) {
-    td:not(:first-of-type) {
-    //  border-right: 0 !important;
+    td {
+      //  border-right: 0 !important;
+      font-weight: 400 !important;
       color: $muted-text-color;
       font-style: italic;
+      text-align: center;
     }
   }
 }
 .responses-container {
   position: relative;
+  margin-bottom: 16px;
   .table-root {
     div div div {
       max-height: calc(100vh - 120px);
@@ -183,11 +192,6 @@ p {
     }
     td:first-of-type {
       border-right: 0 !important;
-      background-color: #fff;
-    }
-  }
-  tr:has(.score-wrapper, .meaning-wrapper) {
-    td {
       background-color: #fff;
     }
   }
@@ -280,8 +284,11 @@ p {
   font-weight: 600;
   margin-bottom: 4px;
 }
+.section-wrapper {
+  padding: 8px;
+}
 .section-wrapper:not(:last-of-type) {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 @media print {
@@ -399,6 +406,9 @@ p {
       top: 8px !important;
     }
   }
+  .section-wrapper {
+    padding: 0 !important;
+  }
   .recharts-legend-item-text {
     font-size: 10px;
   }
@@ -424,7 +434,7 @@ p {
   }
   .MuiAccordionSummary-root {
     padding: 0;
-    min-height: 0 !important;
+    min-height: 32px !important;
   }
   .response-summary {
     display: block !important;

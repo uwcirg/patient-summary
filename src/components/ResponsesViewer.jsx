@@ -105,7 +105,7 @@ export default function ResponsesViewer({
         alignItems={"flex-start"}
         gap={1}
       >
-        <Box sx={{ width: "100%" }}>
+        <Box sx={{ width: "100%", flex: 1}}>
           <Typography
             component="h3"
             variant="subtitle2"

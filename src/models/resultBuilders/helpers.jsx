@@ -17,6 +17,7 @@ import {
 import {
   generateUUID,
   getDisplayQTitle,
+  getLocaleDateStringFromDate,
   isEmptyArray,
   isNil,
   isNumber,
@@ -52,11 +53,7 @@ export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, 
 
   const rows = (questionnaireResponses || []).map((qr) => {
     const flat = ctx.flattenResponseItems(qr.item || []);
-    const stats = ctx.getScoreStatsFromQuestionnaireResponse(
-      qr,
-      questionnaire,
-      questionnaireConfigs["CIRG_SLUMS"],
-    );
+    const stats = ctx.getScoreStatsFromQuestionnaireResponse(qr, questionnaire, questionnaireConfigs["CIRG_SLUMS"]);
 
     const { score, totalAnsweredItems, totalItems } = stats;
 
@@ -499,13 +496,14 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
 
   const allAnswered = questionScores.length > 0 && questionScores.every((v) => v != null);
 
-  let score = null, rawScore = ctx.getAnswerByResponseLinkId(scoringQuestionId, responseItemsFlat, config)
+  let score = null,
+    rawScore = ctx.getAnswerByResponseLinkId(scoringQuestionId, responseItemsFlat, config);
   if (scoringQuestionScore != null) {
     score = scoringQuestionScore;
   } else if (allAnswered) {
     score = questionScores.reduce((sum, n) => sum + (n ?? 0), 0);
   } else {
-    score = rawScore
+    score = rawScore;
   }
 
   const subScores = {};
@@ -534,16 +532,17 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
 
 export function getAlertFromMostRecentResponse(current, config = {}) {
   if (!current) return false;
+  if (config?.alertQuestionId) {
+    return !!(
+      current?.responses?.find((o) => linkIdEquals(o.id, config?.alertQuestionId, config?.linkIdMatchMode))?.answer ??
+      false
+    );
+  }
   let alert =
     isNumber(current?.score) &&
     config?.highSeverityScoreCutoff != null &&
     current.score >= config?.highSeverityScoreCutoff;
-  if (!alert && config?.alertQuestionId) {
-    alert = !!(
-      current?.responses?.find((o) => linkIdEquals(o.id, config?.alertQuestionId, config?.linkIdMatchMode))?.answer ??
-      alert
-    );
-  }
+
   return alert;
 }
 
@@ -623,7 +622,8 @@ export function getComparisonDisplayIconByRow(row, iconProps = {}) {
 
 export function getScoreRangeDisplayByRow(row) {
   if (!row) return null;
-  const { minScore, maxScore, minimumScore, maximumScore, score } = row;
+  const { responses, minScore, maxScore, minimumScore, maximumScore, score } = row;
+  if (!responses || isEmptyArray(responses)) return "";
   if (score == null) return "";
   const minScoreToUse = isNumber(minScore) ? minScore : isNumber(minimumScore) ? minimumScore : 0;
   const maxScoreToUse = isNumber(maxScore) ? maxScore : isNumber(maximumScore) ? maximumScore : 0;
@@ -634,7 +634,8 @@ export function getScoreRangeDisplayByRow(row) {
 
 export function getNumAnsweredDisplayByRow(row) {
   if (!row) return null;
-  const { totalItems, totalAnsweredItems } = row;
+  const { responses, totalItems, totalAnsweredItems } = row;
+  if (!responses || isEmptyArray(responses)) return "No";
   if (!totalItems && !totalAnsweredItems) return "No";
   if (totalItems === 1 && totalAnsweredItems === 1) return "Yes";
   if (isNumber(totalAnsweredItems) && isNumber(totalItems))
@@ -673,6 +674,11 @@ export function getTitleByRow(row) {
   return "Untitled Measure";
 }
 
+export function getNormalizedRowTitleDisplay(text, row) {
+  if (!text) return "";
+  return text.replace("{date}", row?.date ? getLocaleDateStringFromDate(row?.date) : "most recent");
+}
+
 export function getNoDataDisplay() {
   return <span className="no-data-wrapper">No data</span>;
 }
@@ -697,7 +703,7 @@ export function getResponseColumns(data, config = {}) {
 
   return [
     {
-      title: "Questions" + (config?.subtitle ? "\n ( " + config.subtitle + " )" : ""),
+      title: "Questions" + (config?.subtitle ? "\n ( " + getNormalizedRowTitleDisplay(config.subtitle) + " )" : ""),
       field: "question",
       filtering: false,
       cellStyle: {
@@ -739,7 +745,7 @@ export function getResponseColumns(data, config = {}) {
         if (isNumber(rowDataItem)) return rowDataItem;
         // explicit placeholders prevent React from trying to render objects
         if (!rowDataItem || String(rowDataItem) === "null" || String(rowDataItem) === "undefined") return "—";
-        if (rowDataItem.hasMeaning) {
+        if (rowDataItem.hasMeaningOnly) {
           const { key, ...rest } = rowDataItem;
           return <Meaning {...rest}></Meaning>;
         }

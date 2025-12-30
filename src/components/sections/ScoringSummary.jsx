@@ -72,14 +72,14 @@ export default function ScoringSummary(props) {
             {value}
           </span>
         )}
-        {!value && getNoDataDisplay}
+        {!value && getNoDataDisplay()}
       </>
     ),
     date: (row) => (
       <Stack direction={"column"} spacing={1} alignItems={"space-between"} justifyContent={"space-between"}>
         <Box>{row.displayDate}</Box>
         {row.source && (
-          <Box className="muted-text" sx={{ mt: 1, "@media print": { mt: 0 } }}>
+          <Box className="muted-text source-container" >
             {row.source}
           </Box>
         )}
