@@ -783,16 +783,19 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const subtitle = opts?.config?.subtitle ? this._normalizeDisplay(opts?.config?.subtitle, data[0]) : "";
     const scoreParams = getScoreParamsFromResponses(data, opts?.config);
     const dataProps = { ...data[0], ...scoreParams };
+    const displayMeaningOnly = this._hasMeaningOnlyData(data);
     return {
       ...data[0],
       ...scoreParams,
-      comparisonIcon: getComparisonDisplayIconByRow(dataProps, { fontSize: "small", sx: { verticalAlign: "middle" } }),
+      comparisonIcon: displayMeaningOnly
+        ? null
+        : getComparisonDisplayIconByRow(dataProps, { fontSize: "small", sx: { verticalAlign: "middle" } }),
       numAnsweredDisplay: getNumAnsweredDisplayByRow(dataProps),
       scoreRangeDisplay: getScoreRangeDisplayByRow(dataProps),
       rowTitle: getTitleByRow(dataProps),
       subtitle,
       responseColumns: getResponseColumns(data, data[0]),
-      displayMeaningOnly: this._hasMeaningOnlyData(data),
+      displayMeaningOnly,
       hasData: !isEmptyArray(data),
       responseData: data,
       tableResponseData: opts?.tableResponseData ?? this._formatTableResponseData(data),

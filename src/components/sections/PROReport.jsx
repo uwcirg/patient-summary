@@ -45,12 +45,13 @@ export default function PROReport() {
         key={`wrapper_${table.id}`}
       >
         <ScoringSummary
+          {...table}
           key={`reportable_table_${table.id}`}
           data={table.rows}
           disableLinks={true}
           enableResponsesViewer={true}
         />
-        <Box>
+        <Box sx={{marginTop: 1}}>
           {!isEmptyArray(table.charts) &&
             table.charts.map((chartData, index) => {
               if (isEmptyArray(chartData?.data)) return null;
@@ -79,12 +80,12 @@ export default function PROReport() {
           )}
           {table.layout === "simple" && (
             <ScoringSummary
+              {...table}
               key={table.id}
               data={table.rows}
               disableLinks={true}
               enableResponsesViewer={true}
               tableStyle={tableStyle}
-              {...table}
             />
           )}
           {table.layout === "two-columns" && renderTwoColumns(table)}

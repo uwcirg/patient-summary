@@ -31,7 +31,9 @@ export default function ScoringSummary(props) {
 
   const isColVisible = (id) => {
     if (id === "measure") return true;
-    return !hiddenColumns?.includes(id);
+    const isVisible = !hiddenColumns?.includes(id);
+    //console.log(`Column ${id}: hiddenColumns =`, hiddenColumns, `isVisible =`, isVisible);
+    return isVisible;
   };
 
   const handleClick = (e, anchorElementId) => {

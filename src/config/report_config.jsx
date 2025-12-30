@@ -116,6 +116,7 @@ export const report_config = {
           keyToMatch: "CIRG-SUBSTANCE-USE",
           title: "Substance Use",
           layout: "two-columns",
+          hiddenColumns: ["comparison"],
           dataKeysToMatch: [
             "CIRG-CNICS-Smoking",
             "CIRG-CNICS-AUDIT",
