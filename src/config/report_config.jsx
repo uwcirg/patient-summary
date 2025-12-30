@@ -1,4 +1,5 @@
 import { Box, Stack } from "@mui/material";
+import {getNoDataDisplay} from "@models/resultBuilders/helpers";
 
 export const report_config = {
   sections: [
@@ -52,7 +53,7 @@ export const report_config = {
               renderCell: (row, value) => (
                 <Stack direction={"column"} sx={{ whiteSpace: "pre-line" }} justifyContent={"space-between"}>
                   <Box>{value && value.split(",").join("\n")}</Box>
-                  {!value && <Box className="muted-text">N/A</Box>}
+                  {!value && getNoDataDisplay()}
                   {row.source && (
                     <Box className="muted-text" sx={{ mt: 1 }}>
                       {row.source}
@@ -72,7 +73,7 @@ export const report_config = {
               renderCell: (row, value) => (
                 <Stack direction={"column"} sx={{ whiteSpace: "pre-line" }} justifyContent={"flex-start"}>
                   <Box>{value && value.split(",").join("\n")}</Box>
-                  {!value && <Box className="muted-text">N/A</Box>}
+                  {!value && getNoDataDisplay()}
                   {row.source && (
                     <Box className="muted-text" sx={{ mt: 1 }}>
                       {row.source}
@@ -155,7 +156,8 @@ export const report_config = {
               type: "text",
               renderCell: (row, value) => (
                 <Stack direction={"column"}>
-                  <span>{value ?? "N/A"}</span>
+                  {value && <span>{value}</span>}
+                  {!value && getNoDataDisplay()}
                   {row.source && <span className="muted-text">{row.source}</span>}
                 </Stack>
               ),
@@ -192,7 +194,8 @@ export const report_config = {
               type: "text",
               renderCell: (row, value) => (
                 <Stack direction={"column"} spacing={1}>
-                  <Box>{value ?? "N/A"}</Box>
+                  {value && <Box>{value}</Box>}
+                  {!value && getNoDataDisplay()}
                   {row.source && (
                     <Box className="muted-text" sx={{ mt: 2 }}>
                       {row.source}

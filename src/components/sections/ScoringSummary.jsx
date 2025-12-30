@@ -15,6 +15,7 @@ import Scoring from "@components/Score";
 import { isEmptyArray, scrollToAnchor } from "@util";
 import ResponsesViewer from "../ResponsesViewer";
 import Meaning from "../Meaning";
+import { getNoDataDisplay } from "../../models/resultBuilders/helpers";
 
 // tiny helper to read nested keys like "provider.name"
 const getByPath = (obj, path) => {
@@ -63,9 +64,14 @@ export default function ScoringSummary(props) {
   // -------- reusable default cell renderers
   const defaultRenderers = {
     text: (row, value) => (
-      <span className={row.alert ? "text-error" : row.warning ? "text-warning" : !value ? "muted-text" : ""}>
-        {value ?? "N/A"}
-      </span>
+      <>
+        {value && (
+          <span className={row.alert ? "text-error" : row.warning ? "text-warning" : !value ? "muted-text" : ""}>
+            {value}
+          </span>
+        )}
+        {!value && getNoDataDisplay}
+      </>
     ),
     date: (row) => (
       <Stack direction={"column"} spacing={1} alignItems={"space-between"} justifyContent={"space-between"}>
@@ -153,7 +159,7 @@ export default function ScoringSummary(props) {
             buttonStyle={{ width: "100%", maxWidth: 108, margin: "auto" }}
           />
         ) : (
-          <Typography component="h3" variant="subtitle2" sx={{ textAlign: "center" }}>
+          <Typography component="h3" variant="subtitle2" sx={{ textAlign: "left" }}>
             {title}
           </Typography>
         );
@@ -176,7 +182,9 @@ export default function ScoringSummary(props) {
       renderCell: (row) =>
         row.numAnsweredDisplay
           ? row.numAnsweredDisplay
-          : defaultRenderers.text(row, row.hasData != null && !row.hasData ? "No Data" : ""),
+          : row.hasData != null && !row.hasData
+            ? getNoDataDisplay()
+            : defaultRenderers.text(row, ""),
     },
     {
       id: "scoreMeaning",
@@ -268,7 +276,7 @@ export default function ScoringSummary(props) {
     cellProps: { sx: baseCellStyle, size: "small" },
     renderCell: () => (
       <Box className="muted-text text-center" sx={{ fontStyle: "italic" }}>
-        No Data
+        {getNoDataDisplay()}
       </Box>
     ),
   };
@@ -366,7 +374,7 @@ export default function ScoringSummary(props) {
                 color: "text.secondary",
               }}
             >
-              {props.emptyMessage || "No Data"}
+              {props.emptyMessage || getNoDataDisplay()}
             </TableCell>
           </TableRow>
         )}

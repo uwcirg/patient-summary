@@ -665,6 +665,10 @@ export function getTitleByRow(row) {
   return "Untitled Measure";
 }
 
+export function getNoDataDisplay() {
+  return <span className="no-data-wrapper">No Data</span>;
+}
+
 export function getResponseColumns(data, config = {}) {
   if (isEmptyArray(data)) return [];
 

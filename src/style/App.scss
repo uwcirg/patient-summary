@@ -144,6 +144,12 @@ p {
   td:has(.text-danger) {
     background-color: $danger-background-color;
   }
+  tr:has(.no-data-wrapper) {
+    td:not(:first-of-type) {
+      border-right: 0 !important;
+      color: $muted-text-color;
+    }
+  }
 }
 .responses-container {
   position: relative;

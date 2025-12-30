@@ -106,7 +106,13 @@ export default function ResponsesViewer({
         gap={1}
       >
         <Box sx={{ width: "100%" }}>
-          <Typography component="h3" variant="subtitle2" sx={{ textAlign: "center" }}>
+          <Typography
+            component="h3"
+            variant="subtitle2"
+            sx={{
+              textAlign: "center",
+            }}
+          >
             {responsesTileTitle}
           </Typography>
           {subtitle && (
