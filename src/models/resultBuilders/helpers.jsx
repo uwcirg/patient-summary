@@ -27,7 +27,15 @@ import {
 } from "@util";
 import Scoring from "@components/Score";
 import Meaning from "@components/Meaning";
-import { DEFAULT_ANSWER_OPTIONS } from "@/consts";
+import {
+  DEFAULT_ANSWER_OPTIONS,
+  CONDITION_CODES,
+  QUESTIONNAIRE_IDS,
+  LINK_IDS,
+  MINICOG_HIDDEN_IDS,
+  SEVERITY_CUTOFFS,
+  SCORING_PARAMS,
+} from "@/consts";
 import { getDateDomain } from "@/config/chart_config";
 import questionnaireConfigs, {
   findMatchingQuestionLinkIdFromCode,
@@ -42,26 +50,47 @@ import { report_config } from "@/config/report_config";
  * so it can use cfg + utility methods without importing.
  * --------------------------------------------- */
 
-/** SLUMS (education-aware) */
-export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, opts = {}) {
-  const conditions = opts.conditions || getResourcesByResourceType(ctx.patientBundle);
+/**
+ * Summarizes SLUMS questionnaire responses with education-aware scoring
+ *
+ * @param {Object} ctx - Builder context containing utility methods and configuration
+ * @param {Array<Object>} questionnaireResponses - Array of FHIR QuestionnaireResponse resources
+ * @param {Object} questionnaire - FHIR Questionnaire resource definition
+ * @param {Object} options - Optional configuration
+ * @param {Array<Object>} [options.conditions] - Array of condition resources for education level detection
+ * @returns {Array<Object>} Sorted array of processed response rows with scores and metadata
+ */
+
+export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, options = {}) {
+  const conditions = options.conditions || getResourcesByResourceType(ctx.patientBundle);
   const hasLowerLevelEducation = !isEmptyArray(conditions)
     ? conditions.some((c) =>
-        (c?.code?.coding || []).some((cd) => (cd?.code || "").toString().toUpperCase() === "Z55.5"),
+        (c?.code?.coding || []).some(
+          (cd) => (cd?.code || "").toString().toUpperCase() === CONDITION_CODES.LOWER_EDUCATION,
+        ),
       )
     : false;
 
   const rows = (questionnaireResponses || []).map((qr) => {
     const flat = ctx.flattenResponseItems(qr.item || []);
-    const stats = ctx.getScoreStatsFromQuestionnaireResponse(qr, questionnaire, questionnaireConfigs["CIRG_SLUMS"]);
+    const stats = ctx.getScoreStatsFromQuestionnaireResponse(
+      qr,
+      questionnaire,
+      questionnaireConfigs[QUESTIONNAIRE_IDS.SLUMS],
+    );
 
     const { score, totalAnsweredItems, totalItems } = stats;
 
     const educationLevel = hasLowerLevelEducation ? "low" : "high";
     let scoreSeverity = "low";
-    if (score != null) {
-      if (educationLevel === "low" && score <= 19) scoreSeverity = "high";
-      else if (educationLevel === "high" && score <= 20) scoreSeverity = "high";
+
+    if (isNumber(score)) {
+      const cutoff =
+        educationLevel === "low" ? SEVERITY_CUTOFFS.SLUMS_LOW_EDUCATION : SEVERITY_CUTOFFS.SLUMS_HIGH_EDUCATION;
+
+      if (score <= cutoff) {
+        scoreSeverity = "high";
+      }
     }
 
     let responses = ctx.formattedResponses(questionnaire?.item ?? null, flat);
@@ -78,7 +107,9 @@ export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, 
       scoreMeaning: meaningFromSeverity(scoreSeverity),
       comparisonToAlert: "lower",
       scoringParams: { ...ctx.cfg, scoreSeverity: scoreSeverity },
-      highSeverityScoreCutoff: hasLowerLevelEducation ? 19 : 20,
+      highSeverityScoreCutoff: hasLowerLevelEducation
+        ? SEVERITY_CUTOFFS.SLUMS_LOW_EDUCATION
+        : SEVERITY_CUTOFFS.SLUMS_HIGH_EDUCATION,
       totalAnsweredItems,
       totalItems,
       authoredDate: qr.authored,
@@ -90,14 +121,27 @@ export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, 
   return ctx.sortByNewestAuthoredOrUpdated(rows);
 }
 
-/** C-IDAS (18-item sum + suicide flag) */
-export function summarizeCIDASHelper(
-  ctx,
-  questionnaireResponses,
-  questionnaire,
-  { suicideLinkId = "cs-idas-15", maximumScore = 36, highSeverityScoreCutoff = 19 } = {},
-) {
-  const coalesceNum = (n, fb = 0) => (typeof n === "number" && Number.isFinite(n) ? n : fb);
+/**
+ * Summarizes C-IDAS questionnaire responses with suicide risk flagging
+ *
+ * @param {Object} ctx - Builder context
+ * @param {Array<Object>} questionnaireResponses - Array of QuestionnaireResponse resources
+ * @param {Object} questionnaire - Questionnaire resource
+ * @param {Object} options - Configuration options
+ * @param {string} [options.suicideLinkId='cs-idas-15'] - Link ID for suicide question
+ * @param {number} [options.maximumScore=36] - Maximum possible score
+ * @param {number} [options.highSeverityScoreCutoff=19] - Cutoff for high severity
+ * @returns {Array<Object>} Processed response rows with suicide risk indicators
+ */
+export function summarizeCIDASHelper(ctx, questionnaireResponses, questionnaire, options = {}) {
+  // Item 7: Standardized parameter destructuring
+  const {
+    suicideLinkId = LINK_IDS.CIDAS_SUICIDE,
+    maximumScore = SCORING_PARAMS.CIDAS_MAXIMUM_SCORE,
+    highSeverityScoreCutoff = SEVERITY_CUTOFFS.CIDAS_HIGH_SEVERITY + 1,
+  } = options;
+
+  const coalesceNum = (n, fallback = 0) => (typeof n === "number" && Number.isFinite(n) ? n : fallback);
 
   const rows = (questionnaireResponses || []).map((qr) => {
     const flat = ctx.flattenResponseItems(qr.item || []);
@@ -105,11 +149,18 @@ export function summarizeCIDASHelper(
     const { score, totalAnsweredItems, totalItems } = ctx.getScoreStatsFromQuestionnaireResponse(
       qr,
       questionnaire,
-      questionnaireConfigs["CIRG-C-IDAS"],
+      questionnaireConfigs[QUESTIONNAIRE_IDS.CIDAS],
     );
 
     const suicideScore = coalesceNum(ctx.getScoringByResponseItem(questionnaire, flat, suicideLinkId), 0);
-    const scoreSeverity = score > 18 || suicideScore >= 1 ? "high" : "low";
+
+    // severity calculation
+    const scoreSeverity =
+      (isNumber(score) && score > SEVERITY_CUTOFFS.CIDAS_HIGH_SEVERITY) ||
+      suicideScore >= SEVERITY_CUTOFFS.CIDAS_SUICIDE_THRESHOLD
+        ? "high"
+        : "low";
+
     const responses = ctx.formattedResponses(questionnaire?.item ?? [], flat);
 
     return {
@@ -122,7 +173,7 @@ export function summarizeCIDASHelper(
       scoreSeverity,
       highSeverityScoreCutoff,
       meaning: meaningFromSeverity(scoreSeverity),
-      alertNote: suicideScore >= 1 ? "suicide concern" : null,
+      alertNote: suicideScore >= SEVERITY_CUTOFFS.CIDAS_SUICIDE_THRESHOLD ? "suicide concern" : null,
       scoringParams: { ...ctx.cfg, maximumScore, scoreSeverity },
       totalAnsweredItems,
       totalItems,
@@ -134,27 +185,39 @@ export function summarizeCIDASHelper(
   return ctx.sortByNewestAuthoredOrUpdated(rows);
 }
 
-/** Mini-Cog (recall + clock + total) */
-export function summarizeMiniCogHelper(
-  ctx,
-  questionnaireResponses,
-  questionnaire,
-  {
-    recallLinkIds = ["minicog-question1"],
-    clockLinkId = "minicog-question2",
-    totalLinkId = "minicog-total-score",
-    highSeverityScoreCutoff = 3,
-  } = {},
-) {
+/**
+ * Summarizes Mini-Cog questionnaire responses (recall + clock drawing test)
+ *
+ * Note: Clock score mapping - any score >= 1 is converted to 2 points per clinical protocol
+ *
+ * @param {Object} ctx - Builder context
+ * @param {Array<Object>} questionnaireResponses - QuestionnaireResponse resources
+ * @param {Object} questionnaire - Questionnaire resource
+ * @param {Object} options - Configuration
+ * @param {Array<string>} [options.recallLinkIds=['minicog-question1']] - Link IDs for recall questions
+ * @param {string} [options.clockLinkId='minicog-question2'] - Link ID for clock drawing
+ * @param {string} [options.totalLinkId='minicog-total-score'] - Link ID for total score
+ * @param {number} [options.highSeverityScoreCutoff=3] - Cutoff for cognitive impairment
+ * @returns {Array<Object>} Processed responses with recall, clock, and total scores
+ */
+export function summarizeMiniCogHelper(ctx, questionnaireResponses, questionnaire, options = {}) {
+  const {
+    recallLinkIds = [LINK_IDS.MINICOG_RECALL],
+    clockLinkId = LINK_IDS.MINICOG_CLOCK,
+    totalLinkId = LINK_IDS.MINICOG_TOTAL,
+    highSeverityScoreCutoff = SEVERITY_CUTOFFS.MINICOG_HIGH_SEVERITY,
+  } = options;
+
   const clamp = (n, lo, hi) => Math.min(Math.max(Number(n ?? 0), lo), hi);
 
   const rows = (questionnaireResponses || []).map((qr) => {
     const flat = ctx.flattenResponseItems(qr.item || []);
-    // Recall score
+
+    // Recall score calculation
     let recallScore = null;
     if (recallLinkIds.length === 1) {
       const v = ctx.getScoringByResponseItem(questionnaire, flat, recallLinkIds[0]);
-      recallScore = typeof v === "number" ? clamp(v, 0, 3) : null;
+      recallScore = typeof v === "number" ? clamp(v, 0, SCORING_PARAMS.MINICOG_RECALL_MAX) : null;
     } else {
       const parts = recallLinkIds
         .map((id) => ctx.getScoringByResponseItem(questionnaire, flat, id))
@@ -162,36 +225,31 @@ export function summarizeMiniCogHelper(
       recallScore = clamp(
         parts.reduce((a, b) => a + b, 0),
         0,
-        3,
+        SCORING_PARAMS.MINICOG_RECALL_MAX,
       );
     }
 
-    // Clock score (coerce >=1 to 2; else 0)
+    // Clock score (clinical protocol: >=1 converts to 2 points, else 0)
     const clockRaw = ctx.getScoringByResponseItem(questionnaire, flat, clockLinkId);
-    const clockScore = typeof clockRaw === "number" ? (clockRaw >= 1 ? 2 : 0) : null;
+    const clockScore = typeof clockRaw === "number" ? (clockRaw >= 1 ? SCORING_PARAMS.MINICOG_CLOCK_SCORE : 0) : null;
 
-    // Total score
+    // Total score calculation
     const totalRaw = ctx.getScoringByResponseItem(questionnaire, flat, totalLinkId);
     const computed =
       typeof recallScore === "number" && typeof clockScore === "number" ? recallScore + clockScore : null;
     const totalScore =
       typeof totalRaw === "number"
-        ? clamp(totalRaw, 0, 5)
+        ? clamp(totalRaw, 0, SCORING_PARAMS.MINICOG_MAXIMUM_SCORE)
         : typeof computed === "number"
-          ? clamp(computed, 0, 5)
+          ? clamp(computed, 0, SCORING_PARAMS.MINICOG_MAXIMUM_SCORE)
           : null;
 
     const scoreSeverity = severityFromScore(totalScore);
 
-    const HIDE_IDS = new Set([
-      "introduction",
-      "minicog-question1-instruction",
-      "minicog-question2-instruction",
-      "minicog-total-score-explanation",
-      "minicog-questionnaire-footnote",
-    ]);
+    let responses = ctx
+      .formattedResponses(questionnaire?.item ?? [], flat)
+      .filter((r) => !MINICOG_HIDDEN_IDS.has(r.id));
 
-    let responses = ctx.formattedResponses(questionnaire?.item ?? [], flat).filter((r) => !HIDE_IDS.has(r.id));
     if (isEmptyArray(responses)) responses = ctx.responsesOnly(flat);
 
     const totalItems = (ctx.getAnswerLinkIdsByQuestionnaire(questionnaire) || []).length;
@@ -213,7 +271,7 @@ export function summarizeMiniCogHelper(
       scoreSeverity,
       meaning: meaningFromSeverity(scoreSeverity),
       comparisonToAlert: "lower",
-      scoringParams: { ...(ctx.cfg ?? { maximumScore: 5 }), scoreSeverity },
+      scoringParams: { ...(ctx.cfg ?? { maximumScore: SCORING_PARAMS.MINICOG_MAXIMUM_SCORE }), scoreSeverity },
       highSeverityScoreCutoff,
       totalAnsweredItems,
       totalItems,
@@ -271,8 +329,15 @@ export function getQuestionnaireResponseSkeleton(questionnaireID = "dummy101") {
 }
 
 /* -------------------- Observations to QuestionnaireResponse -------------------- */
+/**
+ * Maps FHIR Observation value types to QuestionnaireResponse answer formats
+ *
+ * @param {Object} obs - FHIR Observation resource
+ * @returns {Object|null} Answer object with appropriate value[x] field, or null if no recognized value
+ */
 export function defaultAnswerMapperFromObservation(obs) {
   if (!obs) return null;
+
   // Quantity → valueQuantity
   if (obs.valueQuantity) {
     const { value, unit, system, code, comparator } = obs.valueQuantity;
@@ -308,22 +373,62 @@ export function defaultAnswerMapperFromObservation(obs) {
   // String
   if (typeof obs.valueString === "string") return { valueString: obs.valueString };
 
+  // Unrecognized value type
   if (obs.id) {
     console.warn(`defaultAnswerMapperFromObservation: Unrecognized value type for observation ${obs.id}`, obs);
   }
 
-  // Fallback: no answer
   return null;
 }
 
+/**
+ * Validates and formats datetime string to minute precision
+ *
+ * @param {string} dtString - ISO datetime string
+ * @returns {string} Formatted datetime (YYYY-MM-DDTHH:MM) or original if invalid
+ */
+function trimToMinutes(dtString) {
+  // date validation
+  if (!dtString) return dtString;
+  const d = new Date(dtString);
+  if (isNaN(d.getTime())) {
+    console.warn(`trimToMinutes: Invalid date string "${dtString}"`);
+    return dtString;
+  }
+  return d.toISOString().slice(0, 16);
+}
+
+/**
+ * Generates a unique grouping key for observations
+ * Falls back to UUID instead of "unknown" to prevent incorrect grouping
+ *
+ * @param {Object} observation - FHIR Observation resource
+ * @returns {string} Unique grouping key
+ */
+function getObservationGroupingKey(observation) {
+  return (
+    observation.effectiveDateTime ||
+    observation.issued ||
+    observation.encounter?.reference ||
+    `unknown-${generateUUID()}` // Prevent grouping unrelated observations
+  );
+}
+
+/**
+ * Converts a group of FHIR Observations to a single QuestionnaireResponse
+ *
+ * @param {Array<Object>} group - Array of related Observation resources
+ * @param {Object} config - Configuration object
+ * @param {Function} [config.getSubject] - Custom function to extract subject
+ * @param {Function} [config.getAuthored] - Custom function to extract authored date
+ * @param {Function} [config.getLinkId] - Custom function to determine linkId
+ * @param {Array<string>} [config.questionLinkIds] - Expected question link IDs
+ * @param {string} [config.questionnaireId] - Questionnaire ID reference
+ * @returns {Object|null} FHIR QuestionnaireResponse or null if group is empty
+ */
 export function observationsToQuestionnaireResponse(group, config = {}) {
   if (isEmptyArray(group)) return null;
-  const trimToMinutes = (dtString) => {
-    if (!dtString) return dtString;
-    const d = new Date(dtString);
-    // Keep only "YYYY-MM-DDTHH:MM"
-    return d.toISOString().slice(0, 16);
-  };
+
   const subject = config.getSubject?.(group) || group[0]?.subject || undefined;
   const extension = group[0].extension;
   const identifier = group[0].identifier;
@@ -332,11 +437,13 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
     trimToMinutes(group[0]?.effectiveDateTime) ||
     trimToMinutes(group[0]?.issued) ||
     new Date().toISOString();
+
   const qLinkIdList = config?.questionLinkIds?.map((id) => normalizeLinkId(id));
 
-  // map answers
+  // Map answers
   const answersByLinkId = new Map();
   const textByLinkId = new Map();
+
   for (const obs of group) {
     let lid = normalizeLinkId(
       config.getLinkId
@@ -344,6 +451,7 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
         : (findMatchingQuestionLinkIdFromCode(obs, qLinkIdList, config) ?? obs.id),
     );
     if (!lid) continue;
+
     const ans = defaultAnswerMapperFromObservation(obs);
     if (!isNil(ans) && isPlainObject(ans)) answersByLinkId.set(lid, ans);
     textByLinkId.set(lid, conceptText(obs.code));
@@ -353,10 +461,12 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
 
   let qLinkIds = !isEmptyArray(answerLinkIdList) ? answerLinkIdList : qLinkIdList || [];
   const scoringQuestionId = getScoringLinkIdFromConfig(config);
+
   if (scoringQuestionId && !qLinkIds.find((qid) => normalizeLinkId(qid) === normalizeLinkId(scoringQuestionId))) {
     qLinkIds.push(normalizeLinkId(scoringQuestionId));
   }
 
+  // Deduplicate after normalization
   const items = [...new Set(qLinkIds)].map((lid) => {
     const objAns = answersByLinkId.get(lid);
     const text = textByLinkId.get(lid);
@@ -380,14 +490,24 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
   };
 }
 
+/**
+ * Converts multiple FHIR Observations to QuestionnaireResponses
+ * Groups observations by effectiveDateTime/issued/encounter
+ *
+ * @param {Array<Object>} observationResources - Array of Observation resources
+ * @param {Object} config - Configuration object
+ * @returns {Array<Object>} Array of QuestionnaireResponse resources sorted by authored date
+ */
 export function observationsToQuestionnaireResponses(observationResources, config = {}) {
   if (isEmptyArray(observationResources)) return [];
+
   const observations = getValidObservationsForQRs(observationResources);
-  /** Group obs by effectiveDateTime (fallback to issued or "unknown") */
+
+  /** Group observations using improved grouping key */
   const groupBy = (observations) => {
     const byGroup = new Map();
     for (const o of observations || []) {
-      const key = o.effectiveDateTime || o.issued || o.encounter?.reference || "unknown";
+      const key = getObservationGroupingKey(o);
       const group = byGroup.get(key);
       if (group) {
         group.push(o);
@@ -397,37 +517,56 @@ export function observationsToQuestionnaireResponses(observationResources, confi
     }
     return byGroup;
   };
+
   const groupByKey = groupBy(observations || []);
   const out = [];
+
   for (const [, group] of groupByKey.entries()) {
     const qr = observationsToQuestionnaireResponse(group, config);
     if (qr) out.push(qr);
   }
+
   return out.sort((a, b) => new Date(a.authored ?? 0) - new Date(b.authored ?? 0));
 }
 
 /**
- * @param {Array} rdata
- * @returns {Array}
+ * Sorts response data by newest date first
+ *
+ * @param {Array<Object>} rdata - Array of response objects with date property
+ * @returns {Array<Object>} Sorted copy of response array
  */
 export function sortResponsesNewestFirst(rdata = []) {
-  return [...rdata].sort((a, b) => new Date(b?.date ?? 0).getTime() - new Date(a?.date ?? 0).getTime());
+  return [...rdata].sort((a, b) => {
+    const dateA = a?.date ? new Date(a.date).getTime() : 0;
+    const dateB = b?.date ? new Date(b.date).getTime() : 0;
+    return dateB - dateA;
+  });
 }
+
 /**
- * @param {Array} rdata
+ * Gets the most recent response row from response data
+ *
+ * @param {Array<Object>} rdata - Response data array
+ * @returns {Object|null} Most recent response or null if empty
  */
 export function getMostRecentResponseRow(rdata = []) {
   return sortResponsesNewestFirst(rdata)[0] || null;
 }
 
 /**
- * @param {Array} rdata
+ * Gets the previous response row that has a valid score
+ * Skips responses with the same date as current
+ *
+ * @param {Array<Object>} rdata - Response data array
+ * @returns {Object|null} Previous response with score or null if not found
  */
 export function getPreviousResponseRowWithScore(rdata = []) {
   const rows = sortResponsesNewestFirst(rdata);
   if (isEmptyArray(rows) || rows.length < 2) return null;
+
   let prev = null;
   const currentItem = rows[0];
+
   for (let i = 1; i < rows.length; i++) {
     const item = rows[i];
     if (currentItem.date && currentItem.date === item.date) {
@@ -438,40 +577,81 @@ export function getPreviousResponseRowWithScore(rdata = []) {
       break;
     }
   }
+
   return prev;
 }
 
+/**
+ * Calculates severity level from a numeric score
+ *
+ * @param {number} score - Numeric score value
+ * @param {Object} config - Configuration with severity thresholds
+ * @param {number} [config.highSeverityScoreCutoff] - Cutoff for high severity
+ * @param {number} [config.mediumSeverityScoreCutoff] - Cutoff for medium severity
+ * @param {Array<Object>} [config.severityBands] - Array of severity bands with min/label/meaning
+ * @returns {string} Severity level: 'high', 'moderate', or 'low'
+ */
 export function severityFromScore(score, config = {}) {
   if (!isNumber(score)) return "low";
   if (config?.highSeverityScoreCutoff != null && score >= config.highSeverityScoreCutoff) return "high";
   if (config?.mediumSeverityScoreCutoff != null && score >= config.mediumSeverityScoreCutoff) return "moderate";
+
   const bands = config?.severityBands;
   if (isEmptyArray(bands) || !isNumber(score)) return "low";
 
-  // bands assumed sorted desc by min
+  // Bands assumed sorted desc by min
   for (const band of bands) {
     if (score >= (band.min ?? 0)) return band.label;
   }
+
   return bands[bands.length - 1]?.label ?? "low";
 }
 
+/**
+ * Determines meaning text from severity level
+ *
+ * @param {string} sev - Severity level
+ * @param {Object} config - Configuration
+ * @param {Function} [config.fallbackMeaningFunc] - Custom meaning function
+ * @param {string} [config.meaningQuestionId] - Link ID for meaning question
+ * @param {Array<Object>} responses - Response items
+ * @param {Object} summaryObject - Summary data object
+ * @returns {string|null} Meaning text or null
+ */
 export function meaningFromSeverity(sev, config = {}, responses = [], summaryObject = {}) {
   if (config?.fallbackMeaningFunc && typeof config.fallbackMeaningFunc === "function") {
     return config.fallbackMeaningFunc(sev, responses, summaryObject);
   }
+
   const valueFromMeaningQuestionId = (responses || []).find((o) =>
     linkIdEquals(o.id, config?.meaningQuestionId, config?.linkIdMatchMode),
   )?.answer;
 
   if (valueFromMeaningQuestionId != null) return String(valueFromMeaningQuestionId).replace(/"/g, "");
+
   const bands = config?.severityBands;
   return bands?.find((b) => b.label === sev)?.meaning ?? null;
 }
 
+/**
+ * Extracts scoring link ID from configuration
+ *
+ * @param {Object} config - Configuration object
+ * @returns {string|null} Normalized link ID for scoring question
+ */
 export function getScoringLinkIdFromConfig(config = {}) {
   return normalizeLinkId(config?.scoringQuestionId ? config?.scoringQuestionId : config?.deriveFrom?.linkId);
 }
 
+/**
+ * Calculates questionnaire score from response items
+ *
+ * @param {Object} questionnaire - FHIR Questionnaire resource
+ * @param {Array<Object>} responseItemsFlat - Flattened response items
+ * @param {Object} config - Configuration object
+ * @param {Object} ctx - Context with utility methods
+ * @returns {Object} Score calculation results with rawScore, score, questionScores, etc.
+ */
 export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, config = {}, ctx = {}) {
   const linkIds = config?.questionLinkIds ? config.questionLinkIds.map((id) => normalizeLinkId(id)) : [];
   let scoreLinkIds = !isEmptyArray(linkIds)
@@ -494,14 +674,16 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
     ctx.getScoringByResponseItem(questionnaire, responseItemsFlat, id, config),
   );
 
-  const allAnswered = questionScores.length > 0 && questionScores.every((v) => v != null);
+  const allAnswered = questionScores.length > 0 && questionScores.every((v) => isNumber(v));
 
-  let score = null,
-    rawScore = ctx.getAnswerByResponseLinkId(scoringQuestionId, responseItemsFlat, config);
-  if (scoringQuestionScore != null) {
+  let score = null;
+  let rawScore = ctx.getAnswerByResponseLinkId(scoringQuestionId, responseItemsFlat, config);
+
+  if (isNumber(scoringQuestionScore)) {
     score = scoringQuestionScore;
   } else if (allAnswered) {
-    score = questionScores.reduce((sum, n) => sum + (n ?? 0), 0);
+    // Only sum if all are numbers (already validated by allAnswered)
+    score = questionScores.reduce((sum, n) => sum + n, 0);
   } else {
     score = rawScore;
   }
@@ -530,14 +712,25 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
   };
 }
 
+/**
+ * Determines if most recent response triggers an alert
+ *
+ * @param {Object} current - Most recent response row
+ * @param {Object} config - Configuration
+ * @param {string} [config.alertQuestionId] - Link ID for alert question
+ * @param {number} [config.highSeverityScoreCutoff] - Score threshold for alert
+ * @returns {boolean} True if alert should be shown
+ */
 export function getAlertFromMostRecentResponse(current, config = {}) {
   if (!current) return false;
+
   if (config?.alertQuestionId) {
     return !!(
       current?.responses?.find((o) => linkIdEquals(o.id, config?.alertQuestionId, config?.linkIdMatchMode))?.answer ??
       false
     );
   }
+
   let alert =
     isNumber(current?.score) &&
     config?.highSeverityScoreCutoff != null &&
@@ -546,22 +739,39 @@ export function getAlertFromMostRecentResponse(current, config = {}) {
   return alert;
 }
 
+/**
+ * Extracts score comparison between current and previous response
+ *
+ * @param {number|null} currentScore - Current score value
+ * @param {number|null} previousScore - Previous score value
+ * @returns {'higher'|'lower'|'equal'|null} Comparison result
+ */
+function getScoreComparison(currentScore, previousScore) {
+  if (!isNumber(currentScore) || !isNumber(previousScore)) return null;
+  if (currentScore > previousScore) return "higher";
+  if (currentScore < previousScore) return "lower";
+  return "equal";
+}
+
+/**
+ * Generates scoring parameters from response data
+ *
+ * @param {Array<Object>} responses - Array of response rows
+ * @param {Object} config - Configuration object
+ * @returns {Object|null} Scoring parameters including current/previous scores, comparison, severity
+ */
 export function getScoreParamsFromResponses(responses, config = {}) {
   if (isEmptyArray(responses)) return null;
+
   const current = getMostRecentResponseRow(responses);
   const prev = getPreviousResponseRowWithScore(responses);
+
   const curScore = current.score != null ? current.score : null;
   const prevScore = prev?.score != null ? prev.score : null;
   const minScore = isNumber(config?.minimumScore) ? config?.minimumScore : 0;
   const maxScore = isNumber(config?.maximumScore) ? config?.maximumScore : null;
   const comparisonToAlert = config?.comparisonToAlert ?? "higher";
-
-  let comparison = null; // "higher" | "lower" | "equal" | null
-  if (prevScore != null && curScore != null && isNumber(curScore) && isNumber(prevScore)) {
-    if (curScore > prevScore) comparison = "higher";
-    else if (curScore < prevScore) comparison = "lower";
-    else comparison = "equal";
-  }
+  const comparison = getScoreComparison(curScore, prevScore);
   const score = curScore;
   const scoreSeverity = severityFromScore(score, config);
   const meaning = meaningFromSeverity(scoreSeverity, config, current?.responses, current);
@@ -569,6 +779,7 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   const alert = getAlertFromMostRecentResponse(current, config);
   const warning =
     isNumber(score) && config?.mediumSeverityScoreCutoff != null && score >= config?.mediumSeverityScoreCutoff;
+
   const scoringParams = {
     ...config,
     score,
@@ -586,6 +797,7 @@ export function getScoreParamsFromResponses(responses, config = {}) {
     comparisonToAlert,
     source,
   };
+
   return {
     ...scoringParams,
     scoringParams: scoringParams,

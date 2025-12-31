@@ -27,6 +27,7 @@ export default function Scoring(props) {
         spacing={0.5}
         justifyContent={justifyContent || "flex-start"}
         alignItems={alignItems || "center"}
+        className="score-container"
       >
         <div className={`${oScore.textColorClass}`}>{getScoreDisplay()}</div>
         {oScore.alertNote && (

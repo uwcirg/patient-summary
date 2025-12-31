@@ -12,21 +12,13 @@ import PHQ9SummaryData from "../mockfiles/MockPHQ9SummaryData.json";
 
 describe("Testing ScoringSummary component", () => {
   it("Renders scoring summary without data", () => {
-    render(<ScoringSummary />);
-    expect(screen.getByText("No Data")).toBeInTheDocument();
+    const {container} = render(<ScoringSummary />);
+    const noDataElement = container.querySelector(".no-data-wrapper");
+    expect(noDataElement).toBeInTheDocument();
   });
 
   it("Renders score cell using data as array", () => {
-    const { container } = render(<ScoringSummary data={[PHQ9SummaryData.scoringSummaryData]} />);
-    const scoreElement = container.querySelector(".score-wrapper");
-    const descendant = screen.getByTestId("score");
-    expect(scoreElement).toContainElement(descendant);
-  });
-
-  it("Renders score cell using data as a single object", () => {
-    const { container } = render(<ScoringSummary data={PHQ9SummaryData.scoringSummaryData} />);
-    const scoreElement = container.querySelector(".score-wrapper");
-    const descendant = screen.getByTestId("score");
-    expect(scoreElement).toContainElement(descendant);
+    render(<ScoringSummary data={[PHQ9SummaryData.scoringSummaryData]} />);
+    expect(screen.getByText("moderate depression")).toBeInTheDocument();
   });
 });

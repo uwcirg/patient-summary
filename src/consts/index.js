@@ -67,3 +67,62 @@ export const FLOWSHEET_CODE_IDS = [
 export const PHQ9_SI_QUESTION_LINK_ID = "44260-8";
 
 export const PHQ9_SI_ANSWER_SCORE_MAPPINGS = DEFAULT_FALLBACK_SCORE_MAPS.default; // extended if needed
+
+/**
+ * Medical condition codes used in questionnaire processing
+ */
+export const CONDITION_CODES = {
+  LOWER_EDUCATION: "Z55.5",
+};
+
+/**
+ * Questionnaire identifiers
+ */
+export const QUESTIONNAIRE_IDS = {
+  SLUMS: "CIRG_SLUMS",
+  CIDAS: "CIRG-C-IDAS",
+};
+
+/**
+ * Link IDs for specific questionnaire items
+ */
+export const LINK_IDS = {
+  CIDAS_SUICIDE: "cs-idas-15",
+  MINICOG_RECALL: "minicog-question1",
+  MINICOG_CLOCK: "minicog-question2",
+  MINICOG_TOTAL: "minicog-total-score",
+};
+
+/**
+ * Hidden link IDs for Mini-Cog display
+ */
+export const MINICOG_HIDDEN_IDS = new Set([
+  "introduction",
+  "minicog-question1-instruction",
+  "minicog-question2-instruction",
+  "minicog-total-score-explanation",
+  "minicog-questionnaire-footnote",
+]);
+
+/**
+ * Default severity cutoffs
+ */
+export const SEVERITY_CUTOFFS = {
+  SLUMS_LOW_EDUCATION: 19,
+  SLUMS_HIGH_EDUCATION: 20,
+  CIDAS_HIGH_SEVERITY: 18,
+  CIDAS_SUICIDE_THRESHOLD: 1,
+  MINICOG_HIGH_SEVERITY: 3,
+};
+
+/**
+ * Scoring parameters
+ */
+export const SCORING_PARAMS = {
+  CIDAS_MAXIMUM_SCORE: 36,
+  MINICOG_MAXIMUM_SCORE: 5,
+  MINICOG_RECALL_MAX: 3,
+  MINICOG_CLOCK_SCORE: 2,
+};
+// pattern in link Id to check to determine whether a questionnaire item is a response item
+export const EXCLUDED_LINK_ID_KEYWORDS = ["introduction", "ignore", "header", "score-label", "critical-flag"];

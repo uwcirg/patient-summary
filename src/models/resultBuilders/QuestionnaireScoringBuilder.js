@@ -32,7 +32,7 @@ import {
   getTitleByRow,
   getScoringLinkIdFromConfig,
 } from "./helpers";
-import { DEFAULT_FALLBACK_SCORE_MAPS, DEFAULT_VAL_TO_LOIN_CODE } from "@/consts";
+import { DEFAULT_FALLBACK_SCORE_MAPS, DEFAULT_VAL_TO_LOIN_CODE, EXCLUDED_LINK_ID_KEYWORDS } from "@/consts";
 import questionnaireConfig from "@/config/questionnaire_config";
 import {
   conceptText,
@@ -74,37 +74,49 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   constructor(config = {}, patientBundle) {
     super();
 
-    const bands = !isEmptyArray(config?.severityBands) ? [...config.severityBands] : null;
-    if (bands) bands.sort((a, b) => (b.min ?? 0) - (a.min ?? 0));
+    // Sort severity bands from highest to lowest minimum value
+    // Create a defensive copy to avoid mutating the input config
+    const severityBands = !isEmptyArray(config?.severityBands)
+      ? [...config.severityBands].sort((a, b) => (b.min ?? 0) - (a.min ?? 0))
+      : null;
 
     const rawFallback = config?.fallbackScoreMap ?? DEFAULT_FALLBACK_SCORE_MAPS.default;
     this.fallbackScoreMap = normalizeObjectKeys(rawFallback);
 
     // normalize linkIds from config once
-    const norm = (id) => (id == null ? id : normalizeLinkId(String(id)));
-    const normArr = (arr) => (isEmptyArray(arr) ? null : arr.map(norm));
+    const normalizedLinkId = (id) => (id == null ? id : normalizeLinkId(String(id)));
+    const normalizeLinkIdArray = (arr) => (isEmptyArray(arr) ? null : arr.map(normalizedLinkId));
 
     this.cfg = {
       ...(config ?? {}),
       key: config.key ?? "",
       title: config.title ?? "",
-      subtitle: config.title ?? "",
+      subtitle: config.subtitle ?? "", // Fixed: was config.title
       questionnaireId: config.questionnaireId ?? "",
       questionnaireName: config.questionnaireName ?? "",
       questionnaireUrl: config.questionnaireUrl ?? "",
-      scoringQuestionId: norm(config.scoringQuestionId) ?? "",
+      scoringQuestionId: normalizeLinkId(config.scoringQuestionId) ?? "",
       subScoringQuestions: config.subScoringQuestions,
       scoringParams: config.scoringParams ?? {},
-      questionLinkIds: normArr(config.questionLinkIds),
+      questionLinkIds: normalizeLinkIdArray(config.questionLinkIds),
       questionnaireMatchMode: config.questionnaireMatchMode ?? "fuzzy",
       linkIdMatchMode: config.linkIdMatchMode ?? "fuzzy",
-      severityBands: bands,
+      severityBands, // Use the sorted copy
       highSeverityScoreCutoff: config.highSeverityScoreCutoff ?? null,
       fallbackMeaningFunc: config.fallbackMeaningFunc ?? null,
       excludeQuestionLinkIdPatterns: config.excludeQuestionLinkIdPatterns ?? null,
     };
 
     this.patientBundle = patientBundle || null;
+
+    // Add cache for bundle grouping
+    this._bundleGroupsCache = null;
+    this._bundleCacheKey = null;
+
+    // Add questionnaire index cache
+    this._questionnaireIndexCache = null;
+    this._questionnaireIndexCacheKey = null;
+
     this.responseAnswerTypes = new Set([
       "boolean",
       "choice",
@@ -120,7 +132,33 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     ]);
   }
 
+  _resolveConfig(config) {
+    return config ?? this.cfg;
+  }
+
   // -------------------- Bundle access --------------------
+
+  /**
+   * Generate a cache key for a bundle to detect if it has changed
+   * @private
+   */
+  _getBundleCacheKey(bundleOverride) {
+    const bundle = bundleOverride || this.patientBundle;
+    if (!bundle) return null;
+
+    // Simple cache key based on bundle structure
+    // For arrays: use length and first/last resource types
+    if (Array.isArray(bundle)) {
+      const firstType = bundle[0]?.resourceType || bundle[0]?.resource?.resourceType;
+      const lastType = bundle[bundle.length - 1]?.resourceType || bundle[bundle.length - 1]?.resource?.resourceType;
+      return `array_${bundle.length}_${firstType}_${lastType}`;
+    }
+
+    // For proper bundles: use entry count and bundle id if available
+    const entryCount = bundle.entry?.length || 0;
+    const bundleId = bundle.id || "no-id";
+    return `bundle_${bundleId}_${entryCount}`;
+  }
   _bundleEntries(bundleOverride) {
     const b = bundleOverride || this.patientBundle;
     if (!b) return [];
@@ -151,7 +189,20 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return entries.filter(isQr);
   }
 
+  /**
+   * Get grouped bundle with caching to avoid repeated processing
+   * @private
+   */
   fromBundleGrouped({ completedOnly = true } = {}, bundleOverride) {
+    const currentCacheKey = this._getBundleCacheKey(bundleOverride);
+    const cacheKeyWithOptions = `${currentCacheKey}_completed_${completedOnly}`;
+
+    // Return cached result if bundle hasn't changed
+    if (this._bundleCacheKey === cacheKeyWithOptions && this._bundleGroupsCache) {
+      return this._bundleGroupsCache;
+    }
+
+    // Bundle changed or not cached yet - recompute
     const groups = Object.create(null);
     for (const res of this._bundleEntries(bundleOverride)) {
       if (!isQr(res)) continue;
@@ -176,7 +227,32 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       }));
       groups[k] = this.sortByNewestAuthoredOrUpdated(mapped).map((x) => x._qr);
     }
+
+    // Cache the result
+    this._bundleGroupsCache = groups;
+    this._bundleCacheKey = cacheKeyWithOptions;
+
     return groups;
+  }
+
+  /**
+   * Clear the bundle grouping cache (call this if you know the bundle has changed)
+   * @public
+   */
+  clearBundleCache() {
+    this._bundleGroupsCache = null;
+    this._bundleCacheKey = null;
+    this._questionnaireIndexCache = null;
+    this._questionnaireIndexCacheKey = null;
+  }
+
+  /**
+   * Update the patient bundle and clear the cache
+   * @public
+   */
+  updatePatientBundle(newBundle) {
+    this.patientBundle = newBundle;
+    this.clearBundleCache();
   }
 
   fromBundleForThisQuestionnaire({ completedOnly = true } = {}, bundleOverride) {
@@ -207,32 +283,52 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
 
   // -------------------- Questionnaire indexing --------------------
+  /**
+   * Index questionnaires in bundle with caching
+   * @private
+   */
   indexQuestionnairesInBundle(bundleOverride) {
+    // Check if we can use cached index
+    const currentCacheKey = this._getBundleCacheKey(bundleOverride);
+    const indexCacheKey = `qindex_${currentCacheKey}`;
+
+    if (this._questionnaireIndexCache && this._questionnaireIndexCacheKey === indexCacheKey) {
+      return this._questionnaireIndexCache;
+    }
+
     const idx = Object.create(null);
     for (const q of this._bundleEntries(bundleOverride)) {
       if (!q) continue;
+
       if (normalizeStr(q.resourceType) === normalizeStr(RT_QR)) {
         if (q.questionnaire) {
-          const qIndex = this.questionnaireIDFromQR(q);
-          if (!idx[qIndex]) {
-            if (questionnaireConfig[qIndex]) {
-              idx[qIndex] = buildQuestionnaire([], questionnaireConfig[qIndex]);
+          const questionnaireId = this.questionnaireIDFromQR(q);
+          if (!idx[questionnaireId]) {
+            if (questionnaireConfig[questionnaireId]) {
+              idx[questionnaireId] = buildQuestionnaire([], questionnaireConfig[questionnaireId]);
             } else {
-              idx[qIndex] = {
+              idx[questionnaireId] = {
                 resourceType: "Questionnaire",
-                id: qIndex,
-                name: qIndex,
+                id: questionnaireId,
+                name: questionnaireId,
               };
             }
           }
-        } else continue;
+        }
         continue;
       }
+
       if (normalizeStr(q.resourceType) !== normalizeStr(RT_Q)) continue;
+
       if (q.id) idx[q.id] = q;
       if (q.name) idx[normalizeStr(q.name)] = q;
       if (q.url) idx[q.url] = q;
     }
+
+    // Cache the index
+    this._questionnaireIndexCache = idx;
+    this._questionnaireIndexCacheKey = indexCacheKey;
+
     return idx;
   }
 
@@ -258,18 +354,17 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   // -------------------- general utils --------------------
   isLinkIdEquals(a, b, config = {}) {
-    // Ensure both inputs are normalized before comparison
     const normalizedA = normalizeLinkId(a);
     const normalizedB = normalizeLinkId(b);
-    const configToUse = config ? config : this.cfg;
-    return linkIdEquals(normalizedA, normalizedB, configToUse.linkIdMatchMode ?? "fuzzy");
+    const resolvedConfig = this._resolveConfig(config);
+    return linkIdEquals(normalizedA, normalizedB, resolvedConfig.linkIdMatchMode ?? "fuzzy");
   }
 
   isHelpQuestionItem(item) {
     if (!item) return false;
     return (
       !isEmptyArray(item.extension) &&
-      item.extension.find((o) => o.valueCodeableConcept?.coding?.find((o) => o.code === "help"))
+      item.extension.find((ext) => ext.valueCodeableConcept?.coding?.find((coding) => coding.code === "help"))
     );
   }
 
@@ -285,29 +380,23 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (!item) return false;
     if (item.readOnly) return false;
     if (this.isValueExpressionQuestionItem(item)) return false;
+
     const linkId = String(item.linkId).toLowerCase();
-    //const configToUse = config ? config : this.cfg;
-    // const scoreLinkId = configToUse?.scoringQuestionId;
-    // const subScoreIds = configToUse?.subScoreQuestionIds;
-    if (
-      linkId === "introduction" ||
-      linkId.includes("ignore") ||
-      linkId.includes("header") ||
-      linkId.includes("score-label") ||
-      linkId.includes("critical-flag")
-    )
+
+    if (EXCLUDED_LINK_ID_KEYWORDS.some((keyword) => linkId === keyword || linkId.includes(keyword))) {
       return false;
+    }
+
     if (item.type && !this.responseAnswerTypes.has(item.type)) return false;
-    const patterns = (config?.excludeQuestionLinkIdPatterns ?? []).map((s) => String(s).toLowerCase());
+
+    const resolvedConfig = this._resolveConfig(config);
+    const patterns = (resolvedConfig?.excludeQuestionLinkIdPatterns ?? []).map((s) => String(s).toLowerCase());
+
     if (patterns.some((p) => linkId.includes(p))) return false;
-    // if (scoreLinkId) {
-    //   return !this.isLinkIdEquals(item.linkId, scoreLinkId, config);
-    // }
-    // if (!isEmptyArray(subScoreIds)) {
-    //   return !subScoreIds.find((id) => this.isLinkIdEquals(id, item.linkId, config));
-    // }
+
     return true;
   }
+
   isNonScoreLinkId(linkId, config = {}) {
     if (!linkId) return false;
     if (config?.questionLinkIds?.indexOf(linkId) !== -1) return true;
@@ -320,16 +409,17 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   // -------------------- Questionnaire matching --------------------
   questionnaireRefMatches(canonical, config) {
-    const configToUse = config ? config : this.cfg;
+    const resolvedConfig = this._resolveConfig(config);
     const ref = normalizeStr(canonical);
-    const key = normalizeStr(configToUse.key);
-    const id = normalizeStr(configToUse.questionnaireId);
-    const name = normalizeStr(configToUse.questionnaireName);
-    const url = normalizeStr(configToUse.questionnaireUrl);
+    const key = normalizeStr(resolvedConfig.key);
+    const id = normalizeStr(resolvedConfig.questionnaireId);
+    const name = normalizeStr(resolvedConfig.questionnaireName);
+    const url = normalizeStr(resolvedConfig.questionnaireUrl);
 
-    if ((configToUse.questionnaireMatchMode ?? "fuzzy") === "strict") {
+    if ((resolvedConfig.questionnaireMatchMode ?? "fuzzy") === "strict") {
       return (url && ref === url) || (id && ref === id) || (name && ref === name);
     }
+
     return (
       (key && fuzzyMatch(ref, key)) ||
       (id && fuzzyMatch(ref, id)) ||
@@ -559,14 +649,15 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   // -------------------- formatting --------------------
   formattedResponses(questionnaireItems, responseItemsFlat, config) {
+    const resolvedConfig = this._resolveConfig(config);
     if (
       isEmptyArray(questionnaireItems) ||
       !questionnaireItems.some((item) => responseItemsFlat?.find((o) => o.linkId === item.linkId))
     )
-      return this.responsesOnly(responseItemsFlat, config);
+      return this.responsesOnly(responseItemsFlat, resolvedConfig);
 
     if (isEmptyArray(responseItemsFlat)) return [];
-    const configToUse = config ? config : this.cfg;
+    const configToUse = resolvedConfig;
     const list = [];
     const walk = (items = []) => {
       for (const q of items) {
@@ -584,12 +675,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       returnObject.rawAnswer = matchedResponseItem?.answer ?? [];
       if (!this.isResponseQuestionItem(q, configToUse)) returnObject.readOnly = true;
       if (this.isValueExpressionQuestionItem(q)) returnObject.isValueExpression = true;
-      if (this.isHelpQuestionItem(q)) q.isHelp = true;
+      if (this.isHelpQuestionItem(q)) returnObject.isHelp = true;
       returnObject.question =
-        q.text ??
-        (!isEmptyArray(matchedResponseItem)
-          ? this._getQuestion(matchedResponseItem[0], configToUse)
-          : `Question ${q.linkId}`);
+        q.text ?? (matchedResponseItem ? this._getQuestion(matchedResponseItem, configToUse) : `Question ${q.linkId}`);
       returnObject.text = matchedResponseItem?.text ? matchedResponseItem?.text : "";
       return returnObject;
     });
@@ -774,7 +862,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return this._getAnswer(answerItem, config);
   }
 
-
   _formatScoringSummaryData = (data, opts = {}) => {
     if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
     const subtitle = opts?.config?.subtitle ? getNormalizedRowTitleDisplay(opts?.config?.subtitle, data[0]) : "";
@@ -811,76 +898,153 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       return { ...item, raw: item };
     });
 
-    // Use the row with max responses as the “schema”
+    // Use the row with max responses as the "schema"
     const anchorRowData = [...data].sort((a, b) => (b.responses?.length || 0) - (a.responses?.length || 0))[0];
     if (!anchorRowData || isEmptyArray(anchorRowData.responses)) return null;
+
+    // Resolve config
+    let resolvedConfig = config;
+    if (!resolvedConfig) {
+      if (data[0].questionnaireId) resolvedConfig = questionnaireConfig[data[0].questionnaireId];
+    }
+
     // Build a set of all question ids
-    let qIds = [],
-      configToUse = config;
-    if (!configToUse) {
-      if (data[0].questionnaireId) configToUse = questionnaireConfig[data[0].questionnaireId];
+    let questionLinkIds = [];
+    if (resolvedConfig && resolvedConfig.questionLinkIds) {
+      questionLinkIds = resolvedConfig.questionLinkIds;
     }
-    if (configToUse && configToUse.questionLinkIds) qIds = configToUse.questionLinkIds;
-    if (isEmptyArray(qIds)) {
-      qIds = Array.from(new Set(anchorRowData.responses.map((r) => r.id).filter((id) => id != null)));
+
+    if (isEmptyArray(questionLinkIds)) {
+      questionLinkIds = Array.from(new Set(anchorRowData.responses.map((r) => r.id).filter((id) => id != null)));
     }
-    const result = [...qIds]
-      .map((qid) => {
-        const row = {};
-        // Question text from first available response carrying that qid
-        const sample =
-          (anchorRowData.responses || []).find((r) => this.isLinkIdEquals(r.id, qid, configToUse)) ||
-          (
-            data.find((d) => (d.responses || []).some((r) => this.isLinkIdEquals(r.id, qid, configToUse)))?.responses ||
-            []
-          ).find((r) => this.isLinkIdEquals(r.id, qid, configToUse));
-        row.id = qid;
-        row.linkId = qid;
-        let question = "";
-        const qItem = getQuestionnaireItemByLinkId(anchorRowData.questionnaire, qid);
-        if (qItem) {
-          question = this._getQuestion(qItem);
+
+    // Create lookup maps
+    // Build a map for quick response lookups by linkId for each data item
+    const responseLookupByDataId = new Map();
+    for (const dataItem of data) {
+      const responseMap = new Map();
+      for (const response of dataItem.responses || []) {
+        if (response.id) {
+          responseMap.set(response.id, response);
         }
-        row.question = sample ? this._getQuestion(sample, configToUse) : question ? question : `Question ${qid}`;
+      }
+      responseLookupByDataId.set(dataItem.id, responseMap);
+    }
+
+    // Build a map for finding sample responses by linkId
+    const sampleResponseMap = new Map();
+
+    // First, try anchor row
+    for (const response of anchorRowData.responses || []) {
+      if (response.id && !sampleResponseMap.has(response.id)) {
+        sampleResponseMap.set(response.id, response);
+      }
+    }
+
+    // Then fill in gaps from other data items
+    for (const dataItem of data) {
+      for (const response of dataItem.responses || []) {
+        if (response.id && !sampleResponseMap.has(response.id)) {
+          sampleResponseMap.set(response.id, response);
+        }
+      }
+    }
+    //
+
+    const result = [...questionLinkIds]
+      .map((questionId) => {
+        const row = {};
+
+        // Get sample response from lookup map (O(1) instead of O(n))
+        let sample = sampleResponseMap.get(questionId);
+
+        // If not found in map, try fuzzy matching (fallback for non-exact matches)
+        if (!sample) {
+          sample =
+            (anchorRowData.responses || []).find((r) => this.isLinkIdEquals(r.id, questionId, resolvedConfig)) ||
+            (
+              data.find((d) => (d.responses || []).some((r) => this.isLinkIdEquals(r.id, questionId, resolvedConfig)))
+                ?.responses || []
+            ).find((r) => this.isLinkIdEquals(r.id, questionId, resolvedConfig));
+        }
+
+        row.id = questionId;
+        row.linkId = questionId;
+
+        // Get question text
+        let question = "";
+        const questionnaireItem = getQuestionnaireItemByLinkId(anchorRowData.questionnaire, questionId);
+        if (questionnaireItem) {
+          question = this._getQuestion(questionnaireItem);
+        }
+
+        row.question = sample
+          ? this._getQuestion(sample, resolvedConfig)
+          : question
+            ? question
+            : `Question ${questionId}`;
+
         row.source = sample?.source;
         row.readOnly = sample?.readOnly || false;
         row.isValueExpression = sample?.isValueExpression || false;
         row.isHelp = sample?.isHelp || false;
-        row.config = configToUse;
-        for (const d of formattedData) {
-          // this is the row data for the date and id of a response set that has the requsite linkId
-          row[d.id] = this._getAnswerByTargetLinkIdFromResponseData(sample?.id, data, d.id, configToUse);
-          row[`${d.id}_data`] = getScoreParamsFromResponses([d], configToUse);
+        row.config = resolvedConfig;
+
+        // Use lookup maps for fast answer retrieval (O(1) instead of O(n*m))
+        for (const dataItem of formattedData) {
+          const responseMap = responseLookupByDataId.get(dataItem.id);
+
+          // Try exact match first from lookup map
+          let matchedResponse = responseMap?.get(sample?.id);
+
+          // Fallback to fuzzy matching if needed
+          if (!matchedResponse && sample?.id) {
+            const matchResponseData = data.find((item) => item.id === dataItem.id);
+            if (matchResponseData && !isEmptyArray(matchResponseData.responses)) {
+              matchedResponse = matchResponseData.responses.find((r) =>
+                this.isLinkIdEquals(r?.id, sample.id, resolvedConfig),
+              );
+            }
+          }
+
+          row[dataItem.id] = matchedResponse ? this._getAnswer(matchedResponse, resolvedConfig) : "--";
+          row[`${dataItem.id}_data`] = getScoreParamsFromResponses([dataItem], resolvedConfig);
         }
+
         return row;
       })
       .filter((r) => !r.isValueExpression && !r.isHelp);
-    if (!configToUse?.skipMeaningScoreRow && this._hasMeaningOnlyData(data)) {
+
+    // Add meaning/score rows
+    if (!resolvedConfig?.skipMeaningScoreRow && this._hasMeaningOnlyData(data)) {
       const meaningRow = {
-        question: configToUse?.meaningRowLabel ? configToUse.meaningRowLabel : "Score / Meaning",
+        question: resolvedConfig?.meaningRowLabel ? resolvedConfig.meaningRowLabel : "Score / Meaning",
         id: `meaning_${data.map((o) => o.id).join("")}`,
-        config: configToUse,
+        config: resolvedConfig,
       };
-      for (const item of data)
+      for (const item of data) {
         meaningRow[item.id] = {
-          ...getScoreParamsFromResponses([item], configToUse),
+          ...getScoreParamsFromResponses([item], resolvedConfig),
           hasMeaningOnly: true,
         };
+      }
       result.push(meaningRow);
-    } else if (!configToUse?.skipMeaningScoreRow && this._hasScoreData(data)) {
+    } else if (!resolvedConfig?.skipMeaningScoreRow && this._hasScoreData(data)) {
       const scoringRow = {
         question: "Score / Meaning",
         id: `score_${data.map((o) => o.id).join("")}`,
-        config: configToUse,
+        config: resolvedConfig,
       };
-      for (const item of data)
+      for (const item of data) {
         scoringRow[item.id] = {
-          ...getScoreParamsFromResponses([item], configToUse),
+          ...getScoreParamsFromResponses([item], resolvedConfig),
           score: item.score,
           meaning: item.meaning,
         };
+      }
       result.push(scoringRow);
     }
+
     return result;
   };
 
@@ -921,74 +1085,167 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return summarizeMiniCogHelper(this, qrs, questionnaire, opts);
   }
 
-  // Inside QuestionnaireScoringBuilder
-
   /**
-   * Build synthetic QuestionnaireResponses that keep only one source linkId
-   * from a host questionnaire’s responses (e.g., PHQ-9 → keep /44260-8 for CIRG-SI).
+   * Build synthetic QuestionnaireResponses containing only a single question from host responses.
    *
-   * Input: hostQrs = array of real QuestionnaireResponses (PHQ-9).
-   * Output: array of synthetic QRs for targetQuestionnaireId containing ONLY linkId.
+   * This enables "derived" instruments where one question from a larger questionnaire
+   * (e.g., PHQ-9's suicide ideation question) is extracted to create a standalone instrument
+   * (e.g., CIRG-SI for suicide risk screening).
+   *
+   * @param {Array} hostQrs - Array of QuestionnaireResponse resources from the host instrument
+   * @param {Object} options - Derivation configuration
+   * @param {string} options.linkId - The linkId of the question to extract (e.g., "/44260-8")
+   * @param {string} options.targetQuestionnaireId - ID for the derived questionnaire (e.g., "CIRG-SI")
+   * @param {Function} [options.normalizeAnswerToCoding] - Function to convert answers to FHIR coding format
+   *
+   * @returns {Array} Array of synthetic QuestionnaireResponse resources, one per host response,
+   *                  each containing only the specified linkId question
+   *
+   * @example
+   * // Extract PHQ-9 question 9 (suicide ideation) to create CIRG-SI responses
+   * const cirgSiResponses = builder.buildDerivedSingleLinkQrs(phq9Responses, {
+   *   linkId: "/44260-8",
+   *   targetQuestionnaireId: "CIRG-SI",
+   *   normalizeAnswerToCoding: (answer) => ({
+   *     valueCoding: {
+   *       system: "http://loinc.org",
+   *       code: answer,
+   *       display: answer
+   *     }
+   *   })
+   * });
+   *
+   * @private
    */
   buildDerivedSingleLinkQrs(
     hostQrs = [],
     {
-      linkId, // e.g. "/44260-8"
-      targetQuestionnaireId, // e.g. "CIRG-SI"
+      linkId,
+      targetQuestionnaireId,
       normalizeAnswerToCoding = (ans) => {
         // Default: map free-text to valueCoding(code/display = lowercased text)
-        if (isNonEmptyString(ans) && DEFAULT_VAL_TO_LOIN_CODE[normalizeStr(ans.toLowerCase())])
+        if (isNonEmptyString(ans) && DEFAULT_VAL_TO_LOIN_CODE[normalizeStr(ans.toLowerCase())]) {
           return { valueCoding: DEFAULT_VAL_TO_LOIN_CODE[normalizeStr(ans.toLowerCase())] };
+        }
         const display = String(ans ?? "");
         const code = display.trim().toLowerCase();
         return { valueCoding: { system: "local/derived", code, display } };
       },
     } = {},
   ) {
+    // Early validation
     if (!linkId || !targetQuestionnaireId) return [];
 
-    const out = [];
+    // Normalize input QRs
     const formattedQrs = (hostQrs || [])
-      .map((qr) => {
-        if (qr.resource) return qr.resource;
-        return qr;
-      })
-      .filter((o) => o.resourceType === "QuestionnaireResponse");
+      .map((qr) => qr.resource || qr)
+      .filter((qr) => qr.resourceType === "QuestionnaireResponse");
+
+    const derivedResponses = [];
+
     for (const qr of formattedQrs) {
-      // locate the item by linkId in the *FHIR* shape (qr.item[].answer[*].valueX)
-      const it = (qr.item || []).find((i) => this.isLinkIdEquals(i.linkId, linkId));
-      if (!it) continue;
+      // Skip QRs without authored date
       if (!qr.authored) continue;
 
-      // normalize answer - FHIR value[x]
-      let answers = [];
-      // tolerate "flattened" shapes or proper FHIR shape
-      if (Array.isArray(it.answer) && it.answer.length && typeof it.answer[0] === "object") {
-        answers = it.answer;
-      } else {
-        // non-FHIR shape (answer: "Nearly every day") - convert
-        answers = [normalizeAnswerToCoding(it.answer)];
-      }
+      // Find the target item by linkId
+      const targetItem = (qr.item || []).find((item) => this.isLinkIdEquals(item.linkId, linkId));
 
-      out.push({
-        resourceType: "QuestionnaireResponse",
-        id: `${qr.id}_${targetQuestionnaireId}`,
-        identifier: qr.identifier,
-        meta: qr.meta,
-        questionnaire: `Questionnaire/${targetQuestionnaireId}`,
-        status: "completed",
-        subject: qr.subject,
-        authored: qr.authored,
-        author: qr.author,
-        item: [{ linkId, text: it.text || linkId, answer: answers }],
-      });
+      // Skip if target item not found
+      if (!targetItem) continue;
+
+      // Normalize answer to FHIR value[x] format
+      const normalizedAnswers = this._normalizeAnswersForDerivedQr(targetItem, normalizeAnswerToCoding);
+
+      // Build synthetic QuestionnaireResponse
+      const syntheticQr = this._buildSyntheticQuestionnaireResponse(
+        qr,
+        targetQuestionnaireId,
+        linkId,
+        targetItem,
+        normalizedAnswers,
+      );
+
+      derivedResponses.push(syntheticQr);
     }
-    return out;
+
+    return derivedResponses;
   }
 
-  // Inside QuestionnaireScoringBuilder._summariesByQuestionnaireRef(qrs, questionnaire, options = {})
+  // Helper method to normalize answers (extract logic for clarity)
+  _normalizeAnswersForDerivedQr(targetItem, normalizeAnswerToCoding) {
+    // Handle proper FHIR shape (array of answer objects)
+    if (Array.isArray(targetItem.answer) && targetItem.answer.length && typeof targetItem.answer[0] === "object") {
+      return targetItem.answer;
+    }
 
-  _summariesByQuestionnaireRef(qrs, questionnaire, options = {}) {
+    // Handle flattened/non-FHIR shape (e.g., answer: "Nearly every day")
+    return [normalizeAnswerToCoding(targetItem.answer)];
+  }
+
+  // Helper method to build synthetic QR (extract logic for clarity)
+  _buildSyntheticQuestionnaireResponse(originalQr, targetQuestionnaireId, linkId, targetItem, normalizedAnswers) {
+    return {
+      resourceType: "QuestionnaireResponse",
+      id: `${originalQr.id}_${targetQuestionnaireId}`,
+      identifier: originalQr.identifier,
+      meta: originalQr.meta,
+      questionnaire: `Questionnaire/${targetQuestionnaireId}`,
+      status: "completed",
+      subject: originalQr.subject,
+      authored: originalQr.authored,
+      author: originalQr.author,
+      item: [
+        {
+          linkId,
+          text: targetItem.text || linkId,
+          answer: normalizedAnswers,
+        },
+      ],
+    };
+  }
+
+  /**
+   * Generate summaries from questionnaire responses with optional derived response support.
+   *
+   * This method handles both direct questionnaire responses and "derived" responses where
+   * a single question from a host questionnaire (e.g., PHQ-9 suicide ideation question)
+   * is extracted to create responses for a derived instrument (e.g., CIRG-SI).
+   *
+   * @param {Array} questionnaireResponses - Array of FHIR QuestionnaireResponse resources
+   * @param {Object} questionnaire - FHIR Questionnaire resource definition
+   * @param {Object} options - Configuration options
+   * @param {Object} [options.strategyOptions] - Options passed to specialized summarizers (SLUM, CIDAS, etc.)
+   *
+   * @returns {Object} Summary object containing:
+   *   - config: Merged configuration
+   *   - chartConfig: Chart visualization parameters
+   *   - chartData: Formatted data for charting
+   *   - chartType: Type of chart to render
+   *   - responseData: Processed response data
+   *   - scoringSummaryData: Aggregated scoring information
+   *   - tableResponseData: Data formatted for table display
+   *   - printResponseData: Data formatted for printing
+   *   - questionnaire: The questionnaire definition
+   *   - key: Unique identifier for the questionnaire
+   *   - error: Error message if processing failed
+   *
+   * @example
+   * // Direct usage with PHQ-9 responses
+   * const summary = builder._summariesByQuestionnaireRef(phq9Responses, phq9Questionnaire);
+   *
+   * @example
+   * // Derived usage - automatically extracts suicide ideation question from PHQ-9
+   * const cirgSiConfig = {
+   *   deriveFrom: {
+   *     linkId: "/44260-8",
+   *     hostIds: ["PHQ-9"],
+   *     normalizeAnswerToCoding: (ans) => ({ valueCoding: { code: ans, display: ans }})
+   *   }
+   * };
+   * const summary = builder._summariesByQuestionnaireRef(phq9Responses, cirgSiQuestionnaire);
+   */
+
+  _summariesByQuestionnaireRef(questionnaireResponses, questionnaire, options = {}) {
     const keyToUse = firstNonEmpty(
       questionnaire?.id,
       this.cfg.questionnaireId,
@@ -1007,61 +1264,75 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
       // If caller passed QRs that already belong to this instrument, proceed as usual.
       // But if QRs actually look like host QRs (or are empty), try to derive.
-      const looksLikeHost = (arr) =>
-        (arr || []).some((qr) => {
-          const q = qr?.resource?.questionnaire || qr?.questionnaire || "";
-          return hostIds.some((hid) =>
-            this.questionnaireRefMatches(q, { questionnaireId: hid, questionnaireMatchMode: "fuzzy" }),
+      const looksLikeHost = (responses) =>
+        (responses || []).some((response) => {
+          const questionnaireRef = response?.resource?.questionnaire || response?.questionnaire || "";
+          return hostIds.some((hostId) =>
+            this.questionnaireRefMatches(questionnaireRef, {
+              questionnaireId: hostId,
+              questionnaireMatchMode: "fuzzy",
+            }),
           );
         });
 
-      hasHostMatch = looksLikeHost(qrs);
+      hasHostMatch = looksLikeHost(questionnaireResponses);
 
-      if (!qrs?.length || hasHostMatch) {
+      if (!questionnaireResponses?.length || hasHostMatch) {
         // We need host QRs. If caller gave us host QRs directly, use them.
         // Otherwise pull them from the bundle groups this instance can see.
-        let hostQrs = [];
+        let hostQuestionnaireResponses = [];
+
         if (hasHostMatch) {
-          hostQrs = qrs;
+          hostQuestionnaireResponses = questionnaireResponses;
         } else {
-          // Search bundle for host groups
-          const groups = this.fromBundleGrouped({ completedOnly: true });
-          for (const k of Object.keys(groups)) {
-            if (
-              hostIds.some((hid) =>
-                this.questionnaireRefMatches(k, { questionnaireId: hid, questionnaireMatchMode: "fuzzy" }),
-              )
-            ) {
-              hostQrs.push(...groups[k]);
+          // This will only recompute if the bundle has actually changed
+          const bundleGroups = this.fromBundleGrouped({ completedOnly: true });
+
+          for (const canonicalRef of Object.keys(bundleGroups)) {
+            const matchesHost = hostIds.some((hostId) =>
+              this.questionnaireRefMatches(canonicalRef, {
+                questionnaireId: hostId,
+                questionnaireMatchMode: "fuzzy",
+              }),
+            );
+
+            if (matchesHost) {
+              hostQuestionnaireResponses.push(...bundleGroups[canonicalRef]);
               hasHostMatch = true;
             }
           }
         }
 
         // Build synthetic QRs carrying only the target linkId for THIS instrument
-        const derivedQrs = this.buildDerivedSingleLinkQrs(hostQrs, {
+        const derivedQuestionnaireResponses = this.buildDerivedSingleLinkQrs(hostQuestionnaireResponses, {
           linkId,
           targetQuestionnaireId: questionnaire?.id || config?.questionnaireId || config?.key || "DERIVED",
           normalizeAnswerToCoding,
         });
 
         // Swap in derived QRs for the rest of the pipeline
-        qrs = derivedQrs;
+        questionnaireResponses = derivedQuestionnaireResponses;
       }
     }
     // === END derived ===========================================================
 
     // choose summarization strategy
-    const strategyMap = { SLUM: "summarizeSLUM", CIDAS: "summarizeCIDAS", MINICOG: "summarizeMiniCog" };
-    const selectedKey = Object.keys(strategyMap).find((k) => this.questionnaireRefMatches(k, config));
-    const evalData = selectedKey
-      ? this[strategyMap[selectedKey]](qrs, questionnaire, options)
-      : this.getResponsesSummary(qrs, questionnaire);
+    const strategyMap = {
+      SLUM: "summarizeSLUM",
+      CIDAS: "summarizeCIDAS",
+      MINICOG: "summarizeMiniCog",
+    };
+
+    const selectedStrategyKey = Object.keys(strategyMap).find((key) => this.questionnaireRefMatches(key, config));
+
+    const evaluationData = selectedStrategyKey
+      ? this[strategyMap[selectedStrategyKey]](questionnaireResponses, questionnaire, options)
+      : this.getResponsesSummary(questionnaireResponses, questionnaire);
 
     // compute scoring/series/params/chart domain/etc.
     const scoringData =
-      !config?.skipChart && !isEmptyArray(evalData)
-        ? evalData.filter(
+      !config?.skipChart && !isEmptyArray(evaluationData)
+        ? evaluationData.filter(
             (item) => item && !isEmptyArray(item.responses) && isNumber(item.score) && isValidDate(item.date),
           )
         : null;
@@ -1079,16 +1350,16 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     let xDomain;
     if (chartData && chartConfig?.dataFormatter) {
       chartData = chartConfig.dataFormatter(chartData);
-      const arrDates = !isEmptyArray(chartData) ? chartData?.map((d) => d.date) : [];
-      const dates = !isEmptyArray(arrDates) ? [...new Set(arrDates)] : [];
-      xDomain = getDateDomain(dates, { padding: dates.length <= 2 ? 0.15 : 0.05 });
+      const dateArray = !isEmptyArray(chartData) ? chartData?.map((dataPoint) => dataPoint.date) : [];
+      const uniqueDates = !isEmptyArray(dateArray) ? [...new Set(dateArray)] : [];
+      xDomain = getDateDomain(uniqueDates, { padding: uniqueDates.length <= 2 ? 0.15 : 0.05 });
     }
 
     const { key, id, ...restOfConfig } = config ?? {};
     const chartParams = { ...chartConfig, ...restOfConfig, ...(restOfConfig?.chartParams ?? {}), xDomain };
-    const tableResponseData = this._formatTableResponseData(evalData, config);
-    const printResponseData = this._formatPrintResponseData(evalData, config);
-    const scoringSummaryData = this._formatScoringSummaryData(evalData, {
+    const tableResponseData = this._formatTableResponseData(evaluationData, config);
+    const printResponseData = this._formatPrintResponseData(evaluationData, config);
+    const scoringSummaryData = this._formatScoringSummaryData(evaluationData, {
       tableResponseData,
       printResponseData,
       config,
@@ -1099,13 +1370,17 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       chartConfig: chartParams,
       chartData: { ...chartParams, data: chartData },
       chartType: chartConfig?.type,
-      responseData: evalData,
+      responseData: evaluationData,
       scoringSummaryData,
       tableResponseData,
       printResponseData,
       questionnaire,
       key: questionnaire?.id,
-      error: !hasHostMatch && !questionnaire ? "No associated questionnaire found" : "",
+      error: !questionnaire
+        ? "No associated questionnaire found"
+        : !hasHostMatch
+          ? "No host questionnaire responses found"
+          : "",
     };
   }
 

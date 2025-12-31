@@ -10,8 +10,9 @@ import Score from "../../components/Score";
 
 describe("Testing Score component", () => {
   it("Renders score without score param", () => {
-    render(<Score />);
-    expect(screen.getByText("N/A")).toBeInTheDocument();
+    const {container} = render(<Score />);
+    const scoreElement = container.querySelector(".score-container");
+    expect(scoreElement).toBeNull();
   });
 
   it("Renders score with alert param", () => {
