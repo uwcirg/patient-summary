@@ -120,7 +120,7 @@ export default function ScoringSummary(props) {
           ...stickyStyle,
           minHeight: { xs: theme.spacing(4), sm: "auto" },
           backgroundColor: "lightest.main",
-          textAlign: "center",
+          textAlign: "left",
         },
         ...defaultHeaderCellProps,
       },
@@ -132,9 +132,9 @@ export default function ScoringSummary(props) {
           borderBottom: `1px solid`,
           borderBottomColor: "border.main",
           verticalAlign: "top",
-          textAlign: "center",
+          textAlign: "left",
           height: "100%",
-          minWidth: "132px",
+          minWidth: "128px",
         },
         size: "small",
       },
@@ -158,7 +158,7 @@ export default function ScoringSummary(props) {
             tableData={row?.tableResponseData}
             columns={row?.responseColumns}
             questionnaire={row.questionnaire}
-            buttonStyle={{ width: "100%", maxWidth: 108, margin: "auto" }}
+            buttonStyle={{ width: "100%", maxWidth: 108}}
           />
         ) : (
           <Typography component="h3" variant="subtitle2" sx={{ textAlign: "left" }}>

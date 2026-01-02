@@ -271,7 +271,7 @@ export default function BarCharts(props) {
   const yDomain = maxYValue ? [minYValue, maxYValue] : [minYValue, "auto"];
 
   const renderTitle = () => (
-    <Typography variant="subtitle1" component="h4" color="secondary" sx={{ textAlign: "center", mt: 1 }}>
+    <Typography variant="subtitle1" component="h4" color="secondary" sx={{ textAlign: "center" }}>
       {title}
     </Typography>
   );

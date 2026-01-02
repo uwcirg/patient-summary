@@ -502,7 +502,6 @@ export default function LineCharts(props) {
   );
 
   const renderLegend = () => {
-  
     if (isEmptyArray(sources)) {
       return (
         <Legend

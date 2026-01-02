@@ -17,6 +17,10 @@ const defaultOptions = {
   typography: {
     subtitle1: {
       fontWeight: 500,
+      fontSize: "0.875rem",
+    },
+    subtitle2: {
+      fontSize: "0.875rem",
     },
   },
 };
@@ -25,10 +29,10 @@ export const themes = {
     ...defaultOptions,
     palette: {
       background: {
-        main: "#f7f6f9",
+        main: "#FaFaFa",
       },
       lightest: {
-        main: "#f7f7f8",
+        main: "#fafafa",
       },
       lighter: {
         main: indigo[50],
@@ -55,7 +59,7 @@ export const themes = {
         main: grey[700],
       },
       border: {
-        main: "#ececec",
+        main: "#f5f5f5",
       },
       error: {
         main: red[900]

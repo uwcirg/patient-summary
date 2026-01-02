@@ -12,11 +12,8 @@ const sectionWrapperSx = {
 };
 
 const titleSx = {
-  //marginBottom: 1,
   fontWeight: 500,
-  // borderBottomStyle: "solid",
-  // borderBottomWidth: "1px",
-  backgroundColor: "#f9fafb",
+  backgroundColor: "background.main",
   padding: (theme) => theme.spacing(0.5, 1),
 };
 

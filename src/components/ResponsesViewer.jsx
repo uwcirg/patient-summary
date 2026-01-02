@@ -109,9 +109,9 @@ export default function ResponsesViewer({
           <Typography
             component="h3"
             variant="subtitle2"
-            sx={{
-              textAlign: "center",
-            }}
+            // sx={{
+            //   textAlign: "center",
+            // }}
           >
             {responsesTileTitle}
           </Typography>
