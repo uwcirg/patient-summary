@@ -137,10 +137,10 @@ export default function LineCharts(props) {
     const maxSpread = 6 * 24 * 60 * 60 * 1000; // Maximum: 6 days
     const dynamicSpreadWidth = Math.max(minSpread, Math.min(maxSpread, timeRangeMs * 0.005));
 
-    console.log("LineChart - Dynamic spread calculation:", {
-      timeRangeDays: (timeRangeMs / (24 * 60 * 60 * 1000)).toFixed(1),
-      spreadWidthHours: (dynamicSpreadWidth / (60 * 60 * 1000)).toFixed(1),
-    });
+    // console.log("LineChart - Dynamic spread calculation:", {
+    //   timeRangeDays: (timeRangeMs / (24 * 60 * 60 * 1000)).toFixed(1),
+    //   spreadWidthHours: (dynamicSpreadWidth / (60 * 60 * 1000)).toFixed(1),
+    // });
 
     // Group by DATE AND Y-VALUE (to find true overlaps)
     const groups = {};
@@ -232,11 +232,11 @@ export default function LineCharts(props) {
   const calculatedXDomain = React.useMemo(() => {
     // If we have a custom xDomain prop and no truncation, use it
     if (xDomain && !wasTruncated) {
-      console.log("LineChart using custom xDomain:", {
-        start: new Date(xDomain[0]).toLocaleDateString(),
-        end: new Date(xDomain[1]).toLocaleDateString(),
-        rawDomain: xDomain,
-      });
+      // console.log("LineChart using custom xDomain:", {
+      //   start: new Date(xDomain[0]).toLocaleDateString(),
+      //   end: new Date(xDomain[1]).toLocaleDateString(),
+      //   rawDomain: xDomain,
+      // });
       return xDomain;
     }
 
@@ -251,11 +251,11 @@ export default function LineCharts(props) {
 
     const domain = [cutoffTimestamp - paddingMs, now + paddingMs];
 
-    console.log("LineChart calculated domain:", {
-      start: new Date(domain[0]).toLocaleDateString(),
-      end: new Date(domain[1]).toLocaleDateString(),
-      rawDomain: domain,
-    });
+    // console.log("LineChart calculated domain:", {
+    //   start: new Date(domain[0]).toLocaleDateString(),
+    //   end: new Date(domain[1]).toLocaleDateString(),
+    //   rawDomain: domain,
+    // });
 
     return domain;
   }, [xDomain, wasTruncated]);
