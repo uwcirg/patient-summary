@@ -210,10 +210,10 @@ p {
   }
 }
 
-.MuiButton-contained,
-.MuiButton-outlined {
-  border-radius: 24px !important;
-}
+// .MuiButton-contained,
+// .MuiButton-outlined {
+//   border-radius: 24px !important;
+// }
 
 .MuiTablePagination-toolbar {
   .MuiTablePagination-input {
@@ -295,6 +295,19 @@ p {
 }
 .section-wrapper:not(:last-of-type) {
   margin-bottom: 16px;
+}
+.list-item-container {
+  margin: 0;
+  padding: 0 0 0 16px;
+  list-style-type: square;
+  &.single {
+    list-style-type: none;
+    padding: 0;
+  }
+  li:before {
+    content: "";
+    margin-left: -4px;
+  }
 }
 
 @media print {

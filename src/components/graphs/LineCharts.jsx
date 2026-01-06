@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Typography, Box } from "@mui/material";
-//import { useTheme } from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
 import {
   LineChart,
   Line,
@@ -63,7 +63,7 @@ export default function LineCharts(props) {
     yTickFormatter,
   } = props;
 
- // const theme = useTheme();
+  const theme = useTheme();
   const CUT_OFF_YEAR = 5;
 
   const sources = React.useMemo(() => {
@@ -605,19 +605,6 @@ export default function LineCharts(props) {
     );
   };
 
-  // const renderCustomLegend = (props) => {
-  //   const { payload } = props;
-  //   return (
-  //     <ul>
-  //       {payload.map((entry, index) => (
-  //         <li key={`item-${index}`} style={{ color: entry.color }}>
-  //           {entry.value}
-  //         </li>
-  //       ))}
-  //     </ul>
-  //   );
-  // };
-
   const renderMultipleLines = () =>
     yLineFields.map((item, index) => (
       <Line
@@ -641,7 +628,7 @@ export default function LineCharts(props) {
       {...defaultOptions}
       type="monotone"
       dataKey={yFieldKey}
-      stroke={"#e0e0e0"}
+      stroke={theme.palette.muter.main}
       activeDot={(dotProps) => {
         const { cx, cy, payload, value, index } = dotProps;
 

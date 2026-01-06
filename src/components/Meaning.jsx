@@ -23,7 +23,11 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
           });
 
           return (
-            <Box className={`table-cell-item ${cellClass}`} key={key} dangerouslySetInnerHTML={{ __html: sanitized }} />
+            <Box
+              className={`table-cell-item circle-container ${cellClass}`}
+              key={key}
+              dangerouslySetInnerHTML={{ __html: sanitized }}
+            />
           );
         }
 

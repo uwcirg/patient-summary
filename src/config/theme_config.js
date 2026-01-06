@@ -58,6 +58,9 @@ export const themes = {
       muted: {
         main: grey[700],
       },
+      muter: {
+        main: grey[400]
+      },
       border: {
         main: "#f5f5f5",
       },

@@ -684,7 +684,7 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
     score = scoringQuestionScore;
   } else if (allAnswered || config?.nullScoreAllowed) {
     // Only sum if all are numbers (already validated by allAnswered)
-    score = questionScores.reduce((sum, n) => n != null ? sum + n : sum, 0);
+    score = questionScores.reduce((sum, n) => (n != null ? sum + n : sum), 0);
   } else {
     score = rawScore;
   }
@@ -709,7 +709,7 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
     scoringQuestionScore,
     questionScores,
     scoreLinkIds,
-    subScores : removeNullValuesFromObject(subScores),
+    subScores: removeNullValuesFromObject(subScores),
   };
 }
 
@@ -916,9 +916,14 @@ export function getResponseColumns(data, config = {}) {
 
   return [
     {
-      title: "Questions" + (config?.subtitle ? "\n ( " + getNormalizedRowTitleDisplay(config.subtitle) + " )" : ""),
+      title:
+        "Questions" +
+        (config?.subtitle && !config.disableHeaderRowSubtitle
+          ? "\n ( " + getNormalizedRowTitleDisplay(config.subtitle) + " )"
+          : ""),
       field: "question",
       filtering: false,
+      sorting: false,
       cellStyle: {
         position: "sticky",
         left: 0,
@@ -933,7 +938,7 @@ export function getResponseColumns(data, config = {}) {
           typeof q === "string" &&
           (normalizeStr(q).includes("score") ||
             normalizeStr(q).includes("meaning") ||
-            normalizeStr(q) === "summary" ||
+            normalizeStr(q).includes("summary") ||
             normalizeStr(q) === "status" ||
             normalizeStr(q) === normalizeStr(config?.title))
         ) {

@@ -184,6 +184,7 @@ function bootstrapInstrumentConfigMap(map) {
  * @param {Object} [clockScoreMap] for Mini-Cog: map of clock drawing answer to score
  * @param {Object[]} [columns] additional columns to extract from responses
  * @param {boolean} comparisonToAlert 'higher' (default) means higher scores are worse; 'lower' means lower scores are worse
+ * @param {boolean} disableHeaderRowSubtitle if true the subtitle won't display in the header row in responses table
  * @param {Object} deriveFrom configuration for deriving score from other questionnaire(s)
  * @param {string[]} [deriveFrom.hostIds] questionnaire keys/ids to derive from
  * @param {string} [deriveFrom.linkId] linkId of the question in the host questionnaire(s) to derive from
@@ -273,6 +274,7 @@ const questionnaireConfigsRaw = {
     instrumentName: "CNICS ASSIST Overdose",
     title: "Overdose",
     subtitle: "Past 6 months",
+    disableHeaderRowSubtitle: true,
     questionnaireMatchMode: "strict",
     highSeverityScoreCutoff: 1,
     comparisonToAlert: "higher",
@@ -290,7 +292,7 @@ const questionnaireConfigsRaw = {
       { min: 1, label: "high", meaning: "Yes, overdose" },
       { min: 0, label: "low", meaning: "No overdose" },
     ],
-    meaningRowLabel: "Summary",
+    meaningRowLabel: "Summary (Past 6 months)",
     skipChart: true,
   },
   "CIRG-CNICS-ASSIST-Polysub": {
@@ -921,6 +923,7 @@ const questionnaireConfigsRaw = {
     key: "CIRG-CNICS-MINI",
     instrumentName: "MINI Score",
     title: "MINI Score",
+    subtitle: "Past 12 months",
     minimumScore: 0,
     maximumScore: 7,
     scoringQuestionId: "MINI-score",
@@ -935,23 +938,12 @@ const questionnaireConfigsRaw = {
     questionnaireMatchMode: "strict",
     title: "Substance Use",
     subtitle: "Past 3 months",
+    disableHeaderRowSubtitle: true,
     minimumScore: 0,
     maximumScore: 5,
     meaningQuestionId: "ASSIST-3mo-score",
-    meaningRowLabel: "Summary",
+    meaningRowLabel: "Summary (Past 3 months)",
     nullScoreAllowed: true,
-    questionLinkIds: [
-      "ASSIST-10",
-      "ASSIST-11",
-      "ASSIST-12",
-      "ASSIST-13",
-      "ASSIST-14",
-      "ASSIST-15",
-      "ASSIST-16",
-      "ASSIST-17",
-      "ASSIST-18",
-      "ASSIST-19",
-    ],
     fallbackScoreMap: {
       "assist-10-0": 0,
       "assist-10-1": 1,
