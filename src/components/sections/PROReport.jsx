@@ -46,9 +46,9 @@ export default function PROReport() {
           data={table.rows}
           disableLinks={true}
           enableResponsesViewer={true}
-          containerStyle={{alignSelf: "stretch"}}
+          containerStyle={{ alignSelf: "stretch" }}
         />
-        <Box sx={{marginTop: 1}}>
+        <Box sx={{ marginTop: 1 }}>
           {!isEmptyArray(table.charts) &&
             table.charts.map((chartData, index) => {
               if (isEmptyArray(chartData?.data)) return null;
@@ -69,23 +69,25 @@ export default function PROReport() {
             <Typography
               variant="body1"
               component="h3"
-              color="accent"
+              className="section-subtitle"
               sx={{ ...titleSx, marginBottom: table.title ? 1 : 0 }}
             >
               {table.title}
             </Typography>
           )}
-          {table.layout === "simple" && (
-            <ScoringSummary
-              {...table}
-              key={table.id}
-              data={table.rows}
-              disableLinks={true}
-              enableResponsesViewer={true}
-              tableStyle={tableStyle}
-            />
-          )}
-          {table.layout === "two-columns" && renderTwoColumns(table)}
+          <Box sx={{ marginLeft: 1, marginRight: 1 }}>
+            {table.layout === "simple" && (
+              <ScoringSummary
+                {...table}
+                key={table.id}
+                data={table.rows}
+                disableLinks={true}
+                enableResponsesViewer={true}
+                tableStyle={tableStyle}
+              />
+            )}
+            {table.layout === "two-columns" && renderTwoColumns(table)}
+          </Box>
         </Box>
       );
     },

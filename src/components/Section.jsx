@@ -32,7 +32,7 @@ export default function Section({ section, data }) {
   const renderSectionTitle = () => (
     <Stack spacing={1} direction={"row"} justifyContent={"center"} alignItems={"center"}>
       {section.icon && section.icon({ color: "#FFF" })}
-      <Typography variant="h6" component="h2" id={`${sectionId}_title`}>
+      <Typography className="section-title" variant="h6" component="h2" id={`${sectionId}_title`}>
         {section.title}
       </Typography>
     </Stack>
@@ -46,7 +46,11 @@ export default function Section({ section, data }) {
       }}
     >
       {renderAnchorElement()}
-      {section.standalone && <Paper className="section-wrapper" sx={{ padding: (theme) => theme.spacing(1) }}>{section.component(data)}</Paper>}
+      {section.standalone && (
+        <Paper className="section-wrapper" sx={{ padding: (theme) => theme.spacing(1) }}>
+          {section.component(data)}
+        </Paper>
+      )}
       {!section.standalone && (
         <Accordion
           key={`section_${sectionId}`}

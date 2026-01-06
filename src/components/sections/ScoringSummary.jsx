@@ -43,7 +43,12 @@ export default function ScoringSummary(props) {
 
   // -------- styles
   const defaultTableCellProps = { size: "small" };
-  const defaultHeaderCellProps = { ...defaultTableCellProps, align: "center", variant: "head" };
+  const defaultHeaderCellProps = {
+    ...defaultTableCellProps,
+    align: "center",
+    variant: "head",
+    verticalAlign: "center",
+  };
   const cellWhiteSpaceStyle = { wordBreak: "break-word", whiteSpace: "normal" };
   const baseCellStyle = {
     borderRight: `1px solid`,
@@ -52,8 +57,8 @@ export default function ScoringSummary(props) {
     lineHeight: 1.4,
     fontSize: { xs: "0.75rem", sm: "0.8rem" }, // optional: slightly smaller on xs
     wordBreak: "break-word",
-    padding: theme.spacing(0.75, 1),
-    verticalAlign: "center",
+    padding: theme.spacing(1),
+    verticalAlign: "top",
     ...cellWhiteSpaceStyle,
   };
   const stickyStyle = {
@@ -78,11 +83,7 @@ export default function ScoringSummary(props) {
     date: (row) => (
       <Stack direction={"column"} spacing={1} alignItems={"space-between"} justifyContent={"space-between"}>
         <Box>{row.displayDate}</Box>
-        {row.source && (
-          <Box className="muted-text source-container" >
-            {row.source}
-          </Box>
-        )}
+        {row.source && <Box className="muted-text source-container">{row.source}</Box>}
       </Stack>
     ),
     score: (row) => {
@@ -91,7 +92,7 @@ export default function ScoringSummary(props) {
           direction="column"
           spacing={0.75}
           justifyContent="space-between"
-          alignItems="center"
+          alignItems="flex-start"
           sx={{ width: "100%" }}
           className="score-wrapper"
         >
@@ -158,7 +159,7 @@ export default function ScoringSummary(props) {
             tableData={row?.tableResponseData}
             columns={row?.responseColumns}
             questionnaire={row.questionnaire}
-            buttonStyle={{ width: "100%", maxWidth: 108}}
+            buttonStyle={{ width: "100%", maxWidth: 108 }}
           />
         ) : (
           <Typography component="h3" variant="subtitle2" sx={{ textAlign: "left" }}>
@@ -175,11 +176,10 @@ export default function ScoringSummary(props) {
       headerProps: {
         sx: {
           ...baseCellStyle,
-          padding: theme.spacing(0.5),
         },
         ...defaultHeaderCellProps,
       },
-      cellProps: { sx: { ...baseCellStyle, whiteSpace: "nowrap", padding: theme.spacing(0.5) } },
+      cellProps: { sx: { ...baseCellStyle, whiteSpace: "nowrap" } },
       size: "small",
       renderCell: (row) =>
         row.numAnsweredDisplay
@@ -191,8 +191,8 @@ export default function ScoringSummary(props) {
     {
       id: "scoreMeaning",
       header: "Score / Meaning",
-      align: "center",
-      headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
+      align: "left",
+      headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps, align: "left" },
       cellProps: {
         sx: {
           ...baseCellStyle,
@@ -202,7 +202,7 @@ export default function ScoringSummary(props) {
         size: "small",
       },
       renderCell: (row) => (
-        <Stack sx={{ width: "100%" }} spacing={1} alignItems={"center"}>
+        <Stack sx={{ width: "100%" }} spacing={1} alignItems={"flex-start"} justifyContent={"flex-start"}>
           {!row.displayMeaningNotScore && defaultRenderers.score(row)}
           <Meaning id={row.id ?? row.key} meaning={row.meaning} alert={row.alert} warning={row.warning} />
         </Stack>

@@ -40,6 +40,12 @@ main {
     overflow-x: auto;
   }
 }
+.section-title {
+  font-weight: 700 !important;
+}
+.section-subtitle {
+  font-weight: 600 !important;
+}
 .print-only {
   display: none;
 }
@@ -156,7 +162,7 @@ p {
       font-weight: 400 !important;
       color: $muted-text-color;
       font-style: italic;
-      text-align: center;
+      text-align: left;
     }
   }
 }
