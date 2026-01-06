@@ -42,6 +42,11 @@ export const DEFAULT_FALLBACK_SCORE_MAPS = {
     "several days": 1,
     "more than half the days": 2,
     "nearly every day": 3,
+    "never": 0,
+    "once or twice": 1,
+    "monthly": 2,
+    "weekly": 3,
+    "daily or almost daily": 4,
   },
 };
 // defaultAnswerOptions are what get rendered into the Questionnaire item.answerOption

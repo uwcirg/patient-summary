@@ -8,6 +8,7 @@ export default function CustomTooltip({
   payload,
   yFieldValueFormatter,
   tooltipLabelFormatter,
+  tooltipValueFormatter,
   yFieldKey,
   yLabel,
 }) {
@@ -40,7 +41,7 @@ export default function CustomTooltip({
       <div className="tooltip-label">{fmtDate}</div>
 
       {/* Single-series summary line (falls back to multi if present) */}
-      {meaning != null || scoreDisplay != null ? (
+      {multiValues.length < 2 && (meaning != null || scoreDisplay != null) ? (
         <div style={{ marginBottom: multiValues.length > 1 ? 8 : 0 }}>
           {scoreDisplay != null && (
             <div>
@@ -49,9 +50,7 @@ export default function CustomTooltip({
           )}
           {meaning && (
             <div className="meaning-item flex" style={{ whiteSpace: "pre-line" }}>
-              <span style={{ color: FONT_COLOR }}>
-                meaning:
-              </span>
+              <span style={{ color: FONT_COLOR }}>meaning:</span>
               <span>{String(meaning)}</span>
             </div>
           )}
@@ -71,7 +70,8 @@ export default function CustomTooltip({
                 border: "1px solid rgba(0,0,0,0.1)",
               }}
             />
-            <span style={{ color: FONT_COLOR }}>{m.name}:</span> {m.value}
+            <span style={{ color: FONT_COLOR }}>{m.name}:</span>{" "}
+            {tooltipValueFormatter ? tooltipValueFormatter(m.value) : m.value}
           </div>
         ))}
     </div>
@@ -98,5 +98,6 @@ CustomTooltip.propTypes = {
   yLabel: PropTypes.string,
   yFieldKey: PropTypes.string,
   tooltipLabelFormatter: PropTypes.func,
+  tooltipValueFormatter: PropTypes.func,
   yFieldValueFormatter: PropTypes.func,
 };

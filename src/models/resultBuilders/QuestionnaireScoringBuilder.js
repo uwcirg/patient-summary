@@ -1197,7 +1197,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       item: [
         {
           linkId,
-          text: targetItem.text || linkId,
+          // text: (targetItem.text ? targetItem.text.replace(/\s*\([^)]*\)/g, "").trim() : null) || linkId,
+          text: (targetItem.text ? targetItem.text : null) || linkId,
           answer: normalizedAnswers,
         },
       ],
@@ -1333,7 +1334,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const scoringData =
       !config?.skipChart && !isEmptyArray(evaluationData)
         ? evaluationData.filter(
-            (item) => item && !isEmptyArray(item.responses) && isNumber(item.score) && isValidDate(item.date),
+            (item) =>
+              item &&
+              !isEmptyArray(item.responses) &&
+              (isNumber(item.score) || item.subScores) &&
+              isValidDate(item.date),
           )
         : null;
 
@@ -1343,7 +1348,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           ...item,
           ...getScoreParamsFromResponses(scoringData.slice(index), config),
           id: item.id + "_" + item.instrumentName + "_" + index,
-          total: item.score,
+          total: isNumber(item.score) ? item.score : null,
         }))
       : null;
 

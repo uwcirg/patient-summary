@@ -37,6 +37,7 @@ const CHART_CONFIG = {
     xLabelVisible: false,
     legendType: "none",
     showTicks: false,
+    connectNulls: false,
     dataFormatter: (data) => {
       if (isEmptyArray(data)) return data;
       let dataTOUse = JSON.parse(JSON.stringify(data));

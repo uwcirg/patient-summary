@@ -35,7 +35,7 @@ export default function PROReport() {
     return (
       <Stack
         direction="row"
-        alignItems="center"
+        alignItems="flex-start"
         className="response-summary"
         flexWrap={flexWrapConfig}
         key={`wrapper_${table.id}`}

@@ -192,6 +192,9 @@ function bootstrapInstrumentConfigMap(map) {
  * @param {number} highSeverityScoreCutoff
  * @param {number} maximumScore
  * @param {number} minimumScore
+ * @param {boolean} comparisonToAlert 'higher' (default) means higher scores are worse; 'lower' means lower scores are worse
+ * @param {Object} [subScores] map of sub-score configurations
+ * @param {boolean} [nullScoreAllowed] if true, a null score is allowed (not an error)
  * @param {Object} [fallbackScoreMap] map of linkId to score
  * @param {{min:number,label:string,meaning?:string}[]} [config.severityBands]
  * @param {function} fallbackMeaningFunc function to derive meaning from severity and responses
@@ -270,7 +273,7 @@ const questionnaireConfigsRaw = {
     instrumentName: "CNICS ASSIST Overdose",
     title: "Overdose",
     subtitle: "Past 6 months",
-    questionnaireMatchMode: "fuzzy",
+    questionnaireMatchMode: "strict",
     highSeverityScoreCutoff: 1,
     comparisonToAlert: "higher",
     displayMeaningNotScore: true,
@@ -295,7 +298,7 @@ const questionnaireConfigsRaw = {
     instrumentName: "CNICS Polysubstance Use",
     title: "Concurrent Drug Use",
     subtitle: "Past 3 months",
-    questionnaireMatchMode: "fuzzy",
+    questionnaireMatchMode: "strict",
     highSeverityScoreCutoff: 1,
     displayMeaningNotScore: true,
     scoringQuestionId: "ASSIST-Polysub",
@@ -926,13 +929,227 @@ const questionnaireConfigsRaw = {
     linkIdMatchMode: "strict",
     chartParams: { ...CHART_CONFIG.default, title: "MINI Score", minimumYValue: 0, maximumYValue: 7, xLabel: "" },
   },
+  "CIRG-CNICS-ASSIST": {
+    key: "CIRG-CNICS-ASSIST",
+    instrumentName: "Substance Use",
+    questionnaireMatchMode: "strict",
+    title: "Substance Use",
+    subtitle: "Past 3 months",
+    minimumScore: 0,
+    maximumScore: 5,
+    meaningQuestionId: "ASSIST-3mo-score",
+    meaningRowLabel: "Summary",
+    nullScoreAllowed: true,
+    questionLinkIds: [
+      "ASSIST-10",
+      "ASSIST-11",
+      "ASSIST-12",
+      "ASSIST-13",
+      "ASSIST-14",
+      "ASSIST-15",
+      "ASSIST-16",
+      "ASSIST-17",
+      "ASSIST-18",
+      "ASSIST-19",
+    ],
+    fallbackScoreMap: {
+      "assist-10-0": 0,
+      "assist-10-1": 1,
+      "assist-10-2": 2,
+      "assist-10-3": 3,
+      "assist-10-4": 4,
+      "assist-11-0": 0,
+      "assist-11-1": 1,
+      "assist-11-2": 2,
+      "assist-11-3": 3,
+      "assist-11-4": 4,
+      "assist-12-0": 0,
+      "assist-12-1": 1,
+      "assist-12-2": 2,
+      "assist-12-3": 3,
+      "assist-12-4": 4,
+      "assist-13-0": 0,
+      "assist-13-1": 1,
+      "assist-13-2": 2,
+      "assist-13-3": 3,
+      "assist-13-4": 4,
+      "assist-14-0": 0,
+      "assist-14-1": 1,
+      "assist-14-2": 2,
+      "assist-14-3": 3,
+      "assist-14-4": 4,
+      "assist-15-0": 0,
+      "assist-15-1": 1,
+      "assist-15-2": 2,
+      "assist-15-3": 3,
+      "assist-15-4": 4,
+      "assist-16-0": 0,
+      "assist-16-1": 1,
+      "assist-16-2": 2,
+      "assist-16-3": 3,
+      "assist-16-4": 4,
+      "assist-17-0": 0,
+      "assist-17-1": 1,
+      "assist-17-2": 2,
+      "assist-17-3": 3,
+      "assist-17-4": 4,
+      "assist-18-0": 0,
+      "assist-18-1": 1,
+      "assist-18-2": 2,
+      "assist-18-3": 3,
+      "assist-18-4": 4,
+      "assist-19-0": 0,
+      "assist-19-1": 1,
+      "assist-19-2": 2,
+      "assist-19-3": 3,
+      "assist-19-4": 4,
+    },
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      if (!severity) return "";
+      const meaningResponse = responses.find((response) => linkIdEquals(response.id, "ASSIST-3mo-score", "strict"));
+      const meaningAnswer =
+        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
+      return meaningAnswer.split(",").join("|");
+    },
+    subScoringQuestions: [
+      {
+        key: "ASSIST-10",
+        linkId: "ASSIST-10",
+      },
+      {
+        key: "ASSIST-11",
+        linkId: "ASSIST-11",
+      },
+      {
+        key: "ASSIST-12",
+        linkId: "ASSIST-12",
+      },
+      {
+        key: "ASSIST-13",
+        linkId: "ASSIST-13",
+      },
+      {
+        key: "ASSIST-14",
+        linkId: "ASSIST-14",
+      },
+      {
+        key: "ASSIST-15",
+        linkId: "ASSIST-15",
+      },
+      {
+        key: "ASSIST-16",
+        linkId: "ASSIST-16",
+      },
+      {
+        key: "ASSIST-17",
+        linkId: "ASSIST-17",
+      },
+      {
+        key: "ASSIST-18",
+        linkId: "ASSIST-18",
+      },
+      {
+        key: "ASSIST-19",
+        linkId: "ASSIST-19",
+      },
+    ],
+    yLineFields: [
+      {
+        key: "ASSIST-10",
+        label: "Cocaine/crack",
+        color: "#6E026F",
+        strokeWidth: 2,
+        legendType: "line",
+      },
+      {
+        key: "ASSIST-11",
+        label: "Methamphetamine",
+        color: "#5A7ACD",
+        strokeWidth: 2,
+        legendType: "line",
+      },
+      {
+        key: "ASSIST-12",
+        label: "Heroin",
+        color: "#001BB7",
+        strokeWidth: 2,
+        legendType: "line",
+      },
+      {
+        key: "ASSIST-13",
+        label: "Fentanyl",
+        color: "#62109F",
+        strokeWidth: 2,
+        legendType: "line",
+      },
+      {
+        key: "ASSIST-14",
+        color: "#725CAD",
+        label: "Narcotic pain meds",
+        strokeWidth: 2,
+        legendType: "line",
+      },
+      {
+        key: "ASSIST-15",
+        label: "Sedatives",
+        color: "#FF2DD1",
+        strokeWidth: 2,
+        legendType: "line",
+      },
+      {
+        key: "ASSIST-16",
+        label: "Marijuana",
+        color: "#00809D",
+        strokeWidth: 2,
+        legendType: "line",
+      },
+      {
+        key: "ASSIST-17",
+        color: "#FF90BB",
+        label: "Stimulants",
+        strokeWidth: 2,
+        legendType: "line",
+      },
+      {
+        key: "ASSIST-18",
+        color: "#FF5555",
+        label: "Inhalants",
+        strokeWidth: 2,
+        legendType: "line",
+      },
+      {
+        key: "ASSIST-19",
+        color: "#3DB6B1",
+        label: "Psychedelics",
+        strokeWidth: 2,
+        legendType: "line",
+      },
+    ],
+    displayMeaningNotScore: true,
+    xLabel: "",
+    linkIdMatchMode: "strict",
+    chartParams: {
+      ...CHART_CONFIG.default,
+      title: "Substance Use",
+      chartHeight: 360,
+      minimumYValue: 0,
+      maximumYValue: 5,
+      xLabel: "",
+      connectNulls: true,
+      tooltipValueFormatter: (value) => {
+        if (value == null || value === undefined) return "No data";
+        if (value === 0) return "Never";
+        if (value === 1) return "Once or twice";
+        if (value === 2) return "Monthly";
+        if (value === 3) return "Weekly";
+        if (value === 4) return "Daily or almost daily";
+        return value;
+      },
+    },
+  },
 
   //TODO, implement those
-  "CIRG-DRUG-USE": {
-    key: "CIRG-DRUG-USE",
-    instrumentName: "Drug Use",
-    title: "Drug Use",
-  },
   "CIRG-IDU": {
     key: "CIRG-IDU",
     instrumentName: "IDU",

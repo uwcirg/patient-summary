@@ -681,9 +681,9 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
 
   if (isNumber(scoringQuestionScore)) {
     score = scoringQuestionScore;
-  } else if (allAnswered) {
+  } else if (allAnswered || config?.nullScoreAllowed) {
     // Only sum if all are numbers (already validated by allAnswered)
-    score = questionScores.reduce((sum, n) => sum + n, 0);
+    score = questionScores.reduce((sum, n) => n != null ? sum + n : sum, 0);
   } else {
     score = rawScore;
   }

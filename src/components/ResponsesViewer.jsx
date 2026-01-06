@@ -101,11 +101,11 @@ export default function ResponsesViewer({
       <Stack
         sx={{ height: "100%" }}
         direction={"column"}
-        justifyContent={"space-between"}
+        justifyContent={"flex-start"}
         alignItems={"flex-start"}
         gap={1}
       >
-        <Box sx={{ width: "100%", flex: 1}}>
+        <Box sx={{ width: "100%"}}>
           <Typography
             component="h3"
             variant="subtitle2"

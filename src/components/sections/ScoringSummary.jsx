@@ -47,7 +47,6 @@ export default function ScoringSummary(props) {
     ...defaultTableCellProps,
     align: "center",
     variant: "head",
-    verticalAlign: "center",
   };
   const cellWhiteSpaceStyle = { wordBreak: "break-word", whiteSpace: "normal" };
   const baseCellStyle = {
@@ -134,7 +133,7 @@ export default function ScoringSummary(props) {
           borderBottomColor: "border.main",
           verticalAlign: "top",
           textAlign: "left",
-          height: "100%",
+         // height: "100%",
           minWidth: "128px",
         },
         size: "small",

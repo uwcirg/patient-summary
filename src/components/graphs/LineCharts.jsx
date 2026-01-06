@@ -31,6 +31,7 @@ export default function LineCharts(props) {
   const {
     chartHeight,
     chartWidth,
+    connectNulls,
     data,
     dotColor,
     enableAxisMeaningLabels,
@@ -46,6 +47,7 @@ export default function LineCharts(props) {
     strokeWidth,
     title,
     tooltipLabelFormatter,
+    tooltipValueFormatter,
     xTickLabelAngle,
     xFieldKey,
     yFieldValueFormatter,
@@ -354,7 +356,6 @@ export default function LineCharts(props) {
       interval="preserveStartEnd"
       scale="time"
       angle={xTickLabelAngle ?? 0}
-      connectNulls={false}
       ticks={dedupedTicks}
       padding={{ left: 30, right: 30 }}
     >
@@ -496,6 +497,7 @@ export default function LineCharts(props) {
           xLabelKey="originalDate"
           yLabel={yLabel}
           yFieldValueFormatter={yFieldValueFormatter}
+          tooltipValueFormatter={tooltipValueFormatter}
         />
       )}
     />
@@ -558,8 +560,10 @@ export default function LineCharts(props) {
     }
     //eslint-disable-next-line
     const points = payload && !isEmptyArray(payload.payload) ? payload.payload : [];
+    console.log("points ", points)
+
     return (
-      <div style={{ display: "flex", gap: 16, alignItems: "center", padding: "4px 8px" }}>
+      <div style={{ display: "flex", gap: 16, alignItems: "flex-start", padding: "4px 8px" }}>
         {items.map((it) => (
           <div
             key={it.key}
@@ -571,10 +575,20 @@ export default function LineCharts(props) {
           </div>
         ))}
         {points.length > 1 && (
-          <div style={{ marginLeft: 16, fontSize: 10, color: "#444" }}>
+          <div
+            style={{
+              marginLeft: 16,
+              fontSize: 10,
+              color: "#444",
+              display: "grid",
+              gridTemplateColumns: points.length > 6 ? "repeat(3, 1fr)" : "repeat(2, 1fr)",
+              gap: "4px 16px", // row gap, column gap
+              maxWidth: "360px", // adjust as needed
+            }}
+          >
             {points.map((entry, index) => (
-              <div key={`item-${index}`} style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
-                <svg width="16" height="16" style={{ marginRight: 4 }}>
+              <div key={`item-${index}`} style={{ display: "flex", alignItems: "center" }}>
+                <svg width="16" height="16" style={{ marginRight: 4, flexShrink: 0 }}>
                   <line
                     x1="0"
                     y1="8"
@@ -585,7 +599,7 @@ export default function LineCharts(props) {
                     strokeDasharray={entry.payload.strokeDasharray || "0"}
                   />
                 </svg>
-                <span style={{ fontSize: 12 }}>{entry.value.replace(/[_,-]/g, " ")}</span>
+                <span style={{ fontSize: 10, whiteSpace: "nowrap" }}>{entry.value.replace(/[_,-]/g, " ")}</span>
               </div>
             ))}
           </div>
@@ -612,7 +626,7 @@ export default function LineCharts(props) {
       <Line
         {...defaultOptions}
         key={`line_${id}_${index}`}
-        name={item.key}
+        name={item.label ? item.label : item.key}
         type="monotone"
         dataKey={item.key}
         stroke={item.color}
@@ -621,6 +635,7 @@ export default function LineCharts(props) {
         strokeDasharray={item.strokeDasharray ? item.strokeDasharray : 0}
         legendType={item.legendType ? item.legendType : "line"}
         dot={item.dot ? item.dot : { strokeDasharray: "", strokeWidth: 2 }}
+        connectNulls={!!connectNulls}
       />
     ));
 
@@ -690,6 +705,7 @@ export default function LineCharts(props) {
         );
       }}
       strokeWidth={strokeWidth ? strokeWidth : 1}
+      connectNulls={!!connectNulls}
     />
   );
 
@@ -834,6 +850,7 @@ export default function LineCharts(props) {
 LineCharts.propTypes = {
   chartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   chartHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  connectNulls: PropTypes.bool,
   data: PropTypes.array,
   dotColor: PropTypes.string,
   enableAxisMeaningLabels: PropTypes.bool,
@@ -850,6 +867,7 @@ LineCharts.propTypes = {
   strokeWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   title: PropTypes.string,
   tooltipLabelFormatter: PropTypes.func,
+  tooltipValueFormatter: PropTypes.func,
   xDomain: PropTypes.array,
   xFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yFieldValueFormatter: PropTypes.func,
