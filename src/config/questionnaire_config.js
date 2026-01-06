@@ -1079,7 +1079,7 @@ const questionnaireConfigsRaw = {
       {
         key: "ASSIST-13",
         label: "Fentanyl",
-        color: "#62109F",
+        color: "#5C6F2B",
         strokeWidth: 2,
         legendType: "line",
       },

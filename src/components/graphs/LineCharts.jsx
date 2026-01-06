@@ -560,7 +560,6 @@ export default function LineCharts(props) {
     }
     //eslint-disable-next-line
     const points = payload && !isEmptyArray(payload.payload) ? payload.payload : [];
-    console.log("points ", points)
 
     return (
       <div style={{ display: "flex", gap: 16, alignItems: "flex-start", padding: "4px 8px" }}>
@@ -592,10 +591,10 @@ export default function LineCharts(props) {
                   <line
                     x1="0"
                     y1="8"
-                    x2="16"
+                    x2="12"
                     y2="8"
                     stroke={entry.color}
-                    strokeWidth="2"
+                    strokeWidth="4"
                     strokeDasharray={entry.payload.strokeDasharray || "0"}
                   />
                 </svg>
