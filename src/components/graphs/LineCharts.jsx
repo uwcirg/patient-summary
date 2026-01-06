@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Typography, Box } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+//import { useTheme } from "@mui/material/styles";
 import {
   LineChart,
   Line,
@@ -50,7 +50,6 @@ export default function LineCharts(props) {
     tooltipValueFormatter,
     xTickLabelAngle,
     xFieldKey,
-    yFieldValueFormatter,
     xLabel,
     xLabelVisible,
     xDomain,
@@ -64,7 +63,7 @@ export default function LineCharts(props) {
     yTickFormatter,
   } = props;
 
-  const theme = useTheme();
+ // const theme = useTheme();
   const CUT_OFF_YEAR = 5;
 
   const sources = React.useMemo(() => {
@@ -496,7 +495,6 @@ export default function LineCharts(props) {
           xFieldKey={xFieldKey}
           xLabelKey="originalDate"
           yLabel={yLabel}
-          yFieldValueFormatter={yFieldValueFormatter}
           tooltipValueFormatter={tooltipValueFormatter}
         />
       )}
@@ -633,7 +631,7 @@ export default function LineCharts(props) {
         strokeWidth={item.strokeWidth ? item.strokeWidth : 2}
         strokeDasharray={item.strokeDasharray ? item.strokeDasharray : 0}
         legendType={item.legendType ? item.legendType : "line"}
-        dot={item.dot ? item.dot : { strokeDasharray: "", strokeWidth: 2 }}
+        dot={item.dot ? item.dot : { strokeDasharray: "", strokeWidth: 1 }}
         connectNulls={!!connectNulls}
       />
     ));
@@ -643,7 +641,7 @@ export default function LineCharts(props) {
       {...defaultOptions}
       type="monotone"
       dataKey={yFieldKey}
-      stroke={theme.palette.primary.main}
+      stroke={"#e0e0e0"}
       activeDot={(dotProps) => {
         const { cx, cy, payload, value, index } = dotProps;
 
@@ -656,7 +654,7 @@ export default function LineCharts(props) {
               payload={payload}
               index={index}
               isActive
-              params={{ r: 5, width: 9, height: 9 }}
+              params={{ r: 5, width: 8, height: 8 }}
             />
           );
         }
@@ -869,7 +867,6 @@ LineCharts.propTypes = {
   tooltipValueFormatter: PropTypes.func,
   xDomain: PropTypes.array,
   xFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  yFieldValueFormatter: PropTypes.func,
   xLabel: PropTypes.string,
   yLabelVisible: PropTypes.bool,
   xTickLabelAngle: PropTypes.number,

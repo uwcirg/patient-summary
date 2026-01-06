@@ -6,7 +6,6 @@ export default function CustomTooltip({
   xLabelKey,
   active,
   payload,
-  yFieldValueFormatter,
   tooltipLabelFormatter,
   tooltipValueFormatter,
   yFieldKey,
@@ -19,7 +18,7 @@ export default function CustomTooltip({
   const rawDate = d[xLabelKey] ?? d[xFieldKey] ?? d.date;
   const meaning = (d.meaning ?? d.scoreMeaning ?? d.label ?? "").replace(/\|/g, "\n");
   const scoreRaw = d[yFieldKey] ?? d.score;
-  const scoreDisplay = typeof yFieldValueFormatter === "function" ? yFieldValueFormatter(scoreRaw, d) : scoreRaw;
+  const scoreDisplay = typeof tooltipValueFormatter === "function" ? tooltipValueFormatter(scoreRaw, d) : scoreRaw;
 
   // use provided formatter; else a default
   const fmtDate =
@@ -70,7 +69,7 @@ export default function CustomTooltip({
                 border: "1px solid rgba(0,0,0,0.1)",
               }}
             />
-            <span style={{ color: FONT_COLOR }}>{m.name}:</span>{" "}
+            <span style={{ color: FONT_COLOR }}>{tooltipLabelFormatter ? tooltipLabelFormatter(m.name) : m.name}:</span>{" "}
             {tooltipValueFormatter ? tooltipValueFormatter(m.value) : m.value}
           </div>
         ))}
@@ -99,5 +98,4 @@ CustomTooltip.propTypes = {
   yFieldKey: PropTypes.string,
   tooltipLabelFormatter: PropTypes.func,
   tooltipValueFormatter: PropTypes.func,
-  yFieldValueFormatter: PropTypes.func,
 };

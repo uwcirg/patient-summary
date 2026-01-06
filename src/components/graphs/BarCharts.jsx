@@ -26,7 +26,6 @@ export default function BarCharts(props) {
     xDomain,
     xTickFormatter,
     xFieldKey, // "date"
-    yFieldValueFormatter,
     xLabel,
     yLabel,
     xLabelVisible,
@@ -34,6 +33,7 @@ export default function BarCharts(props) {
     minimumYValue,
     yFieldKey, // "total", "score", etc.
     tooltipLabelFormatter,
+    tooltipValueFormatter,
     data = [],
   } = props;
 
@@ -317,7 +317,8 @@ export default function BarCharts(props) {
           xLabelKey="originalTimestamp"
           xFieldKey={xFieldKey}
           yLabel={yLabel}
-          yFieldValueFormatter={yFieldValueFormatter}
+          tooltipValueFormatter={tooltipValueFormatter}
+          tooltipLabelFormatter={tooltipLabelFormatter}
         />
       )}
     />
@@ -396,7 +397,6 @@ BarCharts.propTypes = {
   lgChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   xTickFormatter: PropTypes.func,
   xFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  yFieldValueFormatter: PropTypes.func,
   xLabel: PropTypes.string,
   xLabelVisible: PropTypes.bool,
   minimumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
@@ -404,5 +404,6 @@ BarCharts.propTypes = {
   yFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yLabel: PropTypes.string,
   tooltipLabelFormatter: PropTypes.func,
+  tooltipValueFormatter: PropTypes.func,
   data: PropTypes.array,
 };

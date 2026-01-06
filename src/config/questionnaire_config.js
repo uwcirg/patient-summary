@@ -178,45 +178,45 @@ function bootstrapInstrumentConfigMap(map) {
 }
 
 /**
- * @param {string} key
- * @param {string} title (from Questionnaire resource)
- * @param {string} subtitle
- * @param {string} questionnaireId
- * @param {string} questionnaireName
- * @param {string} questionnaireUrl
- * @param {string|null} scoringQuestionId linkId of the question used for scoring
- * @param {string[]} [questionLinkIds] optional, linkIds of questions to include, usually specified if linkId can be different for a question /1111 or 1111
- * @param {string[]}[subScoringQuestions] optional, object of sub-questions to include for scoring breakdowns
- * @param {'strict'|'fuzzy'} [questionnaireMatchMode] used when matching a Questionnaire FHIR resource to this config
- * @param {'strict'|'fuzzy'} [linkIdMatchMode]
- * @param {number} highSeverityScoreCutoff
- * @param {number} maximumScore
- * @param {number} minimumScore
- * @param {boolean} comparisonToAlert 'higher' (default) means higher scores are worse; 'lower' means lower scores are worse
- * @param {Object} [subScores] map of sub-score configurations
- * @param {boolean} [nullScoreAllowed] if true, a null score is allowed (not an error)
- * @param {Object} [fallbackScoreMap] map of linkId to score
- * @param {{min:number,label:string,meaning?:string}[]} [config.severityBands]
- * @param {function} fallbackMeaningFunc function to derive meaning from severity and responses
- * @param {boolean} displayMeaningNotScore if true, display meaning/label instead of numeric score
- * @param {string[]} [recallLinkIds] for Mini-Cog: linkIds for recall items
+ * @param {string} [alertQuestionId] linkId of question that contains alert/critical flag
+ * @param {Object|Array} chartParams params for charting line/bar graphs
  * @param {string} [clockLinkId] for Mini-Cog: linkId for clock drawing item
- * @param {string[]} [recallCorrectCodes] for Mini-Cog: coded answers that count as correct for recall items
- * @param {string[]} [recallCorrectStrings] for Mini-Cog: string answers that count as correct for recall items
  * @param {Object} [clockScoreMap] for Mini-Cog: map of clock drawing answer to score
  * @param {Object[]} [columns] additional columns to extract from responses
- * @param {boolean} [skipChart] if true, do not render chart for this questionnaire
- * @param {boolean} [skipMeaningScoreRow] if true, the score/ meaning row in the responses table will not be rendered
- * @param {Object|Array} chartParams params for charting line/bar graphs
- * @param {function} valueFormatter function to format score value for display
+ * @param {boolean} comparisonToAlert 'higher' (default) means higher scores are worse; 'lower' means lower scores are worse
  * @param {Object} deriveFrom configuration for deriving score from other questionnaire(s)
  * @param {string[]} [deriveFrom.hostIds] questionnaire keys/ids to derive from
  * @param {string} [deriveFrom.linkId] linkId of the question in the host questionnaire(s) to derive from
  * @param {boolean} [deriveFrom.usePreviousScore] if true, use previous score from host questionnaire(s) instead of current score
- * @param {string} [meaningQuestionId] linkId of question that contains meaning/label for the score
- * @param {string} [alertQuestionId] linkId of question that contains alert/critical flag
- * @param {function} yFieldValueFormatter function to format score value for chart y-axis
+ * @param {boolean} displayMeaningNotScore if true, display meaning/label instead of numeric score
  * @param {array} excludeQuestionLinkIdPatterns param for pattern in link Id to exclude as a response item
+ * @param {function} fallbackMeaningFunc function to derive meaning from severity and responses
+ * @param {Object} [fallbackScoreMap] map of linkId to score
+ * @param {number} highSeverityScoreCutoff
+ * @param {string} key
+ * @param {string} [linkIdMatchMode] 'strict'|'fuzzy'
+ * @param {number} maximumScore
+ * @param {string} [meaningQuestionId] linkId of question that contains meaning/label for the score
+ * @param {number} minimumScore
+ * @param {boolean} [nullScoreAllowed] if true, a null score is allowed (not an error)
+ * @param {string} questionnaireId
+ * @param {string} [questionnaireMatchMode] 'strict'|'fuzzy' - used when matching a Questionnaire FHIR resource to this config
+ * @param {string} questionnaireName
+ * @param {string} questionnaireUrl
+ * @param {string[]} [questionLinkIds] optional, linkIds of questions to include, usually specified if linkId can be different for a question /1111 or 1111
+ * @param {string[]} [recallCorrectCodes] for Mini-Cog: coded answers that count as correct for recall items
+ * @param {string[]} [recallCorrectStrings] for Mini-Cog: string answers that count as correct for recall items
+ * @param {string[]} [recallLinkIds] for Mini-Cog: linkIds for recall items
+ * @param {string|null} scoringQuestionId linkId of the question used for scoring
+ * @param {{min:number,label:string,meaning?:string}[]} [severityBands]
+ * @param {boolean} [skipChart] if true, do not render chart for this questionnaire
+ * @param {boolean} [skipMeaningScoreRow] if true, the score/ meaning row in the responses table will not be rendered
+ * @param {Object} [subScores] map of sub-score configurations
+ * @param {string[]} [subScoringQuestions] optional, object of sub-questions to include for scoring breakdowns
+ * @param {string} subtitle
+ * @param {string} title (from Questionnaire resource)
+ * @param {function} tooltipValueFormatter function to format y value in tooltip
+ * @param {function} valueFormatter function to format score value for display
  */
 const questionnaireConfigsRaw = {
   "CIRG-ADL-IADL": {
@@ -839,7 +839,7 @@ const questionnaireConfigsRaw = {
       maximumYValue: 100,
       xLabel: "",
       yLabel: "value",
-      yFieldValueFormatter: (value) => (value ? `${value} %` : ""),
+      tooltipValueFormatter: (value) => (value ? `${value} %` : ""),
       type: "barchart",
     },
   },
@@ -903,14 +903,14 @@ const questionnaireConfigsRaw = {
         {
           key: "AUDIT-C-score",
           color: "#3b82f6", // bloo
-          strokeWidth: 2,
+          strokeWidth: 1,
           legendType: "line",
           //strokeDasharray: "2 2", // dashed line
         },
         {
           key: "AUDIT-score",
           color: SUCCESS_COLOR, // green
-          strokeWidth: 2,
+          strokeWidth: 1,
           legendType: "line",
         },
       ],
@@ -1059,70 +1059,70 @@ const questionnaireConfigsRaw = {
         key: "ASSIST-10",
         label: "Cocaine/crack",
         color: "#6E026F",
-        strokeWidth: 2,
+        strokeWidth: 1,
         legendType: "line",
       },
       {
         key: "ASSIST-11",
         label: "Methamphetamine",
         color: "#5A7ACD",
-        strokeWidth: 2,
+        strokeWidth: 1,
         legendType: "line",
       },
       {
         key: "ASSIST-12",
         label: "Heroin",
         color: "#001BB7",
-        strokeWidth: 2,
+        strokeWidth: 1,
         legendType: "line",
       },
       {
         key: "ASSIST-13",
         label: "Fentanyl",
         color: "#5C6F2B",
-        strokeWidth: 2,
+        strokeWidth: 1,
         legendType: "line",
       },
       {
         key: "ASSIST-14",
         color: "#725CAD",
         label: "Narcotic pain meds",
-        strokeWidth: 2,
+        strokeWidth: 1,
         legendType: "line",
       },
       {
         key: "ASSIST-15",
         label: "Sedatives",
         color: "#FF2DD1",
-        strokeWidth: 2,
+        strokeWidth: 1,
         legendType: "line",
       },
       {
         key: "ASSIST-16",
         label: "Marijuana",
         color: "#00809D",
-        strokeWidth: 2,
+        strokeWidth: 1,
         legendType: "line",
       },
       {
         key: "ASSIST-17",
         color: "#FF90BB",
         label: "Stimulants",
-        strokeWidth: 2,
+        strokeWidth: 1,
         legendType: "line",
       },
       {
         key: "ASSIST-18",
         color: "#FF5555",
         label: "Inhalants",
-        strokeWidth: 2,
+        strokeWidth: 1,
         legendType: "line",
       },
       {
         key: "ASSIST-19",
         color: "#3DB6B1",
         label: "Psychedelics",
-        strokeWidth: 2,
+        strokeWidth: 1,
         legendType: "line",
       },
     ],

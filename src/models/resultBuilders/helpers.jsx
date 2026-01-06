@@ -23,6 +23,7 @@ import {
   isNumber,
   isPlainObject,
   normalizeStr,
+  removeNullValuesFromObject,
   stripHtmlTags,
 } from "@util";
 import Scoring from "@components/Score";
@@ -708,7 +709,7 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
     scoringQuestionScore,
     questionScores,
     scoreLinkIds,
-    subScores,
+    subScores : removeNullValuesFromObject(subScores),
   };
 }
 

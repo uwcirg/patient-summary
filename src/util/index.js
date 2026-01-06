@@ -506,3 +506,10 @@ export function stripHtmlTags(html) {
   const doc = domParser.parseFromString(html, "text/html");
   return doc.body.textContent || "";
 }
+export function removeNullValuesFromObject(obj) {
+  if (!obj) return null;
+  const filtered = Object.fromEntries(
+    Object.entries(obj).filter(([_, value]) => value !== null)
+  );
+  return Object.keys(filtered).length === 0 ? null : filtered;
+}
