@@ -712,32 +712,34 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   getDataSource(resource) {
     if (!resource) return "";
     let source = "";
+    const CNICS_LABEL = "CNICS",
+      EPIC_LABEL = "EPIC";
     if (!isEmptyArray(resource.extension)) {
-      const match = resource.extension.find((node) => String(node.url).includes("epic"));
+      const match = resource.extension.find((node) => String(node.url).toLowerCase().includes("epic"));
       if (match) {
-        source = "epic";
+        source = EPIC_LABEL;
       }
     }
     if (!isEmptyArray(resource.identifier)) {
-      let match = resource.identifier.find((node) => String(node.system).includes("epic"));
+      let match = resource.identifier.find((node) => String(node.system).toLowerCase().includes("epic"));
       if (match) {
-        source = "epic";
+        source = EPIC_LABEL;
       }
-      match = resource.identifier.find((node) => String(node.system).includes("cnics"));
+      match = resource.identifier.find((node) => String(node.system).toLowerCase().includes("cnics"));
       if (match) {
-        source = "cnics";
+        source = CNICS_LABEL;
       }
     }
     if (isPlainObject(resource.identifier)) {
       if (resource.identifier?.system) {
-        source = resource.identifier.system.includes("cnics")
-          ? "cnics"
-          : resource.identifier.system.includes("epic")
-            ? "epic"
+        source = String(resource.identifier.system).toLowerCase().includes("cnics")
+          ? CNICS_LABEL
+          : String(resource.identifier.system).toLowerCase().includes("epic")
+            ? EPIC_LABEL
             : "";
       }
     }
-    if (!source) return "epic";
+    if (!source) return EPIC_LABEL;
     return source;
   }
 
@@ -1028,7 +1030,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           hasMeaningOnly: true,
         };
       }
-      result.push(meaningRow);
+      result.unshift(meaningRow);
     } else if (!resolvedConfig?.skipMeaningScoreRow && this._hasScoreData(data)) {
       const scoringRow = {
         question: "Score / Meaning",
@@ -1042,7 +1044,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           meaning: item.meaning,
         };
       }
-      result.push(scoringRow);
+      result.unshift(scoringRow);
     }
 
     return result;

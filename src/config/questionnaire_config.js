@@ -940,7 +940,7 @@ const questionnaireConfigsRaw = {
     subtitle: "Past 3 months",
     disableHeaderRowSubtitle: true,
     minimumScore: 0,
-    maximumScore: 5,
+    maximumScore: 4,
     meaningQuestionId: "ASSIST-3mo-score",
     meaningRowLabel: "Summary (Past 3 months)",
     nullScoreAllowed: true,
@@ -1124,10 +1124,19 @@ const questionnaireConfigsRaw = {
     chartParams: {
       ...CHART_CONFIG.default,
       title: "Substance Use",
+      bestMeaningLabel: "low",
+      worstMeaningLabel: "high",
       chartHeight: 360,
       minimumYValue: 0,
-      maximumYValue: 5,
-      xLabel: "",
+      maximumYValue: 4,
+      yLabel: "frequency",
+      yLabelVisible: true,
+      enableAxisMeaningLabels: true,
+      yLabelProps: {
+        dy: 36,
+        dx: 25,
+      },
+     // showTicks: true,
       connectNulls: true,
       tooltipValueFormatter: (value) => {
         if (value == null || value === undefined) return "No data";

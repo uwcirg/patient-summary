@@ -29,6 +29,7 @@ import { generateUUID, isEmptyArray, range } from "@/util";
 
 export default function LineCharts(props) {
   const {
+    bestMeaningLabel,
     chartHeight,
     chartWidth,
     connectNulls,
@@ -58,9 +59,11 @@ export default function LineCharts(props) {
     xsChartWidth,
     yFieldKey,
     yLabel,
+    yLabelProps,
     yLabelVisible,
     yLineFields,
     yTickFormatter,
+    worstMeaningLabel
   } = props;
 
   const theme = useTheme();
@@ -388,7 +391,7 @@ export default function LineCharts(props) {
     const strokeColor = "#fff";
     const strokeWidth = 2;
 
-    switch (payload.source) {
+    switch (String(payload.source).toLowerCase()) {
       case "cnics":
         return (
           <circle
@@ -441,10 +444,14 @@ export default function LineCharts(props) {
   const renderYAxis = () => (
     <YAxis
       domain={yDomain}
-      label={yLabel && yLabelVisible ? { value: yLabel, angle: -90, position: "insideLeft" } : null}
+      label={
+        yLabel && yLabelVisible
+          ? { value: yLabel, angle: -90, position: "insideLeft", ...(yLabelProps ? yLabelProps : {}) }
+          : null
+      }
       minTickGap={8}
-      tickLine={{ stroke: "#FFF" }}
-      stroke="#FFF"
+      tickLine={{ stroke: yLabelVisible ? "#444" : "#FFF" }}
+      stroke={yLabelVisible ? "#444" : "#FFF"}
       tick={
         showTicks
           ? (e) => {
@@ -531,8 +538,8 @@ export default function LineCharts(props) {
   };
 
   const CustomLegend = (payload) => {
-    const hasCnics = sources.includes("cnics");
-    const hasEpic = sources.includes("epic");
+    const hasCnics = sources.includes("CNICS") || sources.includes("cnics");
+    const hasEpic = sources.includes("EPIC") || sources.includes("epic");
     let items = [];
     if (hasCnics) {
       items.push({
@@ -548,7 +555,7 @@ export default function LineCharts(props) {
     if (hasEpic) {
       items.push({
         key: "epic",
-        label: "Epic",
+        label: "EPIC",
         icon: (
           <svg width="16" height="16">
             <rect x="4" y="4" width="8" height="8" fill="#444" stroke="#fff" strokeWidth="2" />
@@ -696,7 +703,7 @@ export default function LineCharts(props) {
   const renderMinScoreMeaningLabel = () => {
     if (!maxYValue) return null;
     if (!filteredData || !filteredData.length) return null;
-    if (!filteredData.find((item) => item.scoreSeverity)) return null;
+    //if (!filteredData.find((item) => item.scoreSeverity)) return null;
     const configData = filteredData.find((item) => item && item.comparisonToAlert) ?? {};
     return (
       <ReferenceLine
@@ -705,11 +712,12 @@ export default function LineCharts(props) {
         strokeWidth={0}
       >
         <Label
-          value={configData.comparisonToAlert === "lower" ? "Worst" : "Best"}
+          value={configData.comparisonToAlert === "lower" ? worstMeaningLabel??"Worst" : bestMeaningLabel??"Best"}
           fontSize="12px"
           fontWeight={500}
           fill={configData.comparisonToAlert === "lower" ? ALERT_COLOR : SUCCESS_COLOR}
           position="insideTopLeft"
+          dx={-12}
         />
       </ReferenceLine>
     );
@@ -718,7 +726,7 @@ export default function LineCharts(props) {
   const renderMaxScoreMeaningLabel = () => {
     if (!maxYValue) return null;
     if (!filteredData || !filteredData.length) return null;
-    if (!filteredData.find((item) => item.scoreSeverity)) return null;
+    //if (!filteredData.find((item) => item.scoreSeverity)) return null;
     const configData = filteredData.find((item) => item && item.comparisonToAlert) ?? {};
     return (
       <ReferenceLine
@@ -728,11 +736,12 @@ export default function LineCharts(props) {
         strokeWidth={0}
       >
         <Label
-          value={configData.comparisonToAlert === "lower" ? "Best" : "Worst"}
+          value={configData.comparisonToAlert === "lower" ? bestMeaningLabel??"Best" : worstMeaningLabel??"Worst"}
           fontSize="12px"
           fontWeight={500}
           fill={configData.comparisonToAlert === "lower" ? SUCCESS_COLOR : ALERT_COLOR}
           position="insideBottomLeft"
+          dx={-12}
         />
       </ReferenceLine>
     );
@@ -805,7 +814,7 @@ export default function LineCharts(props) {
           <LineChart
             data={filteredData}
             margin={{
-              top: 28,
+              top: 32,
               right: 20,
               left: 20,
               bottom: 10,
@@ -832,6 +841,7 @@ export default function LineCharts(props) {
 }
 
 LineCharts.propTypes = {
+  bestMeaningLabel: PropTypes.string,
   chartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   chartHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   connectNulls: PropTypes.bool,
@@ -855,7 +865,6 @@ LineCharts.propTypes = {
   xDomain: PropTypes.array,
   xFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   xLabel: PropTypes.string,
-  yLabelVisible: PropTypes.bool,
   xTickLabelAngle: PropTypes.number,
   xTickFormatter: PropTypes.func,
   xTickStyle: PropTypes.object,
@@ -863,6 +872,9 @@ LineCharts.propTypes = {
   yFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yLabel: PropTypes.string,
   xLabelVisible: PropTypes.bool,
+  yLabelProps: PropTypes.object,
+  yLabelVisible: PropTypes.bool,
   yLineFields: PropTypes.array,
   yTickFormatter: PropTypes.func,
+  worstMeaningLabel: PropTypes.worst
 };
