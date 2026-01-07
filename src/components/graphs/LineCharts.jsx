@@ -571,7 +571,16 @@ export default function LineCharts(props) {
     const points = payload && !isEmptyArray(payload.payload) ? payload.payload : [];
 
     return (
-      <div style={{ display: "flex", gap: 16, alignItems: "flex-start", padding: "4px 8px" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 16,
+          alignItems: "flex-start",
+          padding: "4px 8px",
+          position: "relative",
+          left: "32px",
+        }}
+      >
         {items.map((it) => (
           <div
             key={it.key}
@@ -821,12 +830,16 @@ export default function LineCharts(props) {
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
           <LineChart
             data={filteredData}
-            margin={chartMargin ? chartMargin: {
-              top: 20,
-              right: 20,
-              left: 20,
-              bottom: 10,
-            }}
+            margin={
+              chartMargin
+                ? chartMargin
+                : {
+                    top: 20,
+                    right: 20,
+                    left: 20,
+                    bottom: 10,
+                  }
+            }
             id={`lineChart_${id ?? generateUUID()}`}
           >
             <CartesianGrid strokeDasharray="2 2" horizontal={false} vertical={false} fill="#fdfbfbff" />

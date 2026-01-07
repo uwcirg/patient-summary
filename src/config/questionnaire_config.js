@@ -1128,17 +1128,17 @@ const questionnaireConfigsRaw = {
       minimumYValue: 0,
       maximumYValue: 4,
       chartMargin: {
-        top: 28,
+        top: 40,
         right: 20,
         left: 32,
         bottom: 10,
       },
-      yLabel: " ",
+      yLabel: "Frequency",
       yLabelVisible: true,
       yTickFormatter: (value) => {
         const labels = {
           0: "Never",
-          1: "Once or Twice",
+          1: "Once/Twice",
           2: "Monthly",
           3: "Weekly",
           4: "Daily",
@@ -1151,6 +1151,7 @@ const questionnaireConfigsRaw = {
         position: "top",
         angle: 0,
         dy: -16,
+        fontSize: "10px"
       },
       showTicks: true,
       connectNulls: true,
