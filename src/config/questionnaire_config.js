@@ -1124,19 +1124,35 @@ const questionnaireConfigsRaw = {
     chartParams: {
       ...CHART_CONFIG.default,
       title: "Substance Use",
-      bestMeaningLabel: "low",
-      worstMeaningLabel: "high",
       chartHeight: 360,
       minimumYValue: 0,
       maximumYValue: 4,
-      yLabel: "frequency",
-      yLabelVisible: true,
-      enableAxisMeaningLabels: true,
-      yLabelProps: {
-        dy: 36,
-        dx: 25,
+      chartMargin: {
+        top: 28,
+        right: 20,
+        left: 32,
+        bottom: 10,
       },
-     // showTicks: true,
+      yLabel: " ",
+      yLabelVisible: true,
+      yTickFormatter: (value) => {
+        const labels = {
+          0: "Never",
+          1: "Once or Twice",
+          2: "Monthly",
+          3: "Weekly",
+          4: "Daily",
+        };
+        return labels[value] || value;
+      },
+      yTicks: [0, 1, 2, 3, 4],
+      // enableAxisMeaningLabels: true,
+      yLabelProps: {
+        position: "top",
+        angle: 0,
+        dy: -16,
+      },
+      showTicks: true,
       connectNulls: true,
       tooltipValueFormatter: (value) => {
         if (value == null || value === undefined) return "No data";

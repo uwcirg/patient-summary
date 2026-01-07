@@ -30,6 +30,7 @@ import { generateUUID, isEmptyArray, range } from "@/util";
 export default function LineCharts(props) {
   const {
     bestMeaningLabel,
+    chartMargin,
     chartHeight,
     chartWidth,
     connectNulls,
@@ -63,7 +64,8 @@ export default function LineCharts(props) {
     yLabelVisible,
     yLineFields,
     yTickFormatter,
-    worstMeaningLabel
+    yTicks,
+    worstMeaningLabel,
   } = props;
 
   const theme = useTheme();
@@ -366,8 +368,7 @@ export default function LineCharts(props) {
   );
 
   const yDomain = maxYValue ? [minYValue ?? 0, maxYValue] : [minYValue ?? 0, "auto"];
-  const yTicks = maxYValue ? range(minYValue ?? 0, maxYValue) : range(minYValue ?? 0, 50);
-
+  const yTicksToUse = yTicks || (maxYValue ? range(minYValue ?? 0, maxYValue) : range(minYValue ?? 0, 50));
   // ----- KEY-SAFE CUSTOM DOT WITH STROKE -----
   const SourceDot = ({ cx, cy, payload, index, params }) => {
     if (isEmptyArray(sources)) return null;
@@ -470,12 +471,15 @@ export default function LineCharts(props) {
               e["fill"] = color;
               e["fontSize"] = "12px";
               e["fontWeight"] = 500;
-              return <Text {...e}>{value}</Text>;
+
+              // Apply the yTickFormatter here
+              const displayValue = yTickFormatter ? yTickFormatter(value) : value;
+
+              return <Text {...e}>{displayValue}</Text>;
             }
           : false
       }
-      tickFormatter={yTickFormatter}
-      ticks={yTicks}
+      ticks={yTicksToUse}
       tickMargin={8}
     />
   );
@@ -712,7 +716,9 @@ export default function LineCharts(props) {
         strokeWidth={0}
       >
         <Label
-          value={configData.comparisonToAlert === "lower" ? worstMeaningLabel??"Worst" : bestMeaningLabel??"Best"}
+          value={
+            configData.comparisonToAlert === "lower" ? (worstMeaningLabel ?? "Worst") : (bestMeaningLabel ?? "Best")
+          }
           fontSize="12px"
           fontWeight={500}
           fill={configData.comparisonToAlert === "lower" ? ALERT_COLOR : SUCCESS_COLOR}
@@ -736,7 +742,9 @@ export default function LineCharts(props) {
         strokeWidth={0}
       >
         <Label
-          value={configData.comparisonToAlert === "lower" ? bestMeaningLabel??"Best" : worstMeaningLabel??"Worst"}
+          value={
+            configData.comparisonToAlert === "lower" ? (bestMeaningLabel ?? "Best") : (worstMeaningLabel ?? "Worst")
+          }
           fontSize="12px"
           fontWeight={500}
           fill={configData.comparisonToAlert === "lower" ? SUCCESS_COLOR : ALERT_COLOR}
@@ -813,8 +821,8 @@ export default function LineCharts(props) {
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
           <LineChart
             data={filteredData}
-            margin={{
-              top: 32,
+            margin={chartMargin ? chartMargin: {
+              top: 20,
               right: 20,
               left: 20,
               bottom: 10,
@@ -842,6 +850,7 @@ export default function LineCharts(props) {
 
 LineCharts.propTypes = {
   bestMeaningLabel: PropTypes.string,
+  chartMargin: PropTypes.object,
   chartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   chartHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   connectNulls: PropTypes.bool,
@@ -876,5 +885,6 @@ LineCharts.propTypes = {
   yLabelVisible: PropTypes.bool,
   yLineFields: PropTypes.array,
   yTickFormatter: PropTypes.func,
-  worstMeaningLabel: PropTypes.worst
+  yTicks: PropTypes.array,
+  worstMeaningLabel: PropTypes.worst,
 };
