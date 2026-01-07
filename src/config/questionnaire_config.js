@@ -1007,7 +1007,7 @@ const questionnaireConfigsRaw = {
   "CIRG-CNICS-ARV": {
     key: "CIRG-CNICS-ARV",
     questionnaireId: "CIRG-CNICS-ARV",
-    title: "CNICS Antiretroviral (ARV) medications and adherence",
+    title: "Antiretroviral (ARV) adherence",
     instrumentName: "CIRG-CNICS-ARV",
   },
   "CIRG-SHORTNESS-OF-BREATH": {

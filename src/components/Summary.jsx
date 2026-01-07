@@ -64,7 +64,7 @@ export default function Summary(props) {
         }}
       >
         <ScoringSummary
-          data={summary}
+          data={summary?.scoringSummaryData}
           disableLinks={true}
           enableResponsesViewer={true}
           containerStyle={{ alignSelf: "stretch" }}
@@ -76,7 +76,6 @@ export default function Summary(props) {
               ...(summary?.chartData ?? {}),
               title: "",
               lgChartWidth: 520,
-              chartHeight: 220
             }}
           ></Chart>
         )}
