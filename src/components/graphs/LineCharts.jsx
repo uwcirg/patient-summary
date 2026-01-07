@@ -469,7 +469,7 @@ export default function LineCharts(props) {
                 }
               }
               e["fill"] = color;
-              e["fontSize"] = "12px";
+              e["fontSize"] = "10px";
               e["fontWeight"] = 500;
 
               // Apply the yTickFormatter here
@@ -899,5 +899,5 @@ LineCharts.propTypes = {
   yLineFields: PropTypes.array,
   yTickFormatter: PropTypes.func,
   yTicks: PropTypes.array,
-  worstMeaningLabel: PropTypes.worst,
+  worstMeaningLabel: PropTypes.string,
 };

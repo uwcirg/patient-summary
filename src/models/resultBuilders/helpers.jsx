@@ -896,7 +896,7 @@ export function getNoDataDisplay() {
   return <span className="no-data-wrapper">No data</span>;
 }
 
-export function getResponseColumns(data, config = {}) {
+export function getResponseColumns(data) {
   if (isEmptyArray(data)) return [];
 
   const dates =
@@ -916,11 +916,7 @@ export function getResponseColumns(data, config = {}) {
 
   return [
     {
-      title:
-        "Questions" +
-        (config?.subtitle && !config.disableHeaderRowSubtitle
-          ? "\n ( " + getNormalizedRowTitleDisplay(config.subtitle) + " )"
-          : ""),
+      title: "",
       field: "question",
       filtering: false,
       sorting: false,
@@ -934,15 +930,22 @@ export function getResponseColumns(data, config = {}) {
       render: (rowData) => {
         const q = rowData?.question ?? "";
         const config = rowData?.config;
+        const cleaned = typeof q === "string" ? q.replace(/\s*\([^)]*\)/g, "").trim() : "";
+        const isQuestion = normalizeStr(cleaned) === "questions";
         if (
           typeof q === "string" &&
-          (normalizeStr(q).includes("score") ||
-            normalizeStr(q).includes("meaning") ||
-            normalizeStr(q).includes("summary") ||
-            normalizeStr(q) === "status" ||
-            normalizeStr(q) === normalizeStr(config?.title))
+          (normalizeStr(cleaned).includes("score") ||
+            normalizeStr(cleaned).includes("meaning") ||
+            normalizeStr(cleaned).includes("summary") ||
+            normalizeStr(cleaned) === "status" ||
+            normalizeStr(cleaned) === normalizeStr(config?.title) ||
+            isQuestion)
         ) {
-          return <b>{q}</b>;
+          return (
+            <span className={`${isQuestion ? "question-row" : ""}`}>
+              <b>{q}</b>
+            </span>
+          );
         }
         // fall back to normalized string if not a plain string
         if (typeof q !== "string") return stripHtmlTags(normalize(q));

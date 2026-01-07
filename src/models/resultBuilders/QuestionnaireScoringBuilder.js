@@ -870,6 +870,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const scoreParams = getScoreParamsFromResponses(data, opts?.config);
     const dataProps = { responses: data[0].responses, ...data[0], ...scoreParams };
     const displayMeaningOnly = this._hasMeaningOnlyData(data);
+    const tableResponseData = opts?.tableResponseData ?? this._formatTableResponseData(data);
     return {
       ...data[0],
       ...scoreParams,
@@ -884,8 +885,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       displayMeaningOnly,
       hasData: !isEmptyArray(data),
       responseData: data,
-      tableResponseData: opts?.tableResponseData ?? this._formatTableResponseData(data),
-      printResponseData: opts?.printResponseData ?? this._formatPrintResponseData(data),
+      tableResponseData,
       questionnaire: getQuestionnaireFromRowData(
         data[0],
         getResourcesByResourceType(this.patientBundle, "Questionnaire"),
@@ -1017,8 +1017,30 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       })
       .filter((r) => !r.isValueExpression && !r.isHelp);
 
+    const hasMeaningOnly = !resolvedConfig?.skipMeaningScoreRow && this._hasMeaningOnlyData(data);
+    const hasScoreOnly = !resolvedConfig?.skipMeaningScoreRow && this._hasScoreData(data);
+
+    if (hasMeaningOnly || hasScoreOnly) {
+      const questionRow = {
+        question:
+          "Questions" +
+          (resolvedConfig?.subtitle && !resolvedConfig.disableHeaderRowSubtitle
+            ? "\n ( " + getNormalizedRowTitleDisplay(resolvedConfig.subtitle) + " )"
+            : ""),
+        id: `question_${data.map((o) => o.id).join("")}`,
+        config: resolvedConfig,
+      };
+      for (const item of data) {
+        questionRow[item.id] = {
+          score: " ",
+          meaning: null,
+        };
+      }
+      result.unshift(questionRow);
+    }
+
     // Add meaning/score rows
-    if (!resolvedConfig?.skipMeaningScoreRow && this._hasMeaningOnlyData(data)) {
+    if (hasMeaningOnly) {
       const meaningRow = {
         question: resolvedConfig?.meaningRowLabel ? resolvedConfig.meaningRowLabel : "Score / Meaning",
         id: `meaning_${data.map((o) => o.id).join("")}`,
@@ -1031,7 +1053,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         };
       }
       result.unshift(meaningRow);
-    } else if (!resolvedConfig?.skipMeaningScoreRow && this._hasScoreData(data)) {
+    } else if (hasScoreOnly) {
       const scoringRow = {
         question: "Score / Meaning",
         id: `score_${data.map((o) => o.id).join("")}`,
@@ -1049,24 +1071,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     return result;
   };
-
-  _formatPrintResponseData(data, params) {
-    if (!this._hasResponseData(data)) return null;
-
-    // Current implementation prints only the first column/date
-    const first = data[0];
-    const headerRow = [
-      "Questions",
-      `${getLocaleDateStringFromDate(first.date)} ${first.source ? "(" + first.source + ")" : ""}`.trim(),
-    ];
-    const bodyRows = (first.responses || []).map((row) => [
-      this._getQuestion(row, params),
-      this._getAnswerByTargetLinkIdFromResponseData(row.id, data, first.id, params),
-    ]);
-    const scoreRow = this._hasScoreData(data) ? [{ score: first.score, scoreParams: params }] : null;
-
-    return { headerRow, bodyRows, scoreRow };
-  }
 
   async _loadQuestionnaire(canonical, questionnaireLoader, bundleOverride) {
     if (questionnaireLoader) {
@@ -1365,12 +1369,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const { key, id, ...restOfConfig } = config ?? {};
     const chartParams = { ...chartConfig, ...restOfConfig, ...(restOfConfig?.chartParams ?? {}), xDomain };
     const tableResponseData = this._formatTableResponseData(evaluationData, config);
-    const printResponseData = this._formatPrintResponseData(evaluationData, config);
     const scoringSummaryData = this._formatScoringSummaryData(evaluationData, {
       tableResponseData,
-      printResponseData,
       config,
     });
+    const printResponseData = !isEmptyArray(tableResponseData) ? [tableResponseData[0]]: [];
 
     return {
       config,
