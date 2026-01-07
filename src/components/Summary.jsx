@@ -9,8 +9,8 @@ import Questionnaire from "@models/Questionnaire";
 import { hasData } from "@util";
 import Error from "./ErrorComponent";
 import QuestionnaireInfo from "./QuestionnaireInfo";
-import Responses from "./Responses";
 import Chart from "./Chart";
+import ScoringSummary from "./sections/ScoringSummary";
 import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "@/consts";
 
 export default function Summary(props) {
@@ -63,11 +63,12 @@ export default function Summary(props) {
           md: "nowrap",
         }}
       >
-        <Responses
+        <ScoringSummary
           data={summary}
-          questionnaireId={questionnaireId}
-          questionnaireJson={summary?.questionnaire}
-        ></Responses>
+          disableLinks={true}
+          enableResponsesViewer={true}
+          containerStyle={{ alignSelf: "stretch" }}
+        ></ScoringSummary>
         {hasChart && (
           <Chart
             type={summary?.chartType}
