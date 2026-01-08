@@ -513,3 +513,11 @@ export function removeNullValuesFromObject(obj) {
   );
   return Object.keys(filtered).length === 0 ? null : filtered;
 }
+export function chunkArray (array, size = 3) {
+  if (!array) return [];
+  const chunks = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+};

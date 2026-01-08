@@ -1,6 +1,6 @@
 import React, { forwardRef, useMemo } from "react";
 import PropTypes from "prop-types";
-import { Box, Paper } from "@mui/material";
+import { Box, Paper, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import MaterialTable from "@material-table/core";
 
@@ -44,6 +44,7 @@ function normalizeCell(v) {
 }
 
 export default function ResponsesTable({
+  title,
   tableData = [],
   columns,
   buildColumns, // optional: () => columns[]
@@ -101,6 +102,11 @@ export default function ResponsesTable({
         ...(boxSx || {}),
       }}
     >
+      {title && (
+        <Typography component="h3" variant="subtitle2" sx={{ textAlign: "left", marginBottom: 1 }}>
+          {title}
+        </Typography>
+      )}
       <MaterialTable
         components={{ Container: MTContainer }}
         columns={safeColumns}
@@ -127,6 +133,7 @@ export default function ResponsesTable({
 }
 
 ResponsesTable.propTypes = {
+  title: PropTypes.string,
   tableData: PropTypes.array,
   columns: PropTypes.array,
   buildColumns: PropTypes.func,

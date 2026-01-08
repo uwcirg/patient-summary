@@ -3,6 +3,7 @@ import React, { useMemo, useCallback } from "react";
 import { Box, Stack, Typography } from "@mui/material";
 import { isEmptyArray } from "@util";
 import Chart from "../Chart";
+import ResponsesTable from "../ResponsesTable";
 import Section from "../Section";
 import ScoringSummary from "./ScoringSummary";
 
@@ -87,6 +88,21 @@ export default function PROReport() {
               />
             )}
             {table.layout === "two-columns" && renderTwoColumns(table)}
+          </Box>
+          <Box className="print-only">
+            {table.rows?.map((row) => {
+              if (!row.printColumnChunks) return null;
+              return row.printColumnChunks.map((chunk, index) => {
+                return (
+                  <ResponsesTable
+                    key={`${row.id}_chunk_${index}`}
+                    columns={chunk.columns}
+                    tableData={row.tableResponseData}
+                    title={`${row.title} details ${index > 0 ? "(cont'd)" : ""}`}
+                  ></ResponsesTable>
+                );
+              });
+            })}
           </Box>
         </Box>
       );

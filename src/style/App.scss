@@ -188,7 +188,7 @@ p {
   }
 
   tr:has(.text-readonly),
-  tr:has(.question-row)  {
+  tr:has(.question-row) {
     td {
       border-left: 0;
       background-color: #fff;
@@ -205,7 +205,7 @@ p {
   }
   tr:has(.question-row) {
     td {
-      background-color: #FFF !important;
+      background-color: #fff !important;
     }
     td {
       border-right: 0 !important;
@@ -525,6 +525,19 @@ p {
   }
   .MuiTabs-indicator {
     background-color: transparent !important;
+  }
+  .responses-container {
+    width: 100% !important;
+    .table-root {
+      div div div {
+        max-height: 100% !important;
+        td {
+          font-size: 10px !important;
+          padding: 4px !important;
+          text-align: left !important;
+        }
+      }
+    }
   }
 }
 

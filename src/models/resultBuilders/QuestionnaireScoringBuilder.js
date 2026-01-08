@@ -864,12 +864,27 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return this._getAnswer(answerItem, config);
   }
 
+  _formatColumnChunks = (columns = [], chunkSize = 3) => {
+    if (!columns) return [];
+    const [header, ...rest] = columns;
+    const chunks = [];
+    for (let i = 0; i < rest.length; i += chunkSize) {
+      const chunk = rest.slice(i, i + chunkSize);
+      chunks.push({
+        columns: [header, ...chunk],
+      });
+    }
+
+    return chunks;
+  };
+
   _formatScoringSummaryData = (data, opts = {}) => {
     if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
     const subtitle = opts?.config?.subtitle ? getNormalizedRowTitleDisplay(opts?.config?.subtitle, data[0]) : "";
     const scoreParams = getScoreParamsFromResponses(data, opts?.config);
     const dataProps = { responses: data[0].responses, ...data[0], ...scoreParams };
     const displayMeaningOnly = this._hasMeaningOnlyData(data);
+    const responseColumns = getResponseColumns(data, data[0]);
     const tableResponseData = opts?.tableResponseData ?? this._formatTableResponseData(data);
     return {
       ...data[0],
@@ -881,9 +896,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       scoreRangeDisplay: getScoreRangeDisplayByRow(dataProps),
       rowTitle: getTitleByRow(dataProps),
       subtitle,
-      responseColumns: getResponseColumns(data, data[0]),
       displayMeaningOnly,
       hasData: !isEmptyArray(data),
+      responseColumns,
+      printColumnChunks: this._formatColumnChunks(responseColumns, 3),
       responseData: data,
       tableResponseData,
       questionnaire: getQuestionnaireFromRowData(
@@ -1373,7 +1389,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       tableResponseData,
       config,
     });
-    const printResponseData = !isEmptyArray(tableResponseData) ? [tableResponseData[0]]: [];
+    const printResponseData = !isEmptyArray(tableResponseData) ? [tableResponseData[0]] : [];
 
     return {
       config,
