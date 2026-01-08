@@ -89,6 +89,7 @@ export default function PROReport() {
             )}
             {table.layout === "two-columns" && renderTwoColumns(table)}
           </Box>
+          {/* print only details */}
           <Box className="print-only">
             {table.rows?.map((row) => {
               if (!row.printColumnChunks) return null;

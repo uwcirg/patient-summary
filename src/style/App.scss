@@ -528,6 +528,8 @@ p {
   }
   .responses-container {
     width: 100% !important;
+    padding: 8px !important;
+    box-shadow: none !important;
     .table-root {
       div div div {
         max-height: 100% !important;

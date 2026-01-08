@@ -1247,7 +1247,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
    *   - responseData: Processed response data
    *   - scoringSummaryData: Aggregated scoring information
    *   - tableResponseData: Data formatted for table display
-   *   - printResponseData: Data formatted for printing
    *   - questionnaire: The questionnaire definition
    *   - key: Unique identifier for the questionnaire
    *   - error: Error message if processing failed
@@ -1389,7 +1388,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       tableResponseData,
       config,
     });
-    const printResponseData = !isEmptyArray(tableResponseData) ? [tableResponseData[0]] : [];
 
     return {
       config,
@@ -1399,7 +1397,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       responseData: evaluationData,
       scoringSummaryData,
       tableResponseData,
-      printResponseData,
       questionnaire,
       key: questionnaire?.id,
       error: !questionnaire
