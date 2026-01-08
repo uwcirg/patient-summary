@@ -99,7 +99,7 @@ export default function PROReport() {
                     key={`${row.id}_chunk_${index}`}
                     columns={chunk.columns}
                     tableData={row.tableResponseData}
-                    title={`${row.title} details ${index > 0 ? "(cont'd)" : ""}`}
+                    title={`${row.title} Details ${index > 0 ? "(cont'd)" : ""}`}
                   ></ResponsesTable>
                 );
               });

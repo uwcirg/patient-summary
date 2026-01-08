@@ -209,7 +209,7 @@ export const report_config = {
         },
          {
           id: "table_psychosocial_concern",
-          title: "Psychosocial concerns and quality of life",
+          title: "Psychosocial Concerns and Quality of Life",
           layout: "two-columns",
           dataKeysToMatch: ["CIRG-SOCIAL-SUPPORT", "CIRG-HIV-Stigma", "CIRG-PC-PTSD-5", "CIRG-HRQOL"],
         },

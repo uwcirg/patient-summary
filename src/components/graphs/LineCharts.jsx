@@ -66,6 +66,7 @@ export default function LineCharts(props) {
     yTickFormatter,
     yTicks,
     worstMeaningLabel,
+    wrapperClass
   } = props;
 
   const theme = useTheme();
@@ -825,7 +826,7 @@ export default function LineCharts(props) {
           },
           height: chartHeight ? chartHeight : "calc(100% - 40px)",
         }}
-        className="chart-wrapper"
+        className={`chart-wrapper ${wrapperClass ? wrapperClass: ""}`}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
           <LineChart
@@ -900,4 +901,5 @@ LineCharts.propTypes = {
   yTickFormatter: PropTypes.func,
   yTicks: PropTypes.array,
   worstMeaningLabel: PropTypes.string,
+  wrapperClass: PropTypes.string
 };

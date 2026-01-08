@@ -383,9 +383,11 @@ p {
     }
   }
   .chart-wrapper {
-    height: 210px !important;
     padding: 0;
     margin: 0;
+    &:not(.big) {
+      height: 200px !important;
+    }
   }
   .chart__container {
     height: auto !important;
@@ -449,14 +451,6 @@ p {
       width: 100%;
     }
   }
-  // .accordion-wrapper:not(:last-of-type),
-  // .summary-container:not(:last-of-type) {
-  //   page-break-after: always;
-  // }
-  // .accordion-wrapper:not(:last-of-type),
-  // .summary-container:not(:last-of-type) {
-  //   page-break-after: always;
-  // }
   .MuiToolbar-root {
     background-color: $default-print-background-color !important;
     box-shadow: none !important;

@@ -501,6 +501,7 @@ const questionnaireConfigsRaw = {
         if (value === 4) return "Daily or almost daily";
         return value;
       },
+      wrapperClass: "big"
     },
   },
   "CIRG-CNICS-ASSIST-OD": {
