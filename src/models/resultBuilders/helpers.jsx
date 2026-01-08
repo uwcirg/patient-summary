@@ -960,6 +960,7 @@ export function getResponseColumns(data) {
         minWidth: "148px",
         borderRight: "1px solid #ececec",
       },
+      spanFullRow: !!item.readyOnly,
       render: (rowData) => {
         const rowDataItem = rowData?.[item.id];
         if (rowData.readOnly) return <span className="text-readonly"></span>;

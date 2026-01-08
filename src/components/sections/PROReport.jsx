@@ -90,7 +90,7 @@ export default function PROReport() {
             {table.layout === "two-columns" && renderTwoColumns(table)}
           </Box>
           {/* print only details */}
-          <Box className="print-only">
+          {/* <Box className="print-only">
             {table.rows?.map((row) => {
               if (!row.printColumnChunks) return null;
               return row.printColumnChunks.map((chunk, index) => {
@@ -104,7 +104,7 @@ export default function PROReport() {
                 );
               });
             })}
-          </Box>
+          </Box> */}
         </Box>
       );
     },
@@ -125,5 +125,37 @@ export default function PROReport() {
     ));
   }, [renderTable]);
 
-  return sections;
+  const printTables = useMemo(() => {
+    return report_config.sections.map((section, index) => {
+      return (
+        <Box className="print-only" key={`${section.id}_printonly_${index}`}>
+          <Typography className="section-title" variant="h6" component="h2" id={`${section.id}_title_details_${index}`}>
+            {section.title} {"Details"}
+          </Typography>
+          {section.tables.map((table) => {
+            return table.rows?.map((row) => {
+              if (!row.printColumnChunks) return null;
+              return row.printColumnChunks.map((chunk, index) => {
+                return (
+                  <ResponsesTable
+                    key={`${row.id}_chunk_${index}`}
+                    columns={chunk.columns}
+                    tableData={row.tableResponseData}
+                    title={`${row.title} ${index > 0 ? "(cont'd)" : ""}`}
+                  ></ResponsesTable>
+                );
+              });
+            });
+          })}
+        </Box>
+      );
+    });
+  }, []);
+
+  return (
+    <>
+      {sections}
+      {printTables}
+    </>
+  );
 }

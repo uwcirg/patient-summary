@@ -76,6 +76,13 @@ p {
   }
 }
 
+.sticky-header {
+  position: sticky;
+  top: 0;
+  background-color: #fff; /* Also add a background color to prevent content from showing through */
+  z-index: 10; /* Ensure the header is above other table content */
+}
+
 .ghost {
   visibility: hidden;
   &.logo {
@@ -186,19 +193,26 @@ p {
       border-bottom: 0;
     }
   }
-
-  tr:has(.text-readonly),
-  tr:has(.question-row) {
+  tr:has(.text-readonly) {
     td {
-      border-left: 0;
-      background-color: #fff;
-      // font-style: italic;
+      border-left: 0 !important;
       color: $muted-text-color;
       line-height: 1.5;
       padding-left: 16px;
       background-color: $row-background-color !important;
     }
-    td:first-of-type {
+    td {
+      border-right: 0 !important;
+    }
+  }
+  tr:has(.question-row) {
+    td {
+      border-left: 0 !important;
+      background-color: #fff;
+      line-height: 1.5;
+      padding-left: 16px;
+    }
+    td {
       border-right: 0 !important;
       background-color: #fff;
     }
@@ -511,6 +525,12 @@ p {
   .table-container {
     border: 0 !important;
     box-shadow: none !important;
+    max-height: 100% !important;
+    th, td {
+      text-align: left !important;
+      padding: 4px !important;
+      font-size: 10px;
+    }
   }
   .MuiTab-root.Mui-selected {
     color: #000000de !important;

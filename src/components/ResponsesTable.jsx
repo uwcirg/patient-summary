@@ -1,17 +1,20 @@
-import React, { forwardRef, useMemo } from "react";
+import React, { useMemo } from "react";
 import PropTypes from "prop-types";
-import { Box, Paper, Typography } from "@mui/material";
+import {
+  Box,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import MaterialTable from "@material-table/core";
-
-// Forward the ref so MaterialTable can measure scrollWidth
-const MTContainer = forwardRef(function MTContainer(props, ref) {
-  return <Paper ref={ref} className="table-root" elevation={1} {...props} />;
-});
 
 /**
- * Auto-generate a simple columns array from the first row of data
- * Only used when `columns` prop is not provided and buildColumns returns nothing.
+ * Auto-generate simple columns array from the first row of data
  */
 function buildBasicColumns(tableData) {
   if (!Array.isArray(tableData) || tableData.length === 0) return [];
@@ -24,36 +27,48 @@ function buildBasicColumns(tableData) {
 
 const safeGet = (row, field) => {
   if (!field) return undefined;
-  // support nested fields like "a.b.c"
   return String(field)
     .split(".")
     .reduce((acc, k) => (acc == null ? acc : acc[k]), row);
 };
 
-// normalize anything to a renderable node
 function normalizeCell(v) {
   if (v == null || v === "null" || v === "undefined") return "N/A";
   if (typeof v === "string" || typeof v === "number") return v;
   if (React.isValidElement(v)) return v;
   if (Array.isArray(v)) return v.join(", ");
   try {
-    return JSON.stringify(v); // last resort for objects
+    return JSON.stringify(v);
   } catch {
     return String(v);
   }
 }
 
 export default function ResponsesTable({
-  title,
   tableData = [],
+  title,
   columns,
   buildColumns, // optional: () => columns[]
   headerBgColor = "#FFF",
   boxSx,
-  tableOptions,
-  wrapDefaultRender = true, // allow opting out if needed
+  wrapDefaultRender = true,
+  dense = true,
+  stickyHeader = true,
 }) {
   const theme = useTheme();
+  const STICKY_FIRST_COL_LEFT = 0;
+  const Z_HEADER = 3;
+  const Z_FIRST_COL = 2;
+  const Z_CORNER = 4; // top-left cell (header + first col)
+
+  // function isTextReadonlyElement(node) {
+  //   if (!React.isValidElement(node)) return false;
+
+  //   const className = node.props?.className;
+  //   if (!className) return false;
+
+  //   return typeof className === "string" && className.includes("text-readonly");
+  // }
 
   // resolve columns in priority order:
   // 1) explicit columns prop
@@ -70,16 +85,14 @@ export default function ResponsesTable({
     return buildBasicColumns(tableData);
   }, [columns, buildColumns, tableData]);
 
-  // safe default render wrapper
+  // Apply safe default render unless column.render exists
   const safeColumns = useMemo(() => {
     const cols = Array.isArray(resolvedColumns) ? resolvedColumns : [];
     if (!wrapDefaultRender) return cols;
 
     return cols.map((col) => {
-      // If a custom render exists, assume it knows what to do.
       if (typeof col?.render === "function") return col;
 
-      // Otherwise, provide a safe default that coerces the raw value.
       return {
         ...col,
         render: (rowData) => normalizeCell(safeGet(rowData, col.field)),
@@ -98,47 +111,134 @@ export default function ResponsesTable({
         [theme.breakpoints.up("md")]: { width: "95%" },
         [theme.breakpoints.up("lg")]: { width: "85%" },
         overflowX: "auto",
+        overflowY: "auto",
         position: "relative",
         ...(boxSx || {}),
       }}
     >
       {title && (
-        <Typography component="h3" variant="subtitle2" sx={{ textAlign: "left", marginBottom: 1 }}>
+        <Typography
+          variant="subtitle2"
+          component="h3"
+          sx={{
+            marginBottom: 1,
+          }}
+        >
           {title}
         </Typography>
       )}
-      <MaterialTable
-        components={{ Container: MTContainer }}
-        columns={safeColumns}
-        data={tableData ?? []}
-        options={{
-          search: false,
-          showTitle: false,
-          padding: "dense",
-          toolbar: false,
-          paging: false,
-          thirdSortClick: false,
-          headerStyle: {
-            backgroundColor: headerBgColor,
-            position: "sticky",
-            top: 0,
-            zIndex: 998,
-            borderRight: "2px solid #ececec",
-          },
-          ...(tableOptions || {}),
+      <TableContainer
+        className="table-container"
+        component={Paper}
+        elevation={1}
+        sx={{
+          maxHeight: "calc(100vh - 120px)", // leave room for AppBar
+          overflowY: "auto",
+          overflowX: "auto",
         }}
-      />
+      >
+        <Table size={dense ? "small" : "medium"} stickyHeader={stickyHeader}>
+          <TableHead>
+            <TableRow>
+              {safeColumns.map((col, colIndex) => {
+                const isFirstCol = colIndex === 0;
+
+                return (
+                  <TableCell
+                    key={col.field ?? col.title ?? colIndex}
+                    align={col.align || "left"}
+                    sx={{
+                      backgroundColor: headerBgColor,
+                      top: 0,
+                      zIndex: isFirstCol ? Z_CORNER : Z_HEADER,
+
+                      ...(isFirstCol
+                        ? {
+                            position: "sticky",
+                            left: STICKY_FIRST_COL_LEFT,
+                          }
+                        : { borderRight: "1px solid #ececec" }),
+
+                      ...(col.headerStyle || {}),
+                    }}
+                  >
+                    {col.title}
+                  </TableCell>
+                );
+              })}
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {(tableData ?? []).map((row, rowIndex) => (
+              <TableRow key={row?.id ?? rowIndex} hover>
+                {safeColumns.map((col, colIndex) => {
+                  const content =
+                    typeof col.render === "function"
+                      ? col.render(row, rowIndex)
+                      : normalizeCell(safeGet(row, col.field));
+                  const isFirstCol = colIndex === 0;
+                  if (col.spanFullRow || row.readOnly) {
+                    if (isFirstCol) {
+                      return (
+                        <TableCell
+                          key={`${row?.id ?? rowIndex}-readonly`}
+                          colSpan={safeColumns.length}
+                          className="read-only"
+                          sx={{
+                            backgroundColor: "#f7f9f9",
+                            ...(col.readonlyCellStyle || {}),
+                          }}
+                        >
+                          {content}
+                        </TableCell>
+                      );
+                    }
+                    return null;
+                  }
+                  return (
+                    <TableCell
+                      key={`${row?.id ?? rowIndex}-${col.field ?? col.title ?? colIndex}`}
+                      align={col.align || "left"}
+                      sx={{
+                        ...(isFirstCol
+                          ? {
+                              position: "sticky",
+                              left: STICKY_FIRST_COL_LEFT,
+                              zIndex: Z_FIRST_COL,
+                              backgroundColor: "#fff",
+                            }
+                          : { borderRight: "1px solid #ececec" }),
+                        ...(col.cellStyle || {}),
+                      }}
+                    >
+                      {content}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            ))}
+
+            {(!tableData || tableData.length === 0) && (
+              <TableRow>
+                <TableCell colSpan={safeColumns.length || 1}>N/A</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 }
 
 ResponsesTable.propTypes = {
-  title: PropTypes.string,
   tableData: PropTypes.array,
-  columns: PropTypes.array,
+  columns: PropTypes.array, // [{ title, field, render?, align?, headerSx?, cellSx? }]
   buildColumns: PropTypes.func,
   headerBgColor: PropTypes.string,
   boxSx: PropTypes.object,
-  tableOptions: PropTypes.object,
   wrapDefaultRender: PropTypes.bool,
+  dense: PropTypes.bool,
+  stickyHeader: PropTypes.bool,
+  title: PropTypes.string,
 };
