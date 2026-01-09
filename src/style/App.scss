@@ -1,7 +1,7 @@
 // $chart-background-color: #fbfcff;
 $chart-background-color: #fff;
 $muted-text-color: #4f4d4d;
-$border-color: rgba(224, 224, 224, 1);
+$border-color: #f4f0f0;
 $app-background-color: #faf9fa;
 $summary-container-background-color: #fff;
 $default-print-background-color: #fff;
@@ -141,6 +141,11 @@ p {
     th:first-of-type {
       z-index: 999 !important;
       left: 0;
+      border-right: 1px solid $border-color;
+    }
+    th {
+      white-space: pre-line;
+      font-size: 0.8rem;
     }
   }
 }

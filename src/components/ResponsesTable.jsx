@@ -50,7 +50,7 @@ export default function ResponsesTable({
   columns,
   buildColumns, // optional: () => columns[]
   headerBgColor = "#FFF",
-  boxSx,
+  containerStyle,
   wrapDefaultRender = true,
   dense = true,
   stickyHeader = true,
@@ -60,15 +60,7 @@ export default function ResponsesTable({
   const Z_HEADER = 3;
   const Z_FIRST_COL = 2;
   const Z_CORNER = 4; // top-left cell (header + first col)
-
-  // function isTextReadonlyElement(node) {
-  //   if (!React.isValidElement(node)) return false;
-
-  //   const className = node.props?.className;
-  //   if (!className) return false;
-
-  //   return typeof className === "string" && className.includes("text-readonly");
-  // }
+  const BORDER_COLOR = "#f4f0f0";
 
   // resolve columns in priority order:
   // 1) explicit columns prop
@@ -113,7 +105,7 @@ export default function ResponsesTable({
         overflowX: "auto",
         overflowY: "auto",
         position: "relative",
-        ...(boxSx || {}),
+        ...(containerStyle || {}),
       }}
     >
       {title && (
@@ -157,7 +149,7 @@ export default function ResponsesTable({
                             position: "sticky",
                             left: STICKY_FIRST_COL_LEFT,
                           }
-                        : { borderRight: "1px solid #ececec" }),
+                        : { borderRight: `1px solid ${BORDER_COLOR}` }),
 
                       ...(col.headerStyle || {}),
                     }}
@@ -208,7 +200,7 @@ export default function ResponsesTable({
                               zIndex: Z_FIRST_COL,
                               backgroundColor: "#fff",
                             }
-                          : { borderRight: "1px solid #ececec" }),
+                          : { borderRight: `1px solid ${BORDER_COLOR}` }),
                         ...(col.cellStyle || {}),
                       }}
                     >
@@ -236,7 +228,7 @@ ResponsesTable.propTypes = {
   columns: PropTypes.array, // [{ title, field, render?, align?, headerSx?, cellSx? }]
   buildColumns: PropTypes.func,
   headerBgColor: PropTypes.string,
-  boxSx: PropTypes.object,
+  containerStyle: PropTypes.object,
   wrapDefaultRender: PropTypes.bool,
   dense: PropTypes.bool,
   stickyHeader: PropTypes.bool,
