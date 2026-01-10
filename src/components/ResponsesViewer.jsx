@@ -86,11 +86,6 @@ export default function ResponsesViewer({
                 {questionnaire && (
                   <QuestionnaireInfo
                     questionnaireJson={questionnaire}
-                    iconProps={{
-                      sx: {
-                        color: "#eaedef",
-                      },
-                    }}
                   ></QuestionnaireInfo>
                 )}
               </Stack>
