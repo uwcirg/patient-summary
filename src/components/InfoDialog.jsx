@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import DOMPurify from "dompurify";
 import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
 import Button from "@mui/material/Button";
@@ -15,6 +16,7 @@ export default function InfoDialog(props) {
     title,
     content,
     buttonIcon: ButtonIcon = HelpIcon,
+    buttonIconProps = {},
     buttonProps = {},
     buttonSize = "small",
     buttonColor = "info",
@@ -27,6 +29,7 @@ export default function InfoDialog(props) {
     closeButtonText = "Close",
     dialogProps = {},
     allowHtml = false,
+    sanitizeConfig = {},
   } = props;
 
   const theme = useTheme();
@@ -34,6 +37,19 @@ export default function InfoDialog(props) {
 
   // Use controlled state if provided, otherwise use internal state
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
+
+  // Sanitize HTML content
+  const sanitizedContent = useMemo(() => {
+    if (!allowHtml || typeof content !== 'string') {
+      return content;
+    }
+    
+    return DOMPurify.sanitize(content, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'div'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
+      ...sanitizeConfig,
+    });
+  }, [content, allowHtml, sanitizeConfig]);
 
   const handleDialogOpen = () => {
     if (controlledOpen === undefined) {
@@ -64,7 +80,7 @@ export default function InfoDialog(props) {
           edge="end"
           {...buttonProps}
         >
-          <ButtonIcon color={buttonColor} />
+          <ButtonIcon color={buttonColor} {...buttonIconProps} />
         </IconButton>
       )}
       
@@ -83,7 +99,7 @@ export default function InfoDialog(props) {
         <DialogContent>
           <DialogContentText sx={{ marginTop: theme.spacing(3) }}>
             {allowHtml ? (
-              <div dangerouslySetInnerHTML={{ __html: content }} />
+              <div dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
             ) : (
               content
             )}
@@ -102,6 +118,7 @@ InfoDialog.propTypes = {
   title: PropTypes.string,
   content: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
   buttonIcon: PropTypes.elementType,
+  buttonIconProps: PropTypes.object,
   buttonProps: PropTypes.object,
   buttonSize: PropTypes.string,
   buttonColor: PropTypes.string,
@@ -114,4 +131,5 @@ InfoDialog.propTypes = {
   closeButtonText: PropTypes.string,
   dialogProps: PropTypes.object,
   allowHtml: PropTypes.bool,
+  sanitizeConfig: PropTypes.object,
 };
