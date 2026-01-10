@@ -225,7 +225,7 @@ export default function ScoringSummary(props) {
         size: "small",
       },
       renderCell: (row) => (
-        <Stack sx={{ width: "100%" }} spacing={1} alignItems={"flex-start"} justifyContent={"flex-start"}>
+        <Stack sx={{ width: "100%" }} spacing={1.5} alignItems={"flex-start"} justifyContent={"flex-start"}>
           {!row.displayMeaningNotScore && defaultRenderers.score(row)}
           {row.showNumAnsweredWithScore && defaultRenderers.answered(row)}
           <Meaning id={row.id ?? row.key} meaning={row.meaning} alert={row.alert} warning={row.warning} />
