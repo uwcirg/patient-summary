@@ -11,6 +11,8 @@ import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import HelpIcon from "@mui/icons-material/Help";
+import { IconButton, Tooltip } from "@mui/material";
 import Scoring from "@components/Score";
 import { isEmptyArray, scrollToAnchor } from "@util";
 import ResponsesViewer from "../ResponsesViewer";
@@ -85,6 +87,42 @@ export default function ScoringSummary(props) {
         {row.source && <Box className="muted-text source-container">{row.source}</Box>}
       </Stack>
     ),
+    answered: (row) => {
+      if (row.totalAnsweredItems != null) {
+        return (
+          <Stack gap={0.5} direction={"row"}>
+            <Box>{`${row.totalAnsweredItems} questions answered`}</Box>
+            {row.note && (
+              <Tooltip
+                title={row.note}
+                className="print-hidden"
+                arrow
+                componentsProps={{
+                  tooltip: {
+                    // Target the tooltip slot
+                    sx: {
+                      fontSize: "0.85rem",
+                      padding: "16px",
+                      bgcolor: "#036295",
+                      color: "#FFF", // set text color
+                      "& .MuiTooltip-arrow": {
+                        // Target the nested arrow class
+                        color: "#036295", // Make the arrow color match the background
+                      },
+                    },
+                  },
+                }}
+              >
+                <IconButton>
+                  <HelpIcon color="info" fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Stack>
+        );
+      }
+      return null;
+    },
     score: (row) => {
       return (
         <Stack
@@ -133,7 +171,7 @@ export default function ScoringSummary(props) {
           borderBottomColor: "border.main",
           verticalAlign: "top",
           textAlign: "left",
-         // height: "100%",
+          // height: "100%",
           minWidth: "128px",
         },
         size: "small",
@@ -154,6 +192,7 @@ export default function ScoringSummary(props) {
           <ResponsesViewer
             title={title}
             subtitle={row.subtitle}
+            note={row.note}
             responsesTileTitle={row.rowTitle}
             tableData={row?.tableResponseData}
             columns={row?.responseColumns}
@@ -203,6 +242,7 @@ export default function ScoringSummary(props) {
       renderCell: (row) => (
         <Stack sx={{ width: "100%" }} spacing={1} alignItems={"flex-start"} justifyContent={"flex-start"}>
           {!row.displayMeaningNotScore && defaultRenderers.score(row)}
+          {row.showNumAnsweredWithScore && defaultRenderers.answered(row)}
           <Meaning id={row.id ?? row.key} meaning={row.meaning} alert={row.alert} warning={row.warning} />
         </Stack>
       ),

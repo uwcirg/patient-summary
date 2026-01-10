@@ -269,7 +269,7 @@ const questionnaireConfigsRaw = {
     questionnaireMatchMode: "fuzzy",
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 36, xLabel: "" },
   },
-   "CIRG-CNICS-ASSIST": {
+  "CIRG-CNICS-ASSIST": {
     key: "CIRG-CNICS-ASSIST",
     instrumentName: "Substance Use",
     questionnaireMatchMode: "strict",
@@ -488,7 +488,7 @@ const questionnaireConfigsRaw = {
         position: "top",
         angle: 0,
         dy: -16,
-        fontSize: "10px"
+        fontSize: "10px",
       },
       showTicks: true,
       connectNulls: true,
@@ -501,7 +501,7 @@ const questionnaireConfigsRaw = {
         if (value === 4) return "Daily or almost daily";
         return value;
       },
-      wrapperClass: "big"
+      wrapperClass: "big",
     },
   },
   "CIRG-CNICS-ASSIST-OD": {
@@ -920,6 +920,7 @@ const questionnaireConfigsRaw = {
     subtitle: "Last two weeks",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/phq9",
     scoringQuestionId: "/44261-6",
+    note: "PLEASE NOTE: In Epic PHQ-9 questions 1 and 2 are used for screening, only people with a score of 3 or more receive the remaining question. In the CNICS PRO people receive Q1-8 if answering remotely and Q1-9 if in person. CNICS PRO PHQ-9 questions can be skipped,  scores are calculated only if 7 or more questions are answered.",
     subScoringQuestions: [
       {
         key: "PHQ-2",
@@ -955,6 +956,7 @@ const questionnaireConfigsRaw = {
       { min: 5, label: "mild", meaning: "Mild depression" },
       { min: 0, label: "low", meaning: "Minimal depression" },
     ],
+    showNumAnsweredWithScore: true,
     chartParams: { ...CHART_CONFIG.default, title: "PHQ-9", minimumYValue: 0, maximumYValue: 27, xLabel: "" },
   },
   "CIRG-SLUMS": {

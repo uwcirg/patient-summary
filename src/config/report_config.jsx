@@ -21,6 +21,7 @@ export const report_config = {
             "CIRG-CNICS-FROP-Com",
             "CIRG-Shortness-of-Breath",
           ],
+          hiddenColumns: ["numAnswered"]
         },
       ],
     },
@@ -116,7 +117,7 @@ export const report_config = {
           keyToMatch: "CIRG-SUBSTANCE-USE",
           title: "Substance Use",
           layout: "two-columns",
-          hiddenColumns: ["comparison"],
+          hiddenColumns: ["comparison", "numAnswered"],
           dataKeysToMatch: [
             "CIRG-CNICS-Smoking",
             "CIRG-CNICS-AUDIT",
@@ -211,6 +212,7 @@ export const report_config = {
           id: "table_psychosocial_concern",
           title: "Psychosocial Concerns and Quality of Life",
           layout: "two-columns",
+          hiddenColumns: ["numAnswered", "comparison"],
           dataKeysToMatch: ["CIRG-SOCIAL-SUPPORT", "CIRG-HIV-Stigma", "CIRG-PC-PTSD-5", "CIRG-HRQOL"],
         },
       ],

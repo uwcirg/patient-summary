@@ -508,9 +508,6 @@ p {
         color: $default-print-color !important;
         padding: 4px;
       }
-      td:empty {
-        border-bottom: 0 !important;
-      }
     }
   }
   .MuiAccordionSummary-root {
@@ -528,7 +525,7 @@ p {
     display: block;
   }
   .table-container {
-    border: 0 !important;
+    border: 1px solid $border-color !important;
     box-shadow: none !important;
     max-height: 100% !important;
     th, td {
@@ -559,6 +556,9 @@ p {
         }
       }
     }
+  }
+  .history-block {
+    page-break-before: always;
   }
 }
 

@@ -881,6 +881,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   _formatScoringSummaryData = (data, opts = {}) => {
     if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
     const subtitle = opts?.config?.subtitle ? getNormalizedRowTitleDisplay(opts?.config?.subtitle, data[0]) : "";
+    const note = opts?.config?.note ? opts?.config?.note: null;
     const scoreParams = getScoreParamsFromResponses(data, opts?.config);
     const dataProps = { responses: data[0].responses, ...data[0], ...scoreParams };
     const displayMeaningOnly = this._hasMeaningOnlyData(data);
@@ -896,6 +897,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       scoreRangeDisplay: getScoreRangeDisplayByRow(dataProps),
       rowTitle: getTitleByRow(dataProps),
       subtitle,
+      note,
       displayMeaningOnly,
       hasData: !isEmptyArray(data),
       responseColumns,

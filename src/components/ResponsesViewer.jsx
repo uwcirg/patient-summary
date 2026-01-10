@@ -12,7 +12,6 @@ const Transition = forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-
 export default function ResponsesViewer({
   title,
   subtitle,
@@ -20,7 +19,7 @@ export default function ResponsesViewer({
   columns,
   headerBgColor,
   buttonStyle,
-  buttonLabel = "Details",
+  buttonLabel = "History",
   // Optional advanced mode:
   buildColumns, // (optional) function: () => columns[]
   responsesTileTitle = "Responses", // header above the button, mirrors your summary tile

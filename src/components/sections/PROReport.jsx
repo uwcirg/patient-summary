@@ -129,9 +129,6 @@ export default function PROReport() {
     return report_config.sections.map((section, index) => {
       return (
         <Box className="print-only" key={`${section.id}_printonly_${index}`}>
-          <Typography className="section-title" variant="h6" component="h2" id={`${section.id}_title_details_${index}`}>
-            {section.title} {"Details"}
-          </Typography>
           {section.tables.map((table) => {
             return table.rows?.map((row) => {
               if (!row.printColumnChunks) return null;
@@ -141,7 +138,7 @@ export default function PROReport() {
                     key={`${row.id}_chunk_${index}`}
                     columns={chunk.columns}
                     tableData={row.tableResponseData}
-                    title={`${row.title} ${index > 0 ? "(cont'd)" : ""}`}
+                    title={`${row.title} History ${index > 0 ? "(cont'd)" : ""}`}
                   ></ResponsesTable>
                 );
               });
@@ -155,7 +152,7 @@ export default function PROReport() {
   return (
     <>
       {sections}
-      {printTables}
+      <Box className="print-only history-block">{printTables}</Box>
     </>
   );
 }
