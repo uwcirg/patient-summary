@@ -91,7 +91,7 @@ export default function ScoringSummary(props) {
       if (row.totalAnsweredItems != null) {
         return (
           <Stack gap={0.5} direction={"row"}>
-            <Box>{`${row.totalAnsweredItems} questions answered`}</Box>
+            <Box>{`${row.totalAnsweredItems} question${row.totalAnsweredItems > 1 ? "s" : ""} answered`}</Box>
             {row.note && (
               <Tooltip
                 title={row.note}

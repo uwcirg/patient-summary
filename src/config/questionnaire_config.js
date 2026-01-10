@@ -920,7 +920,7 @@ const questionnaireConfigsRaw = {
     subtitle: "Last two weeks",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/phq9",
     scoringQuestionId: "/44261-6",
-    note: "PLEASE NOTE: In Epic PHQ-9 questions 1 and 2 are used for screening, only people with a score of 3 or more receive the remaining question. In the CNICS PRO people receive Q1-8 if answering remotely and Q1-9 if in person. CNICS PRO PHQ-9 questions can be skipped,  scores are calculated only if 7 or more questions are answered.",
+    note: "PLEASE NOTE: In EPIC, PHQ-9 questions 1 and 2 are used for screening, and only people with a score of 3 or more receive the remaining questions. In the CNICS PRO, people receive questions 1 through 8 if answering remotely and questions 1 through 9 if in person. The CNICS PRO PHQ-9 questions can be skipped, and the scores are calculated only if 7 or more questions are answered.",
     subScoringQuestions: [
       {
         key: "PHQ-2",
