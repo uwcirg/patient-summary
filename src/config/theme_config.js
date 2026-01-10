@@ -62,7 +62,7 @@ export const themes = {
         main: grey[400]
       },
       border: {
-        main: "#f5f5f5",
+        main: grey[200],
       },
       error: {
         main: red[900]
