@@ -2,8 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
-import ErrorIcon from "@mui/icons-material/Error";
-import WarningIcon from "@mui/icons-material/ReportProblem";
+import AlertIcon from "@mui/icons-material/ReportProblem";
 import Score from "@models/Score";
 
 export default function Scoring(props) {
@@ -15,10 +14,10 @@ export default function Scoring(props) {
     const renderIcon = () => {
       if (oScore.isHigh())
         return (
-          <ErrorIcon color={oScore.iconColorClass} fontSize="small" className={oScore.iconClass}></ErrorIcon>
+          <AlertIcon color={oScore.iconColorClass} fontSize="small" className={oScore.iconClass}></AlertIcon>
         );
       return (
-        <WarningIcon color={oScore.iconColorClass} fontSize="small" className={oScore.iconClass}></WarningIcon>
+        <AlertIcon color={oScore.iconColorClass} fontSize="small" className={oScore.iconClass}></AlertIcon>
       );
     };
     return (

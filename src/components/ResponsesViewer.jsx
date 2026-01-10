@@ -13,6 +13,7 @@ const Transition = forwardRef(function Transition(props, ref) {
 });
 
 export default function ResponsesViewer({
+  note,
   title,
   subtitle,
   tableData = [],
@@ -86,6 +87,7 @@ export default function ResponsesViewer({
                 {questionnaire && (
                   <QuestionnaireInfo
                     questionnaireJson={questionnaire}
+                    note={note}
                   ></QuestionnaireInfo>
                 )}
               </Stack>
@@ -112,6 +114,7 @@ export default function ResponsesViewer({
 ResponsesViewer.propTypes = {
   title: PropTypes.string.isRequired,
   subtitle: PropTypes.string,
+  note: PropTypes.string,
   tableData: PropTypes.array,
   columns: PropTypes.array, // optional, if omitted, auto-build simple columns
   headerBgColor: PropTypes.string, // optional

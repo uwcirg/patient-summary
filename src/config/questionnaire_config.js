@@ -1,7 +1,7 @@
 import { isEmptyArray } from "@util";
 import { linkIdEquals } from "@util/fhirUtil";
 import CHART_CONFIG, { SUCCESS_COLOR } from "./chart_config";
-import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS } from "@/consts";
+import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS, PHQ9_ADMIN_NOTE } from "@/consts";
 import QuestionnaireScoringBuilder from "@/models/resultBuilders/QuestionnaireScoringBuilder";
 
 function normalizeInstrumentConfigKeys(config) {
@@ -920,7 +920,7 @@ const questionnaireConfigsRaw = {
     subtitle: "Last two weeks",
     questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/phq9",
     scoringQuestionId: "/44261-6",
-    note: "PLEASE NOTE: In EPIC, PHQ-9 questions 1 and 2 are used for screening, and only people with a score of 3 or more receive the remaining questions. In the CNICS PRO, people receive questions 1 through 8 if answering remotely and questions 1 through 9 if in person. The CNICS PRO PHQ-9 questions can be skipped, and the scores are calculated only if 7 or more questions are answered.",
+    note: PHQ9_ADMIN_NOTE,
     subScoringQuestions: [
       {
         key: "PHQ-2",

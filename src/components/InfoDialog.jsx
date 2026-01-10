@@ -40,13 +40,31 @@ export default function InfoDialog(props) {
 
   // Sanitize HTML content
   const sanitizedContent = useMemo(() => {
-    if (!allowHtml || typeof content !== 'string') {
+    if (!allowHtml || typeof content !== "string") {
       return content;
     }
-    
+
     return DOMPurify.sanitize(content, {
-      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'div'],
-      ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
+      ALLOWED_TAGS: [
+        "p",
+        "br",
+        "strong",
+        "em",
+        "u",
+        "a",
+        "ul",
+        "ol",
+        "li",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "span",
+        "div",
+      ],
+      ALLOWED_ATTR: ["href", "target", "rel", "class"],
       ...sanitizeConfig,
     });
   }, [content, allowHtml, sanitizeConfig]);
@@ -83,7 +101,7 @@ export default function InfoDialog(props) {
           <ButtonIcon color={buttonColor} {...buttonIconProps} />
         </IconButton>
       )}
-      
+
       <Dialog open={isOpen} onClose={handleClose} {...dialogProps}>
         {title && (
           <DialogTitle
@@ -95,17 +113,13 @@ export default function InfoDialog(props) {
             {title}
           </DialogTitle>
         )}
-        
+
         <DialogContent>
           <DialogContentText sx={{ marginTop: theme.spacing(3) }}>
-            {allowHtml ? (
-              <div dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
-            ) : (
-              content
-            )}
+            {allowHtml ? <span dangerouslySetInnerHTML={{ __html: sanitizedContent }} /> : content}
           </DialogContentText>
         </DialogContent>
-        
+
         <DialogActions>
           <Button onClick={handleClose}>{closeButtonText}</Button>
         </DialogActions>

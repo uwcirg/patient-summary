@@ -42,10 +42,10 @@ export const DEFAULT_FALLBACK_SCORE_MAPS = {
     "several days": 1,
     "more than half the days": 2,
     "nearly every day": 3,
-    "never": 0,
+    never: 0,
     "once or twice": 1,
-    "monthly": 2,
-    "weekly": 3,
+    monthly: 2,
+    weekly: 3,
     "daily or almost daily": 4,
   },
 };
@@ -72,6 +72,26 @@ export const FLOWSHEET_CODE_IDS = [
 export const PHQ9_SI_QUESTION_LINK_ID = "44260-8";
 
 export const PHQ9_SI_ANSWER_SCORE_MAPPINGS = DEFAULT_FALLBACK_SCORE_MAPS.default; // extended if needed
+
+export const PHQ9_ADMIN_NOTE = `
+  <div>
+    <p><strong>Please note: PHQ-9 administration differs by system</strong>:</p>
+
+    <p><strong>EPIC</strong></p>
+    <ul>
+      <li>Items 1 - 2 are used for initial screening</li>
+      <li>Items 3 - 9 are administered only if the screening score is ≥3</li>
+    </ul>
+
+    <p><strong>CNICS PRO</strong></p>
+    <ul>
+      <li>Remote completion: items 1 - 8</li>
+      <li>In-person completion: items 1 - 9</li>
+      <li>Items may be skipped</li>
+      <li>A total PHQ-9 score is calculated only if ≥7 items are answered</li>
+    </ul>
+  </div>
+`.trim();
 
 /**
  * Medical condition codes used in questionnaire processing
@@ -108,26 +128,6 @@ export const MINICOG_HIDDEN_IDS = new Set([
   "minicog-total-score-explanation",
   "minicog-questionnaire-footnote",
 ]);
-
-export const PHQ9_ADMIN_NOTE = `
-  <div>
-    <p><strong>Please note: PHQ-9 administration differs by system</strong></p>
-
-    <p><strong>EPIC</strong></p>
-    <ul>
-      <li>Items 1–2 are used for initial screening</li>
-      <li>Items 3–9 are administered only if the screening score is ≥3</li>
-    </ul>
-
-    <p><strong>CNICS PRO</strong></p>
-    <ul>
-      <li>Remote completion: items 1–8</li>
-      <li>In-person completion: items 1–9</li>
-      <li>Items may be skipped</li>
-      <li>A total PHQ-9 score is calculated only if ≥7 items are answered</li>
-    </ul>
-  </div>
-`.trim(); 
 
 /**
  * Default severity cutoffs

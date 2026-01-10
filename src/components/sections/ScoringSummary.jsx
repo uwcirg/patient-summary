@@ -11,10 +11,9 @@ import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import HelpIcon from "@mui/icons-material/Help";
-import { IconButton, Tooltip } from "@mui/material";
 import Scoring from "@components/Score";
 import { isEmptyArray, scrollToAnchor } from "@util";
+import InfoDialog from "../InfoDialog";
 import ResponsesViewer from "../ResponsesViewer";
 import Meaning from "../Meaning";
 import { getNoDataDisplay } from "../../models/resultBuilders/helpers";
@@ -90,33 +89,19 @@ export default function ScoringSummary(props) {
     answered: (row) => {
       if (row.totalAnsweredItems != null) {
         return (
-          <Stack gap={0.5} direction={"row"}>
+          <Stack direction={"row"}>
             <Box>{`${row.totalAnsweredItems} question${row.totalAnsweredItems > 1 ? "s" : ""} answered`}</Box>
             {row.note && (
-              <Tooltip
-                title={row.note}
-                className="print-hidden"
-                arrow
-                componentsProps={{
-                  tooltip: {
-                    // Target the tooltip slot
-                    sx: {
-                      fontSize: "0.85rem",
-                      padding: "16px",
-                      bgcolor: "#036295",
-                      color: "#FFF", // set text color
-                      "& .MuiTooltip-arrow": {
-                        // Target the nested arrow class
-                        color: "#036295", // Make the arrow color match the background
-                      },
-                    },
-                  },
+              <InfoDialog
+                title={`About ${row.title} Scoring`}
+                content={row.note}
+                buttonTitle={`Click to learn more about ${row.title} scoring`}
+                allowHtml={true}
+                buttonSize="small"
+                buttonIconProps={{
+                  fontSize: "small",
                 }}
-              >
-                <IconButton>
-                  <HelpIcon color="info" fontSize="small" />
-                </IconButton>
-              </Tooltip>
+              />
             )}
           </Stack>
         );
@@ -375,32 +360,34 @@ export default function ScoringSummary(props) {
   const renderTableBody = () => {
     const dataToUse = Array.isArray(data) ? data : data ? [data] : [];
     const hasData = dataToUse.length > 0;
-
     return (
       <TableBody>
         {hasData ? (
-          dataToUse.map((row, index) => (
-            <TableRow key={`summary_${row.key || index}_${index}`}>
-              {visibleColumns.map((col) => (
-                <TableCell
-                  key={`cell_${col.id}_${row.key || index}`}
-                  {...defaultTableCellProps}
-                  align={col.align || "left"}
-                  {...(col.cellProps || {})}
-                  sx={{
-                    ...baseCellStyle,
-                    ...(col.sticky ? stickyStyle : {}),
-                    ...(col.cellProps?.sx || {}),
-                    ...(hiddenColumnIdsInMobile.indexOf(col.id) !== -1
-                      ? { display: { xs: "none", md: "table-cell" } } // hide “Meaning” on small devices
-                      : {}),
-                  }}
-                >
-                  {renderCell(col, row)}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))
+          dataToUse.map((row, index) => {
+            const noRowData = isEmptyArray(row.responseData);
+            return (
+              <TableRow key={`summary_${row.key || index}_${index}`}>
+                {visibleColumns.map((col, colIndex) => (
+                  <TableCell
+                    key={`cell_${col.id}_${row.key || index}`}
+                    {...defaultTableCellProps}
+                    align={col.align || "left"}
+                    {...(col.cellProps || {})}
+                    sx={{
+                      ...baseCellStyle,
+                      ...(col.sticky ? stickyStyle : {}),
+                      ...(col.cellProps?.sx || {}),
+                      ...(hiddenColumnIdsInMobile.indexOf(col.id) !== -1
+                        ? { display: { xs: "none", md: "table-cell" } } // hide “Meaning” on small devices
+                        : {}),
+                    }}
+                  >
+                    {noRowData && colIndex > 0 ? props.emptyMessage || getNoDataDisplay() : renderCell(col, row)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            );
+          })
         ) : (
           <TableRow>
             <TableCell
