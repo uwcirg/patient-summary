@@ -957,7 +957,7 @@ const questionnaireConfigsRaw = {
       { min: 0, label: "low", meaning: "Minimal depression" },
     ],
     showNumAnsweredWithScore: true,
-    chartParams: { ...CHART_CONFIG.default, title: "PHQ-9", minimumYValue: 0, maximumYValue: 27, xLabel: "" },
+    chartParams: { ...CHART_CONFIG.default, title: "PHQ-9 Score", minimumYValue: 0, maximumYValue: 27, xLabel: "" },
   },
   "CIRG-SLUMS": {
     key: "CIRG-SLUMS",
@@ -1073,7 +1073,7 @@ const questionnaireConfigsRaw = {
     valueFormatter: (value) => (value ? `${value} %` : ""),
     chartParams: {
       ...CHART_CONFIG.default,
-      title: "ART Adherence (VAS)",
+      title: "ART Adherence (VAS %)",
       minimumYValue: 0,
       maximumYValue: 100,
       xLabel: "",
