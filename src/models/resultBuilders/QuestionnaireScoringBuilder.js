@@ -881,14 +881,15 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   _formatScoringSummaryData = (data, opts = {}) => {
     if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
     const subtitle = opts?.config?.subtitle ? getNormalizedRowTitleDisplay(opts?.config?.subtitle, data[0]) : "";
-    const note = opts?.config?.note ? opts?.config?.note: null;
+    const note = opts?.config?.note ? opts?.config?.note : null;
     const scoreParams = getScoreParamsFromResponses(data, opts?.config);
     const dataProps = { responses: data[0].responses, ...data[0], ...scoreParams };
     const displayMeaningOnly = this._hasMeaningOnlyData(data);
     const responseColumns = getResponseColumns(data, data[0]);
     const tableResponseData = opts?.tableResponseData ?? this._formatTableResponseData(data);
+    const { patientBundle, questionnaire, ...rest } = data[0];
     return {
-      ...data[0],
+      ...rest,
       ...scoreParams,
       comparisonIcon: displayMeaningOnly
         ? null
@@ -904,10 +905,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       printColumnChunks: this._formatColumnChunks(responseColumns, 3),
       responseData: data,
       tableResponseData,
-      questionnaire: getQuestionnaireFromRowData(
-        data[0],
-        getResourcesByResourceType(this.patientBundle, "Questionnaire"),
-      ),
+      questionnaire: !questionnaire
+        ? getQuestionnaireFromRowData(data[0], getResourcesByResourceType(this.patientBundle, "Questionnaire"))
+        : questionnaire,
     };
   };
 
@@ -1027,7 +1027,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
             }
           }
 
-          row[dataItem.id] = matchedResponse ? this._getAnswer(matchedResponse, resolvedConfig) : "--";
+          row[dataItem.id] = matchedResponse ? this._getAnswer(matchedResponse, resolvedConfig) : "-";
           row[`${dataItem.id}_data`] = getScoreParamsFromResponses([dataItem], resolvedConfig);
         }
 

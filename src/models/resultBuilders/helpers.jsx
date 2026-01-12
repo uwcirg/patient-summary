@@ -988,10 +988,9 @@ export function getResponseColumns(data) {
           );
         }
         const contentToRender = typeof rowDataItem === "string" ? stripHtmlTags(rowDataItem) : normalize(rowDataItem);
-        if (contentToRender)
-            return contentToRender;
-            // string answers render directly; everything else is safely stringified
-        return "-";
+        if (contentToRender) return contentToRender;
+        // string answers render directly; everything else is safely stringified
+        return "—";
       },
     })),
   ];

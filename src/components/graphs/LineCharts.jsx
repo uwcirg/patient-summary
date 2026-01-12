@@ -66,7 +66,7 @@ export default function LineCharts(props) {
     yTickFormatter,
     yTicks,
     worstMeaningLabel,
-    wrapperClass
+    wrapperClass,
   } = props;
 
   const theme = useTheme();
@@ -143,11 +143,6 @@ export default function LineCharts(props) {
     const minSpread = 2 * 60 * 60 * 1000; // Minimum: 2 hours
     const maxSpread = 6 * 24 * 60 * 60 * 1000; // Maximum: 6 days
     const dynamicSpreadWidth = Math.max(minSpread, Math.min(maxSpread, timeRangeMs * 0.005));
-
-    // console.log("LineChart - Dynamic spread calculation:", {
-    //   timeRangeDays: (timeRangeMs / (24 * 60 * 60 * 1000)).toFixed(1),
-    //   spreadWidthHours: (dynamicSpreadWidth / (60 * 60 * 1000)).toFixed(1),
-    // });
 
     // Group by DATE AND Y-VALUE (to find true overlaps)
     const groups = {};
@@ -239,11 +234,6 @@ export default function LineCharts(props) {
   const calculatedXDomain = React.useMemo(() => {
     // If we have a custom xDomain prop and no truncation, use it
     if (xDomain && !wasTruncated) {
-      // console.log("LineChart using custom xDomain:", {
-      //   start: new Date(xDomain[0]).toLocaleDateString(),
-      //   end: new Date(xDomain[1]).toLocaleDateString(),
-      //   rawDomain: xDomain,
-      // });
       return xDomain;
     }
 
@@ -258,26 +248,8 @@ export default function LineCharts(props) {
 
     const domain = [cutoffTimestamp - paddingMs, now + paddingMs];
 
-    // console.log("LineChart calculated domain:", {
-    //   start: new Date(domain[0]).toLocaleDateString(),
-    //   end: new Date(domain[1]).toLocaleDateString(),
-    //   rawDomain: domain,
-    // });
-
     return domain;
   }, [xDomain, wasTruncated]);
-
-  // React.useEffect(() => {
-  //   console.log("LineChart - Truncation Debug:", {
-  //     originalDataLength: processedData?.length,
-  //     filteredDataLength: filteredData?.length,
-  //     wasTruncated,
-  //     truncationDate: truncationDate ? new Date(truncationDate).toLocaleDateString() : null,
-  //     oldestDataPoint: processedData?.[0]
-  //       ? new Date(processedData[0].originalDate || processedData[0][xFieldKey]).toLocaleDateString()
-  //       : null,
-  //   });
-  // }, [processedData, filteredData, wasTruncated, truncationDate, xFieldKey]);
 
   const hasMultipleYFields = () => yLineFields && yLineFields.length > 0;
 
@@ -308,20 +280,29 @@ export default function LineCharts(props) {
     return Array.from(s).sort((a, b) => a - b);
   };
 
-  // Build candidate ticks (months every 6) only when we have a numeric domain
+  // Determine effective chart width for responsive calculations
+  const effectiveChartWidth = chartWidth || 580;
+  const isSmallScreen = effectiveChartWidth <= 450;
+  const isMediumScreen = effectiveChartWidth > 450 && effectiveChartWidth <= 580;
+
+  // Build candidate ticks with responsive step size
+  const tickStep = isSmallScreen ? 12 : isMediumScreen ? 9 : 6;
+
   const allTicksRaw =
     Array.isArray(calculatedXDomain) && typeof calculatedXDomain[0] === "number"
-      ? buildTimeTicks(calculatedXDomain, { unit: "month", step: 6 })
+      ? buildTimeTicks(calculatedXDomain, { unit: "month", step: tickStep })
       : undefined;
 
-  // 1) Ensure numeric & unique; 2) Clamp to domain; 3) Sort; 4) Thin to fit; 5) Dedupe again (belt & suspenders)
+  // 1) Ensure numeric & unique; 2) Clamp to domain; 3) Sort; 4) Thin to fit; 5) Dedupe again
   const clampedAll = allTicksRaw
     ? allTicksRaw.filter((t) => t >= calculatedXDomain[0] && t <= calculatedXDomain[1])
     : undefined;
 
   const allTicks = clampedAll ? uniqSorted(clampedAll) : undefined;
 
-  const ticksRaw = allTicks ? thinTicksToFit(allTicks, (ms) => fmtMonthYear.format(ms), chartWidth) : undefined;
+  const ticksRaw = allTicks
+    ? thinTicksToFit(allTicks, (ms) => fmtMonthYear.format(ms), effectiveChartWidth)
+    : undefined;
 
   // Final ticks to render (unique & sorted)
   const ticks = ticksRaw ? uniqSorted(ticksRaw) : undefined;
@@ -347,22 +328,44 @@ export default function LineCharts(props) {
     return result;
   }, [ticks]);
 
+  // Responsive chart margin
+  const getResponsiveMargin = () => {
+    if (chartMargin) return chartMargin;
+
+    if (isSmallScreen) {
+      return { top: 20, right: 15, left: 15, bottom: 10 };
+    } else if (isMediumScreen) {
+      return { top: 20, right: 18, left: 18, bottom: 10 };
+    }
+    return { top: 20, right: 20, left: 20, bottom: 10 };
+  };
+
+  // Responsive X-axis height
+  const xAxisHeight = isSmallScreen ? 80 : 108;
+
+  // Responsive padding
+  const xAxisPadding = isSmallScreen ? { left: 10, right: 10 } : { left: 20, right: 20 };
+
   const renderXAxis = () => (
     <XAxis
       dataKey={xFieldKey}
-      height={108}
+      height={xAxisHeight}
       domain={calculatedXDomain}
       textAnchor="end"
       type="number"
       allowDataOverflow={false}
-      tick={xTickStyle ? xTickStyle : { style: { fontSize: "12px", fontWeight: 500 }, textAnchor: "middle" }}
+      tick={
+        xTickStyle
+          ? xTickStyle
+          : { style: { fontSize: isSmallScreen ? "10px" : "12px", fontWeight: 500 }, textAnchor: "middle" }
+      }
       tickFormatter={xTickFormatter}
-      tickMargin={12}
+      tickMargin={isSmallScreen ? 8 : 12}
       interval="preserveStartEnd"
       scale="time"
       angle={xTickLabelAngle ?? 0}
       ticks={dedupedTicks}
-      padding={{ left: 30, right: 30 }}
+      padding={xAxisPadding}
     >
       {xLabel && xLabelVisible && <Label value={xLabel} offset={-8} position="insideBottom" />}
     </XAxis>
@@ -370,6 +373,7 @@ export default function LineCharts(props) {
 
   const yDomain = maxYValue ? [minYValue ?? 0, maxYValue] : [minYValue ?? 0, "auto"];
   const yTicksToUse = yTicks || (maxYValue ? range(minYValue ?? 0, maxYValue) : range(minYValue ?? 0, 50));
+
   // ----- KEY-SAFE CUSTOM DOT WITH STROKE -----
   const SourceDot = ({ cx, cy, payload, index, params }) => {
     if (isEmptyArray(sources)) return null;
@@ -393,27 +397,23 @@ export default function LineCharts(props) {
     const strokeColor = "#fff";
     const strokeWidth = 2;
 
+    // Responsive dot size
+    const dotSize = isSmallScreen ? 3 : (useParams.r ?? 4);
+    const rectSize = isSmallScreen ? 6 : (useParams.width ?? 8);
+
     switch (String(payload.source).toLowerCase()) {
       case "cnics":
         return (
-          <circle
-            key={k}
-            cx={cx}
-            cy={cy}
-            r={useParams.r ?? 4}
-            fill={color}
-            stroke={strokeColor}
-            strokeWidth={strokeWidth}
-          />
+          <circle key={k} cx={cx} cy={cy} r={dotSize} fill={color} stroke={strokeColor} strokeWidth={strokeWidth} />
         );
       case "epic":
         return (
           <rect
             key={k}
-            x={cx - (useParams.width ?? 8) / 2}
-            y={cy - (useParams.height ?? 8) / 2}
-            width={useParams.width ?? 8}
-            height={useParams.height ?? 8}
+            x={cx - rectSize / 2}
+            y={cy - rectSize / 2}
+            width={rectSize}
+            height={rectSize}
             fill={color}
             stroke={strokeColor}
             strokeWidth={strokeWidth}
@@ -421,15 +421,7 @@ export default function LineCharts(props) {
         );
       default:
         return (
-          <circle
-            key={k}
-            cx={cx}
-            cy={cy}
-            r={useParams.r ?? 4}
-            fill={color}
-            stroke={strokeColor}
-            strokeWidth={strokeWidth}
-          />
+          <circle key={k} cx={cx} cy={cy} r={dotSize} fill={color} stroke={strokeColor} strokeWidth={strokeWidth} />
         );
     }
   };
@@ -448,7 +440,13 @@ export default function LineCharts(props) {
       domain={yDomain}
       label={
         yLabel && yLabelVisible
-          ? { value: yLabel, angle: -90, position: "insideLeft", ...(yLabelProps ? yLabelProps : {}) }
+          ? {
+              value: yLabel,
+              angle: -90,
+              position: "insideLeft",
+              style: { fontSize: isSmallScreen ? "10px" : "12px" },
+              ...(yLabelProps ? yLabelProps : {}),
+            }
           : null
       }
       minTickGap={8}
@@ -470,7 +468,7 @@ export default function LineCharts(props) {
                 }
               }
               e["fill"] = color;
-              e["fontSize"] = "10px";
+              e["fontSize"] = isSmallScreen ? "9px" : "10px";
               e["fontWeight"] = 500;
 
               // Apply the yTickFormatter here
@@ -482,13 +480,14 @@ export default function LineCharts(props) {
       }
       ticks={yTicksToUse}
       tickMargin={8}
+      width={isSmallScreen ? 50 : 60}
     />
   );
 
   const renderToolTip = () => (
     <Tooltip
-      itemStyle={{ fontSize: "10px" }}
-      labelStyle={{ fontSize: "10px" }}
+      itemStyle={{ fontSize: isSmallScreen ? "9px" : "10px" }}
+      labelStyle={{ fontSize: isSmallScreen ? "9px" : "10px" }}
       animationBegin={500}
       animationDuration={550}
       // Use originalDate in tooltip if available
@@ -518,10 +517,12 @@ export default function LineCharts(props) {
       return (
         <Legend
           formatter={(value) => (
-            <span style={{ marginRight: "8px", fontSize: "14px" }}>{value.replace(/_/g, " ")}</span>
+            <span style={{ marginRight: "8px", fontSize: isSmallScreen ? "11px" : "14px" }}>
+              {value.replace(/_/g, " ")}
+            </span>
           )}
-          iconSize={12}
-          wrapperStyle={{ bottom: "12px" }}
+          iconSize={isSmallScreen ? 10 : 12}
+          wrapperStyle={{ bottom: isSmallScreen ? "8px" : "12px" }}
         />
       );
     }
@@ -533,8 +534,8 @@ export default function LineCharts(props) {
         align="right"
         wrapperStyle={{
           position: "absolute",
-          top: 10,
-          right: 36,
+          top: isSmallScreen ? 5 : 10,
+          right: isSmallScreen ? 18 : 36,
           width: "auto",
         }}
         content={(legendProps) => <CustomLegend {...legendProps} sources={sources} />}
@@ -546,13 +547,18 @@ export default function LineCharts(props) {
     const hasCnics = sources.includes("CNICS") || sources.includes("cnics");
     const hasEpic = sources.includes("EPIC") || sources.includes("epic");
     let items = [];
+
+    const iconSize = isSmallScreen ? 12 : 16;
+    const dotRadius = isSmallScreen ? 3 : 4;
+    const rectSize = isSmallScreen ? 6 : 8;
+
     if (hasCnics) {
       items.push({
         key: "cnics",
         label: "CNICS",
         icon: (
-          <svg width="16" height="16">
-            <circle cx="8" cy="8" r="4" fill="#444" stroke="#fff" strokeWidth="2" />
+          <svg width={iconSize} height={iconSize}>
+            <circle cx={iconSize / 2} cy={iconSize / 2} r={dotRadius} fill="#444" stroke="#fff" strokeWidth="2" />
           </svg>
         ),
       });
@@ -562,8 +568,16 @@ export default function LineCharts(props) {
         key: "epic",
         label: "EPIC",
         icon: (
-          <svg width="16" height="16">
-            <rect x="4" y="4" width="8" height="8" fill="#444" stroke="#fff" strokeWidth="2" />
+          <svg width={iconSize} height={iconSize}>
+            <rect
+              x={(iconSize - rectSize) / 2}
+              y={(iconSize - rectSize) / 2}
+              width={rectSize}
+              height={rectSize}
+              fill="#444"
+              stroke="#fff"
+              strokeWidth="2"
+            />
           </svg>
         ),
       });
@@ -575,11 +589,12 @@ export default function LineCharts(props) {
       <div
         style={{
           display: "flex",
-          gap: 16,
+          gap: isSmallScreen ? 8 : 16,
           alignItems: "flex-start",
-          padding: "4px 8px",
+          padding: isSmallScreen ? "2px 4px" : "4px 8px",
           position: "relative",
-          left: "32px",
+          left: isSmallScreen ? "16px" : "32px",
+          flexWrap: "wrap",
         }}
       >
         {items.map((it) => (
@@ -589,35 +604,37 @@ export default function LineCharts(props) {
             aria-label={`${it.label} legend item`}
           >
             {it.icon}
-            <span style={{ fontSize: 10, color: "#444" }}>{it.label}</span>
+            <span style={{ fontSize: isSmallScreen ? 9 : 10, color: "#444" }}>{it.label}</span>
           </div>
         ))}
         {points.length > 1 && (
           <div
             style={{
-              marginLeft: 16,
-              fontSize: 10,
+              marginLeft: isSmallScreen ? 8 : 16,
+              fontSize: isSmallScreen ? 9 : 10,
               color: "#444",
               display: "grid",
-              gridTemplateColumns: points.length > 6 ? "repeat(3, 1fr)" : "repeat(2, 1fr)",
-              gap: "4px 16px", // row gap, column gap
-              maxWidth: "360px", // adjust as needed
+              gridTemplateColumns: isSmallScreen ? "1fr" : points.length > 6 ? "repeat(3, 1fr)" : "repeat(2, 1fr)",
+              gap: isSmallScreen ? "2px 8px" : "4px 16px",
+              maxWidth: isSmallScreen ? "200px" : "360px",
             }}
           >
             {points.map((entry, index) => (
               <div key={`item-${index}`} style={{ display: "flex", alignItems: "center" }}>
-                <svg width="16" height="16" style={{ marginRight: 4, flexShrink: 0 }}>
+                <svg width={iconSize} height={iconSize} style={{ marginRight: 4, flexShrink: 0 }}>
                   <line
                     x1="0"
-                    y1="8"
-                    x2="12"
-                    y2="8"
+                    y1={iconSize / 2}
+                    x2={iconSize - 4}
+                    y2={iconSize / 2}
                     stroke={entry.color}
-                    strokeWidth="4"
+                    strokeWidth={isSmallScreen ? 3 : 4}
                     strokeDasharray={entry.payload.strokeDasharray || "0"}
                   />
                 </svg>
-                <span style={{ fontSize: 10, whiteSpace: "nowrap" }}>{entry.value.replace(/[_,-]/g, " ")}</span>
+                <span style={{ fontSize: isSmallScreen ? 9 : 10, whiteSpace: "nowrap" }}>
+                  {entry.value.replace(/[_,-]/g, " ")}
+                </span>
               </div>
             ))}
           </div>
@@ -636,7 +653,7 @@ export default function LineCharts(props) {
         dataKey={item.key}
         stroke={item.color}
         fill={item.fill ? item.fill : item.color}
-        strokeWidth={item.strokeWidth ? item.strokeWidth : 2}
+        strokeWidth={item.strokeWidth ? item.strokeWidth : isSmallScreen ? 1.5 : 2}
         strokeDasharray={item.strokeDasharray ? item.strokeDasharray : 0}
         legendType={item.legendType ? item.legendType : "line"}
         dot={item.dot ? item.dot : { strokeDasharray: "", strokeWidth: 1 }}
@@ -662,7 +679,7 @@ export default function LineCharts(props) {
               payload={payload}
               index={index}
               isActive
-              params={{ r: 5, width: 8, height: 8 }}
+              params={{ r: isSmallScreen ? 4 : 5, width: isSmallScreen ? 7 : 8, height: isSmallScreen ? 7 : 8 }}
             />
           );
         }
@@ -676,7 +693,7 @@ export default function LineCharts(props) {
         }
         const color = getDotColor(payload, baseColor);
 
-        return <circle cx={cx} cy={cy} r={5} fill={color} stroke="#fff" strokeWidth={2} />;
+        return <circle cx={cx} cy={cy} r={isSmallScreen ? 4 : 5} fill={color} stroke="#fff" strokeWidth={2} />;
       }}
       dot={({ cx, cy, payload, value, index }) => {
         if (!isEmptyArray(sources))
@@ -702,14 +719,14 @@ export default function LineCharts(props) {
             key={`dot-default-${payload?.id}_${index}`}
             cx={cx}
             cy={cy}
-            r={4}
+            r={isSmallScreen ? 3 : 4}
             fill={color}
             stroke="#fff"
             strokeWidth={2}
           />
         );
       }}
-      strokeWidth={strokeWidth ? strokeWidth : 1}
+      strokeWidth={strokeWidth ? strokeWidth : isSmallScreen ? 1 : 1}
       connectNulls={!!connectNulls}
     />
   );
@@ -717,7 +734,6 @@ export default function LineCharts(props) {
   const renderMinScoreMeaningLabel = () => {
     if (!maxYValue) return null;
     if (!filteredData || !filteredData.length) return null;
-    //if (!filteredData.find((item) => item.scoreSeverity)) return null;
     const configData = filteredData.find((item) => item && item.comparisonToAlert) ?? {};
     return (
       <ReferenceLine
@@ -729,7 +745,7 @@ export default function LineCharts(props) {
           value={
             configData.comparisonToAlert === "lower" ? (worstMeaningLabel ?? "Worst") : (bestMeaningLabel ?? "Best")
           }
-          fontSize="12px"
+          fontSize={isSmallScreen ? "10px" : "12px"}
           fontWeight={500}
           fill={configData.comparisonToAlert === "lower" ? ALERT_COLOR : SUCCESS_COLOR}
           position="insideTopLeft"
@@ -742,7 +758,6 @@ export default function LineCharts(props) {
   const renderMaxScoreMeaningLabel = () => {
     if (!maxYValue) return null;
     if (!filteredData || !filteredData.length) return null;
-    //if (!filteredData.find((item) => item.scoreSeverity)) return null;
     const configData = filteredData.find((item) => item && item.comparisonToAlert) ?? {};
     return (
       <ReferenceLine
@@ -755,7 +770,7 @@ export default function LineCharts(props) {
           value={
             configData.comparisonToAlert === "lower" ? (bestMeaningLabel ?? "Best") : (worstMeaningLabel ?? "Worst")
           }
-          fontSize="12px"
+          fontSize={isSmallScreen ? "10px" : "12px"}
           fontWeight={500}
           fill={configData.comparisonToAlert === "lower" ? SUCCESS_COLOR : ALERT_COLOR}
           position="insideBottomLeft"
@@ -804,14 +819,14 @@ export default function LineCharts(props) {
           value: "data truncated",
           position: "top",
           fill: "#666",
-          fontSize: 10,
+          fontSize: isSmallScreen ? 9 : 10,
           fontWeight: 500,
         }}
       />
     );
   };
 
-  const MIN_CHART_WIDTH = xsChartWidth ? xsChartWidth : 400;
+  const MIN_CHART_WIDTH = xsChartWidth || 400;
 
   return (
     <>
@@ -820,29 +835,19 @@ export default function LineCharts(props) {
         sx={{
           width: {
             xs: MIN_CHART_WIDTH,
-            sm: chartWidth,
-            md: mdChartWidth ? mdChartWidth : chartWidth,
-            lg: lgChartWidth ? lgChartWidth : chartWidth,
+            sm: chartWidth || 580,
+            md: mdChartWidth || chartWidth || 580,
+            lg: lgChartWidth || chartWidth || 580,
           },
-          height: chartHeight ? chartHeight : "calc(100% - 40px)",
+          height: {
+            xs: 280, // Increased height for small screens
+            sm: chartHeight || 240,
+          },
         }}
-        className={`chart-wrapper ${wrapperClass ? wrapperClass: ""}`}
+        className={`chart-wrapper ${wrapperClass ? wrapperClass : ""}`}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
-          <LineChart
-            data={filteredData}
-            margin={
-              chartMargin
-                ? chartMargin
-                : {
-                    top: 20,
-                    right: 20,
-                    left: 20,
-                    bottom: 10,
-                  }
-            }
-            id={`lineChart_${id ?? generateUUID()}`}
-          >
+          <LineChart data={filteredData} margin={getResponsiveMargin()} id={`lineChart_${id ?? generateUUID()}`}>
             <CartesianGrid strokeDasharray="2 2" horizontal={false} vertical={false} fill="#fdfbfbff" />
             {renderXAxis()}
             {renderYAxis()}
@@ -901,5 +906,5 @@ LineCharts.propTypes = {
   yTickFormatter: PropTypes.func,
   yTicks: PropTypes.array,
   worstMeaningLabel: PropTypes.string,
-  wrapperClass: PropTypes.string
+  wrapperClass: PropTypes.string,
 };

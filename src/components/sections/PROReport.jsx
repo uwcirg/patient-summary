@@ -76,7 +76,23 @@ export default function PROReport() {
               {table.title}
             </Typography>
           )}
-          <Box sx={{ marginLeft: 1, marginRight: 1 }}>
+          <Box
+            sx={{
+              marginLeft: {
+                xs: 0,
+                sm: 0,
+                md: 1,
+                lg: 1,
+              },
+              marginRight: {
+                xs: 0,
+                sm: 0,
+                md: 1,
+                lg: 1,
+              },
+              width: "100%"
+            }}
+          >
             {table.layout === "simple" && (
               <ScoringSummary
                 {...table}

@@ -33,7 +33,7 @@ const safeGet = (row, field) => {
 };
 
 function normalizeCell(v) {
-  if (v == null || v === "null" || v === "undefined") return "N/A";
+  if (v == null || v === "null" || v === "undefined") return "-";
   if (typeof v === "string" || typeof v === "number") return v;
   if (React.isValidElement(v)) return v;
   if (Array.isArray(v)) return v.join(", ");

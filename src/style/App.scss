@@ -65,6 +65,7 @@ p {
 }
 .chart__container {
   background-color: $chart-background-color;
+  max-width: 100%;
 }
 .response-table {
   min-width: 45%;

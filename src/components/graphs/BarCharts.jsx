@@ -20,8 +20,8 @@ export default function BarCharts(props) {
   const {
     id,
     title,
-    xsChartWidth,
     chartWidth,
+    mdChartWidth,
     lgChartWidth,
     xDomain,
     xTickFormatter,
@@ -263,7 +263,7 @@ export default function BarCharts(props) {
     return uniqSorted(ticksRaw);
   }, [parsed.length, xAxisDomain, chartWidth]);
 
-  const MIN_CHART_WIDTH = xsChartWidth ?? 400;
+  //const MIN_CHART_WIDTH = xsChartWidth ?? 400;
 
   let maxYValue = maximumYValue ?? parsed.reduce((m, d) => Math.max(m, Number(d?.[yFieldKey] ?? -Infinity)), -Infinity);
   let minYValue = minimumYValue ?? parsed?.reduce((min, d) => Math.min(min, d[yFieldKey]), Infinity);
@@ -351,7 +351,9 @@ export default function BarCharts(props) {
       {renderTitle()}
       <Box
         sx={{
-          width: { xs: MIN_CHART_WIDTH, sm: chartWidth, lg: lgChartWidth ?? chartWidth },
+          width: { xs: 420, sm: chartWidth || 580,
+            md: mdChartWidth || chartWidth || 580,
+            lg: lgChartWidth || chartWidth || 580,},
           height: 250,
         }}
         key={id}
@@ -392,8 +394,8 @@ BarCharts.propTypes = {
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   title: PropTypes.string,
   xDomain: PropTypes.array,
-  xsChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   chartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  mdChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   lgChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   xTickFormatter: PropTypes.func,
   xFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
