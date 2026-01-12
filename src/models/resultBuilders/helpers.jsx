@@ -911,7 +911,7 @@ export function getResponseColumns(data) {
     if (typeof v === "string" || typeof v === "number") return v;
     if (React.isValidElement(v)) return v;
     if (Array.isArray(v)) return v.join(", ");
-    return "--";
+    return "-";
   };
 
   return [
@@ -988,8 +988,10 @@ export function getResponseColumns(data) {
           );
         }
         const contentToRender = typeof rowDataItem === "string" ? stripHtmlTags(rowDataItem) : normalize(rowDataItem);
-        // string answers render directly; everything else is safely stringified
-        return contentToRender;
+        if (contentToRender)
+            return contentToRender;
+            // string answers render directly; everything else is safely stringified
+        return "-";
       },
     })),
   ];
