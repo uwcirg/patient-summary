@@ -1213,6 +1213,82 @@ const questionnaireConfigsRaw = {
     skipMeaningScoreRow: true,
     skipChart: true,
   },
+  "CIRG-UNPROTECTED-SEX": {
+    key: "CIRG-UNPROTECTED-SEX",
+    instrumentName: "Unprotected Sex",
+    title: "Unprotected Sex",
+    subtitle: "Past 3 months",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
+      linkIds: [
+        "SEXUAL-RISK-SCORE-UNPROTECTED-ANAL",
+        "SEXUAL-RISK-SCORE-UNPROTECTED-ORAL",
+        "SEXUAL-RISK-SCORE-UNPROTECTED-VAGINAL",
+      ],
+    },
+    columns: [
+      {
+        linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-ANAL",
+        id: "result",
+        label: "Anal Sex"
+      },
+      {
+        linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-ORAL",
+        id: "result",
+        label: "Oral Sex"
+      },
+      {
+        linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-VAGINAL",
+        id: "result",
+        label: "Vaginal Sex"
+      },
+    ],
+    valueFormatter: (val) =>
+      String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : val,
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      let arrResponses = [];
+      // anal sex
+      const analSexResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED-ANAL", "strict"),
+      );
+      const analSexAnswer =
+        analSexResponse?.answer != null && analSexResponse.answer !== undefined ? analSexResponse.answer : null;
+      if (String(analSexAnswer).toLowerCase() === "true") arrResponses.push("Anal Sex: Yes");
+      else if (String(analSexAnswer).toLowerCase() === "false") arrResponses.push("Anal Sex: No");
+      else arrResponses.push("Anal Sex: " + (analSexAnswer ? analSexAnswer : "-"));
+
+      // oral sex
+      const oralSexResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED-ORAL", "strict"),
+      );
+      const oralSexAnswer =
+        oralSexResponse?.answer != null && oralSexResponse.answer !== undefined ? oralSexResponse.answer : null;
+      if (String(oralSexAnswer).toLowerCase() === "true") arrResponses.push("Oral Sex: Yes");
+      else if (String(oralSexAnswer).toLowerCase() === "false") arrResponses.push("Oral Sex: No");
+      else arrResponses.push("Oral Sex: " + (oralSexAnswer ? oralSexAnswer : "-"));
+
+      // vaginal sex
+      const vaginalSexResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED-VAGINAL", "strict"),
+      );
+      const vaginalSexAnswer =
+        vaginalSexResponse?.answer != null && vaginalSexResponse.answer !== undefined
+          ? vaginalSexResponse.answer
+          : null;
+      if (String(vaginalSexAnswer).toLowerCase() === "true") arrResponses.push("Vaginal Sex: Yes");
+      else if (String(vaginalSexAnswer).toLowerCase() === "false") arrResponses.push("Vaginal Sex: No");
+      else arrResponses.push("Vaginal Sex: " + (vaginalSexAnswer ? vaginalSexAnswer : "-"));
+
+      return arrResponses.join("|");
+    },
+    displayMeaningNotScore: true,
+    skipResponses: true,
+    meaningRowLabel: "Summary (Past 3 months)",
+    linkIdMatchMode: "strict",
+    skipChart: true,
+  },
+
   "CIRG-UNPROTECTED-ANAL-SEX": {
     key: "CIRG-UNPRTECTED-ANAL-SEX",
     instrumentName: "Unprotected Sex",

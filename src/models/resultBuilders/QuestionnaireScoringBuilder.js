@@ -774,7 +774,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const matchItem = qrItems.find((it) => this.isLinkIdEquals(it.linkId, col.linkId));
       const ans = matchItem?.answer;
       const value = matchItem ? this.getAnswerItemDisplayValue(ans, config) : null;
-      out[col.id] = config?.valueFormatter ? config?.valueFormatter(value) : value;
+      const displayValue = (col?.label ? col.label + ": " : "") + (value ? value : "-");
+      out[col.id] =
+        (out[col.id] ? out[col.id] + "\n" : "") +
+        (config?.valueFormatter ? config?.valueFormatter(displayValue) : displayValue);
     }
     return out;
   }

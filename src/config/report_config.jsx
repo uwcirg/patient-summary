@@ -174,9 +174,10 @@ export const report_config = {
           layout: "simple",
           dataKeysToMatch: [
             "CIRG-SEXUAL-PARTNERS",
-            "CIRG-UNPROTECTED-ANAL-SEX",
-            "CIRG-UNPROTECTED-ORAL-SEX",
-            "CIRG-UNPROTECTED-VAGINAL-SEX",
+            "CIRG-UNPROTECTED-SEX",
+            // "CIRG-UNPROTECTED-ANAL-SEX",
+            // "CIRG-UNPROTECTED-ORAL-SEX",
+            // "CIRG-UNPROTECTED-VAGINAL-SEX",
             "CIRG-STI",
             "CIRG-EXCHANGE-SEX",
           ],
@@ -211,6 +212,11 @@ export const report_config = {
               align: "left",
               accessor: "result",
               type: "text",
+              cellProps: {
+                sx: {
+                  whiteSpace: "pre"
+                }
+              }
             },
             {
               id: "date",
