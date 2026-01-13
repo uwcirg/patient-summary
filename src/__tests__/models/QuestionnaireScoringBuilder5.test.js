@@ -648,6 +648,457 @@ describe("QuestionnaireScoringBuilder - Derivation Logic", () => {
       getResponsesSummarySpy.mockRestore();
     });
   });
+  describe("buildDerivedMultiLinkQrs", () => {
+    it("should return empty array when linkIds is empty", () => {
+      const hostQrs = [createMockQuestionnaireResponse()];
+
+      const result = builder.buildDerivedMultiLinkQrs(hostQrs, {
+        linkIds: [],
+        targetQuestionnaireId: "AUDIT-C",
+      });
+
+      expect(result).toEqual([]);
+    });
+
+    it("should return empty array when targetQuestionnaireId is missing", () => {
+      const hostQrs = [createMockQuestionnaireResponse()];
+
+      const result = builder.buildDerivedMultiLinkQrs(hostQrs, {
+        linkIds: ["/q1", "/q2"],
+      });
+
+      expect(result).toEqual([]);
+    });
+
+    it("should return empty array for empty hostQrs", () => {
+      const result = builder.buildDerivedMultiLinkQrs([], {
+        linkIds: ["/68517-2", "/68519-8"],
+        targetQuestionnaireId: "AUDIT-C",
+      });
+
+      expect(result).toEqual([]);
+    });
+
+    it("should extract multiple questions from host response", () => {
+      const auditResponse = createMockQuestionnaireResponse({
+        id: "audit-response-1",
+        questionnaire: "Questionnaire/AUDIT",
+        authored: "2024-01-15T10:30:00Z",
+        items: [
+          {
+            linkId: "/68517-2",
+            text: "How often do you have a drink containing alcohol?",
+            answer: [{ valueInteger: 2 }],
+          },
+          {
+            linkId: "/68519-8",
+            text: "How many drinks containing alcohol do you have on a typical day?",
+            answer: [{ valueInteger: 3 }],
+          },
+          {
+            linkId: "/68520-6",
+            text: "How often do you have 6 or more drinks on one occasion?",
+            answer: [{ valueInteger: 1 }],
+          },
+          {
+            linkId: "/other-question",
+            text: "Some other question we do not want",
+            answer: [{ valueInteger: 4 }],
+          },
+        ],
+      });
+
+      const result = builder.buildDerivedMultiLinkQrs([auditResponse], {
+        linkIds: ["/68517-2", "/68519-8", "/68520-6"],
+        targetQuestionnaireId: "AUDIT-C",
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        resourceType: "QuestionnaireResponse",
+        id: "audit-response-1_AUDIT-C",
+        questionnaire: "Questionnaire/AUDIT-C",
+        status: "completed",
+        authored: "2024-01-15T10:30:00Z",
+      });
+
+      // Should have exactly 3 items (not 4)
+      expect(result[0].item).toHaveLength(3);
+      expect(result[0].item[0].linkId).toBe("/68517-2");
+      expect(result[0].item[1].linkId).toBe("/68519-8");
+      expect(result[0].item[2].linkId).toBe("/68520-6");
+      expect(result[0].item[0].answer[0].valueInteger).toBe(2);
+      expect(result[0].item[1].answer[0].valueInteger).toBe(3);
+      expect(result[0].item[2].answer[0].valueInteger).toBe(1);
+    });
+
+    it("should remap linkIds when using object notation", () => {
+      const gad7Response = createMockQuestionnaireResponse({
+        id: "gad7-response-1",
+        questionnaire: "Questionnaire/GAD-7",
+        authored: "2024-01-15T10:30:00Z",
+        items: [
+          {
+            linkId: "/69725-0",
+            text: "Feeling nervous, anxious, or on edge",
+            answer: [{ valueInteger: 2 }],
+          },
+          {
+            linkId: "/68509-9",
+            text: "Not being able to stop or control worrying",
+            answer: [{ valueInteger: 3 }],
+          },
+        ],
+      });
+
+      const result = builder.buildDerivedMultiLinkQrs([gad7Response], {
+        linkIds: [
+          { sourceLinkId: "/69725-0", targetLinkId: "/gad2-q1" },
+          { sourceLinkId: "/68509-9", targetLinkId: "/gad2-q2" },
+        ],
+        targetQuestionnaireId: "GAD-2",
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].item).toHaveLength(2);
+      expect(result[0].item[0].linkId).toBe("/gad2-q1");
+      expect(result[0].item[1].linkId).toBe("/gad2-q2");
+      expect(result[0].item[0].answer[0].valueInteger).toBe(2);
+      expect(result[0].item[1].answer[0].valueInteger).toBe(3);
+    });
+
+    it("should skip responses without all linkIds when requireAllLinkIds is true", () => {
+      const auditResponse1 = createMockQuestionnaireResponse({
+        id: "audit-response-1",
+        questionnaire: "Questionnaire/AUDIT",
+        authored: "2024-01-15T10:30:00Z",
+        items: [
+          {
+            linkId: "/68517-2",
+            text: "Question 1",
+            answer: [{ valueInteger: 2 }],
+          },
+          {
+            linkId: "/68519-8",
+            text: "Question 2",
+            answer: [{ valueInteger: 3 }],
+          },
+          // Missing /68520-6
+        ],
+      });
+
+      const auditResponse2 = createMockQuestionnaireResponse({
+        id: "audit-response-2",
+        questionnaire: "Questionnaire/AUDIT",
+        authored: "2024-02-15T10:30:00Z",
+        items: [
+          {
+            linkId: "/68517-2",
+            text: "Question 1",
+            answer: [{ valueInteger: 1 }],
+          },
+          {
+            linkId: "/68519-8",
+            text: "Question 2",
+            answer: [{ valueInteger: 2 }],
+          },
+          {
+            linkId: "/68520-6",
+            text: "Question 3",
+            answer: [{ valueInteger: 0 }],
+          },
+        ],
+      });
+
+      const result = builder.buildDerivedMultiLinkQrs([auditResponse1, auditResponse2], {
+        linkIds: ["/68517-2", "/68519-8", "/68520-6"],
+        targetQuestionnaireId: "AUDIT-C",
+        requireAllLinkIds: true,
+      });
+
+      // Only the second response should be included
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("audit-response-2_AUDIT-C");
+      expect(result[0].item).toHaveLength(3);
+    });
+
+    it("should include partial responses when requireAllLinkIds is false", () => {
+      const auditResponse = createMockQuestionnaireResponse({
+        id: "audit-response-1",
+        questionnaire: "Questionnaire/AUDIT",
+        authored: "2024-01-15T10:30:00Z",
+        items: [
+          {
+            linkId: "/68517-2",
+            text: "Question 1",
+            answer: [{ valueInteger: 2 }],
+          },
+          {
+            linkId: "/68519-8",
+            text: "Question 2",
+            answer: [{ valueInteger: 3 }],
+          },
+          // Missing /68520-6
+        ],
+      });
+
+      const result = builder.buildDerivedMultiLinkQrs([auditResponse], {
+        linkIds: ["/68517-2", "/68519-8", "/68520-6"],
+        targetQuestionnaireId: "AUDIT-C",
+        requireAllLinkIds: false, // or omit (default is false)
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].item).toHaveLength(2); // Only 2 items found
+      expect(result[0].item[0].linkId).toBe("/68517-2");
+      expect(result[0].item[1].linkId).toBe("/68519-8");
+    });
+
+    it("should skip responses without authored date", () => {
+      const auditResponse1 = createMockQuestionnaireResponse({
+        id: "audit-response-1",
+        questionnaire: "Questionnaire/AUDIT",
+        authored: null,
+        items: [
+          { linkId: "/68517-2", text: "Q1", answer: [{ valueInteger: 2 }] },
+          { linkId: "/68519-8", text: "Q2", answer: [{ valueInteger: 3 }] },
+        ],
+      });
+
+      const auditResponse2 = createMockQuestionnaireResponse({
+        id: "audit-response-2",
+        questionnaire: "Questionnaire/AUDIT",
+        authored: "2024-01-15T10:30:00Z",
+        items: [
+          { linkId: "/68517-2", text: "Q1", answer: [{ valueInteger: 1 }] },
+          { linkId: "/68519-8", text: "Q2", answer: [{ valueInteger: 2 }] },
+        ],
+      });
+
+      const result = builder.buildDerivedMultiLinkQrs([auditResponse1, auditResponse2], {
+        linkIds: ["/68517-2", "/68519-8"],
+        targetQuestionnaireId: "AUDIT-C",
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("audit-response-2_AUDIT-C");
+    });
+
+    it("should handle flattened answer format with normalizeAnswerToCoding", () => {
+      const auditResponse = createMockQuestionnaireResponse({
+        id: "audit-response-1",
+        questionnaire: "Questionnaire/AUDIT",
+        authored: "2024-01-15T10:30:00Z",
+        items: [
+          {
+            linkId: "/68517-2",
+            text: "Question 1",
+            answer: "Monthly or less",
+          },
+          {
+            linkId: "/68519-8",
+            text: "Question 2",
+            answer: "3 or 4",
+          },
+        ],
+      });
+
+      const normalizeAnswerToCoding = vi.fn((ans, linkId) => ({
+        valueCoding: {
+          system: "http://loinc.org",
+          code: `${linkId}-${String(ans).toLowerCase().replace(/\s+/g, "-")}`,
+          display: ans,
+        },
+      }));
+
+      const result = builder.buildDerivedMultiLinkQrs([auditResponse], {
+        linkIds: ["/68517-2", "/68519-8"],
+        targetQuestionnaireId: "AUDIT-C",
+        normalizeAnswerToCoding,
+      });
+
+      expect(normalizeAnswerToCoding).toHaveBeenCalledTimes(2);
+      expect(normalizeAnswerToCoding).toHaveBeenCalledWith("Monthly or less", "/68517-2");
+      expect(normalizeAnswerToCoding).toHaveBeenCalledWith("3 or 4", "/68519-8");
+
+      expect(result[0].item[0].answer).toEqual([
+        {
+          valueCoding: {
+            system: "http://loinc.org",
+            code: "/68517-2-monthly-or-less",
+            display: "Monthly or less",
+          },
+        },
+      ]);
+    });
+
+    it("should preserve metadata from original response", () => {
+      const auditResponse = createMockQuestionnaireResponse({
+        id: "audit-response-1",
+        questionnaire: "Questionnaire/AUDIT",
+        authored: "2024-01-15T10:30:00Z",
+        identifier: [{ system: "http://example.org", value: "ABC123" }],
+        meta: {
+          versionId: "1",
+          lastUpdated: "2024-01-15T10:35:00Z",
+          source: "epic",
+        },
+        subject: { reference: "Patient/123" },
+        author: { reference: "Practitioner/456" },
+        items: [
+          { linkId: "/68517-2", text: "Q1", answer: [{ valueInteger: 2 }] },
+          { linkId: "/68519-8", text: "Q2", answer: [{ valueInteger: 3 }] },
+        ],
+      });
+
+      const result = builder.buildDerivedMultiLinkQrs([auditResponse], {
+        linkIds: ["/68517-2", "/68519-8"],
+        targetQuestionnaireId: "AUDIT-C",
+      });
+
+      expect(result[0]).toMatchObject({
+        identifier: [{ system: "http://example.org", value: "ABC123" }],
+        meta: {
+          versionId: "1",
+          lastUpdated: "2024-01-15T10:35:00Z",
+          source: "epic",
+        },
+        subject: { reference: "Patient/123" },
+        author: { reference: "Practitioner/456" },
+      });
+    });
+
+    it("should process multiple host responses correctly", () => {
+      const auditResponses = [
+        createMockQuestionnaireResponse({
+          id: "audit-response-1",
+          questionnaire: "Questionnaire/AUDIT",
+          authored: "2024-01-15T10:30:00Z",
+          items: [
+            { linkId: "/68517-2", text: "Q1", answer: [{ valueInteger: 2 }] },
+            { linkId: "/68519-8", text: "Q2", answer: [{ valueInteger: 3 }] },
+          ],
+        }),
+        createMockQuestionnaireResponse({
+          id: "audit-response-2",
+          questionnaire: "Questionnaire/AUDIT",
+          authored: "2024-02-15T10:30:00Z",
+          items: [
+            { linkId: "/68517-2", text: "Q1", answer: [{ valueInteger: 1 }] },
+            { linkId: "/68519-8", text: "Q2", answer: [{ valueInteger: 2 }] },
+          ],
+        }),
+        createMockQuestionnaireResponse({
+          id: "audit-response-3",
+          questionnaire: "Questionnaire/AUDIT",
+          authored: "2024-03-15T10:30:00Z",
+          items: [
+            { linkId: "/68517-2", text: "Q1", answer: [{ valueInteger: 0 }] },
+            { linkId: "/68519-8", text: "Q2", answer: [{ valueInteger: 1 }] },
+          ],
+        }),
+      ];
+
+      const result = builder.buildDerivedMultiLinkQrs(auditResponses, {
+        linkIds: ["/68517-2", "/68519-8"],
+        targetQuestionnaireId: "AUDIT-C",
+      });
+
+      expect(result).toHaveLength(3);
+      expect(result[0].id).toBe("audit-response-1_AUDIT-C");
+      expect(result[1].id).toBe("audit-response-2_AUDIT-C");
+      expect(result[2].id).toBe("audit-response-3_AUDIT-C");
+    });
+
+    it("should preserve original linkIds when preserveOriginalLinkIds is true", () => {
+      const gad7Response = createMockQuestionnaireResponse({
+        id: "gad7-response-1",
+        questionnaire: "Questionnaire/GAD-7",
+        authored: "2024-01-15T10:30:00Z",
+        items: [
+          { linkId: "/69725-0", text: "Q1", answer: [{ valueInteger: 2 }] },
+          { linkId: "/68509-9", text: "Q2", answer: [{ valueInteger: 3 }] },
+        ],
+      });
+
+      const result = builder.buildDerivedMultiLinkQrs([gad7Response], {
+        linkIds: [
+          { sourceLinkId: "/69725-0", targetLinkId: "/gad2-q1" },
+          { sourceLinkId: "/68509-9", targetLinkId: "/gad2-q2" },
+        ],
+        targetQuestionnaireId: "GAD-2",
+        preserveOriginalLinkIds: true,
+      });
+
+      // Should keep original linkIds despite targetLinkId specification
+      expect(result[0].item[0].linkId).toBe("/69725-0");
+      expect(result[0].item[1].linkId).toBe("/68509-9");
+    });
+
+    it("should handle bundle entry format (resource wrapper)", () => {
+      const auditResponse = {
+        resource: createMockQuestionnaireResponse({
+          id: "audit-response-1",
+          questionnaire: "Questionnaire/AUDIT",
+          authored: "2024-01-15T10:30:00Z",
+          items: [
+            { linkId: "/68517-2", text: "Q1", answer: [{ valueInteger: 2 }] },
+            { linkId: "/68519-8", text: "Q2", answer: [{ valueInteger: 3 }] },
+          ],
+        }),
+      };
+
+      const result = builder.buildDerivedMultiLinkQrs([auditResponse], {
+        linkIds: ["/68517-2", "/68519-8"],
+        targetQuestionnaireId: "AUDIT-C",
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("audit-response-1_AUDIT-C");
+    });
+
+    it("should skip responses with no matching items", () => {
+      const auditResponse = createMockQuestionnaireResponse({
+        id: "audit-response-1",
+        questionnaire: "Questionnaire/AUDIT",
+        authored: "2024-01-15T10:30:00Z",
+        items: [
+          { linkId: "/different-q1", text: "Q1", answer: [{ valueInteger: 2 }] },
+          { linkId: "/different-q2", text: "Q2", answer: [{ valueInteger: 3 }] },
+        ],
+      });
+
+      const result = builder.buildDerivedMultiLinkQrs([auditResponse], {
+        linkIds: ["/68517-2", "/68519-8"], // None of these exist
+        targetQuestionnaireId: "AUDIT-C",
+      });
+
+      expect(result).toEqual([]);
+    });
+
+    it("should maintain order of linkIds in derived response", () => {
+      const auditResponse = createMockQuestionnaireResponse({
+        id: "audit-response-1",
+        questionnaire: "Questionnaire/AUDIT",
+        authored: "2024-01-15T10:30:00Z",
+        items: [
+          { linkId: "/68520-6", text: "Q3", answer: [{ valueInteger: 1 }] },
+          { linkId: "/68517-2", text: "Q1", answer: [{ valueInteger: 2 }] },
+          { linkId: "/68519-8", text: "Q2", answer: [{ valueInteger: 3 }] },
+        ],
+      });
+
+      const result = builder.buildDerivedMultiLinkQrs([auditResponse], {
+        linkIds: ["/68517-2", "/68519-8", "/68520-6"],
+        targetQuestionnaireId: "AUDIT-C",
+      });
+
+      // Order should match the linkIds array, not the original item order
+      expect(result[0].item[0].linkId).toBe("/68517-2");
+      expect(result[0].item[1].linkId).toBe("/68519-8");
+      expect(result[0].item[2].linkId).toBe("/68520-6");
+    });
+  });
 });
 
 // ========== Helper Functions ==========

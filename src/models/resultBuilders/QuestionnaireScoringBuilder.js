@@ -1032,7 +1032,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
             const rowAnswer = matchedResponse ? this._getAnswer(matchedResponse, resolvedConfig) : null;
 
-            row[dataItem.id] = (resolvedConfig.valueFormatter ? resolvedConfig.valueFormatter(rowAnswer) : rowAnswer) ?? "-";
+            row[dataItem.id] =
+              (resolvedConfig.valueFormatter ? resolvedConfig.valueFormatter(rowAnswer) : rowAnswer) ?? "-";
             row[`${dataItem.id}_data`] = getScoreParamsFromResponses([dataItem], resolvedConfig);
           }
 
@@ -1200,6 +1201,193 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return derivedResponses;
   }
 
+  /**
+   * Build synthetic QuestionnaireResponses containing multiple selected questions from host responses.
+   *
+   * This enables "derived" instruments where multiple questions from a larger questionnaire
+   * are extracted to create a standalone instrument. For example:
+   * - Extract multiple AUDIT-C questions from full AUDIT
+   * - Extract GAD-2 questions from GAD-7
+   * - Create custom screening tools from comprehensive assessments
+   *
+   * @param {Array} hostQrs - Array of QuestionnaireResponse resources from the host instrument
+   * @param {Object} options - Derivation configuration
+   * @param {Array<string|Object>} options.linkIds - Array of linkIds to extract, or objects with mapping config
+   *   Can be: ["/q1", "/q2"] or [{sourceLinkId: "/q1", targetLinkId: "/derived-q1"}, ...]
+   * @param {string} options.targetQuestionnaireId - ID for the derived questionnaire
+   * @param {Function} [options.normalizeAnswerToCoding] - Function to convert answers to FHIR coding format
+   * @param {boolean} [options.requireAllLinkIds=false] - If true, skip responses that don't have all linkIds
+   * @param {boolean} [options.preserveOriginalLinkIds=false] - If true, keep original linkIds instead of remapping
+   *
+   * @returns {Array} Array of synthetic QuestionnaireResponse resources
+   *
+   * @example
+   * // Extract multiple questions with original linkIds
+   * const auditCResponses = builder.buildDerivedMultiLinkQrs(auditResponses, {
+   *   linkIds: ["/68517-2", "/68519-8", "/68520-6"], // AUDIT-C questions 1-3
+   *   targetQuestionnaireId: "AUDIT-C"
+   * });
+   *
+   * @example
+   * // Extract and remap linkIds
+   * const gad2Responses = builder.buildDerivedMultiLinkQrs(gad7Responses, {
+   *   linkIds: [
+   *     { sourceLinkId: "/69725-0", targetLinkId: "/gad2-q1" },
+   *     { sourceLinkId: "/68509-9", targetLinkId: "/gad2-q2" }
+   *   ],
+   *   targetQuestionnaireId: "GAD-2",
+   *   requireAllLinkIds: true
+   * });
+   *
+   * @example
+   * // Extract with custom normalization
+   * const customScreening = builder.buildDerivedMultiLinkQrs(phq9Responses, {
+   *   linkIds: ["/44250-9", "/44255-8", "/44260-8"],
+   *   targetQuestionnaireId: "CUSTOM-SCREENING",
+   *   normalizeAnswerToCoding: (ans, linkId) => ({
+   *     valueCoding: {
+   *       system: "http://example.org/custom",
+   *       code: `${linkId}-${ans}`,
+   *       display: ans
+   *     }
+   *   })
+   * });
+   */
+  buildDerivedMultiLinkQrs(
+    hostQrs = [],
+    {
+      linkIds = [],
+      targetQuestionnaireId,
+      normalizeAnswerToCoding = (ans) => {
+        // Default: map free-text to valueCoding(code/display = lowercased text)
+        if (isNonEmptyString(ans) && DEFAULT_VAL_TO_LOIN_CODE[normalizeStr(ans.toLowerCase())]) {
+          return { valueCoding: DEFAULT_VAL_TO_LOIN_CODE[normalizeStr(ans.toLowerCase())] };
+        }
+        const display = String(ans ?? "");
+        const code = display.trim().toLowerCase();
+        return { valueCoding: { system: "local/derived", code, display } };
+      },
+      requireAllLinkIds = false,
+      preserveOriginalLinkIds = false,
+    } = {},
+  ) {
+    // Validation
+    if (isEmptyArray(linkIds) || !targetQuestionnaireId) return [];
+
+    // Normalize linkIds configuration
+    const linkIdMappings = linkIds.map((item) => {
+      if (typeof item === "string") {
+        return { sourceLinkId: item, targetLinkId: item };
+      }
+      return {
+        sourceLinkId: item.sourceLinkId,
+        targetLinkId: preserveOriginalLinkIds ? item.sourceLinkId : item.targetLinkId || item.sourceLinkId,
+      };
+    });
+
+    // Normalize input QRs
+    const formattedQrs = (hostQrs || [])
+      .map((qr) => qr.resource || qr)
+      .filter((qr) => qr.resourceType === "QuestionnaireResponse");
+
+    const derivedResponses = [];
+
+    for (const qr of formattedQrs) {
+      // Skip QRs without authored date
+      if (!qr.authored) continue;
+
+      // Extract all matching items
+      const extractedItems = [];
+      const foundLinkIds = new Set();
+
+      for (const mapping of linkIdMappings) {
+        const targetItem = (qr.item || []).find((item) => this.isLinkIdEquals(item.linkId, mapping.sourceLinkId));
+
+        if (targetItem) {
+          foundLinkIds.add(mapping.sourceLinkId);
+
+          // Normalize answer to FHIR value[x] format
+          const normalizedAnswers = this._normalizeAnswersForDerivedQr(targetItem, (ans) =>
+            normalizeAnswerToCoding(ans, mapping.sourceLinkId),
+          );
+
+          extractedItems.push({
+            linkId: mapping.targetLinkId,
+            text: targetItem.text || mapping.targetLinkId,
+            answer: normalizedAnswers,
+          });
+        }
+      }
+
+      // Skip if requireAllLinkIds is true and we didn't find all linkIds
+      if (requireAllLinkIds && foundLinkIds.size !== linkIdMappings.length) {
+        continue;
+      }
+
+      // Skip if no items were extracted
+      if (isEmptyArray(extractedItems)) continue;
+
+      // Build synthetic QuestionnaireResponse
+      const syntheticQr = {
+        resourceType: "QuestionnaireResponse",
+        id: `${qr.id}_${targetQuestionnaireId}`,
+        identifier: qr.identifier,
+        meta: qr.meta,
+        questionnaire: `Questionnaire/${targetQuestionnaireId}`,
+        status: "completed",
+        subject: qr.subject,
+        authored: qr.authored,
+        author: qr.author,
+        item: extractedItems,
+      };
+
+      derivedResponses.push(syntheticQr);
+    }
+
+    return derivedResponses;
+  }
+
+  /**
+   * Build derived QuestionnaireResponses from host responses.
+   * Automatically handles both single-link and multi-link derivation.
+   *
+   * @param {Array} hostQrs - Array of QuestionnaireResponse resources from the host instrument
+   * @param {Object} options - Derivation configuration
+   * @param {string|Array} options.linkId - Single linkId or array of linkIds to extract
+   * @param {Array} [options.linkIds] - Alternative to linkId for multi-link derivation
+   * @param {string} options.targetQuestionnaireId - ID for the derived questionnaire
+   * @param {Function} [options.normalizeAnswerToCoding] - Function to convert answers to FHIR coding format
+   * @param {boolean} [options.requireAllLinkIds=false] - For multi-link: skip responses missing any linkId
+   *
+   * @returns {Array} Array of synthetic QuestionnaireResponse resources
+   */
+  buildDerivedQrs(hostQrs = [], options = {}) {
+    const { linkId, linkIds } = options;
+
+    // Determine which method to use
+    const linksToExtract = linkIds || (Array.isArray(linkId) ? linkId : linkId ? [linkId] : []);
+
+    if (isEmptyArray(linksToExtract)) {
+      console.warn("buildDerivedQrs: no linkIds provided");
+      return [];
+    }
+
+    // Single link - use optimized single-link method
+    if (linksToExtract.length === 1 && typeof linksToExtract[0] === "string") {
+      return this.buildDerivedSingleLinkQrs(hostQrs, {
+        linkId: linksToExtract[0],
+        targetQuestionnaireId: options.targetQuestionnaireId,
+        normalizeAnswerToCoding: options.normalizeAnswerToCoding,
+      });
+    }
+
+    // Multiple links - use multi-link method
+    return this.buildDerivedMultiLinkQrs(hostQrs, {
+      ...options,
+      linkIds: linksToExtract,
+    });
+  }
+
   // Helper method to normalize answers (extract logic for clarity)
   _normalizeAnswersForDerivedQr(targetItem, normalizeAnswerToCoding) {
     // Handle proper FHIR shape (array of answer objects)
@@ -1286,61 +1474,63 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const config = fromRegistry ? fromRegistry : this.cfg;
 
     // If this instrument is defined as "derived" from a host instrument,
-    // synthesize single-link QRs from the host QRs *when needed*.
+    // synthesize single-link or multiple links  QRs from the host QRs
     let hasHostMatch = true;
-    if (config?.deriveFrom?.linkId && !isEmptyArray(config?.deriveFrom?.hostIds)) {
-      const { linkId, hostIds, normalizeAnswerToCoding } = config.deriveFrom;
+    const deriveConfig = config?.deriveFrom;
+    if (deriveConfig && !isEmptyArray(deriveConfig?.hostIds)) {
+      // Check if we have linkId or linkIds
+      const hasDerivationConfig = deriveConfig.linkId || !isEmptyArray(deriveConfig.linkIds);
 
-      // If caller passed QRs that already belong to this instrument, proceed as usual.
-      // But if QRs actually look like host QRs (or are empty), try to derive.
-      const looksLikeHost = (responses) =>
-        (responses || []).some((response) => {
-          const questionnaireRef = response?.resource?.questionnaire || response?.questionnaire || "";
-          return hostIds.some((hostId) =>
-            this.questionnaireRefMatches(questionnaireRef, {
-              questionnaireId: hostId,
-              questionnaireMatchMode: "fuzzy",
-            }),
-          );
-        });
+      if (hasDerivationConfig) {
+        const { linkId, linkIds, hostIds, normalizeAnswerToCoding, requireAllLinkIds } = deriveConfig;
 
-      hasHostMatch = looksLikeHost(questionnaireResponses);
-
-      if (!questionnaireResponses?.length || hasHostMatch) {
-        // We need host QRs. If caller gave us host QRs directly, use them.
-        // Otherwise pull them from the bundle groups this instance can see.
-        let hostQuestionnaireResponses = [];
-
-        if (hasHostMatch) {
-          hostQuestionnaireResponses = questionnaireResponses;
-        } else {
-          // This will only recompute if the bundle has actually changed
-          const bundleGroups = this.fromBundleGrouped({ completedOnly: true });
-
-          for (const canonicalRef of Object.keys(bundleGroups)) {
-            const matchesHost = hostIds.some((hostId) =>
-              this.questionnaireRefMatches(canonicalRef, {
+        const looksLikeHost = (responses) =>
+          (responses || []).some((response) => {
+            const questionnaireRef = response?.resource?.questionnaire || response?.questionnaire || "";
+            return hostIds.some((hostId) =>
+              this.questionnaireRefMatches(questionnaireRef, {
                 questionnaireId: hostId,
                 questionnaireMatchMode: "fuzzy",
               }),
             );
+          });
 
-            if (matchesHost) {
-              hostQuestionnaireResponses.push(...bundleGroups[canonicalRef]);
-              hasHostMatch = true;
+        hasHostMatch = looksLikeHost(questionnaireResponses);
+
+        if (!questionnaireResponses?.length || hasHostMatch) {
+          let hostQuestionnaireResponses = [];
+
+          if (hasHostMatch) {
+            hostQuestionnaireResponses = questionnaireResponses;
+          } else {
+            // Search bundle for host groups
+            const bundleGroups = this.fromBundleGrouped({ completedOnly: true });
+            for (const canonicalRef of Object.keys(bundleGroups)) {
+              if (
+                hostIds.some((hostId) =>
+                  this.questionnaireRefMatches(canonicalRef, {
+                    questionnaireId: hostId,
+                    questionnaireMatchMode: "fuzzy",
+                  }),
+                )
+              ) {
+                hostQuestionnaireResponses.push(...bundleGroups[canonicalRef]);
+                hasHostMatch = true;
+              }
             }
           }
+
+          // Build derived QRs using the flexible method
+          const derivedQuestionnaireResponses = this.buildDerivedQrs(hostQuestionnaireResponses, {
+            linkId,
+            linkIds,
+            targetQuestionnaireId: questionnaire?.id || config?.questionnaireId || config?.key || "DERIVED",
+            normalizeAnswerToCoding,
+            requireAllLinkIds,
+          });
+
+          questionnaireResponses = derivedQuestionnaireResponses;
         }
-
-        // Build synthetic QRs carrying only the target linkId for THIS instrument
-        const derivedQuestionnaireResponses = this.buildDerivedSingleLinkQrs(hostQuestionnaireResponses, {
-          linkId,
-          targetQuestionnaireId: questionnaire?.id || config?.questionnaireId || config?.key || "DERIVED",
-          normalizeAnswerToCoding,
-        });
-
-        // Swap in derived QRs for the rest of the pipeline
-        questionnaireResponses = derivedQuestionnaireResponses;
       }
     }
     // === END derived ===========================================================

@@ -187,7 +187,7 @@ function bootstrapInstrumentConfigMap(map) {
  * @param {boolean} disableHeaderRowSubtitle if true the subtitle won't display in the header row in responses table
  * @param {Object} deriveFrom configuration for deriving score from other questionnaire(s)
  * @param {string[]} [deriveFrom.hostIds] questionnaire keys/ids to derive from
- * @param {string} [deriveFrom.linkId] linkId of the question in the host questionnaire(s) to derive from
+ * @param {string} [deriveFrom.linkIds] linkId or [linkIds] of the question in the host questionnaire(s) to derive from
  * @param {boolean} [deriveFrom.usePreviousScore] if true, use previous score from host questionnaire(s) instead of current score
  * @param {boolean} displayMeaningNotScore if true, display meaning/label instead of numeric score
  * @param {array} excludeQuestionLinkIdPatterns param for pattern in link Id to exclude as a response item
@@ -999,7 +999,6 @@ const questionnaireConfigsRaw = {
       // optional: override how free-text maps to valueCoding
       //normalizeAnswerToCoding: (ans) => ({ valueCoding: { system: "...", code: ..., display: ... }})
     },
-    skipResponses: true,
     chartParams: {
       ...CHART_CONFIG.default,
       title: "Suicide Ideation",

@@ -332,12 +332,14 @@ export default function LineCharts(props) {
   const getResponsiveMargin = () => {
     if (chartMargin) return chartMargin;
 
+    const extraTopMargin = hasMultipleYFields? 10: 0;
+
     if (isSmallScreen) {
-      return { top: 20, right: 15, left: 15, bottom: 10 };
+      return { top: 20 + extraTopMargin, right: 14, left: 14, bottom: 10 };
     } else if (isMediumScreen) {
-      return { top: 20, right: 18, left: 18, bottom: 10 };
+      return { top: 20 + extraTopMargin, right: 18, left: 18, bottom: 10 };
     }
-    return { top: 20, right: 20, left: 20, bottom: 10 };
+    return { top: 20 + extraTopMargin, right: 20, left: 20, bottom: 10 };
   };
 
   // Responsive X-axis height

@@ -1,7 +1,7 @@
 // $chart-background-color: #fbfcff;
 $chart-background-color: #fff;
 $muted-text-color: #4f4d4d;
-$border-color: #f4f0f0;
+$border-color: #e0e0e0;
 $app-background-color: #faf9fa;
 $summary-container-background-color: #fff;
 $default-print-background-color: #fff;
@@ -215,6 +215,9 @@ p {
   tr:has(.question-row) {
     td {
       border-left: 0 !important;
+      &:first-of-type {
+        border-right: 1px solid $border-color !important;
+      }
       background-color: #fff;
       line-height: 1.5;
       padding-left: 16px;
