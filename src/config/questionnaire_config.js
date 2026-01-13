@@ -1,4 +1,4 @@
-import { isEmptyArray } from "@util";
+import { isEmptyArray, isNumber } from "@util";
 import { linkIdEquals } from "@util/fhirUtil";
 import CHART_CONFIG, { SUCCESS_COLOR } from "./chart_config";
 import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS, PHQ9_ADMIN_NOTE } from "@/consts";
@@ -212,12 +212,13 @@ function bootstrapInstrumentConfigMap(map) {
  * @param {{min:number,label:string,meaning?:string}[]} [severityBands]
  * @param {boolean} [skipChart] if true, do not render chart for this questionnaire
  * @param {boolean} [skipMeaningScoreRow] if true, the score/ meaning row in the responses table will not be rendered
+ * @param {boolean} [skipResponses] if true, the response rows in the responses table will not be rendered
  * @param {Object} [subScores] map of sub-score configurations
  * @param {string[]} [subScoringQuestions] optional, object of sub-questions to include for scoring breakdowns
  * @param {string} subtitle
  * @param {string} title (from Questionnaire resource)
  * @param {function} tooltipValueFormatter function to format y value in tooltip
- * @param {function} valueFormatter function to format score value for display
+ * @param {function} valueFormatter function to format response value for display
  */
 const questionnaireConfigsRaw = {
   "CIRG-ADL-IADL": {
@@ -568,6 +569,7 @@ const questionnaireConfigsRaw = {
     },
     alertQuestionId: "FINANCIAL-critical-flag",
     meaningQuestionId: "FINANCIAL-score-label",
+    skipResponses: true,
     skipChart: true,
   },
   "CIRG-CNICS-FOOD": {
@@ -608,7 +610,7 @@ const questionnaireConfigsRaw = {
       }
       return arrMeaning.join("|");
     },
-    meaningRowLabel: "Summary",
+    skipMeaningScoreRow: true,
     skipChart: true,
   },
   "CIRG-CNICS-HOUSING": {
@@ -627,7 +629,7 @@ const questionnaireConfigsRaw = {
         housingResponse?.answer != null && housingResponse.answer !== undefined ? housingResponse.answer : null;
       return housingAnswer;
     },
-    meaningRowLabel: "Summary",
+    skipMeaningScoreRow: true,
     skipChart: true,
   },
   "CIRG-CNICS-IPV4": {
@@ -997,6 +999,7 @@ const questionnaireConfigsRaw = {
       // optional: override how free-text maps to valueCoding
       //normalizeAnswerToCoding: (ans) => ({ valueCoding: { system: "...", code: ..., display: ... }})
     },
+    skipResponses: true,
     chartParams: {
       ...CHART_CONFIG.default,
       title: "Suicide Ideation",
@@ -1070,7 +1073,7 @@ const questionnaireConfigsRaw = {
         id: "result",
       },
     ],
-    valueFormatter: (value) => (value ? `${value} %` : ""),
+    valueFormatter: (value) => (isNumber(value) ? `${value} %` : value),
     chartParams: {
       ...CHART_CONFIG.default,
       title: "ART Adherence (VAS %)",
@@ -1081,6 +1084,8 @@ const questionnaireConfigsRaw = {
       tooltipValueFormatter: (value) => (value ? `${value} %` : ""),
       type: "barchart",
     },
+    skipResponses: true,
+    meaningRowLabel: "Visual Analog Scale % (Past 4 weeks)",
   },
   "CIRG-CNICS-AUDIT": {
     title: "Alcohol Score",
@@ -1193,12 +1198,122 @@ const questionnaireConfigsRaw = {
   "CIRG-SEXUAL-PARTNERS": {
     key: "CIRG-SEXUAL-PARTNERS",
     instrumentName: "Number of Sexual Partners",
-    title: "# of Sex Partners x 3 months",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
+      linkId: "SEXUAL-RISK-SCORE-NUM-PARTNERS", // the single item to keep
+    },
+    columns: [
+      {
+        linkId: "SEXUAL-RISK-SCORE-NUM-PARTNERS",
+        id: "result",
+      },
+    ],
+    title: "# of Sex Partners",
+    subtitle: "Past 3 months",
+    skipMeaningScoreRow: true,
+    skipChart: true,
   },
-  "CIRG-UNPROTECTED-SEX": {
-    key: "CIRG-UNPRTECTED-SEX",
+  "CIRG-UNPROTECTED-ANAL-SEX": {
+    key: "CIRG-UNPRTECTED-ANAL-SEX",
     instrumentName: "Unprotected Sex",
-    title: "Unprotected Sex",
+    title: "Unprotected anal sex",
+    subtitle: "Past 3 months",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
+      linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-ANAL", // the single item to keep
+    },
+    columns: [
+      {
+        linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-ANAL",
+        id: "result",
+      },
+    ],
+    valueFormatter: (val) =>
+      String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : val,
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      const meaningResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED-ANAL", "strict"),
+      );
+      const meaningAnswer =
+        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
+      if (String(meaningAnswer).toLowerCase() === "true") return "Yes";
+      else if (String(meaningAnswer).toLowerCase() === "false") return "No";
+      return meaningAnswer;
+    },
+    displayMeaningNotScore: true,
+    skipResponses: true,
+    meaningRowLabel: "Unprotected Anal Sex",
+    linkIdMatchMode: "strict",
+    skipChart: true,
+  },
+  "CIRG-UNPROTECTED-ORAL-SEX": {
+    key: "CIRG-UNPROTECTED-ORAL-SEX",
+    instrumentName: "Unprotected Sex",
+    title: "Unprotected oral sex",
+    subtitle: "Past 3 months",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
+      linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-ORAL", // the single item to keep
+    },
+    columns: [
+      {
+        linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-ORAL",
+        id: "result",
+      },
+    ],
+    valueFormatter: (val) =>
+      String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : val,
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      const meaningResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED-ORAL", "strict"),
+      );
+      const meaningAnswer =
+        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
+      if (String(meaningAnswer).toLowerCase() === "true") return "Yes";
+      else if (String(meaningAnswer).toLowerCase() === "false") return "No";
+      return meaningAnswer;
+    },
+    displayMeaningNotScore: true,
+    skipResponses: true,
+    meaningRowLabel: "Unprotected Oral Sex",
+    linkIdMatchMode: "strict",
+    skipChart: true,
+  },
+  "CIRG-UNPROTECTED-VAGINAL-SEX": {
+    key: "CIRG-UNPROTECTED-VAGINAL-SEX",
+    instrumentName: "Unprotected Sex",
+    title: "Unprotected vaginal sex",
+    subtitle: "Past 3 months",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
+      linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-VAGINAL", // the single item to keep
+    },
+    columns: [
+      {
+        linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-VAGINAL",
+        id: "result",
+      },
+    ],
+    valueFormatter: (val) =>
+      String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : val,
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      const meaningResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED-VAGINAL", "strict"),
+      );
+      const meaningAnswer =
+        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
+      if (String(meaningAnswer).toLowerCase() === "true") return "Yes";
+      else if (String(meaningAnswer).toLowerCase() === "false") return "No";
+      return meaningAnswer;
+    },
+    displayMeaningNotScore: true,
+    skipResponses: true,
+    meaningRowLabel: "Unprotected Vaginal Sex",
+    linkIdMatchMode: "strict",
+    skipChart: true,
   },
   "CIRG-EXCHANGE-SEX": {
     key: "CIRG-EXCHANGE-SEX",
@@ -1208,7 +1323,38 @@ const questionnaireConfigsRaw = {
   "CIRG-STI": {
     key: "CIRG-STI",
     instrumentName: "STI",
-    title: "STI",
+    title: "Concern for STI exposure",
+    subtitle: "Past 3 months",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
+      linkId: "SEXUAL-RISK-SCORE-STI-EXPOSURE", // the single item to keep
+    },
+    columns: [
+      {
+        linkId: "SEXUAL-RISK-SCORE-STI-EXPOSURE",
+        id: "result",
+      },
+    ],
+    valueFormatter: (val) =>
+      String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : "",
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      if (!severity) return "";
+      const meaningResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-STI-EXPOSURE", "strict"),
+      );
+      const meaningAnswer =
+        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
+      if (String(meaningAnswer).toLowerCase() === "true") return "Yes";
+      else if (String(meaningAnswer).toLowerCase() === "false") return "No";
+      return meaningAnswer;
+    },
+    displayMeaningNotScore: true,
+    skipResponses: true,
+    meaningRowLabel: "Concern for STI exposure",
+    linkIdMatchMode: "strict",
+    alertQuestionId: "SEXUAL-RISK-SCORE-STI-EXPOSURE",
+    skipChart: true,
   },
   "CIRG-SOCIAL-SUPPORT": {
     key: "CIRG-SOCIAL-SUPPORT",

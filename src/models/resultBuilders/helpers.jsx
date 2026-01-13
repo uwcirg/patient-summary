@@ -937,6 +937,7 @@ export function getResponseColumns(data) {
           (normalizeStr(cleaned).includes("score") ||
             normalizeStr(cleaned).includes("meaning") ||
             normalizeStr(cleaned).includes("summary") ||
+            normalizeStr(cleaned).includes("visual analog scale") ||
             normalizeStr(cleaned) === "status" ||
             normalizeStr(cleaned) === normalizeStr(config?.title) ||
             isQuestion)
@@ -969,6 +970,7 @@ export function getResponseColumns(data) {
         if (!rowDataItem || String(rowDataItem) === "null" || String(rowDataItem) === "undefined") return "—";
         if (rowDataItem.hasMeaningOnly) {
           const { key, ...rest } = rowDataItem;
+          if (!rowDataItem.meaning) return "-";
           return <Meaning {...rest}></Meaning>;
         }
         // numeric score path

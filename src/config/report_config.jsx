@@ -1,5 +1,7 @@
 import { Box, Stack } from "@mui/material";
-import {getNoDataDisplay} from "@models/resultBuilders/helpers";
+import { getNoDataDisplay } from "@models/resultBuilders/helpers";
+import { getLocaleDateStringFromDate, isEmptyArray } from "@util";
+import ResponsesViewer from "@components/ResponsesViewer";
 
 export const report_config = {
   sections: [
@@ -21,7 +23,7 @@ export const report_config = {
             "CIRG-CNICS-FROP-Com",
             "CIRG-Shortness-of-Breath",
           ],
-          hiddenColumns: ["numAnswered"]
+          hiddenColumns: ["numAnswered"],
         },
       ],
     },
@@ -108,7 +110,7 @@ export const report_config = {
               align: "left",
               accessor: "result",
               type: "text",
-              formatter: (row, value) => row.key === "CIRG-VAS" && value? value + " %" : value
+              formatter: (row, value) => (row.key === "CIRG-VAS" && value ? value + " %" : value),
             },
           ],
         },
@@ -123,12 +125,12 @@ export const report_config = {
             "CIRG-CNICS-AUDIT",
             "CIRG-CNICS-MINI",
             "CIRG-CNICS-ASSIST",
-          //  "CIRG-CNICS-ASSIST-Polysub",
-           // "CIRG-IDU",
-           // "CIRG-Concurrent-IDU",
+            //  "CIRG-CNICS-ASSIST-Polysub",
+            // "CIRG-IDU",
+            // "CIRG-Concurrent-IDU",
           ],
         },
-         {
+        {
           id: "table_naloxone_access",
           title: "Harm Reduction",
           layout: "simple",
@@ -166,11 +168,18 @@ export const report_config = {
             },
           ],
         },
-         {
+        {
           id: "table_sexual_risk",
           title: "Sexual Risk Behavior",
           layout: "simple",
-          dataKeysToMatch: ["CIRG-SEXUAL-PARTNERS", "CIRG-UNPROTECTED-SEX", "CIRG-EXCHANGE-SEX", "CIRG-STI"],
+          dataKeysToMatch: [
+            "CIRG-SEXUAL-PARTNERS",
+            "CIRG-UNPROTECTED-ANAL-SEX",
+            "CIRG-UNPROTECTED-ORAL-SEX",
+            "CIRG-UNPROTECTED-VAGINAL-SEX",
+            "CIRG-STI",
+            "CIRG-EXCHANGE-SEX",
+          ],
           hiddenColumns: ["id", "source", "lastAssessed", "numAnswered", "scoreMeaning", "comparison"],
           columns: [
             {
@@ -180,6 +189,21 @@ export const report_config = {
               accessor: "title",
               type: "text",
               headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
+              renderCell: (row, value) => {
+                if (isEmptyArray(row?.responseData)) return value;
+                return (
+                  <ResponsesViewer
+                    title={row.title}
+                    subtitle={row.subtitle}
+                    note={row.note}
+                    responsesTileTitle={row.rowTitle}
+                    tableData={row?.tableResponseData}
+                    columns={row?.responseColumns}
+                    questionnaire={row.questionnaire}
+                    buttonStyle={{ width: "100%", maxWidth: 108 }}
+                  />
+                );
+              },
             },
             {
               id: "result",
@@ -196,7 +220,7 @@ export const report_config = {
               type: "text",
               renderCell: (row, value) => (
                 <Stack direction={"column"} spacing={1}>
-                  {value && <Box>{value}</Box>}
+                  {value && <Box>{getLocaleDateStringFromDate(value)}</Box>}
                   {!value && getNoDataDisplay()}
                   {row.source && (
                     <Box className="muted-text" sx={{ mt: 2 }}>
@@ -208,7 +232,7 @@ export const report_config = {
             },
           ],
         },
-         {
+        {
           id: "table_psychosocial_concern",
           title: "Psychosocial Concerns and Quality of Life",
           layout: "two-columns",

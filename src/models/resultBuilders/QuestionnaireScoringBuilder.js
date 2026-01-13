@@ -773,7 +773,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (!col?.id) continue;
       const matchItem = qrItems.find((it) => this.isLinkIdEquals(it.linkId, col.linkId));
       const ans = matchItem?.answer;
-      out[col.id] = matchItem ? this.getAnswerItemDisplayValue(ans, config) : null;
+      const value = matchItem ? this.getAnswerItemDisplayValue(ans, config) : null;
+      out[col.id] = config?.valueFormatter ? config?.valueFormatter(value) : value;
     }
     return out;
   }
@@ -849,12 +850,13 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   _hasScoreData(data) {
     return (
       !isEmptyArray(data) &&
+      this._hasResponseData(data) &&
       !data.find((item) => item.displayMeaningNotScore) &&
       !!data.find((item) => item.score != null)
     );
   }
   _hasMeaningOnlyData(data) {
-    return !isEmptyArray(data) && data.find((item) => item.displayMeaningNotScore);
+    return !isEmptyArray(data) && this._hasResponseData(data) && data.find((item) => item.displayMeaningNotScore);
   }
 
   _getAnswerByTargetLinkIdFromResponseData(targetLinkId, responseData, responses_id, config = {}) {
@@ -864,7 +866,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return this._getAnswer(answerItem, config);
   }
 
-  _formatColumnChunks = (columns = [], chunkSize = 3) => {
+  _formatPrintColumnChunks = (columns = [], chunkSize = 3) => {
     if (!columns) return [];
     const [header, ...rest] = columns;
     const chunks = [];
@@ -887,7 +889,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const displayMeaningOnly = this._hasMeaningOnlyData(data);
     const responseColumns = getResponseColumns(data, data[0]);
     const tableResponseData = opts?.tableResponseData ?? this._formatTableResponseData(data);
-    const { patientBundle, questionnaire, ...rest } = data[0];
+    const { patientBundle, questionnaireResponse, questionnaire, ...rest } = data[0];
     return {
       ...rest,
       ...scoreParams,
@@ -902,7 +904,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       displayMeaningOnly,
       hasData: !isEmptyArray(data),
       responseColumns,
-      printColumnChunks: this._formatColumnChunks(responseColumns, 3),
+      printColumnChunks: this._formatPrintColumnChunks(responseColumns, 3),
       responseData: data,
       tableResponseData,
       questionnaire: !questionnaire
@@ -970,97 +972,100 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       }
     }
     //
+    let result = [];
+    if (!resolvedConfig?.skipResponses) {
+      result = [...questionLinkIds]
+        .map((questionId) => {
+          const row = {};
 
-    const result = [...questionLinkIds]
-      .map((questionId) => {
-        const row = {};
+          // Get sample response from lookup map (O(1) instead of O(n))
+          let sample = sampleResponseMap.get(questionId);
 
-        // Get sample response from lookup map (O(1) instead of O(n))
-        let sample = sampleResponseMap.get(questionId);
-
-        // If not found in map, try fuzzy matching (fallback for non-exact matches)
-        if (!sample) {
-          sample =
-            (anchorRowData.responses || []).find((r) => this.isLinkIdEquals(r.id, questionId, resolvedConfig)) ||
-            (
-              data.find((d) => (d.responses || []).some((r) => this.isLinkIdEquals(r.id, questionId, resolvedConfig)))
-                ?.responses || []
-            ).find((r) => this.isLinkIdEquals(r.id, questionId, resolvedConfig));
-        }
-
-        row.id = questionId;
-        row.linkId = questionId;
-
-        // Get question text
-        let question = "";
-        const questionnaireItem = getQuestionnaireItemByLinkId(anchorRowData.questionnaire, questionId);
-        if (questionnaireItem) {
-          question = this._getQuestion(questionnaireItem);
-        }
-
-        row.question = sample
-          ? this._getQuestion(sample, resolvedConfig)
-          : question
-            ? question
-            : `Question ${questionId}`;
-
-        row.source = sample?.source;
-        row.readOnly = sample?.readOnly || false;
-        row.isValueExpression = sample?.isValueExpression || false;
-        row.isHelp = sample?.isHelp || false;
-        row.config = resolvedConfig;
-
-        // Use lookup maps for fast answer retrieval (O(1) instead of O(n*m))
-        for (const dataItem of formattedData) {
-          const responseMap = responseLookupByDataId.get(dataItem.id);
-
-          // Try exact match first from lookup map
-          let matchedResponse = responseMap?.get(sample?.id);
-
-          // Fallback to fuzzy matching if needed
-          if (!matchedResponse && sample?.id) {
-            const matchResponseData = data.find((item) => item.id === dataItem.id);
-            if (matchResponseData && !isEmptyArray(matchResponseData.responses)) {
-              matchedResponse = matchResponseData.responses.find((r) =>
-                this.isLinkIdEquals(r?.id, sample.id, resolvedConfig),
-              );
-            }
+          // If not found in map, try fuzzy matching (fallback for non-exact matches)
+          if (!sample) {
+            sample =
+              (anchorRowData.responses || []).find((r) => this.isLinkIdEquals(r.id, questionId, resolvedConfig)) ||
+              (
+                data.find((d) => (d.responses || []).some((r) => this.isLinkIdEquals(r.id, questionId, resolvedConfig)))
+                  ?.responses || []
+              ).find((r) => this.isLinkIdEquals(r.id, questionId, resolvedConfig));
           }
 
-          row[dataItem.id] = matchedResponse ? this._getAnswer(matchedResponse, resolvedConfig) : "-";
-          row[`${dataItem.id}_data`] = getScoreParamsFromResponses([dataItem], resolvedConfig);
-        }
+          row.id = questionId;
+          row.linkId = questionId;
 
-        return row;
-      })
-      .filter((r) => !r.isValueExpression && !r.isHelp);
+          // Get question text
+          let question = "";
+          const questionnaireItem = getQuestionnaireItemByLinkId(anchorRowData.questionnaire, questionId);
+          if (questionnaireItem) {
+            question = this._getQuestion(questionnaireItem);
+          }
+
+          row.question = sample
+            ? this._getQuestion(sample, resolvedConfig)
+            : question
+              ? question
+              : `Question ${questionId}`;
+
+          row.source = sample?.source;
+          row.readOnly = sample?.readOnly || false;
+          row.isValueExpression = sample?.isValueExpression || false;
+          row.isHelp = sample?.isHelp || false;
+          row.config = resolvedConfig;
+
+          // Use lookup maps for answer retrieval
+          for (const dataItem of formattedData) {
+            const responseMap = responseLookupByDataId.get(dataItem.id);
+
+            // Try exact match first from lookup map
+            let matchedResponse = responseMap?.get(sample?.id);
+
+            // Fallback to fuzzy matching if needed
+            if (!matchedResponse && sample?.id) {
+              const matchResponseData = data.find((item) => item.id === dataItem.id);
+              if (matchResponseData && !isEmptyArray(matchResponseData.responses)) {
+                matchedResponse = matchResponseData.responses.find((r) =>
+                  this.isLinkIdEquals(r?.id, sample.id, resolvedConfig),
+                );
+              }
+            }
+
+            const rowAnswer = matchedResponse ? this._getAnswer(matchedResponse, resolvedConfig) : null;
+
+            row[dataItem.id] = (resolvedConfig.valueFormatter ? resolvedConfig.valueFormatter(rowAnswer) : rowAnswer) ?? "-";
+            row[`${dataItem.id}_data`] = getScoreParamsFromResponses([dataItem], resolvedConfig);
+          }
+
+          return row;
+        })
+        .filter((r) => !r.isValueExpression && !r.isHelp);
+      if (!isEmptyArray(result)) {
+        const questionRow = {
+          question:
+            "Questions" +
+            (resolvedConfig?.subtitle && !resolvedConfig.disableHeaderRowSubtitle
+              ? "\n ( " + getNormalizedRowTitleDisplay(resolvedConfig.subtitle) + " )"
+              : ""),
+          id: `question_${data.map((o) => o.id).join("")}`,
+          config: resolvedConfig,
+        };
+        for (const item of data) {
+          questionRow[item.id] = {
+            score: " ",
+            meaning: null,
+          };
+        }
+        result.unshift(questionRow);
+      }
+    }
 
     const hasMeaningOnly = !resolvedConfig?.skipMeaningScoreRow && this._hasMeaningOnlyData(data);
     const hasScoreOnly = !resolvedConfig?.skipMeaningScoreRow && this._hasScoreData(data);
-
-    if (hasMeaningOnly || hasScoreOnly) {
-      const questionRow = {
-        question:
-          "Questions" +
-          (resolvedConfig?.subtitle && !resolvedConfig.disableHeaderRowSubtitle
-            ? "\n ( " + getNormalizedRowTitleDisplay(resolvedConfig.subtitle) + " )"
-            : ""),
-        id: `question_${data.map((o) => o.id).join("")}`,
-        config: resolvedConfig,
-      };
-      for (const item of data) {
-        questionRow[item.id] = {
-          score: " ",
-          meaning: null,
-        };
-      }
-      result.unshift(questionRow);
-    }
-
+    const scoreMeaningRowLabel = resolvedConfig?.meaningRowLabel ? resolvedConfig.meaningRowLabel : "Score / Meaning";
     // Add meaning/score rows
     if (hasMeaningOnly) {
       const meaningRow = {
-        question: resolvedConfig?.meaningRowLabel ? resolvedConfig.meaningRowLabel : "Score / Meaning",
+        question: scoreMeaningRowLabel,
         id: `meaning_${data.map((o) => o.id).join("")}`,
         config: resolvedConfig,
       };
@@ -1073,7 +1078,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       result.unshift(meaningRow);
     } else if (hasScoreOnly) {
       const scoringRow = {
-        question: "Score / Meaning",
+        question: scoreMeaningRowLabel,
         id: `score_${data.map((o) => o.id).join("")}`,
         config: resolvedConfig,
       };
