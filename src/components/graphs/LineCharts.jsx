@@ -517,7 +517,7 @@ export default function LineCharts(props) {
       return (
         <Legend
           formatter={(value) => (
-            <span style={{ marginRight: "8px", fontSize: isSmallScreen ? "11px" : "14px" }}>
+            <span style={{ marginRight: "8px", fontSize: isSmallScreen ? "10px" : "12px" }}>
               {value.replace(/_/g, " ")}
             </span>
           )}
@@ -534,7 +534,7 @@ export default function LineCharts(props) {
         align="right"
         wrapperStyle={{
           position: "absolute",
-          top: isSmallScreen ? 5 : 10,
+          top: isSmallScreen ? 4 : 10,
           right: isSmallScreen ? 18 : 36,
           width: "auto",
         }}
@@ -616,7 +616,7 @@ export default function LineCharts(props) {
               display: "grid",
               gridTemplateColumns: isSmallScreen ? "1fr" : points.length > 6 ? "repeat(3, 1fr)" : "repeat(2, 1fr)",
               gap: isSmallScreen ? "2px 8px" : "4px 16px",
-              maxWidth: isSmallScreen ? "200px" : "360px",
+              maxWidth: isSmallScreen ? "200px" : "320px",
             }}
           >
             {points.map((entry, index) => (
@@ -628,11 +628,11 @@ export default function LineCharts(props) {
                     x2={iconSize - 4}
                     y2={iconSize / 2}
                     stroke={entry.color}
-                    strokeWidth={isSmallScreen ? 3 : 4}
+                    strokeWidth={isSmallScreen ? 2 : 4}
                     strokeDasharray={entry.payload.strokeDasharray || "0"}
                   />
                 </svg>
-                <span style={{ fontSize: isSmallScreen ? 9 : 10, whiteSpace: "nowrap" }}>
+                <span style={{ fontSize: isSmallScreen ? 8 : 10, whiteSpace: "nowrap" }}>
                   {entry.value.replace(/[_,-]/g, " ")}
                 </span>
               </div>
@@ -679,7 +679,7 @@ export default function LineCharts(props) {
               payload={payload}
               index={index}
               isActive
-              params={{ r: isSmallScreen ? 4 : 5, width: isSmallScreen ? 7 : 8, height: isSmallScreen ? 7 : 8 }}
+              params={{ r: isSmallScreen ? 4 : 5, width: isSmallScreen ? 6 : 8, height: isSmallScreen ? 6 : 8}}
             />
           );
         }
@@ -693,7 +693,7 @@ export default function LineCharts(props) {
         }
         const color = getDotColor(payload, baseColor);
 
-        return <circle cx={cx} cy={cy} r={isSmallScreen ? 4 : 5} fill={color} stroke="#fff" strokeWidth={2} />;
+        return <circle cx={cx} cy={cy} r={isSmallScreen ? 2 : 4} fill={color} stroke="#fff" strokeWidth={2} />;
       }}
       dot={({ cx, cy, payload, value, index }) => {
         if (!isEmptyArray(sources))
@@ -719,14 +719,14 @@ export default function LineCharts(props) {
             key={`dot-default-${payload?.id}_${index}`}
             cx={cx}
             cy={cy}
-            r={isSmallScreen ? 3 : 4}
+            r={isSmallScreen ? 2 : 4}
             fill={color}
             stroke="#fff"
             strokeWidth={2}
           />
         );
       }}
-      strokeWidth={strokeWidth ? strokeWidth : isSmallScreen ? 1 : 1}
+      strokeWidth={strokeWidth ? strokeWidth : 1}
       connectNulls={!!connectNulls}
     />
   );
@@ -819,7 +819,7 @@ export default function LineCharts(props) {
           value: "data truncated",
           position: "top",
           fill: "#666",
-          fontSize: isSmallScreen ? 9 : 10,
+          fontSize: isSmallScreen ? 10: 12,
           fontWeight: 500,
         }}
       />
