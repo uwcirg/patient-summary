@@ -5,7 +5,7 @@ import { useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
-import Patient from "@/models/Patent";
+import Patient from "@/models/Patient";
 
 export default function PatientInfo(props) {
   const theme = useTheme();
