@@ -893,7 +893,7 @@ export function getNormalizedRowTitleDisplay(text, row) {
 }
 
 export function getNoDataDisplay() {
-  return <span className="no-data-wrapper">No data</span>;
+  return <span className="no-data-wrapper">-</span>;
 }
 
 export function getResponseColumns(data) {
