@@ -187,7 +187,8 @@ function bootstrapInstrumentConfigMap(map) {
  * @param {boolean} disableHeaderRowSubtitle if true the subtitle won't display in the header row in responses table
  * @param {Object} deriveFrom configuration for deriving score from other questionnaire(s)
  * @param {string[]} [deriveFrom.hostIds] questionnaire keys/ids to derive from
- * @param {string} [deriveFrom.linkIds] linkId or [linkIds] of the question in the host questionnaire(s) to derive from
+ * @param {string} [deriveFrom.linkId] linkId of the question in the host questionnaire(s) to derive from
+ * @param {string[]} [deriveFrom.linkIds] [linkIds] of the questions in the host questionnaire(s) to derive from
  * @param {boolean} [deriveFrom.usePreviousScore] if true, use previous score from host questionnaire(s) instead of current score
  * @param {boolean} displayMeaningNotScore if true, display meaning/label instead of numeric score
  * @param {array} excludeQuestionLinkIdPatterns param for pattern in link Id to exclude as a response item
@@ -1215,7 +1216,7 @@ const questionnaireConfigsRaw = {
   "CIRG-UNPROTECTED-ANAL-SEX": {
     key: "CIRG-UNPRTECTED-ANAL-SEX",
     instrumentName: "Unprotected Sex",
-    title: "Unprotected anal sex",
+    title: "Unprotected Anal Sex",
     subtitle: "Past 3 months",
     deriveFrom: {
       hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
@@ -1249,7 +1250,7 @@ const questionnaireConfigsRaw = {
   "CIRG-UNPROTECTED-ORAL-SEX": {
     key: "CIRG-UNPROTECTED-ORAL-SEX",
     instrumentName: "Unprotected Sex",
-    title: "Unprotected oral sex",
+    title: "Unprotected Oral Sex",
     subtitle: "Past 3 months",
     deriveFrom: {
       hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
@@ -1283,7 +1284,7 @@ const questionnaireConfigsRaw = {
   "CIRG-UNPROTECTED-VAGINAL-SEX": {
     key: "CIRG-UNPROTECTED-VAGINAL-SEX",
     instrumentName: "Unprotected Sex",
-    title: "Unprotected vaginal sex",
+    title: "Unprotected Vaginal Sex",
     subtitle: "Past 3 months",
     deriveFrom: {
       hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
@@ -1322,7 +1323,7 @@ const questionnaireConfigsRaw = {
   "CIRG-STI": {
     key: "CIRG-STI",
     instrumentName: "STI",
-    title: "Concern for STI exposure",
+    title: "Concern for STI Exposure",
     subtitle: "Past 3 months",
     deriveFrom: {
       hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
