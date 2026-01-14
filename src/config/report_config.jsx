@@ -173,7 +173,7 @@ export const report_config = {
           layout: "simple",
           dataKeysToMatch: [
             "CIRG-SEXUAL-PARTNERS",
-            "CIRG-UNPROTECTED-SEX",
+            "CIRG-CNICS-SEXUAL-RISK",
             // "CIRG-UNPROTECTED-ANAL-SEX",
             // "CIRG-UNPROTECTED-ORAL-SEX",
             // "CIRG-UNPROTECTED-VAGINAL-SEX",
@@ -215,7 +215,7 @@ export const report_config = {
                 sx: {
                   whiteSpace: "pre"
                 }
-              }
+              },
             },
             {
               id: "date",

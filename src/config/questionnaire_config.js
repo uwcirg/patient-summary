@@ -1213,41 +1213,30 @@ const questionnaireConfigsRaw = {
     skipMeaningScoreRow: true,
     skipChart: true,
   },
-  "CIRG-UNPROTECTED-SEX": {
-    key: "CIRG-UNPROTECTED-SEX",
+  "CIRG-CNICS-SEXUAL-RISK": {
+    key: "CIRG-CNICS-SEXUAL-RISK",
     instrumentName: "Unprotected Sex",
     title: "Unprotected Sex",
     subtitle: "Past 3 months",
-    deriveFrom: {
-      hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
-      linkIds: [
-        "SEXUAL-RISK-SCORE-UNPROTECTED-ANAL",
-        "SEXUAL-RISK-SCORE-UNPROTECTED-ORAL",
-        "SEXUAL-RISK-SCORE-UNPROTECTED-VAGINAL",
-      ],
-    },
     columns: [
       {
-        linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-ANAL",
+        linkId: "SEXUAL-RISK-SCORE-UNPROTECTED",
         id: "result",
-        label: "Anal Sex"
-      },
-      {
-        linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-ORAL",
-        id: "result",
-        label: "Oral Sex"
-      },
-      {
-        linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-VAGINAL",
-        id: "result",
-        label: "Vaginal Sex"
       },
     ],
     valueFormatter: (val) =>
       String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : val,
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
+      const mainResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED", "strict"),
+      );
+      const mainResponseAnswer = mainResponse?.answer != null && mainResponse.answer !== undefined ? mainResponse.answer : null;
+      if (!mainResponseAnswer || String(mainResponseAnswer).toLowerCase() !== "yes") return mainResponseAnswer;
+      
       let arrResponses = [];
+      arrResponses.push(mainResponseAnswer);
+      
       // anal sex
       const analSexResponse = responses.find((response) =>
         linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED-ANAL", "strict"),

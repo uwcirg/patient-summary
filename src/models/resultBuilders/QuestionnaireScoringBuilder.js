@@ -777,7 +777,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const displayValue = (col?.label ? col.label + ": " : "") + (value ? value : "-");
       out[col.id] =
         (out[col.id] ? out[col.id] + "\n" : "") +
-        (config?.valueFormatter && value? config?.valueFormatter(displayValue) : displayValue);
+        (config?.valueFormatter && value ? config?.valueFormatter(displayValue) : displayValue) +
+        (col.extraLine ? "\n" : "");
     }
     return out;
   }
@@ -841,7 +842,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
   _getAnswer(response, config) {
     const o = new Response(response, config);
-    return o.answerText ? o.answerText : "--";
+    return o.answerText ? o.answerText : "-";
   }
   _getQuestion(item, config) {
     const o = new Response(item, config);
@@ -1037,7 +1038,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
             // row[dataItem.id] =
             //   (resolvedConfig.valueFormatter ? resolvedConfig.valueFormatter(rowAnswer) : rowAnswer) ?? "-";
-            row[dataItem.id] = rowAnswer ? rowAnswer : "-";
+            row[dataItem.id] = rowAnswer;
             row[`${dataItem.id}_data`] = getScoreParamsFromResponses([dataItem], resolvedConfig);
           }
 
