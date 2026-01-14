@@ -1284,7 +1284,7 @@ const questionnaireConfigsRaw = {
     },
     displayMeaningNotScore: true,
     skipResponses: true,
-    meaningRowLabel: "Summary (Past 3 months)",
+    meaningRowLabel: "Unprotected Sex (Past 3 months)",
     linkIdMatchMode: "strict",
     skipChart: true,
   },

@@ -294,7 +294,7 @@ export default function BarCharts(props) {
     </XAxis>
   );
 
-  const renderYAxis = () => <YAxis domain={yDomain} minTickGap={4} stroke="#FFF" tick={false} />;
+  const renderYAxis = () => <YAxis domain={yDomain} minTickGap={4} stroke="#FFF" tick={false} width={10}/>;
 
   const renderToolTip = () => (
     <Tooltip
@@ -351,9 +351,12 @@ export default function BarCharts(props) {
       {renderTitle()}
       <Box
         sx={{
-          width: { xs: 420, sm: chartWidth || 580,
+          width: {
+            xs: 420,
+            sm: chartWidth || 580,
             md: mdChartWidth || chartWidth || 580,
-            lg: lgChartWidth || chartWidth || 580,},
+            lg: lgChartWidth || chartWidth || 580,
+          },
           height: 250,
         }}
         key={id}

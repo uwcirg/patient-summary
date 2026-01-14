@@ -337,9 +337,9 @@ export default function LineCharts(props) {
     if (isSmallScreen) {
       return { top: 20 + extraTopMargin, right: 14, left: 14, bottom: 10 };
     } else if (isMediumScreen) {
-      return { top: 20 + extraTopMargin, right: 18, left: 18, bottom: 10 };
+      return { top: 20 + extraTopMargin, right: 20, left: 18, bottom: 10 };
     }
-    return { top: 20 + extraTopMargin, right: 20, left: 20, bottom: 10 };
+    return { top: 20 + extraTopMargin, right: 24, left: 20, bottom: 10 };
   };
 
   // Responsive X-axis height
@@ -362,7 +362,7 @@ export default function LineCharts(props) {
           : { style: { fontSize: isSmallScreen ? "10px" : "12px", fontWeight: 500 }, textAnchor: "middle" }
       }
       tickFormatter={xTickFormatter}
-      tickMargin={isSmallScreen ? 8 : 12}
+      tickMargin={showTicks ? (isSmallScreen ? 8 : 12) : 0}
       interval="preserveStartEnd"
       scale="time"
       angle={xTickLabelAngle ?? 0}
@@ -481,8 +481,8 @@ export default function LineCharts(props) {
           : false
       }
       ticks={yTicksToUse}
-      tickMargin={8}
-      width={isSmallScreen ? 50 : 60}
+      tickMargin={showTicks ? 8 : 0}
+      width={showTicks ? isSmallScreen ? 50 : 60 : 10}
     />
   );
 
@@ -537,7 +537,7 @@ export default function LineCharts(props) {
         wrapperStyle={{
           position: "absolute",
           top: isSmallScreen ? 4 : 10,
-          right: isSmallScreen ? 18 : 36,
+          right: isSmallScreen ? 20 : 48,
           width: "auto",
         }}
         content={(legendProps) => <CustomLegend {...legendProps} sources={sources} />}

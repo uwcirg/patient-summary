@@ -33,8 +33,8 @@ class Score {
   }
 
   get displayValue() {
-    const formatter = this.scoreParams?.valueFormatter;
-    return this.score != null ? (formatter ? formatter(this.score) : this.score) : this.rawScore ? this.rawScore : "";
+    //const formatter = this.scoreParams?.valueFormatter;
+    return this.score != null ? this.score : this.rawScore ? this.rawScore : "";
   }
 
   get textColorClass() {

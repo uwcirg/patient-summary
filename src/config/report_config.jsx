@@ -110,7 +110,6 @@ export const report_config = {
               align: "left",
               accessor: "result",
               type: "text",
-              formatter: (row, value) => (row.key === "CIRG-VAS" && value ? value + " %" : value),
             },
           ],
         },
