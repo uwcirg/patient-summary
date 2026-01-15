@@ -32,7 +32,12 @@ import {
   getTitleByRow,
   getScoringLinkIdFromConfig,
 } from "./helpers";
-import { DEFAULT_FALLBACK_SCORE_MAPS, DEFAULT_VAL_TO_LOIN_CODE, EXCLUDED_LINK_ID_KEYWORDS } from "@/consts";
+import {
+  DEFAULT_FALLBACK_SCORE_MAPS,
+  DEFAULT_VAL_TO_LOIN_CODE,
+  EXCLUDED_LINK_ID_KEYWORDS,
+  EMPTY_CELL_STRING,
+} from "@/consts";
 import questionnaireConfig from "@/config/questionnaire_config";
 import {
   conceptText,
@@ -794,44 +799,45 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     );
     const fromRegistry = keyToUse ? questionnaireConfig[keyToUse] : null;
     const config = fromRegistry ? fromRegistry : this.cfg;
+    //const seen = new Set();
+    const rows = (questionnaireResponses || [])
+      .map((qr, rIndex) => {
+        const flat = this.flattenResponseItems(qr.item);
+        const { score, rawScore, subScores, scoringQuestionScore, totalAnsweredItems, totalItems } =
+          this.getScoreStatsFromQuestionnaireResponse(qr, questionnaire, config);
+        const source = this.getDataSource(qr);
+        let responses = this.formattedResponses(questionnaire?.item ?? [], flat, config).map((item) => {
+          item.source = source;
+          return item;
+        });
+        if (isEmptyArray(responses)) responses = this.responsesOnly(flat, config);
 
-    const rows = (questionnaireResponses || []).map((qr, rIndex) => {
-      const flat = this.flattenResponseItems(qr.item);
-      const { score, rawScore, subScores, scoringQuestionScore, totalAnsweredItems, totalItems } =
-        this.getScoreStatsFromQuestionnaireResponse(qr, questionnaire, config);
-      const source = this.getDataSource(qr);
-      let responses = this.formattedResponses(questionnaire?.item ?? [], flat, config).map((item) => {
-        item.source = source;
-        return item;
+        return {
+          ...(config ?? {}),
+          ...(config?.columns ? this.getColumnObjects(config.columns, qr, config) : {}),
+          id: qr.id + "_" + rIndex,
+          instrumentName: config?.instrumentName ?? this.questionnaireIDFromQR(qr),
+          date: qr.authored ?? null,
+          displayDate: getLocaleDateStringFromDate(qr.authored),
+          columnDisplayDate:
+            `${getLocaleDateStringFromDate(qr.authored, "YYYY-MM-DD HH:mm")} ${source ? "\n\r" + source : ""}`.trim(),
+          source,
+          responses,
+          rawScore,
+          score,
+          scoringQuestionScore,
+          subScores,
+          ...(subScores ?? {}),
+          totalItems,
+          totalAnsweredItems,
+          authoredDate: qr.authored,
+          lastUpdated: qr.meta?.lastUpdated,
+          config: config,
+          questionnaire,
+          questionnaireResponse: qr,
+          patientBundle: this.patientBundle,
+        };
       });
-      if (isEmptyArray(responses)) responses = this.responsesOnly(flat, config);
-
-      return {
-        ...(config ?? {}),
-        ...(config?.columns ? this.getColumnObjects(config.columns, qr, config) : {}),
-        id: qr.id + "_" + rIndex,
-        instrumentName: config?.instrumentName ?? this.questionnaireIDFromQR(qr),
-        date: qr.authored ?? null,
-        displayDate: getLocaleDateStringFromDate(qr.authored),
-        columnDisplayDate:
-          `${getLocaleDateStringFromDate(qr.authored, "YYYY-MM-DD HH:mm")} ${source ? "\n\r" + source : ""}`.trim(),
-        source,
-        responses,
-        rawScore,
-        score,
-        scoringQuestionScore,
-        subScores,
-        ...(subScores ?? {}),
-        totalItems,
-        totalAnsweredItems,
-        authoredDate: qr.authored,
-        lastUpdated: qr.meta?.lastUpdated,
-        config: config,
-        questionnaire,
-        questionnaireResponse: qr,
-        patientBundle: this.patientBundle,
-      };
-    });
 
     return this.sortByNewestAuthoredOrUpdated(rows);
   }
@@ -842,7 +848,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
   _getAnswer(response, config) {
     const o = new Response(response, config);
-    return o.answerText ? o.answerText : "-";
+    return o.answerText ? o.answerText : EMPTY_CELL_STRING;
   }
   _getQuestion(item, config) {
     const o = new Response(item, config);
@@ -861,13 +867,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
   _hasMeaningOnlyData(data) {
     return !isEmptyArray(data) && this._hasResponseData(data) && data.find((item) => item.displayMeaningNotScore);
-  }
-
-  _getAnswerByTargetLinkIdFromResponseData(targetLinkId, responseData, responses_id, config = {}) {
-    const matchResponseData = (responseData || []).find((item) => item.id === responses_id);
-    if (!matchResponseData || isEmptyArray(matchResponseData.responses)) return "--";
-    const answerItem = matchResponseData.responses.find((o) => this.isLinkIdEquals(o?.id, targetLinkId, config));
-    return this._getAnswer(answerItem, config);
   }
 
   _formatPrintColumnChunks = (columns = [], chunkSize = 3) => {
@@ -1035,9 +1034,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
             }
 
             const rowAnswer = matchedResponse ? this._getAnswer(matchedResponse, resolvedConfig) : null;
-
-            // row[dataItem.id] =
-            //   (resolvedConfig.valueFormatter ? resolvedConfig.valueFormatter(rowAnswer) : rowAnswer) ?? "-";
             row[dataItem.id] = rowAnswer;
             row[`${dataItem.id}_data`] = getScoreParamsFromResponses([dataItem], resolvedConfig);
           }
@@ -1546,14 +1542,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       CIDAS: "summarizeCIDAS",
       MINICOG: "summarizeMiniCog",
     };
-
     const selectedStrategyKey = Object.keys(strategyMap).find((key) => this.questionnaireRefMatches(key, config));
-
     const evaluationData = selectedStrategyKey
       ? this[strategyMap[selectedStrategyKey]](questionnaireResponses, questionnaire, options)
       : this.getResponsesSummary(questionnaireResponses, questionnaire);
 
-    // compute scoring/series/params/chart domain/etc.
+    // get valid scoring data
     const scoringData =
       !config?.skipChart && !isEmptyArray(evaluationData)
         ? evaluationData.filter(
@@ -1566,14 +1560,27 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         : null;
 
     const chartConfig = getChartConfig(questionnaire?.id);
-    let chartData = !isEmptyArray(scoringData)
-      ? scoringData.map((item, index) => ({
-          ...item,
-          ...getScoreParamsFromResponses(scoringData.slice(index), config),
-          id: item.id + "_" + item.instrumentName + "_" + index,
-          total: isNumber(item.score) ? item.score : null,
-        }))
-      : null;
+
+    let chartData = null;
+    if (!isEmptyArray(scoringData)) {
+      const seen = new Set();
+      chartData = scoringData
+        .map((item, index) => {
+          const { config, questionnaire, questionnaireResponse, patientBundle, chartParams, responses, ...rest } = item;
+          return {
+            ...rest,
+            ...getScoreParamsFromResponses(scoringData.slice(index), config),
+            id: item.id + "_" + item.instrumentName + "_" + index,
+            total: isNumber(item.score) ? item.score : null,
+          };
+        })
+        .filter(({ date, total }) => {
+          const key = `${date}|${total}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+    }
 
     let xDomain;
     if (chartData && chartConfig?.dataFormatter) {
@@ -1583,8 +1590,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       xDomain = getDateDomain(uniqueDates, { padding: uniqueDates.length <= 2 ? 0.15 : 0.05 });
     }
 
-    const { key, id, ...restOfConfig } = config ?? {};
-    const chartParams = { ...chartConfig, ...restOfConfig, ...(restOfConfig?.chartParams ?? {}), xDomain };
+    const { chartParams } = config ?? {};
+    const chartDataParams = { ...chartConfig, ...chartParams, xDomain };
     const tableResponseData = this._formatTableResponseData(evaluationData, config);
     const scoringSummaryData = this._formatScoringSummaryData(evaluationData, {
       tableResponseData,
@@ -1593,8 +1600,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     return {
       config,
-      chartConfig: chartParams,
-      chartData: { ...chartParams, data: chartData },
+      chartConfig: chartDataParams,
+      chartData: { ...chartDataParams, data: chartData },
       chartType: chartConfig?.type,
       responseData: evaluationData,
       scoringSummaryData,

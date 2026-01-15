@@ -1,5 +1,5 @@
 import { isEmptyArray, isNumber } from "@util";
-import { linkIdEquals } from "@util/fhirUtil";
+import { getResourcesByResourceType, linkIdEquals } from "@util/fhirUtil";
 import CHART_CONFIG, { SUCCESS_COLOR } from "./chart_config";
 import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS, PHQ9_ADMIN_NOTE } from "@/consts";
 import QuestionnaireScoringBuilder from "@/models/resultBuilders/QuestionnaireScoringBuilder";
@@ -1231,12 +1231,13 @@ const questionnaireConfigsRaw = {
       const mainResponse = responses.find((response) =>
         linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED", "strict"),
       );
-      const mainResponseAnswer = mainResponse?.answer != null && mainResponse.answer !== undefined ? mainResponse.answer : null;
+      const mainResponseAnswer =
+        mainResponse?.answer != null && mainResponse.answer !== undefined ? mainResponse.answer : null;
       if (!mainResponseAnswer || String(mainResponseAnswer).toLowerCase() !== "yes") return mainResponseAnswer;
-      
+
       let arrResponses = [];
       arrResponses.push(mainResponseAnswer);
-      
+
       // anal sex
       const analSexResponse = responses.find((response) =>
         linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED-ANAL", "strict"),
@@ -1467,7 +1468,9 @@ export function getProcessedQuestionnaireData(questionnaireId, opts = {}) {
   const config = summaryData?.questionnaireId?.config || getConfigForQuestionnaire(questionnaireId);
   if (!config) return null;
   const qb = new QuestionnaireScoringBuilder(config, bundle);
-  const processedSummaryData = qb._summariesByQuestionnaireRef(bundle);
+  const processedSummaryData = qb._summariesByQuestionnaireRef(
+    getResourcesByResourceType(bundle, "QuestionnaireResponse"),
+  );
   return processedSummaryData && processedSummaryData?.scoringSummaryData
     ? processedSummaryData
     : { ...config, config, scoringSummaryData: { ...config, hasData: false } };

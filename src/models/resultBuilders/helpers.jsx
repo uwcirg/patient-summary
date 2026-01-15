@@ -31,6 +31,8 @@ import Meaning from "@components/Meaning";
 import {
   DEFAULT_ANSWER_OPTIONS,
   CONDITION_CODES,
+  EMPTY_CELL_STRING,
+  IS_QUESTION_COLUMN_KEYWORDS,
   QUESTIONNAIRE_IDS,
   LINK_IDS,
   MINICOG_HIDDEN_IDS,
@@ -898,16 +900,11 @@ export function getNoDataDisplay() {
 
 export function getResponseColumns(data) {
   if (isEmptyArray(data)) return [];
-
-  const dates =
-    data?.map((item) => {
-      const { key, id, ...rest } = item ?? {};
-      return { id: item.id, key: item.key, ...rest };
-    }) ?? [];
+  const dates = data ?? [];
 
   // tiny safe normalizer to avoid raw objects rendering
   const normalize = (v) => {
-    if (v == null || String(v) === "null" || String(v) === "undefined") return "—";
+    if (v == null || String(v) === "" || String(v) === "null" || String(v) === "undefined") return "—";
     if (typeof v === "string" || typeof v === "number") return v;
     if (React.isValidElement(v)) return v;
     if (Array.isArray(v)) return v.join(", ");
@@ -931,14 +928,14 @@ export function getResponseColumns(data) {
         const q = rowData?.question ?? "";
         const config = rowData?.config;
         const cleaned = typeof q === "string" ? q.replace(/\s*\([^)]*\)/g, "").trim() : "";
+        const normalizedClean = normalizeStr(cleaned);
         const isQuestion = normalizeStr(cleaned) === "questions";
+
         if (
           typeof q === "string" &&
-          (normalizeStr(cleaned).includes("score") ||
-            normalizeStr(cleaned).includes("meaning") ||
-            normalizeStr(cleaned).includes("summary") ||
-            normalizeStr(cleaned).includes("visual analog scale") ||
-            normalizeStr(cleaned) === "status" ||
+          (IS_QUESTION_COLUMN_KEYWORDS.some(
+            (keyword) => normalizedClean === keyword || normalizedClean.includes(keyword),
+          ) ||
             normalizeStr(cleaned) === normalizeStr(config?.title) ||
             isQuestion)
         ) {
@@ -967,7 +964,8 @@ export function getResponseColumns(data) {
         if (rowData.readOnly) return <span className="text-readonly"></span>;
         if (isNumber(rowDataItem)) return rowDataItem;
         // explicit placeholders prevent React from trying to render objects
-        if (!rowDataItem || String(rowDataItem) === "null" || String(rowDataItem) === "undefined") return "—";
+        if (!rowDataItem || String(rowDataItem) === "null" || String(rowDataItem) === "undefined")
+          return EMPTY_CELL_STRING;
         if (rowDataItem.hasMeaningOnly) {
           const { key, ...rest } = rowDataItem;
           if (!rowDataItem.meaning) return "-";
@@ -992,7 +990,7 @@ export function getResponseColumns(data) {
         const contentToRender = typeof rowDataItem === "string" ? stripHtmlTags(rowDataItem) : normalize(rowDataItem);
         if (contentToRender) return contentToRender;
         // string answers render directly; everything else is safely stringified
-        return "—";
+        return EMPTY_CELL_STRING;
       },
     })),
   ];

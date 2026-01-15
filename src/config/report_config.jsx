@@ -213,8 +213,8 @@ export const report_config = {
               type: "text",
               cellProps: {
                 sx: {
-                  whiteSpace: "pre"
-                }
+                  whiteSpace: "pre",
+                },
               },
             },
             {
