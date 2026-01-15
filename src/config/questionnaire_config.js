@@ -1468,9 +1468,15 @@ export function getProcessedQuestionnaireData(questionnaireId, opts = {}) {
   const config = summaryData?.questionnaireId?.config || getConfigForQuestionnaire(questionnaireId);
   if (!config) return null;
   const qb = new QuestionnaireScoringBuilder(config, bundle);
-  const processedSummaryData = qb._summariesByQuestionnaireRef(
-    getResourcesByResourceType(bundle, "QuestionnaireResponse"),
-  );
+  const qrBundle = getResourcesByResourceType(bundle, "QuestionnaireResponse");
+  const matchQs = [questionnaireId, config.deriveFrom?.hostIds ?? []].flat();
+  const matchedQrs = qrBundle?.filter((item) => {
+    const qId = item.questionnaire ? item.questionnaire?.split("/")[1] : null;
+    return qId && matchQs.indexOf(qId) !== -1;
+  });
+  // TODO get only matched qrs using questionnaireId and deriveFrom hostIds
+
+  const processedSummaryData = !isEmptyArray(matchedQrs) ? qb._summariesByQuestionnaireRef(matchedQrs) : null;
   return processedSummaryData && processedSummaryData?.scoringSummaryData
     ? processedSummaryData
     : { ...config, config, scoringSummaryData: { ...config, hasData: false } };

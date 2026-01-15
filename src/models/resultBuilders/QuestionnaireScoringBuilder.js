@@ -811,7 +811,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           return item;
         });
         if (isEmptyArray(responses)) responses = this.responsesOnly(flat, config);
-
         return {
           ...(config ?? {}),
           ...(config?.columns ? this.getColumnObjects(config.columns, qr, config) : {}),
@@ -1592,8 +1591,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const { chartParams } = config ?? {};
     const chartDataParams = { ...chartConfig, ...chartParams, xDomain };
-    const tableResponseData = this._formatTableResponseData(evaluationData, config);
-    const scoringSummaryData = this._formatScoringSummaryData(evaluationData, {
+    const dedupeByDateLatest = (arr) => {
+      const map = new Map();
+      arr.forEach(item => map.set(item.date, item));
+      return [...map.values()];
+    }
+    const useData = dedupeByDateLatest(evaluationData);
+    const tableResponseData = this._formatTableResponseData(useData, config);
+    const scoringSummaryData = this._formatScoringSummaryData(useData, {
       tableResponseData,
       config,
     });
