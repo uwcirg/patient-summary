@@ -931,6 +931,7 @@ const questionnaireConfigsRaw = {
       },
     ],
     maximumScore: 27,
+    linkIdMatchMode: "fuzzy",
     questionLinkIds: [
       "/44250-9",
       "/44255-8",
