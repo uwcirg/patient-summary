@@ -153,6 +153,7 @@ export default function ResponsesTable({
 
                       ...(col.headerStyle || {}),
                     }}
+                    variant="head"
                   >
                     {col.title}
                   </TableCell>

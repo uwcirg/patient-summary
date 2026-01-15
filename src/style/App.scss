@@ -211,12 +211,18 @@ p {
     }
     td {
       border-right: 0 !important;
+       &:last-of-type {
+        border-right: 1px solid $border-color !important;
+      }
     }
   }
   tr:has(.question-row) {
     td {
       border-left: 0 !important;
       &:first-of-type {
+        border-right: 1px solid $border-color !important;
+      }
+      &:last-of-type {
         border-right: 1px solid $border-color !important;
       }
       background-color: #fff;

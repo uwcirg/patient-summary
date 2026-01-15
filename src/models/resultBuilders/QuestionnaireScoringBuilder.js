@@ -906,7 +906,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       hasData: !isEmptyArray(data),
       responseColumns,
       printColumnChunks: this._formatPrintColumnChunks(responseColumns, 3),
-      responseData: data,
+      responseData: data?.map((item) => {
+        const { patientBundle, ...rest } = item;
+        return { ...rest };
+      }),
       tableResponseData,
       questionnaire: !questionnaire
         ? getQuestionnaireFromRowData(data[0], getResourcesByResourceType(this.patientBundle, "Questionnaire"))
@@ -1564,7 +1567,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const seen = new Set();
       chartData = scoringData
         .map((item, index) => {
-          const { questionnaire, questionnaireResponse, patientBundle, config, chartParams, ...rest } = item;
+          const { responses, questionnaire, questionnaireResponse, patientBundle, config, chartParams, ...rest } = item;
           return {
             ...rest,
             ...getScoreParamsFromResponses(scoringData.slice(index), config),
