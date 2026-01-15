@@ -800,43 +800,42 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const fromRegistry = keyToUse ? questionnaireConfig[keyToUse] : null;
     const config = fromRegistry ? fromRegistry : this.cfg;
     //const seen = new Set();
-    const rows = (questionnaireResponses || [])
-      .map((qr, rIndex) => {
-        const flat = this.flattenResponseItems(qr.item);
-        const { score, rawScore, subScores, scoringQuestionScore, totalAnsweredItems, totalItems } =
-          this.getScoreStatsFromQuestionnaireResponse(qr, questionnaire, config);
-        const source = this.getDataSource(qr);
-        let responses = this.formattedResponses(questionnaire?.item ?? [], flat, config).map((item) => {
-          item.source = source;
-          return item;
-        });
-        if (isEmptyArray(responses)) responses = this.responsesOnly(flat, config);
-        return {
-          ...(config ?? {}),
-          ...(config?.columns ? this.getColumnObjects(config.columns, qr, config) : {}),
-          id: qr.id + "_" + rIndex,
-          instrumentName: config?.instrumentName ?? this.questionnaireIDFromQR(qr),
-          date: qr.authored ?? null,
-          displayDate: getLocaleDateStringFromDate(qr.authored),
-          columnDisplayDate:
-            `${getLocaleDateStringFromDate(qr.authored, "YYYY-MM-DD HH:mm")} ${source ? "\n\r" + source : ""}`.trim(),
-          source,
-          responses,
-          rawScore,
-          score,
-          scoringQuestionScore,
-          subScores,
-          ...(subScores ?? {}),
-          totalItems,
-          totalAnsweredItems,
-          authoredDate: qr.authored,
-          lastUpdated: qr.meta?.lastUpdated,
-          config: config,
-          questionnaire,
-          questionnaireResponse: qr,
-          patientBundle: this.patientBundle,
-        };
+    const rows = (questionnaireResponses || []).map((qr, rIndex) => {
+      const flat = this.flattenResponseItems(qr.item);
+      const { score, rawScore, subScores, scoringQuestionScore, totalAnsweredItems, totalItems } =
+        this.getScoreStatsFromQuestionnaireResponse(qr, questionnaire, config);
+      const source = this.getDataSource(qr);
+      let responses = this.formattedResponses(questionnaire?.item ?? [], flat, config).map((item) => {
+        item.source = source;
+        return item;
       });
+      if (isEmptyArray(responses)) responses = this.responsesOnly(flat, config);
+      return {
+        ...(config ?? {}),
+        ...(config?.columns ? this.getColumnObjects(config.columns, qr, config) : {}),
+        id: qr.id + "_" + rIndex,
+        instrumentName: config?.instrumentName ?? this.questionnaireIDFromQR(qr),
+        date: qr.authored ?? null,
+        displayDate: getLocaleDateStringFromDate(qr.authored),
+        columnDisplayDate:
+          `${getLocaleDateStringFromDate(qr.authored, "YYYY-MM-DD HH:mm")} ${source ? "\n\r" + source : ""}`.trim(),
+        source,
+        responses,
+        rawScore,
+        score,
+        scoringQuestionScore,
+        subScores,
+        ...(subScores ?? {}),
+        totalItems,
+        totalAnsweredItems,
+        authoredDate: qr.authored,
+        lastUpdated: qr.meta?.lastUpdated,
+        config: config,
+        questionnaire,
+        questionnaireResponse: qr,
+        patientBundle: this.patientBundle,
+      };
+    });
 
     return this.sortByNewestAuthoredOrUpdated(rows);
   }
@@ -1565,7 +1564,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const seen = new Set();
       chartData = scoringData
         .map((item, index) => {
-          const { config, questionnaire, questionnaireResponse, patientBundle, chartParams, responses, ...rest } = item;
+          const { questionnaire, questionnaireResponse, patientBundle, config, chartParams, ...rest } = item;
           return {
             ...rest,
             ...getScoreParamsFromResponses(scoringData.slice(index), config),
@@ -1590,12 +1589,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     }
 
     const { chartParams } = config ?? {};
-    const chartDataParams = { ...chartConfig, ...chartParams, xDomain };
+    const chartDataParams = { ...config, ...chartConfig, ...chartParams, xDomain };
     const dedupeByDateLatest = (arr) => {
       const map = new Map();
-      arr.forEach(item => map.set(item.date, item));
+      arr.forEach((item) => map.set(item.date, item));
       return [...map.values()];
-    }
+    };
     const useData = dedupeByDateLatest(evaluationData);
     const tableResponseData = this._formatTableResponseData(useData, config);
     const scoringSummaryData = this._formatScoringSummaryData(useData, {

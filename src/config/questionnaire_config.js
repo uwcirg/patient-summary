@@ -1474,8 +1474,7 @@ export function getProcessedQuestionnaireData(questionnaireId, opts = {}) {
     const qId = item.questionnaire ? item.questionnaire?.split("/")[1] : null;
     return qId && matchQs.indexOf(qId) !== -1;
   });
-  // TODO get only matched qrs using questionnaireId and deriveFrom hostIds
-
+  
   const processedSummaryData = !isEmptyArray(matchedQrs) ? qb._summariesByQuestionnaireRef(matchedQrs) : null;
   return processedSummaryData && processedSummaryData?.scoringSummaryData
     ? processedSummaryData
