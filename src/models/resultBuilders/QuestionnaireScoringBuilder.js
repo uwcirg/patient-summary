@@ -912,10 +912,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       hasData: !isEmptyArray(data),
       responseColumns,
       printColumnChunks: this._formatPrintColumnChunks(responseColumns, 3),
-      // responseData: data?.map((item) => {
-      //   const { patientBundle, ...rest } = item;
-      //   return { ...rest };
-      // }),
       tableResponseData,
       questionnaire: !questionnaire
         ? getQuestionnaireFromRowData(data[0], getResourcesByResourceType(this.patientBundle, "Questionnaire"))
