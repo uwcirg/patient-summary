@@ -19,11 +19,7 @@ class Score {
   isInRange() {
     return Score.range.indexOf(this.severity) !== -1;
   }
-
-  get rawScore() {
-    return this.scoreParams?.rawScore;
-  }
-
+  
   get currentScore() {
     return this.score;
   }
@@ -33,8 +29,7 @@ class Score {
   }
 
   get displayValue() {
-    //const formatter = this.scoreParams?.valueFormatter;
-    return this.score != null ? this.score : this.rawScore ? this.rawScore : "";
+    return this.score;
   }
 
   get textColorClass() {

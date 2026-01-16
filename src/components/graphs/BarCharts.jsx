@@ -300,8 +300,8 @@ export default function BarCharts(props) {
     <Tooltip
       itemStyle={{ fontSize: 10 }}
       labelStyle={{ fontSize: 10 }}
-      animationBegin={500}
-      animationDuration={550}
+      animationBegin={0}
+      animationDuration={0}
       // Use original timestamp in tooltip if available
       labelFormatter={(value, payload) => {
         if (tooltipLabelFormatter) {

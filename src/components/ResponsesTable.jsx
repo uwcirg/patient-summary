@@ -131,7 +131,7 @@ export default function ResponsesTable({
       >
         <Table size={dense ? "small" : "medium"} stickyHeader={stickyHeader}>
           <TableHead>
-            <TableRow>
+            <TableRow hover={false}>
               {safeColumns.map((col, colIndex) => {
                 const isFirstCol = colIndex === 0;
 
@@ -164,7 +164,7 @@ export default function ResponsesTable({
 
           <TableBody>
             {(tableData ?? []).map((row, rowIndex) => (
-              <TableRow key={row?.id ?? rowIndex} hover>
+              <TableRow key={row?.id ?? rowIndex} hover={false}>
                 {safeColumns.map((col, colIndex) => {
                   const content =
                     typeof col.render === "function"

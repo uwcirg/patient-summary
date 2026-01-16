@@ -653,7 +653,7 @@ export function getScoringLinkIdFromConfig(config = {}) {
  * @param {Array<Object>} responseItemsFlat - Flattened response items
  * @param {Object} config - Configuration object
  * @param {Object} ctx - Context with utility methods
- * @returns {Object} Score calculation results with rawScore, score, questionScores, etc.
+ * @returns {Object} Score calculation results with score, questionScores, etc.
  */
 export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, config = {}, ctx = {}) {
   const linkIds = config?.questionLinkIds ? config.questionLinkIds.map((id) => normalizeLinkId(id)) : [];
@@ -680,7 +680,6 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
   const allAnswered = questionScores.length > 0 && questionScores.every((v) => isNumber(v));
 
   let score = null;
-  let rawScore = ctx.getAnswerByResponseLinkId(scoringQuestionId, responseItemsFlat, config);
 
   if (isNumber(scoringQuestionScore)) {
     score = scoringQuestionScore;
@@ -688,7 +687,7 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
     // Only sum if all are numbers (already validated by allAnswered)
     score = questionScores.reduce((sum, n) => (n != null ? sum + n : sum), 0);
   } else {
-    score = rawScore;
+    score = null;
   }
 
   const subScores = {};
@@ -706,7 +705,6 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
   }
 
   return {
-    rawScore,
     score,
     scoringQuestionScore,
     questionScores,
@@ -786,7 +784,6 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   const scoringParams = {
     ...config,
     score,
-    rawScore: current?.rawScore,
     scoreSeverity,
     currentScore: curScore,
     previousScore: prevScore,

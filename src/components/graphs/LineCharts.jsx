@@ -413,10 +413,11 @@ export default function LineCharts(props) {
 
   const renderToolTip = () => (
     <Tooltip
-      itemStyle={{ fontSize: isSmallScreen ? "9px" : "10px" }}
-      labelStyle={{ fontSize: isSmallScreen ? "9px" : "10px" }}
-      animationBegin={500}
-      animationDuration={550}
+      itemStyle={{ fontSize: "10px" }}
+      labelStyle={{ fontSize: "10px"}}
+      animationBegin={0}
+      animationDuration={0}
+      shared={false}
       // Use originalDate in tooltip if available
       labelFormatter={(value, payload) => {
         if (tooltipLabelFormatter) {

@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 const NullDot = ({ isSmallScreen, cx, cy, payload, index }) => {
   if (cx == null || cy == null) return null;
 
-  const size = isSmallScreen ? 6 : 8;
+  const size = isSmallScreen ? 4 : 6;
   const strokeWidth = isSmallScreen ? 1.5 : 2;
   const halfSize = size / 2;
   const k = `nulldotsymbol-${payload?.id}_${payload?.key}_${payload?.source}-${index}`;

@@ -22,7 +22,7 @@ const sectionSx = {
   padding: (theme) => theme.spacing(1),
 };
 
-const tableStyle = { width: "auto", minWidth: "50%" };
+const tableStyle = { width: "auto", minWidth: "30%"};
 
 const flexWrapConfig = {
   xs: "wrap",
@@ -105,22 +105,6 @@ export default function PROReport() {
             )}
             {table.layout === "two-columns" && renderTwoColumns(table)}
           </Box>
-          {/* print only details */}
-          {/* <Box className="print-only">
-            {table.rows?.map((row) => {
-              if (!row.printColumnChunks) return null;
-              return row.printColumnChunks.map((chunk, index) => {
-                return (
-                  <ResponsesTable
-                    key={`${row.id}_chunk_${index}`}
-                    columns={chunk.columns}
-                    tableData={row.tableResponseData}
-                    title={`${row.title} Details ${index > 0 ? "(cont'd)" : ""}`}
-                  ></ResponsesTable>
-                );
-              });
-            })}
-          </Box> */}
         </Box>
       );
     },

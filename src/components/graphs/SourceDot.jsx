@@ -25,7 +25,7 @@ const SourceDot = ({ cx, cy, isSmallScreen, sources, yFieldKey, xFieldKey, paylo
   const strokeWidth = 2;
 
   // Responsive dot size
-  const dotSize = isSmallScreen ? 3 : (useParams.r ?? 4);
+  const dotSize = isSmallScreen ? 2 : (useParams.r ?? 4);
   const rectSize = isSmallScreen ? 6 : (useParams.width ?? 8);
 
   switch (String(payload.source).toLowerCase()) {

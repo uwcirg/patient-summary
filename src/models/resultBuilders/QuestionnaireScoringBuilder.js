@@ -762,7 +762,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const flat = this.flattenResponseItems(qr.item);
 
     const stats = calculateQuestionnaireScore(questionnaire, flat, config, this);
-    const { score, rawScore, subScores, scoringQuestionScore, scoreLinkIds } = stats;
+    const { score, subScores, scoringQuestionScore, scoreLinkIds } = stats;
 
     let totalItems = scoreLinkIds?.length ?? 0;
 
@@ -775,7 +775,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (totalItems === 0 && score != null) totalItems = 1;
     if (totalAnsweredItems === 0 && score != null) totalAnsweredItems = 1;
 
-    return { ...stats, score, rawScore, subScores, scoringQuestionScore, totalAnsweredItems, totalItems };
+    return { ...stats, score, subScores, scoringQuestionScore, totalAnsweredItems, totalItems };
   }
 
   getColumnObjects(columns, qr, config = {}) {
@@ -809,7 +809,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const config = fromRegistry ? fromRegistry : this.cfg;
     const rows = (questionnaireResponses || []).map((qr, rIndex) => {
       const flat = this.flattenResponseItems(qr.item);
-      const { score, rawScore, subScores, scoringQuestionScore, totalAnsweredItems, totalItems } =
+      const { score, subScores, scoringQuestionScore, totalAnsweredItems, totalItems } =
         this.getScoreStatsFromQuestionnaireResponse(qr, questionnaire, config);
       const source = this.getDataSource(qr);
       let responses = this.formattedResponses(questionnaire?.item ?? [], flat, config).map((item) => {
@@ -828,7 +828,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           `${getLocaleDateStringFromDate(qr.authored, "YYYY-MM-DD HH:mm")} ${source ? "\n\r" + source : ""}`.trim(),
         source,
         responses,
-        rawScore,
         score,
         scoringQuestionScore,
         subScores,
