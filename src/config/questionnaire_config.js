@@ -273,9 +273,9 @@ const questionnaireConfigsRaw = {
   },
   "CIRG-CNICS-ASSIST": {
     key: "CIRG-CNICS-ASSIST",
-    instrumentName: "Substance Use",
+    instrumentName: "Substances Reported",
     questionnaireMatchMode: "strict",
-    title: "Substance Use",
+    title: "Substances Reported",
     subtitle: "Past 3 months",
     disableHeaderRowSubtitle: true,
     minimumScore: 0,
@@ -462,7 +462,7 @@ const questionnaireConfigsRaw = {
     linkIdMatchMode: "strict",
     chartParams: {
       ...CHART_CONFIG.default,
-      title: "Substance Use",
+      title: "Substances Reported",
       chartHeight: 360,
       minimumYValue: 0,
       maximumYValue: 4,
@@ -961,7 +961,7 @@ const questionnaireConfigsRaw = {
       { min: 0, label: "low", meaning: "Minimal depression" },
     ],
     showNumAnsweredWithScore: true,
-    chartParams: { ...CHART_CONFIG.default, title: "PHQ-9 Score", minimumYValue: 0, maximumYValue: 27, xLabel: "" },
+    chartParams: { ...CHART_CONFIG.default, title: "PHQ-9 Score", minimumYValue: 0, maximumYValue: 27, xLabel: "", connectNulls: true},
   },
   "CIRG-SLUMS": {
     key: "CIRG-SLUMS",
@@ -1060,7 +1060,7 @@ const questionnaireConfigsRaw = {
   },
   "CIRG-VAS": {
     key: "CIRG-VAS",
-    title: "Visual Analog Scale",
+    title: "Percent ART taken",
     subtitle: "Past 4 weeks",
     instrumentName: "VAS",
     scoringQuestionId: "ARV-VAS",
@@ -1077,7 +1077,7 @@ const questionnaireConfigsRaw = {
     valueFormatter: (value) => (isNumber(value) ? `${value} %` : value),
     chartParams: {
       ...CHART_CONFIG.default,
-      title: "ART Adherence (VAS %)",
+      title: "Percent ART Taken",
       minimumYValue: 0,
       maximumYValue: 100,
       xLabel: "",
@@ -1176,6 +1176,11 @@ const questionnaireConfigsRaw = {
     chartParams: { ...CHART_CONFIG.default, title: "MINI Score", minimumYValue: 0, maximumYValue: 7, xLabel: "" },
   },
   //TODO, implement those
+  "CIRG-PARTNER-CONTEXT": {
+    key: "CIRG-PARTNER-CONTEXT",
+    instrumentName: "Partner Context",
+    title: "Partner Context"
+  },
   "CIRG-IDU": {
     key: "CIRG-IDU",
     instrumentName: "IDU",

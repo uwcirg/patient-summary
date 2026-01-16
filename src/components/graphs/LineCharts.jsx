@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Typography, Box } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
   LineChart,
@@ -19,12 +19,16 @@ import {
 import {
   ALERT_COLOR,
   SUCCESS_COLOR,
-  WARNING_COLOR,
   buildTimeTicks,
   fmtMonthYear,
+  getDotColor,
   thinTicksToFit,
 } from "@config/chart_config";
+import InfoDialog from "@components/InfoDialog";
+import CustomLegend from "./CustomLegend";
 import CustomTooltip from "./CustomTooltip";
+import NullDot from "./NullDot";
+import SourceDot from "./SourceDot";
 import { generateUUID, isEmptyArray, range } from "@/util";
 
 export default function LineCharts(props) {
@@ -45,6 +49,7 @@ export default function LineCharts(props) {
     mdChartWidth,
     maximumYValue,
     minimumYValue,
+    note,
     showTicks,
     strokeWidth,
     title,
@@ -77,54 +82,6 @@ export default function LineCharts(props) {
     for (const d of data || []) if (d?.source) set.add(d.source);
     return Array.from(set);
   }, [data]);
-
-  const getDotColor = (entry, baseColor) => {
-    // If no duplicates on this day, use base color
-    if (!entry._duplicateCount || entry._duplicateCount === 1) {
-      return baseColor;
-    }
-
-    // For duplicates, adjust the brightness based on index
-    const hexToRgb = (hex) => {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result
-        ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16),
-          }
-        : null;
-    };
-
-    const rgbToHex = (r, g, b) => {
-      return (
-        "#" +
-        [r, g, b]
-          .map((x) => {
-            const hex = Math.round(x).toString(16);
-            return hex.length === 1 ? "0" + hex : hex;
-          })
-          .join("")
-      );
-    };
-
-    const adjustBrightness = (color, amount) => {
-      const rgb = hexToRgb(color);
-      if (!rgb) return color;
-
-      return rgbToHex(
-        Math.min(255, Math.max(0, rgb.r + amount)),
-        Math.min(255, Math.max(0, rgb.g + amount)),
-        Math.min(255, Math.max(0, rgb.b + amount)),
-      );
-    };
-
-    // Adjust brightness: first dot darker, last dot lighter
-    const brightnessStep = 5; // Adjust this value for more/less variation
-    const adjustment = (entry._duplicateIndex - Math.floor(entry._duplicateCount / 2)) * brightnessStep;
-
-    return adjustBrightness(baseColor, adjustment);
-  };
 
   // Process data to add jitter for overlapping points on the same calendar day AND same y-value
   const processedData = React.useMemo(() => {
@@ -251,6 +208,21 @@ export default function LineCharts(props) {
     return domain;
   }, [xDomain, wasTruncated]);
 
+  const nullValueData = React.useMemo(() => {
+    if (!filteredData || filteredData.length === 0) return [];
+
+    return filteredData.map((d) => ({
+      ...d,
+      [yFieldKey]: d[yFieldKey] == null || d[yFieldKey] === undefined ? 0 : null,
+      isNull: d[yFieldKey] == null || d[yFieldKey] === undefined,
+    }));
+  }, [filteredData, yFieldKey]);
+
+  const hasNullValues = React.useMemo(() => {
+    if (!filteredData || filteredData.length === 0) return false;
+    return filteredData.some((d) => d[yFieldKey] === null || d[yFieldKey] === undefined);
+  }, [filteredData, yFieldKey]);
+
   const hasMultipleYFields = () => yLineFields && yLineFields.length > 0;
 
   let maxYValue = maximumYValue
@@ -268,9 +240,23 @@ export default function LineCharts(props) {
   };
 
   const renderTitle = () => (
-    <Typography variant="subtitle1" component="h4" color="secondary" sx={{ textAlign: "center" }}>
-      {title}
-    </Typography>
+    <Stack direction="row" alignItems="center" justifyContent={"center"}>
+      <Typography variant="subtitle1" component="h4" color="secondary" sx={{ textAlign: "center" }}>
+        {title}
+      </Typography>
+      {note && (
+        <InfoDialog
+          title={`About ${title} Scoring`}
+          content={note}
+          buttonTitle={`Click to learn more about ${title} scoring`}
+          allowHtml={true}
+          buttonSize="small"
+          buttonIconProps={{
+            fontSize: "small",
+          }}
+        />
+      )}
+    </Stack>
   );
 
   const uniqSorted = (arr) => {
@@ -332,7 +318,7 @@ export default function LineCharts(props) {
   const getResponsiveMargin = () => {
     if (chartMargin) return chartMargin;
 
-    const extraTopMargin = hasMultipleYFields? 10: 0;
+    const extraTopMargin = hasMultipleYFields ? 10 : 0;
 
     if (isSmallScreen) {
       return { top: 20 + extraTopMargin, right: 14, left: 14, bottom: 10 };
@@ -375,67 +361,6 @@ export default function LineCharts(props) {
 
   const yDomain = maxYValue ? [minYValue ?? 0, maxYValue] : [minYValue ?? 0, "auto"];
   const yTicksToUse = yTicks || (maxYValue ? range(minYValue ?? 0, maxYValue) : range(minYValue ?? 0, 50));
-
-  // ----- KEY-SAFE CUSTOM DOT WITH STROKE -----
-  const SourceDot = ({ cx, cy, payload, index, params }) => {
-    if (isEmptyArray(sources)) return null;
-    if (cx == null || cy == null) return null;
-    const useParams = params ? params : {};
-
-    // Determine base color first
-    let baseColor;
-    if (payload.highSeverityScoreCutoff && payload[yFieldKey] >= payload.highSeverityScoreCutoff)
-      baseColor = ALERT_COLOR;
-    else if (payload.mediumSeverityScoreCutoff && payload[yFieldKey] >= payload.mediumSeverityScoreCutoff)
-      baseColor = WARNING_COLOR;
-    else baseColor = SUCCESS_COLOR;
-
-    // Apply duplicate coloring
-    const color = getDotColor(payload, baseColor);
-
-    const k = `dot-${payload?.id}_${payload?.key}_${payload?.source}-${payload?.[xFieldKey]}-${index}`;
-
-    // White stroke for better visibility
-    const strokeColor = "#fff";
-    const strokeWidth = 2;
-
-    // Responsive dot size
-    const dotSize = isSmallScreen ? 3 : (useParams.r ?? 4);
-    const rectSize = isSmallScreen ? 6 : (useParams.width ?? 8);
-
-    switch (String(payload.source).toLowerCase()) {
-      case "cnics":
-        return (
-          <circle key={k} cx={cx} cy={cy} r={dotSize} fill={color} stroke={strokeColor} strokeWidth={strokeWidth} />
-        );
-      case "epic":
-        return (
-          <rect
-            key={k}
-            x={cx - rectSize / 2}
-            y={cy - rectSize / 2}
-            width={rectSize}
-            height={rectSize}
-            fill={color}
-            stroke={strokeColor}
-            strokeWidth={strokeWidth}
-          />
-        );
-      default:
-        return (
-          <circle key={k} cx={cx} cy={cy} r={dotSize} fill={color} stroke={strokeColor} strokeWidth={strokeWidth} />
-        );
-    }
-  };
-
-  SourceDot.propTypes = {
-    cx: PropTypes.number,
-    cy: PropTypes.number,
-    payload: PropTypes.object,
-    index: PropTypes.number,
-    params: PropTypes.object,
-  };
-  // --------------------------------
 
   const renderYAxis = () => (
     <YAxis
@@ -482,7 +407,7 @@ export default function LineCharts(props) {
       }
       ticks={yTicksToUse}
       tickMargin={showTicks ? 8 : 0}
-      width={showTicks ? isSmallScreen ? 50 : 60 : 10}
+      width={showTicks ? (isSmallScreen ? 50 : 60) : 10}
     />
   );
 
@@ -495,7 +420,6 @@ export default function LineCharts(props) {
       // Use originalDate in tooltip if available
       labelFormatter={(value, payload) => {
         if (tooltipLabelFormatter) {
-          // eslint-disable-next-line
           const originalValue = payload?.[0]?.payload?.originalDate ?? value;
           return tooltipLabelFormatter(originalValue, payload);
         }
@@ -540,108 +464,16 @@ export default function LineCharts(props) {
           right: isSmallScreen ? 20 : 48,
           width: "auto",
         }}
-        content={(legendProps) => <CustomLegend {...legendProps} sources={sources} />}
-      />
-    );
-  };
-
-  const CustomLegend = (payload) => {
-    const hasCnics = sources.includes("CNICS") || sources.includes("cnics");
-    const hasEpic = sources.includes("EPIC") || sources.includes("epic");
-    let items = [];
-
-    const iconSize = isSmallScreen ? 12 : 16;
-    const dotRadius = isSmallScreen ? 3 : 4;
-    const rectSize = isSmallScreen ? 6 : 8;
-
-    if (hasCnics) {
-      items.push({
-        key: "cnics",
-        label: "CNICS",
-        icon: (
-          <svg width={iconSize} height={iconSize}>
-            <circle cx={iconSize / 2} cy={iconSize / 2} r={dotRadius} fill="#444" stroke="#fff" strokeWidth="2" />
-          </svg>
-        ),
-      });
-    }
-    if (hasEpic) {
-      items.push({
-        key: "epic",
-        label: "EPIC",
-        icon: (
-          <svg width={iconSize} height={iconSize}>
-            <rect
-              x={(iconSize - rectSize) / 2}
-              y={(iconSize - rectSize) / 2}
-              width={rectSize}
-              height={rectSize}
-              fill="#444"
-              stroke="#fff"
-              strokeWidth="2"
-            />
-          </svg>
-        ),
-      });
-    }
-    //eslint-disable-next-line
-    const points = payload && !isEmptyArray(payload.payload) ? payload.payload : [];
-
-    return (
-      <div
-        style={{
-          display: "flex",
-          gap: isSmallScreen ? 8 : 16,
-          alignItems: "flex-start",
-          padding: isSmallScreen ? "2px 4px" : "4px 8px",
-          position: "relative",
-          left: isSmallScreen ? "16px" : "32px",
-          flexWrap: "wrap",
-        }}
-      >
-        {items.map((it) => (
-          <div
-            key={it.key}
-            style={{ display: "flex", gap: 2, alignItems: "center" }}
-            aria-label={`${it.label} legend item`}
-          >
-            {it.icon}
-            <span style={{ fontSize: isSmallScreen ? 9 : 10, color: "#444" }}>{it.label}</span>
-          </div>
-        ))}
-        {points.length > 1 && (
-          <div
-            style={{
-              marginLeft: isSmallScreen ? 8 : 16,
-              fontSize: isSmallScreen ? 9 : 10,
-              color: "#444",
-              display: "grid",
-              gridTemplateColumns: isSmallScreen ? "1fr" : points.length > 6 ? "repeat(3, 1fr)" : "repeat(2, 1fr)",
-              gap: isSmallScreen ? "2px 8px" : "4px 16px",
-              maxWidth: isSmallScreen ? "200px" : "320px",
-            }}
-          >
-            {points.map((entry, index) => (
-              <div key={`item-${index}`} style={{ display: "flex", alignItems: "center" }}>
-                <svg width={iconSize} height={iconSize} style={{ marginRight: 4, flexShrink: 0 }}>
-                  <line
-                    x1="0"
-                    y1={iconSize / 2}
-                    x2={iconSize - 4}
-                    y2={iconSize / 2}
-                    stroke={entry.color}
-                    strokeWidth={isSmallScreen ? 2 : 4}
-                    strokeDasharray={entry.payload.strokeDasharray || "0"}
-                  />
-                </svg>
-                <span style={{ fontSize: isSmallScreen ? 8 : 10, whiteSpace: "nowrap" }}>
-                  {entry.value.replace(/[_,-]/g, " ")}
-                </span>
-              </div>
-            ))}
-          </div>
+        content={(legendProps) => (
+          <CustomLegend
+            {...legendProps}
+            sources={sources}
+            isSmallScreen={isSmallScreen}
+            hasNullValues={hasNullValues}
+            yLineFields={yLineFields}
+          />
         )}
-      </div>
+      />
     );
   };
 
@@ -681,16 +513,18 @@ export default function LineCharts(props) {
               payload={payload}
               index={index}
               isActive
-              params={{ r: isSmallScreen ? 4 : 5, width: isSmallScreen ? 6 : 8, height: isSmallScreen ? 6 : 8}}
+              isSmallScreen={isSmallScreen}
+              sources={sources}
+              xFieldKey={xFieldKey}
+              yFieldKey={yFieldKey}
+              params={{ r: isSmallScreen ? 4 : 5, width: isSmallScreen ? 6 : 8, height: isSmallScreen ? 6 : 8 }}
             />
           );
         }
 
         // fallback: severity-based active circles with duplicate coloring
         let baseColor = dotColor;
-        // eslint-disable-next-line
         if (payload.highSeverityScoreCutoff) {
-          // eslint-disable-next-line
           baseColor = value >= payload.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR;
         }
         const color = getDotColor(payload, baseColor);
@@ -699,14 +533,23 @@ export default function LineCharts(props) {
       }}
       dot={({ cx, cy, payload, value, index }) => {
         if (!isEmptyArray(sources))
-          // eslint-disable-next-line
-          return <SourceDot key={`${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />;
+          return (
+            <SourceDot
+              key={`${payload?.id}_${index}`}
+              cx={cx}
+              cy={cy}
+              payload={payload}
+              index={index}
+              isSmallScreen={isSmallScreen}
+              sources={sources}
+              xFieldKey={xFieldKey}
+              yFieldKey={yFieldKey}
+            />
+          );
 
         // Determine base color
         let baseColor;
-        // eslint-disable-next-line
         if (payload.highSeverityScoreCutoff) {
-          // eslint-disable-next-line
           baseColor = value >= payload.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR;
         } else {
           baseColor = dotColor;
@@ -717,7 +560,6 @@ export default function LineCharts(props) {
 
         return (
           <circle
-            // eslint-disable-next-line
             key={`dot-default-${payload?.id}_${index}`}
             cx={cx}
             cy={cy}
@@ -730,6 +572,25 @@ export default function LineCharts(props) {
       }}
       strokeWidth={strokeWidth ? strokeWidth : 1}
       connectNulls={!!connectNulls}
+    />
+  );
+
+  const renderNullLine = () => (
+    <Line
+      data={nullValueData}
+      type="monotone"
+      dataKey={yFieldKey}
+      stroke="transparent"
+      fill="transparent"
+      strokeWidth={0}
+      isAnimationActive={false}
+      legendType="none"
+      dot={({ cx, cy, payload, index }) => {
+        if (!payload.isNull) return null;
+        return <NullDot key={`null-${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />;
+      }}
+      activeDot={false}
+      connectNulls={false}
     />
   );
 
@@ -821,7 +682,7 @@ export default function LineCharts(props) {
           value: "data truncated",
           position: "top",
           fill: "#666",
-          fontSize: isSmallScreen ? 10: 12,
+          fontSize: isSmallScreen ? 10 : 12,
           fontWeight: 500,
         }}
       />
@@ -860,6 +721,7 @@ export default function LineCharts(props) {
             {renderLegend()}
             {hasMultipleYFields() && renderMultipleLines()}
             {!hasMultipleYFields() && renderSingleLine()}
+            {renderNullLine()}
             {enableAxisMeaningLabels && renderMaxScoreMeaningLabel()}
             {enableAxisMeaningLabels && renderMinScoreMeaningLabel()}
           </LineChart>
@@ -887,6 +749,7 @@ LineCharts.propTypes = {
   lgChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   maximumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   minimumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  note: PropTypes.string,
   showTicks: PropTypes.bool,
   strokeWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   title: PropTypes.string,

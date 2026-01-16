@@ -173,7 +173,7 @@ export default function ScoringSummary(props) {
           >
             {title} {row.subtitle ? row.subtitle : ""}
           </Link>
-        ) : props.enableResponsesViewer && !isEmptyArray(row?.responseData) ? (
+        ) : props.enableResponsesViewer && !isEmptyArray(row?.tableResponseData) ? (
           <ResponsesViewer
             title={title}
             subtitle={row.subtitle}
@@ -364,7 +364,7 @@ export default function ScoringSummary(props) {
       <TableBody>
         {hasData ? (
           dataToUse.map((row, index) => {
-            const noRowData = isEmptyArray(row.responseData);
+            const noRowData = isEmptyArray(row.tableResponseData);
             return (
               <TableRow key={`summary_${row.key || index}_${index}`}>
                 {visibleColumns.map((col, colIndex) => (

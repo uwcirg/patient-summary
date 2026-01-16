@@ -410,6 +410,7 @@ export function toMaybeDate(s) {
 
 /** Strict numeric coercion, returns number or null (never NaN). */
 export function toFiniteNumber(v) {
+  if (v == null) return null;
   const n = typeof v === "string" && v.trim() !== "" ? Number(v) : typeof v === "number" ? v : NaN;
   return Number.isFinite(n) ? n : null;
 }

@@ -807,7 +807,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     );
     const fromRegistry = keyToUse ? questionnaireConfig[keyToUse] : null;
     const config = fromRegistry ? fromRegistry : this.cfg;
-    //const seen = new Set();
     const rows = (questionnaireResponses || []).map((qr, rIndex) => {
       const flat = this.flattenResponseItems(qr.item);
       const { score, rawScore, subScores, scoringQuestionScore, totalAnsweredItems, totalItems } =
@@ -914,10 +913,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       hasData: !isEmptyArray(data),
       responseColumns,
       printColumnChunks: this._formatPrintColumnChunks(responseColumns, 3),
-      responseData: data?.map((item) => {
-        const { patientBundle, ...rest } = item;
-        return { ...rest };
-      }),
+      // responseData: data?.map((item) => {
+      //   const { patientBundle, ...rest } = item;
+      //   return { ...rest };
+      // }),
       tableResponseData,
       questionnaire: !questionnaire
         ? getQuestionnaireFromRowData(data[0], getResourcesByResourceType(this.patientBundle, "Questionnaire"))
@@ -1618,7 +1617,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
             (item) =>
               item &&
               !isEmptyArray(item.responses) &&
-              (isNumber(item.score) || item.subScores) &&
+              (item.score == null || isNumber(item.score) || item.subScores) &&
               isValidDate(item.date),
           )
         : null;
@@ -1635,7 +1634,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
             ...rest,
             ...getScoreParamsFromResponses(scoringData.slice(index), config),
             id: item.id + "_" + item.instrumentName + "_" + index,
-            total: isNumber(item.score) ? item.score : null,
+            //total: isNumber(item.score) ? item.score : null,
           };
         })
         .filter(({ date, total }) => {
@@ -1654,8 +1653,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       xDomain = getDateDomain(uniqueDates, { padding: uniqueDates.length <= 2 ? 0.15 : 0.05 });
     }
 
-    const { chartParams } = config ?? {};
-    const chartDataParams = { ...config, ...chartConfig, ...chartParams, xDomain };
+    const { chartParams, ...rest } = config ?? {};
+    const chartDataParams = { ...rest, ...chartConfig, ...chartParams, xDomain };
     const dedupeByDateLatest = (arr) => {
       const map = new Map();
       arr.forEach((item) => map.set(item.date, item));

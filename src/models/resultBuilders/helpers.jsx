@@ -595,7 +595,7 @@ export function getPreviousResponseRowWithScore(rdata = []) {
  * @returns {string} Severity level: 'high', 'moderate', or 'low'
  */
 export function severityFromScore(score, config = {}) {
-  if (!isNumber(score)) return "low";
+  if (!isNumber(score)) return "";
   if (config?.highSeverityScoreCutoff != null && score >= config.highSeverityScoreCutoff) return "high";
   if (config?.mediumSeverityScoreCutoff != null && score >= config.mediumSeverityScoreCutoff) return "moderate";
 

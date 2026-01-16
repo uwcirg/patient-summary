@@ -22,7 +22,7 @@ export default function QuestionnaireInfo(props) {
           ? buttonIconProps
           : {
               sx: {
-                color: "#eaedef",
+                color: "#f8fafb",
               },
             }
       }

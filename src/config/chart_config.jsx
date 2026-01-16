@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { isEmptyArray, getDateObjectInLocalDateTime, getLocaleDateStringFromDate} from "@util";
+import { isEmptyArray, getDateObjectInLocalDateTime, getLocaleDateStringFromDate } from "@util";
 
 const Rect = (props) => {
   const { cx, cy, color, value } = props;
@@ -30,7 +30,7 @@ const CHART_CONFIG = {
     xFieldKey: "date",
     xAxisTitle: "Date",
     yAxisTitle: "Score",
-    yFieldKey: "total",
+    yFieldKey: "score",
     yLabel: "score",
     xLabel: "date",
     yLabelVisible: false,
@@ -95,7 +95,7 @@ const CHART_CONFIG = {
         },
       },
       {
-        key: "total",
+        key: "score",
         color: "#00897b",
         strokeWidth: 2,
       },
@@ -284,3 +284,51 @@ export const fmtISO = new Intl.DateTimeFormat("en-CA", {
   day: "2-digit",
   timeZone: "UTC",
 });
+
+export const getDotColor = (entry, baseColor) => {
+  // If no duplicates on this day, use base color
+  if (!entry._duplicateCount || entry._duplicateCount === 1) {
+    return baseColor;
+  }
+
+  // For duplicates, adjust the brightness based on index
+  const hexToRgb = (hex) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : null;
+  };
+
+  const rgbToHex = (r, g, b) => {
+    return (
+      "#" +
+      [r, g, b]
+        .map((x) => {
+          const hex = Math.round(x).toString(16);
+          return hex.length === 1 ? "0" + hex : hex;
+        })
+        .join("")
+    );
+  };
+
+  const adjustBrightness = (color, amount) => {
+    const rgb = hexToRgb(color);
+    if (!rgb) return color;
+
+    return rgbToHex(
+      Math.min(255, Math.max(0, rgb.r + amount)),
+      Math.min(255, Math.max(0, rgb.g + amount)),
+      Math.min(255, Math.max(0, rgb.b + amount)),
+    );
+  };
+
+  // Adjust brightness: first dot darker, last dot lighter
+  const brightnessStep = 5; // Adjust this value for more/less variation
+  const adjustment = (entry._duplicateIndex - Math.floor(entry._duplicateCount / 2)) * brightnessStep;
+
+  return adjustBrightness(baseColor, adjustment);
+};

@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { getLocaleDateStringFromDate } from "@/util";
+
 export default function CustomTooltip({
   xFieldKey,
   xLabelKey,
@@ -18,7 +19,15 @@ export default function CustomTooltip({
   const rawDate = d[xLabelKey] ?? d[xFieldKey] ?? d.date;
   const meaning = (d.meaning ?? d.scoreMeaning ?? d.label ?? "").replace(/\|/g, "\n");
   const scoreRaw = d[yFieldKey] ?? d.score;
-  const scoreDisplay = typeof tooltipValueFormatter === "function" ? tooltipValueFormatter(scoreRaw, d) : scoreRaw;
+
+  // Check if the score is null or undefined
+  const isNull = scoreRaw == null || scoreRaw === undefined || d.isNull;
+
+  const scoreDisplay = isNull
+    ? "Not Scored"
+    : typeof tooltipValueFormatter === "function"
+      ? tooltipValueFormatter(scoreRaw, d)
+      : scoreRaw;
 
   // use provided formatter; else a default
   const fmtDate =
@@ -26,14 +35,21 @@ export default function CustomTooltip({
     (rawDate ? getLocaleDateStringFromDate(rawDate, "YYYY-MM-DD HH:mm") : "—");
 
   // if multiple lines, payload will have one entry per series
-  const multiValues = payload.map((p, i) => ({
-    key: p.dataKey ?? p.name ?? `series-${i}`,
-    value: p.value,
-    color: p.color,
-    name: p.name ?? p.dataKey,
-  }));
+  const multiValues = payload.map((p, i) => {
+    const value = p.value;
+    const isValueNull = value == null || value === undefined;
+
+    return {
+      key: p.dataKey ?? p.name ?? `series-${i}`,
+      value: value,
+      isNull: isValueNull,
+      color: p.color,
+      name: p.name ?? p.dataKey,
+    };
+  });
 
   const FONT_COLOR = "#666";
+  const NULL_COLOR = "#999";
 
   return (
     <div className="tooltip-container">
@@ -44,10 +60,13 @@ export default function CustomTooltip({
         <div style={{ marginBottom: multiValues.length > 1 ? 8 : 0 }}>
           {scoreDisplay != null && (
             <div>
-              <span style={{ color: FONT_COLOR }}>{yLabel ? yLabel : "score"}:</span> {String(scoreDisplay)}
+              <span style={{ color: FONT_COLOR }}>{yLabel ? yLabel : "score"}:</span>{" "}
+              <span style={{ color: isNull ? NULL_COLOR : "inherit", fontStyle: isNull ? "italic" : "normal" }}>
+                {String(scoreDisplay)}
+              </span>
             </div>
           )}
-          {meaning && (
+          {meaning && !isNull && (
             <div className="meaning-item flex" style={{ whiteSpace: "pre-line" }}>
               <span style={{ color: FONT_COLOR }}>meaning:</span>
               <span>{String(meaning)}</span>
@@ -58,21 +77,33 @@ export default function CustomTooltip({
 
       {/* Multi-series values (if render multiple yLineFields) */}
       {multiValues.length > 1 &&
-        multiValues.map((m) => (
-          <div key={`tt-${m.key}`} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span
-              style={{
-                width: 10,
-                height: 10,
-                display: "inline-block",
-                background: m.color,
-                border: "1px solid rgba(0,0,0,0.1)",
-              }}
-            />
-            <span style={{ color: FONT_COLOR }}>{tooltipLabelFormatter ? tooltipLabelFormatter(m.name) : m.name}:</span>{" "}
-            {tooltipValueFormatter ? tooltipValueFormatter(m.value) : m.value}
-          </div>
-        ))}
+        multiValues.map((m) => {
+          const displayValue = m.isNull
+            ? "Not Scored"
+            : tooltipValueFormatter
+              ? tooltipValueFormatter(m.value)
+              : m.value;
+
+          return (
+            <div key={`tt-${m.key}`} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span
+                style={{
+                  width: 10,
+                  height: 10,
+                  display: "inline-block",
+                  background: m.isNull ? NULL_COLOR : m.color,
+                  border: "1px solid rgba(0,0,0,0.1)",
+                }}
+              />
+              <span style={{ color: FONT_COLOR }}>
+                {tooltipLabelFormatter ? tooltipLabelFormatter(m.name) : m.name}:
+              </span>{" "}
+              <span style={{ color: m.isNull ? NULL_COLOR : "inherit", fontStyle: m.isNull ? "italic" : "normal" }}>
+                {displayValue}
+              </span>
+            </div>
+          );
+        })}
     </div>
   );
 }
