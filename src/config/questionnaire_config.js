@@ -389,14 +389,14 @@ const questionnaireConfigsRaw = {
       {
         key: "ASSIST-10",
         label: "Cocaine/crack",
-        color: "#6E026F",
+        color: "#388697",
         strokeWidth: 1,
         legendType: "line",
       },
       {
         key: "ASSIST-11",
         label: "Methamphetamine",
-        color: "#5A7ACD",
+        color: "#8C5383",
         strokeWidth: 1,
         legendType: "line",
       },
@@ -410,7 +410,7 @@ const questionnaireConfigsRaw = {
       {
         key: "ASSIST-13",
         label: "Fentanyl",
-        color: "#5C6F2B",
+        color: "#AF7A6D",
         strokeWidth: 1,
         legendType: "line",
       },
@@ -431,7 +431,7 @@ const questionnaireConfigsRaw = {
       {
         key: "ASSIST-16",
         label: "Marijuana",
-        color: "#00809D",
+        color: "#8884FF",
         strokeWidth: 1,
         legendType: "line",
       },
@@ -505,6 +505,7 @@ const questionnaireConfigsRaw = {
         return value;
       },
       wrapperClass: "big",
+      lineType: "stepAfter"
       //enableLineSwitches: true
     },
   },

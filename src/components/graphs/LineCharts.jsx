@@ -46,6 +46,7 @@ export default function LineCharts(props) {
     enableScoreSeverityCutoffLine,
     id,
     legendType,
+    lineType,
     lgChartWidth,
     mdChartWidth,
     maximumYValue,
@@ -530,7 +531,7 @@ export default function LineCharts(props) {
           {...defaultOptions}
           key={`line_${id}_${index}`}
           name={item.label ? item.label : item.key}
-          type="monotone"
+          type={lineType??"monotone"}
           dataKey={item.key}
           stroke={item.color}
           fill={item.fill ? item.fill : item.color}
@@ -545,7 +546,7 @@ export default function LineCharts(props) {
   const renderSingleLine = () => (
     <Line
       {...defaultOptions}
-      type="monotone"
+      type={lineType ?? "monotone"}
       dataKey={yFieldKey}
       stroke={theme.palette.muter.main}
       activeDot={(dotProps) => {
@@ -793,6 +794,7 @@ LineCharts.propTypes = {
   highSeverityScoreCutoff: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   legendType: PropTypes.string,
+  lineType: PropTypes.string,
   mdChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   lgChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   maximumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),

@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import Error from "./ErrorComponent";
 import BarChart from "./graphs/BarCharts";
 import LineChart from "./graphs/LineCharts";
+
 const Chart = (props) => {
   const eligibleCharts = ["linechart", "barchart"];
   const chartRef = useRef();
