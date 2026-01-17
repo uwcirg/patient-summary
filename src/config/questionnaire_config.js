@@ -505,7 +505,7 @@ const questionnaireConfigsRaw = {
         return value;
       },
       wrapperClass: "big",
-      lineType: "stepAfter"
+    //  lineType: "stepAfter"
       //enableLineSwitches: true
     },
   },
