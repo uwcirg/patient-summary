@@ -41,6 +41,7 @@ export default function LineCharts(props) {
     data,
     dotColor,
     enableAxisMeaningLabels,
+    enableLineSwitches,
     enableScoreSeverityArea,
     enableScoreSeverityCutoffLine,
     id,
@@ -62,6 +63,7 @@ export default function LineCharts(props) {
     xDomain,
     xTickFormatter,
     xTickStyle,
+    xsChartHeight,
     xsChartWidth,
     yFieldKey,
     yLabel,
@@ -76,6 +78,26 @@ export default function LineCharts(props) {
 
   const theme = useTheme();
   const CUT_OFF_YEAR = 5;
+
+  const [visibleLines, setVisibleLines] = React.useState(() => {
+    // Only initialize if switches are enabled and we have multiple lines
+    if (enableLineSwitches && yLineFields && yLineFields.length > 0) {
+      return yLineFields.reduce((acc, field) => {
+        acc[field.key] = true;
+        return acc;
+      }, {});
+    }
+    return {};
+  });
+
+  const toggleLineVisibility = (lineKey) => {
+    if (!enableLineSwitches) return; // Don't toggle if switches aren't enabled
+
+    setVisibleLines((prev) => ({
+      ...prev,
+      [lineKey]: !prev[lineKey],
+    }));
+  };
 
   const sources = React.useMemo(() => {
     const set = new Set();
@@ -186,6 +208,24 @@ export default function LineCharts(props) {
       truncationDate: hasOlderData ? cutoffTimestamp : null,
     };
   }, [processedData, xFieldKey]);
+
+  const linesWithData = React.useMemo(() => {
+    if (!filteredData || filteredData.length === 0 || !yLineFields || yLineFields.length === 0) {
+      return new Set();
+    }
+
+    const linesFound = new Set();
+
+    // Check each line field to see if any data points have a value for that key
+    yLineFields.forEach((field) => {
+      const hasData = filteredData.some((d) => d[field.key] !== null && d[field.key] !== undefined);
+      if (hasData) {
+        linesFound.add(field.key);
+      }
+    });
+
+    return linesFound;
+  }, [filteredData, yLineFields]);
 
   // Calculate fixed domain from cutoff to now (overrides xDomain prop if truncation is active)
   const calculatedXDomain = React.useMemo(() => {
@@ -332,7 +372,7 @@ export default function LineCharts(props) {
   const xAxisHeight = isSmallScreen ? 80 : 108;
 
   // Responsive padding
-  const xAxisPadding = isSmallScreen ? { left: 10, right: 10 } : { left: 20, right: 20 };
+  const xAxisPadding = isSmallScreen ? { left: 10, right: 10 } : { left: 16, right: 16 };
 
   const renderXAxis = () => (
     <XAxis
@@ -407,14 +447,14 @@ export default function LineCharts(props) {
       }
       ticks={yTicksToUse}
       tickMargin={showTicks ? 8 : 0}
-      width={showTicks ? (isSmallScreen ? 50 : 60) : 10}
+      width={showTicks ? (isSmallScreen ? 48 : 72) : 10}
     />
   );
 
   const renderToolTip = () => (
     <Tooltip
       itemStyle={{ fontSize: "10px" }}
-      labelStyle={{ fontSize: "10px"}}
+      labelStyle={{ fontSize: "10px" }}
       animationBegin={0}
       animationDuration={0}
       shared={false}
@@ -462,7 +502,7 @@ export default function LineCharts(props) {
         wrapperStyle={{
           position: "absolute",
           top: isSmallScreen ? 4 : 10,
-          right: isSmallScreen ? 20 : 48,
+          right: isSmallScreen ? 20 : 24,
           width: "auto",
         }}
         content={(legendProps) => (
@@ -472,6 +512,10 @@ export default function LineCharts(props) {
             isSmallScreen={isSmallScreen}
             hasNullValues={hasNullValues}
             yLineFields={yLineFields}
+            visibleLines={visibleLines}
+            onToggleLine={toggleLineVisibility}
+            enableLineSwitches={enableLineSwitches}
+            linesWithData={linesWithData}
           />
         )}
       />
@@ -479,22 +523,24 @@ export default function LineCharts(props) {
   };
 
   const renderMultipleLines = () =>
-    yLineFields.map((item, index) => (
-      <Line
-        {...defaultOptions}
-        key={`line_${id}_${index}`}
-        name={item.label ? item.label : item.key}
-        type="monotone"
-        dataKey={item.key}
-        stroke={item.color}
-        fill={item.fill ? item.fill : item.color}
-        strokeWidth={item.strokeWidth ? item.strokeWidth : isSmallScreen ? 1.5 : 2}
-        strokeDasharray={item.strokeDasharray ? item.strokeDasharray : 0}
-        legendType={item.legendType ? item.legendType : "line"}
-        dot={item.dot ? item.dot : { strokeDasharray: "", strokeWidth: 1 }}
-        connectNulls={!!connectNulls}
-      />
-    ));
+    yLineFields
+      .filter((item) => !enableLineSwitches || visibleLines[item.key] !== false) // Only filter if switches enabled
+      .map((item, index) => (
+        <Line
+          {...defaultOptions}
+          key={`line_${id}_${index}`}
+          name={item.label ? item.label : item.key}
+          type="monotone"
+          dataKey={item.key}
+          stroke={item.color}
+          fill={item.fill ? item.fill : item.color}
+          strokeWidth={item.strokeWidth ? item.strokeWidth : isSmallScreen ? 1.5 : 2}
+          strokeDasharray={item.strokeDasharray ? item.strokeDasharray : 0}
+          legendType={item.legendType ? item.legendType : "line"}
+          dot={item.dot ? item.dot : { strokeDasharray: "", strokeWidth: 1 }}
+          connectNulls={!!connectNulls}
+        />
+      ));
 
   const renderSingleLine = () => (
     <Line
@@ -704,8 +750,8 @@ export default function LineCharts(props) {
             lg: lgChartWidth || chartWidth || 580,
           },
           height: {
-            xs: 280, // Increased height for small screens
-            sm: chartHeight || 240,
+            xs: xsChartHeight ? xsChartHeight : 280, // Increased height for small screens
+            sm: chartHeight ? chartHeight: 240,
           },
         }}
         className={`chart-wrapper ${wrapperClass ? wrapperClass : ""}`}
@@ -743,6 +789,7 @@ LineCharts.propTypes = {
   enableAxisMeaningLabels: PropTypes.bool,
   enableScoreSeverityArea: PropTypes.bool,
   enableScoreSeverityCutoffLine: PropTypes.bool,
+  enableLineSwitches: PropTypes.bool,
   highSeverityScoreCutoff: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   legendType: PropTypes.string,
@@ -763,6 +810,7 @@ LineCharts.propTypes = {
   xTickFormatter: PropTypes.func,
   xTickStyle: PropTypes.object,
   xsChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  xsChartHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yLabel: PropTypes.string,
   xLabelVisible: PropTypes.bool,

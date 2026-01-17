@@ -1,8 +1,17 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { isEmptyArray } from "@util";
+import { Switch } from "@mui/material";
 
-const CustomLegend = ({ payload, sources, isSmallScreen, hasNullValues, yLineFields }) => {
+const CustomLegend = ({
+  sources,
+  isSmallScreen,
+  hasNullValues,
+  yLineFields,
+  visibleLines,
+  onToggleLine,
+  enableLineSwitches,
+  linesWithData
+}) => {
   const hasCnics = sources.includes("CNICS") || sources.includes("cnics");
   const hasEpic = sources.includes("EPIC") || sources.includes("epic");
   let items = [];
@@ -79,10 +88,17 @@ const CustomLegend = ({ payload, sources, isSmallScreen, hasNullValues, yLineFie
     });
   }
 
-  const points = payload && !isEmptyArray(payload) ? payload : [];
+  //const points = payload && !isEmptyArray(payload) ? payload : [];
+
+
+  // Filter yLineFields to only include lines that have data
+  const lineFieldsWithData = yLineFields && linesWithData 
+    ? yLineFields.filter(field => linesWithData.has(field.key))
+    : yLineFields || [];
+
 
   // If we have yLineFields (multiple lines), show them as line items
-  const showLineItems = yLineFields && yLineFields.length > 0 && points.length > 1;
+  const showLineItems = yLineFields && yLineFields.length > 0;
 
   return (
     <div
@@ -92,7 +108,7 @@ const CustomLegend = ({ payload, sources, isSmallScreen, hasNullValues, yLineFie
         alignItems: "flex-start",
         padding: isSmallScreen ? "2px 4px" : "4px 8px",
         position: "relative",
-        left: isSmallScreen ? "16px" : "32px",
+        left: isSmallScreen ? "16px" : "24px",
         flexWrap: "wrap",
       }}
     >
@@ -114,29 +130,81 @@ const CustomLegend = ({ payload, sources, isSmallScreen, hasNullValues, yLineFie
             fontSize: isSmallScreen ? 9 : 10,
             color: "#444",
             display: "grid",
-            gridTemplateColumns: isSmallScreen ? "1fr" : points.length > 6 ? "repeat(3, 1fr)" : "repeat(2, 1fr)",
+            gridTemplateColumns: isSmallScreen ? "1fr" : yLineFields.length > 6 ? "repeat(3, 1fr)" : "repeat(2, 1fr)",
             gap: isSmallScreen ? "2px 8px" : "4px 16px",
-            maxWidth: isSmallScreen ? "200px" : "320px",
+            maxWidth: isSmallScreen ? "200px" : "420px",
           }}
         >
-          {points.map((entry, index) => (
-            <div key={`item-${index}`} style={{ display: "flex", alignItems: "center" }}>
-              <svg width={iconSize} height={iconSize} style={{ marginRight: 4, flexShrink: 0 }}>
-                <line
-                  x1="0"
-                  y1={iconSize / 2}
-                  x2={iconSize - 4}
-                  y2={iconSize / 2}
-                  stroke={entry.color}
-                  strokeWidth={isSmallScreen ? 2 : 4}
-                  strokeDasharray={entry.payload.strokeDasharray || "0"}
-                />
-              </svg>
-              <span style={{ fontSize: isSmallScreen ? 8 : 10, whiteSpace: "nowrap" }}>
-                {entry.value.replace(/[_,-]/g, " ")}
-              </span>
-            </div>
-          ))}
+          {/* Map over lineFieldsWithData show lines with data */}
+          {lineFieldsWithData.map((lineField, index) => {
+            const lineKey = lineField.key;
+            const isVisible = visibleLines?.[lineKey] !== false;
+            const lineColor = lineField.color;
+            const lineLabel = lineField.label || lineField.key;
+            const strokeDasharray = lineField.strokeDasharray || "0";
+
+            return (
+              <div
+                key={`item-${index}`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  opacity: enableLineSwitches && !isVisible ? 0.5 : 1,
+                }}
+              >
+                {/* Only render switch if enableLineSwitches is true */}
+                {enableLineSwitches && (
+                  <Switch
+                    checked={isVisible}
+                    onChange={() => onToggleLine?.(lineKey)}
+                    size="small"
+                    className="print-hidden"
+                    sx={{
+                      width: isSmallScreen ? 32 : 36,
+                      height: isSmallScreen ? 16 : 20,
+                      padding: 0,
+                      marginRight: 0.4,
+                      "& .MuiSwitch-switchBase": {
+                        padding: 0,
+                        margin: "2px",
+                        "&.Mui-checked": {
+                          transform: isSmallScreen ? "translateX(16px)" : "translateX(16px)",
+                          color: "#fff",
+                          "& + .MuiSwitch-track": {
+                            backgroundColor: lineColor,
+                            opacity: 1,
+                          },
+                        },
+                      },
+                      "& .MuiSwitch-thumb": {
+                        width: isSmallScreen ? 12 : 14,
+                        height: isSmallScreen ? 12 : 14,
+                      },
+                      "& .MuiSwitch-track": {
+                        borderRadius: isSmallScreen ? 8 : 10,
+                        opacity: 1,
+                        backgroundColor: "#ccc",
+                      },
+                    }}
+                  />
+                )}
+                <svg width={iconSize} height={iconSize} style={{ marginRight: 4, flexShrink: 0 }}>
+                  <line
+                    x1="0"
+                    y1={iconSize / 2}
+                    x2={iconSize - 4}
+                    y2={iconSize / 2}
+                    stroke={lineColor}
+                    strokeWidth={isSmallScreen ? 2 : 4}
+                    strokeDasharray={strokeDasharray}
+                  />
+                </svg>
+                <span style={{ fontSize: isSmallScreen ? 8 : 10, whiteSpace: "nowrap" }}>
+                  {lineLabel.replace(/[_,-]/g, " ")}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -151,4 +219,8 @@ CustomLegend.propTypes = {
   isSmallScreen: PropTypes.bool,
   hasNullValues: PropTypes.bool,
   yLineFields: PropTypes.array,
+  visibleLines: PropTypes.object,
+  onToggleLine: PropTypes.func,
+  enableLineSwitches: PropTypes.bool,
+  linesWithData: PropTypes.instanceOf(Set), 
 };

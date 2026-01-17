@@ -463,13 +463,14 @@ const questionnaireConfigsRaw = {
     chartParams: {
       ...CHART_CONFIG.default,
       title: "Substances Reported",
-      chartHeight: 360,
+      chartHeight: 420,
+      xsChartHeight: 460, 
       minimumYValue: 0,
       maximumYValue: 4,
       chartMargin: {
-        top: 40,
+        top: 52,
         right: 20,
-        left: 32,
+        left: 20,
         bottom: 10,
       },
       yLabel: "Frequency",
@@ -504,6 +505,7 @@ const questionnaireConfigsRaw = {
         return value;
       },
       wrapperClass: "big",
+      //enableLineSwitches: true
     },
   },
   "CIRG-CNICS-ASSIST-OD": {

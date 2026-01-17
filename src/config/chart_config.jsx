@@ -21,7 +21,7 @@ const CHART_CONFIG = {
   default: {
     type: "linechart",
     title: "Total Score by Date",
-    xsChartWidth: 420,
+    xsChartWidth: 400,
     chartWidth: 580,
     dotColor: "#444",
     lgChartWidth: 588,
