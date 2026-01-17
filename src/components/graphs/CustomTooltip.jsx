@@ -60,7 +60,7 @@ export default function CustomTooltip({
         <div style={{ marginBottom: multiValues.length > 1 ? 8 : 0 }}>
           {scoreDisplay != null && (
             <div>
-              <span style={{ color: FONT_COLOR }}>{yLabel ? yLabel : "score"}:</span>{" "}
+              {!isNull && <span style={{ color: FONT_COLOR }}>{yLabel ? yLabel : "score"}:</span>}{" "}
               <span style={{ color: isNull ? NULL_COLOR : "inherit", fontStyle: isNull ? "italic" : "normal" }}>
                 {String(scoreDisplay)}
               </span>
@@ -121,7 +121,6 @@ CustomTooltip.propTypes = {
       payload: PropTypes.object, // raw data point: { date, score, meaning, ... }
     }),
   ),
-  // the x-value for this tooltip (e.g. date)
   label: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   xFieldKey: PropTypes.string,
   xLabelKey: PropTypes.string,
