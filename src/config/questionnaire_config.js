@@ -478,6 +478,8 @@ const questionnaireConfigsRaw = {
         return labels[value] || value;
       },
       yTicks: [0, 1, 2, 3, 4],
+      showTooltipScore: false,
+      showTooltipMeaning: false,
       isCategoricalY: true,
       // enableAxisMeaningLabels: true,
       yLabelProps: {
@@ -935,6 +937,7 @@ const questionnaireConfigsRaw = {
     maximumScore: 27,
     linkIdMatchMode: "fuzzy",
     questionLinkIds: [
+      "/55758-7",
       "/44250-9",
       "/44255-8",
       "/44259-0",
@@ -1161,17 +1164,19 @@ const questionnaireConfigsRaw = {
           color: "#3b82f6", // bloo
           strokeWidth: 1,
           legendType: "line",
-          strokeOpacity: 0.4,
+          strokeOpacity: 0.6,
           //strokeDasharray: "2 2", // dashed line
         },
         {
           key: "AUDIT-score",
           color: SUCCESS_COLOR, // green
           strokeWidth: 1,
-          strokeOpacity: 0.4,
+          strokeOpacity: 0.6,
           legendType: "line",
         },
       ],
+      showTooltipScore: false,
+      showTooltipMeaning: false,
     },
     // skipChart: true,
   },

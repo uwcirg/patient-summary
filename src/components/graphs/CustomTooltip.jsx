@@ -13,6 +13,8 @@ export default function CustomTooltip({
   yLabel,
   lineColorMap,
   isCategoricalY,
+  showScore = true,
+  showMeaning = true,
 }) {
   if (!active || !payload || !payload.length) return null;
 
@@ -61,6 +63,7 @@ export default function CustomTooltip({
 
       {/* Single-series summary line (falls back to multi if present) */}
       {isSingleValue &&
+        showScore &&
         (() => {
           const scoreDisplay = isCategoricalY
             ? null
@@ -83,7 +86,7 @@ export default function CustomTooltip({
                   </span>
                 </div>
               )}
-              {meaning && !isNull && (
+              {showMeaning && meaning && !isNull && (
                 <div className="meaning-item flex" style={{ whiteSpace: "pre-line" }}>
                   <span style={{ color: FONT_COLOR }}>meaning:</span>
                   <span>{String(meaning)}</span>
@@ -104,6 +107,8 @@ export default function CustomTooltip({
 
           // Skip rendering this line if displayValue is null
           if (displayValue === null) return null;
+          if (String(m.name).toLocaleLowerCase() === "score" && !showScore) return null;
+          if (String(m.name).toLocaleLowerCase() === "meaning" && !showMeaning) return null;
 
           return (
             <div key={`tt-${m.key}`} style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -151,4 +156,6 @@ CustomTooltip.propTypes = {
   tooltipValueFormatter: PropTypes.func,
   lineColorMap: PropTypes.object,
   isCategoricalY: PropTypes.bool,
+  showMeaning: PropTypes.bool,
+  showScore: PropTypes.bool,
 };

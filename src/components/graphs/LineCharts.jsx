@@ -57,6 +57,8 @@ export default function LineCharts(props) {
     minimumYValue,
     note,
     showXTicks,
+    showTooltipScore,
+    showTooltipMeaning,
     showYTicks,
     strokeWidth,
     title,
@@ -554,6 +556,8 @@ export default function LineCharts(props) {
           tooltipValueFormatter={tooltipValueFormatter}
           lineColorMap={lineColorMap}
           isCategoricalY={isCategoricalY}
+          showScore={showTooltipScore}
+          showMeaning={showTooltipMeaning}
         />
       )}
     />
@@ -869,6 +873,8 @@ LineCharts.propTypes = {
   maximumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   minimumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   note: PropTypes.string,
+  showTooltipScore: PropTypes.bool,
+  showTooltipMeaning: PropTypes.bool,
   showXTicks: PropTypes.bool,
   showYTicks: PropTypes.bool,
   strokeWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),

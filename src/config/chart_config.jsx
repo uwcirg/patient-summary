@@ -39,6 +39,8 @@ const CHART_CONFIG = {
     legendType: "none",
     showYTicks: false,
     showXTicks: true,
+    showTooltipScore: true,
+    showTooltipMeaning: true,
     connectNulls: false,
     dataFormatter: (data) => {
       if (isEmptyArray(data)) return data;
