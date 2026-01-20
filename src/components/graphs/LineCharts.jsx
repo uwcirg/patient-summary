@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import PropTypes from "prop-types";
 import { Box, Stack, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
@@ -21,14 +21,14 @@ import {
   SUCCESS_COLOR,
   buildTimeTicks,
   fmtMonthYear,
-  getDotColor,
+  hexToRgba,
   thinTicksToFit,
 } from "@config/chart_config";
 import InfoDialog from "@components/InfoDialog";
 import CustomLegend from "./CustomLegend";
 import CustomTooltip from "./CustomTooltip";
 import NullDot from "./NullDot";
-import SourceDot from "./SourceDot";
+import { createDotRenderer, createActiveDotRenderer } from "./ChartDotRenderers";
 import { generateUUID, isEmptyArray, range } from "@/util";
 
 export default function LineCharts(props) {
@@ -52,7 +52,8 @@ export default function LineCharts(props) {
     maximumYValue,
     minimumYValue,
     note,
-    showTicks,
+    showXTicks,
+    showYTicks,
     strokeWidth,
     title,
     tooltipLabelFormatter,
@@ -79,6 +80,7 @@ export default function LineCharts(props) {
 
   const theme = useTheme();
   const CUT_OFF_YEAR = 5;
+  const isCategoricalY = props.isCategoricalY || false;
 
   const [visibleLines, setVisibleLines] = React.useState(() => {
     // Only initialize if switches are enabled and we have multiple lines
@@ -100,6 +102,8 @@ export default function LineCharts(props) {
     }));
   };
 
+  const hasMultipleYFields = useCallback(() => yLineFields && yLineFields.length > 0, [yLineFields]);
+
   const sources = React.useMemo(() => {
     const set = new Set();
     for (const d of data || []) if (d?.source) set.add(d.source);
@@ -110,75 +114,81 @@ export default function LineCharts(props) {
   const processedData = React.useMemo(() => {
     if (!data || !Array.isArray(data)) return [];
 
-    // Calculate the time range of the data
     const timestamps = data.map((d) => d[xFieldKey]).filter((t) => t !== undefined && t !== null);
-
     if (timestamps.length === 0) return [];
 
     const minTimestamp = Math.min(...timestamps);
     const maxTimestamp = Math.max(...timestamps);
     const timeRangeMs = maxTimestamp - minTimestamp;
 
-    // Dynamic spread width: use 0.5% of total time range, with min/max bounds
-    const minSpread = 2 * 60 * 60 * 1000; // Minimum: 2 hours
-    const maxSpread = 6 * 24 * 60 * 60 * 1000; // Maximum: 6 days
+    const minSpread = 2 * 60 * 60 * 1000;
+    const maxSpread = 6 * 24 * 60 * 60 * 1000;
     const dynamicSpreadWidth = Math.max(minSpread, Math.min(maxSpread, timeRangeMs * 0.005));
 
-    // Group by DATE AND Y-VALUE (to find true overlaps)
+    const fieldsToCheck = hasMultipleYFields() ? yLineFields.map((f) => f.key) : [yFieldKey];
+
+    // Group by DATE AND Y-VALUE for each field
     const groups = {};
+
     data.forEach((d) => {
       const timestamp = d[xFieldKey];
-      const yValue = d[yFieldKey];
+      if (timestamp === undefined || timestamp === null) return;
 
-      if (timestamp !== undefined && timestamp !== null && yValue !== undefined && yValue !== null) {
-        // Round to start of day (midnight)
-        const dateOnly = new Date(timestamp);
-        dateOnly.setHours(0, 0, 0, 0);
-        const dayKey = dateOnly.getTime();
-
-        // Create composite key: date + y-value
-        const compositeKey = `${dayKey}_${yValue}`;
-
-        if (!groups[compositeKey]) groups[compositeKey] = [];
-        groups[compositeKey].push(d);
-      }
-    });
-
-    // Add jitter offset ONLY for points with same date AND same y-value
-    return data.map((d) => {
-      const timestamp = d[xFieldKey];
-      const yValue = d[yFieldKey];
-
-      if (timestamp === undefined || timestamp === null || yValue === undefined || yValue === null) {
-        return d;
-      }
-
-      // Get the composite key for this point
       const dateOnly = new Date(timestamp);
       dateOnly.setHours(0, 0, 0, 0);
       const dayKey = dateOnly.getTime();
-      const compositeKey = `${dayKey}_${yValue}`;
 
-      const group = groups[compositeKey];
+      fieldsToCheck.forEach((fieldKey) => {
+        const yValue = d[fieldKey];
+        if (yValue === undefined || yValue === null) return;
 
-      // If only one point with this date+y-value combination, no jitter needed
-      if (!group || group.length === 1) {
-        return d;
-      }
+        // Create composite key: field + date + Y-VALUE
+        // This groups points with same date
+        const compositeKey = `${fieldKey}_${dayKey}_${yValue}`;
 
-      // Multiple points with same date AND same y-value - apply jitter
-      const index = group.indexOf(d);
-      const offset = (index - (group.length - 1) / 2) * (dynamicSpreadWidth / group.length);
-
-      return {
-        ...d,
-        [xFieldKey]: timestamp + offset,
-        originalDate: timestamp, // preserve original for tooltip
-        _duplicateIndex: index,
-        _duplicateCount: group.length,
-      };
+        if (!groups[compositeKey]) groups[compositeKey] = [];
+        groups[compositeKey].push({ dataPoint: d, fieldKey, yValue });
+      });
     });
-  }, [data, xFieldKey, yFieldKey]);
+
+    return data.map((d) => {
+      const timestamp = d[xFieldKey];
+      if (timestamp === undefined || timestamp === null) return d;
+
+      const dateOnly = new Date(timestamp);
+      dateOnly.setHours(0, 0, 0, 0);
+      const dayKey = dateOnly.getTime();
+
+      const jitteredPoint = {
+        ...d,
+        originalDate: timestamp,
+      };
+
+      fieldsToCheck.forEach((fieldKey) => {
+        const yValue = d[fieldKey];
+        if (yValue === undefined || yValue === null) return;
+
+        const compositeKey = `${fieldKey}_${dayKey}_${yValue}`;
+        const group = groups[compositeKey];
+
+        if (!group || group.length === 1) {
+          jitteredPoint[`${fieldKey}_jittered_x`] = timestamp;
+          return;
+        }
+
+        const groupIndex = group.findIndex((item) => item.dataPoint === d);
+        if (groupIndex === -1) return;
+
+        // Apply X-axis jitter only
+        const offset = (groupIndex - (group.length - 1) / 2) * (dynamicSpreadWidth / group.length);
+        jitteredPoint[`${fieldKey}_jittered_x`] = timestamp + offset;
+        jitteredPoint[`${fieldKey}_duplicateIndex`] = groupIndex;
+        jitteredPoint[`${fieldKey}_duplicateCount`] = group.length;
+      });
+
+      return jitteredPoint;
+    });
+  }, [data, xFieldKey, yFieldKey, yLineFields, hasMultipleYFields]);
 
   // Filter and track if data was truncated
   const { filteredData, wasTruncated, truncationDate } = React.useMemo(() => {
@@ -263,8 +273,6 @@ export default function LineCharts(props) {
     if (!filteredData || filteredData.length === 0) return false;
     return filteredData.some((d) => d[yFieldKey] === null || d[yFieldKey] === undefined);
   }, [filteredData, yFieldKey]);
-
-  const hasMultipleYFields = () => yLineFields && yLineFields.length > 0;
 
   let maxYValue = maximumYValue
     ? maximumYValue
@@ -359,18 +367,33 @@ export default function LineCharts(props) {
   const getResponsiveMargin = () => {
     if (chartMargin) return chartMargin;
 
-    const extraTopMargin = hasMultipleYFields ? 10 : 0;
+    const extraTopMargin = hasMultipleYFields() ? 10 : 0;
 
     if (isSmallScreen) {
-      return { top: 20 + extraTopMargin, right: 14, left: 14, bottom: 10 };
+      return {
+        top: 20 + extraTopMargin,
+        right: 14,
+        left: 14,
+        bottom: 10,
+      };
     } else if (isMediumScreen) {
-      return { top: 20 + extraTopMargin, right: 20, left: 18, bottom: 10 };
+      return {
+        top: 20 + extraTopMargin,
+        right: 18,
+        left: 18,
+        bottom: 10,
+      };
     }
-    return { top: 20 + extraTopMargin, right: 24, left: 20, bottom: 10 };
+    return {
+      top: 20 + extraTopMargin,
+      right: 24,
+      left: 24,
+      bottom: 10,
+    };
   };
 
   // Responsive X-axis height
-  const xAxisHeight = isSmallScreen ? 80 : 108;
+  const xAxisHeight = showXTicks ? (isSmallScreen ? 80 : 108) : 0;
 
   // Responsive padding
   const xAxisPadding = isSmallScreen ? { left: 10, right: 10 } : { left: 16, right: 16 };
@@ -384,28 +407,52 @@ export default function LineCharts(props) {
       type="number"
       allowDataOverflow={false}
       tick={
-        xTickStyle
+        showXTicks
           ? xTickStyle
-          : { style: { fontSize: isSmallScreen ? "10px" : "12px", fontWeight: 500 }, textAnchor: "middle" }
+            ? xTickStyle
+            : { style: { fontSize: isSmallScreen ? "10px" : "12px", fontWeight: 500 }, textAnchor: "middle" }
+          : false
       }
       tickFormatter={xTickFormatter}
-      tickMargin={showTicks ? (isSmallScreen ? 8 : 12) : 0}
+      tickMargin={showXTicks ? (isSmallScreen ? 8 : 12) : 0}
       interval="preserveStartEnd"
       scale="time"
       angle={xTickLabelAngle ?? 0}
       ticks={dedupedTicks}
       padding={xAxisPadding}
     >
-      {xLabel && xLabelVisible && <Label value={xLabel} offset={-8} position="insideBottom" />}
+      {xLabel && xLabelVisible && <Label value={xLabel} offset={4} position="insideBottom" />}
     </XAxis>
   );
 
-  const yDomain = maxYValue ? [minYValue ?? 0, maxYValue] : [minYValue ?? 0, "auto"];
-  const yTicksToUse = yTicks || (maxYValue ? range(minYValue ?? 0, maxYValue) : range(minYValue ?? 0, 50));
+  // Calculate Y domain and ticks based on data type
+  const { yDomainToUse, yTicksToUse } = React.useMemo(() => {
+    if (isCategoricalY) {
+      const min = minimumYValue ?? 0;
+      const max = maximumYValue ?? 4;
+      const padding = 0.15;
+
+      return {
+        yDomainToUse: [min - padding, max + padding],
+        yTicksToUse: yTicks || range(min, max),
+      };
+    }
+
+    const domain = maxYValue ? [minYValue ?? 0, maxYValue] : [minYValue ?? 0, "auto"];
+    const ticks = yTicks || (maxYValue ? range(minYValue ?? 0, maxYValue) : range(minYValue ?? 0, 50));
+
+    return {
+      yDomainToUse: domain,
+      yTicksToUse: ticks,
+    };
+  }, [isCategoricalY, minimumYValue, maximumYValue, yTicks, maxYValue, minYValue]);
+
+  // const yDomain = maxYValue ? [minYValue ?? 0, maxYValue] : [minYValue ?? 0, "auto"];
+  // const yTicksToUse = yTicks || (maxYValue ? range(minYValue ?? 0, maxYValue) : range(minYValue ?? 0, 50));
 
   const renderYAxis = () => (
     <YAxis
-      domain={yDomain}
+      domain={yDomainToUse}
       label={
         yLabel && yLabelVisible
           ? {
@@ -417,11 +464,11 @@ export default function LineCharts(props) {
             }
           : null
       }
-      minTickGap={8}
+      minTickGap={isCategoricalY ? 0 : 8} // No gap for categorical to show all ticks
       tickLine={{ stroke: yLabelVisible ? "#444" : "#FFF" }}
       stroke={yLabelVisible ? "#444" : "#FFF"}
       tick={
-        showTicks
+        showYTicks
           ? (e) => {
               const configData = filteredData.find((item) => item.highSeverityScoreCutoff);
               let color = "#666";
@@ -447,10 +494,20 @@ export default function LineCharts(props) {
           : false
       }
       ticks={yTicksToUse}
-      tickMargin={showTicks ? 8 : 0}
-      width={showTicks ? (isSmallScreen ? 48 : 72) : 10}
+      tickMargin={showYTicks ? 8 : 0}
+      allowDataOverflow={!!isCategoricalY}
+      width={showYTicks ? (isSmallScreen ? 50 : 60) : 10}
     />
   );
+
+  const lineColorMap = React.useMemo(() => {
+    if (!yLineFields || yLineFields.length === 0) return {};
+
+    return yLineFields.reduce((map, field) => {
+      map[field.key] = hexToRgba(field.color, 1);
+      return map;
+    }, {});
+  }, [yLineFields]);
 
   const renderToolTip = () => (
     <Tooltip
@@ -475,6 +532,7 @@ export default function LineCharts(props) {
           xLabelKey="originalDate"
           yLabel={yLabel}
           tooltipValueFormatter={tooltipValueFormatter}
+          lineColorMap={lineColorMap}
         />
       )}
     />
@@ -523,105 +581,83 @@ export default function LineCharts(props) {
     );
   };
 
-  const renderMultipleLines = () =>
-    yLineFields
-      .filter((item) => !enableLineSwitches || visibleLines[item.key] !== false) // Only filter if switches enabled
-      .map((item, index) => (
-        <Line
-          {...defaultOptions}
-          key={`line_${id}_${index}`}
-          name={item.label ? item.label : item.key}
-          type={lineType??"monotone"}
-          dataKey={item.key}
-          stroke={item.color}
-          fill={item.fill ? item.fill : item.color}
-          strokeWidth={item.strokeWidth ? item.strokeWidth : isSmallScreen ? 1.5 : 2}
-          strokeDasharray={item.strokeDasharray ? item.strokeDasharray : 0}
-          legendType={item.legendType ? item.legendType : "line"}
-          dot={item.dot ? item.dot : { strokeDasharray: "", strokeWidth: 1 }}
-          connectNulls={!!connectNulls}
-        />
-      ));
+  const renderMultipleLines = () => {
+    // Create the base configuration object (same for all lines)
+    const baseDotConfig = {
+      sources,
+      isSmallScreen,
+      xFieldKey,
+      yFieldKey,
+    };
 
-  const renderSingleLine = () => (
-    <Line
-      {...defaultOptions}
-      type={lineType ?? "monotone"}
-      dataKey={yFieldKey}
-      stroke={theme.palette.muter.main}
-      activeDot={(dotProps) => {
-        const { cx, cy, payload, value, index } = dotProps;
+    return yLineFields
+      .filter((item) => !enableLineSwitches || visibleLines[item.key] !== false)
+      .map((item, index) => {
+        // Create dot config specific to this line
+        const lineDotConfig = {
+          ...baseDotConfig,
+          dotColor: item.color, // Use the line's color as the dot color
+        };
 
-        // source-based shapes (hover version)
-        if (!isEmptyArray(sources)) {
-          return (
-            <SourceDot
-              cx={cx}
-              cy={cy}
-              payload={payload}
-              index={index}
-              isActive
-              isSmallScreen={isSmallScreen}
-              sources={sources}
-              xFieldKey={xFieldKey}
-              yFieldKey={yFieldKey}
-              params={{ r: isSmallScreen ? 4 : 5, width: isSmallScreen ? 6 : 8, height: isSmallScreen ? 6 : 8 }}
-            />
-          );
-        }
+        // Use custom opacity if provided, otherwise default to 0.5
+        const strokeOpacity = item.strokeOpacity !== undefined ? item.strokeOpacity : 0.5;
+        const faintStroke = hexToRgba(item.color, strokeOpacity);
 
-        // fallback: severity-based active circles with duplicate coloring
-        let baseColor = dotColor;
-        if (payload.highSeverityScoreCutoff) {
-          baseColor = value >= payload.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR;
-        }
-        const color = getDotColor(payload, baseColor);
-
-        return <circle cx={cx} cy={cy} r={isSmallScreen ? 2 : 4} fill={color} stroke="#fff" strokeWidth={2} />;
-      }}
-      dot={({ cx, cy, payload, value, index }) => {
-        if (!isEmptyArray(sources))
-          return (
-            <SourceDot
-              key={`${payload?.id}_${index}`}
-              cx={cx}
-              cy={cy}
-              payload={payload}
-              index={index}
-              isSmallScreen={isSmallScreen}
-              sources={sources}
-              xFieldKey={xFieldKey}
-              yFieldKey={yFieldKey}
-            />
-          );
-
-        // Determine base color
-        let baseColor;
-        if (payload.highSeverityScoreCutoff) {
-          baseColor = value >= payload.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR;
-        } else {
-          baseColor = dotColor;
-        }
-
-        // Apply duplicate coloring
-        const color = getDotColor(payload, baseColor);
+        // Use jittered x field if it exists, otherwise use regular xFieldKey
+        const jitteredXField = `${item.key}_jittered_x`;
 
         return (
-          <circle
-            key={`dot-default-${payload?.id}_${index}`}
-            cx={cx}
-            cy={cy}
-            r={isSmallScreen ? 2 : 4}
-            fill={color}
-            stroke="#fff"
-            strokeWidth={2}
+          <Line
+            {...defaultOptions}
+            key={`line_${id}_${index}`}
+            name={item.label ? item.label : item.key}
+            type={lineType ? lineType : "monotone"}
+            dataKey={item.key}
+            // Use jittered x coordinate
+            data={filteredData.map((d) => ({
+              ...d,
+              // Use jittered x if available, otherwise use original
+              [xFieldKey]: d[jitteredXField] !== undefined ? d[jitteredXField] : d[xFieldKey],
+              // Store duplicate info for this specific line
+              _duplicateIndex: d[`${item.key}_duplicateIndex`],
+              _duplicateCount: d[`${item.key}_duplicateCount`],
+            }))}
+            stroke={faintStroke} // Use fainter color for stroke
+            fill={item.fill ? item.fill : faintStroke}
+            strokeWidth={item.strokeWidth ? item.strokeWidth : isSmallScreen ? 1.5 : 2}
+            strokeDasharray={item.strokeDasharray ? item.strokeDasharray : 0}
+            legendType={item.legendType ? item.legendType : "line"}
+            dot={createDotRenderer(lineDotConfig)} // Use extracted dot renderer
+            activeDot={createActiveDotRenderer(lineDotConfig)} // Use extracted active dot renderer
+            connectNulls={!!connectNulls}
           />
         );
-      }}
-      strokeWidth={strokeWidth ? strokeWidth : 1}
-      connectNulls={!!connectNulls}
-    />
-  );
+      });
+  };
+
+  const renderSingleLine = () => {
+    // Create the configuration object
+    const dotConfig = {
+      sources,
+      isSmallScreen,
+      xFieldKey,
+      yFieldKey,
+      dotColor,
+    };
+
+    return (
+      <Line
+        {...defaultOptions}
+        type={lineType ? lineType : "monotone"}
+        dataKey={yFieldKey}
+        stroke={theme.palette.muter.main}
+        activeDot={createActiveDotRenderer(dotConfig)}
+        dot={createDotRenderer(dotConfig)}
+        strokeWidth={strokeWidth ? strokeWidth : 1}
+        connectNulls={!!connectNulls}
+      />
+    );
+  };
 
   const renderNullLine = () => (
     <Line
@@ -752,7 +788,7 @@ export default function LineCharts(props) {
           },
           height: {
             xs: xsChartHeight ? xsChartHeight : 280, // Increased height for small screens
-            sm: chartHeight ? chartHeight: 240,
+            sm: chartHeight ? chartHeight : 240,
           },
         }}
         className={`chart-wrapper ${wrapperClass ? wrapperClass : ""}`}
@@ -793,6 +829,7 @@ LineCharts.propTypes = {
   enableLineSwitches: PropTypes.bool,
   highSeverityScoreCutoff: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  isCategoricalY: PropTypes.bool,
   legendType: PropTypes.string,
   lineType: PropTypes.string,
   mdChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
@@ -800,7 +837,8 @@ LineCharts.propTypes = {
   maximumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   minimumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   note: PropTypes.string,
-  showTicks: PropTypes.bool,
+  showXTicks: PropTypes.bool,
+  showYTicks: PropTypes.bool,
   strokeWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   title: PropTypes.string,
   tooltipLabelFormatter: PropTypes.func,

@@ -285,12 +285,12 @@ export default function BarCharts(props) {
       height={108}
       tick={{ fontSize: 12, fontWeight: 500, textAnchor: "middle" }}
       tickFormatter={(ts) => (xTickFormatter ? xTickFormatter(ts) : new Date(ts).toLocaleDateString())}
-      tickMargin={12}
+      tickMargin={10}
       ticks={calculatedTicks}
       interval="preserveStartEnd"
-      padding={{ left: 30, right: 30 }}
+      padding={{ left: 16, right: 16 }}
     >
-      {xLabel && xLabelVisible && <Label value={xLabel} offset={-8} position="insideBottom" />}
+      {xLabel && xLabelVisible && <Label value={xLabel} offset={-12} position="insideBottom" />}
     </XAxis>
   );
 

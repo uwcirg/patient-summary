@@ -11,17 +11,21 @@ export default function CustomTooltip({
   tooltipValueFormatter,
   yFieldKey,
   yLabel,
+  lineColorMap,
 }) {
   if (!active || !payload || !payload.length) return null;
 
   // The original data object for this x-position
   const d = payload[0].payload ?? {};
-  const rawDate = d[xLabelKey] ?? d[xFieldKey] ?? d.date;
+
+  // For multiple lines, use originalDate; for single line use xLabelKey
+  const rawDate = d.originalDate ?? d[xLabelKey] ?? d[xFieldKey] ?? d.date;
+
   const meaning = (d.meaning ?? d.scoreMeaning ?? d.label ?? "").replace(/\|/g, "\n");
   const scoreRaw = d[yFieldKey] ?? d.score;
 
   // Check if the score is null or undefined
-  const isNull = scoreRaw == null || scoreRaw === undefined || d.isNull;
+  const isNull = scoreRaw === null || scoreRaw === undefined || d.isNull;
 
   const scoreDisplay = isNull
     ? "Not Scored"
@@ -37,13 +41,16 @@ export default function CustomTooltip({
   // if multiple lines, payload will have one entry per series
   const multiValues = payload.map((p, i) => {
     const value = p.value;
-    const isValueNull = value == null || value === undefined;
+    const isValueNull = value === null || value === undefined;
+    const dataKey = p.key ?? p.dataKey ?? p.name ?? `series-${i}`;
+    // Get original color from lineColorMap or from stored data or fallback to payload color
+    const originalColor = lineColorMap?.[dataKey] ?? d[`${dataKey}_originalColor`] ?? p.color;
 
     return {
       key: p.dataKey ?? p.name ?? `series-${i}`,
       value: value,
       isNull: isValueNull,
-      color: p.color,
+      color: originalColor,
       name: p.name ?? p.dataKey,
     };
   });
@@ -60,7 +67,7 @@ export default function CustomTooltip({
         <div style={{ marginBottom: multiValues.length > 1 ? 8 : 0 }}>
           {scoreDisplay != null && (
             <div>
-              {!isNull && <span style={{ color: FONT_COLOR }}>{yLabel ? yLabel : "score"}:</span>}{" "}
+              <span style={{ color: FONT_COLOR }}>{yLabel ? yLabel : "score"}:</span>{" "}
               <span style={{ color: isNull ? NULL_COLOR : "inherit", fontStyle: isNull ? "italic" : "normal" }}>
                 {String(scoreDisplay)}
               </span>
@@ -128,4 +135,5 @@ CustomTooltip.propTypes = {
   yFieldKey: PropTypes.string,
   tooltipLabelFormatter: PropTypes.func,
   tooltipValueFormatter: PropTypes.func,
+  lineColorMap: PropTypes.object,
 };

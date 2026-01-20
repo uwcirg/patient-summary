@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Switch } from "@mui/material";
+import { hexToRgba } from "@config/chart_config";
 
 const CustomLegend = ({
   sources,
@@ -139,7 +140,7 @@ const CustomLegend = ({
           {lineFieldsWithData.map((lineField, index) => {
             const lineKey = lineField.key;
             const isVisible = visibleLines?.[lineKey] !== false;
-            const lineColor = lineField.color;
+            const lineColor = hexToRgba(lineField.color ?? "#444", 1);
             const lineLabel = lineField.label || lineField.key;
             const strokeDasharray = lineField.strokeDasharray || "0";
 

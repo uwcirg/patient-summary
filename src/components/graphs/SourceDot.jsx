@@ -3,17 +3,26 @@ import PropTypes from "prop-types";
 import { ALERT_COLOR, SUCCESS_COLOR, WARNING_COLOR, getDotColor } from "@config/chart_config";
 import { isEmptyArray } from "@/util";
 
-const SourceDot = ({ cx, cy, isSmallScreen, sources, yFieldKey, xFieldKey, payload, index, params }) => {
+const SourceDot = ({ cx, cy, isSmallScreen, sources, yFieldKey, xFieldKey, payload, index, params, dotColor }) => {
   if (isEmptyArray(sources)) return null;
   if (cx == null || cy == null) return null;
   const useParams = params ? params : {};
 
   // Determine base color first
   let baseColor;
-  if (payload.highSeverityScoreCutoff && payload[yFieldKey] >= payload.highSeverityScoreCutoff) baseColor = ALERT_COLOR;
-  else if (payload.mediumSeverityScoreCutoff && payload[yFieldKey] >= payload.mediumSeverityScoreCutoff)
+
+  // If a custom dotColor is provided, use it
+  if (dotColor) {
+    baseColor = dotColor;
+  }
+  // Otherwise use severity-based coloring
+  else if (payload.highSeverityScoreCutoff && payload[yFieldKey] >= payload.highSeverityScoreCutoff) {
+    baseColor = ALERT_COLOR;
+  } else if (payload.mediumSeverityScoreCutoff && payload[yFieldKey] >= payload.mediumSeverityScoreCutoff) {
     baseColor = WARNING_COLOR;
-  else baseColor = SUCCESS_COLOR;
+  } else {
+    baseColor = SUCCESS_COLOR;
+  }
 
   // Apply duplicate coloring
   const color = getDotColor(payload, baseColor);
@@ -25,7 +34,7 @@ const SourceDot = ({ cx, cy, isSmallScreen, sources, yFieldKey, xFieldKey, paylo
   const strokeWidth = 2;
 
   // Responsive dot size
-  const dotSize = isSmallScreen ? 2 : (useParams.r ?? 4);
+  const dotSize = isSmallScreen ? 3 : (useParams.r ?? 4);
   const rectSize = isSmallScreen ? 6 : (useParams.width ?? 8);
 
   switch (String(payload.source).toLowerCase()) {
@@ -61,4 +70,5 @@ SourceDot.propTypes = {
   index: PropTypes.number,
   params: PropTypes.object,
   sources: PropTypes.array,
+  dotColor: PropTypes.string, // Add this
 };

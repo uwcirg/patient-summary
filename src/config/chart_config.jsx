@@ -24,6 +24,7 @@ const CHART_CONFIG = {
     xsChartWidth: 400,
     chartWidth: 580,
     dotColor: "#444",
+    interval: 0,
     lgChartWidth: 588,
     mdChartWidth: 480,
     chartHeight: 240,
@@ -36,7 +37,8 @@ const CHART_CONFIG = {
     yLabelVisible: false,
     xLabelVisible: false,
     legendType: "none",
-    showTicks: false,
+    showYTicks: false,
+    showXTicks: true,
     connectNulls: false,
     dataFormatter: (data) => {
       if (isEmptyArray(data)) return data;
@@ -292,6 +294,53 @@ export const getDotColor = (entry, baseColor) => {
   }
 
   // For duplicates, adjust the brightness based on index
+  // Adjust brightness: first dot darker, last dot lighter
+  const brightnessStep = 5; // Adjust this value for more/less variation
+  const adjustment = (entry._duplicateIndex - Math.floor(entry._duplicateCount / 2)) * brightnessStep;
+
+  return adjustBrightness(baseColor, adjustment);
+};
+
+const hexToRgb = (hex) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+      }
+    : null;
+};
+
+export const rgbToHex = (r, g, b) => {
+  return (
+    "#" +
+    [r, g, b]
+      .map((x) => {
+        const hex = Math.round(x).toString(16);
+        return hex.length === 1 ? "0" + hex : hex;
+      })
+      .join("")
+  );
+};
+
+export const adjustBrightness = (color, amount) => {
+  const rgb = hexToRgb(color);
+  if (!rgb) return color;
+
+  return rgbToHex(
+    Math.min(255, Math.max(0, rgb.r + amount)),
+    Math.min(255, Math.max(0, rgb.g + amount)),
+    Math.min(255, Math.max(0, rgb.b + amount)),
+  );
+};
+/**
+ * Converts a hex color to rgba with opacity
+ * @param {string} color - Hex color (e.g., "#FF5733")
+ * @param {number} opacity - Opacity (0-1)
+ * @returns {string} RGBA color string
+ */
+export const hexToRgba = (color, opacity = 0.5) => {
   const hexToRgb = (hex) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result
@@ -303,32 +352,8 @@ export const getDotColor = (entry, baseColor) => {
       : null;
   };
 
-  const rgbToHex = (r, g, b) => {
-    return (
-      "#" +
-      [r, g, b]
-        .map((x) => {
-          const hex = Math.round(x).toString(16);
-          return hex.length === 1 ? "0" + hex : hex;
-        })
-        .join("")
-    );
-  };
+  const rgb = hexToRgb(color);
+  if (!rgb) return color;
 
-  const adjustBrightness = (color, amount) => {
-    const rgb = hexToRgb(color);
-    if (!rgb) return color;
-
-    return rgbToHex(
-      Math.min(255, Math.max(0, rgb.r + amount)),
-      Math.min(255, Math.max(0, rgb.g + amount)),
-      Math.min(255, Math.max(0, rgb.b + amount)),
-    );
-  };
-
-  // Adjust brightness: first dot darker, last dot lighter
-  const brightnessStep = 5; // Adjust this value for more/less variation
-  const adjustment = (entry._duplicateIndex - Math.floor(entry._duplicateCount / 2)) * brightnessStep;
-
-  return adjustBrightness(baseColor, adjustment);
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
 };

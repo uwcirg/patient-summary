@@ -391,6 +391,7 @@ const questionnaireConfigsRaw = {
         label: "Cocaine/crack",
         color: "#388697",
         strokeWidth: 1,
+        strokeOpacity: 0.4,
         legendType: "line",
       },
       {
@@ -398,6 +399,7 @@ const questionnaireConfigsRaw = {
         label: "Methamphetamine",
         color: "#8C5383",
         strokeWidth: 1,
+        strokeOpacity: 0.4,
         legendType: "line",
       },
       {
@@ -405,6 +407,7 @@ const questionnaireConfigsRaw = {
         label: "Heroin",
         color: "#001BB7",
         strokeWidth: 1,
+        strokeOpacity: 0.4,
         legendType: "line",
       },
       {
@@ -412,6 +415,7 @@ const questionnaireConfigsRaw = {
         label: "Fentanyl",
         color: "#AF7A6D",
         strokeWidth: 1,
+        strokeOpacity: 0.4,
         legendType: "line",
       },
       {
@@ -419,6 +423,7 @@ const questionnaireConfigsRaw = {
         color: "#725CAD",
         label: "Narcotic pain meds",
         strokeWidth: 1,
+        strokeOpacity: 0.4,
         legendType: "line",
       },
       {
@@ -426,6 +431,7 @@ const questionnaireConfigsRaw = {
         label: "Sedatives",
         color: "#FF2DD1",
         strokeWidth: 1,
+        strokeOpacity: 0.4,
         legendType: "line",
       },
       {
@@ -433,6 +439,7 @@ const questionnaireConfigsRaw = {
         label: "Marijuana",
         color: "#8884FF",
         strokeWidth: 1,
+        strokeOpacity: 0.4,
         legendType: "line",
       },
       {
@@ -440,6 +447,7 @@ const questionnaireConfigsRaw = {
         color: "#FF90BB",
         label: "Stimulants",
         strokeWidth: 1,
+        strokeOpacity: 0.4,
         legendType: "line",
       },
       {
@@ -447,6 +455,7 @@ const questionnaireConfigsRaw = {
         color: "#FF5555",
         label: "Inhalants",
         strokeWidth: 1,
+        strokeOpacity: 0.4,
         legendType: "line",
       },
       {
@@ -454,6 +463,7 @@ const questionnaireConfigsRaw = {
         color: "#3DB6B1",
         label: "Psychedelics",
         strokeWidth: 1,
+        strokeOpacity: 0.4,
         legendType: "line",
       },
     ],
@@ -464,7 +474,8 @@ const questionnaireConfigsRaw = {
       ...CHART_CONFIG.default,
       title: "Substances Reported",
       chartHeight: 420,
-      xsChartHeight: 460, 
+      interval: 0,
+      xsChartHeight: 460,
       minimumYValue: 0,
       maximumYValue: 4,
       chartMargin: {
@@ -486,6 +497,7 @@ const questionnaireConfigsRaw = {
         return labels[value] || value;
       },
       yTicks: [0, 1, 2, 3, 4],
+      isCategoricalY: true,
       // enableAxisMeaningLabels: true,
       yLabelProps: {
         position: "top",
@@ -493,10 +505,10 @@ const questionnaireConfigsRaw = {
         dy: -16,
         fontSize: "10px",
       },
-      showTicks: true,
+      showYTicks: true,
       connectNulls: true,
       tooltipValueFormatter: (value) => {
-        if (value == null || value === undefined) return "No data";
+        if (value == null || value === undefined) return "Never";
         if (value === 0) return "Never";
         if (value === 1) return "Once or twice";
         if (value === 2) return "Monthly";
@@ -505,7 +517,11 @@ const questionnaireConfigsRaw = {
         return value;
       },
       wrapperClass: "big",
+<<<<<<< Updated upstream
     //  lineType: "stepAfter"
+=======
+      lineType: "stepBefore",
+>>>>>>> Stashed changes
       //enableLineSwitches: true
     },
   },
@@ -833,7 +849,7 @@ const questionnaireConfigsRaw = {
     // optional (defaults to top band min = 15 anyway)
     highSeverityScoreCutoff: 15,
     mediumSeverityScoreCutoff: 10,
-    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 21, xLabel: "" },
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 21, xLabel: "", dotColor: null },
   },
   "CIRG-GDS": {
     key: "CIRG-GDS",
@@ -889,7 +905,7 @@ const questionnaireConfigsRaw = {
     highSeverityScoreCutoff: 2, // flag when total ≤ 2 (common rule)
     comparisonToAlert: "lower",
     questionnaireMatchMode: "fuzzy",
-    chartParams: { ...CHART_CONFIG.default },
+    chartParams: { ...CHART_CONFIG.default, dotColor: null },
   },
   "CIRG-PC-PTSD-5": {
     key: "CIRG-PC-PTSD-5",
@@ -915,6 +931,7 @@ const questionnaireConfigsRaw = {
       maximumYValue: 5,
       xLabel: "",
       type: "barchart",
+      dotColor: null,
     },
   },
   "CIRG-PHQ9": {
@@ -964,7 +981,15 @@ const questionnaireConfigsRaw = {
       { min: 0, label: "low", meaning: "Minimal depression" },
     ],
     showNumAnsweredWithScore: true,
-    chartParams: { ...CHART_CONFIG.default, title: "PHQ-9 Score", minimumYValue: 0, maximumYValue: 27, xLabel: "", connectNulls: true},
+    chartParams: {
+      ...CHART_CONFIG.default,
+      title: "PHQ-9 Score",
+      minimumYValue: 0,
+      maximumYValue: 27,
+      xLabel: "",
+      connectNulls: true,
+      dotColor: null,
+    },
   },
   "CIRG-SLUMS": {
     key: "CIRG-SLUMS",
@@ -1012,6 +1037,7 @@ const questionnaireConfigsRaw = {
       xLabel: "",
       yLabel: "value",
       type: "barchart",
+      dotColor: null,
     },
   },
   "CIRG-CNICS-ARV": {
@@ -1153,12 +1179,14 @@ const questionnaireConfigsRaw = {
           color: "#3b82f6", // bloo
           strokeWidth: 1,
           legendType: "line",
+          strokeOpacity: 0.4
           //strokeDasharray: "2 2", // dashed line
         },
         {
           key: "AUDIT-score",
           color: SUCCESS_COLOR, // green
           strokeWidth: 1,
+          strokeOpacity: 0.4,
           legendType: "line",
         },
       ],
@@ -1182,7 +1210,7 @@ const questionnaireConfigsRaw = {
   "CIRG-PARTNER-CONTEXT": {
     key: "CIRG-PARTNER-CONTEXT",
     instrumentName: "Partner Context",
-    title: "Partner Context"
+    title: "Partner Context",
   },
   "CIRG-IDU": {
     key: "CIRG-IDU",
@@ -1483,7 +1511,7 @@ export function getProcessedQuestionnaireData(questionnaireId, opts = {}) {
     const qId = item.questionnaire ? item.questionnaire?.split("/")[1] : null;
     return qId && matchQs.indexOf(qId) !== -1;
   });
-  
+
   const processedSummaryData = !isEmptyArray(matchedQrs) ? qb._summariesByQuestionnaireRef(matchedQrs) : null;
   return processedSummaryData && processedSummaryData?.scoringSummaryData
     ? processedSummaryData
