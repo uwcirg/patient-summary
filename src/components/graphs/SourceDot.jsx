@@ -3,7 +3,19 @@ import PropTypes from "prop-types";
 import { ALERT_COLOR, SUCCESS_COLOR, WARNING_COLOR, getDotColor } from "@config/chart_config";
 import { isEmptyArray } from "@/util";
 
-const SourceDot = ({ cx, cy, isSmallScreen, sources, yFieldKey, xFieldKey, payload, index, params, dotColor }) => {
+const SourceDot = ({
+  cx,
+  cy,
+  dotRadius,
+  isSmallScreen,
+  sources,
+  yFieldKey,
+  xFieldKey,
+  payload,
+  index,
+  params,
+  dotColor,
+}) => {
   if (isEmptyArray(sources)) return null;
   if (cx == null || cy == null) return null;
   const useParams = params ? params : {};
@@ -33,9 +45,11 @@ const SourceDot = ({ cx, cy, isSmallScreen, sources, yFieldKey, xFieldKey, paylo
   const strokeColor = "#fff";
   const strokeWidth = 2;
 
-  // Responsive dot size
-  const dotSize = isSmallScreen ? 3 : (useParams.r ?? 4);
-  const rectSize = isSmallScreen ? 6 : (useParams.width ?? 8);
+  // Responsive dot size with custom radius support
+  const defaultDotSize = isSmallScreen ? 3 : 4;
+  const defaultRectSize = isSmallScreen ? 6 : 8;
+  const dotSize = dotRadius || useParams.r || defaultDotSize;
+  const rectSize = dotRadius ? dotRadius * 2 : useParams.width || defaultRectSize;
 
   switch (String(payload.source).toLowerCase()) {
     case "cnics":
@@ -63,6 +77,8 @@ export default SourceDot;
 SourceDot.propTypes = {
   cx: PropTypes.number,
   cy: PropTypes.number,
+  dotRadius: PropTypes.number,
+  activeDotRadius: PropTypes.number,
   isSmallScreen: PropTypes.bool,
   xFieldKey: PropTypes.string,
   yFieldKey: PropTypes.string,
@@ -70,5 +86,5 @@ SourceDot.propTypes = {
   index: PropTypes.number,
   params: PropTypes.object,
   sources: PropTypes.array,
-  dotColor: PropTypes.string, // Add this
+  dotColor: PropTypes.string,
 };

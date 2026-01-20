@@ -11,7 +11,8 @@ const CustomLegend = ({
   visibleLines,
   onToggleLine,
   enableLineSwitches,
-  linesWithData
+  linesWithData,
+  legendIconType,
 }) => {
   const hasCnics = sources.includes("CNICS") || sources.includes("cnics");
   const hasEpic = sources.includes("EPIC") || sources.includes("epic");
@@ -91,12 +92,9 @@ const CustomLegend = ({
 
   //const points = payload && !isEmptyArray(payload) ? payload : [];
 
-
   // Filter yLineFields to only include lines that have data
-  const lineFieldsWithData = yLineFields && linesWithData 
-    ? yLineFields.filter(field => linesWithData.has(field.key))
-    : yLineFields || [];
-
+  const lineFieldsWithData =
+    yLineFields && linesWithData ? yLineFields.filter((field) => linesWithData.has(field.key)) : yLineFields || [];
 
   // If we have yLineFields (multiple lines), show them as line items
   const showLineItems = yLineFields && yLineFields.length > 0;
@@ -143,6 +141,8 @@ const CustomLegend = ({
             const lineColor = hexToRgba(lineField.color ?? "#444", 1);
             const lineLabel = lineField.label || lineField.key;
             const strokeDasharray = lineField.strokeDasharray || "0";
+            // Determine icon type: use field-specific legendType, or passed legendIconType, or default 'line'
+            const iconType = lineField.legendType || legendIconType || "line";
 
             return (
               <div
@@ -161,8 +161,8 @@ const CustomLegend = ({
                     size="small"
                     className="print-hidden"
                     sx={{
-                      width: isSmallScreen ? 32 : 36,
-                      height: isSmallScreen ? 16 : 20,
+                      width: isSmallScreen ? 30 : 34,
+                      height: isSmallScreen ? 14 : 18,
                       padding: 0,
                       marginRight: 0.4,
                       "& .MuiSwitch-switchBase": {
@@ -177,28 +177,42 @@ const CustomLegend = ({
                           },
                         },
                       },
-                      "& .MuiSwitch-thumb": {
-                        width: isSmallScreen ? 12 : 14,
-                        height: isSmallScreen ? 12 : 14,
+                       "& .MuiSwitch-thumb": {
+                        width: isSmallScreen ? 10 : 12,
+                        height: isSmallScreen ? 10 : 12,
                       },
-                      "& .MuiSwitch-track": {
-                        borderRadius: isSmallScreen ? 8 : 10,
+                       "& .MuiSwitch-track": {
+                        borderRadius: isSmallScreen ? 6 : 8,
                         opacity: 1,
                         backgroundColor: "#ccc",
                       },
                     }}
                   />
                 )}
+                {/* Render icon based on type */}
                 <svg width={iconSize} height={iconSize} style={{ marginRight: 4, flexShrink: 0 }}>
-                  <line
-                    x1="0"
-                    y1={iconSize / 2}
-                    x2={iconSize - 4}
-                    y2={iconSize / 2}
-                    stroke={lineColor}
-                    strokeWidth={isSmallScreen ? 2 : 4}
-                    strokeDasharray={strokeDasharray}
-                  />
+                  {iconType === "circle" ? (
+                    // Circle icon
+                    <circle
+                      cx={iconSize / 2}
+                      cy={iconSize / 2}
+                      r={isSmallScreen ? 3 : 4}
+                      fill={lineColor}
+                      stroke="#fff"
+                      strokeWidth="1.5"
+                    />
+                  ) : (
+                    // Line icon (default)
+                    <line
+                      x1="0"
+                      y1={iconSize / 2}
+                      x2={iconSize - 4}
+                      y2={iconSize / 2}
+                      stroke={lineColor}
+                      strokeWidth={isSmallScreen ? 2 : 4}
+                      strokeDasharray={strokeDasharray}
+                    />
+                  )}
                 </svg>
                 <span style={{ fontSize: isSmallScreen ? 8 : 10, whiteSpace: "nowrap" }}>
                   {lineLabel.replace(/[_,-]/g, " ")}
@@ -223,5 +237,6 @@ CustomLegend.propTypes = {
   visibleLines: PropTypes.object,
   onToggleLine: PropTypes.func,
   enableLineSwitches: PropTypes.bool,
-  linesWithData: PropTypes.instanceOf(Set), 
+  linesWithData: PropTypes.instanceOf(Set),
+  legendIconType: PropTypes.oneOf(["line", "circle"]),
 };

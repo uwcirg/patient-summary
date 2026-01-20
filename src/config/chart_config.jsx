@@ -113,7 +113,10 @@ export default CHART_CONFIG;
 export const SUCCESS_COLOR = "green";
 export const ALERT_COLOR = "#b71c1c";
 export const WARNING_COLOR = "#e65100";
-
+export const SUBSTANCE_USE_LINE_PROPS = {
+  strokeWidth: 1,
+  strokeOpacity: 0.15,
+};
 export const COLORS = [
   "#3E517A",
   "#1976d2",

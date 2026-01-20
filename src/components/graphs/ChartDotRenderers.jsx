@@ -1,5 +1,5 @@
 import React from "react";
-import { ALERT_COLOR, SUCCESS_COLOR, getDotColor} from "@config/chart_config";
+import { ALERT_COLOR, SUCCESS_COLOR, getDotColor } from "@config/chart_config";
 import SourceDot from "./SourceDot";
 import { isEmptyArray } from "@/util";
 /**
@@ -32,10 +32,30 @@ export const getSeverityBaseColor = (payload, value, defaultColor) => {
  * @param {string} config.dotColor - Default dot color
  * @param {boolean} config.isActive - Whether this is an active (hovered) dot
  * @param {Object} config.params - Additional parameters (r, width, height for sizing)
+ * @param {number} config.dotRadius - Custom dot radius (overrides default sizing)
+ * @param {number} config.activeDotRadius - Custom active dot radius
  */
 export const renderChartDot = (props, config) => {
   const { cx, cy, payload, value, index } = props;
-  const { sources, isSmallScreen, xFieldKey, yFieldKey, dotColor, isActive = false, params = {} } = config;
+  const {
+    dotRadius,
+    activeDotRadius,
+    sources,
+    isSmallScreen,
+    xFieldKey,
+    yFieldKey,
+    dotColor,
+    isActive = false,
+    params = {},
+  } = config;
+
+  // Determine radius based on custom radius, active state, and screen size
+  let radius;
+  if (isActive) {
+    radius = activeDotRadius || (isSmallScreen ? 4 : 5);
+  } else {
+    radius = dotRadius || (isSmallScreen ? 2 : 4);
+  }
 
   // If we have source-based data, use SourceDot component
   if (!isEmptyArray(sources)) {
@@ -52,6 +72,7 @@ export const renderChartDot = (props, config) => {
         yFieldKey={yFieldKey}
         params={params}
         dotColor={dotColor} // Pass the custom dot color
+        dotRadius={radius} // Pass custom radius
       />
     );
   }
@@ -61,10 +82,6 @@ export const renderChartDot = (props, config) => {
 
   // Apply duplicate coloring
   const color = getDotColor(payload, baseColor);
-
-  // Determine radius based on active state and screen size
-  const radius = isActive ? (isSmallScreen ? 4 : 5) : isSmallScreen ? 2 : 4;
-
   return (
     <circle
       key={`dot-${isActive ? "active-" : ""}${payload?.id}_${index}`}
@@ -102,12 +119,13 @@ export const createDotRenderer = (config) => {
  * @param {string} config.xFieldKey - X field key
  * @param {string} config.yFieldKey - Y field key
  * @param {string} config.dotColor - Default dot color
+ * @param {number} config.activeDotRadius - Custom active dot radius
  * @returns {Function} Active dot renderer function for Recharts
  */
 export const createActiveDotRenderer = (config) => {
   return (props) => {
     const params = {
-      r: config.isSmallScreen ? 4 : 6,
+      r: config.activeDotRadius || (config.isSmallScreen ? 4 : 5),
       width: config.isSmallScreen ? 6 : 8,
       height: config.isSmallScreen ? 6 : 8,
     };

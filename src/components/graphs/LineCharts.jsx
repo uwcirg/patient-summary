@@ -40,11 +40,15 @@ export default function LineCharts(props) {
     connectNulls,
     data,
     dotColor,
+    dotRadius,
+    activeDotRadius,
     enableAxisMeaningLabels,
     enableLineSwitches,
     enableScoreSeverityArea,
     enableScoreSeverityCutoffLine,
     id,
+    jitterSpreadDays,
+    legendIconType,
     legendType,
     lineType,
     lgChartWidth,
@@ -121,14 +125,23 @@ export default function LineCharts(props) {
     const maxTimestamp = Math.max(...timestamps);
     const timeRangeMs = maxTimestamp - minTimestamp;
 
-    const minSpread = 2 * 60 * 60 * 1000;
-    const maxSpread = 6 * 24 * 60 * 60 * 1000;
-    const dynamicSpreadWidth = Math.max(minSpread, Math.min(maxSpread, timeRangeMs * 0.005));
+    // Use prop if provided, otherwise calculate dynamically
+    let dynamicSpreadWidth;
+    if (jitterSpreadDays !== undefined) {
+      // Use fixed spread based on prop
+      dynamicSpreadWidth = jitterSpreadDays * 24 * 60 * 60 * 1000;
+    } else {
+      // Use dynamic calculation
+      const minSpread = 7 * 24 * 60 * 60 * 1000; // 7 days
+      const maxSpread = 21 * 24 * 60 * 60 * 1000; // 21 days
+      dynamicSpreadWidth = Math.max(minSpread, Math.min(maxSpread, timeRangeMs * 0.01));
+    }
 
     const fieldsToCheck = hasMultipleYFields() ? yLineFields.map((f) => f.key) : [yFieldKey];
 
-    // Group by DATE AND Y-VALUE for each field
-    const groups = {};
+    // Group by DATE AND Y-VALUE across ALL fields
+    // This creates a master list of all points at each date+value combination
+    const crossLineGroups = {};
 
     data.forEach((d) => {
       const timestamp = d[xFieldKey];
@@ -142,15 +155,20 @@ export default function LineCharts(props) {
         const yValue = d[fieldKey];
         if (yValue === undefined || yValue === null) return;
 
-        // Create composite key: field + date + Y-VALUE
-        // This groups points with same date
-        const compositeKey = `${fieldKey}_${dayKey}_${yValue}`;
+        // Create composite key WITHOUT field: just date + Y-value
+        // This groups ALL substances with same date and same frequency together
+        const crossLineKey = `${dayKey}_${yValue}`;
 
-        if (!groups[compositeKey]) groups[compositeKey] = [];
-        groups[compositeKey].push({ dataPoint: d, fieldKey, yValue });
+        if (!crossLineGroups[crossLineKey]) crossLineGroups[crossLineKey] = [];
+        crossLineGroups[crossLineKey].push({
+          dataPoint: d,
+          fieldKey,
+          yValue,
+        });
       });
     });
 
+    // Add X-axis jitter for points with same date AND same y-value (across all lines)
     return data.map((d) => {
       const timestamp = d[xFieldKey];
       if (timestamp === undefined || timestamp === null) return d;
@@ -164,23 +182,27 @@ export default function LineCharts(props) {
         originalDate: timestamp,
       };
 
+      // Apply X-axis jitter for each field
       fieldsToCheck.forEach((fieldKey) => {
         const yValue = d[fieldKey];
         if (yValue === undefined || yValue === null) return;
 
-        const compositeKey = `${fieldKey}_${dayKey}_${yValue}`;
-        const group = groups[compositeKey];
+        const crossLineKey = `${dayKey}_${yValue}`;
+        const group = crossLineGroups[crossLineKey];
 
         if (!group || group.length === 1) {
           jitteredPoint[`${fieldKey}_jittered_x`] = timestamp;
           return;
         }
 
-        const groupIndex = group.findIndex((item) => item.dataPoint === d);
+        // Find this specific field+data point in the cross-line group
+        const groupIndex = group.findIndex((item) => item.dataPoint === d && item.fieldKey === fieldKey);
         if (groupIndex === -1) return;
 
-        // Apply X-axis jitter only
+        // Calculate X-axis jitter offset based on position in cross-line group
         const offset = (groupIndex - (group.length - 1) / 2) * (dynamicSpreadWidth / group.length);
+        console.log("field key ", fieldKey, " offset ", offset);
+
         jitteredPoint[`${fieldKey}_jittered_x`] = timestamp + offset;
         jitteredPoint[`${fieldKey}_duplicateIndex`] = groupIndex;
         jitteredPoint[`${fieldKey}_duplicateCount`] = group.length;
@@ -188,7 +210,7 @@ export default function LineCharts(props) {
 
       return jitteredPoint;
     });
-  }, [data, xFieldKey, yFieldKey, yLineFields, hasMultipleYFields]);
+  }, [data, xFieldKey, yFieldKey, yLineFields, hasMultipleYFields, jitterSpreadDays]);
 
   // Filter and track if data was truncated
   const { filteredData, wasTruncated, truncationDate } = React.useMemo(() => {
@@ -368,6 +390,7 @@ export default function LineCharts(props) {
     if (chartMargin) return chartMargin;
 
     const extraTopMargin = hasMultipleYFields() ? 10 : 0;
+    const extraCategoryMargin = isCategoricalY ? 20 : 0;
 
     if (isSmallScreen) {
       return {
@@ -379,15 +402,15 @@ export default function LineCharts(props) {
     } else if (isMediumScreen) {
       return {
         top: 20 + extraTopMargin,
-        right: 18,
-        left: 18,
+        right: 18 + extraCategoryMargin,
+        left: 18 + extraCategoryMargin,
         bottom: 10,
       };
     }
     return {
       top: 20 + extraTopMargin,
-      right: 24,
-      left: 24,
+      right: 24 + extraCategoryMargin,
+      left: 24 + extraCategoryMargin,
       bottom: 10,
     };
   };
@@ -430,7 +453,7 @@ export default function LineCharts(props) {
     if (isCategoricalY) {
       const min = minimumYValue ?? 0;
       const max = maximumYValue ?? 4;
-      const padding = 0.15;
+      const padding = 0.5;
 
       return {
         yDomainToUse: [min - padding, max + padding],
@@ -446,9 +469,6 @@ export default function LineCharts(props) {
       yTicksToUse: ticks,
     };
   }, [isCategoricalY, minimumYValue, maximumYValue, yTicks, maxYValue, minYValue]);
-
-  // const yDomain = maxYValue ? [minYValue ?? 0, maxYValue] : [minYValue ?? 0, "auto"];
-  // const yTicksToUse = yTicks || (maxYValue ? range(minYValue ?? 0, maxYValue) : range(minYValue ?? 0, 50));
 
   const renderYAxis = () => (
     <YAxis
@@ -533,6 +553,7 @@ export default function LineCharts(props) {
           yLabel={yLabel}
           tooltipValueFormatter={tooltipValueFormatter}
           lineColorMap={lineColorMap}
+          isCategoricalY={isCategoricalY}
         />
       )}
     />
@@ -575,6 +596,7 @@ export default function LineCharts(props) {
             onToggleLine={toggleLineVisibility}
             enableLineSwitches={enableLineSwitches}
             linesWithData={linesWithData}
+            legendIconType={legendIconType}
           />
         )}
       />
@@ -588,6 +610,8 @@ export default function LineCharts(props) {
       isSmallScreen,
       xFieldKey,
       yFieldKey,
+      dotRadius,
+      activeDotRadius,
     };
 
     return yLineFields
@@ -597,6 +621,8 @@ export default function LineCharts(props) {
         const lineDotConfig = {
           ...baseDotConfig,
           dotColor: item.color, // Use the line's color as the dot color
+          dotRadius: item.dotRadius ?? dotRadius,
+          activeDotRadius: item.dotRadius ?? activeDotRadius,
         };
 
         // Use custom opacity if provided, otherwise default to 0.5
@@ -643,6 +669,8 @@ export default function LineCharts(props) {
       xFieldKey,
       yFieldKey,
       dotColor,
+      dotRadius,
+      activeDotRadius,
     };
 
     return (
@@ -823,6 +851,8 @@ LineCharts.propTypes = {
   connectNulls: PropTypes.bool,
   data: PropTypes.array,
   dotColor: PropTypes.string,
+  dotRadius: PropTypes.number,
+  activeDotRadius: PropTypes.number,
   enableAxisMeaningLabels: PropTypes.bool,
   enableScoreSeverityArea: PropTypes.bool,
   enableScoreSeverityCutoffLine: PropTypes.bool,
@@ -830,6 +860,8 @@ LineCharts.propTypes = {
   highSeverityScoreCutoff: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   isCategoricalY: PropTypes.bool,
+  jitterSpreadDays: PropTypes.number,
+  legendIconType: PropTypes.oneOf(["line", "circle"]),
   legendType: PropTypes.string,
   lineType: PropTypes.string,
   mdChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),

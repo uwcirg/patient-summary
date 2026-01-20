@@ -12,6 +12,7 @@ export default function CustomTooltip({
   yFieldKey,
   yLabel,
   lineColorMap,
+  isCategoricalY,
 }) {
   if (!active || !payload || !payload.length) return null;
 
@@ -20,18 +21,12 @@ export default function CustomTooltip({
 
   // For multiple lines, use originalDate; for single line use xLabelKey
   const rawDate = d.originalDate ?? d[xLabelKey] ?? d[xFieldKey] ?? d.date;
-
-  const meaning = (d.meaning ?? d.scoreMeaning ?? d.label ?? "").replace(/\|/g, "\n");
   const scoreRaw = d[yFieldKey] ?? d.score;
 
   // Check if the score is null or undefined
   const isNull = scoreRaw === null || scoreRaw === undefined || d.isNull;
 
-  const scoreDisplay = isNull
-    ? "Not Scored"
-    : typeof tooltipValueFormatter === "function"
-      ? tooltipValueFormatter(scoreRaw, d)
-      : scoreRaw;
+  const meaning = !isNull ? (d.meaning ?? d.scoreMeaning ?? d.label ?? "").replace(/\|/g, "\n") : null;
 
   // use provided formatter; else a default
   const fmtDate =
@@ -55,6 +50,8 @@ export default function CustomTooltip({
     };
   });
 
+  const isSingleValue = multiValues.length === 1;
+
   const FONT_COLOR = "#666";
   const NULL_COLOR = "#999";
 
@@ -63,26 +60,40 @@ export default function CustomTooltip({
       <div className="tooltip-label">{fmtDate}</div>
 
       {/* Single-series summary line (falls back to multi if present) */}
-      {multiValues.length < 2 && (meaning != null || scoreDisplay != null) ? (
-        <div style={{ marginBottom: multiValues.length > 1 ? 8 : 0 }}>
-          {scoreDisplay != null && (
-            <div>
-              <span style={{ color: FONT_COLOR }}>{yLabel ? yLabel : "score"}:</span>{" "}
-              <span style={{ color: isNull ? NULL_COLOR : "inherit", fontStyle: isNull ? "italic" : "normal" }}>
-                {String(scoreDisplay)}
-              </span>
-            </div>
-          )}
-          {meaning && !isNull && (
-            <div className="meaning-item flex" style={{ whiteSpace: "pre-line" }}>
-              <span style={{ color: FONT_COLOR }}>meaning:</span>
-              <span>{String(meaning)}</span>
-            </div>
-          )}
-        </div>
-      ) : null}
+      {isSingleValue &&
+        (() => {
+          const scoreDisplay = isCategoricalY
+            ? null
+            : isNull
+              ? "Not Scored"
+              : typeof tooltipValueFormatter === "function"
+                ? tooltipValueFormatter(scoreRaw, d)
+                : scoreRaw;
 
-      {/* Multi-series values (if render multiple yLineFields) */}
+          // Don't show anything if scoreDisplay is null and there's no meaning
+          if (scoreDisplay === null && !meaning) return null;
+
+          return (
+            <div style={{ marginBottom: 0 }}>
+              {scoreDisplay !== null && (
+                <div>
+                  {!isNull && <span style={{ color: FONT_COLOR }}>{yLabel ? yLabel : "score"}:</span>}{" "}
+                  <span style={{ color: isNull ? NULL_COLOR : "inherit", fontStyle: isNull ? "italic" : "normal" }}>
+                    {String(scoreDisplay)}
+                  </span>
+                </div>
+              )}
+              {meaning && !isNull && (
+                <div className="meaning-item flex" style={{ whiteSpace: "pre-line" }}>
+                  <span style={{ color: FONT_COLOR }}>meaning:</span>
+                  <span>{String(meaning)}</span>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+      {/* Multi-series values - for multi-line charts */}
       {multiValues.length > 1 &&
         multiValues.map((m) => {
           const displayValue = m.isNull
@@ -90,6 +101,9 @@ export default function CustomTooltip({
             : tooltipValueFormatter
               ? tooltipValueFormatter(m.value)
               : m.value;
+
+          // Skip rendering this line if displayValue is null
+          if (displayValue === null) return null;
 
           return (
             <div key={`tt-${m.key}`} style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -136,4 +150,5 @@ CustomTooltip.propTypes = {
   tooltipLabelFormatter: PropTypes.func,
   tooltipValueFormatter: PropTypes.func,
   lineColorMap: PropTypes.object,
+  isCategoricalY: PropTypes.bool,
 };

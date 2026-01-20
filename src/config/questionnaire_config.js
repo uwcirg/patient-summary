@@ -1,6 +1,6 @@
 import { isEmptyArray, isNumber } from "@util";
 import { getResourcesByResourceType, linkIdEquals } from "@util/fhirUtil";
-import CHART_CONFIG, { SUCCESS_COLOR } from "./chart_config";
+import CHART_CONFIG, { SUCCESS_COLOR, SUBSTANCE_USE_LINE_PROPS } from "./chart_config";
 import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS, PHQ9_ADMIN_NOTE } from "@/consts";
 import QuestionnaireScoringBuilder from "@/models/resultBuilders/QuestionnaireScoringBuilder";
 
@@ -385,86 +385,67 @@ const questionnaireConfigsRaw = {
         linkId: "ASSIST-19",
       },
     ],
+    legendIconType: "circle",
     yLineFields: [
       {
+        ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-10",
         label: "Cocaine/crack",
         color: "#388697",
-        strokeWidth: 1,
-        strokeOpacity: 0.4,
-        legendType: "line",
       },
       {
+        ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-11",
         label: "Methamphetamine",
         color: "#8C5383",
-        strokeWidth: 1,
-        strokeOpacity: 0.4,
-        legendType: "line",
       },
       {
+        ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-12",
         label: "Heroin",
         color: "#001BB7",
-        strokeWidth: 1,
-        strokeOpacity: 0.4,
-        legendType: "line",
       },
       {
+        ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-13",
         label: "Fentanyl",
         color: "#AF7A6D",
-        strokeWidth: 1,
-        strokeOpacity: 0.4,
-        legendType: "line",
       },
       {
+        ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-14",
         color: "#725CAD",
         label: "Narcotic pain meds",
-        strokeWidth: 1,
-        strokeOpacity: 0.4,
-        legendType: "line",
       },
       {
+        ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-15",
         label: "Sedatives",
         color: "#FF2DD1",
-        strokeWidth: 1,
-        strokeOpacity: 0.4,
-        legendType: "line",
       },
       {
+        ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-16",
         label: "Marijuana",
         color: "#8884FF",
-        strokeWidth: 1,
-        strokeOpacity: 0.4,
-        legendType: "line",
       },
       {
+        ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-17",
         color: "#FF90BB",
         label: "Stimulants",
-        strokeWidth: 1,
-        strokeOpacity: 0.4,
-        legendType: "line",
       },
       {
+        ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-18",
         color: "#FF5555",
         label: "Inhalants",
-        strokeWidth: 1,
-        strokeOpacity: 0.4,
-        legendType: "line",
       },
       {
+        ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-19",
         color: "#3DB6B1",
         label: "Psychedelics",
-        strokeWidth: 1,
-        strokeOpacity: 0.4,
-        legendType: "line",
       },
     ],
     displayMeaningNotScore: true,
@@ -508,17 +489,22 @@ const questionnaireConfigsRaw = {
       showYTicks: true,
       connectNulls: true,
       tooltipValueFormatter: (value) => {
-        if (value == null || value === undefined) return "Never";
+        if (value == null || value === undefined) return null;
         if (value === 0) return "Never";
         if (value === 1) return "Once or twice";
         if (value === 2) return "Monthly";
         if (value === 3) return "Weekly";
         if (value === 4) return "Daily or almost daily";
-        return value;
+        return null;
       },
       wrapperClass: "big",
-      lineType: "stepBefore",
-      //enableLineSwitches: true
+      dotRadius: 5,
+      activeDotRadius: 6,
+      //  lineType: "stepAfter"
+      // lineType: "stepBefore",
+      lineType: "monotone",
+      jitterSpreadDays: 16,
+      // enableLineSwitches: true,
     },
   },
   "CIRG-CNICS-ASSIST-OD": {
@@ -1175,7 +1161,7 @@ const questionnaireConfigsRaw = {
           color: "#3b82f6", // bloo
           strokeWidth: 1,
           legendType: "line",
-          strokeOpacity: 0.4
+          strokeOpacity: 0.4,
           //strokeDasharray: "2 2", // dashed line
         },
         {
