@@ -517,11 +517,7 @@ const questionnaireConfigsRaw = {
         return value;
       },
       wrapperClass: "big",
-<<<<<<< Updated upstream
-    //  lineType: "stepAfter"
-=======
       lineType: "stepBefore",
->>>>>>> Stashed changes
       //enableLineSwitches: true
     },
   },
