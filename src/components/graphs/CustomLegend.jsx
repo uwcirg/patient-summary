@@ -98,6 +98,7 @@ const CustomLegend = ({
 
   // If we have yLineFields (multiple lines), show them as line items
   const showLineItems = yLineFields && yLineFields.length > 0;
+  const shouldShowSwitches = enableLineSwitches && yLineFields?.length > 1;
 
   return (
     <div
@@ -125,7 +126,7 @@ const CustomLegend = ({
       {showLineItems && (
         <div
           style={{
-            marginLeft: isSmallScreen ? 8 : 16,
+            // marginLeft: isSmallScreen ? 8 : 16,
             fontSize: isSmallScreen ? 9 : 10,
             color: "#444",
             display: "grid",
@@ -150,21 +151,23 @@ const CustomLegend = ({
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  opacity: enableLineSwitches && !isVisible ? 0.5 : 1,
+                  opacity: shouldShowSwitches && !isVisible ? 0.5 : 1,
                 }}
               >
-                {/* Only render switch if enableLineSwitches is true */}
-                {enableLineSwitches && (
+                {/* Only render switch if shouldShowSwitches is true */}
+                {shouldShowSwitches && (
                   <Switch
                     checked={isVisible}
                     onChange={() => onToggleLine?.(lineKey)}
                     size="small"
                     className="print-hidden"
                     sx={{
-                      width: isSmallScreen ? 30 : 34,
-                      height: isSmallScreen ? 14 : 18,
+                      // width: isSmallScreen ? 30 : 34,
+                      // height: isSmallScreen ? 14 : 18,
+                      width: isSmallScreen ? 24 : 30,
+                      height: isSmallScreen ? 10 : 14,
                       padding: 0,
-                      marginRight: 0.4,
+                      marginRight: 0.8,
                       "& .MuiSwitch-switchBase": {
                         padding: 0,
                         margin: "2px",
@@ -173,15 +176,15 @@ const CustomLegend = ({
                           color: "#fff",
                           "& + .MuiSwitch-track": {
                             backgroundColor: lineColor,
-                            opacity: 1,
+                            opacity: 0.8,
                           },
                         },
                       },
-                       "& .MuiSwitch-thumb": {
-                        width: isSmallScreen ? 10 : 12,
-                        height: isSmallScreen ? 10 : 12,
+                      "& .MuiSwitch-thumb": {
+                        width: isSmallScreen ? 6 : 8,
+                        height: isSmallScreen ? 7 : 9,
                       },
-                       "& .MuiSwitch-track": {
+                      "& .MuiSwitch-track": {
                         borderRadius: isSmallScreen ? 6 : 8,
                         opacity: 1,
                         backgroundColor: "#ccc",
@@ -209,7 +212,7 @@ const CustomLegend = ({
                       x2={iconSize - 4}
                       y2={iconSize / 2}
                       stroke={lineColor}
-                      strokeWidth={isSmallScreen ? 2 : 4}
+                      strokeWidth={2.5}
                       strokeDasharray={strokeDasharray}
                     />
                   )}

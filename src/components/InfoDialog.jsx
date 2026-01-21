@@ -8,7 +8,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import { IconButton } from "@mui/material";
+import IconButton from "@mui/material/IconButton";
 import HelpIcon from "@mui/icons-material/Help";
 
 export default function InfoDialog(props) {
@@ -110,7 +110,7 @@ export default function InfoDialog(props) {
               color: "#FFF",
             }}
           >
-            {title}
+           {title}
           </DialogTitle>
         )}
 

@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import PropTypes from "prop-types";
 import { Box, Stack, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
@@ -26,6 +26,7 @@ import {
 } from "@config/chart_config";
 import InfoDialog from "@components/InfoDialog";
 import CustomLegend from "./CustomLegend";
+import CustomSourceTooltip from "./CustomSourceTooltip";
 import CustomTooltip from "./CustomTooltip";
 import NullDot from "./NullDot";
 import { createDotRenderer, createActiveDotRenderer } from "./ChartDotRenderers";
@@ -60,6 +61,8 @@ export default function LineCharts(props) {
     showTooltipScore,
     showTooltipMeaning,
     showYTicks,
+    sourceColors,
+    splitBySource,
     strokeWidth,
     title,
     tooltipLabelFormatter,
@@ -88,7 +91,14 @@ export default function LineCharts(props) {
   const CUT_OFF_YEAR = 5;
   const isCategoricalY = props.isCategoricalY || false;
 
-  const [visibleLines, setVisibleLines] = React.useState(() => {
+  // Add tooltip state for source-based rendering
+  const [sourceTooltip, setSourceTooltip] = useState({
+    visible: false,
+    position: { x: 0, y: 0 },
+    data: null,
+  });
+
+  const [visibleLines, setVisibleLines] = useState(() => {
     // Only initialize if switches are enabled and we have multiple lines
     if (enableLineSwitches && yLineFields && yLineFields.length > 0) {
       return yLineFields.reduce((acc, field) => {
@@ -98,6 +108,36 @@ export default function LineCharts(props) {
     }
     return {};
   });
+
+  // Handler for custom tooltip
+  const handleDotMouseEnter = useCallback(
+    (e, payload) => {
+      if (!splitBySource) return;
+
+      const mouseX = e.clientX || e.pageX;
+      const mouseY = e.clientY || e.pageY;
+      const meaningRaw = payload.meaning ?? payload.scoreMeaning ?? payload.label ?? "";
+      const meaning = meaningRaw.replace(/\|/g, "\n");
+
+      setSourceTooltip({
+        visible: true,
+        position: { x: mouseX, y: mouseY },
+        data: {
+          date: payload.originalDate || payload.date || payload[xFieldKey],
+          value: payload[yFieldKey],
+          source: payload.source,
+          isNull: payload.isNull || false,
+          meaning: meaning || null,
+        },
+      });
+    },
+    [splitBySource, xFieldKey, yFieldKey],
+  );
+
+  const handleDotMouseLeave = React.useCallback(() => {
+    if (!splitBySource) return;
+    setSourceTooltip({ visible: false, position: { x: 0, y: 0 }, data: null });
+  }, [splitBySource]);
 
   const toggleLineVisibility = (lineKey) => {
     if (!enableLineSwitches) return; // Don't toggle if switches aren't enabled
@@ -203,7 +243,6 @@ export default function LineCharts(props) {
 
         // Calculate X-axis jitter offset based on position in cross-line group
         const offset = (groupIndex - (group.length - 1) / 2) * (dynamicSpreadWidth / group.length);
-        console.log("field key ", fieldKey, " offset ", offset);
 
         jitteredPoint[`${fieldKey}_jittered_x`] = timestamp + offset;
         jitteredPoint[`${fieldKey}_duplicateIndex`] = groupIndex;
@@ -481,7 +520,8 @@ export default function LineCharts(props) {
               value: yLabel,
               angle: -90,
               position: "insideLeft",
-              style: { fontSize: isSmallScreen ? "10px" : "12px" },
+              offset: -2,
+              style: { fontSize: "10px"},
               ...(yLabelProps ? yLabelProps : {}),
             }
           : null
@@ -531,37 +571,41 @@ export default function LineCharts(props) {
     }, {});
   }, [yLineFields]);
 
-  const renderToolTip = () => (
-    <Tooltip
-      itemStyle={{ fontSize: "10px" }}
-      labelStyle={{ fontSize: "10px" }}
-      animationBegin={0}
-      animationDuration={0}
-      shared={false}
-      // Use originalDate in tooltip if available
-      labelFormatter={(value, payload) => {
-        if (tooltipLabelFormatter) {
-          const originalValue = payload?.[0]?.payload?.originalDate ?? value;
-          return tooltipLabelFormatter(originalValue, payload);
-        }
-        return value;
-      }}
-      content={(props) => (
-        <CustomTooltip
-          {...props}
-          yFieldKey={yFieldKey}
-          xFieldKey={xFieldKey}
-          xLabelKey="originalDate"
-          yLabel={yLabel}
-          tooltipValueFormatter={tooltipValueFormatter}
-          lineColorMap={lineColorMap}
-          isCategoricalY={isCategoricalY}
-          showScore={showTooltipScore}
-          showMeaning={showTooltipMeaning}
-        />
-      )}
-    />
-  );
+  const renderToolTip = () => {
+    // Don't render Recharts tooltip when using splitBySource
+    if (splitBySource) return null;
+    return (
+      <Tooltip
+        itemStyle={{ fontSize: "10px" }}
+        labelStyle={{ fontSize: "10px" }}
+        animationBegin={0}
+        animationDuration={0}
+        shared={false}
+        // Use originalDate in tooltip if available
+        labelFormatter={(value, payload) => {
+          if (tooltipLabelFormatter) {
+            const originalValue = payload?.[0]?.payload?.originalDate ?? value;
+            return tooltipLabelFormatter(originalValue, payload);
+          }
+          return value;
+        }}
+        content={(props) => (
+          <CustomTooltip
+            {...props}
+            yFieldKey={yFieldKey}
+            xFieldKey={xFieldKey}
+            xLabelKey="originalDate"
+            yLabel={yLabel}
+            tooltipValueFormatter={tooltipValueFormatter}
+            lineColorMap={lineColorMap}
+            isCategoricalY={isCategoricalY}
+            showScore={showTooltipScore}
+            showMeaning={showTooltipMeaning}
+          />
+        )}
+      />
+    );
+  };
 
   const renderLegend = () => {
     if (isEmptyArray(sources)) {
@@ -585,8 +629,8 @@ export default function LineCharts(props) {
         align="right"
         wrapperStyle={{
           position: "absolute",
-          top: isSmallScreen ? 4 : 10,
-          right: isSmallScreen ? 20 : 24,
+          top: isSmallScreen ? 4 : 8,
+          right: isSmallScreen ? 20 : 40,
           width: "auto",
         }}
         content={(legendProps) => (
@@ -636,22 +680,27 @@ export default function LineCharts(props) {
         // Use jittered x field if it exists, otherwise use regular xFieldKey
         const jitteredXField = `${item.key}_jittered_x`;
 
+        // Filter out null values for this specific line
+        const lineData = filteredData
+          .filter((d) => d[item.key] !== null && d[item.key] !== undefined && !d[item.key].isNull)
+          .map((d) => ({
+            ...d,
+            // Use jittered x if available, otherwise use original
+            [xFieldKey]: d[jitteredXField] !== undefined ? d[jitteredXField] : d[xFieldKey],
+            // Store duplicate info for this specific line
+            _duplicateIndex: d[`${item.key}_duplicateIndex`],
+            _duplicateCount: d[`${item.key}_duplicateCount`],
+          }));
+
         return (
           <Line
             {...defaultOptions}
-            key={`line_${id}_${index}`}
+            key={`line_${id}_${item.key}_${index}`}
             name={item.label ? item.label : item.key}
             type={lineType ? lineType : "monotone"}
             dataKey={item.key}
             // Use jittered x coordinate
-            data={filteredData.map((d) => ({
-              ...d,
-              // Use jittered x if available, otherwise use original
-              [xFieldKey]: d[jitteredXField] !== undefined ? d[jitteredXField] : d[xFieldKey],
-              // Store duplicate info for this specific line
-              _duplicateIndex: d[`${item.key}_duplicateIndex`],
-              _duplicateCount: d[`${item.key}_duplicateCount`],
-            }))}
+            data={lineData}
             stroke={faintStroke} // Use fainter color for stroke
             fill={item.fill ? item.fill : faintStroke}
             strokeWidth={item.strokeWidth ? item.strokeWidth : isSmallScreen ? 1.5 : 2}
@@ -676,11 +725,13 @@ export default function LineCharts(props) {
       dotRadius,
       activeDotRadius,
     };
+    const lineData = filteredData.filter((d) => d[yFieldKey] !== null && d[yFieldKey] !== undefined);
 
     return (
       <Line
         {...defaultOptions}
         type={lineType ? lineType : "monotone"}
+        data={lineData} // Use filtered data
         dataKey={yFieldKey}
         stroke={theme.palette.muter.main}
         activeDot={createActiveDotRenderer(dotConfig)}
@@ -701,14 +752,110 @@ export default function LineCharts(props) {
       strokeWidth={0}
       isAnimationActive={false}
       legendType="none"
-      dot={({ cx, cy, payload, index }) => {
-        if (!payload.isNull) return null;
-        return <NullDot key={`null-${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />;
+      dot={(dotProps) => {
+        if (!dotProps.payload?.isNull) return null;
+        const { cx, cy, payload, index } = dotProps;
+        return (
+          <g
+            key={`${dotProps.payload?.id}_${dotProps.payload?.key}_${index}_nulldot`}
+            onMouseEnter={(e) => handleDotMouseEnter(e, dotProps.payload)}
+            onMouseLeave={handleDotMouseLeave}
+          >
+            <NullDot key={`null-${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />;
+          </g>
+        );
       }}
-      activeDot={false}
+      activeDot={(dotProps) => {
+        const { cx, cy, payload, index } = dotProps;
+        return (
+          <g
+            key={`${dotProps.payload?.id}_${dotProps.payload?.key}_activenulldot`}
+            onMouseEnter={(e) => handleDotMouseEnter(e, dotProps.payload)}
+            onMouseLeave={handleDotMouseLeave}
+          >
+            <NullDot key={`null-${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />;
+          </g>
+        );
+      }}
       connectNulls={false}
     />
   );
+
+  // Get unique sources from data
+  const uniqueSources = React.useMemo(() => {
+    const sourceSet = new Set();
+    filteredData.forEach((d) => {
+      if (d.source) sourceSet.add(d.source);
+    });
+    return Array.from(sourceSet);
+  }, [filteredData]);
+
+  const renderLinesBySource = () => {
+    if (uniqueSources.length === 0) {
+      return renderSingleLine();
+    }
+
+    const colorsToUse = sourceColors ? sourceColors : {};
+
+    return uniqueSources.map((source, index) => {
+      const sourceData = filteredData.filter(
+        (d) => d.source === source && d[yFieldKey] !== null && d[yFieldKey] !== undefined,
+      );
+
+      const sourceColor = colorsToUse[source] || theme.palette.muter.main;
+      const faintStroke = hexToRgba(sourceColor, 0.6);
+
+      const lineDotConfig = {
+        sources: [source],
+        isSmallScreen,
+        xFieldKey,
+        yFieldKey,
+        dotRadius,
+        activeDotRadius,
+      };
+
+      return (
+        <Line
+          {...defaultOptions}
+          key={`line-source-${source}-${index}`}
+          name={source}
+          type="monotone"
+          dataKey={yFieldKey}
+          data={sourceData}
+          stroke={faintStroke}
+          fill={faintStroke}
+          strokeWidth={strokeWidth ? strokeWidth : isSmallScreen ? 1 : 1.5}
+          dot={(dotProps) => {
+            const CustomDot = createDotRenderer(lineDotConfig);
+            const { key, ...rest } = dotProps;
+            return (
+              <g
+                key={`${dotProps.payload?.id}_${dotProps.payload?.key}_dot`}
+                onMouseEnter={(e) => handleDotMouseEnter(e, dotProps.payload)}
+                onMouseLeave={handleDotMouseLeave}
+              >
+                <CustomDot {...rest} />
+              </g>
+            );
+          }}
+          activeDot={(dotProps) => {
+            const CustomActiveDot = createActiveDotRenderer(lineDotConfig);
+            const { key, ...rest } = dotProps;
+            return (
+              <g
+                key={`${dotProps.payload?.id}_${dotProps.payload?.key}_activedot`}
+                onMouseEnter={(e) => handleDotMouseEnter(e, dotProps.payload)}
+                onMouseLeave={handleDotMouseLeave}
+              >
+                <CustomActiveDot {...rest} />
+              </g>
+            );
+          }}
+          connectNulls={!!connectNulls}
+        />
+      );
+    });
+  };
 
   const renderMinScoreMeaningLabel = () => {
     if (!maxYValue) return null;
@@ -836,13 +983,24 @@ export default function LineCharts(props) {
             {renderToolTip()}
             {renderLegend()}
             {hasMultipleYFields() && renderMultipleLines()}
-            {!hasMultipleYFields() && renderSingleLine()}
+            {hasMultipleYFields() && renderMultipleLines()}
+            {!hasMultipleYFields() && (splitBySource ? renderLinesBySource() : renderSingleLine())}
             {renderNullLine()}
             {enableAxisMeaningLabels && renderMaxScoreMeaningLabel()}
             {enableAxisMeaningLabels && renderMinScoreMeaningLabel()}
           </LineChart>
         </ResponsiveContainer>
       </Box>
+      {splitBySource && (
+        <CustomSourceTooltip
+          visible={sourceTooltip.visible}
+          position={sourceTooltip.position}
+          data={sourceTooltip.data}
+          tooltipLabelFormatter={tooltipLabelFormatter}
+          tooltipValueFormatter={tooltipValueFormatter}
+          yLabel={yLabel}
+        />
+      )}
     </>
   );
 }
@@ -877,6 +1035,8 @@ LineCharts.propTypes = {
   showTooltipMeaning: PropTypes.bool,
   showXTicks: PropTypes.bool,
   showYTicks: PropTypes.bool,
+  sourceColors: PropTypes.object,
+  splitBySource: PropTypes.bool,
   strokeWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   title: PropTypes.string,
   tooltipLabelFormatter: PropTypes.func,

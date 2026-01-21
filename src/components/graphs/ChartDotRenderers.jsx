@@ -54,7 +54,7 @@ export const renderChartDot = (props, config) => {
   if (isActive) {
     radius = activeDotRadius || (isSmallScreen ? 4 : 5);
   } else {
-    radius = dotRadius || (isSmallScreen ? 2 : 4);
+    radius = dotRadius || (isSmallScreen ? 3 : 4);
   }
 
   // If we have source-based data, use SourceDot component

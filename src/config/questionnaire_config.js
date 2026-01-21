@@ -385,7 +385,7 @@ const questionnaireConfigsRaw = {
         linkId: "ASSIST-19",
       },
     ],
-    legendIconType: "circle",
+    //legendIconType: "circle",
     yLineFields: [
       {
         ...SUBSTANCE_USE_LINE_PROPS,
@@ -506,7 +506,7 @@ const questionnaireConfigsRaw = {
       // lineType: "stepBefore",
       lineType: "monotone",
       jitterSpreadDays: 16,
-      // enableLineSwitches: true,
+      enableLineSwitches: true,
     },
   },
   "CIRG-CNICS-ASSIST-OD": {
@@ -974,6 +974,7 @@ const questionnaireConfigsRaw = {
       xLabel: "",
       connectNulls: true,
       dotColor: null,
+      splitBySource: true,
     },
   },
   "CIRG-SLUMS": {
@@ -1194,11 +1195,6 @@ const questionnaireConfigsRaw = {
     chartParams: { ...CHART_CONFIG.default, title: "MINI Score", minimumYValue: 0, maximumYValue: 7, xLabel: "" },
   },
   //TODO, implement those
-  "CIRG-PARTNER-CONTEXT": {
-    key: "CIRG-PARTNER-CONTEXT",
-    instrumentName: "Partner Context",
-    title: "Partner Context",
-  },
   "CIRG-IDU": {
     key: "CIRG-IDU",
     instrumentName: "IDU",
@@ -1235,6 +1231,71 @@ const questionnaireConfigsRaw = {
     title: "# of Sex Partners",
     subtitle: "Past 3 months",
     skipMeaningScoreRow: true,
+    skipChart: true,
+  },
+  "CIRG-PARTNER-CONTEXT": {
+    key: "CIRG-PARTNER-CONTEXT",
+    instrumentName: "Sexual Partner Context",
+    title: "Sexual Partner Context",
+    subtitle: "Past 3 months",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
+      linkIds: [
+        "SEXUAL-RISK-SCORE-PARTNERS-GENDERS",
+        "SEXUAL-RISK-SCORE-PARTNERS-HIV-NEG-PREP",
+        "SEXUAL-RISK-SCORE-PARTNERS-HIV-UNKNOWN",
+      ],
+    },
+    columns: [
+      {
+        linkId: "SEXUAL-RISK-SCORE-PARTNERS-GENDERS",
+        id: "result",
+      },
+      {
+        linkId: "SEXUAL-RISK-SCORE-PARTNERS-HIV-NEG-PREP",
+        id: "result",
+      },
+      {
+        linkId: "SEXUAL-RISK-SCORE-PARTNERS-HIV-UNKNOWN",
+        id: "result",
+      },
+    ],
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      let arrResponses = [];
+
+      // gender
+      const genderSexResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-PARTNERS-GENDERS", "strict"),
+      );
+      const genderSexAnswer =
+        genderSexResponse?.answer != null && genderSexResponse.answer !== undefined ? genderSexResponse.answer : null;
+      if (genderSexAnswer && String(genderSexAnswer).toLowerCase() !== "tbd") arrResponses.push(genderSexAnswer);
+
+      // PREP
+      const prepSexResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-PARTNERS-HIV-NEG-PREP", "strict"),
+      );
+      const prepSexAnswer =
+        prepSexResponse?.answer != null && prepSexResponse.answer !== undefined ? prepSexResponse.answer : null;
+      if (prepSexAnswer && String(prepSexAnswer).toLowerCase() !== "tbd") arrResponses.push(prepSexAnswer);
+
+      // HIV unknown
+      const hivUnknownResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-PARTNERS-HIV-UNKNOWN", "strict"),
+      );
+      const hivUnknownAnswer =
+        hivUnknownResponse?.answer != null && hivUnknownResponse.answer !== undefined
+          ? hivUnknownResponse.answer
+          : null;
+      if (hivUnknownAnswer && String(hivUnknownAnswer).toLowerCase() !== "tbd") arrResponses.push(hivUnknownAnswer);
+
+      return arrResponses.join("|");
+    },
+    displayMeaningNotScore: true,
+    skipResponses: true,
+    meaningRowLabel: "Sexual Partner Context (Past 3 months)",
+    linkIdMatchMode: "strict",
     skipChart: true,
   },
   "CIRG-CNICS-SEXUAL-RISK": {
@@ -1429,7 +1490,6 @@ const questionnaireConfigsRaw = {
       String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : "",
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
-      if (!severity) return "";
       const meaningResponse = responses.find((response) =>
         linkIdEquals(response.id, "SEXUAL-RISK-SCORE-STI-EXPOSURE", "strict"),
       );

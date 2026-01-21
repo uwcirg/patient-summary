@@ -81,7 +81,7 @@ export default function ResponsesViewer({
               <CloseIcon />
             </IconButton>
 
-            <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
+            <Typography sx={{ ml: 2, flex: 1 }} variant="h5" component="h2">
               <Stack gap={1} alignItems={"center"} direction={"row"}>
                 {title}
                 {questionnaire && (

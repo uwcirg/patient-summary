@@ -191,7 +191,7 @@ export const report_config = {
               type: "text",
               headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
               renderCell: (row, value) => {
-                if (isEmptyArray(row?.responseData)) return value;
+                if (isEmptyArray(row?.tableResponseData)) return value;
                 return (
                   <ResponsesViewer
                     title={row.title}

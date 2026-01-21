@@ -17,9 +17,44 @@ export default function CustomTooltip({
   showMeaning = true,
 }) {
   if (!active || !payload || !payload.length) return null;
+  const uniqueArr = Array.from(new Set(payload.map(JSON.stringify))).map(JSON.parse);
+  // Separate null markers from regular data
+  const nullMarkers = uniqueArr.filter((p) => p.payload?.isNull === true);
+  const regularData = uniqueArr.filter((p) => {
+    const value = p.value;
+    const hasValue = value !== null && value !== undefined;
+    const hasPayloadData = p.payload && Object.keys(p.payload).length > 0;
+    const isNotNullMarker = !p.payload?.isNull;
+    return  hasValue && hasPayloadData && isNotNullMarker;
+  });
+
+  // If we have null markers, show null tooltip
+  if (nullMarkers.length > 0 && regularData.length === 0) {
+    const nullPayload = nullMarkers[0].payload;
+    const rawDate = nullPayload.originalDate ?? nullPayload[xLabelKey] ?? nullPayload[xFieldKey] ?? nullPayload.date;
+    const source = nullPayload.source;
+
+    const fmtDate =
+      (typeof tooltipLabelFormatter === "function" && tooltipLabelFormatter(rawDate)) ||
+      (rawDate ? getLocaleDateStringFromDate(rawDate, "YYYY-MM-DD HH:mm") : "—");
+
+    const FONT_COLOR = "#666";
+    const NULL_COLOR = "#999";
+
+    return (
+      <div className="tooltip-container">
+        <div className="tooltip-label">{fmtDate}</div>
+        <div style={{ color: NULL_COLOR, fontStyle: "italic" }}>Not Scored</div>
+        {source && <div style={{ fontSize: "10px", color: FONT_COLOR, marginTop: 4 }}>source: {source}</div>}
+      </div>
+    );
+  }
+
+  // If no valid data points and no null markers, don't show tooltip
+  if (regularData.length === 0) return null;
 
   // The original data object for this x-position
-  const d = payload[0].payload ?? {};
+  const d = regularData[0].payload ?? {};
 
   // For multiple lines, use originalDate; for single line use xLabelKey
   const rawDate = d.originalDate ?? d[xLabelKey] ?? d[xFieldKey] ?? d.date;
@@ -36,9 +71,10 @@ export default function CustomTooltip({
     (rawDate ? getLocaleDateStringFromDate(rawDate, "YYYY-MM-DD HH:mm") : "—");
 
   // if multiple lines, payload will have one entry per series
-  const multiValues = payload.map((p, i) => {
+  // Use uniqueRegularData instead of payload
+  const multiValues = regularData.map((p, i) => {
     const value = p.value;
-    const isValueNull = value === null || value === undefined;
+    const isValueNull = value === null || value === undefined || p.payload?.isNull;
     const dataKey = p.key ?? p.dataKey ?? p.name ?? `series-${i}`;
     // Get original color from lineColorMap or from stored data or fallback to payload color
     const originalColor = lineColorMap?.[dataKey] ?? d[`${dataKey}_originalColor`] ?? p.color;
@@ -49,6 +85,7 @@ export default function CustomTooltip({
       isNull: isValueNull,
       color: originalColor,
       name: p.name ?? p.dataKey,
+      source: p.payload?.source, // Store source info
     };
   });
 
@@ -92,13 +129,16 @@ export default function CustomTooltip({
                   <span>{String(meaning)}</span>
                 </div>
               )}
+              {/* Show source for single value */}
+              {d.source && <div style={{ fontSize: "10px", color: FONT_COLOR, marginTop: 4 }}>source: {d.source}</div>}
             </div>
           );
         })()}
 
       {/* Multi-series values - for multi-line charts */}
       {multiValues.length > 1 &&
-        multiValues.map((m) => {
+        multiValues.map((m, idx) => {
+          // Add idx parameter
           const displayValue = m.isNull
             ? "Not Scored"
             : tooltipValueFormatter
@@ -111,7 +151,8 @@ export default function CustomTooltip({
           if (String(m.name).toLocaleLowerCase() === "meaning" && !showMeaning) return null;
 
           return (
-            <div key={`tt-${m.key}`} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div key={`tt-${m.key}-${idx}`} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {/* ^^^ Changed from key={`tt-${m.key}`} to key={`tt-${m.key}-${idx}`} */}
               <span
                 style={{
                   width: 10,
@@ -135,16 +176,86 @@ export default function CustomTooltip({
 }
 
 CustomTooltip.propTypes = {
-  // whether tooltip is visible
   active: PropTypes.bool,
-  // Recharts passes an array of series entries for this x-position
   payload: PropTypes.arrayOf(
     PropTypes.shape({
       value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       name: PropTypes.string,
       dataKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       color: PropTypes.string,
-      payload: PropTypes.object, // raw data point: { date, score, meaning, ... }
+      payload: PropTypes.object,
+    }),
+  ),
+  label: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  xFieldKey: PropTypes.string,
+  xLabelKey: PropTypes.string,
+  yLabel: PropTypes.string,
+  yFieldKey: PropTypes.string,
+  tooltipLabelFormatter: PropTypes.func,
+  tooltipValueFormatter: PropTypes.func,
+  lineColorMap: PropTypes.object,
+  isCategoricalY: PropTypes.bool,
+  showMeaning: PropTypes.bool,
+  showScore: PropTypes.bool,
+};
+
+CustomTooltip.propTypes = {
+  active: PropTypes.bool,
+  payload: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      name: PropTypes.string,
+      dataKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      color: PropTypes.string,
+      payload: PropTypes.object,
+    }),
+  ),
+  label: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  xFieldKey: PropTypes.string,
+  xLabelKey: PropTypes.string,
+  yLabel: PropTypes.string,
+  yFieldKey: PropTypes.string,
+  tooltipLabelFormatter: PropTypes.func,
+  tooltipValueFormatter: PropTypes.func,
+  lineColorMap: PropTypes.object,
+  isCategoricalY: PropTypes.bool,
+  showMeaning: PropTypes.bool,
+  showScore: PropTypes.bool,
+};
+
+CustomTooltip.propTypes = {
+  active: PropTypes.bool,
+  payload: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      name: PropTypes.string,
+      dataKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      color: PropTypes.string,
+      payload: PropTypes.object,
+    }),
+  ),
+  label: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  xFieldKey: PropTypes.string,
+  xLabelKey: PropTypes.string,
+  yLabel: PropTypes.string,
+  yFieldKey: PropTypes.string,
+  tooltipLabelFormatter: PropTypes.func,
+  tooltipValueFormatter: PropTypes.func,
+  lineColorMap: PropTypes.object,
+  isCategoricalY: PropTypes.bool,
+  showMeaning: PropTypes.bool,
+  showScore: PropTypes.bool,
+};
+
+CustomTooltip.propTypes = {
+  active: PropTypes.bool,
+  payload: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      name: PropTypes.string,
+      dataKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      color: PropTypes.string,
+      payload: PropTypes.object,
     }),
   ),
   label: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
