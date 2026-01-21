@@ -2,18 +2,10 @@ import React from "react";
 import PropTypes from "prop-types";
 import { getLocaleDateStringFromDate } from "@/util";
 
-const CustomSourceTooltip = ({
-  visible,
-  position,
-  data,
-  tooltipValueFormatter,
-  yLabel,
-  showScore = true,
-  showMeaning = true,
-}) => {
+const CustomSourceTooltip = ({ visible, position, data, tooltipValueFormatter, yLabel, showMeaning = true }) => {
   if (!visible || !data) return null;
 
-  const { date, value, source, isNull, meaning } = data;
+  const { date, value, source, isNull, meaning, lineName, lineColor } = data;
 
   // Handle date formatting with fallback
   let fmtDate;
@@ -22,7 +14,6 @@ const CustomSourceTooltip = ({
     if (!isNaN(dateObj.getTime())) {
       try {
         fmtDate = getLocaleDateStringFromDate(date, "YYYY-MM-DD HH:mm");
-        console.log("Formatted with getLocaleDateStringFromDate:", fmtDate);
       } catch (err) {
         console.log(err);
         // Fallback to simple formatting
@@ -54,18 +45,45 @@ const CustomSourceTooltip = ({
         top: position.y - 10,
         pointerEvents: "none",
         zIndex: 1000,
-        background: "white",
+        background: "#FFF",
         border: "1px solid #ccc",
         padding: "8px 12px",
-        borderRadius: "4px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-        fontSize: "12px",
+        borderRadius: 0,
+        boxShadow: "0 2px 6px rgba(33, 33, 33, 0.15)",
       }}
     >
       <div className="tooltip-label" style={{ fontWeight: 500, marginBottom: 4, fontSize: FONT_SIZE }}>
         {fmtDate}
       </div>
-      {showScore && displayValue && (
+      {lineName && (
+        <div
+          style={{
+            fontSize: "10px",
+            color: FONT_COLOR,
+            marginBottom: 4,
+            fontWeight: 500,
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
+          {lineColor && (
+            <span
+              style={{
+                display: "inline-block",
+                width: "10px",
+                height: "10px",
+                backgroundColor: lineColor,
+                border: "1px solid rgba(0,0,0,0.1)",
+                borderRadius: 0,
+                flexShrink: 0,
+              }}
+            />
+          )}
+          {lineName}
+        </div>
+      )}
+      {displayValue != null && (
         <div style={{ fontSize: FONT_SIZE, marginBottom: 2 }}>
           {!isNull && <span style={{ color: FONT_COLOR }}>{yLabel || "score"}:</span>}{" "}
           <span style={{ color: isNull ? NULL_COLOR : "inherit", fontStyle: isNull ? "italic" : "normal" }}>
@@ -95,12 +113,12 @@ CustomSourceTooltip.propTypes = {
     source: PropTypes.string,
     isNull: PropTypes.bool,
     meaning: PropTypes.string,
+    lineName: PropTypes.string,
+    lineColor: PropTypes.string,
   }),
-  tooltipLabelFormatter: PropTypes.func,
   tooltipValueFormatter: PropTypes.func,
   yLabel: PropTypes.string,
   showMeaning: PropTypes.bool,
-  showScore: PropTypes.bool,
 };
 
 export default CustomSourceTooltip;

@@ -90,6 +90,7 @@ export default function LineCharts(props) {
   const theme = useTheme();
   const CUT_OFF_YEAR = 5;
   const isCategoricalY = props.isCategoricalY || false;
+  const hoveredElementRef = React.useRef(null);
 
   // Add tooltip state for source-based rendering
   const [sourceTooltip, setSourceTooltip] = useState({
@@ -109,35 +110,47 @@ export default function LineCharts(props) {
     return {};
   });
 
+  const hasMultipleYFields = useCallback(() => yLineFields && yLineFields.length > 0, [yLineFields]);
+
   // Handler for custom tooltip
   const handleDotMouseEnter = useCallback(
-    (e, payload) => {
-      if (!splitBySource) return;
+    (e, payload, lineName, dataKey, lineColor) => {
+     if (!splitBySource && !hasMultipleYFields()) return;
+
+      hoveredElementRef.current = payload; // Track current element
 
       const mouseX = e.clientX || e.pageX;
       const mouseY = e.clientY || e.pageY;
-      const meaningRaw = payload.meaning ?? payload.scoreMeaning ?? payload.label ?? "";
-      const meaning = meaningRaw.replace(/\|/g, "\n");
-
+      const meaningRaw = payload?.showTooltipMeaning && payload.meaning ? (payload.scoreMeaning ?? payload.label) : "";
+      const meaning = meaningRaw ? meaningRaw.replace(/\|/g, "\n") : null;
+      
       setSourceTooltip({
         visible: true,
         position: { x: mouseX, y: mouseY },
         data: {
           date: payload.originalDate || payload.date || payload[xFieldKey],
-          value: payload[yFieldKey],
+          value: dataKey ? payload[dataKey] : payload[yFieldKey],
           source: payload.source,
           isNull: payload.isNull || false,
           meaning: meaning || null,
+          lineName: lineName || null,
+          lineColor: lineColor,
         },
       });
     },
-    [splitBySource, xFieldKey, yFieldKey],
+    [splitBySource, hasMultipleYFields, xFieldKey, yFieldKey],
   );
 
   const handleDotMouseLeave = React.useCallback(() => {
-    if (!splitBySource) return;
-    setSourceTooltip({ visible: false, position: { x: 0, y: 0 }, data: null });
-  }, [splitBySource]);
+    if (!splitBySource && !hasMultipleYFields()) return;
+    hoveredElementRef.current = null; // Clear reference
+    // Add a small delay to prevent flickering
+    setTimeout(() => {
+      if (hoveredElementRef.current === null) {
+        setSourceTooltip({ visible: false, position: { x: 0, y: 0 }, data: null });
+      }
+    }, 50);
+  }, [splitBySource, hasMultipleYFields]);
 
   const toggleLineVisibility = (lineKey) => {
     if (!enableLineSwitches) return; // Don't toggle if switches aren't enabled
@@ -147,8 +160,6 @@ export default function LineCharts(props) {
       [lineKey]: !prev[lineKey],
     }));
   };
-
-  const hasMultipleYFields = useCallback(() => yLineFields && yLineFields.length > 0, [yLineFields]);
 
   const sources = React.useMemo(() => {
     const set = new Set();
@@ -521,7 +532,7 @@ export default function LineCharts(props) {
               angle: -90,
               position: "insideLeft",
               offset: -2,
-              style: { fontSize: "10px"},
+              style: { fontSize: "10px" },
               ...(yLabelProps ? yLabelProps : {}),
             }
           : null
@@ -573,7 +584,7 @@ export default function LineCharts(props) {
 
   const renderToolTip = () => {
     // Don't render Recharts tooltip when using splitBySource
-    if (splitBySource) return null;
+    if (splitBySource || hasMultipleYFields()) return null;
     return (
       <Tooltip
         itemStyle={{ fontSize: "10px" }}
@@ -696,7 +707,7 @@ export default function LineCharts(props) {
           <Line
             {...defaultOptions}
             key={`line_${id}_${item.key}_${index}`}
-            name={item.label ? item.label : item.key}
+            name={item.label ?? item.key}
             type={lineType ? lineType : "monotone"}
             dataKey={item.key}
             // Use jittered x coordinate
@@ -706,8 +717,46 @@ export default function LineCharts(props) {
             strokeWidth={item.strokeWidth ? item.strokeWidth : isSmallScreen ? 1.5 : 2}
             strokeDasharray={item.strokeDasharray ? item.strokeDasharray : 0}
             legendType={item.legendType ? item.legendType : "line"}
-            dot={createDotRenderer(lineDotConfig)} // Use extracted dot renderer
-            activeDot={createActiveDotRenderer(lineDotConfig)} // Use extracted active dot renderer
+            // dot={createDotRenderer(lineDotConfig)} // Use extracted dot renderer
+            // activeDot={createActiveDotRenderer(lineDotConfig)} // Use extracted active dot renderer
+            dot={(dotProps) => {
+              const CustomDot = createDotRenderer(lineDotConfig);
+              const { key, ...rest } = dotProps;
+              return (
+                <g
+                  key={`${dotProps.payload?.id}_${dotProps.payload?.key}_multiline_dot`}
+                  onMouseEnter={(e) => {
+                    e.stopPropagation();
+                    handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color);
+                  }}
+                  onMouseLeave={(e) => {
+                    e.stopPropagation();
+                    handleDotMouseLeave();
+                  }}
+                >
+                  <CustomDot {...rest} />
+                </g>
+              );
+            }}
+            activeDot={(dotProps) => {
+              const CustomActiveDot = createActiveDotRenderer(lineDotConfig);
+              const { key, ...rest } = dotProps;
+              return (
+                <g
+                  key={`${dotProps.payload?.id}_${dotProps.payload?.key}_multiline_activedot`}
+                  onMouseEnter={(e) => {
+                    e.stopPropagation();
+                    handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color)
+                  }}
+                  onMouseLeave={(e) => {
+                    e.stopPropagation();
+                    handleDotMouseLeave();
+                  }}
+                >
+                  <CustomActiveDot {...rest} />
+                </g>
+              );
+            }}
             connectNulls={!!connectNulls}
           />
         );
@@ -758,8 +807,14 @@ export default function LineCharts(props) {
         return (
           <g
             key={`${dotProps.payload?.id}_${dotProps.payload?.key}_${index}_nulldot`}
-            onMouseEnter={(e) => handleDotMouseEnter(e, dotProps.payload)}
-            onMouseLeave={handleDotMouseLeave}
+            onMouseEnter={(e) => {
+              e.stopPropagation();
+              handleDotMouseEnter(e, dotProps.payload);
+            }}
+            onMouseLeave={(e) => {
+              e.stopPropagation();
+              handleDotMouseLeave();
+            }}
           >
             <NullDot key={`null-${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />;
           </g>
@@ -971,6 +1026,7 @@ export default function LineCharts(props) {
           },
         }}
         className={`chart-wrapper ${wrapperClass ? wrapperClass : ""}`}
+        onMouseLeave={handleDotMouseLeave}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
           <LineChart data={filteredData} margin={getResponsiveMargin()} id={`lineChart_${id ?? generateUUID()}`}>
@@ -991,16 +1047,16 @@ export default function LineCharts(props) {
           </LineChart>
         </ResponsiveContainer>
       </Box>
-      {splitBySource && (
-        <CustomSourceTooltip
-          visible={sourceTooltip.visible}
-          position={sourceTooltip.position}
-          data={sourceTooltip.data}
-          tooltipLabelFormatter={tooltipLabelFormatter}
-          tooltipValueFormatter={tooltipValueFormatter}
-          yLabel={yLabel}
-        />
-      )}
+      {(splitBySource || hasMultipleYFields()) && (
+          <CustomSourceTooltip
+            visible={sourceTooltip.visible}
+            position={sourceTooltip.position}
+            data={sourceTooltip.data}
+            tooltipLabelFormatter={tooltipLabelFormatter}
+            tooltipValueFormatter={tooltipValueFormatter}
+            yLabel={yLabel}
+          />
+        )}
     </>
   );
 }

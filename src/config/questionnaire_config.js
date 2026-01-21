@@ -1501,7 +1501,7 @@ const questionnaireConfigsRaw = {
     },
     displayMeaningNotScore: true,
     skipResponses: true,
-    meaningRowLabel: "Concern for STI exposure",
+    meaningRowLabel: "Concern for STI Exposure (Last 3 months)",
     linkIdMatchMode: "strict",
     alertQuestionId: "SEXUAL-RISK-SCORE-STI-EXPOSURE",
     skipChart: true,

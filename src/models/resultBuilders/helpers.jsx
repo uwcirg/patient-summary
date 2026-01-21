@@ -22,6 +22,7 @@ import {
   isNil,
   isNumber,
   isPlainObject,
+  capitalizeFirstLetterSafe,
   normalizeStr,
   removeNullValuesFromObject,
   stripHtmlTags,
@@ -175,7 +176,7 @@ export function summarizeCIDASHelper(ctx, questionnaireResponses, questionnaire,
       score,
       scoreSeverity,
       highSeverityScoreCutoff,
-      meaning: meaningFromSeverity(scoreSeverity),
+      meaning: capitalizeFirstLetterSafe(meaningFromSeverity(scoreSeverity)),
       alertNote: suicideScore >= SEVERITY_CUTOFFS.CIDAS_SUICIDE_THRESHOLD ? "suicide concern" : null,
       scoringParams: { ...ctx.cfg, maximumScore, scoreSeverity },
       totalAnsweredItems,
@@ -272,7 +273,7 @@ export function summarizeMiniCogHelper(ctx, questionnaireResponses, questionnair
       clock_draw_score: clockScore,
       score: totalScore,
       scoreSeverity,
-      meaning: meaningFromSeverity(scoreSeverity),
+      meaning: capitalizeFirstLetterSafe(meaningFromSeverity(scoreSeverity)),
       comparisonToAlert: "lower",
       scoringParams: { ...(ctx.cfg ?? { maximumScore: SCORING_PARAMS.MINICOG_MAXIMUM_SCORE }), scoreSeverity },
       highSeverityScoreCutoff,
@@ -775,7 +776,7 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   const comparison = getScoreComparison(curScore, prevScore);
   const score = curScore;
   const scoreSeverity = severityFromScore(score, config);
-  const meaning = meaningFromSeverity(scoreSeverity, config, current?.responses, current);
+  const meaning = capitalizeFirstLetterSafe(meaningFromSeverity(scoreSeverity, config, current?.responses, current));
   const source = current?.source;
   const alert = getAlertFromMostRecentResponse(current, config);
   const warning =
@@ -902,7 +903,10 @@ export function getResponseColumns(data) {
   // tiny safe normalizer to avoid raw objects rendering
   const normalize = (v) => {
     if (v == null || String(v) === "" || String(v) === "null" || String(v) === "undefined") return "—";
-    if (typeof v === "string" || typeof v === "number") return v;
+    if (typeof v === "string" || typeof v === "number") {
+      if (String(v).toLowerCase() === "tbd") return "-";
+      return v;
+    }
     if (React.isValidElement(v)) return v;
     if (Array.isArray(v)) return v.join(", ");
     return "-";

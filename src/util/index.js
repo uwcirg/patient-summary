@@ -509,16 +509,20 @@ export function stripHtmlTags(html) {
 }
 export function removeNullValuesFromObject(obj) {
   if (!obj) return null;
-  const filtered = Object.fromEntries(
-    Object.entries(obj).filter(([_, value]) => value !== null)
-  );
+  const filtered = Object.fromEntries(Object.entries(obj).filter(([_, value]) => value !== null));
   return Object.keys(filtered).length === 0 ? null : filtered;
 }
-export function chunkArray (array, size = 3) {
+export function chunkArray(array, size = 3) {
   if (!array) return [];
   const chunks = [];
   for (let i = 0; i < array.length; i += size) {
     chunks.push(array.slice(i, i + size));
   }
   return chunks;
-};
+}
+
+export function capitalizeFirstLetterSafe(text) {
+  if (!text) return "";
+  if (typeof text !== "string" || text.length === 0) return text;
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+}
