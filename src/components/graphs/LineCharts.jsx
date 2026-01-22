@@ -110,6 +110,8 @@ export default function LineCharts(props) {
     return {};
   });
 
+  const Y_AXIS_PADDING = 0.5;
+
   const hasMultipleYFields = useCallback(() => yLineFields && yLineFields.length > 0, [yLineFields]);
 
   // Handler for custom tooltip
@@ -509,7 +511,7 @@ export default function LineCharts(props) {
     if (isCategoricalY) {
       const min = minimumYValue ?? 0;
       const max = maximumYValue ?? 4;
-      const padding = 0.5;
+      const padding = Y_AXIS_PADDING;
 
       return {
         yDomainToUse: [min - padding, max + padding],
@@ -741,8 +743,6 @@ export default function LineCharts(props) {
         data={lineData} // Use filtered data
         dataKey={yFieldKey}
         stroke={theme.palette.muter.main}
-        // activeDot={createActiveDotRenderer(dotConfig)}
-        // dot={createDotRenderer(dotConfig)}
         dot={(dotProps) => {
           const CustomDot = createDotRenderer(dotConfig);
           const { key, ...rest } = dotProps;
@@ -776,6 +776,9 @@ export default function LineCharts(props) {
   };
 
   const renderNullLine = () => {
+    // Determine the actual bottom position accounting for categorical padding
+    const nullYValue = isCategoricalY ? (minimumYValue ?? 0) - Y_AXIS_PADDING / 2 : (minimumYValue ?? 0);
+
     // Handle multiple lines case - only show null when ALL fields are null
     if (hasMultipleYFields()) {
       // Create data where we only mark as null if ALL yLineFields are null
@@ -785,8 +788,8 @@ export default function LineCharts(props) {
 
         return {
           ...d,
-          // Use the first field key as the dataKey for rendering
-          [yLineFields[0].key]: allFieldsNull ? 0 : null,
+          // Force the value to be at the bottom of the chart (accounting for padding)
+          [yLineFields[0].key]: allFieldsNull ? nullYValue : null,
           isNull: allFieldsNull,
         };
       });
@@ -845,10 +848,15 @@ export default function LineCharts(props) {
       );
     }
 
-    // Handle single line case (existing code)
+    // Handle single line case - also ensure it's at the bottom accounting for padding
+    const singleLineNullData = nullValueData.map((d) => ({
+      ...d,
+      [yFieldKey]: d.isNull ? nullYValue : null,
+    }));
+
     return (
       <Line
-        data={nullValueData}
+        data={singleLineNullData}
         type="monotone"
         dataKey={yFieldKey}
         stroke="transparent"

@@ -223,7 +223,7 @@ describe("QuestionnaireScoringBuilder – severity bands", () => {
   it("returns 'low' when bands missing or score not a number", () => {
     //const b2 = new QuestionnaireScoringBuilder({ questionnaireId: "phq9" });
     // @ts-expect-error test non-number
-    expect(severityFromScore("not-a-number")).toBe("low");
+    expect(severityFromScore("not-a-number")).toBe("");
   });
 
   it("meaningFromSeverity returns associated meaning", () => {

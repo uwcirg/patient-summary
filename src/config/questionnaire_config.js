@@ -477,7 +477,7 @@ const questionnaireConfigsRaw = {
         };
         return labels[value] || value;
       },
-      yTicks: [0, 1, 2, 3, 4],
+      yTicks: [ 0, 1, 2, 3, 4],
       showTooltipMeaning: false,
       isCategoricalY: true,
       // enableAxisMeaningLabels: true,
@@ -506,7 +506,7 @@ const questionnaireConfigsRaw = {
       lineType: "monotone",
       jitterSpreadDays: 16,
       enableLineSwitches: true,
-      noDataText: "Not Answered"
+      noDataText: "Not Answered",
     },
   },
   "CIRG-CNICS-ASSIST-OD": {
