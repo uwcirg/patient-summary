@@ -106,7 +106,7 @@ const CustomLegend = ({
         display: "flex",
         gap: isSmallScreen ? 8 : 16,
         alignItems: "flex-start",
-        padding: isSmallScreen ? "2px 4px" : "4px 8px",
+        padding: isSmallScreen ? "4px 4px" : "4px 8px",
         position: "relative",
         left: isSmallScreen ? "16px" : "24px",
         flexWrap: "wrap",
