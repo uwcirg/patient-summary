@@ -391,37 +391,37 @@ const questionnaireConfigsRaw = {
         ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-10",
         label: "Cocaine/crack",
-        color: "#388697",
+        color: "#0072B2",
       },
       {
         ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-11",
         label: "Methamphetamine",
-        color: "#8C5383",
+        color: "#D55E00",
       },
       {
         ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-12",
         label: "Heroin",
-        color: "#001BB7",
+        color: "#009E73",
       },
       {
         ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-13",
         label: "Fentanyl",
-        color: "#AF7A6D",
+        color: "#CC79A7",
       },
       {
         ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-14",
-        color: "#725CAD",
+        color: "#56B4E9",
         label: "Narcotic pain meds",
       },
       {
         ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-15",
         label: "Sedatives",
-        color: "#FF2DD1",
+        color: "#E69F00",
       },
       {
         ...SUBSTANCE_USE_LINE_PROPS,
@@ -432,7 +432,7 @@ const questionnaireConfigsRaw = {
       {
         ...SUBSTANCE_USE_LINE_PROPS,
         key: "ASSIST-17",
-        color: "#FF90BB",
+        color: "#545E56",
         label: "Stimulants",
       },
       {

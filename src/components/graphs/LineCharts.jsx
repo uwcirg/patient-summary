@@ -397,8 +397,8 @@ export default function LineCharts(props) {
 
   // Determine effective chart width for responsive calculations
   const effectiveChartWidth = chartWidth || 580;
-  const isSmallScreen = effectiveChartWidth <= 450;
-  const isMediumScreen = effectiveChartWidth > 450 && effectiveChartWidth <= 580;
+  const isSmallScreen = effectiveChartWidth <= 500;
+  const isMediumScreen = effectiveChartWidth > 500 && effectiveChartWidth <= 780;
 
   // Build candidate ticks with responsive step size
   const tickStep = isSmallScreen ? 12 : isMediumScreen ? 9 : 6;
@@ -602,7 +602,7 @@ export default function LineCharts(props) {
         wrapperStyle={{
           position: "absolute",
           top: isSmallScreen ? 4 : 8,
-          right: isSmallScreen ? 20 : hasNullValues ? 20 : 40,
+          right: isSmallScreen ? 20 : (hasNullValues && hasMultipleYFields()) ? 32 : 40,
           width: "auto",
         }}
         content={(legendProps) => (
