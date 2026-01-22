@@ -4,16 +4,16 @@ import PropTypes from "prop-types";
 const NullDot = ({ isSmallScreen, cx, cy, payload, index }) => {
   if (cx == null || cy == null) return null;
 
-  const size = isSmallScreen ? 4 : 5;
-  const strokeWidth = isSmallScreen ? 1.5 : 2;
-  const halfSize = size / 2;
+  const size = isSmallScreen ? 5 : 6;
+  const strokeWidth = isSmallScreen ? 1 : 1.5;
+  const halfSize = size / 1.5;
   const k = `nulldotsymbol-${payload?.id}_${payload?.key}_${payload?.source}-${index}`;
 
   return (
     <g key={`null-dot-${k}_${index}`}>
       {/* X symbol made from two diagonal lines */}
       <line
-        x1={cx - halfSize}
+        x1={cx}
         y1={cy - halfSize}
         x2={cx + halfSize}
         y2={cy + halfSize}
@@ -22,7 +22,7 @@ const NullDot = ({ isSmallScreen, cx, cy, payload, index }) => {
         strokeLinecap="round"
       />
       <line
-        x1={cx - halfSize}
+        x1={cx}
         y1={cy + halfSize}
         x2={cx + halfSize}
         y2={cy - halfSize}

@@ -2,18 +2,30 @@ import React from "react";
 import PropTypes from "prop-types";
 import { getLocaleDateStringFromDate } from "@/util";
 
-const CustomSourceTooltip = ({ visible, position, data, tooltipValueFormatter, yLabel, showMeaning = true }) => {
+const CustomSourceTooltip = ({
+  visible,
+  position,
+  positionType = "fixed",
+  data,
+  payload,
+  tooltipValueFormatter,
+  xFieldKey,
+  yFieldKey,
+  yLabel,
+  showMeaning = true,
+}) => {
   if (!visible || !data) return null;
 
   const { date, value, source, isNull, meaning, lineName, lineColor } = data;
 
   // Handle date formatting with fallback
-  let fmtDate;
-  if (date) {
-    const dateObj = new Date(date);
+  let fmtDate,
+    dateToUse = date ? date : payload && payload[xFieldKey] ? payload[xFieldKey] : null;
+  if (dateToUse) {
+    const dateObj = new Date(dateToUse);
     if (!isNaN(dateObj.getTime())) {
       try {
-        fmtDate = getLocaleDateStringFromDate(date, "YYYY-MM-DD HH:mm");
+        fmtDate = getLocaleDateStringFromDate(dateToUse, "YYYY-MM-DD HH:mm");
       } catch (err) {
         console.log(err);
         // Fallback to simple formatting
@@ -34,13 +46,23 @@ const CustomSourceTooltip = ({ visible, position, data, tooltipValueFormatter, y
   const NULL_COLOR = "#999";
   const FONT_SIZE = "10px";
 
-  const displayValue = isNull ? "Not Scored" : tooltipValueFormatter ? tooltipValueFormatter(value) : value;
+  const valueToUse = payload && payload[yFieldKey] ? payload[yFieldKey] : value;
+
+  console.log("valueToUse ", valueToUse);
+
+  const displayValue =
+    isNull || valueToUse == null
+      ? "Not Scored"
+      : tooltipValueFormatter
+        ? tooltipValueFormatter(valueToUse)
+        : valueToUse;
+  const lineLabel = lineName ? lineName.replace(/[-_]/g, " ") : "";
 
   return (
     <div
       className="tooltip-container"
       style={{
-        position: "fixed",
+        position: positionType ?? "fixed",
         left: position.x + 15,
         top: position.y - 10,
         pointerEvents: "none",
@@ -52,13 +74,16 @@ const CustomSourceTooltip = ({ visible, position, data, tooltipValueFormatter, y
         boxShadow: "0 2px 6px rgba(33, 33, 33, 0.15)",
       }}
     >
-      <div className="tooltip-label" style={{ fontWeight: 500, marginBottom: 4, fontSize: FONT_SIZE }}>
+      <div
+        className="tooltip-label"
+        style={{ fontWeight: 500, marginBottom: 4, fontSize: FONT_SIZE, whiteSpace: "nowrap" }}
+      >
         {fmtDate}
       </div>
-      {lineName && (
+      {lineLabel && (
         <div
           style={{
-            fontSize: "10px",
+            fontSize: FONT_SIZE,
             color: FONT_COLOR,
             marginBottom: 4,
             fontWeight: 500,
@@ -80,7 +105,7 @@ const CustomSourceTooltip = ({ visible, position, data, tooltipValueFormatter, y
               }}
             />
           )}
-          {lineName}
+          {lineLabel}
         </div>
       )}
       {displayValue != null && (
@@ -107,6 +132,7 @@ CustomSourceTooltip.propTypes = {
     x: PropTypes.number,
     y: PropTypes.number,
   }),
+  positionType: PropTypes.string,
   data: PropTypes.shape({
     date: PropTypes.number,
     value: PropTypes.any,
@@ -116,7 +142,10 @@ CustomSourceTooltip.propTypes = {
     lineName: PropTypes.string,
     lineColor: PropTypes.string,
   }),
+  payload: PropTypes.object,
   tooltipValueFormatter: PropTypes.func,
+  xFieldKey: PropTypes.string,
+  yFieldKey: PropTypes.string,
   yLabel: PropTypes.string,
   showMeaning: PropTypes.bool,
 };

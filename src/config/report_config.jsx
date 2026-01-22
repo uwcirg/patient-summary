@@ -221,12 +221,11 @@ export const report_config = {
               renderCell: (row, value) => {
                 const values = value.split("\n");
                 return (
-                  <Stack
-                    direction={"column"}
-                    gap={0.5}
-                  >
+                  <Stack direction={"column"} gap={0.5}>
                     {values.map((value, index) => (
-                      <span key={`${row.key}_value_${index}`}>{value}</span>
+                      <span className={`${row?.alert ? "text-danger" : ""}`} key={`${row.key}_value_${index}`}>
+                        {value}
+                      </span>
                     ))}
                   </Stack>
                 );

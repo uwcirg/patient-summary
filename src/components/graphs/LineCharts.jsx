@@ -11,7 +11,7 @@ import {
   YAxis,
   CartesianGrid,
   Text,
-  Tooltip,
+ // Tooltip,
   Label,
   Legend,
   ResponsiveContainer,
@@ -27,7 +27,7 @@ import {
 import InfoDialog from "@components/InfoDialog";
 import CustomLegend from "./CustomLegend";
 import CustomSourceTooltip from "./CustomSourceTooltip";
-import CustomTooltip from "./CustomTooltip";
+//import CustomTooltip from "./CustomTooltip";
 import NullDot from "./NullDot";
 import { createDotRenderer, createActiveDotRenderer } from "./ChartDotRenderers";
 import { generateUUID, isEmptyArray, range } from "@/util";
@@ -58,7 +58,6 @@ export default function LineCharts(props) {
     minimumYValue,
     note,
     showXTicks,
-    showTooltipScore,
     showTooltipMeaning,
     showYTicks,
     sourceColors,
@@ -97,6 +96,7 @@ export default function LineCharts(props) {
     visible: false,
     position: { x: 0, y: 0 },
     data: null,
+    payload: null
   });
 
   const [visibleLines, setVisibleLines] = useState(() => {
@@ -115,7 +115,7 @@ export default function LineCharts(props) {
   // Handler for custom tooltip
   const handleDotMouseEnter = useCallback(
     (e, payload, lineName, dataKey, lineColor) => {
-     if (!splitBySource && !hasMultipleYFields()) return;
+     // if (!splitBySource && !hasMultipleYFields()) return;
 
       hoveredElementRef.current = payload; // Track current element
 
@@ -123,7 +123,7 @@ export default function LineCharts(props) {
       const mouseY = e.clientY || e.pageY;
       const meaningRaw = payload?.showTooltipMeaning && payload.meaning ? (payload.scoreMeaning ?? payload.label) : "";
       const meaning = meaningRaw ? meaningRaw.replace(/\|/g, "\n") : null;
-      
+
       setSourceTooltip({
         visible: true,
         position: { x: mouseX, y: mouseY },
@@ -136,21 +136,22 @@ export default function LineCharts(props) {
           lineName: lineName || null,
           lineColor: lineColor,
         },
+        payload: payload
       });
     },
-    [splitBySource, hasMultipleYFields, xFieldKey, yFieldKey],
+    [xFieldKey, yFieldKey],
   );
 
   const handleDotMouseLeave = React.useCallback(() => {
-    if (!splitBySource && !hasMultipleYFields()) return;
+   // if (!splitBySource && !hasMultipleYFields()) return;
     hoveredElementRef.current = null; // Clear reference
     // Add a small delay to prevent flickering
     setTimeout(() => {
       if (hoveredElementRef.current === null) {
-        setSourceTooltip({ visible: false, position: { x: 0, y: 0 }, data: null });
+        setSourceTooltip({ visible: false, position: { x: 0, y: 0 }, data: null, payload: null });
       }
     }, 50);
-  }, [splitBySource, hasMultipleYFields]);
+  }, []);
 
   const toggleLineVisibility = (lineKey) => {
     if (!enableLineSwitches) return; // Don't toggle if switches aren't enabled
@@ -441,7 +442,7 @@ export default function LineCharts(props) {
   const getResponsiveMargin = () => {
     if (chartMargin) return chartMargin;
 
-    const extraTopMargin = hasMultipleYFields() ? 10 : 0;
+    const extraTopMargin = hasMultipleYFields() ? 16 : 0;
     const extraCategoryMargin = isCategoricalY ? 20 : 0;
 
     if (isSmallScreen) {
@@ -453,14 +454,14 @@ export default function LineCharts(props) {
       };
     } else if (isMediumScreen) {
       return {
-        top: 20 + extraTopMargin,
+        top: 12 + extraTopMargin,
         right: 18 + extraCategoryMargin,
         left: 18 + extraCategoryMargin,
         bottom: 10,
       };
     }
     return {
-      top: 20 + extraTopMargin,
+      top: 10 + extraTopMargin,
       right: 24 + extraCategoryMargin,
       left: 24 + extraCategoryMargin,
       bottom: 10,
@@ -573,51 +574,6 @@ export default function LineCharts(props) {
     />
   );
 
-  const lineColorMap = React.useMemo(() => {
-    if (!yLineFields || yLineFields.length === 0) return {};
-
-    return yLineFields.reduce((map, field) => {
-      map[field.key] = hexToRgba(field.color, 1);
-      return map;
-    }, {});
-  }, [yLineFields]);
-
-  const renderToolTip = () => {
-    // Don't render Recharts tooltip when using splitBySource
-    if (splitBySource || hasMultipleYFields()) return null;
-    return (
-      <Tooltip
-        itemStyle={{ fontSize: "10px" }}
-        labelStyle={{ fontSize: "10px" }}
-        animationBegin={0}
-        animationDuration={0}
-        shared={false}
-        // Use originalDate in tooltip if available
-        labelFormatter={(value, payload) => {
-          if (tooltipLabelFormatter) {
-            const originalValue = payload?.[0]?.payload?.originalDate ?? value;
-            return tooltipLabelFormatter(originalValue, payload);
-          }
-          return value;
-        }}
-        content={(props) => (
-          <CustomTooltip
-            {...props}
-            yFieldKey={yFieldKey}
-            xFieldKey={xFieldKey}
-            xLabelKey="originalDate"
-            yLabel={yLabel}
-            tooltipValueFormatter={tooltipValueFormatter}
-            lineColorMap={lineColorMap}
-            isCategoricalY={isCategoricalY}
-            showScore={showTooltipScore}
-            showMeaning={showTooltipMeaning}
-          />
-        )}
-      />
-    );
-  };
-
   const renderLegend = () => {
     if (isEmptyArray(sources)) {
       return (
@@ -717,8 +673,6 @@ export default function LineCharts(props) {
             strokeWidth={item.strokeWidth ? item.strokeWidth : isSmallScreen ? 1.5 : 2}
             strokeDasharray={item.strokeDasharray ? item.strokeDasharray : 0}
             legendType={item.legendType ? item.legendType : "line"}
-            // dot={createDotRenderer(lineDotConfig)} // Use extracted dot renderer
-            // activeDot={createActiveDotRenderer(lineDotConfig)} // Use extracted active dot renderer
             dot={(dotProps) => {
               const CustomDot = createDotRenderer(lineDotConfig);
               const { key, ...rest } = dotProps;
@@ -746,7 +700,7 @@ export default function LineCharts(props) {
                   key={`${dotProps.payload?.id}_${dotProps.payload?.key}_multiline_activedot`}
                   onMouseEnter={(e) => {
                     e.stopPropagation();
-                    handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color)
+                    handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color);
                   }}
                   onMouseLeave={(e) => {
                     e.stopPropagation();
@@ -783,8 +737,34 @@ export default function LineCharts(props) {
         data={lineData} // Use filtered data
         dataKey={yFieldKey}
         stroke={theme.palette.muter.main}
-        activeDot={createActiveDotRenderer(dotConfig)}
-        dot={createDotRenderer(dotConfig)}
+        // activeDot={createActiveDotRenderer(dotConfig)}
+        // dot={createDotRenderer(dotConfig)}
+        dot={(dotProps) => {
+          const CustomDot = createDotRenderer(dotConfig);
+          const { key, ...rest } = dotProps;
+          return (
+            <g
+              key={`${dotProps.payload?.id}_${dotProps.payload?.key}_singleline_dot`}
+              onMouseEnter={(e) => handleDotMouseEnter(e, dotProps.payload)}
+              onMouseLeave={handleDotMouseLeave}
+            >
+              <CustomDot {...rest} />
+            </g>
+          );
+        }}
+        activeDot={(dotProps) => {
+          const CustomActiveDot = createActiveDotRenderer(dotConfig);
+          const { key, ...rest } = dotProps;
+          return (
+            <g
+              key={`${dotProps.payload?.id}_${dotProps.payload?.key}_singleline_activedot`}
+              onMouseEnter={(e) => handleDotMouseEnter(e, dotProps.payload)}
+              onMouseLeave={handleDotMouseLeave}
+            >
+              <CustomActiveDot {...rest} />
+            </g>
+          );
+        }}
         strokeWidth={strokeWidth ? strokeWidth : 1}
         connectNulls={!!connectNulls}
       />
@@ -1036,7 +1016,7 @@ export default function LineCharts(props) {
             {renderTruncationLine()}
             {enableScoreSeverityCutoffLine && renderScoreSeverityCutoffLine()}
             {enableScoreSeverityArea && renderScoreSeverityArea()}
-            {renderToolTip()}
+            {/* {renderToolTip()} */}
             {renderLegend()}
             {hasMultipleYFields() && renderMultipleLines()}
             {hasMultipleYFields() && renderMultipleLines()}
@@ -1047,16 +1027,17 @@ export default function LineCharts(props) {
           </LineChart>
         </ResponsiveContainer>
       </Box>
-      {(splitBySource || hasMultipleYFields()) && (
-          <CustomSourceTooltip
-            visible={sourceTooltip.visible}
-            position={sourceTooltip.position}
-            data={sourceTooltip.data}
-            tooltipLabelFormatter={tooltipLabelFormatter}
-            tooltipValueFormatter={tooltipValueFormatter}
-            yLabel={yLabel}
-          />
-        )}
+       <CustomSourceTooltip
+          visible={sourceTooltip.visible}
+          position={sourceTooltip.position}
+          data={sourceTooltip.data}
+          tooltipLabelFormatter={tooltipLabelFormatter}
+          tooltipValueFormatter={tooltipValueFormatter}
+          xFieldKey={xFieldKey}
+          yFieldKey={yFieldKey}
+          yLabel={yLabel}
+          showMeaning={showTooltipMeaning}
+        />
     </>
   );
 }
@@ -1087,7 +1068,6 @@ LineCharts.propTypes = {
   maximumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   minimumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   note: PropTypes.string,
-  showTooltipScore: PropTypes.bool,
   showTooltipMeaning: PropTypes.bool,
   showXTicks: PropTypes.bool,
   showYTicks: PropTypes.bool,

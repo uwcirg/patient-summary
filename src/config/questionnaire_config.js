@@ -478,7 +478,6 @@ const questionnaireConfigsRaw = {
         return labels[value] || value;
       },
       yTicks: [0, 1, 2, 3, 4],
-      showTooltipScore: false,
       showTooltipMeaning: false,
       isCategoricalY: true,
       // enableAxisMeaningLabels: true,
@@ -1176,7 +1175,6 @@ const questionnaireConfigsRaw = {
           legendType: "line",
         },
       ],
-      showTooltipScore: false,
       showTooltipMeaning: false,
     },
     // skipChart: true,

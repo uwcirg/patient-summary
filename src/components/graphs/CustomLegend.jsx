@@ -131,7 +131,7 @@ const CustomLegend = ({
             color: "#444",
             display: "grid",
             gridTemplateColumns: isSmallScreen ? "1fr" : yLineFields.length > 6 ? "repeat(3, 1fr)" : "repeat(2, 1fr)",
-            gap: isSmallScreen ? "2px 8px" : "4px 16px",
+            gap: isSmallScreen ? "4px 8px" : "6px 16px",
             maxWidth: isSmallScreen ? "200px" : "420px",
           }}
         >
@@ -165,7 +165,7 @@ const CustomLegend = ({
                       // width: isSmallScreen ? 30 : 34,
                       // height: isSmallScreen ? 14 : 18,
                       width: isSmallScreen ? 24 : 30,
-                      height: isSmallScreen ? 10 : 14,
+                      height: isSmallScreen ? 12 : 16,
                       padding: 0,
                       marginRight: 0.8,
                       "& .MuiSwitch-switchBase": {
@@ -181,8 +181,8 @@ const CustomLegend = ({
                         },
                       },
                       "& .MuiSwitch-thumb": {
-                        width: isSmallScreen ? 6 : 8,
-                        height: isSmallScreen ? 7 : 9,
+                        width: isSmallScreen ? 6 : 10,
+                        height: isSmallScreen ? 9 : 11,
                       },
                       "& .MuiSwitch-track": {
                         borderRadius: isSmallScreen ? 6 : 8,

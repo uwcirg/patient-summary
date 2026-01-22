@@ -14,7 +14,7 @@ import {
 } from "recharts";
 import React, { useMemo } from "react";
 import { SUCCESS_COLOR, ALERT_COLOR, buildTimeTicks, fmtMonthYear, thinTicksToFit } from "@config/chart_config";
-import CustomTooltip from "./CustomTooltip";
+import CustomSourceTooltip from "./CustomSourceTooltip";
 
 export default function BarCharts(props) {
   const {
@@ -32,7 +32,6 @@ export default function BarCharts(props) {
     maximumYValue,
     minimumYValue,
     yFieldKey, // "total", "score", etc.
-    tooltipLabelFormatter,
     tooltipValueFormatter,
     data = [],
   } = props;
@@ -294,35 +293,58 @@ export default function BarCharts(props) {
     </XAxis>
   );
 
-  const renderYAxis = () => <YAxis domain={yDomain} minTickGap={4} stroke="#FFF" tick={false} width={10}/>;
+  const renderYAxis = () => <YAxis domain={yDomain} minTickGap={4} stroke="#FFF" tick={false} width={10} />;
 
-  const renderToolTip = () => (
-    <Tooltip
-      itemStyle={{ fontSize: 10 }}
-      labelStyle={{ fontSize: 10 }}
-      animationBegin={0}
-      animationDuration={0}
-      // Use original timestamp in tooltip if available
-      labelFormatter={(value, payload) => {
-        if (tooltipLabelFormatter) {
-          const originalValue = payload?.[0]?.payload?.originalTimestamp ?? value;
-          return tooltipLabelFormatter(originalValue, payload);
-        }
-        return value;
-      }}
-      content={(props) => (
-        <CustomTooltip
-          {...props}
-          yFieldKey={yFieldKey}
-          xLabelKey="originalTimestamp"
-          xFieldKey={xFieldKey}
-          yLabel={yLabel}
-          tooltipValueFormatter={tooltipValueFormatter}
-          tooltipLabelFormatter={tooltipLabelFormatter}
-        />
-      )}
-    />
-  );
+  const TooltipWrapper = ({ active, payload, coordinate }) => {
+    if (!active || !payload || !payload[0]) return null;
+
+    const entry = payload[0].payload;
+    const originalTimestamp = entry.originalTimestamp ?? entry[xFieldKey];
+    return (
+      <CustomSourceTooltip
+        visible={active}
+        position={{ x: coordinate?.x || 0, y: coordinate?.y || 0 }}
+        positionType="absolute"
+        data={{
+          date: originalTimestamp,
+          value: entry[yFieldKey],
+          source: entry.source, // Will be omitted if undefined
+          isNull: entry[yFieldKey] == null,
+          meaning: entry.meaning, // Will be omitted if undefined
+        }}
+        payload={entry}
+        tooltipValueFormatter={tooltipValueFormatter}
+        xFieldKey={xFieldKey}
+        yFieldKey={yFieldKey}
+        yLabel={yLabel}
+        showMeaning={true}
+      />
+    );
+  };
+
+  TooltipWrapper.propTypes = {
+    active: PropTypes.bool,
+    label: PropTypes.any,
+    coordinate: PropTypes.shape({
+      x: PropTypes.number,
+      y: PropTypes.number,
+    }),
+    payload: PropTypes.arrayOf(
+      PropTypes.shape({
+        payload: PropTypes.shape({
+          originalTimestamp: PropTypes.number,
+          [xFieldKey]: PropTypes.number,
+          [yFieldKey]: PropTypes.any,
+          source: PropTypes.string,
+          meaning: PropTypes.string,
+          highSeverityScoreCutoff: PropTypes.number,
+        }),
+      }),
+    ),
+  };
+  const renderToolTip = () => {
+    return <Tooltip content={<TooltipWrapper />} />;
+  };
 
   const renderTruncationLine = () => {
     if (!wasTruncated || !truncationDate) {
@@ -380,6 +402,7 @@ export default function BarCharts(props) {
             {renderToolTip()}
             <Bar dataKey={yFieldKey} maxBarSize={dynamicBarSize} barCategoryGap="20%" minPointSize={4}>
               {parsed.map((entry, index) => {
+                // eslint-disable-next-line
                 const baseColor = entry[yFieldKey] >= entry.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR;
                 const barColor = getBarColor(entry, baseColor);
 
