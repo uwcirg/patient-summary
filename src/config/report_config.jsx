@@ -214,8 +214,22 @@ export const report_config = {
               type: "text",
               cellProps: {
                 sx: {
-                  whiteSpace: "pre",
+                  whiteSpace: "pre-line",
+                  lineHeight: 1.5,
                 },
+              },
+              renderCell: (row, value) => {
+                const values = value.split("\n");
+                return (
+                  <Stack
+                    direction={"column"}
+                    gap={0.5}
+                  >
+                    {values.map((value, index) => (
+                      <span key={`${row.key}_value_${index}`}>{value}</span>
+                    ))}
+                  </Stack>
+                );
               },
             },
             {

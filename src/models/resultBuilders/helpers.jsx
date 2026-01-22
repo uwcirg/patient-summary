@@ -22,7 +22,6 @@ import {
   isNil,
   isNumber,
   isPlainObject,
-  capitalizeFirstLetterSafe,
   normalizeStr,
   removeNullValuesFromObject,
   stripHtmlTags,
@@ -176,7 +175,7 @@ export function summarizeCIDASHelper(ctx, questionnaireResponses, questionnaire,
       score,
       scoreSeverity,
       highSeverityScoreCutoff,
-      meaning: capitalizeFirstLetterSafe(meaningFromSeverity(scoreSeverity)),
+      meaning: meaningFromSeverity(scoreSeverity),
       alertNote: suicideScore >= SEVERITY_CUTOFFS.CIDAS_SUICIDE_THRESHOLD ? "suicide concern" : null,
       scoringParams: { ...ctx.cfg, maximumScore, scoreSeverity },
       totalAnsweredItems,
@@ -273,7 +272,7 @@ export function summarizeMiniCogHelper(ctx, questionnaireResponses, questionnair
       clock_draw_score: clockScore,
       score: totalScore,
       scoreSeverity,
-      meaning: capitalizeFirstLetterSafe(meaningFromSeverity(scoreSeverity)),
+      meaning: meaningFromSeverity(scoreSeverity),
       comparisonToAlert: "lower",
       scoringParams: { ...(ctx.cfg ?? { maximumScore: SCORING_PARAMS.MINICOG_MAXIMUM_SCORE }), scoreSeverity },
       highSeverityScoreCutoff,
@@ -776,7 +775,7 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   const comparison = getScoreComparison(curScore, prevScore);
   const score = curScore;
   const scoreSeverity = severityFromScore(score, config);
-  const meaning = capitalizeFirstLetterSafe(meaningFromSeverity(scoreSeverity, config, current?.responses, current));
+  const meaning = meaningFromSeverity(scoreSeverity, config, current?.responses, current);
   const source = current?.source;
   const alert = getAlertFromMostRecentResponse(current, config);
   const warning =
