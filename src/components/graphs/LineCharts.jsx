@@ -11,7 +11,7 @@ import {
   YAxis,
   CartesianGrid,
   Text,
- // Tooltip,
+  // Tooltip,
   Label,
   Legend,
   ResponsiveContainer,
@@ -27,7 +27,6 @@ import {
 import InfoDialog from "@components/InfoDialog";
 import CustomLegend from "./CustomLegend";
 import CustomSourceTooltip from "./CustomSourceTooltip";
-//import CustomTooltip from "./CustomTooltip";
 import NullDot from "./NullDot";
 import { createDotRenderer, createActiveDotRenderer } from "./ChartDotRenderers";
 import { generateUUID, isEmptyArray, range } from "@/util";
@@ -56,6 +55,7 @@ export default function LineCharts(props) {
     mdChartWidth,
     maximumYValue,
     minimumYValue,
+    noDataText,
     note,
     showXTicks,
     showTooltipMeaning,
@@ -96,7 +96,7 @@ export default function LineCharts(props) {
     visible: false,
     position: { x: 0, y: 0 },
     data: null,
-    payload: null
+    payload: null,
   });
 
   const [visibleLines, setVisibleLines] = useState(() => {
@@ -115,7 +115,7 @@ export default function LineCharts(props) {
   // Handler for custom tooltip
   const handleDotMouseEnter = useCallback(
     (e, payload, lineName, dataKey, lineColor) => {
-     // if (!splitBySource && !hasMultipleYFields()) return;
+      // if (!splitBySource && !hasMultipleYFields()) return;
 
       hoveredElementRef.current = payload; // Track current element
 
@@ -136,14 +136,14 @@ export default function LineCharts(props) {
           lineName: lineName || null,
           lineColor: lineColor,
         },
-        payload: payload
+        payload: payload,
       });
     },
     [xFieldKey, yFieldKey],
   );
 
   const handleDotMouseLeave = React.useCallback(() => {
-   // if (!splitBySource && !hasMultipleYFields()) return;
+    // if (!splitBySource && !hasMultipleYFields()) return;
     hoveredElementRef.current = null; // Clear reference
     // Add a small delay to prevent flickering
     setTimeout(() => {
@@ -346,8 +346,11 @@ export default function LineCharts(props) {
 
   const hasNullValues = React.useMemo(() => {
     if (!filteredData || filteredData.length === 0) return false;
+    if (hasMultipleYFields()) {
+      return filteredData.find((d) => yLineFields.every((field) => d[field.key] == null || d[field.key] === undefined));
+    }
     return filteredData.some((d) => d[yFieldKey] === null || d[yFieldKey] === undefined);
-  }, [filteredData, yFieldKey]);
+  }, [filteredData, yFieldKey, hasMultipleYFields, yLineFields]);
 
   let maxYValue = maximumYValue
     ? maximumYValue
@@ -597,7 +600,7 @@ export default function LineCharts(props) {
         wrapperStyle={{
           position: "absolute",
           top: isSmallScreen ? 4 : 8,
-          right: isSmallScreen ? 20 : 40,
+          right: isSmallScreen ? 20 : hasNullValues ? 20 : 40,
           width: "auto",
         }}
         content={(legendProps) => (
@@ -612,6 +615,7 @@ export default function LineCharts(props) {
             enableLineSwitches={enableLineSwitches}
             linesWithData={linesWithData}
             legendIconType={legendIconType}
+            noDataText={noDataText}
           />
         )}
       />
@@ -771,50 +775,129 @@ export default function LineCharts(props) {
     );
   };
 
-  const renderNullLine = () => (
-    <Line
-      data={nullValueData}
-      type="monotone"
-      dataKey={yFieldKey}
-      stroke="transparent"
-      fill="transparent"
-      strokeWidth={0}
-      isAnimationActive={false}
-      legendType="none"
-      dot={(dotProps) => {
-        if (!dotProps.payload?.isNull) return null;
-        const { cx, cy, payload, index } = dotProps;
-        return (
-          <g
-            key={`${dotProps.payload?.id}_${dotProps.payload?.key}_${index}_nulldot`}
-            onMouseEnter={(e) => {
-              e.stopPropagation();
-              handleDotMouseEnter(e, dotProps.payload);
-            }}
-            onMouseLeave={(e) => {
-              e.stopPropagation();
-              handleDotMouseLeave();
-            }}
-          >
-            <NullDot key={`null-${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />;
-          </g>
-        );
-      }}
-      activeDot={(dotProps) => {
-        const { cx, cy, payload, index } = dotProps;
-        return (
-          <g
-            key={`${dotProps.payload?.id}_${dotProps.payload?.key}_activenulldot`}
-            onMouseEnter={(e) => handleDotMouseEnter(e, dotProps.payload)}
-            onMouseLeave={handleDotMouseLeave}
-          >
-            <NullDot key={`null-${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />;
-          </g>
-        );
-      }}
-      connectNulls={false}
-    />
-  );
+  const renderNullLine = () => {
+    // Handle multiple lines case - only show null when ALL fields are null
+    if (hasMultipleYFields()) {
+      // Create data where we only mark as null if ALL yLineFields are null
+      const multiLineNullData = filteredData.map((d) => {
+        // Check if all line fields are null for this data point
+        const allFieldsNull = yLineFields.every((field) => d[field.key] == null || d[field.key] === undefined);
+
+        return {
+          ...d,
+          // Use the first field key as the dataKey for rendering
+          [yLineFields[0].key]: allFieldsNull ? 0 : null,
+          isNull: allFieldsNull,
+        };
+      });
+
+      return (
+        <Line
+          key="null-line-multi"
+          data={multiLineNullData}
+          type="monotone"
+          dataKey={yLineFields[0].key}
+          stroke="transparent"
+          fill="transparent"
+          strokeWidth={0}
+          isAnimationActive={false}
+          legendType="none"
+          dot={(dotProps) => {
+            if (!dotProps.payload?.isNull) return null;
+            const { cx, cy, payload, index } = dotProps;
+            return (
+              <g
+                key={`${payload?.id}_${payload?.key}_${index}_nulldot`}
+                onMouseEnter={(e) => {
+                  e.stopPropagation();
+                  handleDotMouseEnter(e, payload);
+                }}
+                onMouseLeave={(e) => {
+                  e.stopPropagation();
+                  handleDotMouseLeave();
+                }}
+              >
+                <NullDot key={`null-${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />
+              </g>
+            );
+          }}
+          activeDot={(dotProps) => {
+            if (!dotProps.payload?.isNull) return null;
+            const { cx, cy, payload, index } = dotProps;
+            return (
+              <g
+                key={`${payload?.id}_${payload?.key}_activenulldot`}
+                onMouseEnter={(e) => {
+                  e.stopPropagation();
+                  handleDotMouseEnter(e, payload);
+                }}
+                onMouseLeave={(e) => {
+                  e.stopPropagation();
+                  handleDotMouseLeave();
+                }}
+              >
+                <NullDot key={`null-${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />
+              </g>
+            );
+          }}
+          connectNulls={false}
+        />
+      );
+    }
+
+    // Handle single line case (existing code)
+    return (
+      <Line
+        data={nullValueData}
+        type="monotone"
+        dataKey={yFieldKey}
+        stroke="transparent"
+        fill="transparent"
+        strokeWidth={0}
+        isAnimationActive={false}
+        legendType="none"
+        dot={(dotProps) => {
+          if (!dotProps.payload?.isNull) return null;
+          const { cx, cy, payload, index } = dotProps;
+          return (
+            <g
+              key={`${payload?.id}_${payload?.key}_${index}_nulldot`}
+              onMouseEnter={(e) => {
+                e.stopPropagation();
+                handleDotMouseEnter(e, payload);
+              }}
+              onMouseLeave={(e) => {
+                e.stopPropagation();
+                handleDotMouseLeave();
+              }}
+            >
+              <NullDot key={`null-${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />
+            </g>
+          );
+        }}
+        activeDot={(dotProps) => {
+          if (!dotProps.payload?.isNull) return null;
+          const { cx, cy, payload, index } = dotProps;
+          return (
+            <g
+              key={`${payload?.id}_${payload?.key}_activenulldot`}
+              onMouseEnter={(e) => {
+                e.stopPropagation();
+                handleDotMouseEnter(e, payload);
+              }}
+              onMouseLeave={(e) => {
+                e.stopPropagation();
+                handleDotMouseLeave();
+              }}
+            >
+              <NullDot key={`null-${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />
+            </g>
+          );
+        }}
+        connectNulls={false}
+      />
+    );
+  };
 
   // Get unique sources from data
   const uniqueSources = React.useMemo(() => {
@@ -1027,17 +1110,18 @@ export default function LineCharts(props) {
           </LineChart>
         </ResponsiveContainer>
       </Box>
-       <CustomSourceTooltip
-          visible={sourceTooltip.visible}
-          position={sourceTooltip.position}
-          data={sourceTooltip.data}
-          tooltipLabelFormatter={tooltipLabelFormatter}
-          tooltipValueFormatter={tooltipValueFormatter}
-          xFieldKey={xFieldKey}
-          yFieldKey={yFieldKey}
-          yLabel={yLabel}
-          showMeaning={showTooltipMeaning}
-        />
+      <CustomSourceTooltip
+        visible={sourceTooltip.visible}
+        position={sourceTooltip.position}
+        data={sourceTooltip.data}
+        tooltipLabelFormatter={tooltipLabelFormatter}
+        tooltipValueFormatter={tooltipValueFormatter}
+        xFieldKey={xFieldKey}
+        yFieldKey={yFieldKey}
+        yLabel={yLabel}
+        showMeaning={showTooltipMeaning}
+        noDataText={noDataText}
+      />
     </>
   );
 }
@@ -1064,6 +1148,7 @@ LineCharts.propTypes = {
   legendType: PropTypes.string,
   lineType: PropTypes.string,
   mdChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  noDataText: PropTypes.string,
   lgChartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   maximumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   minimumYValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),

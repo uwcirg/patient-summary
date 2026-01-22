@@ -13,6 +13,7 @@ const CustomSourceTooltip = ({
   yFieldKey,
   yLabel,
   showMeaning = true,
+  noDataText = "Not Scored"
 }) => {
   if (!visible || !data) return null;
 
@@ -48,11 +49,9 @@ const CustomSourceTooltip = ({
 
   const valueToUse = payload && payload[yFieldKey] ? payload[yFieldKey] : value;
 
-  console.log("valueToUse ", valueToUse);
-
   const displayValue =
     isNull || valueToUse == null
-      ? "Not Scored"
+      ? noDataText
       : tooltipValueFormatter
         ? tooltipValueFormatter(valueToUse)
         : valueToUse;
@@ -128,6 +127,7 @@ const CustomSourceTooltip = ({
 
 CustomSourceTooltip.propTypes = {
   visible: PropTypes.bool,
+  noDataText: PropTypes.string,
   position: PropTypes.shape({
     x: PropTypes.number,
     y: PropTypes.number,

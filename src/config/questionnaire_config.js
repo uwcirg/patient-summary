@@ -341,7 +341,7 @@ const questionnaireConfigsRaw = {
       const meaningResponse = responses.find((response) => linkIdEquals(response.id, "ASSIST-3mo-score", "strict"));
       const meaningAnswer =
         meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
-      return meaningAnswer.split(",").join("|");
+      return meaningAnswer?.split(",").join("|");
     },
     subScoringQuestions: [
       {
@@ -506,6 +506,7 @@ const questionnaireConfigsRaw = {
       lineType: "monotone",
       jitterSpreadDays: 16,
       enableLineSwitches: true,
+      noDataText: "Not Answered"
     },
   },
   "CIRG-CNICS-ASSIST-OD": {

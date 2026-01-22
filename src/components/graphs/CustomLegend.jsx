@@ -7,6 +7,7 @@ const CustomLegend = ({
   sources,
   isSmallScreen,
   hasNullValues,
+  noDataText = "Not Scored",
   yLineFields,
   visibleLines,
   onToggleLine,
@@ -62,7 +63,7 @@ const CustomLegend = ({
 
     items.push({
       key: "not-scored",
-      label: "Not Scored",
+      label: noDataText,
       icon: (
         <svg width={iconSize} height={iconSize}>
           <g transform={`translate(${iconSize / 2}, ${iconSize / 2})`}>
@@ -236,6 +237,7 @@ CustomLegend.propTypes = {
   sources: PropTypes.array,
   isSmallScreen: PropTypes.bool,
   hasNullValues: PropTypes.bool,
+  noDataText: PropTypes.string,
   yLineFields: PropTypes.array,
   visibleLines: PropTypes.object,
   onToggleLine: PropTypes.func,
