@@ -240,9 +240,9 @@ export default function BarCharts(props) {
 
   const renderYAxis = () => <YAxis domain={yDomain} minTickGap={4} stroke="#FFF" tick={false} width={10} />;
 
-  const TooltipWrapper = ({ payload, coordinate }) => {
+  const TooltipWrapper = ({ active, payload, coordinate }) => {
     
-    if (!payload || !payload[0]) return null;
+    if (!active || !payload || !payload[0]) return null;
 
     const entry = payload[0].payload;
     const originalTimestamp = entry.originalTimestamp ?? entry[xFieldKey];
@@ -296,7 +296,6 @@ export default function BarCharts(props) {
   const renderToolTip = () => {
     return (
       <Tooltip
-        shared
         trigger="hover"
         content={(p) => <TooltipWrapper {...p} />}
         wrapperStyle={{ pointerEvents: "none" }}

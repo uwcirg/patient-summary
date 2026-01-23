@@ -21,7 +21,7 @@ import CustomLegend from "./CustomLegend";
 import CustomSourceTooltip from "./CustomSourceTooltip";
 import NullDot from "./NullDot";
 import { createDotRenderer, createActiveDotRenderer } from "./ChartDotRenderers";
-import { useDismissableOverlay } from "@/hooks/useDismissableOverlay";
+//import { useDismissableOverlay } from "@/hooks/useDismissableOverlay";
 import { generateUUID, isEmptyArray, range } from "@/util";
 
 export default function LineCharts(props) {
@@ -1187,7 +1187,7 @@ export default function LineCharts(props) {
     };
   }, []);
 
-  useDismissableOverlay({ wrapperRef, onDismiss: hideTooltip });
+  // useDismissableOverlay({ wrapperRef, onDismiss: hideTooltip });
 
   return (
     <>
