@@ -89,6 +89,13 @@ export default function LineCharts(props) {
   const CUT_OFF_YEAR = 5;
   const isCategoricalY = props.isCategoricalY || false;
   const hoveredElementRef = React.useRef(null);
+  const hideTimerRef = React.useRef(null);
+
+  const hideTooltip = React.useCallback(() => {
+    hoveredElementRef.current = null;
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    setSourceTooltip({ visible: false, position: { x: 0, y: 0 }, data: null, payload: null });
+  }, []);
 
   // Add tooltip state for source-based rendering
   const [sourceTooltip, setSourceTooltip] = useState({
@@ -116,12 +123,16 @@ export default function LineCharts(props) {
   // Handler for custom tooltip
   const handleDotMouseEnter = useCallback(
     (e, payload, lineName, dataKey, lineColor) => {
-      // if (!splitBySource && !hasMultipleYFields()) return;
+      hoveredElementRef.current = payload;
 
-      hoveredElementRef.current = payload; // Track current element
+      // Cancel any pending hide
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
 
-      const mouseX = e.clientX || e.pageX;
-      const mouseY = e.clientY || e.pageY;
+      // Support mouse + touch
+      const pt = e?.touches?.[0] || e?.changedTouches?.[0];
+      const mouseX = e?.clientX ?? pt?.clientX ?? e?.pageX ?? 0;
+      const mouseY = e?.clientY ?? pt?.clientY ?? e?.pageY ?? 0;
+
       const meaningRaw = payload?.showTooltipMeaning && payload.meaning ? (payload.scoreMeaning ?? payload.label) : "";
       const meaning = meaningRaw ? meaningRaw.replace(/\|/g, "\n") : null;
 
@@ -144,10 +155,10 @@ export default function LineCharts(props) {
   );
 
   const handleDotMouseLeave = React.useCallback(() => {
-    // if (!splitBySource && !hasMultipleYFields()) return;
-    hoveredElementRef.current = null; // Clear reference
-    // Add a small delay to prevent flickering
-    setTimeout(() => {
+    hoveredElementRef.current = null;
+
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = setTimeout(() => {
       if (hoveredElementRef.current === null) {
         setSourceTooltip({ visible: false, position: { x: 0, y: 0 }, data: null, payload: null });
       }
@@ -476,7 +487,7 @@ export default function LineCharts(props) {
   const xAxisHeight = showXTicks ? (isSmallScreen ? 80 : 108) : 0;
 
   // Responsive padding
-  const xAxisPadding = isSmallScreen ? { left: 10, right: 10 } : { left: 16, right: 16 };
+  const xAxisPadding = isSmallScreen ? { left: 10, right: 10 } : { left: 20, right: 20 };
 
   const renderXAxis = () => (
     <XAxis
@@ -601,7 +612,7 @@ export default function LineCharts(props) {
         wrapperStyle={{
           position: "absolute",
           top: isSmallScreen ? 4 : 8,
-          right: isSmallScreen ? 20 : (hasNullValues && hasMultipleYFields()) ? 32 : 40,
+          right: isSmallScreen ? 20 : hasNullValues && hasMultipleYFields() ? 32 : 40,
           width: "auto",
         }}
         content={(legendProps) => (
@@ -684,11 +695,19 @@ export default function LineCharts(props) {
               return (
                 <g
                   key={`${dotProps.payload?.id}_${dotProps.payload?.key}_multiline_dot`}
-                  onMouseEnter={(e) => {
+                  onPointerDown={(e) => {
                     e.stopPropagation();
                     handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color);
                   }}
-                  onMouseLeave={(e) => {
+                  onPointerEnter={(e) => {
+                    e.stopPropagation();
+                    handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color);
+                  }}
+                  onPointerLeave={(e) => {
+                    e.stopPropagation();
+                    handleDotMouseLeave();
+                  }}
+                  onPointerCancel={(e) => {
                     e.stopPropagation();
                     handleDotMouseLeave();
                   }}
@@ -703,11 +722,19 @@ export default function LineCharts(props) {
               return (
                 <g
                   key={`${dotProps.payload?.id}_${dotProps.payload?.key}_multiline_activedot`}
-                  onMouseEnter={(e) => {
+                  onPointerDown={(e) => {
                     e.stopPropagation();
                     handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color);
                   }}
-                  onMouseLeave={(e) => {
+                  onPointerEnter={(e) => {
+                    e.stopPropagation();
+                    handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color);
+                  }}
+                  onPointerLeave={(e) => {
+                    e.stopPropagation();
+                    handleDotMouseLeave();
+                  }}
+                  onPointerCancel={(e) => {
                     e.stopPropagation();
                     handleDotMouseLeave();
                   }}
@@ -748,12 +775,20 @@ export default function LineCharts(props) {
           return (
             <g
               key={`${dotProps.payload?.id}_${dotProps.payload?.key}_singleline_dot`}
-              onMouseEnter={(e) => {
+              onPointerDown={(e) => {
                 e.stopPropagation();
                 handleDotMouseEnter(e, dotProps.payload);
               }}
-              onMouseLeave={(e) => {
-                e.stopPropagation();   
+              onPointerEnter={(e) => {
+                e.stopPropagation();
+                handleDotMouseEnter(e, dotProps.payload);
+              }}
+              onPointerLeave={(e) => {
+                e.stopPropagation();
+                handleDotMouseLeave();
+              }}
+              onPointerCancel={(e) => {
+                e.stopPropagation();
                 handleDotMouseLeave();
               }}
             >
@@ -767,12 +802,20 @@ export default function LineCharts(props) {
           return (
             <g
               key={`${dotProps.payload?.id}_${dotProps.payload?.key}_singleline_activedot`}
-              onMouseEnter={(e) => {
+              onPointerDown={(e) => {
                 e.stopPropagation();
                 handleDotMouseEnter(e, dotProps.payload);
               }}
-              onMouseLeave={(e) => {
-                e.stopPropagation();   
+              onPointerEnter={(e) => {
+                e.stopPropagation();
+                handleDotMouseEnter(e, dotProps.payload);
+              }}
+              onPointerLeave={(e) => {
+                e.stopPropagation();
+                handleDotMouseLeave();
+              }}
+              onPointerCancel={(e) => {
+                e.stopPropagation();
                 handleDotMouseLeave();
               }}
             >
@@ -822,11 +865,19 @@ export default function LineCharts(props) {
             return (
               <g
                 key={`${payload?.id}_${payload?.key}_${index}_nulldot`}
-                onMouseEnter={(e) => {
+                onPointerDown={(e) => {
                   e.stopPropagation();
                   handleDotMouseEnter(e, payload);
                 }}
-                onMouseLeave={(e) => {
+                onPointerEnter={(e) => {
+                  e.stopPropagation();
+                  handleDotMouseEnter(e, payload);
+                }}
+                onPointerLeave={(e) => {
+                  e.stopPropagation();
+                  handleDotMouseLeave();
+                }}
+                onPointerCancel={(e) => {
                   e.stopPropagation();
                   handleDotMouseLeave();
                 }}
@@ -841,11 +892,19 @@ export default function LineCharts(props) {
             return (
               <g
                 key={`${payload?.id}_${payload?.key}_activenulldot`}
-                onMouseEnter={(e) => {
+                onPointerDown={(e) => {
                   e.stopPropagation();
                   handleDotMouseEnter(e, payload);
                 }}
-                onMouseLeave={(e) => {
+                onPointerEnter={(e) => {
+                  e.stopPropagation();
+                  handleDotMouseEnter(e, payload);
+                }}
+                onPointerLeave={(e) => {
+                  e.stopPropagation();
+                  handleDotMouseLeave();
+                }}
+                onPointerCancel={(e) => {
                   e.stopPropagation();
                   handleDotMouseLeave();
                 }}
@@ -881,11 +940,19 @@ export default function LineCharts(props) {
           return (
             <g
               key={`${payload?.id}_${payload?.key}_${index}_nulldot`}
-              onMouseEnter={(e) => {
+              onPointerDown={(e) => {
                 e.stopPropagation();
                 handleDotMouseEnter(e, payload);
               }}
-              onMouseLeave={(e) => {
+              onPointerEnter={(e) => {
+                e.stopPropagation();
+                handleDotMouseEnter(e, payload);
+              }}
+              onPointerLeave={(e) => {
+                e.stopPropagation();
+                handleDotMouseLeave();
+              }}
+              onPointerCancel={(e) => {
                 e.stopPropagation();
                 handleDotMouseLeave();
               }}
@@ -900,11 +967,19 @@ export default function LineCharts(props) {
           return (
             <g
               key={`${payload?.id}_${payload?.key}_activenulldot`}
-              onMouseEnter={(e) => {
+              onPointerDown={(e) => {
                 e.stopPropagation();
                 handleDotMouseEnter(e, payload);
               }}
-              onMouseLeave={(e) => {
+              onPointerEnter={(e) => {
+                e.stopPropagation();
+                handleDotMouseEnter(e, payload);
+              }}
+              onPointerLeave={(e) => {
+                e.stopPropagation();
+                handleDotMouseLeave();
+              }}
+              onPointerCancel={(e) => {
                 e.stopPropagation();
                 handleDotMouseLeave();
               }}
@@ -968,14 +1043,22 @@ export default function LineCharts(props) {
             return (
               <g
                 key={`${dotProps.payload?.id}_${dotProps.payload?.key}_dot`}
-                onMouseEnter={(e) => {
-                e.stopPropagation();
-                handleDotMouseEnter(e, dotProps.payload);
-              }}
-                onMouseLeave={(e) => {
-                e.stopPropagation();   
-                handleDotMouseLeave();
-              }}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  handleDotMouseEnter(e, dotProps.payload);
+                }}
+                onPointerEnter={(e) => {
+                  e.stopPropagation();
+                  handleDotMouseEnter(e, dotProps.payload);
+                }}
+                onPointerLeave={(e) => {
+                  e.stopPropagation();
+                  handleDotMouseLeave();
+                }}
+                onPointerCancel={(e) => {
+                  e.stopPropagation();
+                  handleDotMouseLeave();
+                }}
               >
                 <CustomDot {...rest} />
               </g>
@@ -987,14 +1070,22 @@ export default function LineCharts(props) {
             return (
               <g
                 key={`${dotProps.payload?.id}_${dotProps.payload?.key}_activedot`}
-                onMouseEnter={(e) => {
-                e.stopPropagation();
-                handleDotMouseEnter(e, dotProps.payload);
-               }}
-              onMouseLeave={(e) => {
-                e.stopPropagation();   
-                handleDotMouseLeave();
-              }}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  handleDotMouseEnter(e, dotProps.payload);
+                }}
+                onPointerEnter={(e) => {
+                  e.stopPropagation();
+                  handleDotMouseEnter(e, dotProps.payload);
+                }}
+                onPointerLeave={(e) => {
+                  e.stopPropagation();
+                  handleDotMouseLeave();
+                }}
+                onPointerCancel={(e) => {
+                  e.stopPropagation();
+                  handleDotMouseLeave();
+                }}
               >
                 <CustomActiveDot {...rest} />
               </g>
@@ -1103,6 +1194,32 @@ export default function LineCharts(props) {
 
   const MIN_CHART_WIDTH = xsChartWidth || 400;
 
+  React.useEffect(() => {
+    return () => {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const onPointerDownCapture = () => {
+      // Tap/click anywhere outside dots closes it
+      hideTooltip();
+    };
+
+    const onScroll = () => hideTooltip();
+    const onBlur = () => hideTooltip();
+
+    document.addEventListener("pointerdown", onPointerDownCapture, { capture: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("blur", onBlur);
+
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDownCapture, { capture: true });
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, [hideTooltip]);
+
   return (
     <>
       {renderTitle()}
@@ -1120,7 +1237,11 @@ export default function LineCharts(props) {
           },
         }}
         className={`chart-wrapper ${wrapperClass ? wrapperClass : ""}`}
-        onMouseLeave={(e) => {
+        onPointerLeave={(e) => {
+          e.stopPropagation();
+          handleDotMouseLeave();
+        }}
+        onPointerCancel={(e) => {
           e.stopPropagation();
           handleDotMouseLeave();
         }}

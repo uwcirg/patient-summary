@@ -13,11 +13,25 @@ const CustomSourceTooltip = ({
   yFieldKey,
   yLabel,
   showMeaning = true,
-  noDataText = "Not Scored"
+  noDataText = "Not Scored",
 }) => {
-  if (!visible || !data) return null;
+  const ref = React.useRef(null);
+  const [size, setSize] = React.useState({ w: 220, h: 120 });
+  const OFFSET_X = 15;
+  const OFFSET_Y = -10;
+  const MARGIN = 8;
 
-  const { date, value, source, isNull, meaning, lineName, lineColor } = data;
+  const rawLeft = (position?.x ?? 0) + OFFSET_X;
+  const rawTop = (position?.y ?? 0) + OFFSET_Y;
+
+  // Clamp within viewport
+  const vw = typeof window !== "undefined" ? window.innerWidth : 1000;
+  const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+
+  const clampedLeft = Math.min(Math.max(rawLeft, MARGIN), vw - size.w - MARGIN);
+  const clampedTop = Math.min(Math.max(rawTop, MARGIN), vh - size.h - MARGIN);
+
+  const { date, value, source, isNull, meaning, lineName, lineColor } = data ?? {};
 
   // Handle date formatting with fallback
   let fmtDate,
@@ -47,23 +61,31 @@ const CustomSourceTooltip = ({
   const NULL_COLOR = "#999";
   const FONT_SIZE = "10px";
 
-  const valueToUse = payload && payload[yFieldKey] ? payload[yFieldKey] : value;
+  const valueToUse =
+    payload && payload[yFieldKey] !== undefined && payload[yFieldKey] !== null ? payload[yFieldKey] : value;
 
   const displayValue =
-    isNull || valueToUse == null
-      ? noDataText
-      : tooltipValueFormatter
-        ? tooltipValueFormatter(valueToUse)
-        : valueToUse;
+    isNull || valueToUse == null ? noDataText : tooltipValueFormatter ? tooltipValueFormatter(valueToUse) : valueToUse;
   const lineLabel = lineName ? lineName.replace(/[-_]/g, " ") : "";
 
+  React.useLayoutEffect(() => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    // Only update if it changed (avoid re-render loops)
+    if (Math.abs(rect.width - size.w) > 1 || Math.abs(rect.height - size.h) > 1) {
+      setSize({ w: rect.width, h: rect.height });
+    }
+  }, [size.h, size.w, data, visible]); // dependencies that change tooltip size
+
+  if (!visible || !data) return null;
   return (
     <div
+      ref={ref}
       className="tooltip-container"
       style={{
         position: positionType ?? "fixed",
-        left: position.x + 15,
-        top: position.y - 10,
+        left: clampedLeft,
+        top: clampedTop,
         pointerEvents: "none",
         zIndex: 1000,
         background: "#FFF",
@@ -75,7 +97,7 @@ const CustomSourceTooltip = ({
     >
       <div
         className="tooltip-label"
-        style={{ fontWeight: 500, marginBottom: 4, fontSize: FONT_SIZE, whiteSpace: "nowrap" }}
+        style={{ fontWeight: 500, marginBottom: 4, fontSize: FONT_SIZE }}
       >
         {fmtDate}
       </div>

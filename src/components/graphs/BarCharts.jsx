@@ -37,6 +37,13 @@ export default function BarCharts(props) {
   } = props;
 
   const CUT_OFF_YEAR = 5;
+  const wrapperRef = React.useRef(null);
+  const hideTimerRef = React.useRef(null);
+  const [forceHide, setForceHide] = React.useState(false);
+  const hideTooltip = React.useCallback(() => {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    setForceHide(true);
+  }, []);
 
   const getBarColor = (entry, baseColor) => {
     // If no duplicates on this day, use base color
@@ -287,7 +294,7 @@ export default function BarCharts(props) {
       tickMargin={10}
       ticks={calculatedTicks}
       interval="preserveStartEnd"
-      padding={{ left: 16, right: 16 }}
+      padding={{ left: 20, right: 20 }}
     >
       {xLabel && xLabelVisible && <Label value={xLabel} offset={-12} position="insideBottom" />}
     </XAxis>
@@ -296,21 +303,27 @@ export default function BarCharts(props) {
   const renderYAxis = () => <YAxis domain={yDomain} minTickGap={4} stroke="#FFF" tick={false} width={10} />;
 
   const TooltipWrapper = ({ active, payload, coordinate }) => {
+    if (forceHide) return null;
     if (!active || !payload || !payload[0]) return null;
 
     const entry = payload[0].payload;
     const originalTimestamp = entry.originalTimestamp ?? entry[xFieldKey];
+
+    const rect = wrapperRef.current?.getBoundingClientRect();
+    const vx = rect ? rect.left + (coordinate?.x ?? 0) : 0;
+    const vy = rect ? rect.top + (coordinate?.y ?? 0) : 0;
+
     return (
       <CustomSourceTooltip
         visible={active}
-        position={{ x: coordinate?.x || 0, y: coordinate?.y || 0 }}
-        positionType="absolute"
+        position={{ x: vx, y: vy }}
+        positionType="fixed"
         data={{
           date: originalTimestamp,
           value: entry[yFieldKey],
-          source: entry.source, // Will be omitted if undefined
+          source: entry.source,
           isNull: entry[yFieldKey] == null,
-          meaning: entry.meaning, // Will be omitted if undefined
+          meaning: entry.meaning,
         }}
         payload={entry}
         tooltipValueFormatter={tooltipValueFormatter}
@@ -343,7 +356,13 @@ export default function BarCharts(props) {
     ),
   };
   const renderToolTip = () => {
-    return <Tooltip content={<TooltipWrapper />} />;
+    return (
+      <Tooltip
+        content={<TooltipWrapper />}
+        wrapperStyle={{ pointerEvents: "none" }} // prevents tooltip layer blocking events
+        isAnimationActive={false}
+      />
+    );
   };
 
   const renderTruncationLine = () => {
@@ -368,6 +387,31 @@ export default function BarCharts(props) {
     );
   };
 
+  React.useEffect(() => {
+    const onDownCapture = (e) => {
+      // If the click/tap is inside this chart, don't hide it
+      if (wrapperRef.current && wrapperRef.current.contains(e.target)) return;
+      hideTooltip();
+    };
+    const onScroll = () => hideTooltip();
+    const onBlur = () => hideTooltip();
+
+    document.addEventListener("pointerdown", onDownCapture, { capture: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("blur", onBlur);
+
+    return () => {
+      document.removeEventListener("pointerdown", onDownCapture, { capture: true });
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, [hideTooltip]);
+  React.useEffect(() => {
+    return () => {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
+  }, []);
+
   return (
     <>
       {renderTitle()}
@@ -382,7 +426,22 @@ export default function BarCharts(props) {
           height: 250,
         }}
         key={id}
+        ref={wrapperRef}
         className="chart-wrapper"
+        onPointerDown={(e) => {
+          e.stopPropagation(); // prevent global dismiss from instantly hiding
+          setForceHide(false);
+        }}
+        onPointerEnter={() => setForceHide(false)}
+        onPointerLeave={() => {
+          // small delay prevents flicker when moving between bars
+          if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+          hideTimerRef.current = setTimeout(() => setForceHide(true), 50);
+        }}
+        onPointerDownCapture={(e) => {
+          e.stopPropagation();
+          setForceHide(false);
+        }}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
           <BarChart
