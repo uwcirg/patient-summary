@@ -55,6 +55,8 @@ export default function BarCharts(props) {
     setForceHide(true);
   }, []);
 
+  useDismissableOverlay({ wrapperRef, onDismiss: hideTooltip });
+
   const showTooltip = React.useCallback(() => {
     clearHideTimer();
     setForceHide(false);
@@ -366,7 +368,10 @@ export default function BarCharts(props) {
     );
   };
 
-  useDismissableOverlay({ wrapperRef, onDismiss: hideTooltip });
+  React.useEffect(() => {
+    setForceHide(false);
+    setLocked(false);
+  }, [data]);
 
   return (
     <>
@@ -383,8 +388,11 @@ export default function BarCharts(props) {
         }}
         ref={wrapperRef}
         className="chart-wrapper"
-        onPointerEnter={() => {
-          if (pointerTypeRef.current === "mouse") showTooltip();
+        onPointerEnter={(e) => {
+          pointerTypeRef.current = e.pointerType || "mouse";
+          if (pointerTypeRef.current === "mouse") {
+            showTooltip();
+          }
         }}
         onPointerDown={(e) => {
           pointerTypeRef.current = e.pointerType || "mouse";
@@ -402,12 +410,16 @@ export default function BarCharts(props) {
         }}
         onPointerMove={(e) => {
           pointerTypeRef.current = e.pointerType || pointerTypeRef.current;
+          // For mouse, ensure tooltip is shown when moving over chart
+          if (pointerTypeRef.current === "mouse") {
+            showTooltip();
+          }
         }}
-        onPointerLeave={() => {
+        onPointerLeave={(e) => {
+          pointerTypeRef.current = e.pointerType || pointerTypeRef.current;
           // Mouse only: allow leaving to hide
           if (pointerTypeRef.current === "mouse") {
-            clearHideTimer();
-            hideTimerRef.current = setTimeout(() => setForceHide(true), 80);
+            hideTooltip(); // Use hideTooltip directly instead of setting a timer
           }
         }}
       >

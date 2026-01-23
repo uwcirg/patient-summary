@@ -48,8 +48,8 @@ export const renderChartDot = (props, config) => {
     isActive = false,
     params = {},
     // optional tuning knobs:
-    hitRadiusMultiplier = 3.25, // how much bigger than visual dot
-    minHitRadius = 14,          // minimum hit target in px (great for iPad)
+    hitRadiusMultiplier = 1.25, // how much bigger than visual dot
+    minHitRadius = 2,          // minimum hit target in px (great for iPad)
   } = config;
 
   // Determine visual radius
