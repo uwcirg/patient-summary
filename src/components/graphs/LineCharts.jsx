@@ -1136,7 +1136,6 @@ export default function LineCharts(props) {
             {/* {renderToolTip()} */}
             {renderLegend()}
             {hasMultipleYFields() && renderMultipleLines()}
-            {hasMultipleYFields() && renderMultipleLines()}
             {!hasMultipleYFields() && (splitBySource ? renderLinesBySource() : renderSingleLine())}
             {renderNullLine()}
             {enableAxisMeaningLabels && renderMaxScoreMeaningLabel()}
