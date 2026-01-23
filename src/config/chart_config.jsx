@@ -267,6 +267,20 @@ function measureLabelWidth(text, font = "12px sans-serif") {
   return ctx.measureText(String(text)).width;
 }
 
+export function getCutoffDomain({ years = 5, now = Date.now(), paddingDays = 30 }) {
+  const yearsAgo = new Date(now);
+  yearsAgo.setFullYear(yearsAgo.getFullYear() - years);
+  const cutoff = yearsAgo.getTime();
+  const paddingMs = paddingDays * 24 * 60 * 60 * 1000;
+  return [cutoff - paddingMs, now + paddingMs];
+}
+
+export function uniqSorted(arr) {
+  const s = new Set();
+  for (const v of arr || []) if (Number.isFinite(v)) s.add(v);
+  return Array.from(s).sort((a, b) => a - b);
+}
+
 export function thinTicksToFit(
   ticks,
   formatter,
@@ -281,6 +295,19 @@ export function thinTicksToFit(
   if (ticks.length <= maxCount) return ticks;
   const k = Math.ceil(ticks.length / maxCount);
   return ticks.filter((_, i) => i % k === 0);
+}
+
+export function buildClampedThinnedTicks({ domain, stepMonths, width }) {
+  if (!Array.isArray(domain) || typeof domain[0] !== "number") return undefined;
+
+  const allTicksRaw = buildTimeTicks(domain, { unit: "month", step: stepMonths });
+  const clamped = allTicksRaw.filter((t) => t >= domain[0] && t <= domain[1]);
+  const allTicks = uniqSorted(clamped);
+
+  const effectiveWidth = Number(width) || 580;
+  const thinned = thinTicksToFit(allTicks, (ms) => fmtMonthYear.format(ms), effectiveWidth);
+
+  return uniqSorted(thinned);
 }
 
 // Label formatters

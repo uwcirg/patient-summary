@@ -13,8 +13,14 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import React, { useMemo } from "react";
-import { SUCCESS_COLOR, ALERT_COLOR, buildTimeTicks, fmtMonthYear, thinTicksToFit } from "@config/chart_config";
+import {
+  SUCCESS_COLOR,
+  ALERT_COLOR,
+  buildClampedThinnedTicks,
+} from "@config/chart_config";
 import CustomSourceTooltip from "./CustomSourceTooltip";
+import { useDismissableOverlay } from "@/hooks/useDismissableOverlay";
+import { useForceHide } from "@/hooks/useForceHide";
 
 export default function BarCharts(props) {
   const {
@@ -39,11 +45,11 @@ export default function BarCharts(props) {
   const CUT_OFF_YEAR = 5;
   const wrapperRef = React.useRef(null);
   const hideTimerRef = React.useRef(null);
-  const [forceHide, setForceHide] = React.useState(false);
+  const { forceHide, hideNow, showNow, scheduleHide } = useForceHide({ leaveDelayMs: 50 });
+
   const hideTooltip = React.useCallback(() => {
-    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-    setForceHide(true);
-  }, []);
+    hideNow();
+  }, [hideNow]);
 
   const getBarColor = (entry, baseColor) => {
     // If no duplicates on this day, use base color
@@ -243,31 +249,11 @@ export default function BarCharts(props) {
   const calculatedTicks = useMemo(() => {
     if (parsed.length === 0) return undefined;
 
-    // 1. Build regular 6-month interval ticks
-    const allTicksRaw =
-      Array.isArray(xAxisDomain) && typeof xAxisDomain[0] === "number"
-        ? buildTimeTicks(xAxisDomain, { unit: "month", step: 6 })
-        : undefined;
-
-    if (!allTicksRaw) return undefined;
-
-    // Clamp to domain
-    const clampedAll = allTicksRaw.filter((t) => t >= xAxisDomain[0] && t <= xAxisDomain[1]);
-
-    // Ensure unique and sorted
-    const uniqSorted = (arr) => {
-      const s = new Set();
-      for (const v of arr) if (Number.isFinite(v)) s.add(v);
-      return Array.from(s).sort((a, b) => a - b);
-    };
-
-    const allTicks = uniqSorted(clampedAll);
-
-    // Thin ticks to fit
-    const effectiveWidth = Number(chartWidth) || 580;
-    const ticksRaw = thinTicksToFit(allTicks, (ms) => fmtMonthYear.format(ms), effectiveWidth);
-
-    return uniqSorted(ticksRaw);
+    return buildClampedThinnedTicks({
+      domain: xAxisDomain,
+      stepMonths: 6, // bars: fixed 6-month tick spacing
+      width: Number(chartWidth) || 580,
+    });
   }, [parsed.length, xAxisDomain, chartWidth]);
 
   //const MIN_CHART_WIDTH = xsChartWidth ?? 400;
@@ -305,7 +291,7 @@ export default function BarCharts(props) {
 
   const TooltipWrapper = ({ active, payload, coordinate }) => {
     React.useEffect(() => {
-      if (active) setForceHide(false);
+      if (active) showNow();
     }, [active]);
     if (forceHide) return null;
     if (!active || !payload || !payload[0]) return null;
@@ -392,29 +378,12 @@ export default function BarCharts(props) {
   };
 
   React.useEffect(() => {
-    const onDownCapture = (e) => {
-      if (wrapperRef.current && wrapperRef.current.contains(e.target)) return;
-      hideTooltip();
-    };
-
-    const onScroll = () => hideTooltip();
-    const onBlur = () => hideTooltip();
-
-    document.addEventListener("pointerdown", onDownCapture, true);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("blur", onBlur);
-
+    const refCurrent = hideTimerRef.current;
     return () => {
-      document.removeEventListener("pointerdown", onDownCapture, true);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("blur", onBlur);
-    };
-  }, [hideTooltip]);
-  React.useEffect(() => {
-    return () => {
-      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+      if (refCurrent) clearTimeout(refCurrent);
     };
   }, []);
+  useDismissableOverlay({ wrapperRef, onDismiss: hideTooltip });
 
   return (
     <>
@@ -433,18 +402,14 @@ export default function BarCharts(props) {
         ref={wrapperRef}
         className="chart-wrapper"
         onPointerDown={(e) => {
-          e.stopPropagation(); // prevent global dismiss from instantly hiding
-          setForceHide(false);
+          e.stopPropagation();
+          showNow();
         }}
-        onPointerEnter={() => setForceHide(false)}
-        onPointerLeave={() => {
-          // small delay prevents flicker when moving between bars
-          if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-          hideTimerRef.current = setTimeout(() => setForceHide(true), 50);
-        }}
+        onPointerEnter={() => showNow()}
+        onPointerLeave={() => scheduleHide()}
         onPointerDownCapture={(e) => {
           e.stopPropagation();
-          setForceHide(false);
+          showNow();
         }}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>

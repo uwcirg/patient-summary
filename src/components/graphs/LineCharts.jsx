@@ -18,16 +18,15 @@ import {
 import {
   ALERT_COLOR,
   SUCCESS_COLOR,
-  buildTimeTicks,
-  fmtMonthYear,
   hexToRgba,
-  thinTicksToFit,
+  buildClampedThinnedTicks,
 } from "@config/chart_config";
 import InfoDialog from "@components/InfoDialog";
 import CustomLegend from "./CustomLegend";
 import CustomSourceTooltip from "./CustomSourceTooltip";
 import NullDot from "./NullDot";
 import { createDotRenderer, createActiveDotRenderer } from "./ChartDotRenderers";
+import { useDismissableOverlay } from "@/hooks/useDismissableOverlay";
 import { generateUUID, isEmptyArray, range } from "@/util";
 
 export default function LineCharts(props) {
@@ -86,6 +85,7 @@ export default function LineCharts(props) {
   } = props;
 
   const theme = useTheme();
+  const wrapperRef = React.useRef(null);
   const CUT_OFF_YEAR = 5;
   const isCategoricalY = props.isCategoricalY || false;
   const hoveredElementRef = React.useRef(null);
@@ -398,39 +398,21 @@ export default function LineCharts(props) {
     </Stack>
   );
 
-  const uniqSorted = (arr) => {
-    if (!Array.isArray(arr)) return arr;
-    const s = new Set();
-    for (const v of arr) if (Number.isFinite(v)) s.add(v);
-    return Array.from(s).sort((a, b) => a - b);
-  };
-
   // Determine effective chart width for responsive calculations
   const effectiveChartWidth = chartWidth || 580;
   const isSmallScreen = effectiveChartWidth <= 500;
   const isMediumScreen = effectiveChartWidth > 500 && effectiveChartWidth <= 780;
 
   // Build candidate ticks with responsive step size
-  const tickStep = isSmallScreen ? 12 : isMediumScreen ? 9 : 6;
+  const stepMonths = isSmallScreen ? 12 : isMediumScreen ? 9 : 6;
 
-  const allTicksRaw =
-    Array.isArray(calculatedXDomain) && typeof calculatedXDomain[0] === "number"
-      ? buildTimeTicks(calculatedXDomain, { unit: "month", step: tickStep })
-      : undefined;
-
-  // 1) Ensure numeric & unique; 2) Clamp to domain; 3) Sort; 4) Thin to fit; 5) Dedupe again
-  const clampedAll = allTicksRaw
-    ? allTicksRaw.filter((t) => t >= calculatedXDomain[0] && t <= calculatedXDomain[1])
-    : undefined;
-
-  const allTicks = clampedAll ? uniqSorted(clampedAll) : undefined;
-
-  const ticksRaw = allTicks
-    ? thinTicksToFit(allTicks, (ms) => fmtMonthYear.format(ms), effectiveChartWidth)
-    : undefined;
-
-  // Final ticks to render (unique & sorted)
-  const ticks = ticksRaw ? uniqSorted(ticksRaw) : undefined;
+  const ticks = React.useMemo(() => {
+    return buildClampedThinnedTicks({
+      domain: calculatedXDomain,
+      stepMonths,
+      width: effectiveChartWidth,
+    });
+  }, [calculatedXDomain, stepMonths, effectiveChartWidth]);
 
   // Deduplicate ticks by calendar day (safeguard against duplicate date labels)
   const dedupedTicks = React.useMemo(() => {
@@ -1200,30 +1182,13 @@ export default function LineCharts(props) {
     };
   }, []);
 
-  React.useEffect(() => {
-    const onPointerDownCapture = () => {
-      // Tap/click anywhere outside dots closes it
-      hideTooltip();
-    };
-
-    const onScroll = () => hideTooltip();
-    const onBlur = () => hideTooltip();
-
-    document.addEventListener("pointerdown", onPointerDownCapture, { capture: true });
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("blur", onBlur);
-
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDownCapture, { capture: true });
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("blur", onBlur);
-    };
-  }, [hideTooltip]);
+  useDismissableOverlay({ wrapperRef, onDismiss: hideTooltip });
 
   return (
     <>
       {renderTitle()}
       <Box
+        ref={wrapperRef}
         sx={{
           width: {
             xs: MIN_CHART_WIDTH,
