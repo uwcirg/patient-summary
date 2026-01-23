@@ -41,35 +41,45 @@ const SourceDot = ({
 
   const k = `dot-${payload?.id}_${payload?.key}_${payload?.source}-${payload?.[xFieldKey]}-${index}`;
 
-  // White stroke for better visibility
-  const strokeColor = "#fff";
-  const strokeWidth = 2;
 
   // Responsive dot size with custom radius support
   const defaultDotSize = isSmallScreen ? 3 : 5;
   const defaultRectSize = isSmallScreen ? 6 : 8;
   const dotSize = dotRadius || useParams.r || defaultDotSize;
   const rectSize = dotRadius ? dotRadius * 2 : useParams.width || defaultRectSize;
+   const hitR = Math.max(14, dotSize * 3.25);
 
-  switch (String(payload.source).toLowerCase()) {
-    case "cnics":
-      return <circle key={k} cx={cx} cy={cy} r={dotSize} fill={color} stroke={strokeColor} strokeWidth={strokeWidth} />;
-    case "epic":
-      return (
-        <rect
-          key={k}
-          x={cx - rectSize / 2}
-          y={cy - rectSize / 2}
-          width={rectSize}
-          height={rectSize}
-          fill={color}
-          stroke={strokeColor}
-          strokeWidth={strokeWidth}
-        />
-      );
-    default:
-      return <circle key={k} cx={cx} cy={cy} r={dotSize} fill={color} stroke={strokeColor} strokeWidth={strokeWidth} />;
-  }
+  const shape =
+    String(payload.source).toLowerCase() === "epic" ? (
+      <rect
+        x={cx - rectSize / 2}
+        y={cy - rectSize / 2}
+        width={rectSize}
+        height={rectSize}
+        fill={color}
+        stroke="#fff"
+        strokeWidth={2}
+        style={{ pointerEvents: "none" }}
+      />
+    ) : (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={dotSize}
+        fill={color}
+        stroke="#fff"
+        strokeWidth={2}
+        style={{ pointerEvents: "none" }}
+      />
+    );
+
+  return (
+    <g key={k}>
+      {/* invisible hit target */}
+      <circle cx={cx} cy={cy} r={hitR} fill="transparent" stroke="transparent" />
+      {shape}
+    </g>
+  );
 };
 
 export default SourceDot;

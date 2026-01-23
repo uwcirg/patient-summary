@@ -47,51 +47,73 @@ export const renderChartDot = (props, config) => {
     dotColor,
     isActive = false,
     params = {},
+    // optional tuning knobs:
+    hitRadiusMultiplier = 3.25, // how much bigger than visual dot
+    minHitRadius = 14,          // minimum hit target in px (great for iPad)
   } = config;
 
-  // Determine radius based on custom radius, active state, and screen size
+  // Determine visual radius
   let radius;
-  if (isActive) {
-    radius = activeDotRadius || (isSmallScreen ? 4 : 5);
-  } else {
-    radius = dotRadius || (isSmallScreen ? 3 : 4);
-  }
+  if (isActive) radius = activeDotRadius || (isSmallScreen ? 4 : 5);
+  else radius = dotRadius || (isSmallScreen ? 3 : 4);
 
-  // If we have source-based data, use SourceDot component
+  const visualR = params.r || radius;
+  const hitR = Math.max(minHitRadius, visualR * hitRadiusMultiplier);
+
+  // Build the visible dot element (same logic you already have)
+  let visibleDot = null;
+
   if (!isEmptyArray(sources)) {
-    return (
-      <SourceDot
-        key={`${payload?.id}_${index}`}
+    visibleDot = (
+      <g pointerEvents="none">
+        <SourceDot
+          key={`${payload?.id}_${index}`}
+          cx={cx}
+          cy={cy}
+          payload={payload}
+          index={index}
+          isSmallScreen={isSmallScreen}
+          sources={sources}
+          xFieldKey={xFieldKey}
+          yFieldKey={yFieldKey}
+          params={params}
+          dotColor={dotColor}
+          dotRadius={radius}
+        />
+      </g>
+    );
+  } else {
+    const baseColor = getSeverityBaseColor(payload, value, dotColor);
+    const color = getDotColor(payload, baseColor);
+
+    visibleDot = (
+      <circle
+        key={`dot-${isActive ? "active-" : ""}${payload?.id}_${index}`}
         cx={cx}
         cy={cy}
-        payload={payload}
-        index={index}
-        isSmallScreen={isSmallScreen}
-        sources={sources}
-        xFieldKey={xFieldKey}
-        yFieldKey={yFieldKey}
-        params={params}
-        dotColor={dotColor} // Pass the custom dot color
-        dotRadius={radius} // Pass custom radius
+        r={visualR}
+        fill={color}
+        stroke="#fff"
+        strokeWidth={2}
+        pointerEvents="none"
       />
     );
   }
 
-  // Get base color based on severity
-  const baseColor = getSeverityBaseColor(payload, value, dotColor);
-
-  // Apply duplicate coloring
-  const color = getDotColor(payload, baseColor);
+  // Wrap with hit target
   return (
-    <circle
-      key={`dot-${isActive ? "active-" : ""}${payload?.id}_${index}`}
-      cx={cx}
-      cy={cy}
-      r={params.r || radius}
-      fill={color}
-      stroke="#fff"
-      strokeWidth={2}
-    />
+    <g key={`dotwrap-${isActive ? "active-" : ""}${payload?.id}_${index}`}>
+      {/* invisible hit target */}
+      <circle
+        cx={cx}
+        cy={cy}
+        r={hitR}
+        fill="transparent"
+        stroke="transparent"
+        style={{ pointerEvents: "all" }}
+      />
+      {visibleDot}
+    </g>
   );
 };
 

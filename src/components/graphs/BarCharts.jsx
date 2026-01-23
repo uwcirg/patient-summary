@@ -13,18 +13,13 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import React, { useMemo } from "react";
-import {
-  SUCCESS_COLOR,
-  ALERT_COLOR,
-  buildClampedThinnedTicks,
-} from "@config/chart_config";
+import { SUCCESS_COLOR, ALERT_COLOR, adjustBrightness, buildClampedThinnedTicks } from "@config/chart_config";
 import CustomSourceTooltip from "./CustomSourceTooltip";
 import { useDismissableOverlay } from "@/hooks/useDismissableOverlay";
 import { useForceHide } from "@/hooks/useForceHide";
 
 export default function BarCharts(props) {
   const {
-    id,
     title,
     chartWidth,
     mdChartWidth,
@@ -45,53 +40,29 @@ export default function BarCharts(props) {
   const CUT_OFF_YEAR = 5;
   const wrapperRef = React.useRef(null);
   const hideTimerRef = React.useRef(null);
-  const { forceHide, hideNow, showNow, scheduleHide } = useForceHide({ leaveDelayMs: 50 });
+  const { hideNow, showNow, scheduleHide } = useForceHide({ leaveDelayMs: 50 });
+  const [locked, setLocked] = React.useState(false); // sticky open (touch)
+  const pointerTypeRef = React.useRef("mouse"); // 'mouse' | 'touch' | 'pen'
+  const lastActiveAtRef = React.useRef(0);
+  const clearHideTimer = () => {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = null;
+  };
 
   const hideTooltip = React.useCallback(() => {
+    clearHideTimer();
     hideNow();
   }, [hideNow]);
+  const showTooltip = React.useCallback(() => {
+    clearHideTimer();
+    showNow();
+  }, [showNow]);
 
   const getBarColor = (entry, baseColor) => {
     // If no duplicates on this day, use base color
     if (!entry._duplicateCount || entry._duplicateCount === 1) {
       return baseColor;
     }
-
-    // For duplicates, adjust the brightness based on index
-    // Convert hex to RGB, adjust brightness, convert back
-    const hexToRgb = (hex) => {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result
-        ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16),
-          }
-        : null;
-    };
-
-    const rgbToHex = (r, g, b) => {
-      return (
-        "#" +
-        [r, g, b]
-          .map((x) => {
-            const hex = Math.round(x).toString(16);
-            return hex.length === 1 ? "0" + hex : hex;
-          })
-          .join("")
-      );
-    };
-
-    const adjustBrightness = (color, amount) => {
-      const rgb = hexToRgb(color);
-      if (!rgb) return color;
-
-      return rgbToHex(
-        Math.min(255, Math.max(0, rgb.r + amount)),
-        Math.min(255, Math.max(0, rgb.g + amount)),
-        Math.min(255, Math.max(0, rgb.b + amount)),
-      );
-    };
 
     // Adjust brightness: first bar darker, last bar lighter
     const brightnessStep = 5; // Adjust this value for more/less variation
@@ -290,11 +261,29 @@ export default function BarCharts(props) {
   const renderYAxis = () => <YAxis domain={yDomain} minTickGap={4} stroke="#FFF" tick={false} width={10} />;
 
   const TooltipWrapper = ({ active, payload, coordinate }) => {
-    React.useEffect(() => {
-      if (active) showNow();
-    }, [active]);
-    if (forceHide) return null;
-    if (!active || !payload || !payload[0]) return null;
+    // If user explicitly hid it, don't show.
+    //if (forceHide) return null;
+
+    const isTouch = pointerTypeRef.current === "touch";
+
+    // Touch + locked: ignore active jitter as long as we have a payload
+    if (isTouch && locked) {
+      if (!payload || !payload[0]) return null; // nothing to show
+    } else {
+      // Mouse (or unlocked touch): debounce brief active=false transitions
+      if (active) {
+        lastActiveAtRef.current = Date.now();
+      } else {
+        const dt = Date.now() - lastActiveAtRef.current;
+        if (dt < 80) {
+          // treat as still active to prevent flicker
+        } else {
+          return null;
+        }
+      }
+
+      if (!payload || !payload[0]) return null;
+    }
 
     const entry = payload[0].payload;
     const originalTimestamp = entry.originalTimestamp ?? entry[xFieldKey];
@@ -305,7 +294,7 @@ export default function BarCharts(props) {
 
     return (
       <CustomSourceTooltip
-        visible={active}
+        visible={true}
         position={{ x: vx, y: vy }}
         positionType="fixed"
         data={{
@@ -348,8 +337,10 @@ export default function BarCharts(props) {
   const renderToolTip = () => {
     return (
       <Tooltip
-        content={<TooltipWrapper />}
-        wrapperStyle={{ pointerEvents: "none" }} // prevents tooltip layer blocking events
+        shared
+        trigger="hover"
+        content={(p) => <TooltipWrapper {...p} />}
+        wrapperStyle={{ pointerEvents: "none" }}
         isAnimationActive={false}
       />
     );
@@ -389,7 +380,6 @@ export default function BarCharts(props) {
     <>
       {renderTitle()}
       <Box
-        id={`chart_wrapper_${id}`}
         sx={{
           width: {
             xs: 420,
@@ -402,14 +392,31 @@ export default function BarCharts(props) {
         ref={wrapperRef}
         className="chart-wrapper"
         onPointerDown={(e) => {
+          pointerTypeRef.current = e.pointerType || "mouse";
           e.stopPropagation();
-          showNow();
+          if (pointerTypeRef.current === "touch") {
+            setLocked(true);
+            showTooltip();
+          } else {
+            // Mouse: just ensure it's visible
+            setLocked(false);
+            showTooltip();
+          }
         }}
-        onPointerEnter={() => showNow()}
-        onPointerLeave={() => scheduleHide()}
+        onPointerMove={(e) => {
+          pointerTypeRef.current = e.pointerType || pointerTypeRef.current;
+        }}
+        onPointerLeave={() => {
+          // Mouse only: allow leaving to hide
+          if (pointerTypeRef.current === "mouse") {
+            clearHideTimer();
+            scheduleHide();
+          }
+        }}
+        onPointerEnter={() => showTooltip()}
         onPointerDownCapture={(e) => {
           e.stopPropagation();
-          showNow();
+          showTooltip();
         }}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
@@ -421,7 +428,7 @@ export default function BarCharts(props) {
               bottom: 10,
             }}
             data={parsed}
-            style={{ width: "100%", maxWidth: "650px" }}
+            style={{ width: "100%", maxWidth: "650px", touchAction: "manipulation" }}
           >
             <CartesianGrid strokeDasharray="2 2" horizontal={false} vertical={false} fill="#fdfbfbff" />
             {renderTruncationLine()}
@@ -430,6 +437,7 @@ export default function BarCharts(props) {
             {renderToolTip()}
             <Bar dataKey={yFieldKey} maxBarSize={dynamicBarSize} barCategoryGap="20%" minPointSize={4}>
               {parsed.map((entry, index) => {
+                // eslint-disable-next-line
                 const baseColor = entry[yFieldKey] >= entry.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR;
                 const barColor = getBarColor(entry, baseColor);
 
@@ -444,7 +452,6 @@ export default function BarCharts(props) {
 }
 
 BarCharts.propTypes = {
-  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   title: PropTypes.string,
   xDomain: PropTypes.array,
   chartWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
