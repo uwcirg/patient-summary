@@ -264,7 +264,8 @@ export default function BarCharts(props) {
     const allTicks = uniqSorted(clampedAll);
 
     // Thin ticks to fit
-    const ticksRaw = thinTicksToFit(allTicks, (ms) => fmtMonthYear.format(ms), chartWidth);
+    const effectiveWidth = Number(chartWidth) || 580;
+    const ticksRaw = thinTicksToFit(allTicks, (ms) => fmtMonthYear.format(ms), effectiveWidth);
 
     return uniqSorted(ticksRaw);
   }, [parsed.length, xAxisDomain, chartWidth]);
@@ -303,6 +304,9 @@ export default function BarCharts(props) {
   const renderYAxis = () => <YAxis domain={yDomain} minTickGap={4} stroke="#FFF" tick={false} width={10} />;
 
   const TooltipWrapper = ({ active, payload, coordinate }) => {
+    React.useEffect(() => {
+      if (active) setForceHide(false);
+    }, [active]);
     if (forceHide) return null;
     if (!active || !payload || !payload[0]) return null;
 
@@ -389,19 +393,19 @@ export default function BarCharts(props) {
 
   React.useEffect(() => {
     const onDownCapture = (e) => {
-      // If the click/tap is inside this chart, don't hide it
       if (wrapperRef.current && wrapperRef.current.contains(e.target)) return;
       hideTooltip();
     };
+
     const onScroll = () => hideTooltip();
     const onBlur = () => hideTooltip();
 
-    document.addEventListener("pointerdown", onDownCapture, { capture: true });
+    document.addEventListener("pointerdown", onDownCapture, true);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("blur", onBlur);
 
     return () => {
-      document.removeEventListener("pointerdown", onDownCapture, { capture: true });
+      document.removeEventListener("pointerdown", onDownCapture, true);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("blur", onBlur);
     };
@@ -416,6 +420,7 @@ export default function BarCharts(props) {
     <>
       {renderTitle()}
       <Box
+        id={`chart_wrapper_${id}`}
         sx={{
           width: {
             xs: 420,
@@ -425,7 +430,6 @@ export default function BarCharts(props) {
           },
           height: 250,
         }}
-        key={id}
         ref={wrapperRef}
         className="chart-wrapper"
         onPointerDown={(e) => {
@@ -461,7 +465,6 @@ export default function BarCharts(props) {
             {renderToolTip()}
             <Bar dataKey={yFieldKey} maxBarSize={dynamicBarSize} barCategoryGap="20%" minPointSize={4}>
               {parsed.map((entry, index) => {
-                // eslint-disable-next-line
                 const baseColor = entry[yFieldKey] >= entry.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR;
                 const barColor = getBarColor(entry, baseColor);
 
