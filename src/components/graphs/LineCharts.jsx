@@ -11,7 +11,6 @@ import {
   YAxis,
   CartesianGrid,
   Text,
-  // Tooltip,
   Label,
   Legend,
   ResponsiveContainer,
@@ -749,8 +748,14 @@ export default function LineCharts(props) {
           return (
             <g
               key={`${dotProps.payload?.id}_${dotProps.payload?.key}_singleline_dot`}
-              onMouseEnter={(e) => handleDotMouseEnter(e, dotProps.payload)}
-              onMouseLeave={handleDotMouseLeave}
+              onMouseEnter={(e) => {
+                e.stopPropagation();
+                handleDotMouseEnter(e, dotProps.payload);
+              }}
+              onMouseLeave={(e) => {
+                e.stopPropagation();   
+                handleDotMouseLeave();
+              }}
             >
               <CustomDot {...rest} />
             </g>
@@ -762,8 +767,14 @@ export default function LineCharts(props) {
           return (
             <g
               key={`${dotProps.payload?.id}_${dotProps.payload?.key}_singleline_activedot`}
-              onMouseEnter={(e) => handleDotMouseEnter(e, dotProps.payload)}
-              onMouseLeave={handleDotMouseLeave}
+              onMouseEnter={(e) => {
+                e.stopPropagation();
+                handleDotMouseEnter(e, dotProps.payload);
+              }}
+              onMouseLeave={(e) => {
+                e.stopPropagation();   
+                handleDotMouseLeave();
+              }}
             >
               <CustomActiveDot {...rest} />
             </g>
@@ -957,8 +968,14 @@ export default function LineCharts(props) {
             return (
               <g
                 key={`${dotProps.payload?.id}_${dotProps.payload?.key}_dot`}
-                onMouseEnter={(e) => handleDotMouseEnter(e, dotProps.payload)}
-                onMouseLeave={handleDotMouseLeave}
+                onMouseEnter={(e) => {
+                e.stopPropagation();
+                handleDotMouseEnter(e, dotProps.payload);
+              }}
+                onMouseLeave={(e) => {
+                e.stopPropagation();   
+                handleDotMouseLeave();
+              }}
               >
                 <CustomDot {...rest} />
               </g>
@@ -970,8 +987,14 @@ export default function LineCharts(props) {
             return (
               <g
                 key={`${dotProps.payload?.id}_${dotProps.payload?.key}_activedot`}
-                onMouseEnter={(e) => handleDotMouseEnter(e, dotProps.payload)}
-                onMouseLeave={handleDotMouseLeave}
+                onMouseEnter={(e) => {
+                e.stopPropagation();
+                handleDotMouseEnter(e, dotProps.payload);
+               }}
+              onMouseLeave={(e) => {
+                e.stopPropagation();   
+                handleDotMouseLeave();
+              }}
               >
                 <CustomActiveDot {...rest} />
               </g>
@@ -1097,7 +1120,10 @@ export default function LineCharts(props) {
           },
         }}
         className={`chart-wrapper ${wrapperClass ? wrapperClass : ""}`}
-        onMouseLeave={handleDotMouseLeave}
+        onMouseLeave={(e) => {
+          e.stopPropagation();
+          handleDotMouseLeave();
+        }}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
           <LineChart data={filteredData} margin={getResponsiveMargin()} id={`lineChart_${id ?? generateUUID()}`}>
