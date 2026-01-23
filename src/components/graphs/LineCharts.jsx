@@ -165,10 +165,10 @@ export default function LineCharts(props) {
       const dt = Date.now() - lastShowAtRef.current;
       // grace window prevents flicker when pointer slips off dot briefly
       if (dt > 120) {
-        setSourceTooltip({ visible: false, position: { x: 0, y: 0 }, data: null, payload: null });
+        hideTooltip();
       }
     }, 80);
-  }, [locked]);
+  }, [hideTooltip, locked]);
 
   const toggleLineVisibility = (lineKey) => {
     if (!enableLineSwitches) return; // Don't toggle if switches aren't enabled
@@ -691,10 +691,8 @@ export default function LineCharts(props) {
                     handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color);
                   }}
                   onPointerLeave={(e) => {
-                    if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                      e.stopPropagation();
-                      handleDotMouseLeave();
-                    }
+                    e.stopPropagation();
+                    handleDotMouseLeave();
                   }}
                   onPointerCancel={(e) => {
                     e.stopPropagation();
@@ -720,10 +718,8 @@ export default function LineCharts(props) {
                     handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color);
                   }}
                   onPointerLeave={(e) => {
-                    if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                      e.stopPropagation();
-                      handleDotMouseLeave();
-                    }
+                    e.stopPropagation();
+                    handleDotMouseLeave();
                   }}
                   onPointerCancel={(e) => {
                     e.stopPropagation();
@@ -775,10 +771,8 @@ export default function LineCharts(props) {
                 handleDotMouseEnter(e, dotProps.payload);
               }}
               onPointerLeave={(e) => {
-                if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                  e.stopPropagation();
-                  handleDotMouseLeave();
-                }
+                e.stopPropagation();
+                handleDotMouseLeave();
               }}
               onPointerCancel={(e) => {
                 e.stopPropagation();
@@ -804,10 +798,8 @@ export default function LineCharts(props) {
                 handleDotMouseEnter(e, dotProps.payload);
               }}
               onPointerLeave={(e) => {
-                if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                  e.stopPropagation();
-                  handleDotMouseLeave();
-                }
+                e.stopPropagation();
+                handleDotMouseLeave();
               }}
               onPointerCancel={(e) => {
                 e.stopPropagation();
@@ -869,10 +861,8 @@ export default function LineCharts(props) {
                   handleDotMouseEnter(e, payload);
                 }}
                 onPointerLeave={(e) => {
-                  if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                    e.stopPropagation();
-                    handleDotMouseLeave();
-                  }
+                  e.stopPropagation();
+                  handleDotMouseLeave();
                 }}
                 onPointerCancel={(e) => {
                   e.stopPropagation();
@@ -898,10 +888,8 @@ export default function LineCharts(props) {
                   handleDotMouseEnter(e, payload);
                 }}
                 onPointerLeave={(e) => {
-                  if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                    e.stopPropagation();
-                    handleDotMouseLeave();
-                  }
+                  e.stopPropagation();
+                  handleDotMouseLeave();
                 }}
                 onPointerCancel={(e) => {
                   e.stopPropagation();
@@ -948,10 +936,8 @@ export default function LineCharts(props) {
                 handleDotMouseEnter(e, payload);
               }}
               onPointerLeave={(e) => {
-                if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                  e.stopPropagation();
-                  handleDotMouseLeave();
-                }
+                e.stopPropagation();
+                handleDotMouseLeave();
               }}
               onPointerCancel={(e) => {
                 e.stopPropagation();
@@ -977,10 +963,8 @@ export default function LineCharts(props) {
                 handleDotMouseEnter(e, payload);
               }}
               onPointerLeave={(e) => {
-                if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                  e.stopPropagation();
-                  handleDotMouseLeave();
-                }
+                e.stopPropagation();
+                handleDotMouseLeave();
               }}
               onPointerCancel={(e) => {
                 e.stopPropagation();
@@ -1055,10 +1039,8 @@ export default function LineCharts(props) {
                   handleDotMouseEnter(e, dotProps.payload);
                 }}
                 onPointerLeave={(e) => {
-                  if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                    e.stopPropagation();
-                    handleDotMouseLeave();
-                  }
+                  e.stopPropagation();
+                  handleDotMouseLeave();
                 }}
                 onPointerCancel={(e) => {
                   e.stopPropagation();
@@ -1084,10 +1066,8 @@ export default function LineCharts(props) {
                   handleDotMouseEnter(e, dotProps.payload);
                 }}
                 onPointerLeave={(e) => {
-                  if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                    e.stopPropagation();
-                    handleDotMouseLeave();
-                  }
+                  e.stopPropagation();
+                  handleDotMouseLeave();
                 }}
                 onPointerCancel={(e) => {
                   e.stopPropagation();
@@ -1235,16 +1215,8 @@ export default function LineCharts(props) {
             hideTooltip();
           }
         }}
-        onPointerLeave={(e) => {
-          if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-            e.stopPropagation();
-            handleDotMouseLeave();
-          }
-        }}
-        onPointerCancel={(e) => {
-          e.stopPropagation();
-          handleDotMouseLeave();
-        }}
+        onPointerLeave={hideTooltip}
+        onPointerCancel={hideTooltip}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
           <LineChart data={filteredData} margin={getResponsiveMargin()} id={`lineChart_${id ?? generateUUID()}`}>

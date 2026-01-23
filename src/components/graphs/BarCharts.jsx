@@ -15,8 +15,6 @@ import {
 import React, { useMemo } from "react";
 import { SUCCESS_COLOR, ALERT_COLOR, adjustBrightness, buildClampedThinnedTicks } from "@config/chart_config";
 import CustomSourceTooltip from "./CustomSourceTooltip";
-import { useDismissableOverlay } from "@/hooks/useDismissableOverlay";
-import { useForceHide } from "@/hooks/useForceHide";
 
 export default function BarCharts(props) {
   const {
@@ -39,24 +37,6 @@ export default function BarCharts(props) {
 
   const CUT_OFF_YEAR = 5;
   const wrapperRef = React.useRef(null);
-  const hideTimerRef = React.useRef(null);
-  const { hideNow, showNow, scheduleHide } = useForceHide({ leaveDelayMs: 50 });
-  const [locked, setLocked] = React.useState(false); // sticky open (touch)
-  const pointerTypeRef = React.useRef("mouse"); // 'mouse' | 'touch' | 'pen'
-  const lastActiveAtRef = React.useRef(0);
-  const clearHideTimer = () => {
-    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-    hideTimerRef.current = null;
-  };
-
-  const hideTooltip = React.useCallback(() => {
-    clearHideTimer();
-    hideNow();
-  }, [hideNow]);
-  const showTooltip = React.useCallback(() => {
-    clearHideTimer();
-    showNow();
-  }, [showNow]);
 
   const getBarColor = (entry, baseColor) => {
     // If no duplicates on this day, use base color
@@ -260,30 +240,9 @@ export default function BarCharts(props) {
 
   const renderYAxis = () => <YAxis domain={yDomain} minTickGap={4} stroke="#FFF" tick={false} width={10} />;
 
-  const TooltipWrapper = ({ active, payload, coordinate }) => {
-    // If user explicitly hid it, don't show.
-    //if (forceHide) return null;
-
-    const isTouch = pointerTypeRef.current === "touch";
-
-    // Touch + locked: ignore active jitter as long as we have a payload
-    if (isTouch && locked) {
-      if (!payload || !payload[0]) return null; // nothing to show
-    } else {
-      // Mouse (or unlocked touch): debounce brief active=false transitions
-      if (active) {
-        lastActiveAtRef.current = Date.now();
-      } else {
-        const dt = Date.now() - lastActiveAtRef.current;
-        if (dt < 80) {
-          // treat as still active to prevent flicker
-        } else {
-          return null;
-        }
-      }
-
-      if (!payload || !payload[0]) return null;
-    }
+  const TooltipWrapper = ({ payload, coordinate }) => {
+    
+    if (!payload || !payload[0]) return null;
 
     const entry = payload[0].payload;
     const originalTimestamp = entry.originalTimestamp ?? entry[xFieldKey];
@@ -368,14 +327,6 @@ export default function BarCharts(props) {
     );
   };
 
-  React.useEffect(() => {
-    const refCurrent = hideTimerRef.current;
-    return () => {
-      if (refCurrent) clearTimeout(refCurrent);
-    };
-  }, []);
-  useDismissableOverlay({ wrapperRef, onDismiss: hideTooltip });
-
   return (
     <>
       {renderTitle()}
@@ -391,33 +342,6 @@ export default function BarCharts(props) {
         }}
         ref={wrapperRef}
         className="chart-wrapper"
-        onPointerDown={(e) => {
-          pointerTypeRef.current = e.pointerType || "mouse";
-          e.stopPropagation();
-          if (pointerTypeRef.current === "touch") {
-            setLocked(true);
-            showTooltip();
-          } else {
-            // Mouse: just ensure it's visible
-            setLocked(false);
-            showTooltip();
-          }
-        }}
-        onPointerMove={(e) => {
-          pointerTypeRef.current = e.pointerType || pointerTypeRef.current;
-        }}
-        onPointerLeave={() => {
-          // Mouse only: allow leaving to hide
-          if (pointerTypeRef.current === "mouse") {
-            clearHideTimer();
-            scheduleHide();
-          }
-        }}
-        onPointerEnter={() => showTooltip()}
-        onPointerDownCapture={(e) => {
-          e.stopPropagation();
-          showTooltip();
-        }}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
           <BarChart
