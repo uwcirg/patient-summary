@@ -77,7 +77,7 @@ const CustomSourceTooltip = ({
     }
   }, [size.h, size.w, data, visible]); // dependencies that change tooltip size
 
-  if (!visible || !data) return null;
+  if (!data) return null;
   return (
     <div
       ref={ref}
@@ -93,12 +93,21 @@ const CustomSourceTooltip = ({
         padding: "8px 12px",
         borderRadius: 0,
         boxShadow: "0 2px 6px rgba(33, 33, 33, 0.15)",
+        opacity: visible ? 1 : 0,
+        transform: visible
+          ? "translate(-50%, calc(-100% - 8px)) scale(1)"
+          : "translate(-50%, calc(-100% - 12px)) scale(0.96)",
+
+        // Faster fade-in, slightly slower fade-out
+        transition: visible
+          ? "opacity 0.12s cubic-bezier(0.4, 0, 0.2, 1), transform 0.12s cubic-bezier(0.4, 0, 0.2, 1)"
+          : "opacity 0.18s cubic-bezier(0.4, 0, 1, 1), transform 0.18s cubic-bezier(0.4, 0, 1, 1)",
+
+        // Keep in DOM but invisible when hidden (prevents layout shift)
+        visibility: visible ? "visible" : "hidden",
       }}
     >
-      <div
-        className="tooltip-label"
-        style={{ fontWeight: 500, marginBottom: 4, fontSize: FONT_SIZE }}
-      >
+      <div className="tooltip-label" style={{ fontWeight: 500, marginBottom: 4, fontSize: FONT_SIZE }}>
         {fmtDate}
       </div>
       {lineLabel && (

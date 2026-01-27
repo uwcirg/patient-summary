@@ -179,7 +179,7 @@ export const report_config = {
             // "CIRG-UNPROTECTED-ORAL-SEX",
             // "CIRG-UNPROTECTED-VAGINAL-SEX",
             "CIRG-STI",
-            "CIRG-EXCHANGE-SEX",
+            "CIRG-CNICS-EXCHANGE-SEX",
           ],
           hiddenColumns: ["id", "source", "lastAssessed", "numAnswered", "scoreMeaning", "comparison"],
           columns: [

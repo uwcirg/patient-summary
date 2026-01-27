@@ -1180,6 +1180,34 @@ const questionnaireConfigsRaw = {
     },
     // skipChart: true,
   },
+  "CIRG-CNICS-EXCHANGE-SEX": {
+    key: "CIRG-CNICS-EXCHANGE-SEX",
+    insturmentName: "Exchange Sex",
+    title: "Exchange Sex",
+    subtitle: "Past 3 months",
+    columns: [
+      {
+        linkId: "EXCHANGE-SEX-SCORE-PAST-3-MONTHS",
+        id: "result",
+      },
+    ],
+    displayMeaningNotScore: true,
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      const meaningResponse = responses.find((response) =>
+        linkIdEquals(response.id, "EXCHANGE-SEX-SCORE-PAST-3-MONTHS", "strict"),
+      );
+      const meaningAnswer =
+        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
+      if (String(meaningAnswer).toLowerCase() === "true") return "Yes";
+      else if (String(meaningAnswer).toLowerCase() === "false") return "No";
+      return meaningAnswer;
+    },
+    linkIdMatchMode: "strict",
+    meaningQuestionId: "EXCHANGE-SEX-SCORE-PAST-3-MONTHS",
+    skipMeaningScoreRow: true,
+    skipChart: true,
+  },
   "CIRG-CNICS-MINI": {
     key: "CIRG-CNICS-MINI",
     instrumentName: "MINI Score",
@@ -1464,11 +1492,6 @@ const questionnaireConfigsRaw = {
     meaningRowLabel: "Unprotected Vaginal Sex",
     linkIdMatchMode: "strict",
     skipChart: true,
-  },
-  "CIRG-EXCHANGE-SEX": {
-    key: "CIRG-EXCHANGE-SEX",
-    insturmentName: "Exchange Sex",
-    title: "Exchange Sex",
   },
   "CIRG-STI": {
     key: "CIRG-STI",
