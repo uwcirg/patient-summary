@@ -129,44 +129,44 @@ export const report_config = {
             // "CIRG-Concurrent-IDU",
           ],
         },
-        {
-          id: "table_naloxone_access",
-          title: "Harm Reduction",
-          layout: "simple",
-          dataKeysToMatch: ["CIRG-Naloxone-Access", "CIRG-Fentanyl-Strip-Access"],
-          hiddenColumns: ["id", "source", "lastAssessed", "numAnswered", "scoreMeaning", "comparison"],
-          columns: [
-            {
-              id: "measure",
-              header: "Measure",
-              align: "left",
-              accessor: "title",
-              type: "text",
-              headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
-            },
-            {
-              id: "result",
-              header: "Result",
-              align: "left",
-              accessor: "result",
-              type: "text",
-            },
-            {
-              id: "date",
-              header: "Last Done",
-              align: "left",
-              accessor: "date",
-              type: "text",
-              renderCell: (row, value) => (
-                <Stack direction={"column"}>
-                  {value && <span>{value}</span>}
-                  {!value && getNoDataDisplay()}
-                  {row.source && <span className="muted-text">{row.source}</span>}
-                </Stack>
-              ),
-            },
-          ],
-        },
+        // {
+        //   id: "table_naloxone_access",
+        //   title: "Harm Reduction",
+        //   layout: "simple",
+        //   dataKeysToMatch: ["CIRG-Naloxone-Access", "CIRG-Fentanyl-Strip-Access"],
+        //   hiddenColumns: ["id", "source", "lastAssessed", "numAnswered", "scoreMeaning", "comparison"],
+        //   columns: [
+        //     {
+        //       id: "measure",
+        //       header: "Measure",
+        //       align: "left",
+        //       accessor: "title",
+        //       type: "text",
+        //       headerProps: { sx: { textAlign: "left", backgroundColor: "lightest.main" } },
+        //     },
+        //     {
+        //       id: "result",
+        //       header: "Result",
+        //       align: "left",
+        //       accessor: "result",
+        //       type: "text",
+        //     },
+        //     {
+        //       id: "date",
+        //       header: "Last Done",
+        //       align: "left",
+        //       accessor: "date",
+        //       type: "text",
+        //       renderCell: (row, value) => (
+        //         <Stack direction={"column"}>
+        //           {value && <span>{value}</span>}
+        //           {!value && getNoDataDisplay()}
+        //           {row.source && <span className="muted-text">{row.source}</span>}
+        //         </Stack>
+        //       ),
+        //     },
+        //   ],
+        // },
         {
           id: "table_sexual_risk",
           title: "Sexual Risk Behavior",
