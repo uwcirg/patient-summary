@@ -1238,7 +1238,7 @@ const questionnaireConfigsRaw = {
     linkIdMatchMode: "strict",
     skipChart: true,
     displayMeaningNotScore: true,
-    meaningRowLabel: "Social Support",
+    meaningRowLabel: "Summary",
     alertQuestionId: "MAPSS-SF-SCORE-CRITICAL",
     meaningQuestionId: "MAPSS-SF-SCORE-SOCIAL-SUPPORT",
     fallbackMeaningFunc: function (severity, responses) {
