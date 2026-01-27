@@ -58,7 +58,7 @@ export const report_config = {
                   <Box>{value && value.split(",").join("\n")}</Box>
                   {!value && getNoDataDisplay()}
                   {row.source && (
-                    <Box className="muted-text" sx={{ mt: 1 }}>
+                    <Box className="muted-text source-container">
                       {row.source}
                     </Box>
                   )}
@@ -78,7 +78,7 @@ export const report_config = {
                   <Box>{value && value.split(",").join("\n")}</Box>
                   {!value && getNoDataDisplay()}
                   {row.source && (
-                    <Box className="muted-text" sx={{ mt: 1 }}>
+                    <Box className="muted-text source-container">
                       {row.source}
                     </Box>
                   )}
@@ -234,7 +234,7 @@ export const report_config = {
             {
               id: "date",
               header: "Last Done",
-              align: "left",
+              align: "center",
               accessor: "date",
               type: "text",
               renderCell: (row, value) => (
@@ -242,7 +242,7 @@ export const report_config = {
                   {value && <Box>{getLocaleDateStringFromDate(value)}</Box>}
                   {!value && getNoDataDisplay()}
                   {row.source && (
-                    <Box className="muted-text" sx={{ mt: 2 }}>
+                    <Box className="muted-text source-container">
                       {row.source}
                     </Box>
                   )}
@@ -259,7 +259,7 @@ export const report_config = {
           dataKeysToMatch: ["CIRG-CNICS-MAPSS-SF", "CIRG-HIV-Stigma", "CIRG-PC-PTSD-5", "CIRG-HRQOL"],
           tableStyle: {
             width: "auto"
-          }
+          },
         },
       ],
     },

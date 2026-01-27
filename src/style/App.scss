@@ -251,11 +251,6 @@ p {
   }
 }
 
-// .MuiButton-contained,
-// .MuiButton-outlined {
-//   border-radius: 24px !important;
-// }
-
 .MuiTablePagination-toolbar {
   .MuiTablePagination-input {
     margin-left: 0 !important;
@@ -297,10 +292,6 @@ p {
         top: 25%;
         left: 92%;
         transform: translateX(-50%);
-        // width: 6px;
-        // height: 6px;
-        // border: 1px solid #777;
-        // border-radius: 50%;
         opacity: 0.4;
       }
       &.inactive::after {
@@ -349,6 +340,11 @@ p {
     content: "";
     margin-left: -4px;
   }
+}
+.source-container {
+  font-size: 0.725rem;
+  color: $muted-text-color;
+  margin-top: 8px;
 }
 
 @media print {
