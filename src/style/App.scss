@@ -219,6 +219,7 @@ p {
   tr:has(.question-row) {
     td {
       border-left: 0 !important;
+      border-right: 0 !important;
       &:first-of-type {
         border-right: 1px solid $border-color !important;
       }

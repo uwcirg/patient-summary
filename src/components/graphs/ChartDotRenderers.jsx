@@ -31,6 +31,7 @@ export const getSeverityBaseColor = (payload, value, defaultColor) => {
  * @param {string} config.yFieldKey - Y field key
  * @param {string} config.dotColor - Default dot color
  * @param {boolean} config.isActive - Whether this is an active (hovered) dot
+ * @param {boolean} config.isHovered - Whether this is an active (hovered) dot
  * @param {Object} config.params - Additional parameters (r, width, height for sizing)
  * @param {number} config.dotRadius - Custom dot radius (overrides default sizing)
  * @param {number} config.activeDotRadius - Custom active dot radius
@@ -46,6 +47,7 @@ export const renderChartDot = (props, config) => {
     yFieldKey,
     dotColor,
     isActive = false,
+    isHovered = false,
     params = {},
     // optional tuning knobs:
     hitRadiusMultiplier = 1.25, // how much bigger than visual dot
@@ -54,7 +56,7 @@ export const renderChartDot = (props, config) => {
 
   // Determine visual radius
   let radius;
-  if (isActive) radius = activeDotRadius || (isSmallScreen ? 4 : 5);
+  if (isHovered || isActive) radius = activeDotRadius || (isSmallScreen ? 4 : 5);
   else radius = dotRadius || (isSmallScreen ? 3 : 4);
 
   const visualR = params.r || radius;
@@ -147,7 +149,7 @@ export const createDotRenderer = (config) => {
 export const createActiveDotRenderer = (config) => {
   return (props) => {
     const params = {
-      r: config.activeDotRadius || (config.isSmallScreen ? 4 : 5),
+      r: config.activeDotRadius || (config.isSmallScreen ? 6 : 8),
       width: config.isSmallScreen ? 6 : 8,
       height: config.isSmallScreen ? 6 : 8,
     };

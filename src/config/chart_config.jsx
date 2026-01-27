@@ -1,6 +1,10 @@
 import PropTypes from "prop-types";
 import { isEmptyArray, getDateObjectInLocalDateTime, getLocaleDateStringFromDate } from "@util";
 
+
+export const SUCCESS_COLOR = "green";
+export const ALERT_COLOR = "#b71c1c";
+export const WARNING_COLOR = "#e65100";
 const Rect = (props) => {
   const { cx, cy, color, value } = props;
   if (!cx && !(parseInt(cx) === 0)) return null;
@@ -23,7 +27,9 @@ const CHART_CONFIG = {
     title: "Total Score by Date",
     xsChartWidth: 400,
     chartWidth: 580,
-    dotColor: "#444",
+    dotColor: SUCCESS_COLOR,
+    dotRadius: 4,
+    activeDotRadius: 5,
     interval: 0,
     lgChartWidth: 588,
     mdChartWidth: 480,
@@ -112,9 +118,6 @@ const CHART_CONFIG = {
 };
 export default CHART_CONFIG;
 
-export const SUCCESS_COLOR = "green";
-export const ALERT_COLOR = "#b71c1c";
-export const WARNING_COLOR = "#e65100";
 export const SUBSTANCE_USE_LINE_PROPS = {
   strokeWidth: 1,
   strokeOpacity: 0.15,

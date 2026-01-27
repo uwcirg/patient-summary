@@ -85,6 +85,7 @@ export default function LineCharts(props) {
   const pointerTypeRef = React.useRef("mouse"); // 'mouse' | 'touch' | 'pen'
   const lastShowAtRef = React.useRef(0);
   const [locked, setLocked] = React.useState(false); // tap-to-lock on touch
+  const [hoveredDotKey, setHoveredDotKey] = useState(null);
 
   // Add tooltip state for source-based rendering
   const [sourceTooltip, setSourceTooltip] = useState({
@@ -136,6 +137,10 @@ export default function LineCharts(props) {
 
       lastShowAtRef.current = Date.now();
 
+      // Create unique key for this dot
+      const dotKey = `${payload.id}_${dataKey || yFieldKey}`;
+      setHoveredDotKey(dotKey);
+
       const meaningRaw = payload?.showTooltipMeaning && payload.meaning ? (payload.scoreMeaning ?? payload.label) : "";
       const meaning = meaningRaw ? meaningRaw.replace(/\|/g, "\n") : null;
 
@@ -166,6 +171,7 @@ export default function LineCharts(props) {
       const dt = Date.now() - lastShowAtRef.current;
       // grace window prevents flicker when pointer slips off dot briefly
       if (dt > 120) {
+        setHoveredDotKey(null);
         hideTooltip();
       }
     }, 80);
@@ -641,7 +647,7 @@ export default function LineCharts(props) {
           ...baseDotConfig,
           dotColor: item.color, // Use the line's color as the dot color
           dotRadius: item.dotRadius ?? dotRadius,
-          activeDotRadius: item.dotRadius ?? activeDotRadius,
+          activeDotRadius: item.activeDotRadius ?? activeDotRadius,
         };
 
         // Use custom opacity if provided, otherwise default to 0.5
@@ -678,7 +684,9 @@ export default function LineCharts(props) {
             strokeDasharray={item.strokeDasharray ? item.strokeDasharray : 0}
             legendType={item.legendType ? item.legendType : "line"}
             dot={(dotProps) => {
-              const CustomDot = createDotRenderer(lineDotConfig);
+              const dotKey = `${dotProps.payload?.id}_${item.key}`;
+              const isHovered = hoveredDotKey === dotKey;
+              const CustomDot = createDotRenderer({ ...lineDotConfig, isHovered });
               const { key, ...rest } = dotProps;
               return (
                 <g
@@ -711,7 +719,10 @@ export default function LineCharts(props) {
               );
             }}
             activeDot={(dotProps) => {
-              const CustomActiveDot = createActiveDotRenderer(lineDotConfig);
+              const CustomActiveDot = createActiveDotRenderer({
+                ...lineDotConfig,
+                isActive: true,
+              });
               const { key, ...rest } = dotProps;
               return (
                 <g
@@ -770,7 +781,10 @@ export default function LineCharts(props) {
         dataKey={yFieldKey}
         stroke={theme.palette.muter.main}
         dot={(dotProps) => {
-          const CustomDot = createDotRenderer(dotConfig);
+          const CustomDot = createDotRenderer({
+            ...dotConfig,
+            isHovered: hoveredDotKey === `${dotProps.payload?.id}_${yFieldKey}`,
+          });
           const { key, ...rest } = dotProps;
           return (
             <g
@@ -803,7 +817,7 @@ export default function LineCharts(props) {
           );
         }}
         activeDot={(dotProps) => {
-          const CustomActiveDot = createActiveDotRenderer(dotConfig);
+          const CustomActiveDot = createActiveDotRenderer({ ...dotConfig, isActive: true });
           const { key, ...rest } = dotProps;
           return (
             <g
@@ -842,19 +856,15 @@ export default function LineCharts(props) {
   };
 
   const renderNullLine = () => {
-    // Determine the actual bottom position accounting for categorical padding
     const nullYValue = isCategoricalY ? (minimumYValue ?? 0) - Y_AXIS_PADDING / 2 : (minimumYValue ?? 0);
 
-    // Handle multiple lines case - only show null when ALL fields are null
+    // Handle multiple lines case
     if (hasMultipleYFields()) {
-      // Create data where we only mark as null if ALL yLineFields are null
       const multiLineNullData = filteredData.map((d) => {
-        // Check if all line fields are null for this data point
         const allFieldsNull = yLineFields.every((field) => d[field.key] == null || d[field.key] === undefined);
 
         return {
           ...d,
-          // Force the value to be at the bottom of the chart (accounting for padding)
           [yLineFields[0].key]: allFieldsNull ? nullYValue : null,
           isNull: allFieldsNull,
         };
@@ -874,20 +884,25 @@ export default function LineCharts(props) {
           dot={(dotProps) => {
             if (!dotProps.payload?.isNull) return null;
             const { cx, cy, payload, index } = dotProps;
+            const keyPostFix = "null_multi";
+            // Create unique key for this null dot
+            const dotKey = `${payload?.id}_${keyPostFix}`;
+            const isHovered = hoveredDotKey === dotKey;
+
             return (
               <g
                 key={`${payload?.id}_${payload?.key}_${index}_nulldot`}
                 onPointerDown={(e) => {
                   e.stopPropagation();
-                  handleDotMouseEnter(e, payload);
+                  handleDotMouseEnter(e, payload, null, keyPostFix);
                 }}
                 onPointerEnter={(e) => {
                   e.stopPropagation();
-                  handleDotMouseEnter(e, payload);
+                  handleDotMouseEnter(e, payload, null, keyPostFix);
                 }}
                 onPointerMove={(e) => {
                   e.stopPropagation();
-                  handleDotMouseEnter(e, payload);
+                  handleDotMouseEnter(e, payload, null, keyPostFix);
                 }}
                 onPointerLeave={(e) => {
                   if ((e.pointerType || pointerTypeRef.current) === "mouse") {
@@ -900,27 +915,41 @@ export default function LineCharts(props) {
                   handleDotMouseLeave();
                 }}
               >
-                <NullDot key={`null-${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />
+                <NullDot
+                  key={`null-${payload?.id}_${index}`}
+                  cx={cx}
+                  cy={cy}
+                  payload={payload}
+                  index={index}
+                  isHovered={isHovered}
+                  isSmallScreen={isSmallScreen}
+                />
               </g>
             );
           }}
           activeDot={(dotProps) => {
             if (!dotProps.payload?.isNull) return null;
             const { cx, cy, payload, index } = dotProps;
+
+            // Create unique key for this null dot
+            const keyPostFix = "null_multi_active";
+            const dotKey = `${payload?.id}_${keyPostFix}`;
+            const isHovered = hoveredDotKey === dotKey;
+        
             return (
               <g
                 key={`${payload?.id}_${payload?.key}_activenulldot`}
                 onPointerDown={(e) => {
                   e.stopPropagation();
-                  handleDotMouseEnter(e, payload);
+                  handleDotMouseEnter(e, payload, null, keyPostFix);
                 }}
                 onPointerEnter={(e) => {
                   e.stopPropagation();
-                  handleDotMouseEnter(e, payload);
+                  handleDotMouseEnter(e, payload, null, keyPostFix);
                 }}
                 onPointerMove={(e) => {
                   e.stopPropagation();
-                  handleDotMouseEnter(e, payload);
+                  handleDotMouseEnter(e, payload, null, keyPostFix);
                 }}
                 onPointerLeave={(e) => {
                   if ((e.pointerType || pointerTypeRef.current) === "mouse") {
@@ -933,7 +962,15 @@ export default function LineCharts(props) {
                   handleDotMouseLeave();
                 }}
               >
-                <NullDot key={`null-${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />
+                <NullDot
+                  key={`null-${payload?.id}_${index}`}
+                  cx={cx}
+                  cy={cy}
+                  payload={payload}
+                  index={index}
+                  isHovered={isHovered}
+                  isSmallScreen={isSmallScreen}
+                />
               </g>
             );
           }}
@@ -942,7 +979,7 @@ export default function LineCharts(props) {
       );
     }
 
-    // Handle single line case - also ensure it's at the bottom accounting for padding
+    // Handle single line case
     const singleLineNullData = nullValueData.map((d) => ({
       ...d,
       [yFieldKey]: d.isNull ? nullYValue : null,
@@ -961,20 +998,24 @@ export default function LineCharts(props) {
         dot={(dotProps) => {
           if (!dotProps.payload?.isNull) return null;
           const { cx, cy, payload, index } = dotProps;
+          const keyPostFix = "null_single";
+          const dotKey = `${payload?.id}_${keyPostFix}`;
+          const isHovered = hoveredDotKey === dotKey;
+
           return (
             <g
               key={`${payload?.id}_${payload?.key}_${index}_nulldot`}
               onPointerDown={(e) => {
                 e.stopPropagation();
-                handleDotMouseEnter(e, payload);
+                handleDotMouseEnter(e, payload, null, keyPostFix);
               }}
               onPointerEnter={(e) => {
                 e.stopPropagation();
-                handleDotMouseEnter(e, payload);
+                handleDotMouseEnter(e, payload, null, keyPostFix);
               }}
               onPointerMove={(e) => {
                 e.stopPropagation();
-                handleDotMouseEnter(e, payload);
+                handleDotMouseEnter(e, payload, null, keyPostFix);
               }}
               onPointerLeave={(e) => {
                 if ((e.pointerType || pointerTypeRef.current) === "mouse") {
@@ -987,27 +1028,40 @@ export default function LineCharts(props) {
                 handleDotMouseLeave();
               }}
             >
-              <NullDot key={`null-${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />
+              <NullDot
+                key={`null-${payload?.id}_${index}`}
+                cx={cx}
+                cy={cy}
+                payload={payload}
+                index={index}
+                isHovered={isHovered}
+                isSmallScreen={isSmallScreen}
+              />
             </g>
           );
         }}
         activeDot={(dotProps) => {
           if (!dotProps.payload?.isNull) return null;
           const { cx, cy, payload, index } = dotProps;
+
+          const keyPostFix = "null_single_active";
+          const dotKey = `${payload?.id}_${keyPostFix}`;
+          const isHovered = hoveredDotKey === dotKey;
+
           return (
             <g
               key={`${payload?.id}_${payload?.key}_activenulldot`}
               onPointerDown={(e) => {
                 e.stopPropagation();
-                handleDotMouseEnter(e, payload);
+                handleDotMouseEnter(e, payload, null, keyPostFix);
               }}
               onPointerEnter={(e) => {
                 e.stopPropagation();
-                handleDotMouseEnter(e, payload);
+                handleDotMouseEnter(e, payload, null, keyPostFix);
               }}
               onPointerMove={(e) => {
                 e.stopPropagation();
-                handleDotMouseEnter(e, payload);
+                handleDotMouseEnter(e, payload, null, keyPostFix);
               }}
               onPointerLeave={(e) => {
                 if ((e.pointerType || pointerTypeRef.current) === "mouse") {
@@ -1020,7 +1074,15 @@ export default function LineCharts(props) {
                 handleDotMouseLeave();
               }}
             >
-              <NullDot key={`null-${payload?.id}_${index}`} cx={cx} cy={cy} payload={payload} index={index} />
+              <NullDot
+                key={`null-${payload?.id}_${index}`}
+                cx={cx}
+                cy={cy}
+                payload={payload}
+                index={index}
+                isHovered={isHovered}
+                isSmallScreen={isSmallScreen}
+              />
             </g>
           );
         }}
@@ -1028,7 +1090,6 @@ export default function LineCharts(props) {
       />
     );
   };
-
   // Get unique sources from data
   const uniqueSources = React.useMemo(() => {
     const sourceSet = new Set();
@@ -1074,7 +1135,10 @@ export default function LineCharts(props) {
           fill={faintStroke}
           strokeWidth={strokeWidth ? strokeWidth : isSmallScreen ? 1 : 1.5}
           dot={(dotProps) => {
-            const CustomDot = createDotRenderer(lineDotConfig);
+            const CustomDot = createDotRenderer({
+              ...lineDotConfig,
+              isHovered: hoveredDotKey === `${dotProps.payload?.id}_${yFieldKey}`,
+            });
             const { key, ...rest } = dotProps;
             return (
               <g
@@ -1107,7 +1171,10 @@ export default function LineCharts(props) {
             );
           }}
           activeDot={(dotProps) => {
-            const CustomActiveDot = createActiveDotRenderer(lineDotConfig);
+            const CustomActiveDot = createActiveDotRenderer({
+              ...lineDotConfig,
+              isActive: true,
+            });
             const { key, ...rest } = dotProps;
             return (
               <g
@@ -1247,7 +1314,6 @@ export default function LineCharts(props) {
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     };
   }, []);
-
 
   return (
     <>

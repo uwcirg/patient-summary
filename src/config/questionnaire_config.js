@@ -1,6 +1,6 @@
 import { capitalizeFirstLetterSafe, isEmptyArray, isNumber } from "@util";
 import { getResourcesByResourceType, linkIdEquals } from "@util/fhirUtil";
-import CHART_CONFIG, { SUCCESS_COLOR, SUBSTANCE_USE_LINE_PROPS } from "./chart_config";
+import CHART_CONFIG, { SUBSTANCE_USE_LINE_PROPS } from "./chart_config";
 import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS, PHQ9_ADMIN_NOTE } from "@/consts";
 import QuestionnaireScoringBuilder from "@/models/resultBuilders/QuestionnaireScoringBuilder";
 
@@ -1171,17 +1171,21 @@ const questionnaireConfigsRaw = {
       yLineFields: [
         {
           key: "AUDIT-C-score",
-          color: "#3b82f6", // bloo
+          color: "#498C8A",
           strokeWidth: 1,
           legendType: "line",
           strokeOpacity: 0.6,
+          dotRadius: 5,
+          activeDotRadius: 6,
           //strokeDasharray: "2 2", // dashed line
         },
         {
           key: "AUDIT-score",
-          color: SUCCESS_COLOR, // green
+          color: "#441151",
           strokeWidth: 1,
           strokeOpacity: 0.6,
+          dotRadius: 5,
+          activeDotRadius: 6,
           legendType: "line",
         },
       ],

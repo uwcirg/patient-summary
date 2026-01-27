@@ -1,12 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-const NullDot = ({ isSmallScreen, cx, cy, payload, index }) => {
+const NullDot = ({ isHovered, isSmallScreen, cx, cy, payload, index }) => {
   if (cx == null || cy == null) return null;
 
-  const size = isSmallScreen ? 4 : 5;
-  const strokeWidth = isSmallScreen ? 1 : 1.5;
-  const halfSize = size / 1.5;
+  const size = isSmallScreen ? (isHovered ? 7 : 5) : isHovered ? 9 : 6;
+  const strokeWidth = isSmallScreen ? (isHovered ? 1.5 : 1) : isHovered ? 2 : 1.5;
+  const halfSize = size / 2;
   const k = `nulldotsymbol-${payload?.id}_${payload?.key}_${payload?.source}-${index}`;
 
   return (
@@ -42,4 +42,5 @@ NullDot.propTypes = {
   cy: PropTypes.number,
   payload: PropTypes.object,
   index: PropTypes.number,
+  isHovered: PropTypes.bool,
 };
