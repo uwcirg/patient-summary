@@ -27,7 +27,7 @@ const CHART_CONFIG = {
     title: "Total Score by Date",
     xsChartWidth: 400,
     chartWidth: 580,
-    dotColor: SUCCESS_COLOR,
+    dotColor: "#444",
     dotRadius: 4,
     activeDotRadius: 5,
     interval: 0,
