@@ -1205,7 +1205,8 @@ const questionnaireConfigsRaw = {
     },
     linkIdMatchMode: "strict",
     meaningQuestionId: "EXCHANGE-SEX-SCORE-PAST-3-MONTHS",
-    skipMeaningScoreRow: true,
+    meaningRowLabel: "Exchange Sex (Past 3 months)",
+    disableHeaderRowSubtitle: true,
     skipChart: true,
   },
   "CIRG-CNICS-MINI": {
