@@ -524,5 +524,6 @@ export function chunkArray(array, size = 3) {
 export function capitalizeFirstLetterSafe(text) {
   if (!text) return "";
   if (typeof text !== "string" || text.length === 0) return text;
-  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  const textStr = String(text).replace(/"/g, "").trim();
+  return textStr.charAt(0).toUpperCase() + textStr.slice(1).toLowerCase();
 }

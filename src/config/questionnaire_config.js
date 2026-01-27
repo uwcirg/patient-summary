@@ -1,4 +1,4 @@
-import { isEmptyArray, isNumber } from "@util";
+import { capitalizeFirstLetterSafe, isEmptyArray, isNumber } from "@util";
 import { getResourcesByResourceType, linkIdEquals } from "@util/fhirUtil";
 import CHART_CONFIG, { SUCCESS_COLOR, SUBSTANCE_USE_LINE_PROPS } from "./chart_config";
 import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS, PHQ9_ADMIN_NOTE } from "@/consts";
@@ -477,7 +477,7 @@ const questionnaireConfigsRaw = {
         };
         return labels[value] || value;
       },
-      yTicks: [ 0, 1, 2, 3, 4],
+      yTicks: [0, 1, 2, 3, 4],
       showTooltipMeaning: false,
       isCategoricalY: true,
       // enableAxisMeaningLabels: true,
@@ -588,6 +588,15 @@ const questionnaireConfigsRaw = {
     meaningQuestionId: "FOOD-score-label",
     linkIdMatchMode: "strict",
     skipChart: true,
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      const meaningResponse = responses.find((response) =>
+        linkIdEquals(response.id, "FOOD-score-label", "strict"),
+      );
+      const meaningAnswer =
+        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
+      return meaningAnswer ? capitalizeFirstLetterSafe(String(meaningAnswer)) : "";
+    },
   },
   "CIRG-CNICS-FROP-Com": {
     key: "CIRG-CNICS-FROP-Com",
@@ -1222,6 +1231,26 @@ const questionnaireConfigsRaw = {
     linkIdMatchMode: "strict",
     chartParams: { ...CHART_CONFIG.default, title: "MINI Score", minimumYValue: 0, maximumYValue: 7, xLabel: "" },
   },
+  "CIRG-CNICS-MAPSS-SF": {
+    key: "CIRG-CNICS-MAPSS-SF",
+    instrumentName: "Social Support",
+    title: "Social Support",
+    linkIdMatchMode: "strict",
+    skipChart: true,
+    displayMeaningNotScore: true,
+    meaningRowLabel: "Social Support",
+    alertQuestionId: "MAPSS-SF-SCORE-CRITICAL",
+    meaningQuestionId: "MAPSS-SF-SCORE-SOCIAL-SUPPORT",
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      const meaningResponse = responses.find((response) =>
+        linkIdEquals(response.id, "MAPSS-SF-SCORE-SOCIAL-SUPPORT", "strict"),
+      );
+      const meaningAnswer =
+        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
+      return meaningAnswer ? capitalizeFirstLetterSafe(String(meaningAnswer)) : "";
+    },
+  },
   //TODO, implement those
   "CIRG-IDU": {
     key: "CIRG-IDU",
@@ -1528,11 +1557,6 @@ const questionnaireConfigsRaw = {
     linkIdMatchMode: "strict",
     alertQuestionId: "SEXUAL-RISK-SCORE-STI-EXPOSURE",
     skipChart: true,
-  },
-  "CIRG-SOCIAL-SUPPORT": {
-    key: "CIRG-SOCIAL-SUPPORT",
-    instrumentName: "Social Support",
-    title: "Social Support",
   },
   "CIRG-HIV-STIGMA": {
     key: "CIRG-HIV-STIGMA",

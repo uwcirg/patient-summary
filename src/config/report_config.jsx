@@ -256,7 +256,7 @@ export const report_config = {
           title: "Psychosocial Concerns and Quality of Life",
           layout: "two-columns",
           hiddenColumns: ["numAnswered", "comparison"],
-          dataKeysToMatch: ["CIRG-SOCIAL-SUPPORT", "CIRG-HIV-Stigma", "CIRG-PC-PTSD-5", "CIRG-HRQOL"],
+          dataKeysToMatch: ["CIRG-CNICS-MAPSS-SF", "CIRG-HIV-Stigma", "CIRG-PC-PTSD-5", "CIRG-HRQOL"],
         },
       ],
     },
