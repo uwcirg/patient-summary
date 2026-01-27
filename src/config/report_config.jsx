@@ -257,6 +257,9 @@ export const report_config = {
           layout: "two-columns",
           hiddenColumns: ["numAnswered", "comparison"],
           dataKeysToMatch: ["CIRG-CNICS-MAPSS-SF", "CIRG-HIV-Stigma", "CIRG-PC-PTSD-5", "CIRG-HRQOL"],
+          tableStyle: {
+            width: "auto"
+          }
         },
       ],
     },
