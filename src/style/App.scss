@@ -6,7 +6,7 @@ $app-background-color: #faf9fa;
 $summary-container-background-color: #fff;
 $default-print-background-color: #fff;
 $default-print-color: #444;
-$row-background-color: #f5f6f9;
+$row-background-color: #f3f5f5;
 $success-color: #1d771d;
 $danger-background-color: #f3e2e233;
 $warning-background-color: #f7d0b01a;
@@ -205,11 +205,9 @@ p {
       border-left: 0 !important;
       color: $muted-text-color;
       line-height: 1.5;
-      padding-left: 16px;
+      padding: 10px 16px !important;
       font-style: italic;
       background-color: $row-background-color !important;
-    }
-    td {
       border-right: 0 !important;
        &:last-of-type {
         border-right: 1px solid $border-color !important;
@@ -220,15 +218,15 @@ p {
     td {
       border-left: 0 !important;
       border-right: 0 !important;
-      &:first-of-type {
-        border-right: 1px solid $border-color !important;
-      }
+      // &:first-of-type {
+      //   border-right: 1px solid $border-color !important;
+      // }
       &:last-of-type {
         border-right: 1px solid $border-color !important;
       }
       background-color: #fff;
       line-height: 1.5;
-      padding-left: 16px;
+      padding: 10px 16px !important;
     }
     td {
       border-right: 0 !important;

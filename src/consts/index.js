@@ -152,6 +152,6 @@ export const SCORING_PARAMS = {
 // pattern in link Id to check to determine whether a questionnaire item is a response item
 export const EXCLUDED_LINK_ID_KEYWORDS = ["introduction", "ignore", "header", "score-label", "critical-flag"];
 
-export const IS_QUESTION_COLUMN_KEYWORDS = ["score", "meaning", "summary", "visual analog scale", "status"];
+export const IS_QUESTION_COLUMN_KEYWORDS = ["score", "meaning", "summary", "visual analog scale", "status", "detailed"];
 
 export const EMPTY_CELL_STRING = "-";

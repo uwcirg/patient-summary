@@ -946,6 +946,16 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       questionLinkIds = Array.from(new Set(anchorRowData.responses.map((r) => r.id).filter((id) => id != null)));
     }
 
+    if (!isEmptyArray(questionLinkIds)) {
+      const patterns = (resolvedConfig?.excludeQuestionLinkIdPatterns ?? []).map((s) => String(s).toLowerCase());
+      if (!isEmptyArray(patterns)) {
+        questionLinkIds = questionLinkIds.filter((qid) => {
+          if (patterns.some((p) => qid.includes(p))) return false;
+          return true;
+        });
+      }
+    }
+
     // Build exact match lookups
     const responseLookupByDataId = new Map();
     for (const dataItem of data) {
@@ -1095,9 +1105,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
       // Add header row
       if (!isEmptyArray(result)) {
+        const questionRowLabel = resolvedConfig?.questionRowLabel ? resolvedConfig.questionRowLabel : "Questions";
         const questionRow = {
           question:
-            "Questions" +
+            questionRowLabel +
             (resolvedConfig?.subtitle && !resolvedConfig.disableHeaderRowSubtitle
               ? "\n ( " + getNormalizedRowTitleDisplay(resolvedConfig.subtitle) + " )"
               : ""),
@@ -1116,11 +1127,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const hasMeaningOnly = !resolvedConfig?.skipMeaningScoreRow && this._hasMeaningOnlyData(data);
     const hasScoreOnly = !resolvedConfig?.skipMeaningScoreRow && this._hasScoreData(data);
-    const scoreMeaningRowLabel = resolvedConfig?.meaningRowLabel ? resolvedConfig.meaningRowLabel : "Score / Meaning";
+    const meaningRowLabel = resolvedConfig?.meaningRowLabel ? resolvedConfig.meaningRowLabel : "Score / Meaning";
 
     if (hasMeaningOnly) {
       const meaningRow = {
-        question: scoreMeaningRowLabel,
+        question: meaningRowLabel,
         id: `meaning_${data.map((o) => o.id).join("")}`,
         config: resolvedConfig,
       };
@@ -1133,7 +1144,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       result.unshift(meaningRow);
     } else if (hasScoreOnly) {
       const scoringRow = {
-        question: scoreMeaningRowLabel,
+        question: meaningRowLabel,
         id: `score_${data.map((o) => o.id).join("")}`,
         config: resolvedConfig,
       };

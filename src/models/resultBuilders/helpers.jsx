@@ -929,7 +929,10 @@ export function getResponseColumns(data) {
         const config = rowData?.config;
         const cleaned = typeof q === "string" ? q.replace(/\s*\([^)]*\)/g, "").trim() : "";
         const normalizedClean = normalizeStr(cleaned);
-        const isQuestion = normalizeStr(cleaned) === "questions";
+        const isQuestion =
+          normalizeStr(cleaned) === "questions" ||
+          normalizeStr(cleaned) === "question" ||
+          normalizeStr(cleaned) === "detailed questions";
 
         if (
           typeof q === "string" &&

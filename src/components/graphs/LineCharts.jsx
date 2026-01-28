@@ -20,7 +20,7 @@ import InfoDialog from "@components/InfoDialog";
 import CustomLegend from "./CustomLegend";
 import CustomSourceTooltip from "./CustomSourceTooltip";
 import NullDot from "./NullDot";
-import { createDotRenderer, createActiveDotRenderer } from "./ChartDotRenderers";
+import { createDotRenderer } from "./ChartDotRenderers";
 import { useDismissableOverlay } from "@/hooks/useDismissableOverlay";
 import { generateUUID, isEmptyArray, range } from "@/util";
 
@@ -410,10 +410,20 @@ export default function LineCharts(props) {
     </Stack>
   );
 
-  // Determine effective chart width for responsive calculations
-  const effectiveChartWidth = chartWidth || 580;
-  const isSmallScreen = effectiveChartWidth <= 500;
-  const isMediumScreen = effectiveChartWidth > 500 && effectiveChartWidth <= 780;
+  const parsedWidth = typeof chartWidth === "number" ? chartWidth : parseInt(chartWidth, 10);
+
+  const effectiveChartWidth = !isNaN(parsedWidth) && parsedWidth > 0 ? parsedWidth : 580;
+
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  React.useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  const isSmallScreen = windowWidth <= 699;
+  const isMediumScreen = windowWidth > 699 && windowWidth <= 920;
 
   // Build candidate ticks with responsive step size
   const stepMonths = isSmallScreen ? 12 : isMediumScreen ? 9 : 6;
@@ -605,8 +615,8 @@ export default function LineCharts(props) {
         align="right"
         wrapperStyle={{
           position: "absolute",
-          top: isSmallScreen ? 4 : 8,
-          right: isSmallScreen ? 20 : hasNullValues && hasMultipleYFields() ? 32 : 40,
+          top: isSmallScreen ? 8 : 10,
+          right: isSmallScreen ? 48 : hasNullValues && hasMultipleYFields() ? 32 : 40,
           width: "auto",
         }}
         content={(legendProps) => (
@@ -718,42 +728,6 @@ export default function LineCharts(props) {
                 </g>
               );
             }}
-            activeDot={(dotProps) => {
-              const CustomActiveDot = createActiveDotRenderer({
-                ...lineDotConfig,
-                isActive: true,
-              });
-              const { key, ...rest } = dotProps;
-              return (
-                <g
-                  key={`${dotProps.payload?.id}_${dotProps.payload?.key}_multiline_activedot`}
-                  onPointerDown={(e) => {
-                    e.stopPropagation();
-                    handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color);
-                  }}
-                  onPointerEnter={(e) => {
-                    e.stopPropagation();
-                    handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color);
-                  }}
-                  onPointerMove={(e) => {
-                    e.stopPropagation();
-                    handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color);
-                  }}
-                  onPointerLeave={(e) => {
-                    if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                      e.stopPropagation();
-                      handleDotMouseLeave();
-                    }
-                  }}
-                  onPointerCancel={(e) => {
-                    e.stopPropagation();
-                    handleDotMouseLeave();
-                  }}
-                >
-                  <CustomActiveDot {...rest} />
-                </g>
-              );
-            }}
             connectNulls={!!connectNulls}
           />
         );
@@ -813,39 +787,6 @@ export default function LineCharts(props) {
               }}
             >
               <CustomDot {...rest} />
-            </g>
-          );
-        }}
-        activeDot={(dotProps) => {
-          const CustomActiveDot = createActiveDotRenderer({ ...dotConfig, isActive: true });
-          const { key, ...rest } = dotProps;
-          return (
-            <g
-              key={`${dotProps.payload?.id}_${dotProps.payload?.key}_singleline_activedot`}
-              onPointerDown={(e) => {
-                e.stopPropagation();
-                handleDotMouseEnter(e, dotProps.payload);
-              }}
-              onPointerEnter={(e) => {
-                e.stopPropagation();
-                handleDotMouseEnter(e, dotProps.payload);
-              }}
-              onPointerMove={(e) => {
-                e.stopPropagation();
-                handleDotMouseEnter(e, dotProps.payload);
-              }}
-              onPointerLeave={(e) => {
-                if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                  e.stopPropagation();
-                  handleDotMouseLeave();
-                }
-              }}
-              onPointerCancel={(e) => {
-                e.stopPropagation();
-                handleDotMouseLeave();
-              }}
-            >
-              <CustomActiveDot {...rest} />
             </g>
           );
         }}
@@ -927,53 +868,6 @@ export default function LineCharts(props) {
               </g>
             );
           }}
-          activeDot={(dotProps) => {
-            if (!dotProps.payload?.isNull) return null;
-            const { cx, cy, payload, index } = dotProps;
-
-            // Create unique key for this null dot
-            const keyPostFix = "null_multi_active";
-            const dotKey = `${payload?.id}_${keyPostFix}`;
-            const isHovered = hoveredDotKey === dotKey;
-        
-            return (
-              <g
-                key={`${payload?.id}_${payload?.key}_activenulldot`}
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                  handleDotMouseEnter(e, payload, null, keyPostFix);
-                }}
-                onPointerEnter={(e) => {
-                  e.stopPropagation();
-                  handleDotMouseEnter(e, payload, null, keyPostFix);
-                }}
-                onPointerMove={(e) => {
-                  e.stopPropagation();
-                  handleDotMouseEnter(e, payload, null, keyPostFix);
-                }}
-                onPointerLeave={(e) => {
-                  if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                    e.stopPropagation();
-                    handleDotMouseLeave();
-                  }
-                }}
-                onPointerCancel={(e) => {
-                  e.stopPropagation();
-                  handleDotMouseLeave();
-                }}
-              >
-                <NullDot
-                  key={`null-${payload?.id}_${index}`}
-                  cx={cx}
-                  cy={cy}
-                  payload={payload}
-                  index={index}
-                  isHovered={isHovered}
-                  isSmallScreen={isSmallScreen}
-                />
-              </g>
-            );
-          }}
           connectNulls={false}
         />
       );
@@ -1005,52 +899,6 @@ export default function LineCharts(props) {
           return (
             <g
               key={`${payload?.id}_${payload?.key}_${index}_nulldot`}
-              onPointerDown={(e) => {
-                e.stopPropagation();
-                handleDotMouseEnter(e, payload, null, keyPostFix);
-              }}
-              onPointerEnter={(e) => {
-                e.stopPropagation();
-                handleDotMouseEnter(e, payload, null, keyPostFix);
-              }}
-              onPointerMove={(e) => {
-                e.stopPropagation();
-                handleDotMouseEnter(e, payload, null, keyPostFix);
-              }}
-              onPointerLeave={(e) => {
-                if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                  e.stopPropagation();
-                  handleDotMouseLeave();
-                }
-              }}
-              onPointerCancel={(e) => {
-                e.stopPropagation();
-                handleDotMouseLeave();
-              }}
-            >
-              <NullDot
-                key={`null-${payload?.id}_${index}`}
-                cx={cx}
-                cy={cy}
-                payload={payload}
-                index={index}
-                isHovered={isHovered}
-                isSmallScreen={isSmallScreen}
-              />
-            </g>
-          );
-        }}
-        activeDot={(dotProps) => {
-          if (!dotProps.payload?.isNull) return null;
-          const { cx, cy, payload, index } = dotProps;
-
-          const keyPostFix = "null_single_active";
-          const dotKey = `${payload?.id}_${keyPostFix}`;
-          const isHovered = hoveredDotKey === dotKey;
-
-          return (
-            <g
-              key={`${payload?.id}_${payload?.key}_activenulldot`}
               onPointerDown={(e) => {
                 e.stopPropagation();
                 handleDotMouseEnter(e, payload, null, keyPostFix);
@@ -1167,42 +1015,6 @@ export default function LineCharts(props) {
                 }}
               >
                 <CustomDot {...rest} />
-              </g>
-            );
-          }}
-          activeDot={(dotProps) => {
-            const CustomActiveDot = createActiveDotRenderer({
-              ...lineDotConfig,
-              isActive: true,
-            });
-            const { key, ...rest } = dotProps;
-            return (
-              <g
-                key={`${dotProps.payload?.id}_${dotProps.payload?.key}_activedot`}
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                  handleDotMouseEnter(e, dotProps.payload);
-                }}
-                onPointerEnter={(e) => {
-                  e.stopPropagation();
-                  handleDotMouseEnter(e, dotProps.payload);
-                }}
-                onPointerMove={(e) => {
-                  e.stopPropagation();
-                  handleDotMouseEnter(e, dotProps.payload);
-                }}
-                onPointerLeave={(e) => {
-                  if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                    e.stopPropagation();
-                    handleDotMouseLeave();
-                  }
-                }}
-                onPointerCancel={(e) => {
-                  e.stopPropagation();
-                  handleDotMouseLeave();
-                }}
-              >
-                <CustomActiveDot {...rest} />
               </g>
             );
           }}

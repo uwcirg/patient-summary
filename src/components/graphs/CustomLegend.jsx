@@ -91,8 +91,6 @@ const CustomLegend = ({
     });
   }
 
-  //const points = payload && !isEmptyArray(payload) ? payload : [];
-
   // Filter yLineFields to only include lines that have data
   const lineFieldsWithData =
     yLineFields && linesWithData ? yLineFields.filter((field) => linesWithData.has(field.key)) : yLineFields || [];
@@ -100,6 +98,22 @@ const CustomLegend = ({
   // If we have yLineFields (multiple lines), show them as line items
   const showLineItems = yLineFields && yLineFields.length > 0;
   const shouldShowSwitches = enableLineSwitches && yLineFields?.length > 1;
+
+  // Check if all lines are visible
+  const allLinesVisible = lineFieldsWithData.every((field) => visibleLines?.[field.key] !== false);
+
+  // Handler for toggling all lines
+  const handleToggleAll = () => {
+    if (!onToggleLine || !lineFieldsWithData.length) return;
+
+    // If all are visible, hide all. Otherwise, show all.
+    const newState = !allLinesVisible;
+    lineFieldsWithData.forEach((field) => {
+      if ((visibleLines?.[field.key] !== false) !== newState) {
+        onToggleLine(field.key);
+      }
+    });
+  };
 
   return (
     <div
@@ -127,103 +141,152 @@ const CustomLegend = ({
       {showLineItems && (
         <div
           style={{
-            // marginLeft: isSmallScreen ? 8 : 16,
             fontSize: isSmallScreen ? 9 : 10,
             color: "#444",
-            display: "grid",
-            gridTemplateColumns: isSmallScreen ? "1fr" : yLineFields.length > 6 ? "repeat(3, 1fr)" : "repeat(2, 1fr)",
-            gap: isSmallScreen ? "4px 8px" : "6px 16px",
-            maxWidth: isSmallScreen ? "200px" : "420px",
+            display: "flex",
+            flexDirection: "column",
+            gap: isSmallScreen ? 4 : 6,
           }}
         >
-          {/* Map over lineFieldsWithData show lines with data */}
-          {lineFieldsWithData.map((lineField, index) => {
-            const lineKey = lineField.key;
-            const isVisible = visibleLines?.[lineKey] !== false;
-            const lineColor = hexToRgba(lineField.color ?? "#444", 1);
-            const lineLabel = lineField.label || lineField.key;
-            const strokeDasharray = lineField.strokeDasharray || "0";
-            // Determine icon type: use field-specific legendType, or passed legendIconType, or default 'line'
-            const iconType = lineField.legendType || legendIconType || "line";
-
-            return (
-              <div
-                key={`item-${index}`}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  opacity: shouldShowSwitches && !isVisible ? 0.5 : 1,
+          {/* Show/Hide All Toggle - only if switches are enabled */}
+          {shouldShowSwitches && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                paddingBottom: isSmallScreen ? 6 : 8,
+                borderBottom: "1px solid #ddd",
+                marginBottom: isSmallScreen ? 2 : 4,
+              }}
+            >
+              <Switch
+                checked={allLinesVisible}
+                onChange={handleToggleAll}
+                size="small"
+                className="print-hidden"
+                sx={{
+                  width: 30,
+                  height: 16,
+                  padding: 0,
+                  marginRight: 0.8,
+                  "& .MuiSwitch-switchBase": {
+                    padding: 0,
+                    margin: "2px",
+                    "&.Mui-checked": {
+                      transform: isSmallScreen ? "translateX(16px)" : "translateX(16px)",
+                      color: "#fff",
+                      "& + .MuiSwitch-track": {
+                        backgroundColor: "#666",
+                        opacity: 0.8,
+                      },
+                    },
+                  },
+                  "& .MuiSwitch-thumb": {
+                    width: 10,
+                    height: 11,
+                  },
+                  "& .MuiSwitch-track": {
+                    borderRadius: 8,
+                    opacity: 1,
+                    backgroundColor: "#ccc",
+                  },
                 }}
-              >
-                {/* Only render switch if shouldShowSwitches is true */}
-                {shouldShowSwitches && (
-                  <Switch
-                    checked={isVisible}
-                    onChange={() => onToggleLine?.(lineKey)}
-                    size="small"
-                    className="print-hidden"
-                    sx={{
-                      // width: isSmallScreen ? 30 : 34,
-                      // height: isSmallScreen ? 14 : 18,
-                      width: isSmallScreen ? 24 : 30,
-                      height: isSmallScreen ? 12 : 16,
-                      padding: 0,
-                      marginRight: 0.8,
-                      "& .MuiSwitch-switchBase": {
+              />
+              <span style={{ fontSize: 10, fontWeight: 500 }}>{allLinesVisible ? "Hide All" : "Show All"}</span>
+            </div>
+          )}
+
+          {/* Individual line items */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isSmallScreen
+                ? "repeat(2, 1fr)"
+                : lineFieldsWithData.length > 9
+                  ? "repeat(4, 1fr)" // 4 columns when more than 9 items
+                  : "repeat(3, 1fr)", // 3 columns otherwise
+              gap: isSmallScreen ? "4px 8px" : "8px 16px",
+            }}
+          >
+            {lineFieldsWithData.map((lineField, index) => {
+              const lineKey = lineField.key;
+              const isVisible = visibleLines?.[lineKey] !== false;
+              const lineColor = hexToRgba(lineField.color ?? "#444", 1);
+              const lineLabel = lineField.label || lineField.key;
+              const strokeDasharray = lineField.strokeDasharray || "0";
+              const iconType = lineField.legendType || legendIconType || "line";
+
+              return (
+                <div
+                  key={`item-${index}`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    opacity: shouldShowSwitches && !isVisible ? 0.5 : 1,
+                  }}
+                >
+                  {shouldShowSwitches && (
+                    <Switch
+                      checked={isVisible}
+                      onChange={() => onToggleLine?.(lineKey)}
+                      size="small"
+                      className="print-hidden"
+                      sx={{
+                        width: 30,
+                        height: 16,
                         padding: 0,
-                        margin: "2px",
-                        "&.Mui-checked": {
-                          transform: isSmallScreen ? "translateX(16px)" : "translateX(16px)",
-                          color: "#fff",
-                          "& + .MuiSwitch-track": {
-                            backgroundColor: lineColor,
-                            opacity: 0.8,
+                        marginRight: 0.8,
+                        "& .MuiSwitch-switchBase": {
+                          padding: 0,
+                          margin: "2px",
+                          "&.Mui-checked": {
+                            transform: isSmallScreen ? "translateX(16px)" : "translateX(16px)",
+                            color: "#fff",
+                            "& + .MuiSwitch-track": {
+                              backgroundColor: lineColor,
+                              opacity: 0.8,
+                            },
                           },
                         },
-                      },
-                      "& .MuiSwitch-thumb": {
-                        width: isSmallScreen ? 6 : 10,
-                        height: isSmallScreen ? 9 : 11,
-                      },
-                      "& .MuiSwitch-track": {
-                        borderRadius: isSmallScreen ? 6 : 8,
-                        opacity: 1,
-                        backgroundColor: "#ccc",
-                      },
-                    }}
-                  />
-                )}
-                {/* Render icon based on type */}
-                <svg width={iconSize} height={iconSize} style={{ marginRight: 4, flexShrink: 0 }}>
-                  {iconType === "circle" ? (
-                    // Circle icon
-                    <circle
-                      cx={iconSize / 2}
-                      cy={iconSize / 2}
-                      r={isSmallScreen ? 3 : 4}
-                      fill={lineColor}
-                      stroke="#fff"
-                      strokeWidth="1.5"
-                    />
-                  ) : (
-                    // Line icon (default)
-                    <line
-                      x1="0"
-                      y1={iconSize / 2}
-                      x2={iconSize - 4}
-                      y2={iconSize / 2}
-                      stroke={lineColor}
-                      strokeWidth={2.5}
-                      strokeDasharray={strokeDasharray}
+                        "& .MuiSwitch-thumb": {
+                          width: 10,
+                          height: 11,
+                        },
+                        "& .MuiSwitch-track": {
+                          borderRadius: 8,
+                          opacity: 1,
+                          backgroundColor: "#ccc",
+                        },
+                      }}
                     />
                   )}
-                </svg>
-                <span style={{ fontSize: isSmallScreen ? 8 : 10, whiteSpace: "nowrap" }}>
-                  {lineLabel.replace(/[_,-]/g, " ")}
-                </span>
-              </div>
-            );
-          })}
+                  <svg width={iconSize} height={iconSize} style={{ marginRight: 4, flexShrink: 0 }}>
+                    {iconType === "circle" ? (
+                      <circle
+                        cx={iconSize / 2}
+                        cy={iconSize / 2}
+                        r={isSmallScreen ? 3 : 4}
+                        fill={lineColor}
+                        stroke="#fff"
+                        strokeWidth="1.5"
+                      />
+                    ) : (
+                      <line
+                        x1="0"
+                        y1={iconSize / 2}
+                        x2={iconSize - 4}
+                        y2={iconSize / 2}
+                        stroke={lineColor}
+                        strokeWidth={2.5}
+                        strokeDasharray={strokeDasharray}
+                      />
+                    )}
+                  </svg>
+                  <span style={{ fontSize: 10, whiteSpace: "nowrap" }}>{lineLabel.replace(/[_,-]/g, " ")}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

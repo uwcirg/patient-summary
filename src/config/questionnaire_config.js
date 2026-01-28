@@ -195,10 +195,12 @@ function bootstrapInstrumentConfigMap(map) {
  * @param {function} fallbackMeaningFunc function to derive meaning from severity and responses
  * @param {Object} [fallbackScoreMap] map of linkId to score
  * @param {number} highSeverityScoreCutoff
+ * @param {string} instrumentName name of the instrument
  * @param {string} key
  * @param {string} [linkIdMatchMode] 'strict'|'fuzzy'
  * @param {number} maximumScore
  * @param {string} [meaningQuestionId] linkId of question that contains meaning/label for the score
+ * @param {string} [meaningRowLabel] label for the meaning row in responses table
  * @param {number} minimumScore
  * @param {boolean} [nullScoreAllowed] if true, a null score is allowed (not an error)
  * @param {string} questionnaireId
@@ -206,6 +208,7 @@ function bootstrapInstrumentConfigMap(map) {
  * @param {string} questionnaireName
  * @param {string} questionnaireUrl
  * @param {string[]} [questionLinkIds] optional, linkIds of questions to include, usually specified if linkId can be different for a question /1111 or 1111
+ * @param {string} questionRowLabel label for the question row in responses table
  * @param {string[]} [recallCorrectCodes] for Mini-Cog: coded answers that count as correct for recall items
  * @param {string[]} [recallCorrectStrings] for Mini-Cog: string answers that count as correct for recall items
  * @param {string[]} [recallLinkIds] for Mini-Cog: linkIds for recall items
@@ -281,8 +284,9 @@ const questionnaireConfigsRaw = {
     minimumScore: 0,
     maximumScore: 4,
     meaningQuestionId: "ASSIST-3mo-score",
-    meaningRowLabel: "Summary (Past 3 months)",
+    meaningRowLabel: "Substances Reported (Past 3 months)",
     nullScoreAllowed: true,
+    questionRowLabel: "Detailed Questions",
     fallbackScoreMap: {
       "assist-10-0": 0,
       "assist-10-1": 1,
@@ -590,9 +594,7 @@ const questionnaireConfigsRaw = {
     skipChart: true,
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
-      const meaningResponse = responses.find((response) =>
-        linkIdEquals(response.id, "FOOD-score-label", "strict"),
-      );
+      const meaningResponse = responses.find((response) => linkIdEquals(response.id, "FOOD-score-label", "strict"));
       const meaningAnswer =
         meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
       return meaningAnswer ? capitalizeFirstLetterSafe(String(meaningAnswer)) : "";
@@ -907,11 +909,12 @@ const questionnaireConfigsRaw = {
     instrumentName: "The Primary Care PTSD Screen for DSM-5 [PC-PTSD-5]",
     title: "PTSD Symptoms",
     subtitle: "Past month",
-  //  skipMeaningScoreRow: true,
+    //  skipMeaningScoreRow: true,
     skipChart: true,
     meaningQuestionId: "PC-PTSD-5-SCORE-SYMPTOMS",
     displayMeaningNotScore: true,
     linkIdMatchMode: "strict",
+    excludeQuestionLinkIdPatterns: ["102017-1"],
     // maximumScore: 5,
     // highSeverityScoreCutoff: 1,
     // severityBands: [
@@ -920,6 +923,17 @@ const questionnaireConfigsRaw = {
     // ],
     // comparisonToAlert: "higher",
     questionnaireMatchMode: "fuzzy",
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      const meaningResponse = responses.find((response) =>
+        linkIdEquals(response.id, "PC-PTSD-5-SCORE-SYMPTOMS", "strict"),
+      );
+      const meaningAnswer =
+        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
+      return meaningAnswer?.split(",").join("|");
+    },
+    meaningRowLabel: "Summary (Symptoms endorsed in the past month)",
+    disableHeaderRowSubtitle: true,
     // questionLinkIds: ["/102012-2", "/102013-0", "/102014-8", "/102015-5", "/102016-3"],
     // scoringQuestionId: "/102017-1",
     // chartParams: {
@@ -1184,7 +1198,7 @@ const questionnaireConfigsRaw = {
         },
         {
           key: "AUDIT-score",
-          color: "#441151",
+          color: "#600876",
           strokeWidth: 1,
           strokeOpacity: 0.6,
           legendType: "line",
