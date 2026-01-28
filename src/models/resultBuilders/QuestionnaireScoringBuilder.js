@@ -14,7 +14,7 @@ import {
   objectToString,
   toFiniteNumber,
 } from "@util";
-import Response from "@models/Response";
+//import Response from "@models/Response";
 import FhirResultBuilder from "./FhirResultBuilder";
 import {
   buildQuestionnaire,
@@ -405,7 +405,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     const resolvedConfig = this._resolveConfig(config);
     const patterns = (resolvedConfig?.excludeQuestionLinkIdPatterns ?? []).map((s) => String(s).toLowerCase());
-
     if (patterns.some((p) => linkId.includes(p))) return false;
 
     return true;
@@ -681,16 +680,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     walk(questionnaireItems);
     const questionnaireItemList = list.map((q) => {
       const matchedResponseItem = this.findResponseItemByLinkId(responseItemsFlat, q.linkId, config);
-      const ans = matchedResponseItem?.answer;
       let returnObject = deepMerge({}, matchedResponseItem);
       returnObject.id = q.linkId;
-      returnObject.answer = this.getAnswerItemDisplayValue(ans, config);
+      returnObject.answer = this._getAnswer(matchedResponseItem, config);
       returnObject.rawAnswer = matchedResponseItem?.answer ?? [];
       if (!this.isResponseQuestionItem(q, configToUse)) returnObject.readOnly = true;
       if (this.isValueExpressionQuestionItem(q)) returnObject.isValueExpression = true;
       if (this.isHelpQuestionItem(q)) returnObject.isHelp = true;
-      returnObject.question =
-        q.text ?? (matchedResponseItem ? this._getQuestion(matchedResponseItem, configToUse) : `Question ${q.linkId}`);
+      returnObject.question = this._getQuestion(matchedResponseItem, configToUse) ?? q.text ?? `Question ${q.linkId}`;
       returnObject.text = matchedResponseItem?.text ? matchedResponseItem?.text : "";
       return returnObject;
     });
@@ -699,10 +696,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       let returnObject = deepMerge({}, item);
       if (!returnObject.id) returnObject.id = item.linkId;
       if (!this.isResponseQuestionItem(item, configToUse)) returnObject.readOnly = true;
-      const ans = item.answer;
-
-      returnObject.answer = this.getAnswerItemDisplayValue(ans, config);
-      returnObject.question = item.text ?? `Question ${index}`;
+      returnObject.answer = this._getAnswer(item, config);
+      returnObject.question = this._getQuestion(item, config) ?? `Question ${index}`;
       returnObject.rawAnswer = item.answer;
       return returnObject;
     });
@@ -711,11 +706,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   responsesOnly(responseItemsFlat = [], config = {}) {
     if (isEmptyArray(responseItemsFlat)) return [];
     return (responseItemsFlat || []).map((item) => {
-      const ans = item.answer;
       return {
         ...item,
         id: item.linkId,
-        answer: this.getAnswerItemDisplayValue(ans, config),
+        answer: this._getAnswer(item, config),
         rawAnswer: item.answer,
         question: item.text,
       };
@@ -785,12 +779,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     for (const col of columns) {
       if (!col?.id) continue;
       const matchItem = qrItems.find((it) => this.isLinkIdEquals(it.linkId, col.linkId));
-      const ans = matchItem?.answer;
-      const value = matchItem ? this.getAnswerItemDisplayValue(ans, config) : null;
-      const displayValue = (col?.label ? col.label + ": " : "") + (value ? value : "-");
+      const value = this._getAnswer(matchItem, config);
+      const displayValue = (col?.label ? col.label + ": " : "") + (!isNil(value) ? value : EMPTY_CELL_STRING);
       out[col.id] =
         (out[col.id] ? out[col.id] + "\n" : "") +
-        (config?.valueFormatter && value ? config?.valueFormatter(displayValue) : displayValue) +
+        (config?.valueFormatter ? config?.valueFormatter(displayValue) : displayValue) +
         (col.extraLine ? "\n" : "");
     }
     return out;
@@ -850,13 +843,33 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   _isPromise(x) {
     return !!x && typeof x.then === "function";
   }
-  _getAnswer(response, config) {
-    const o = new Response(response, config);
-    return o.answerText ? o.answerText : EMPTY_CELL_STRING;
+  _getAnswer(responseItem, config) {
+    if (!responseItem) return EMPTY_CELL_STRING;
+    const ansItem = responseItem?.answer;
+    const answer = this.getAnswerItemDisplayValue(ansItem, config);
+    const displayText = config?.valueFormatter ? config.valueFormatter(answer) : answer;
+    return !isNil(displayText) ? displayText : EMPTY_CELL_STRING;
   }
-  _getQuestion(item, config) {
-    const o = new Response(item, config);
-    return o.questionText;
+  _getQuestion(responseItem, configToUse) {
+    if (!responseItem) return null;
+    let questionText = responseItem?.text;
+    if (!questionText && configToUse?.itemTextByLinkId) {
+      for (const key in configToUse?.itemTextByLinkId) {
+        if (linkIdEquals(key, responseItem.linkId, configToUse?.linkIdMatchMode)) {
+          questionText = configToUse?.itemTextByLinkId[responseItem.linkId];
+          break;
+        }
+      } 
+    }
+    if (!questionText && responseItem._text?.extension) {
+      const textExt = responseItem._text.extension.find(
+        (ext) => ext.url === "http://hl7.org/fhir/StructureDefinition/rendering-xhtml",
+      );
+      if (textExt?.valueString) {
+        questionText = textExt.valueString;
+      }
+    }
+    return questionText;
   }
   _hasResponseData(data) {
     return !isEmptyArray(data) && !!data.find((item) => !isEmptyArray(item.responses));
@@ -870,7 +883,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     );
   }
   _hasMeaningOnlyData(data) {
-    return !isEmptyArray(data) && this._hasResponseData(data) && data.find((item) => item.displayMeaningNotScore);
+    const match = data.find((item) => !!item.displayMeaningNotScore);
+    return !isEmptyArray(data) && this._hasResponseData(data) && !!match;
   }
 
   _formatPrintColumnChunks = (columns = [], chunkSize = 3) => {
@@ -908,7 +922,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       rowTitle: getTitleByRow(dataProps),
       subtitle,
       note,
-      displayMeaningOnly,
+      displayMeaningOnly: displayMeaningOnly,
       hasData: !isEmptyArray(data),
       responseColumns,
       printColumnChunks: this._formatPrintColumnChunks(responseColumns, 3),
@@ -1047,15 +1061,13 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           // Get question text
           let question = "";
           const questionnaireItem = getQuestionnaireItemByLinkId(anchorRowData.questionnaire, questionId);
-          if (questionnaireItem) {
-            question = this._getQuestion(questionnaireItem);
+          if (sample) {
+            question = this._getQuestion(sample, resolvedConfig);
+          } 
+          if (!question && questionnaireItem) {
+            question = this._getQuestion(questionnaireItem, resolvedConfig);
           }
-
-          row.question = sample
-            ? this._getQuestion(sample, resolvedConfig)
-            : question
-              ? question
-              : `Question ${questionId}`;
+          row.question = question ? question : `Question ${questionId}`;
 
           row.source = sample?.source;
           row.readOnly = sample?.readOnly || false;
@@ -1094,7 +1106,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
             }
 
             const rowAnswer = matchedResponse ? this._getAnswer(matchedResponse, resolvedConfig) : null;
-            // console.log("matched Response ", matchedResponse, " answer ", rowAnswer);
             row[dataItem.id] = rowAnswer;
             row[`${dataItem.id}_data`] = getScoreParamsFromResponses([dataItem], resolvedConfig);
           }
@@ -1151,7 +1162,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       for (const item of data) {
         scoringRow[item.id] = {
           ...getScoreParamsFromResponses([item], resolvedConfig),
-          score: item.score,
+          score: resolvedConfig?.valueFormatter ? resolvedConfig.valueFormatter(item.score) : item.score,
           meaning: item.meaning,
         };
       }

@@ -1,4 +1,4 @@
-import { capitalizeFirstLetterSafe, isEmptyArray, isNumber } from "@util";
+import { capitalizeFirstLetterSafe, isEmptyArray } from "@util";
 import { getResourcesByResourceType, linkIdEquals } from "@util/fhirUtil";
 import CHART_CONFIG, { SUBSTANCE_USE_LINE_PROPS } from "./chart_config";
 import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS, PHQ9_ADMIN_NOTE } from "@/consts";
@@ -179,50 +179,53 @@ function bootstrapInstrumentConfigMap(map) {
 
 /**
  * @param {string} [alertQuestionId] linkId of question that contains alert/critical flag
- * @param {Object|Array} chartParams params for charting line/bar graphs
+ * @param {Object|Array} [chartParam] params for charting line/bar graphs
  * @param {string} [clockLinkId] for Mini-Cog: linkId for clock drawing item
  * @param {Object} [clockScoreMap] for Mini-Cog: map of clock drawing answer to score
  * @param {Object[]} [columns] additional columns to extract from responses
- * @param {boolean} comparisonToAlert 'higher' (default) means higher scores are worse; 'lower' means lower scores are worse
- * @param {boolean} disableHeaderRowSubtitle if true the subtitle won't display in the header row in responses table
- * @param {Object} deriveFrom configuration for deriving score from other questionnaire(s)
+ * @param {boolean} [comparisonToAlert] 'higher' (default) means higher scores are worse; 'lower' means lower scores are worse
+ * @param {boolean} [disableHeaderRowSubtitle] if true the subtitle won't display in the header row in responses table
+ * @param {Object} [deriveFrom] configuration for deriving score from other questionnaire(s)
  * @param {string[]} [deriveFrom.hostIds] questionnaire keys/ids to derive from
  * @param {string} [deriveFrom.linkId] linkId of the question in the host questionnaire(s) to derive from
  * @param {string[]} [deriveFrom.linkIds] [linkIds] of the questions in the host questionnaire(s) to derive from
  * @param {boolean} [deriveFrom.usePreviousScore] if true, use previous score from host questionnaire(s) instead of current score
- * @param {boolean} displayMeaningNotScore if true, display meaning/label instead of numeric score
- * @param {array} excludeQuestionLinkIdPatterns param for pattern in link Id to exclude as a response item
- * @param {function} fallbackMeaningFunc function to derive meaning from severity and responses
+ * @param {boolean} [displayMeaningNotScore] if true, display meaning/label instead of numeric score
+ * @param {array} [excludeQuestionLinkIdPatterns] param for pattern in link Id to exclude as a response item
+ * @param {function} [fallbackMeaningFunc] function to derive meaning from severity and responses
  * @param {Object} [fallbackScoreMap] map of linkId to score
- * @param {number} highSeverityScoreCutoff
- * @param {string} instrumentName name of the instrument
- * @param {string} key
+ * @param {number} [highSeverityScoreCutoff] score cutoff for high severity
+ * @param {string} [instrumentName] name of the instrument
+ * @param {string} [key] unique key for this instrument config
  * @param {string} [linkIdMatchMode] 'strict'|'fuzzy'
- * @param {number} maximumScore
+ * @param {number} [maximumScore] maximum possible score
  * @param {string} [meaningQuestionId] linkId of question that contains meaning/label for the score
  * @param {string} [meaningRowLabel] label for the meaning row in responses table
- * @param {number} minimumScore
+ * @param {number} [minimumScore] minimum possible score
+ * @param {string} [note] information note about the instrument, displayed with info icon
  * @param {boolean} [nullScoreAllowed] if true, a null score is allowed (not an error)
- * @param {string} questionnaireId
+ * @param {string} [questionnaireId] key or id of the Questionnaire FHIR resource
  * @param {string} [questionnaireMatchMode] 'strict'|'fuzzy' - used when matching a Questionnaire FHIR resource to this config
- * @param {string} questionnaireName
- * @param {string} questionnaireUrl
+ * @param {string} [questionnaireName] short name for the questionnaire
+ * @param {string} [questionnaireUrl] URL for the questionnaire
  * @param {string[]} [questionLinkIds] optional, linkIds of questions to include, usually specified if linkId can be different for a question /1111 or 1111
  * @param {string} questionRowLabel label for the question row in responses table
  * @param {string[]} [recallCorrectCodes] for Mini-Cog: coded answers that count as correct for recall items
  * @param {string[]} [recallCorrectStrings] for Mini-Cog: string answers that count as correct for recall items
  * @param {string[]} [recallLinkIds] for Mini-Cog: linkIds for recall items
- * @param {string|null} scoringQuestionId linkId of the question used for scoring
+ * @param {string|null} [scoringQuestionId] linkId of the question used for scoring
+ * @param {boolean} [showNumAnsweredWithScore] if true, show number of answered only when score is present
  * @param {{min:number,label:string,meaning?:string}[]} [severityBands]
  * @param {boolean} [skipChart] if true, do not render chart for this questionnaire
  * @param {boolean} [skipMeaningScoreRow] if true, the score/ meaning row in the responses table will not be rendered
  * @param {boolean} [skipResponses] if true, the response rows in the responses table will not be rendered
  * @param {Object} [subScores] map of sub-score configurations
  * @param {string[]} [subScoringQuestions] optional, object of sub-questions to include for scoring breakdowns
- * @param {string} subtitle
- * @param {string} title (from Questionnaire resource)
- * @param {function} tooltipValueFormatter function to format y value in tooltip
- * @param {function} valueFormatter function to format response value for display
+ * @param {string} [subtitle] subtitle to show under title in questionnaire header
+ * @param {string} [title] (from Questionnaire resource)
+ * @param {function} [tooltipValueFormatter] function to format y value in tooltip
+ * @param {function} [valueFormatter] function to format response value for display
+ * @param {object[]} [yLineFields] additional line fields to show in chart
  */
 const questionnaireConfigsRaw = {
   "CIRG-ADL-IADL": {
@@ -341,7 +344,6 @@ const questionnaireConfigsRaw = {
     },
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
-      if (!severity) return "";
       const meaningResponse = responses.find((response) => linkIdEquals(response.id, "ASSIST-3mo-score", "strict"));
       const meaningAnswer =
         meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
@@ -610,7 +612,6 @@ const questionnaireConfigsRaw = {
     linkIdMatchMode: "strict",
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
-      if (!severity) return "";
       let arrMeaning = [];
       const fallResponse = responses.find((response) => linkIdEquals(response.id, "FROP-Com-0", "strict"));
       const numFalls = fallResponse?.answer != null && fallResponse.answer !== undefined ? fallResponse.answer : null;
@@ -636,9 +637,9 @@ const questionnaireConfigsRaw = {
     questionnaireMatchMode: "fuzzy",
     displayMeaningNotScore: true,
     linkIdMatchMode: "strict",
+    meaningQuestionId: "HOUSING-1",
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
-      if (!severity) return "";
       const housingResponse = responses.find((response) => linkIdEquals(response.id, "HOUSING-1", "strict"));
       const housingAnswer =
         housingResponse?.answer != null && housingResponse.answer !== undefined ? housingResponse.answer : null;
@@ -703,7 +704,6 @@ const questionnaireConfigsRaw = {
     excludeQuestionLinkIdPatterns: ["summary"],
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
-      if (!severity) return "";
       let arrMeaning = [];
       const tobaccoUseResponse = responses.find((response) =>
         linkIdEquals(response.id, "Smoking-Tobacco-Cigs-Summary", "strict"),
@@ -1117,7 +1117,7 @@ const questionnaireConfigsRaw = {
         id: "result",
       },
     ],
-    valueFormatter: (value) => (isNumber(value) ? `${value} %` : value),
+    valueFormatter: (value) => (value != null && value !== "" ? `${value} ${String(value).includes("%") ? "" : "%"}` : value),
     chartParams: {
       ...CHART_CONFIG.default,
       title: "Percent ART Taken",
@@ -1125,7 +1125,7 @@ const questionnaireConfigsRaw = {
       maximumYValue: 100,
       xLabel: "",
       yLabel: "value",
-      tooltipValueFormatter: (value) => (value ? `${value} %` : ""),
+      tooltipValueFormatter: (value) => (value != null && value !== "" ? `${value} ${String(value).includes("%") ? "" : "%"}` : value),
       type: "barchart",
     },
     skipResponses: true,
@@ -1566,7 +1566,7 @@ const questionnaireConfigsRaw = {
       );
       const meaningAnswer =
         meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
-      if (String(meaningAnswer).toLowerCase() === "true") return "Yes";
+        if (String(meaningAnswer).toLowerCase() === "true") return "Yes";
       else if (String(meaningAnswer).toLowerCase() === "false") return "No";
       return meaningAnswer;
     },

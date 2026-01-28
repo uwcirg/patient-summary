@@ -149,9 +149,20 @@ export const SCORING_PARAMS = {
   MINICOG_RECALL_MAX: 3,
   MINICOG_CLOCK_SCORE: 2,
 };
-// pattern in link Id to check to determine whether a questionnaire item is a response item
+// pattern in link Id to check to determine whether a questionnaire item is not a response item
 export const EXCLUDED_LINK_ID_KEYWORDS = ["introduction", "ignore", "header", "score-label", "critical-flag"];
 
-export const IS_QUESTION_COLUMN_KEYWORDS = ["score", "meaning", "summary", "visual analog scale", "status", "detailed"];
+export const IS_QUESTION_COLUMN_KEYWORDS = [
+  "score",
+  "meaning",
+  "summary",
+  "visual analog scale",
+  "status",
+  "detailed question",
+  "questions",
+  "question",
+  "detailed questions",
+  "total"
+];
 
 export const EMPTY_CELL_STRING = "-";

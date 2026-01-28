@@ -4,7 +4,7 @@ import Questionnaire from "@models/Questionnaire";
 import InfoDialog from "./InfoDialog";
 
 export default function QuestionnaireInfo(props) {
-  const { questionnaireJson, buttonIconProps, note } = props;
+  const { questionnaireJson, buttonIconProps, buttonSize, note } = props;
 
   const qo = new Questionnaire(questionnaireJson);
   const questionnaireTitle = qo.displayName;
@@ -17,6 +17,7 @@ export default function QuestionnaireInfo(props) {
       content={content}
       buttonTitle={`Click to learn more about ${questionnaireTitle}`}
       allowHtml={true}
+      buttonSize={buttonSize ? buttonSize : "small"}
       buttonIconProps={
         buttonIconProps
           ? buttonIconProps
@@ -33,5 +34,6 @@ export default function QuestionnaireInfo(props) {
 QuestionnaireInfo.propTypes = {
   questionnaireJson: PropTypes.object,
   buttonIconProps: PropTypes.object,
+  buttonSize: PropTypes.string,
   note: PropTypes.string
 };

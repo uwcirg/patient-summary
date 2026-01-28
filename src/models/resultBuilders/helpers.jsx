@@ -930,18 +930,11 @@ export function getResponseColumns(data) {
         const cleaned = typeof q === "string" ? q.replace(/\s*\([^)]*\)/g, "").trim() : "";
         const normalizedClean = normalizeStr(cleaned);
         const isQuestion =
-          normalizeStr(cleaned) === "questions" ||
-          normalizeStr(cleaned) === "question" ||
-          normalizeStr(cleaned) === "detailed questions";
-
-        if (
-          typeof q === "string" &&
-          (IS_QUESTION_COLUMN_KEYWORDS.some(
+          IS_QUESTION_COLUMN_KEYWORDS.some(
             (keyword) => normalizedClean === keyword || normalizedClean.includes(keyword),
-          ) ||
-            normalizeStr(cleaned) === normalizeStr(config?.title) ||
-            isQuestion)
-        ) {
+          ) && normalizedClean.length < 50;
+
+        if (typeof q === "string" && (normalizeStr(cleaned) === normalizeStr(config?.title) || isQuestion)) {
           return (
             <span className={`${isQuestion ? "question-row" : ""}`}>
               <b>{q}</b>
@@ -965,13 +958,13 @@ export function getResponseColumns(data) {
       render: (rowData) => {
         const rowDataItem = rowData?.[item.id];
         if (rowData.readOnly) return <span className="text-readonly"></span>;
-        if (isNumber(rowDataItem)) return rowDataItem;
+        // if (isNumber(rowDataItem)) return rowDataItem;
         // explicit placeholders prevent React from trying to render objects
         if (!rowDataItem || String(rowDataItem) === "null" || String(rowDataItem) === "undefined")
           return EMPTY_CELL_STRING;
         if (rowDataItem.hasMeaningOnly) {
           const { key, ...rest } = rowDataItem;
-          if (!rowDataItem.meaning) return "-";
+          if (!rowDataItem.meaning) return EMPTY_CELL_STRING;
           return <Meaning {...rest}></Meaning>;
         }
         // numeric score path
@@ -990,7 +983,10 @@ export function getResponseColumns(data) {
             </Stack>
           );
         }
-        const contentToRender = typeof rowDataItem === "string" ? stripHtmlTags(rowDataItem) : normalize(rowDataItem);
+        const contentToRender =
+          typeof rowDataItem === "string" || isNumber(rowDataItem)
+            ? stripHtmlTags(rowDataItem)
+            : normalize(rowDataItem);
         if (contentToRender) return contentToRender;
         // string answers render directly; everything else is safely stringified
         return EMPTY_CELL_STRING;
@@ -1034,6 +1030,9 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
         }
         const chartData =
           summaryData[key] && summaryData[key].chartData ? summaryData[key].chartData : processedData?.chartData;
+        if (!currentData) {
+          console.warn(`buildReportData: No scoringSummaryData found for key "${key}"`);
+        }
         rows.push({
           ...(currentData ?? {}),
         });

@@ -56,8 +56,8 @@ export const renderChartDot = (props, config) => {
 
   // Determine visual radius
   let radius;
-  if (isHovered || isActive) radius = activeDotRadius || (isSmallScreen ? 4 : 5);
-  else radius = dotRadius || (isSmallScreen ? 3 : 4);
+  if (isHovered || isActive) radius = activeDotRadius || (isSmallScreen ? 5 : 6);
+  else radius = dotRadius || (isSmallScreen ? 4 : 5);
 
   const visualR = params.r || radius;
   const hitR = Math.max(minHitRadius, visualR * hitRadiusMultiplier);

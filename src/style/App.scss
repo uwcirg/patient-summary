@@ -207,6 +207,7 @@ p {
       line-height: 1.5;
       padding: 10px 16px !important;
       font-style: italic;
+      font-weight: 500 !important;
       background-color: $row-background-color !important;
       border-right: 0 !important;
        &:last-of-type {
@@ -216,29 +217,9 @@ p {
   }
   tr:has(.question-row) {
     td {
-      border-left: 0 !important;
-      border-right: 0 !important;
-      // &:first-of-type {
-      //   border-right: 1px solid $border-color !important;
-      // }
-      &:last-of-type {
-        border-right: 1px solid $border-color !important;
-      }
-      background-color: #fff;
+      background-color: #fff !important;
       line-height: 1.5;
       padding: 10px 16px !important;
-    }
-    td {
-      border-right: 0 !important;
-      background-color: #fff;
-    }
-  }
-  tr:has(.question-row) {
-    td {
-      background-color: #fff !important;
-    }
-    td {
-      border-right: 0 !important;
     }
   }
 }

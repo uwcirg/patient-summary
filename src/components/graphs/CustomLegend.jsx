@@ -105,11 +105,8 @@ const CustomLegend = ({
   // Handler for toggling all lines
   const handleToggleAll = () => {
     if (!onToggleLine || !lineFieldsWithData.length) return;
-
-    // If all are visible, hide all. Otherwise, show all.
-    const newState = !allLinesVisible;
     lineFieldsWithData.forEach((field) => {
-      if ((visibleLines?.[field.key] !== false) !== newState) {
+      if ((visibleLines?.[field.key] !== false) === allLinesVisible) {
         onToggleLine(field.key);
       }
     });
@@ -154,7 +151,7 @@ const CustomLegend = ({
               style={{
                 display: "flex",
                 alignItems: "center",
-                paddingBottom: isSmallScreen ? 6 : 8,
+                paddingBottom: isSmallScreen ? 8 : 10,
                 borderBottom: "1px solid #ddd",
                 marginBottom: isSmallScreen ? 2 : 4,
               }}
@@ -176,7 +173,7 @@ const CustomLegend = ({
                       transform: isSmallScreen ? "translateX(16px)" : "translateX(16px)",
                       color: "#fff",
                       "& + .MuiSwitch-track": {
-                        backgroundColor: "#666",
+                        backgroundColor: "#051694",
                         opacity: 0.8,
                       },
                     },
@@ -188,11 +185,11 @@ const CustomLegend = ({
                   "& .MuiSwitch-track": {
                     borderRadius: 8,
                     opacity: 1,
-                    backgroundColor: "#ccc",
+                    backgroundColor: "#cccccc",
                   },
                 }}
               />
-              <span style={{ fontSize: 10, fontWeight: 500 }}>{allLinesVisible ? "Hide All" : "Show All"}</span>
+              <span style={{ fontSize: 10, fontWeight: 500 }}>{allLinesVisible ? "Show All" : "Hide All"}</span>
             </div>
           )}
 

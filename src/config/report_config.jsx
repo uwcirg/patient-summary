@@ -219,16 +219,22 @@ export const report_config = {
                 },
               },
               renderCell: (row, value) => {
-                const values = value.split("\n");
-                return (
-                  <Stack direction={"column"} gap={0.5}>
-                    {values.map((value, index) => (
-                      <span className={`${row?.alert ? "text-danger" : ""}`} key={`${row.key}_value_${index}`}>
-                        {value}
-                      </span>
-                    ))}
-                  </Stack>
-                );
+                const values = value ? value.split("\n") : null;
+                if (!isEmptyArray(values)) {
+                  return (
+                    <Stack direction={"column"} gap={0.5}>
+                      {values.map((value, index) => (
+                        <span className={`${row?.alert ? "text-danger" : ""}`} key={`${row.key}_value_${index}`}>
+                          {value}
+                        </span>
+                      ))}
+                    </Stack>
+                  );
+                }
+                if (row?.meaning) {
+                  return <span className={`${row?.alert ? "text-danger" : ""}`}>{row.meaning}</span>;
+                }
+                return getNoDataDisplay();
               },
             },
             {

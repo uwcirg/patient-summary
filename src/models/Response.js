@@ -21,6 +21,12 @@ class Response {
         }
       }
     }
+    if (!question && data._text?.extension) {
+      const textExt = data._text.extension.find((ext) => ext.url === "http://hl7.org/fhir/StructureDefinition/rendering-xhtml");
+      if (textExt?.valueString) {
+        question = textExt.valueString;
+      }
+    }
     return question;
   }
   get answerText() {
