@@ -57,11 +57,7 @@ export const report_config = {
                 <Stack direction={"column"} sx={{ whiteSpace: "pre-line" }} justifyContent={"space-between"}>
                   <Box>{value && value.split(",").join("\n")}</Box>
                   {!value && getNoDataDisplay()}
-                  {row.source && (
-                    <Box className="muted-text source-container">
-                      {row.source}
-                    </Box>
-                  )}
+                  {row.source && <Box className="muted-text source-container">{row.source}</Box>}
                 </Stack>
               ),
             },
@@ -77,11 +73,7 @@ export const report_config = {
                 <Stack direction={"column"} sx={{ whiteSpace: "pre-line" }} justifyContent={"flex-start"}>
                   <Box>{value && value.split(",").join("\n")}</Box>
                   {!value && getNoDataDisplay()}
-                  {row.source && (
-                    <Box className="muted-text source-container">
-                      {row.source}
-                    </Box>
-                  )}
+                  {row.source && <Box className="muted-text source-container">{row.source}</Box>}
                 </Stack>
               ),
             },
@@ -247,11 +239,7 @@ export const report_config = {
                 <Stack direction={"column"} spacing={1}>
                   {value && <Box>{getLocaleDateStringFromDate(value)}</Box>}
                   {!value && getNoDataDisplay()}
-                  {row.source && (
-                    <Box className="muted-text source-container">
-                      {row.source}
-                    </Box>
-                  )}
+                  {row.source && <Box className="muted-text source-container">{row.source}</Box>}
                 </Stack>
               ),
             },
@@ -262,9 +250,25 @@ export const report_config = {
           title: "Psychosocial Concerns and Quality of Life",
           layout: "two-columns",
           hiddenColumns: ["numAnswered", "comparison"],
-          dataKeysToMatch: ["CIRG-CNICS-MAPSS-SF", "CIRG-HIV-Stigma", "CIRG-PC-PTSD-5", "CIRG-HRQOL"],
+          dataKeysToMatch: ["CIRG-CNICS-MAPSS-SF", "CIRG-HIV-Stigma", "CIRG-PC-PTSD-5"],
           tableStyle: {
-            width: "auto"
+            width: "auto",
+          },
+        },
+        {
+          id: "table_psychosocial_concern_HRQOL",
+          title: "EuroQOL Health Related Quality-of-Life",
+          layout: "two-columns",
+          hiddenColumns: ["numAnswered", "comparison"],
+          dataKeysToMatch: [
+            "CIRG-CNICS-EUROQOL-SELF-CARE",
+            "CIRG-CNICS-EUROQOL-USUAL-ACTIVITIES",
+            "CIRG-CNICS-EUROQOL-PAIN-DISCOMFORT",
+            "CIRG-CNICS-EUROQOL-ANXIETY-DEPRESSION",
+            "CIRG-CNICS-EUROQOL-EUROQOL-5",
+          ],
+          tableStyle: {
+            width: "auto",
           },
         },
       ],

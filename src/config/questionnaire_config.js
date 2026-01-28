@@ -1,4 +1,4 @@
-import { capitalizeFirstLetterSafe, isEmptyArray } from "@util";
+import { capitalizeFirstLetterSafe, isEmptyArray, isNil } from "@util";
 import { getResourcesByResourceType, linkIdEquals } from "@util/fhirUtil";
 import CHART_CONFIG, { SUBSTANCE_USE_LINE_PROPS } from "./chart_config";
 import { PHQ9_SI_QUESTION_LINK_ID, PHQ9_SI_ANSWER_SCORE_MAPPINGS, PHQ9_ADMIN_NOTE } from "@/consts";
@@ -915,13 +915,6 @@ const questionnaireConfigsRaw = {
     displayMeaningNotScore: true,
     linkIdMatchMode: "strict",
     excludeQuestionLinkIdPatterns: ["102017-1"],
-    // maximumScore: 5,
-    // highSeverityScoreCutoff: 1,
-    // severityBands: [
-    //   { min: 1, label: "high", meaning: "Positive screen" },
-    //   { min: 0, label: "low", meaning: "Negative screen" },
-    // ],
-    // comparisonToAlert: "higher",
     questionnaireMatchMode: "fuzzy",
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
@@ -934,17 +927,6 @@ const questionnaireConfigsRaw = {
     },
     meaningRowLabel: "Summary (Symptoms endorsed in the past month)",
     disableHeaderRowSubtitle: true,
-    // questionLinkIds: ["/102012-2", "/102013-0", "/102014-8", "/102015-5", "/102016-3"],
-    // scoringQuestionId: "/102017-1",
-    // chartParams: {
-    //   ...CHART_CONFIG.default,
-    //   title: "PTSD",
-    //   minimumYValue: 0,
-    //   maximumYValue: 5,
-    //   xLabel: "",
-    //   type: "barchart",
-    //   dotColor: null,
-    // },
   },
   "CIRG-PHQ9": {
     key: "CIRG-PHQ9",
@@ -1117,7 +1099,7 @@ const questionnaireConfigsRaw = {
         id: "result",
       },
     ],
-    valueFormatter: (value) => (value != null && value !== "" ? `${value} ${String(value).includes("%") ? "" : "%"}` : value),
+    valueFormatter: (value) => (!isNil(value) ? `${value} ${String(value).includes("%") ? "" : "%"}` : value),
     chartParams: {
       ...CHART_CONFIG.default,
       title: "Percent ART Taken",
@@ -1125,7 +1107,7 @@ const questionnaireConfigsRaw = {
       maximumYValue: 100,
       xLabel: "",
       yLabel: "value",
-      tooltipValueFormatter: (value) => (value != null && value !== "" ? `${value} ${String(value).includes("%") ? "" : "%"}` : value),
+      tooltipValueFormatter: (value) => (!isNil(value) ? `${value} ${String(value).includes("%") ? "" : "%"}` : value),
       type: "barchart",
     },
     skipResponses: true,
@@ -1566,7 +1548,7 @@ const questionnaireConfigsRaw = {
       );
       const meaningAnswer =
         meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
-        if (String(meaningAnswer).toLowerCase() === "true") return "Yes";
+      if (String(meaningAnswer).toLowerCase() === "true") return "Yes";
       else if (String(meaningAnswer).toLowerCase() === "false") return "No";
       return meaningAnswer;
     },
@@ -1582,11 +1564,82 @@ const questionnaireConfigsRaw = {
     instrumentName: "HIV Stigma",
     title: "HIV Stigma",
   },
-  "CIRG-HRQOL": {
-    key: "CIRG-HRQOL",
+  "CIRG-CNICS-EUROQOL": {
+    key: "CIRG-CNICS-EUROQOL",
     instrumentName: "HRQOL",
-    title: "HRQOL",
+    title: "EuroQOL Health Related Quality-of-Life questionnaire",
   },
+  "CIRG-CNICS-EUROQOL-SELF-CARE": {
+    key: "CIRG-CNICS-EUROQOL-SELF-CARE",
+    instrumentName: "Self Care",
+    title: "Self Care",
+    meaningQuestionId: "EUROQOL-SCORE-SELF-CARE",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
+      linkId: "EUROQOL-SCORE-SELF-CARE", // the single item to keep
+    },
+    skipChart: true,
+    skipResponses: true,
+    displayMeaningNotScore: true,
+    meaningRowLabel: "EUROQOL: Self Care",
+  },
+  "CIRG-CNICS-EUROQOL-USUAL-ACTIVITIES": {
+    key: "CIRG-CNICS-EUROQOL-USUAL-ACTIVITIES",
+    instrumentName: "Usual Activities",
+    title: "Usual Activities",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
+      linkId: "EUROQOL-SCORE-USUAL-ACTIVITIES", // the single item to keep
+    },
+    meaningQuestionId: "EUROQOL-SCORE-USUAL-ACTIVITIES",
+    skipChart: true,
+    skipResponses: true,
+    displayMeaningNotScore: true,
+    meaningRowLabel: "EUROQOL: Usual Activities",
+  },
+  "CIRG-CNICS-EUROQOL-PAIN-DISCOMFORT": {
+    key: "CIRG-CNICS-EUROQOL-PAIN-DISCOMFORT",
+    instrumentName: "Pain/Discomfort",
+    title: "Pain/Discomfort",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
+      linkId: "EUROQOL-SCORE-PAIN", // the single item to keep
+    },
+    meaningQuestionId: "EUROQOL-SCORE-PAIN",
+    skipChart: true,
+    skipResponses: true,
+    displayMeaningNotScore: true,
+    meaningRowLabel: "EUROQOL: Pain/Discomfort",
+  },
+  "CIRG-CNICS-EUROQOL-ANXIETY-DEPRESSION": {
+    key: "CIRG-CNICS-EUROQOL-ANXIETY-DEPRESSION",
+    instrumentName: "Anxiety/Depression",
+    title: "Anxiety/Depression",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
+      linkId: "EUROQOL-SCORE-ANXIETY-DEPRESSION", // the single item to keep
+    },
+    meaningQuestionId: "EUROQOL-SCORE-ANXIETY-DEPRESSION",
+    skipChart: true,
+    skipResponses: true,
+    displayMeaningNotScore: true,
+    meaningRowLabel: "EUROQOL: Anxiety/Depression",
+  },
+  "CIRG-CNICS-EUROQOL-EUROQOL-5": {
+    key: "CIRG-CNICS-EUROQOL-EUROQOL-5",
+    instrumentName: "CIRG-CNICS-EUROQOL-EUROQOL-5",
+    title: "Overall Health State (0%-100%)",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
+      linkId: "EUROQOL-5", // the single item to keep
+    },
+    meaningQuestionId: "EUROQOL-5",
+    skipChart: true,
+    skipResponses: true,
+    displayMeaningNotScore: true,
+    valueFormatter: (value) => (!isNil(value) ? `${value} ${String(value).includes("%") ? "" : "%"}` : value),
+    meaningRowLabel: "EUROQOL: Overall health state (0%-100%)",
+  }
 };
 
 export const getConfigForQuestionnaire = (id) => {
