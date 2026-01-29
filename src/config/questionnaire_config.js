@@ -65,6 +65,24 @@ function assertCutoffsMatchBands(
   }
 }
 
+function assertDisplayMeaningNotScoreHasMeaningSource(config, { strict = false } = {}) {
+  if (!config?.displayMeaningNotScore) return;
+
+  const hasMeaningQuestionId =
+    typeof config?.meaningQuestionId === "string" && config.meaningQuestionId.trim().length > 0;
+  const hasFallbackMeaningFunc = typeof config?.fallbackMeaningFunc === "function";
+  const hasScoringQuestionId =
+    typeof config?.scoringQuestionId === "string" && config.scoringQuestionId.trim().length > 0;
+
+  if (!(hasMeaningQuestionId || hasScoringQuestionId) && !hasFallbackMeaningFunc) {
+    const msg =
+      `[${config?.key ?? "instrument"}] displayMeaningNotScore is true, but neither meaningQuestionId nor fallbackMeaningFunc is specified. ` +
+      `At least one must be provided to determine what meaning to display.`;
+    if (strict) throw new Error(msg);
+    console.warn(msg, config);
+  }
+}
+
 function bootstrapInstrumentConfig(config) {
   let out = normalizeInstrumentConfigKeys(config);
   out = deriveCutoffsFromBands(out);
@@ -79,6 +97,7 @@ function bootstrapInstrumentConfig(config) {
       allowQuestionLinkIdsSameAsDerived: true, // set to false if never want questionLinkIds present when deriveFrom is set (even if it equals the derived linkId)
     });
     warnIfScoringIdsAreInQuestionLinkIds(out); // warn only
+    assertDisplayMeaningNotScoreHasMeaningSource(out); // warn only
   }
   return out;
 }
@@ -1050,7 +1069,6 @@ const questionnaireConfigsRaw = {
     title: "Self Rating Scale (SRS)",
     subtitle: "Past 4 weeks",
     instrumentName: "Self Rating Scale (SRS)",
-    displayMeaningNotScore: true,
     deriveFrom: {
       hostIds: ["CIRG-CNICS-ARV"], // one or many hosts
       linkId: "ARV-SRS", // the single item to keep
@@ -1069,7 +1087,6 @@ const questionnaireConfigsRaw = {
     title: "Last Missed Dose",
     subtitle: "Past 4 weeks",
     instrumentName: "Last Missed Dose",
-    displayMeaningNotScore: true,
     deriveFrom: {
       hostIds: ["CIRG-CNICS-ARV"], // one or many hosts
       linkId: "ARV-last-missed", // the single item to keep
@@ -1189,6 +1206,82 @@ const questionnaireConfigsRaw = {
       showTooltipMeaning: false,
     },
     // skipChart: true,
+  },
+  "CIRG-CNICS-EUROQOL": {
+    key: "CIRG-CNICS-EUROQOL",
+    instrumentName: "HRQOL",
+    title: "EuroQOL Health Related Quality-of-Life questionnaire",
+  },
+  "CIRG-CNICS-EUROQOL-SELF-CARE": {
+    key: "CIRG-CNICS-EUROQOL-SELF-CARE",
+    instrumentName: "Self Care",
+    title: "Self Care",
+    meaningQuestionId: "EUROQOL-SCORE-SELF-CARE",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
+      linkId: "EUROQOL-SCORE-SELF-CARE", // the single item to keep
+    },
+    skipChart: true,
+    skipResponses: true,
+    displayMeaningNotScore: true,
+    meaningRowLabel: "EUROQOL: Self Care",
+  },
+  "CIRG-CNICS-EUROQOL-USUAL-ACTIVITIES": {
+    key: "CIRG-CNICS-EUROQOL-USUAL-ACTIVITIES",
+    instrumentName: "Usual Activities",
+    title: "Usual Activities",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
+      linkId: "EUROQOL-SCORE-USUAL-ACTIVITIES", // the single item to keep
+    },
+    meaningQuestionId: "EUROQOL-SCORE-USUAL-ACTIVITIES",
+    skipChart: true,
+    skipResponses: true,
+    displayMeaningNotScore: true,
+    meaningRowLabel: "EUROQOL: Usual Activities",
+  },
+  "CIRG-CNICS-EUROQOL-PAIN-DISCOMFORT": {
+    key: "CIRG-CNICS-EUROQOL-PAIN-DISCOMFORT",
+    instrumentName: "Pain/Discomfort",
+    title: "Pain/Discomfort",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
+      linkId: "EUROQOL-SCORE-PAIN", // the single item to keep
+    },
+    meaningQuestionId: "EUROQOL-SCORE-PAIN",
+    skipChart: true,
+    skipResponses: true,
+    displayMeaningNotScore: true,
+    meaningRowLabel: "EUROQOL: Pain/Discomfort",
+  },
+  "CIRG-CNICS-EUROQOL-ANXIETY-DEPRESSION": {
+    key: "CIRG-CNICS-EUROQOL-ANXIETY-DEPRESSION",
+    instrumentName: "Anxiety/Depression",
+    title: "Anxiety/Depression",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
+      linkId: "EUROQOL-SCORE-ANXIETY-DEPRESSION", // the single item to keep
+    },
+    meaningQuestionId: "EUROQOL-SCORE-ANXIETY-DEPRESSION",
+    skipChart: true,
+    skipResponses: true,
+    displayMeaningNotScore: true,
+    meaningRowLabel: "EUROQOL: Anxiety/Depression",
+  },
+  "CIRG-CNICS-EUROQOL-EUROQOL-5": {
+    key: "CIRG-CNICS-EUROQOL-EUROQOL-5",
+    instrumentName: "CIRG-CNICS-EUROQOL-EUROQOL-5",
+    title: "Overall Health State (0% - 100%)",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
+      linkId: "EUROQOL-5", // the single item to keep
+    },
+    meaningQuestionId: "EUROQOL-5",
+    skipChart: true,
+    skipResponses: true,
+    displayMeaningNotScore: true,
+    valueFormatter: (value) => (!isNil(value) ? `${value} ${String(value).includes("%") ? "" : "%"}` : value),
+    meaningRowLabel: "EUROQOL: Overall health state (0% - 100%)",
   },
   "CIRG-CNICS-EXCHANGE-SEX": {
     key: "CIRG-CNICS-EXCHANGE-SEX",
@@ -1564,82 +1657,6 @@ const questionnaireConfigsRaw = {
     instrumentName: "HIV Stigma",
     title: "HIV Stigma",
   },
-  "CIRG-CNICS-EUROQOL": {
-    key: "CIRG-CNICS-EUROQOL",
-    instrumentName: "HRQOL",
-    title: "EuroQOL Health Related Quality-of-Life questionnaire",
-  },
-  "CIRG-CNICS-EUROQOL-SELF-CARE": {
-    key: "CIRG-CNICS-EUROQOL-SELF-CARE",
-    instrumentName: "Self Care",
-    title: "Self Care",
-    meaningQuestionId: "EUROQOL-SCORE-SELF-CARE",
-    deriveFrom: {
-      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
-      linkId: "EUROQOL-SCORE-SELF-CARE", // the single item to keep
-    },
-    skipChart: true,
-    skipResponses: true,
-    displayMeaningNotScore: true,
-    meaningRowLabel: "EUROQOL: Self Care",
-  },
-  "CIRG-CNICS-EUROQOL-USUAL-ACTIVITIES": {
-    key: "CIRG-CNICS-EUROQOL-USUAL-ACTIVITIES",
-    instrumentName: "Usual Activities",
-    title: "Usual Activities",
-    deriveFrom: {
-      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
-      linkId: "EUROQOL-SCORE-USUAL-ACTIVITIES", // the single item to keep
-    },
-    meaningQuestionId: "EUROQOL-SCORE-USUAL-ACTIVITIES",
-    skipChart: true,
-    skipResponses: true,
-    displayMeaningNotScore: true,
-    meaningRowLabel: "EUROQOL: Usual Activities",
-  },
-  "CIRG-CNICS-EUROQOL-PAIN-DISCOMFORT": {
-    key: "CIRG-CNICS-EUROQOL-PAIN-DISCOMFORT",
-    instrumentName: "Pain/Discomfort",
-    title: "Pain/Discomfort",
-    deriveFrom: {
-      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
-      linkId: "EUROQOL-SCORE-PAIN", // the single item to keep
-    },
-    meaningQuestionId: "EUROQOL-SCORE-PAIN",
-    skipChart: true,
-    skipResponses: true,
-    displayMeaningNotScore: true,
-    meaningRowLabel: "EUROQOL: Pain/Discomfort",
-  },
-  "CIRG-CNICS-EUROQOL-ANXIETY-DEPRESSION": {
-    key: "CIRG-CNICS-EUROQOL-ANXIETY-DEPRESSION",
-    instrumentName: "Anxiety/Depression",
-    title: "Anxiety/Depression",
-    deriveFrom: {
-      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
-      linkId: "EUROQOL-SCORE-ANXIETY-DEPRESSION", // the single item to keep
-    },
-    meaningQuestionId: "EUROQOL-SCORE-ANXIETY-DEPRESSION",
-    skipChart: true,
-    skipResponses: true,
-    displayMeaningNotScore: true,
-    meaningRowLabel: "EUROQOL: Anxiety/Depression",
-  },
-  "CIRG-CNICS-EUROQOL-EUROQOL-5": {
-    key: "CIRG-CNICS-EUROQOL-EUROQOL-5",
-    instrumentName: "CIRG-CNICS-EUROQOL-EUROQOL-5",
-    title: "Overall Health State (0%-100%)",
-    deriveFrom: {
-      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
-      linkId: "EUROQOL-5", // the single item to keep
-    },
-    meaningQuestionId: "EUROQOL-5",
-    skipChart: true,
-    skipResponses: true,
-    displayMeaningNotScore: true,
-    valueFormatter: (value) => (!isNil(value) ? `${value} ${String(value).includes("%") ? "" : "%"}` : value),
-    meaningRowLabel: "EUROQOL: Overall health state (0%-100%)",
-  }
 };
 
 export const getConfigForQuestionnaire = (id) => {

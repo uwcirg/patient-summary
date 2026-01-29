@@ -173,7 +173,7 @@ const CustomLegend = ({
                       transform: isSmallScreen ? "translateX(16px)" : "translateX(16px)",
                       color: "#fff",
                       "& + .MuiSwitch-track": {
-                        backgroundColor: "#051694",
+                        backgroundColor: "#4f4f52",
                         opacity: 0.8,
                       },
                     },
@@ -185,7 +185,7 @@ const CustomLegend = ({
                   "& .MuiSwitch-track": {
                     borderRadius: 8,
                     opacity: 1,
-                    backgroundColor: "#cccccc",
+                    backgroundColor: "#ccc",
                   },
                 }}
               />
