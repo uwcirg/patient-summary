@@ -229,6 +229,9 @@ p {
     margin-bottom: 4px;
     word-break: normal;
   }
+  &.table-cell-item-stack:not(:last-of-type) {
+    margin-bottom: 6px;
+  }
 }
 
 .MuiTablePagination-toolbar {
