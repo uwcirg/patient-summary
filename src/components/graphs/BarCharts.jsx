@@ -239,7 +239,6 @@ export default function BarCharts(props) {
   let maxYValue = maximumYValue ?? parsed.reduce((m, d) => Math.max(m, Number(d?.[yFieldKey] ?? -Infinity)), -Infinity);
   let minYValue = minimumYValue ?? parsed?.reduce((min, d) => Math.min(min, d[yFieldKey]), Infinity);
   maxYValue = parsed.length === 0 || maxYValue === -Infinity ? null : maxYValue;
-  const yDomain = maxYValue ? [minYValue, maxYValue] : [minYValue, "auto"];
 
   const renderTitle = () => (
     <Typography variant="subtitle1" component="h4" color="secondary" sx={{ textAlign: "center" }}>
@@ -265,7 +264,11 @@ export default function BarCharts(props) {
     </XAxis>
   );
 
-  const renderYAxis = () => <YAxis domain={yDomain} minTickGap={4} stroke="#FFF" tick={false} width={10} />;
+  const renderYAxis = () => {
+    const padding = 0.5;
+    const yDomain = maxYValue ? [minYValue, maxYValue + padding] : [minYValue, "auto"];
+    return <YAxis domain={yDomain} minTickGap={4} stroke="#FFF" tick={false} width={10} />;
+  };
 
   const TooltipWrapper = ({ active, payload, coordinate }) => {
     const isTouch = pointerTypeRef.current === "touch";
