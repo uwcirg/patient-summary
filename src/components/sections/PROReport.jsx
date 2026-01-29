@@ -47,9 +47,19 @@ export default function PROReport() {
           data={table.rows}
           disableLinks={true}
           enableResponsesViewer={true}
-          containerStyle={{ alignSelf: "stretch" }}
+          containerStyle={{ alignSelf: "stretch", flexBasis: {
+            xs: "100%",
+            sm: "100%",
+            md: "50%",
+            lg: "50%",
+          } }}
         />
-        <Box sx={{ marginTop: 1 }}>
+        <Box sx={{ marginTop: {
+          xs: 2,
+          sm: 2,
+          md: 1,
+          lg: 0,
+        }}}>
           {!isEmptyArray(table.charts) &&
             table.charts.map((chartData, index) => {
               if (isEmptyArray(chartData?.data)) return null;

@@ -859,7 +859,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           questionText = configToUse?.itemTextByLinkId[responseItem.linkId];
           break;
         }
-      } 
+      }
     }
     if (!questionText && responseItem._text?.extension) {
       const textExt = responseItem._text.extension.find(
@@ -1060,10 +1060,14 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
           // Get question text
           let question = "";
-          const questionnaireItem = getQuestionnaireItemByLinkId(anchorRowData.questionnaire, questionId);
-          if (sample) {
+          const questionnaireItem = getQuestionnaireItemByLinkId(
+            anchorRowData.questionnaire,
+            questionId,
+            resolvedConfig?.linkIdMatchMode,
+          );
+          if (sample && !sample?.readOnly) {
             question = this._getQuestion(sample, resolvedConfig);
-          } 
+          }
           if (!question && questionnaireItem) {
             question = this._getQuestion(questionnaireItem, resolvedConfig);
           }

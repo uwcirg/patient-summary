@@ -30,7 +30,7 @@ const CHART_CONFIG = {
     dotColor: "#444",
     dotRadius: 4,
     activeDotRadius: 5,
-    interval: 0,
+    interval: 2,
     lgChartWidth: 588,
     mdChartWidth: 480,
     chartHeight: 240,
@@ -63,7 +63,6 @@ const CHART_CONFIG = {
         return item;
       });
     },
-    // xTickFormatter: (item) => new Date(item).toISOString().substring(0, 10),
     xTickFormatter: (value) => {
       const d = value instanceof Date ? value : new Date(value);
       if (isNaN(d)) return "";

@@ -43,8 +43,8 @@ const SourceDot = ({
 
 
   // Responsive dot size with custom radius support
-  const defaultDotSize = isSmallScreen ? 4 : 6;
-  const defaultRectSize = isSmallScreen ? 6 : 8;
+  const defaultDotSize = isSmallScreen ? 4 : 5;
+  const defaultRectSize = isSmallScreen ? 5 : 6;
   const dotSize = dotRadius || useParams.r || defaultDotSize;
   const rectSize = dotRadius ? dotRadius * 2 : useParams.width || defaultRectSize;
    const hitR = Math.max(14, dotSize * 3.25);

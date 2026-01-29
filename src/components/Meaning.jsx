@@ -55,12 +55,20 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
               key={key}
               className={`table-cell-item table-cell-item-stack ${cellClass}`}
               direction="row"
-              spacing={0.2}
+              spacing={0.25}
               justifyContent="flex-start"
-              alignItems="flex-start"
+              alignItems="flex-end"
+              sx={{
+                borderBottom: index !== parts.length - 1 ? "1px solid #ececec" : "none",
+                paddingBottom: "4px",
+              }}
             >
-              <Box component="span" sx={{flex: 1}}>{pair.left}:</Box>
-              <Box component="span" sx={{flex: 1}}>{pair.right}</Box>
+              <Box component="span" sx={{ flex: 1 }}>
+                {pair.left}:
+              </Box>
+              <Box component="span" sx={{ flex: 1 }}>
+                {pair.right}
+              </Box>
             </Stack>
           );
         }

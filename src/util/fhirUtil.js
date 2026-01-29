@@ -379,10 +379,10 @@ export function getDefaultQuestionItemText(linkId, index) {
   return (isNumber(index) ? `Question ${index}` : "") + (codeBit ? " " + codeBit : "");
 }
 
-export function getQuestionnaireItemByLinkId(questionnaire, linkId) {
+export function getQuestionnaireItemByLinkId(questionnaire, linkId, mode = "strict") {
   if (!questionnaire) return null;
   if (isEmptyArray(questionnaire.item)) return null;
-  return questionnaire.item?.find((o) => linkIdEquals(o.linkId, linkId));
+  return questionnaire.item?.find((o) => linkIdEquals(o.linkId, linkId, mode));
 }
 
 export function makeQuestionItem(linkId, text, answerOptions) {

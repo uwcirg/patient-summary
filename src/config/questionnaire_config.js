@@ -1271,7 +1271,8 @@ const questionnaireConfigsRaw = {
   "CIRG-CNICS-EUROQOL-EUROQOL-5": {
     key: "CIRG-CNICS-EUROQOL-EUROQOL-5",
     instrumentName: "CIRG-CNICS-EUROQOL-EUROQOL-5",
-    title: "Overall Health State (0% - 100%)",
+    title: "Overall Health State",
+    subtitle: "(0% - 100%)",
     deriveFrom: {
       hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
       linkId: "EUROQOL-5", // the single item to keep

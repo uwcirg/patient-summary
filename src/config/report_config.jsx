@@ -251,9 +251,9 @@ export const report_config = {
           layout: "two-columns",
           hiddenColumns: ["numAnswered", "comparison"],
           dataKeysToMatch: ["CIRG-CNICS-MAPSS-SF", "CIRG-HIV-Stigma", "CIRG-PC-PTSD-5"],
-          tableStyle: {
-            width: "auto",
-          },
+          // tableStyle: {
+          //   width: "auto",
+          // },
         },
         {
           id: "table_psychosocial_concern_HRQOL",
@@ -267,9 +267,9 @@ export const report_config = {
             "CIRG-CNICS-EUROQOL-ANXIETY-DEPRESSION",
             "CIRG-CNICS-EUROQOL-EUROQOL-5",
           ],
-          tableStyle: {
-            width: "auto",
-          },
+          // tableStyle: {
+          //   width: "auto",
+          // },
         },
       ],
     },
