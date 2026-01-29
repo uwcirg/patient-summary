@@ -155,6 +155,7 @@ const CustomLegend = ({
                 borderBottom: "1px solid #ddd",
                 marginBottom: isSmallScreen ? 2 : 4,
               }}
+              className="print-hidden" 
             >
               <Switch
                 checked={allLinesVisible}
