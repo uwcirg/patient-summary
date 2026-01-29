@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import dayjs from "dayjs";
 import PropTypes from "prop-types";
 import { Box, Stack, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
@@ -15,7 +16,13 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { ALERT_COLOR, SUCCESS_COLOR, hexToRgba, buildClampedThinnedTicks } from "@config/chart_config";
+import {
+  calculateXDomain,
+  ALERT_COLOR,
+  SUCCESS_COLOR,
+  hexToRgba,
+  buildClampedThinnedTicks,
+} from "@config/chart_config";
 import InfoDialog from "@components/InfoDialog";
 import CustomLegend from "./CustomLegend";
 import CustomSourceTooltip from "./CustomSourceTooltip";
@@ -59,6 +66,7 @@ export default function LineCharts(props) {
     title,
     tooltipLabelFormatter,
     tooltipValueFormatter,
+    truncationTimestamp,
     xTickLabelAngle,
     xFieldKey,
     xLabel,
@@ -301,10 +309,12 @@ export default function LineCharts(props) {
     const cutoffTimestamp = yearsAgo.getTime();
 
     // Check if any data was truncated
-    const hasOlderData = processedData.some((d) => {
-      const timestamp = d.originalDate || d[xFieldKey];
-      return timestamp < cutoffTimestamp;
-    });
+    const hasOlderData =
+      truncationTimestamp ||
+      processedData.some((d) => {
+        const timestamp = d.originalDate || d[xFieldKey];
+        return timestamp < cutoffTimestamp;
+      });
 
     // Filter data based on cutoff
     const filtered = processedData.filter((d) => {
@@ -312,12 +322,26 @@ export default function LineCharts(props) {
       return timestamp >= cutoffTimestamp;
     });
 
+    let truncatedDateToUse = truncationTimestamp || null;
+
+    if (!truncatedDateToUse) {
+      const timestamps = filtered
+        .map((d) => d.originalDate || d[xFieldKey])
+        .filter((t) => t !== undefined && t !== null);
+
+      if (timestamps.length > 0) {
+        const minTimestamp = Math.min(...timestamps);
+        // Include truncation date in the domain so the reference line is visible
+        truncatedDateToUse = dayjs(new Date(minTimestamp)).subtract(1, "month").valueOf();
+      }
+    }
+
     return {
       filteredData: filtered,
-      wasTruncated: hasOlderData,
-      truncationDate: hasOlderData ? cutoffTimestamp : null,
+      wasTruncated: !!hasOlderData,
+      truncationDate: hasOlderData ? truncatedDateToUse : null,
     };
-  }, [processedData, xFieldKey]);
+  }, [processedData, xFieldKey, truncationTimestamp]);
 
   const linesWithData = React.useMemo(() => {
     if (!filteredData || filteredData.length === 0 || !yLineFields || yLineFields.length === 0) {
@@ -337,27 +361,16 @@ export default function LineCharts(props) {
     return linesFound;
   }, [filteredData, yLineFields]);
 
-  // Calculate fixed domain from cutoff to now (overrides xDomain prop if truncation is active)
   const calculatedXDomain = React.useMemo(() => {
-    // If we have a custom xDomain prop and no truncation, use it
-    if (xDomain && !wasTruncated) {
-      return xDomain;
-    }
-
-    // Otherwise calculate domain from cutoff to now
-    const now = new Date().getTime();
-    const yearsAgo = new Date();
-    yearsAgo.setFullYear(yearsAgo.getFullYear() - CUT_OFF_YEAR);
-    const cutoffTimestamp = yearsAgo.getTime();
-
-    // Add padding (e.g., 1 month = ~30 days)
-    const paddingMs = 30 * 24 * 60 * 60 * 1000;
-
-    const domain = [cutoffTimestamp - paddingMs, now + paddingMs];
-
-    return domain;
-  }, [xDomain, wasTruncated]);
-
+    return calculateXDomain({
+      filteredData,
+      xFieldKey,
+      wasTruncated,
+      truncationDate,
+      xDomain,
+      cutoffYears: CUT_OFF_YEAR,
+    });
+  }, [xDomain, truncationDate, wasTruncated, filteredData, xFieldKey]);
   const nullValueData = React.useMemo(() => {
     if (!filteredData || filteredData.length === 0) return [];
 
@@ -371,9 +384,11 @@ export default function LineCharts(props) {
   const hasNullValues = React.useMemo(() => {
     if (!filteredData || filteredData.length === 0) return false;
     if (hasMultipleYFields()) {
-      return filteredData.find((d) => yLineFields.every((field) => d[field.key] == null || d[field.key] === undefined));
+      return !!filteredData.find((d) =>
+        yLineFields.every((field) => d[field.key] == null || d[field.key] === undefined),
+      );
     }
-    return filteredData.some((d) => d[yFieldKey] === null || d[yFieldKey] === undefined);
+    return !!filteredData.some((d) => d[yFieldKey] === null || d[yFieldKey] === undefined);
   }, [filteredData, yFieldKey, hasMultipleYFields, yLineFields]);
 
   let maxYValue = maximumYValue
@@ -1100,19 +1115,21 @@ export default function LineCharts(props) {
   };
 
   const renderTruncationLine = () => {
+    console.log("renderTruncationLine in LineCharts:", { wasTruncated, truncationDate });
+
     if (!wasTruncated || !truncationDate) return null;
 
     return (
       <ReferenceLine
         x={truncationDate}
-        stroke="#999"
+        stroke="#9b9a9a"
         strokeWidth={2}
         strokeDasharray="3 3"
         label={{
           value: "data truncated",
           position: "top",
-          fill: "#666",
-          fontSize: isSmallScreen ? 10 : 12,
+          fill: "#777",
+          fontSize: 10,
           fontWeight: 500,
         }}
       />
@@ -1126,6 +1143,8 @@ export default function LineCharts(props) {
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     };
   }, []);
+
+  console.log("LineCharts - before render:", { wasTruncated, truncationDate });
 
   return (
     <>
@@ -1231,6 +1250,7 @@ LineCharts.propTypes = {
   title: PropTypes.string,
   tooltipLabelFormatter: PropTypes.func,
   tooltipValueFormatter: PropTypes.func,
+  truncationTimestamp: PropTypes.number,
   xDomain: PropTypes.array,
   xFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   xLabel: PropTypes.string,

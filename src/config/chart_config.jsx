@@ -1,10 +1,13 @@
 import PropTypes from "prop-types";
 import { isEmptyArray, getDateObjectInLocalDateTime, getLocaleDateStringFromDate } from "@util";
 
-
 export const SUCCESS_COLOR = "green";
 export const ALERT_COLOR = "#b71c1c";
 export const WARNING_COLOR = "#e65100";
+export const CUT_OFF_YEAR = 5;
+const cutoffYearsAgo = new Date();
+cutoffYearsAgo.setFullYear(cutoffYearsAgo.getFullYear() - CUT_OFF_YEAR);
+export const CUT_OFF_TIMESTAMP = cutoffYearsAgo.getTime();
 const Rect = (props) => {
   const { cx, cy, color, value } = props;
   if (!cx && !(parseInt(cx) === 0)) return null;
@@ -29,6 +32,7 @@ const CHART_CONFIG = {
     chartWidth: 580,
     dotColor: "#444",
     dotRadius: 4,
+    cutoffTimestamp: CUT_OFF_TIMESTAMP,
     activeDotRadius: 5,
     interval: 2,
     lgChartWidth: 588,
@@ -276,6 +280,62 @@ export function getCutoffDomain({ years = 5, now = Date.now(), paddingDays = 30 
   const paddingMs = paddingDays * 24 * 60 * 60 * 1000;
   return [cutoff - paddingMs, now + paddingMs];
 }
+
+/**
+ * Calculate X-axis domain for charts with optional data truncation
+ * @param {Object} params
+ * @param {Array} params.filteredData - The filtered data array
+ * @param {string|number} params.xFieldKey - The key for x-axis values
+ * @param {boolean} params.wasTruncated - Whether data was truncated
+ * @param {number} params.truncationDate - The truncation timestamp
+ * @param {Array} params.xDomain - Custom domain override (optional)
+ * @param {number} params.cutoffYears - Number of years to look back (default: 5)
+ * @returns {Array} Domain array [min, max]
+ */
+export const calculateXDomain = ({
+  filteredData,
+  xFieldKey,
+  wasTruncated,
+  truncationDate,
+  xDomain = null,
+  cutoffYears = 5,
+}) => {
+  // If we have a custom xDomain prop and no truncation, use it
+  if (xDomain && !wasTruncated) {
+    return xDomain;
+  }
+
+  // If data was truncated, calculate domain from actual filtered data
+  if (wasTruncated && filteredData.length > 0) {
+    const timestamps = filteredData
+      .map((d) => d.originalDate || d[xFieldKey])
+      .filter((t) => t !== undefined && t !== null);
+
+    if (timestamps.length > 0) {
+      const minTimestamp = Math.min(...timestamps);
+      const maxTimestamp = Math.max(...timestamps);
+
+      // Add padding (e.g., 1 month = ~30 days)
+      const paddingMs = 30 * 24 * 60 * 60 * 1000;
+
+      // Include truncation date in the domain so the reference line is visible
+      const domainMin = truncationDate ? Math.min(minTimestamp, truncationDate) : minTimestamp;
+
+      return [domainMin - paddingMs, maxTimestamp + paddingMs];
+    }
+  }
+
+  // Fallback: calculate domain from cutoff to now
+  const now = new Date().getTime();
+  const yearsAgo = new Date();
+  yearsAgo.setFullYear(yearsAgo.getFullYear() - cutoffYears);
+  const cutoffTimestamp = yearsAgo.getTime();
+
+  // Add padding (e.g., 1 month = ~30 days)
+  const paddingMs = 30 * 24 * 60 * 60 * 1000;
+
+  return [cutoffTimestamp - paddingMs, now + paddingMs];
+};
 
 export function uniqSorted(arr) {
   const s = new Set();

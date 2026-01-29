@@ -1,4 +1,5 @@
 import React from "react";
+import dayjs from "dayjs";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -39,7 +40,7 @@ import {
   SEVERITY_CUTOFFS,
   SCORING_PARAMS,
 } from "@/consts";
-import { getDateDomain } from "@/config/chart_config";
+import { CUT_OFF_TIMESTAMP, getDateDomain } from "@/config/chart_config";
 import questionnaireConfigs, {
   findMatchingQuestionLinkIdFromCode,
   getConfigForQuestionnaire,
@@ -1011,6 +1012,16 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
       return d.chartData.data.map((o) => o.date);
     });
     const dates = !isEmptyArray(arrDates) ? [...new Set(arrDates)] : [];
+    const datesToUse = dates.filter((item) => {
+      const timestamp = item instanceof Date ? item.getTime() : new Date(item).getTime();
+      return timestamp > CUT_OFF_TIMESTAMP;
+    });
+    const hasOlderData = !!dates.find((item) => {
+      const timestamp = item instanceof Date ? item.getTime() : new Date(item).getTime();
+      return timestamp < CUT_OFF_TIMESTAMP;
+    });
+    const minTimestamp = Math.min(...datesToUse);
+    const truncationTimestamp = hasOlderData ? dayjs(new Date(minTimestamp)).subtract(2, "month").valueOf() : null;
     let xDomain = getDateDomain(dates, {
       padding: dates.length <= 2 ? 0.25 : 0.05,
     });
@@ -1040,6 +1051,7 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
           charts.push({
             ...(chartData?.scoringParams ?? {}),
             ...(chartData ?? {}),
+            truncationTimestamp,
             xDomain,
           });
         }

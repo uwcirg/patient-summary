@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import dayjs from "dayjs";
 import { Typography, Box } from "@mui/material";
 import {
   BarChart,
@@ -13,7 +14,13 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import React, { useMemo } from "react";
-import { SUCCESS_COLOR, ALERT_COLOR, adjustBrightness, buildClampedThinnedTicks } from "@config/chart_config";
+import {
+  calculateXDomain,
+  SUCCESS_COLOR,
+  ALERT_COLOR,
+  adjustBrightness,
+  buildClampedThinnedTicks,
+} from "@config/chart_config";
 import CustomSourceTooltip from "./CustomSourceTooltip";
 import { useDismissableOverlay } from "@/hooks/useDismissableOverlay";
 
@@ -33,6 +40,7 @@ export default function BarCharts(props) {
     minimumYValue,
     yFieldKey, // "total", "score", etc.
     tooltipValueFormatter,
+    truncationTimestamp,
     data = [],
   } = props;
 
@@ -151,11 +159,13 @@ export default function BarCharts(props) {
     const cutoffTimestamp = cutoffYearsAgo.getTime();
 
     // Check if any ORIGINAL data was truncated (before processing)
-    const hasOlderData = data.some((item) => {
-      const timestamp =
-        item[xFieldKey] instanceof Date ? item[xFieldKey].getTime() : new Date(item[xFieldKey]).getTime();
-      return timestamp < cutoffTimestamp;
-    });
+    const hasOlderData =
+      truncationTimestamp ||
+      data.some((item) => {
+        const timestamp =
+          item[xFieldKey] instanceof Date ? item[xFieldKey].getTime() : new Date(item[xFieldKey]).getTime();
+        return timestamp < cutoffTimestamp || item.shouldBeTruncated;
+      });
 
     // Filter the PROCESSED data to last years
     const filtered = processedData.filter((item) => {
@@ -163,12 +173,27 @@ export default function BarCharts(props) {
       return timestamp >= cutoffTimestamp;
     });
 
+    let truncatedDateToUse;
+    if (hasOlderData) {
+      truncatedDateToUse = truncationTimestamp;
+      if (!truncatedDateToUse) {
+        const timestamps = filtered
+          .map((d) => d.originalDate || d[xFieldKey])
+          .filter((t) => t !== undefined && t !== null);
+        if (timestamps.length > 0) {
+          const minTimestamp = Math.min(...timestamps);
+          // Include truncation date in the domain so the reference line is visible
+          truncatedDateToUse = dayjs(new Date(minTimestamp)).subtract(6, "month").valueOf();
+        }
+      }
+    }
+
     return {
       filteredData: filtered,
-      wasTruncated: hasOlderData,
-      truncationDate: hasOlderData ? cutoffTimestamp : null,
+      wasTruncated: !!hasOlderData,
+      truncationDate: hasOlderData ? truncatedDateToUse : null,
     };
-  }, [data, processedData, xFieldKey]);
+  }, [data, processedData, xFieldKey, truncationTimestamp]);
 
   // Convert date strings -> timestamps once
   const parsed = useMemo(
@@ -188,37 +213,15 @@ export default function BarCharts(props) {
 
   // Calculate domain with fixed range from cutoff to now (matches LineChart)
   const xAxisDomain = useMemo(() => {
-    // If custom xDomain is provided, use it
-    if (xDomain) {
-      // console.log("BarChart using custom xDomain:", {
-      //   title: title,
-      //   start: new Date(xDomain[0]).toLocaleDateString(),
-      //   end: new Date(xDomain[1]).toLocaleDateString(),
-      //   rawDomain: xDomain,
-      // });
-      return xDomain;
-    }
-
-    if (parsed.length === 0) return ["dataMin", "dataMax"];
-
-    const now = new Date().getTime();
-    const cutoffYearsAgo = new Date();
-    cutoffYearsAgo.setFullYear(cutoffYearsAgo.getFullYear() - CUT_OFF_YEAR);
-    const cutoffTimestamp = cutoffYearsAgo.getTime();
-
-    // Add padding (e.g., 1 month = ~30 days)
-    const paddingMs = 30 * 24 * 60 * 60 * 1000;
-
-    const domain = [cutoffTimestamp - paddingMs, now + paddingMs];
-
-    // console.log("BarChart domain:", {
-    //   start: new Date(domain[0]).toLocaleDateString(),
-    //   end: new Date(domain[1]).toLocaleDateString(),
-    //   rawDomain: domain,
-    // });
-
-    return domain;
-  }, [parsed.length, xDomain]);
+    return calculateXDomain({
+      filteredData,
+      xFieldKey,
+      wasTruncated,
+      truncationDate,
+      xDomain,
+      cutoffYears: CUT_OFF_YEAR,
+    });
+  }, [filteredData, xFieldKey, wasTruncated, truncationDate, xDomain]);
 
   // Calculate unique date ticks (one per calendar day)
   const calculatedTicks = useMemo(() => {
@@ -354,13 +357,13 @@ export default function BarCharts(props) {
     return (
       <ReferenceLine
         x={truncationDate}
-        stroke="#999"
+        stroke="#9b9a9a"
         strokeWidth={2}
         strokeDasharray="3 3"
         label={{
           value: "data truncated",
           position: "top",
-          fill: "#666",
+          fill: "#777",
           fontSize: 10,
           fontWeight: 500,
         }}
@@ -471,5 +474,6 @@ BarCharts.propTypes = {
   yLabel: PropTypes.string,
   tooltipLabelFormatter: PropTypes.func,
   tooltipValueFormatter: PropTypes.func,
+  truncationTimestamp: PropTypes.number,
   data: PropTypes.array,
 };

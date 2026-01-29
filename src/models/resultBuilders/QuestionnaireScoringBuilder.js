@@ -46,7 +46,7 @@ import {
   linkIdEquals,
   normalizeLinkId,
 } from "@/util/fhirUtil";
-import { getDateDomain } from "@/config/chart_config";
+//import { getDateDomain, CUT_OFF_TIMESTAMP } from "@/config/chart_config";
 
 const RT_QR = "questionnaireresponse";
 const RT_Q = "Questionnaire";
@@ -1669,11 +1669,20 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     let xDomain;
     if (chartData && chartConfig?.dataFormatter) {
       chartData = chartConfig.dataFormatter(chartData);
-      const dateArray = !isEmptyArray(chartData) ? chartData?.map((dataPoint) => dataPoint.date) : [];
-      const uniqueDates = !isEmptyArray(dateArray) ? [...new Set(dateArray)] : [];
-      xDomain = getDateDomain(uniqueDates, { padding: uniqueDates.length <= 2 ? 0.15 : 0.05 });
     }
-
+    //const dateArray = !isEmptyArray(chartData) ? chartData?.map((dataPoint) => dataPoint.date) : [];
+    // const uniqueDates = !isEmptyArray(dateArray) ? [...new Set(dateArray)] : [];
+    // xDomain = getDateDomain(uniqueDates, { padding: uniqueDates.length <= 2 ? 0.15 : 0.05 });
+    // const datesToUse = uniqueDates.filter((item) => {
+    //   const timestamp = item instanceof Date ? item.getTime() : new Date(item).getTime();
+    //   return timestamp > CUT_OFF_TIMESTAMP;
+    // });
+    // const hasOlderData = !!uniqueDates.find((item) => {
+    //   const timestamp = item instanceof Date ? item.getTime() : new Date(item).getTime();
+    //   return timestamp < CUT_OFF_TIMESTAMP;
+    // });
+    // const minTimestamp = Math.min(...datesToUse);
+    // const truncationTimestamp = hasOlderData ? dayjs(new Date(minTimestamp)).subtract(1, "month").valueOf() : null;
     const { chartParams, ...rest } = config ?? {};
     const chartDataParams = { ...rest, ...chartConfig, ...chartParams, xDomain };
     const dedupeByDateLatest = (arr) => {
