@@ -57,7 +57,7 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
               direction="row"
               spacing={0.2}
               justifyContent="flex-start"
-              alignItems="center"
+              alignItems="flex-start"
             >
               <Box component="span" sx={{flex: 1}}>{pair.left}:</Box>
               <Box component="span" sx={{flex: 1}}>{pair.right}</Box>
