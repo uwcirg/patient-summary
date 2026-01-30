@@ -18,6 +18,7 @@ import {
 } from "recharts";
 import {
   calculateXDomain,
+  CUT_OFF_YEARS_AGO,
   ALERT_COLOR,
   SUCCESS_COLOR,
   hexToRgba,
@@ -115,7 +116,6 @@ export default function LineCharts(props) {
   });
 
   const Y_AXIS_PADDING = 0.5;
-  const CUT_OFF_YEAR = 5;
   const isCategoricalY = props.isCategoricalY || false;
 
   const hasMultipleYFields = useCallback(() => yLineFields && yLineFields.length > 0, [yLineFields]);
@@ -305,7 +305,7 @@ export default function LineCharts(props) {
 
     // Calculate cutoff years ago from today
     const yearsAgo = new Date();
-    yearsAgo.setFullYear(yearsAgo.getFullYear() - CUT_OFF_YEAR);
+    yearsAgo.setFullYear(yearsAgo.getFullYear() - CUT_OFF_YEARS_AGO);
     const cutoffTimestamp = yearsAgo.getTime();
 
     // Check if any data was truncated
@@ -368,7 +368,7 @@ export default function LineCharts(props) {
       wasTruncated,
       truncationDate,
       xDomain,
-      cutoffYears: CUT_OFF_YEAR,
+      cutoffYears: CUT_OFF_YEARS_AGO,
     });
   }, [xDomain, truncationDate, wasTruncated, filteredData, xFieldKey]);
   const nullValueData = React.useMemo(() => {

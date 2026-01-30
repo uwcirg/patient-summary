@@ -4,10 +4,13 @@ import { isEmptyArray, getDateObjectInLocalDateTime, getLocaleDateStringFromDate
 export const SUCCESS_COLOR = "green";
 export const ALERT_COLOR = "#b71c1c";
 export const WARNING_COLOR = "#e65100";
-export const CUT_OFF_YEAR = 5;
-const cutoffYearsAgo = new Date();
-cutoffYearsAgo.setFullYear(cutoffYearsAgo.getFullYear() - CUT_OFF_YEAR);
-export const CUT_OFF_TIMESTAMP = cutoffYearsAgo.getTime();
+export const CUT_OFF_YEARS_AGO = 5;
+const getCutoffDate = () => {
+  const cutoffYearsAgo = new Date();
+  cutoffYearsAgo.setFullYear(cutoffYearsAgo.getFullYear() - CUT_OFF_YEARS_AGO);
+  return cutoffYearsAgo;
+};
+export const CUT_OFF_TIMESTAMP_ON_GRAPH = getCutoffDate().getTime();
 const Rect = (props) => {
   const { cx, cy, color, value } = props;
   if (!cx && !(parseInt(cx) === 0)) return null;
@@ -32,7 +35,7 @@ const CHART_CONFIG = {
     chartWidth: 580,
     dotColor: "#444",
     dotRadius: 4,
-    cutoffTimestamp: CUT_OFF_TIMESTAMP,
+    cutoffTimestamp: CUT_OFF_TIMESTAMP_ON_GRAPH,
     activeDotRadius: 5,
     interval: 2,
     lgChartWidth: 588,

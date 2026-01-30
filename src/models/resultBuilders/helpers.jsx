@@ -40,7 +40,7 @@ import {
   SEVERITY_CUTOFFS,
   SCORING_PARAMS,
 } from "@/consts";
-import { CUT_OFF_TIMESTAMP, getDateDomain } from "@/config/chart_config";
+import { CUT_OFF_TIMESTAMP_ON_GRAPH, getDateDomain } from "@/config/chart_config";
 import questionnaireConfigs, {
   findMatchingQuestionLinkIdFromCode,
   getConfigForQuestionnaire,
@@ -1014,14 +1014,17 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
     const dates = !isEmptyArray(arrDates) ? [...new Set(arrDates)] : [];
     const datesToUse = dates.filter((item) => {
       const timestamp = item instanceof Date ? item.getTime() : new Date(item).getTime();
-      return timestamp > CUT_OFF_TIMESTAMP;
+      return timestamp > CUT_OFF_TIMESTAMP_ON_GRAPH;
     });
     const hasOlderData = !!dates.find((item) => {
       const timestamp = item instanceof Date ? item.getTime() : new Date(item).getTime();
-      return timestamp < CUT_OFF_TIMESTAMP;
+      return timestamp < CUT_OFF_TIMESTAMP_ON_GRAPH;
     });
-    const minTimestamp = Math.min(...datesToUse);
-    const truncationTimestamp = hasOlderData ? dayjs(new Date(minTimestamp)).subtract(2, "month").valueOf() : null;
+    let truncationTimestamp;
+    if (hasOlderData) {
+      const minTimestamp = Math.min(...datesToUse);
+      truncationTimestamp = dayjs(new Date(minTimestamp)).subtract(2, "month").valueOf();
+    }
     let xDomain = getDateDomain(dates, {
       padding: dates.length <= 2 ? 0.25 : 0.05,
     });
