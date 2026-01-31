@@ -12,9 +12,9 @@ import {
   fuzzyMatch,
   normalizeStr,
   objectToString,
+  stripHtmlTags,
   toFiniteNumber,
 } from "@util";
-//import Response from "@models/Response";
 import FhirResultBuilder from "./FhirResultBuilder";
 import {
   buildQuestionnaire,
@@ -46,7 +46,6 @@ import {
   linkIdEquals,
   normalizeLinkId,
 } from "@/util/fhirUtil";
-//import { getDateDomain, CUT_OFF_TIMESTAMP } from "@/config/chart_config";
 
 const RT_QR = "questionnaireresponse";
 const RT_Q = "Questionnaire";
@@ -845,10 +844,19 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   }
   _getAnswer(responseItem, config) {
     if (!responseItem) return EMPTY_CELL_STRING;
+    // tiny safe normalizer to avoid raw objects rendering
+    const normalize = (v) => {
+      if (typeof v === "string" || typeof v === "number") {
+        if (String(v).toLowerCase() === "tbd") return EMPTY_CELL_STRING;
+        return v;
+      }
+      if (Array.isArray(v)) return v.join(", ");
+      return v;
+    };
     const ansItem = responseItem?.answer;
     const answer = this.getAnswerItemDisplayValue(ansItem, config);
     const displayText = config?.valueFormatter ? config.valueFormatter(answer) : answer;
-    return !isNil(displayText) ? displayText : EMPTY_CELL_STRING;
+    return !isNil(displayText) ? stripHtmlTags(normalize(displayText)) : EMPTY_CELL_STRING;
   }
   _getQuestion(responseItem, configToUse) {
     if (!responseItem) return null;
@@ -869,7 +877,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         questionText = textExt.valueString;
       }
     }
-    return questionText;
+    if (!questionText) return "";
+    return stripHtmlTags((questionText).replace(/\s*\([^)]*\)/g, "").trim());;
   }
   _hasResponseData(data) {
     return !isEmptyArray(data) && !!data.find((item) => !isEmptyArray(item.responses));

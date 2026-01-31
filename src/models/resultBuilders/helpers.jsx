@@ -25,7 +25,6 @@ import {
   isPlainObject,
   normalizeStr,
   removeNullValuesFromObject,
-  stripHtmlTags,
 } from "@util";
 import Scoring from "@components/Score";
 import Meaning from "@components/Meaning";
@@ -69,9 +68,7 @@ export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, 
   const conditions = options.conditions || getResourcesByResourceType(ctx.patientBundle);
   const hasLowerLevelEducation = !isEmptyArray(conditions)
     ? conditions.some((c) =>
-        (c?.code?.coding || []).some(
-          (cd) => (cd?.code || "").toString().toUpperCase() === CONDITION_CODES.LOWER_EDUCATION,
-        ),
+        (c?.code?.coding || []).some((cd) => normalizeStr(cd?.code) === normalizeStr(CONDITION_CODES.LOWER_EDUCATION)),
       )
     : false;
 
@@ -107,10 +104,9 @@ export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, 
       responses,
       ...stats,
       score,
-      scoreSeverity,
-      scoreMeaning: meaningFromSeverity(scoreSeverity),
+      severity: scoreSeverity,
+      meaning: meaningFromSeverity(scoreSeverity, ctx.cfg),
       comparisonToAlert: "lower",
-      scoringParams: { ...ctx.cfg, scoreSeverity: scoreSeverity },
       highSeverityScoreCutoff: hasLowerLevelEducation
         ? SEVERITY_CUTOFFS.SLUMS_LOW_EDUCATION
         : SEVERITY_CUTOFFS.SLUMS_HIGH_EDUCATION,
@@ -174,11 +170,11 @@ export function summarizeCIDASHelper(ctx, questionnaireResponses, questionnaire,
       date: qr.authored ?? null,
       responses,
       score,
-      scoreSeverity,
+      severity: scoreSeverity,
       highSeverityScoreCutoff,
       meaning: meaningFromSeverity(scoreSeverity),
+      maximumScore,
       alertNote: suicideScore >= SEVERITY_CUTOFFS.CIDAS_SUICIDE_THRESHOLD ? "suicide concern" : null,
-      scoringParams: { ...ctx.cfg, maximumScore, scoreSeverity },
       totalAnsweredItems,
       totalItems,
       authoredDate: qr.authored,
@@ -272,10 +268,10 @@ export function summarizeMiniCogHelper(ctx, questionnaireResponses, questionnair
       word_recall_score: recallScore,
       clock_draw_score: clockScore,
       score: totalScore,
-      scoreSeverity,
+      severity: scoreSeverity,
       meaning: meaningFromSeverity(scoreSeverity),
       comparisonToAlert: "lower",
-      scoringParams: { ...(ctx.cfg ?? { maximumScore: SCORING_PARAMS.MINICOG_MAXIMUM_SCORE }), scoreSeverity },
+      maximumScore: SCORING_PARAMS.MINICOG_MAXIMUM_SCORE,
       highSeverityScoreCutoff,
       totalAnsweredItems,
       totalItems,
@@ -355,8 +351,9 @@ export function defaultAnswerMapperFromObservation(obs) {
   }
 
   // Integer / Decimal / Boolean
-  if (obs.valueInteger !== undefined) return { valueInteger: obs.valueInteger };
-  if (typeof obs.valueDecimal === "number") return { valueDecimal: obs.valueDecimal };
+  if (isNumber(obs.valueInteger)) return { valueInteger: obs.valueInteger };
+  if (typeof obs.valueDecimal === "number" && Number.isFinite(obs.valueDecimal))
+    return { valueDecimal: obs.valueDecimal };
   if (typeof obs.valueBoolean === "boolean") return { valueBoolean: obs.valueBoolean };
 
   // Date/DateTime/Time
@@ -399,7 +396,8 @@ function trimToMinutes(dtString) {
     console.warn(`trimToMinutes: Invalid date string "${dtString}"`);
     return dtString;
   }
-  return d.toISOString().slice(0, 16);
+  //return d.toISOString().slice(0, 16);
+  return dayjs(dtString).format("YYYY-MM-DDTHH:mm");
 }
 
 /**
@@ -414,7 +412,7 @@ function getObservationGroupingKey(observation) {
     observation.effectiveDateTime ||
     observation.issued ||
     observation.encounter?.reference ||
-    `unknown-${generateUUID()}` // Prevent grouping unrelated observations
+    `${conceptText(observation.code) ?? "noid"}` // Prevent grouping unrelated observations
   );
 }
 
@@ -902,14 +900,14 @@ export function getResponseColumns(data) {
 
   // tiny safe normalizer to avoid raw objects rendering
   const normalize = (v) => {
-    if (v == null || String(v) === "" || String(v) === "null" || String(v) === "undefined") return "—";
+    if (v == null || String(v) === "" || String(v) === "null" || String(v) === "undefined") return EMPTY_CELL_STRING;
     if (typeof v === "string" || typeof v === "number") {
-      if (String(v).toLowerCase() === "tbd") return "-";
+      if (String(v).toLowerCase() === "tbd") return EMPTY_CELL_STRING;
       return v;
     }
     if (React.isValidElement(v)) return v;
     if (Array.isArray(v)) return v.join(", ");
-    return "-";
+    return EMPTY_CELL_STRING;
   };
 
   return [
@@ -928,23 +926,24 @@ export function getResponseColumns(data) {
       render: (rowData) => {
         const q = rowData?.question ?? "";
         const config = rowData?.config;
-        const cleaned = typeof q === "string" ? q.replace(/\s*\([^)]*\)/g, "").trim() : "";
-        const normalizedClean = normalizeStr(cleaned);
+        const normalizedClean = normalizeStr(q);
         const isQuestion =
-          IS_QUESTION_COLUMN_KEYWORDS.some(
+          normalizeStr(q) === normalizeStr(config?.title) ||
+          (IS_QUESTION_COLUMN_KEYWORDS.some(
             (keyword) => normalizedClean === keyword || normalizedClean.includes(keyword),
-          ) && normalizedClean.length < 50;
+          ) &&
+            normalizedClean.length < 50);
 
-        if (typeof q === "string" && (normalizeStr(cleaned) === normalizeStr(config?.title) || isQuestion)) {
+        if (typeof q === "string" && isQuestion) {
           return (
             <span className={`${isQuestion ? "question-row" : ""}`}>
               <b>{q}</b>
             </span>
           );
         }
-        // fall back to normalized string if not a plain string
-        if (typeof q !== "string") return stripHtmlTags(normalize(q));
-        return stripHtmlTags(q);
+        // // fall back to normalized string if not a plain string
+        if (typeof q !== "string") return normalize(q);
+        return q;
       },
     },
     ...dates.map((item, index) => ({
@@ -955,13 +954,16 @@ export function getResponseColumns(data) {
         minWidth: "148px",
         borderRight: "1px solid #ececec",
       },
-      spanFullRow: !!item.readyOnly,
       render: (rowData) => {
         const rowDataItem = rowData?.[item.id];
         if (rowData.readOnly) return <span className="text-readonly"></span>;
-        // if (isNumber(rowDataItem)) return rowDataItem;
         // explicit placeholders prevent React from trying to render objects
-        if (!rowDataItem || String(rowDataItem) === "null" || String(rowDataItem) === "undefined")
+        if (
+          rowDataItem == null ||
+          String(rowDataItem) === "" ||
+          String(rowDataItem) === "null" ||
+          String(rowDataItem) === "undefined"
+        )
           return EMPTY_CELL_STRING;
         if (rowDataItem.hasMeaningOnly) {
           const { key, ...rest } = rowDataItem;
@@ -984,27 +986,24 @@ export function getResponseColumns(data) {
             </Stack>
           );
         }
-        const contentToRender =
-          typeof rowDataItem === "string" || isNumber(rowDataItem)
-            ? stripHtmlTags(rowDataItem)
-            : normalize(rowDataItem);
-        if (contentToRender) return contentToRender;
-        // string answers render directly; everything else is safely stringified
-        return EMPTY_CELL_STRING;
+        return normalize(rowDataItem);
       },
     })),
   ];
 }
 
 export function buildReportData({ summaryData = {}, bundle = [] }) {
-  let skeleton = Object.assign({}, report_config);
+  const skeleton = Object.assign({}, report_config);
   if (!skeleton || !skeleton.sections || !Array.isArray(skeleton.sections)) {
     console.error("buildReportData: Invalid report_config structure");
     return skeleton || { sections: [] };
   }
   skeleton.sections.forEach((section) => {
     const tables = section.tables;
-    if (isEmptyArray(tables)) return true;
+    if (isEmptyArray(tables)) {
+      console.warn("buildReportData: No tables found in section", section);
+      return true;
+    }
     const keysToMatch = tables.map((table) => table.dataKeysToMatch ?? []).flat();
     const arrDates = keysToMatch.flatMap((key) => {
       const d = summaryData ? summaryData[key] : null;
@@ -1021,9 +1020,12 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
       return timestamp < CUT_OFF_TIMESTAMP_ON_GRAPH;
     });
     let truncationTimestamp;
-    if (hasOlderData) {
-      const minTimestamp = Math.min(...datesToUse);
-      truncationTimestamp = dayjs(new Date(minTimestamp)).subtract(2, "month").valueOf();
+    if (hasOlderData && datesToUse.length > 0) {
+      const minTimestamp = Math.min(...datesToUse.map((d) => new Date(d).getTime()));
+      truncationTimestamp = dayjs(minTimestamp).subtract(2, "month").valueOf();
+    } else if (hasOlderData) {
+      // fallback: truncate relative to cutoff or last date
+      truncationTimestamp = dayjs(CUT_OFF_TIMESTAMP_ON_GRAPH).subtract(2, "month").valueOf();
     }
     let xDomain = getDateDomain(dates, {
       padding: dates.length <= 2 ? 0.25 : 0.05,

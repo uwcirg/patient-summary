@@ -20,6 +20,7 @@ import {
   ALERT_COLOR,
   adjustBrightness,
   buildClampedThinnedTicks,
+  CUT_OFF_YEARS_AGO
 } from "@config/chart_config";
 import CustomSourceTooltip from "./CustomSourceTooltip";
 import { useDismissableOverlay } from "@/hooks/useDismissableOverlay";
@@ -44,7 +45,7 @@ export default function BarCharts(props) {
     data = [],
   } = props;
 
-  const CUT_OFF_YEAR = 5;
+ 
   const wrapperRef = React.useRef(null);
   const [forceHide, setForceHide] = React.useState(false);
   const [locked, setLocked] = React.useState(false); // sticky open (touch)
@@ -155,7 +156,7 @@ export default function BarCharts(props) {
 
     // Calculate cutoff years ago from today
     const cutoffYearsAgo = new Date();
-    cutoffYearsAgo.setFullYear(cutoffYearsAgo.getFullYear() - CUT_OFF_YEAR);
+    cutoffYearsAgo.setFullYear(cutoffYearsAgo.getFullYear() - CUT_OFF_YEARS_AGO);
     const cutoffTimestamp = cutoffYearsAgo.getTime();
 
     // Check if any ORIGINAL data was truncated (before processing)
@@ -219,7 +220,7 @@ export default function BarCharts(props) {
       wasTruncated,
       truncationDate,
       xDomain,
-      cutoffYears: CUT_OFF_YEAR,
+      cutoffYears: CUT_OFF_YEARS_AGO,
     });
   }, [filteredData, xFieldKey, wasTruncated, truncationDate, xDomain]);
 
