@@ -235,8 +235,6 @@ export default function BarCharts(props) {
     });
   }, [parsed.length, xAxisDomain, chartWidth]);
 
-  //const MIN_CHART_WIDTH = xsChartWidth ?? 400;
-
   let maxYValue = maximumYValue ?? parsed.reduce((m, d) => Math.max(m, Number(d?.[yFieldKey] ?? -Infinity)), -Infinity);
   let minYValue = minimumYValue ?? parsed?.reduce((min, d) => Math.min(min, d[yFieldKey]), Infinity);
   maxYValue = parsed.length === 0 || maxYValue === -Infinity ? null : maxYValue;

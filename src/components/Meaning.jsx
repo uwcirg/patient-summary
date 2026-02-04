@@ -30,8 +30,6 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
       {parts.map((m, index) => {
         const key = `${id ?? "row"}_meaning_${index}`;
         const s = String(m ?? "");
-
-        // If it's HTML, sanitize, then (optionally) split text-only cases by ":" won't apply
         if (hasHtmlTags(s)) {
           const sanitized = DOMPurify.sanitize(s, {
             ALLOWED_TAGS: ["b", "i", "em", "strong", "br", "span", "div", "p"],

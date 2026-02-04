@@ -182,7 +182,7 @@ Rect.propTypes = {
 /**
  * Compute a safe, padded domain for an array of timestamps (ms).
  * - Empty array => ["auto","auto"] (or [0,1] if allowAutoFallback=false)
- * - Single date  => expands by ±singlePointWindowDays
+ * - Single date  => expands by +-singlePointWindowDays
  * - Multiple     => padded by `padding` fraction
  */
 export function getDateDomain(
@@ -215,7 +215,15 @@ export function getDateDomain(
   return [min - range * padding, max + range * padding];
 }
 
-// --- build aligned ticks (month/quarter/year) ---
+/**
+ * Builds aligned time ticks for chart axes
+ * @param {[number, number]} domain - Array of [minMs, maxMs] in milliseconds
+ * @param {Object} options - Configuration options
+ * @param {string} options.unit - Time unit: "day", "week", "month", or "year" (default: "month")
+ * @param {number} options.step - Step size for the unit (default: 3)
+ * @param {number} options.weekStartsOn - Day of week start (0=Sunday, 1=Monday, etc.) (default: 0)
+ * @returns {number[]} Array of tick timestamps in milliseconds
+ */
 export function buildTimeTicks([minMs, maxMs], { unit = "month", step = 3, weekStartsOn = 0 } = {}) {
   if (!Number.isFinite(minMs) || !Number.isFinite(maxMs) || maxMs <= minMs) return [];
   const startOfDayUTC = (ms) => {
@@ -260,6 +268,13 @@ export function buildTimeTicks([minMs, maxMs], { unit = "month", step = 3, weekS
   return ticks;
 }
 
+/**
+ * Adds a time step to a UTC timestamp
+ * @param {number} ms - Starting timestamp in milliseconds
+ * @param {string} unit - Time unit: "day", "week", "month", or "year"
+ * @param {number} step - Number of units to add
+ * @returns {number} New timestamp in milliseconds
+ */
 function addStepUTC(ms, unit, step) {
   const d = new Date(ms);
   if (unit === "day") return ms + step * 86400000;
@@ -268,7 +283,12 @@ function addStepUTC(ms, unit, step) {
   return Date.UTC(d.getUTCFullYear() + step, 0, 1);
 }
 
-// Measure text width to thin ticks to avoid overlap
+/**
+ * Measures the rendered width of text using canvas
+ * @param {string} text - Text to measure
+ * @param {string} font - CSS font string (default: "12px sans-serif")
+ * @returns {number} Width in pixels
+ */
 function measureLabelWidth(text, font = "12px sans-serif") {
   const c = measureLabelWidth._c || (measureLabelWidth._c = document.createElement("canvas"));
   const ctx = c.getContext("2d");
@@ -276,6 +296,14 @@ function measureLabelWidth(text, font = "12px sans-serif") {
   return ctx.measureText(String(text)).width;
 }
 
+/**
+ * Calculates a domain from a cutoff date to now with padding
+ * @param {Object} options - Configuration options
+ * @param {number} options.years - Number of years to look back (default: 5)
+ * @param {number} options.now - Current timestamp in milliseconds (default: Date.now())
+ * @param {number} options.paddingDays - Padding in days on each side (default: 30)
+ * @returns {[number, number]} Domain array [cutoff, now+padding]
+ */
 export function getCutoffDomain({ years = 5, now = Date.now(), paddingDays = 30 }) {
   const yearsAgo = new Date(now);
   yearsAgo.setFullYear(yearsAgo.getFullYear() - years);
@@ -346,6 +374,18 @@ export function uniqSorted(arr) {
   return Array.from(s).sort((a, b) => a - b);
 }
 
+/**
+ * Thins tick array to fit within chart width without label overlap
+ * @param {number[]} ticks - Array of tick values
+ * @param {Function} formatter - Function to format tick labels for measurement
+ * @param {number} chartWidth - Total chart width in pixels
+ * @param {Object} options - Configuration options
+ * @param {number} options.leftPadding - Left padding in pixels (default: 50)
+ * @param {number} options.rightPadding - Right padding in pixels (default: 30)
+ * @param {number} options.minGap - Minimum gap between labels in pixels (default: 8)
+ * @param {string} options.font - CSS font string for measurement (default: "12px sans-serif")
+ * @returns {number[]} Thinned array of ticks
+ */
 export function thinTicksToFit(
   ticks,
   formatter,
@@ -362,6 +402,14 @@ export function thinTicksToFit(
   return ticks.filter((_, i) => i % k === 0);
 }
 
+/**
+ * Builds time ticks, clamps to domain, removes duplicates, and thins to fit width
+ * @param {Object} params - Configuration object
+ * @param {[number, number]} params.domain - Domain array [min, max] in milliseconds
+ * @param {number} params.stepMonths - Step size in months
+ * @param {number} params.width - Chart width in pixels
+ * @returns {number[]|undefined} Array of tick timestamps, or undefined if invalid domain
+ */
 export function buildClampedThinnedTicks({ domain, stepMonths, width }) {
   if (!Array.isArray(domain) || typeof domain[0] !== "number") return undefined;
 
@@ -384,6 +432,14 @@ export const fmtISO = new Intl.DateTimeFormat("en-CA", {
   timeZone: "UTC",
 });
 
+/**
+ * Gets dot color for chart points, adjusting brightness for duplicates
+ * @param {Object} entry - Data entry with duplicate metadata
+ * @param {number} entry._duplicateCount - Total number of duplicates on this date
+ * @param {number} entry._duplicateIndex - Index of this duplicate (0-based)
+ * @param {string} baseColor - Base hex color (e.g., "#FF5733")
+ * @returns {string} Hex color string
+ */
 export const getDotColor = (entry, baseColor) => {
   // If no duplicates on this day, use base color
   if (!entry._duplicateCount || entry._duplicateCount === 1) {
@@ -398,6 +454,11 @@ export const getDotColor = (entry, baseColor) => {
   return adjustBrightness(baseColor, adjustment);
 };
 
+/**
+ * Converts a hex color to RGB object
+ * @param {string} hex - Hex color string (e.g., "#FF5733")
+ * @returns {{r: number, g: number, b: number}|null} RGB object or null if invalid
+ */
 const hexToRgb = (hex) => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
@@ -409,6 +470,13 @@ const hexToRgb = (hex) => {
     : null;
 };
 
+/**
+ * Converts RGB values to hex color string
+ * @param {number} r - Red value (0-255)
+ * @param {number} g - Green value (0-255)
+ * @param {number} b - Blue value (0-255)
+ * @returns {string} Hex color string (e.g., "#FF5733")
+ */
 export const rgbToHex = (r, g, b) => {
   return (
     "#" +
@@ -421,6 +489,12 @@ export const rgbToHex = (r, g, b) => {
   );
 };
 
+/**
+ * Adjusts the brightness of a hex color
+ * @param {string} color - Hex color string (e.g., "#FF5733")
+ * @param {number} amount - Amount to adjust brightness (-255 to 255, negative for darker)
+ * @returns {string} Adjusted hex color string
+ */
 export const adjustBrightness = (color, amount) => {
   const rgb = hexToRgb(color);
   if (!rgb) return color;

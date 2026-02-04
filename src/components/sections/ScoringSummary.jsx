@@ -55,7 +55,7 @@ export default function ScoringSummary(props) {
     borderColor: "border.main",
     whiteSpace: { xs: "normal", sm: "nowrap" }, // allow wrapping on phones
     lineHeight: 1.4,
-    fontSize: { xs: "0.75rem", sm: "0.8rem" }, // optional: slightly smaller on xs
+    fontSize: { xs: "0.75rem", sm: "0.8rem" }, // slightly smaller on xs
     wordBreak: "break-word",
     padding: theme.spacing(1),
     verticalAlign: "top",
@@ -156,7 +156,6 @@ export default function ScoringSummary(props) {
           borderBottomColor: "border.main",
           verticalAlign: "top",
           textAlign: "left",
-          // height: "100%",
           minWidth: "128px",
         },
         size: "small",
@@ -264,7 +263,7 @@ export default function ScoringSummary(props) {
     // Start with whichever exists
     let merged = defaultCol ? { ...defaultCol, ...(userCol || {}) } : { ...userCol };
 
-    // If user supplies a new accessor or type but no renderCell,
+    // If a new accessor or type but no renderCell is suppllied,
     // drop the default renderCell to let type/accessor drive rendering.
     if (userCol && (userCol.accessor || userCol.type) && !userCol.renderCell) {
       delete merged.renderCell;
@@ -272,17 +271,17 @@ export default function ScoringSummary(props) {
     return merged;
   };
 
-  // Build a map of all effective columns by id (defaults + user extra columns)
+  // Build a map of all effective columns by id (defaults + extra columns)
   const effectiveById = {};
   const allIds = new Set([...Object.keys(defaultById), ...Object.keys(userById)]);
   for (const id of allIds) {
     effectiveById[id] = mergeColumn(defaultById[id], userById[id]);
   }
 
-  // 1) Columns in the order the user specified (for both defaults and extras)
+  // 1) Columns in the order specified (for both defaults and extras)
   const orderedFromUser = userColumns.map((c) => effectiveById[c.id]).filter(Boolean);
 
-  // 2) Any remaining default columns that the user did *not* mention at all,
+  // 2) Any remaining default columns that are left,
   //     in their original DEFAULT_COLUMNS order
   const remainingDefaults = DEFAULT_COLUMNS.filter((c) => !userById[c.id])
     .map((c) => effectiveById[c.id])
@@ -330,7 +329,7 @@ export default function ScoringSummary(props) {
               ...(col.headerProps?.sx || {}),
               ...(col.width ? { width: col.width } : {}),
               ...(hiddenColumnIdsInMobile.indexOf(col.id) !== -1
-                ? { display: { xs: "none", md: "table-cell" } } // hide “Meaning” on small devices
+                ? { display: { xs: "none", md: "table-cell" } } // hide some columns on small devices
                 : {}),
             }}
           >
@@ -378,7 +377,7 @@ export default function ScoringSummary(props) {
                       ...(col.sticky ? stickyStyle : {}),
                       ...(col.cellProps?.sx || {}),
                       ...(hiddenColumnIdsInMobile.indexOf(col.id) !== -1
-                        ? { display: { xs: "none", md: "table-cell" } } // hide “Meaning” on small devices
+                        ? { display: { xs: "none", md: "table-cell" } } // hide some columns on small devices
                         : {}),
                     }}
                   >

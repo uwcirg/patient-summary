@@ -402,24 +402,6 @@ export function coalesce(...vals) {
   return vals.find((v) => !isNil(v));
 }
 
-export function mergeNonEmpty(base, override = {}) {
-  const out = { ...base };
-  for (const [k, v] of Object.entries(override || {})) {
-    if (Array.isArray(v)) {
-      if (v.length > 0) out[k] = v;
-    } else if (v && typeof v === "object") {
-      if (Object.keys(v).length > 0) out[k] = v;
-    } else if (isNonEmptyString(v)) {
-      out[k] = v;
-    } else if (typeof v === "number" || typeof v === "boolean") {
-      // keep legit numbers/bools (including 0/false)
-      out[k] = v;
-    }
-    // else skip empty/nullish
-  }
-  return out;
-}
-
 export function toMaybeDate(s) {
   if (!s) return null;
   const d = new Date(s);

@@ -1041,8 +1041,6 @@ const questionnaireConfigsRaw = {
     deriveFrom: {
       hostIds: ["CIRG-PHQ9"], // one or many hosts
       linkId: PHQ9_SI_QUESTION_LINK_ID, // the single item to keep
-      // optional: override how free-text maps to valueCoding
-      //normalizeAnswerToCoding: (ans) => ({ valueCoding: { system: "...", code: ..., display: ... }})
     },
     chartParams: {
       ...CHART_CONFIG.default,

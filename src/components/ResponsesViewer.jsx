@@ -21,7 +21,6 @@ export default function ResponsesViewer({
   headerBgColor,
   buttonStyle,
   buttonLabel = "History",
-  // Optional advanced mode:
   buildColumns, // (optional) function: () => columns[]
   responsesTileTitle = "Responses", // header above the button, mirrors your summary tile
   questionnaire, // questionnaire JSON, for info popup
@@ -42,9 +41,6 @@ export default function ResponsesViewer({
           <Typography
             component="h3"
             variant="subtitle2"
-            // sx={{
-            //   textAlign: "center",
-            // }}
           >
             {responsesTileTitle}
           </Typography>
@@ -117,11 +113,11 @@ ResponsesViewer.propTypes = {
   subtitle: PropTypes.string,
   note: PropTypes.string,
   tableData: PropTypes.array,
-  columns: PropTypes.array, // optional, if omitted, auto-build simple columns
-  headerBgColor: PropTypes.string, // optional
-  buttonLabel: PropTypes.string, // optional ("View" default)
-  buttonStyle: PropTypes.object, // optional style object for the button
-  buildColumns: PropTypes.func, // optional hook to compute columns
-  responsesTileTitle: PropTypes.node, // optional ("Responses" default)
-  questionnaire: PropTypes.object, // optional, questionnaire JSON object
+  columns: PropTypes.array, //if omitted, auto-build simple columns
+  headerBgColor: PropTypes.string,
+  buttonLabel: PropTypes.string, // ("View" default)
+  buttonStyle: PropTypes.object, // style object for the button
+  buildColumns: PropTypes.func, //  hook to compute columns
+  responsesTileTitle: PropTypes.node, // ("Responses" default)
+  questionnaire: PropTypes.object, //  questionnaire JSON object
 };
