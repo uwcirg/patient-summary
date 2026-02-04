@@ -1,18 +1,13 @@
 import * as React from "react";
 import PropTypes from "prop-types";
-import { useTheme } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
-import MaterialTable from "@material-table/core";
-import TableContainer from "@mui/material/TableContainer";
 import Error from "@components/ErrorComponent";
+import DataTable from "@/components/DataTable";
 import { isEmptyArray } from "@/util";
+
 export default function Observations(props) {
-  const theme = useTheme();
-  const bgColor =
-    theme && theme.palette && theme.palette.lightest && theme.palette.lightest.main
-      ? theme.palette.lightest.main
-      : "#FFF";
   const { data } = props;
+
   const columns = [
     {
       title: "ID",
@@ -49,11 +44,8 @@ export default function Observations(props) {
           <span className="text-warning">{rowData.status}</span>
         ),
     },
-    // {
-    //   title: "Provider",
-    //   field: "providerText",
-    // },
   ];
+
   const renderPrintView = (data) => {
     const displayColumns = columns.filter((column) => !column.hidden);
     return (
@@ -79,40 +71,21 @@ export default function Observations(props) {
       </table>
     );
   };
+
   if (data?.error) {
     return <Error message={data.error}></Error>;
   }
+
   if (isEmptyArray(data))
     return (
       <Alert severity="warning" className="condition-no-data">
         No recorded observation
       </Alert>
     );
+
   return (
     <>
-      <TableContainer
-        className="print-hidden"
-        sx={{
-          maxWidth: {
-            xs: "460px",
-            sm: "100%",
-          },
-        }}
-      >
-        <MaterialTable
-          columns={columns}
-          data={data}
-          options={{
-            search: false,
-            showTitle: false,
-            toolbar: false,
-            padding: "dense",
-            headerStyle: {
-              backgroundColor: bgColor,
-            },
-          }}
-        ></MaterialTable>
-      </TableContainer>
+      <DataTable columns={columns} data={data} />
       <div className="print-only">{renderPrintView(data)}</div>
     </>
   );

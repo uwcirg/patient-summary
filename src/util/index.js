@@ -51,6 +51,24 @@ export function isValidDate(date) {
   return false;
 }
 
+/**
+ * Validates and formats datetime string to minute precision
+ *
+ * @param {string} dtString - ISO datetime string
+ * @returns {string} Formatted datetime (YYYY-MM-DDTHH:MM) or original if invalid
+ */
+export function trimToMinutes(dtString) {
+  // date validation
+  if (!dtString) return dtString;
+  const d = new Date(dtString);
+  if (isNaN(d.getTime())) {
+    console.warn(`trimToMinutes: Invalid date string "${dtString}"`);
+    return dtString;
+  }
+  //return d.toISOString().slice(0, 16);
+  return dayjs(dtString).format("YYYY-MM-DDTHH:mm");
+}
+
 export function getChartConfig(questionnaireId) {
   if (!questionnaireId) return ChartConfig["default"];
   const qChartConfig = ChartConfig[questionnaireId.toLowerCase()];

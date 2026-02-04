@@ -25,6 +25,7 @@ import {
   isPlainObject,
   normalizeStr,
   removeNullValuesFromObject,
+  trimToMinutes,
 } from "@util";
 import Scoring from "@components/Score";
 import Meaning from "@components/Meaning";
@@ -382,23 +383,6 @@ export function defaultAnswerMapperFromObservation(obs) {
   return null;
 }
 
-/**
- * Validates and formats datetime string to minute precision
- *
- * @param {string} dtString - ISO datetime string
- * @returns {string} Formatted datetime (YYYY-MM-DDTHH:MM) or original if invalid
- */
-function trimToMinutes(dtString) {
-  // date validation
-  if (!dtString) return dtString;
-  const d = new Date(dtString);
-  if (isNaN(d.getTime())) {
-    console.warn(`trimToMinutes: Invalid date string "${dtString}"`);
-    return dtString;
-  }
-  //return d.toISOString().slice(0, 16);
-  return dayjs(dtString).format("YYYY-MM-DDTHH:mm");
-}
 
 /**
  * Generates a unique grouping key for observations

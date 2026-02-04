@@ -1115,8 +1115,7 @@ export default function LineCharts(props) {
   };
 
   const renderTruncationLine = () => {
-    console.log("renderTruncationLine in LineCharts:", { wasTruncated, truncationDate });
-
+    
     if (!wasTruncated || !truncationDate) return null;
 
     return (
@@ -1143,8 +1142,6 @@ export default function LineCharts(props) {
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     };
   }, []);
-
-  console.log("LineCharts - before render:", { wasTruncated, truncationDate });
 
   return (
     <>
