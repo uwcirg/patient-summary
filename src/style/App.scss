@@ -305,12 +305,7 @@ p {
   font-weight: 600;
   margin-bottom: 4px;
 }
-.section-wrapper {
-  padding: 8px;
-}
-.section-wrapper:not(:last-of-type) {
-  margin-bottom: 16px;
-}
+
 .list-item-container {
   margin: 0;
   padding: 0 0 0 16px;
@@ -509,8 +504,14 @@ p {
       display: none !important;
     }
   }
+  .MuiAccordion-root {
+    box-shadow: none !important;
+  }
   .MuiAccordionDetails-root {
     padding: 8px 0 !important;
+  }
+  .MuiAccordionSummary-expandIconWrapper {
+    display: none !important;
   }
   .summary {
     display: block;

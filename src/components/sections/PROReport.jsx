@@ -1,6 +1,8 @@
 import { report_config } from "@config/report_config";
 import React, { useMemo, useCallback } from "react";
-import { Box, Stack, Typography } from "@mui/material";
+import { Accordion, AccordionSummary, AccordionDetails, Box, Stack, Typography } from "@mui/material";
+import { accordionSummaryClasses } from "@mui/material/AccordionSummary";
+import ArrowForwardIosSharpIcon from "@mui/icons-material/ArrowForwardIosSharp";
 import { isEmptyArray } from "@util";
 import Chart from "../Chart";
 import ResponsesTable from "../ResponsesTable";
@@ -12,17 +14,7 @@ const sectionWrapperSx = {
   alignSelf: "stretch",
 };
 
-const titleSx = {
-  fontWeight: 500,
-  backgroundColor: "background.main",
-  padding: (theme) => theme.spacing(0.5, 1),
-};
-
-const sectionSx = {
-  padding: (theme) => theme.spacing(1),
-};
-
-const tableStyle = { width: "auto", minWidth: "30%"};
+const tableStyle = { width: "auto", minWidth: "30%" };
 
 const flexWrapConfig = {
   xs: "wrap",
@@ -47,19 +39,26 @@ export default function PROReport() {
           data={table.rows}
           disableLinks={true}
           enableResponsesViewer={true}
-          containerStyle={{ alignSelf: "stretch", flexBasis: {
-            xs: "100%",
-            sm: "100%",
-            md: "50%",
-            lg: "50%",
-          } }}
+          containerStyle={{
+            alignSelf: "stretch",
+            flexBasis: {
+              xs: "100%",
+              sm: "100%",
+              md: "50%",
+              lg: "50%",
+            },
+          }}
         />
-        <Box sx={{ marginTop: {
-          xs: 2,
-          sm: 2,
-          md: 1,
-          lg: 0,
-        }}}>
+        <Box
+          sx={{
+            marginTop: {
+              xs: 2,
+              sm: 2,
+              md: 1,
+              lg: 0,
+            },
+          }}
+        >
           {!isEmptyArray(table.charts) &&
             table.charts.map((chartData, index) => {
               if (isEmptyArray(chartData?.data)) return null;
@@ -73,48 +72,51 @@ export default function PROReport() {
   }, []);
 
   const renderTable = useCallback(
-    (table) => {
+    (table, section) => {
+      const multipleTables = section.tables?.length > 1;
       return (
         <Box className="section-wrapper" sx={sectionWrapperSx} key={table.id}>
-          {table.title && (
-            <Typography
-              variant="body1"
-              component="h3"
-              className="section-subtitle"
-              sx={{ ...titleSx, marginBottom: table.title ? 1 : 0 }}
-            >
-              {table.title}
-            </Typography>
-          )}
-          <Box
-            sx={{
-              marginLeft: {
-                xs: 0,
-                sm: 0,
-                md: 1,
-                lg: 1,
-              },
-              marginRight: {
-                xs: 0,
-                sm: 0,
-                md: 1,
-                lg: 1,
-              },
-              width: "100%"
-            }}
+          <Accordion
+            disableGutters
+            elevation={multipleTables ? 1 : 0}
+            square
+            defaultExpanded
+            sx={{ marginLeft: multipleTables ? "8px" : 0, marginRight: multipleTables ? "8px" : 0 }}
           >
-            {table.layout === "simple" && (
-              <ScoringSummary
-                {...table}
-                key={table.id}
-                data={table.rows}
-                disableLinks={true}
-                enableResponsesViewer={true}
-                tableStyle={tableStyle}
-              />
+            {table.title && (
+              <AccordionSummary
+                expandIcon={<ArrowForwardIosSharpIcon sx={{ fontSize: "0.9rem" }} />}
+                aria-controls={`panel-${table.id}-content`}
+                id={`panel-${table.id}-header`}
+                sx={{
+                  minHeight: "42px",
+                  backgroundColor: "#e8eaf6",
+                  [`& .${accordionSummaryClasses.expandIconWrapper}.${accordionSummaryClasses.expanded}`]: {
+                    transform: "rotate(90deg)",
+                  },
+                }}
+              >
+                <Typography variant="body1" component="h3" className="section-subtitle">
+                  {table.title}
+                </Typography>
+              </AccordionSummary>
             )}
-            {table.layout === "two-columns" && renderTwoColumns(table)}
-          </Box>
+            <AccordionDetails>
+              <Box>
+                {table.layout === "simple" && (
+                  <ScoringSummary
+                    {...table}
+                    key={table.id}
+                    data={table.rows}
+                    disableLinks={true}
+                    enableResponsesViewer={true}
+                    tableStyle={tableStyle}
+                  />
+                )}
+                {table.layout === "two-columns" && renderTwoColumns(table)}
+              </Box>
+            </AccordionDetails>
+          </Accordion>
         </Box>
       );
     },
@@ -128,9 +130,9 @@ export default function PROReport() {
         section={{
           id: section.id,
           title: section.title,
-          body: section.tables.map((table) => renderTable(table)),
+          body: section.tables.map((table) => renderTable(table, section)),
         }}
-        sx={sectionSx}
+        // sx={sectionSx}
       />
     ));
   }, [renderTable]);
