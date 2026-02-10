@@ -566,7 +566,7 @@ export default function LineCharts(props) {
               value: yLabel,
               angle: -90,
               position: "insideLeft",
-              offset: -2,
+              offset: -4,
               style: { fontSize: "10px" },
               ...(yLabelProps ? yLabelProps : {}),
             }
@@ -602,9 +602,9 @@ export default function LineCharts(props) {
           : false
       }
       ticks={yTicksToUse}
-      tickMargin={showYTicks ? 8 : 0}
+      tickMargin={showYTicks ? 4 : 0}
       allowDataOverflow={!!isCategoricalY}
-      width={showYTicks ? (isSmallScreen ? 50 : 60) : 10}
+      width={showYTicks ? (isSmallScreen ? 56 : 64) : 10}
     />
   );
 
@@ -1158,6 +1158,7 @@ export default function LineCharts(props) {
             xs: xsChartHeight ? xsChartHeight : 280, // Increased height for small screens
             sm: chartHeight ? chartHeight : 240,
           },
+          maxWidth: "100%"
         }}
         className={`chart-wrapper ${wrapperClass ? wrapperClass : ""}`}
         onPointerDown={(e) => {
