@@ -149,7 +149,7 @@ export default function LineCharts(props) {
       const dotKey = `${payload.id}_${dataKey || yFieldKey}`;
       setHoveredDotKey(dotKey);
 
-      const meaningRaw = payload?.showTooltipMeaning && payload.meaning ? (payload.scoreMeaning ?? payload.label) : "";
+      const meaningRaw = showTooltipMeaning ? payload.meaning ?? payload.scoreMeaning ?? payload.label : "";
       const meaning = meaningRaw ? meaningRaw.replace(/\|/g, "\n") : null;
 
       setSourceTooltip({
@@ -167,7 +167,7 @@ export default function LineCharts(props) {
         payload,
       });
     },
-    [xFieldKey, yFieldKey, isScrolling],
+    [xFieldKey, yFieldKey, isScrolling, showTooltipMeaning],
   );
 
   const handleDotMouseLeave = React.useCallback(() => {
@@ -1115,7 +1115,6 @@ export default function LineCharts(props) {
   };
 
   const renderTruncationLine = () => {
-    
     if (!wasTruncated || !truncationDate) return null;
 
     return (

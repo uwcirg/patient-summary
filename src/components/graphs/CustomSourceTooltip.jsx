@@ -90,7 +90,6 @@ const CustomSourceTooltip = ({
         zIndex: 1000,
         background: "#FFF",
         border: "1px solid #ccc",
-        padding: "8px 12px",
         borderRadius: 0,
         boxShadow: "0 2px 6px rgba(33, 33, 33, 0.15)",
         opacity: visible ? 1 : 0,
@@ -107,51 +106,61 @@ const CustomSourceTooltip = ({
         visibility: visible ? "visible" : "hidden",
       }}
     >
-      <div className="tooltip-label" style={{ fontWeight: 500, marginBottom: 4, fontSize: FONT_SIZE }}>
+      <div
+        className="tooltip-label"
+        style={{
+          fontWeight: 500,
+          padding: "6px 12px",
+          fontSize: FONT_SIZE,
+          backgroundColor: "#fafafa",
+        }}
+      >
         {fmtDate}
       </div>
-      {lineLabel && (
-        <div
-          style={{
-            fontSize: FONT_SIZE,
-            color: FONT_COLOR,
-            marginBottom: 4,
-            fontWeight: 500,
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-          }}
-        >
-          {lineColor && (
-            <span
-              style={{
-                display: "inline-block",
-                width: "10px",
-                height: "10px",
-                backgroundColor: lineColor,
-                border: "1px solid rgba(0,0,0,0.1)",
-                borderRadius: 0,
-                flexShrink: 0,
-              }}
-            />
-          )}
-          {lineLabel}
-        </div>
-      )}
-      {displayValue != null && (
-        <div style={{ fontSize: FONT_SIZE, marginBottom: 2 }}>
-          {!isNull && <span style={{ color: FONT_COLOR }}>{yLabel || "score"}:</span>}{" "}
-          <span style={{ color: isNull ? NULL_COLOR : "inherit", fontStyle: isNull ? "italic" : "normal" }}>
-            {displayValue}
-          </span>
-        </div>
-      )}
-      {showMeaning && meaning && !isNull && (
-        <div style={{ fontSize: FONT_SIZE, color: FONT_COLOR, marginTop: 4, whiteSpace: "pre-line" }}>
-          <span style={{ fontWeight: 500 }}>meaning:</span> {meaning}
-        </div>
-      )}
-      {source && <div style={{ fontSize: FONT_SIZE, color: FONT_COLOR, marginTop: 4 }}>source: {source}</div>}
+      <div style={{ padding: "2px 12px 8px" }}>
+        {lineLabel && (
+          <div
+            style={{
+              fontSize: FONT_SIZE,
+              color: FONT_COLOR,
+              marginBottom: 4,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+            }}
+          >
+            {lineColor && (
+              <span
+                style={{
+                  display: "inline-block",
+                  width: "10px",
+                  height: "10px",
+                  backgroundColor: lineColor,
+                  border: "1px solid rgba(0,0,0,0.1)",
+                  borderRadius: 0,
+                  flexShrink: 0,
+                }}
+              />
+            )}
+            {lineLabel}
+          </div>
+        )}
+        {displayValue != null && (
+          <div style={{ fontSize: FONT_SIZE, marginBottom: 2 }}>
+            {!isNull && <span style={{ color: FONT_COLOR, fontWeight: 500 }}>{yLabel || "score"}:</span>}{" "}
+            <span style={{ color: isNull ? NULL_COLOR : "inherit", fontStyle: isNull ? "italic" : "normal" }}>
+              {displayValue}
+            </span>
+          </div>
+        )}
+        {showMeaning && meaning && !isNull && (
+          <div style={{ fontSize: FONT_SIZE, color: FONT_COLOR, marginTop: 2, whiteSpace: "pre" }}>
+            <span style={{ fontWeight: 500 }}>meaning:</span> {meaning}
+          </div>
+        )}
+        {source && <div style={{ fontSize: FONT_SIZE, color: FONT_COLOR, marginTop: 6 }}>source: {source}</div>}
+      </div>
     </div>
   );
 };

@@ -9,8 +9,8 @@ const SourceDot = ({
   dotRadius,
   isSmallScreen,
   sources,
-  yFieldKey,
-  xFieldKey,
+  yFieldKey = "score",
+  xFieldKey = "date",
   payload,
   index,
   params,
@@ -23,17 +23,13 @@ const SourceDot = ({
   // Determine base color first
   let baseColor;
 
-  // If a custom dotColor is provided, use it
-  if (dotColor) {
-    baseColor = dotColor;
-  }
-  // Otherwise use severity-based coloring
-  else if (payload.highSeverityScoreCutoff && payload[yFieldKey] >= payload.highSeverityScoreCutoff) {
+  // use severity-based coloring first
+  if (payload.highSeverityScoreCutoff && payload[yFieldKey] >= payload.highSeverityScoreCutoff) {
     baseColor = ALERT_COLOR;
   } else if (payload.mediumSeverityScoreCutoff && payload[yFieldKey] >= payload.mediumSeverityScoreCutoff) {
     baseColor = WARNING_COLOR;
   } else {
-    baseColor = SUCCESS_COLOR;
+    baseColor = payload.highSeverityScoreCutoff || payload.mediumSeverityScoreCutoff ? SUCCESS_COLOR : dotColor;
   }
 
   // Apply duplicate coloring

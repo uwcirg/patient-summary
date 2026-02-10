@@ -1659,7 +1659,7 @@ const questionnaireConfigsRaw = {
     title: "HIV Stigma",
     alertQuestionId: "HIV-STIGMA-SCORE-CRITICAL",
     scoringQuestionId: "HIV-STIGMA-SCORE",
-    inkIdMatchMode: "strict",
+    linkIdMatchMode: "strict",
     showNumAnsweredWithScore: true,
     totalAnsweredQuestionId: "HIV-STIGMA-SCORE-NUM-ANSWERED",
     noteFunction: (questionnaire) => {
@@ -1671,7 +1671,8 @@ const questionnaireConfigsRaw = {
       { min: 4, label: "high", meaning: "High Stigma" },
       { min: 0, label: "low", meaning: ""},
     ],
-    highSeverityScoreCutoff: 4
+    highSeverityScoreCutoff: 4,
+    chartParams: { ...CHART_CONFIG.default, title: "HIV Stigma Score", xLabel: "" }
   },
 };
 
