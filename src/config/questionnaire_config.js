@@ -273,6 +273,7 @@ const questionnaireConfigsRaw = {
     questionnaireMatchMode: "fuzzy",
     chartParams: { ...CHART_CONFIG.default, xLabel: "" },
   },
+
   "CIRG-BEHAV5": {
     key: "CIRG-BEHAV5",
     questionnaireId: "CIRG-BEHAV5",
@@ -286,6 +287,7 @@ const questionnaireConfigsRaw = {
     questionnaireMatchMode: "fuzzy",
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 6, xLabel: "" },
   },
+
   "CIRG-C-IDAS": {
     key: "CIRG-C-IDAS",
     questionnaireId: "CIRG-C-IDAS",
@@ -298,6 +300,14 @@ const questionnaireConfigsRaw = {
     questionnaireMatchMode: "fuzzy",
     chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 36, xLabel: "" },
   },
+
+  "CIRG-CNICS-ARV": {
+    key: "CIRG-CNICS-ARV",
+    questionnaireId: "CIRG-CNICS-ARV",
+    title: "Antiretroviral (ARV) adherence",
+    instrumentName: "CIRG-CNICS-ARV",
+  },
+
   "CIRG-CNICS-ASSIST": {
     key: "CIRG-CNICS-ASSIST",
     instrumentName: "Substances Reported",
@@ -536,6 +546,7 @@ const questionnaireConfigsRaw = {
       noDataText: "Not Answered",
     },
   },
+
   "CIRG-CNICS-ASSIST-OD": {
     key: "CIRG-CNICS-ASSIST-OD",
     instrumentName: "CNICS ASSIST Overdose",
@@ -562,6 +573,7 @@ const questionnaireConfigsRaw = {
     meaningRowLabel: "Summary (Past 6 months)",
     skipChart: true,
   },
+
   "CIRG-CNICS-ASSIST-Polysub": {
     key: "CIRG-CNICS-ASSIST-Polysub",
     instrumentName: "CNICS Polysubstance Use",
@@ -583,553 +595,7 @@ const questionnaireConfigsRaw = {
     meaningRowLabel: "Summary",
     skipChart: true,
   },
-  "CIRG-CNICS-FINANCIAL": {
-    key: "CIRG-CNICS-FINANCIAL",
-    instrumentName: "CNICS Financial Situation Questionnaire",
-    title: "Financial Situation",
-    questionnaireMatchMode: "fuzzy",
-    highSeverityScoreCutoff: 1,
-    comparisonToAlert: "higher",
-    displayMeaningNotScore: true,
-    linkIdMatchMode: "strict",
-    fallbackScoreMap: {
-      "FINANCIAL-0-0": 1,
-      "FINANCIAL-0-1": 0,
-      "FINANCIAL-0-2": 0,
-      "FINANCIAL-0-3": 0,
-    },
-    alertQuestionId: "FINANCIAL-critical-flag",
-    meaningQuestionId: "FINANCIAL-score-label",
-    skipResponses: true,
-    skipChart: true,
-  },
-  "CIRG-CNICS-FOOD": {
-    key: "CIRG-CNICS-FOOD",
-    instrumentName: "CNICS Food Security Questionnaire",
-    title: "Food Security",
-    subtitle: "Past 12 months",
-    questionnaireMatchMode: "fuzzy",
-    displayMeaningNotScore: true,
-    scoringQuestionId: "FOOD-score",
-    alertQuestionId: "FOOD-critical-flag",
-    meaningQuestionId: "FOOD-score-label",
-    linkIdMatchMode: "strict",
-    skipChart: true,
-    fallbackMeaningFunc: function (severity, responses) {
-      if (isEmptyArray(responses)) return "";
-      const meaningResponse = responses.find((response) => linkIdEquals(response.id, "FOOD-score-label", "strict"));
-      const meaningAnswer =
-        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
-      return meaningAnswer ? capitalizeFirstLetterSafe(String(meaningAnswer)) : "";
-    },
-  },
-  "CIRG-CNICS-FROP-Com": {
-    key: "CIRG-CNICS-FROP-Com",
-    instrumentName: "Falls Risk for Older People in the Community (FROP-Com)",
-    title: "Falls",
-    subtitle: "Past 12 months",
-    questionnaireMatchMode: "fuzzy",
-    displayMeaningNotScore: true,
-    linkIdMatchMode: "strict",
-    fallbackMeaningFunc: function (severity, responses) {
-      if (isEmptyArray(responses)) return "";
-      let arrMeaning = [];
-      const fallResponse = responses.find((response) => linkIdEquals(response.id, "FROP-Com-0", "strict"));
-      const numFalls = fallResponse?.answer != null && fallResponse.answer !== undefined ? fallResponse.answer : null;
-      if (numFalls !== null) {
-        arrMeaning.push(`Number of falls: ${numFalls.replace(/\bfalls?\b/g, "").trim()}`);
-      }
-      const edVisitResponse = responses.find((response) => linkIdEquals(response.id, "FROP-Com-1", "strict"));
-      const edVisit =
-        edVisitResponse?.answer != null && edVisitResponse.answer !== undefined ? edVisitResponse.answer : null;
-      if (edVisit !== null) {
-        arrMeaning.push(`E/D visit: ${edVisit}`);
-      }
-      return arrMeaning.join("|");
-    },
-    skipMeaningScoreRow: true,
-    skipChart: true,
-  },
-  "CIRG-CNICS-HOUSING": {
-    key: "CIRG-CNICS-HOUSING",
-    instrumentName: "CNICS Housing Measure",
-    title: "Housing",
-    subtitle: "Past month",
-    questionnaireMatchMode: "fuzzy",
-    displayMeaningNotScore: true,
-    linkIdMatchMode: "strict",
-    meaningQuestionId: "HOUSING-1",
-    fallbackMeaningFunc: function (severity, responses) {
-      if (isEmptyArray(responses)) return "";
-      const housingResponse = responses.find((response) => linkIdEquals(response.id, "HOUSING-1", "strict"));
-      const housingAnswer =
-        housingResponse?.answer != null && housingResponse.answer !== undefined ? housingResponse.answer : null;
-      return housingAnswer;
-    },
-    skipMeaningScoreRow: true,
-    skipChart: true,
-  },
-  "CIRG-CNICS-IPV4": {
-    key: "CIRG-CNICS-IPV4",
-    instrumentName: "IPV-4",
-    title: "Concern for IPV",
-    subtitle: "Past year",
-    questionnaireMatchMode: "fuzzy",
-    linkIdMatchMode: "strict",
-    highSeverityScoreCutoff: 1,
-    displayMeaningNotScore: true,
-    fallbackScoreMap: {
-      "ipv4-1-0": 1,
-      "ipv4-1-1": 0,
-      "ipv4-2-0": 1,
-      "ipv4-2-1": 0,
-      "ipv4-3-0": 1,
-      "ipv4-3-1": 0,
-      "ipv4-4-0": 1,
-      "ipv4-4-1": 0,
-    },
-    fallbackMeaningFunc: function (severity, responses) {
-      if (isEmptyArray(responses)) return "";
-      if (!severity || severity === "low") return "";
-      const answerMapping = {
-        "IPV4-1": "Felt trapped",
-        "IPV4-2": "Fearful of harm",
-        "IPV4-3": "Sexual violence",
-        "IPV4-4": "Physical violence",
-      };
-      const answers = responses
-        .filter((response) => {
-          return (
-            (response.answer != null &&
-              response.answer !== undefined &&
-              linkIdEquals(response.linkId, "IPV4-1", "strict")) ||
-            linkIdEquals(response.linkId, "IPV4-2", "strict") ||
-            linkIdEquals(response.linkId, "IPV4-3", "strict") ||
-            linkIdEquals(response.linkId, "IPV4-4", "strict")
-          );
-        })
-        .map((response) => answerMapping[response.linkId]);
-      return answers.join("|");
-    },
-    alertQuestionId: "IPV4-critical",
-    meaningRowLabel: "Summary",
-    skipChart: true,
-  },
-  "CIRG-CNICS-Smoking": {
-    key: "CIRG-CNICS-Smoking",
-    instrumentName: "CNICS Smoking",
-    title: "Nicotine Use",
-    questionnaireMatchMode: "fuzzy",
-    displayMeaningNotScore: true,
-    linkIdMatchMode: "strict",
-    excludeQuestionLinkIdPatterns: ["summary"],
-    fallbackMeaningFunc: function (severity, responses) {
-      if (isEmptyArray(responses)) return "";
-      let arrMeaning = [];
-      const tobaccoUseResponse = responses.find((response) =>
-        linkIdEquals(response.id, "Smoking-Tobacco-Cigs-Summary", "strict"),
-      );
-      const eCigUseResponse = responses.find((response) => linkIdEquals(response.id, "E-Cigarettes-Summary", "strict"));
-      const tobaccoUseAnswer =
-        tobaccoUseResponse?.answer != null && tobaccoUseResponse.answer !== undefined
-          ? tobaccoUseResponse.answer
-          : null;
-      const eCigUseAnswer =
-        eCigUseResponse?.answer != null && eCigUseResponse.answer !== undefined ? eCigUseResponse.answer : null;
-      if (tobaccoUseAnswer) {
-        arrMeaning.push("Tobacco cigarettes: " + tobaccoUseAnswer);
-      }
-      if (eCigUseAnswer) {
-        arrMeaning.push("E-Cigarettes: " + eCigUseAnswer);
-      }
-      return arrMeaning.join("|");
-    },
-    meaningRowLabel: "Summary",
-    skipChart: true,
-  },
-  "CIRG-CNICS-Symptoms": {
-    key: "CIRG-CNICS-Symptoms",
-    instrumentName: "CNICS Symptoms Checklist",
-    title: "Current Symptoms",
-    subtitle: "From {date} assessment",
-    questionnaireMatchMode: "fuzzy",
-    linkIdMatchMode: "strict",
-    displayMeaningNotScore: true,
-    meaningRowLabel: "Summary",
-    disableHeaderRowSubtitle: true,
-    columns: [
-      {
-        linkId: "Symptoms-bothers-a-lot",
-        id: "bothersALot",
-      },
-      {
-        linkId: "Symptoms-bothers-some",
-        id: "bothersSome",
-      },
-    ],
-    fallbackMeaningFunc: function (severity, responses) {
-      if (isEmptyArray(responses)) return "";
-      const arrMeaning = [];
-      const bothersALotResponse = responses.find((response) =>
-        linkIdEquals(response.id, "Symptoms-bothers-a-lot", "strict"),
-      );
-      const bothersALotAnswer =
-        bothersALotResponse?.answer != null && bothersALotResponse.answer !== undefined
-          ? bothersALotResponse.answer
-          : null;
-      const bothersSomeResponse = responses.find((response) =>
-        linkIdEquals(response.id, "Symptoms-bothers-some", "strict"),
-      );
-      const bothersSomeAnswer =
-        bothersSomeResponse?.answer != null && bothersSomeResponse.answer !== undefined
-          ? bothersSomeResponse.answer
-          : null;
-      if (bothersALotAnswer) {
-        arrMeaning.push("Bothers a lot: " + bothersALotAnswer);
-      }
-      if (bothersSomeAnswer) {
-        arrMeaning.push("Bothers some: " + bothersSomeAnswer);
-      }
-      return arrMeaning.join("|");
-    },
-    skipChart: true,
-  },
-  "CIRG-CP-ECOG": {
-    key: "CIRG-CP-ECOG",
-    questionnaireId: "CIRG-CP-ECOG",
-    questionnaireName: "cp-ecog",
-    instrumentName: "CP-ECOG",
-    title: "CP-ECOG",
-    questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/cp-ecog",
-    scoringQuestionId: "cp-ecog-total-score",
-    maximumScore: 48,
-    questionnaireMatchMode: "fuzzy",
-    questionLinkIds: [
-      "/89286-9/89146-5",
-      "/89286-9/89149-9",
-      "/89287-7/89172-1",
-      "/89287-7/89138-2",
-      "/89288-5/89154-9",
-      "/89288-5/89165-5",
-      "/89289-3/89143-2",
-      "/89289-3/89140-8",
-      "/89290-1/89158-0",
-      "/89290-1/89173-9",
-      "/89285-1/89141-6",
-      "/89285-1/89171-3",
-    ],
-    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 48, xLabel: "" },
-  },
-  "CIRG-ECOG12": {
-    key: "CIRG-ECOG12",
-    questionnaireId: "CIRG-ECOG12",
-    questionnaireName: "ecog12",
-    instrumentName: "ECOG-12",
-    title: "ECOG-12",
-    questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/ecog12",
-    scoringQuestionId: "ecog12-total-score",
-    maximumScore: 48,
-    questionnaireMatchMode: "fuzzy",
-    questionLinkIds: [
-      "/89286-9/89146-5",
-      "/89286-9/89149-9",
-      "/89287-7/89172-1",
-      "/89287-7/89138-2",
-      "/89288-5/89154-9",
-      "/89288-5/89165-5",
-      "/89289-3/89143-2",
-      "/89289-3/89140-8",
-      "/89290-1/89158-0",
-      "/89290-1/89173-9",
-      "/89285-1/89141-6",
-      "/89285-1/89171-3",
-    ],
-    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 48, xLabel: "" },
-  },
-  "CIRG-GAD7": {
-    key: "CIRG-GAD7",
-    questionnaireId: "CIRG-GAD7",
-    questionnaireName: "gad7",
-    instrumentName: "GAD-7",
-    questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/gad7",
-    scoringQuestionId: "/70274-6",
-    maximumScore: 21,
-    questionLinkIds: ["/69725-0", "/68509-9", "/69733-4", "/69734-2", "/69735-9", "/69689-8", "/69736-7"],
-    questionnaireMatchMode: "fuzzy",
-    severityBands: [
-      { min: 15, label: "high", meaning: "severe anxiety" },
-      { min: 10, label: "moderate", meaning: "moderate anxiety" },
-      { min: 5, label: "mild", meaning: "mild anxiety" },
-      { min: 0, label: "low", meaning: "minimal anxiety" },
-    ],
-    // optional (defaults to top band min = 15 anyway)
-    highSeverityScoreCutoff: 15,
-    mediumSeverityScoreCutoff: 10,
-    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 21, xLabel: "", dotColor: null },
-  },
-  "CIRG-GDS": {
-    key: "CIRG-GDS",
-    questionnaireId: "CIRG-GDS",
-    questionnaireName: "gds",
-    instrumentName: "GDS",
-    questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/gds",
-    scoringQuestionId: "/48545-8",
-    maximumScore: 15,
-    questionnaireMatchMode: "fuzzy",
-    questionLinkIds: [
-      "/48512-8",
-      "/48513-6",
-      "/48514-4",
-      "/48515-1",
-      "/48518-5",
-      "/48519-3",
-      "/48520-1",
-      "/48521-9",
-      "/48523-5",
-      "/48525-0",
-      "/48526-8",
-      "/48528-4",
-      "/48532-6",
-      "/48533-4",
-      "/48534-2",
-    ],
-    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 15, xLabel: "" },
-  },
-  "CIRG-MINICOG": {
-    key: "CIRG-MINICOG",
-    questionnaireId: "CIRG-MINICOG",
-    questionnaireName: "MINICOG",
-    instrumentName: "MINI-COG",
-    questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/minicog",
-    recallLinkIds: ["/recall-1", "/recall-2", "/recall-3"],
-    clockLinkId: "/clock",
-    // What counts as "correct" for recall (pick your reality):
-    recallCorrectCodes: ["correct", "present", "Y"], // if coded
-    recallCorrectStrings: ["correct", "present", "yes"], // if strings
-    // Clock scoring: map whichever value you use to 0 or 2
-    clockScoreMap: {
-      normal: 2,
-      abnormal: 0,
-      2: 2,
-      0: 0,
-    },
-    // Total severity bands for Mini-Cog
-    severityBands: [
-      { min: 3, label: "low", meaning: "unlikely impairment" },
-      { min: 0, label: "high", meaning: "possible impairment" }, // catch-all for 0–2
-    ],
-    highSeverityScoreCutoff: 2, // flag when total ≤ 2 (common rule)
-    comparisonToAlert: "lower",
-    questionnaireMatchMode: "fuzzy",
-    chartParams: { ...CHART_CONFIG.default, dotColor: null },
-  },
-  "CIRG-PC-PTSD-5": {
-    key: "CIRG-PC-PTSD-5",
-    questionnaireId: "CIRG-PC-PTSD-5",
-    questionnaireName: "CIRG-PC-PTSD-5",
-    instrumentName: "The Primary Care PTSD Screen for DSM-5 [PC-PTSD-5]",
-    title: "PTSD Symptoms",
-    subtitle: "Past month",
-    //  skipMeaningScoreRow: true,
-    skipChart: true,
-    meaningQuestionId: "PC-PTSD-5-SCORE-SYMPTOMS",
-    displayMeaningNotScore: true,
-    linkIdMatchMode: "strict",
-    excludeQuestionLinkIdPatterns: ["102017-1"],
-    questionnaireMatchMode: "fuzzy",
-    fallbackMeaningFunc: function (severity, responses) {
-      if (isEmptyArray(responses)) return "";
-      const meaningResponse = responses.find((response) =>
-        linkIdEquals(response.id, "PC-PTSD-5-SCORE-SYMPTOMS", "strict"),
-      );
-      const meaningAnswer =
-        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
-      return meaningAnswer?.split(",").join("|");
-    },
-    meaningRowLabel: "Summary (Symptoms endorsed in the past month)",
-    disableHeaderRowSubtitle: true,
-  },
-  "CIRG-PHQ9": {
-    key: "CIRG-PHQ9",
-    questionnaireId: "CIRG-PHQ9",
-    questionnaireName: "phq9",
-    instrumentName: "Patient Health Questionnaire-9 (PHQ-9)",
-    title: "PHQ-9",
-    subtitle: "Last two weeks",
-    questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/phq9",
-    scoringQuestionId: "/44261-6",
-    note: PHQ9_ADMIN_NOTE,
-    subScoringQuestions: [
-      {
-        key: "PHQ-2",
-        linkId: "/55758-7",
-      },
-    ],
-    maximumScore: 27,
-    linkIdMatchMode: "fuzzy",
-    questionLinkIds: [
-      "/55758-7",
-      "/44250-9",
-      "/44255-8",
-      "/44259-0",
-      "/44254-1",
-      "/44251-7",
-      "/44258-2",
-      "/44252-5",
-      "/44253-3",
-      "/44260-8",
-      //"/69722-7",
-      //"/44261-6",
-      //"/55758-7",
-    ],
-    itemTextByLinkId: {
-      "/55758-7": "PHQ-2 total score",
-      "/44261-6": "PHQ-9 total score",
-    },
-    questionnaireMatchMode: "fuzzy",
-    highSeverityScoreCutoff: 20,
-    mediumSeverityScoreCutoff: 10,
-    severityBands: [
-      { min: 20, label: "high", meaning: "Severe depression" },
-      { min: 15, label: "moderately high", meaning: "Moderately severe depression" },
-      { min: 10, label: "moderate", meaning: "Moderate depression" },
-      { min: 5, label: "mild", meaning: "Mild depression" },
-      { min: 0, label: "low", meaning: "Minimal depression" },
-    ],
-    showNumAnsweredWithScore: true,
-    chartParams: {
-      ...CHART_CONFIG.default,
-      title: "PHQ-9 Score",
-      minimumYValue: 0,
-      maximumYValue: 27,
-      xLabel: "",
-      connectNulls: true,
-      dotColor: null,
-      splitBySource: true,
-    },
-  },
-  "CIRG-SLUMS": {
-    key: "CIRG-SLUMS",
-    questionnaireId: "CIRG-SLUMS",
-    questionnaireName: "slums",
-    instrumentName: "SLUMS",
-    questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/slums",
-    scoringQuestionId: "/71492-3", // total score item
-    questionLinkIds: ["/71492-3"],
-    maximumScore: 30,
-    comparisonToAlert: "lower",
-    questionnaireMatchMode: "fuzzy",
-    // No questionLinkIds needed—SLUMS uses a single total-score field
-    chartParams: { ...CHART_CONFIG.default, title: "SLUMS", minimumYValue: 0, maximumYValue: 30, xLabel: "" },
-  },
-  "CIRG-SI": {
-    key: "CIRG-SI",
-    instrumentName: "Suicide Ideation",
-    title: "Suicide Ideation",
-    subtitle: "Last two weeks",
-    scoringQuestionId: PHQ9_SI_QUESTION_LINK_ID,
-    fallbackScoreMap: PHQ9_SI_ANSWER_SCORE_MAPPINGS,
-    highSeverityScoreCutoff: 3,
-    mediumSeverityScoreCutoff: 2,
-    comparisonToAlert: "higher",
-    severityBands: [
-      { min: 3, label: "high", meaning: "Nearly every day" },
-      { min: 2, label: "moderate", meaning: "More than half the days" },
-      { min: 1, label: "mild", meaning: "Several days" },
-      { min: 0, label: "low", meaning: "Not at all" },
-    ],
-    minimumScore: 0,
-    maximumScore: 3,
-    deriveFrom: {
-      hostIds: ["CIRG-PHQ9"], // one or many hosts
-      linkId: PHQ9_SI_QUESTION_LINK_ID, // the single item to keep
-    },
-    chartParams: {
-      ...CHART_CONFIG.default,
-      title: "Suicide Ideation",
-      minimumYValue: 0,
-      maximumYValue: 3,
-      xLabel: "",
-      yLabel: "value",
-      type: "barchart",
-      dotColor: null,
-    },
-  },
-  "CIRG-CNICS-ARV": {
-    key: "CIRG-CNICS-ARV",
-    questionnaireId: "CIRG-CNICS-ARV",
-    title: "Antiretroviral (ARV) adherence",
-    instrumentName: "CIRG-CNICS-ARV",
-  },
-  "CIRG-SHORTNESS-OF-BREATH": {
-    title: "Shortness of breath",
-  },
-  "CIRG-SRS": {
-    key: "CIRG-SRS",
-    title: "Self Rating Scale (SRS)",
-    subtitle: "Past 4 weeks",
-    instrumentName: "Self Rating Scale (SRS)",
-    deriveFrom: {
-      hostIds: ["CIRG-CNICS-ARV"], // one or many hosts
-      linkId: "ARV-SRS", // the single item to keep
-    },
-    columns: [
-      {
-        linkId: "SARV-SRS",
-        id: "result",
-      },
-    ],
-    skipMeaningScoreRow: true,
-    skipChart: true,
-  },
-  "CIRG-LAST-MISSED-DOSE": {
-    key: "CIRG-LAST-MISSED-DOSE",
-    title: "Last Missed Dose",
-    subtitle: "Past 4 weeks",
-    instrumentName: "Last Missed Dose",
-    deriveFrom: {
-      hostIds: ["CIRG-CNICS-ARV"], // one or many hosts
-      linkId: "ARV-last-missed", // the single item to keep
-    },
-    columns: [
-      {
-        linkId: "ARV-last-missed",
-        id: "result",
-      },
-    ],
-    skipMeaningScoreRow: true,
-    skipChart: true,
-  },
-  "CIRG-VAS": {
-    key: "CIRG-VAS",
-    title: "Percent ART taken",
-    subtitle: "Past 4 weeks",
-    instrumentName: "VAS",
-    scoringQuestionId: "ARV-VAS",
-    deriveFrom: {
-      hostIds: ["CIRG-CNICS-ARV"], // one or many hosts
-      linkId: "ARV-VAS", // the single item to keep
-    },
-    columns: [
-      {
-        linkId: "ARV-VAS",
-        id: "result",
-      },
-    ],
-    valueFormatter: (value) => (!isNil(value) ? `${value} ${String(value).includes("%") ? "" : "%"}` : value),
-    chartParams: {
-      ...CHART_CONFIG.default,
-      title: "Percent ART Taken",
-      minimumYValue: 0,
-      maximumYValue: 100,
-      xLabel: "",
-      yLabel: "value",
-      tooltipValueFormatter: (value) => (!isNil(value) ? `${value} ${String(value).includes("%") ? "" : "%"}` : value),
-      type: "barchart",
-    },
-    skipResponses: true,
-    meaningRowLabel: "Visual Analog Scale % (Past 4 weeks)",
-  },
+
   "CIRG-CNICS-AUDIT": {
     title: "Alcohol Score",
     subtitle: "Past 12 months",
@@ -1205,55 +671,14 @@ const questionnaireConfigsRaw = {
       ],
       showTooltipMeaning: false,
     },
-    // skipChart: true,
   },
+
   "CIRG-CNICS-EUROQOL": {
     key: "CIRG-CNICS-EUROQOL",
     instrumentName: "HRQOL",
     title: "EuroQOL Health Related Quality-of-Life questionnaire",
   },
-  "CIRG-CNICS-EUROQOL-SELF-CARE": {
-    key: "CIRG-CNICS-EUROQOL-SELF-CARE",
-    instrumentName: "Self Care",
-    title: "Self Care",
-    meaningQuestionId: "EUROQOL-SCORE-SELF-CARE",
-    deriveFrom: {
-      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
-      linkId: "EUROQOL-SCORE-SELF-CARE", // the single item to keep
-    },
-    skipChart: true,
-    skipResponses: true,
-    displayMeaningNotScore: true,
-    meaningRowLabel: "EUROQOL: Self Care",
-  },
-  "CIRG-CNICS-EUROQOL-USUAL-ACTIVITIES": {
-    key: "CIRG-CNICS-EUROQOL-USUAL-ACTIVITIES",
-    instrumentName: "Usual Activities",
-    title: "Usual Activities",
-    deriveFrom: {
-      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
-      linkId: "EUROQOL-SCORE-USUAL-ACTIVITIES", // the single item to keep
-    },
-    meaningQuestionId: "EUROQOL-SCORE-USUAL-ACTIVITIES",
-    skipChart: true,
-    skipResponses: true,
-    displayMeaningNotScore: true,
-    meaningRowLabel: "EUROQOL: Usual Activities",
-  },
-  "CIRG-CNICS-EUROQOL-PAIN-DISCOMFORT": {
-    key: "CIRG-CNICS-EUROQOL-PAIN-DISCOMFORT",
-    instrumentName: "Pain/Discomfort",
-    title: "Pain/Discomfort",
-    deriveFrom: {
-      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
-      linkId: "EUROQOL-SCORE-PAIN", // the single item to keep
-    },
-    meaningQuestionId: "EUROQOL-SCORE-PAIN",
-    skipChart: true,
-    skipResponses: true,
-    displayMeaningNotScore: true,
-    meaningRowLabel: "EUROQOL: Pain/Discomfort",
-  },
+
   "CIRG-CNICS-EUROQOL-ANXIETY-DEPRESSION": {
     key: "CIRG-CNICS-EUROQOL-ANXIETY-DEPRESSION",
     instrumentName: "Anxiety/Depression",
@@ -1268,6 +693,7 @@ const questionnaireConfigsRaw = {
     displayMeaningNotScore: true,
     meaningRowLabel: "EUROQOL: Anxiety/Depression",
   },
+
   "CIRG-CNICS-EUROQOL-EUROQOL-5": {
     key: "CIRG-CNICS-EUROQOL-EUROQOL-5",
     instrumentName: "CIRG-CNICS-EUROQOL-EUROQOL-5",
@@ -1284,6 +710,52 @@ const questionnaireConfigsRaw = {
     valueFormatter: (value) => (!isNil(value) ? `${value} ${String(value).includes("%") ? "" : "%"}` : value),
     meaningRowLabel: "EUROQOL: Overall health state (0% - 100%)",
   },
+
+  "CIRG-CNICS-EUROQOL-PAIN-DISCOMFORT": {
+    key: "CIRG-CNICS-EUROQOL-PAIN-DISCOMFORT",
+    instrumentName: "Pain/Discomfort",
+    title: "Pain/Discomfort",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
+      linkId: "EUROQOL-SCORE-PAIN", // the single item to keep
+    },
+    meaningQuestionId: "EUROQOL-SCORE-PAIN",
+    skipChart: true,
+    skipResponses: true,
+    displayMeaningNotScore: true,
+    meaningRowLabel: "EUROQOL: Pain/Discomfort",
+  },
+
+  "CIRG-CNICS-EUROQOL-SELF-CARE": {
+    key: "CIRG-CNICS-EUROQOL-SELF-CARE",
+    instrumentName: "Self Care",
+    title: "Self Care",
+    meaningQuestionId: "EUROQOL-SCORE-SELF-CARE",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
+      linkId: "EUROQOL-SCORE-SELF-CARE", // the single item to keep
+    },
+    skipChart: true,
+    skipResponses: true,
+    displayMeaningNotScore: true,
+    meaningRowLabel: "EUROQOL: Self Care",
+  },
+
+  "CIRG-CNICS-EUROQOL-USUAL-ACTIVITIES": {
+    key: "CIRG-CNICS-EUROQOL-USUAL-ACTIVITIES",
+    instrumentName: "Usual Activities",
+    title: "Usual Activities",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-EUROQOL"], // one or many hosts
+      linkId: "EUROQOL-SCORE-USUAL-ACTIVITIES", // the single item to keep
+    },
+    meaningQuestionId: "EUROQOL-SCORE-USUAL-ACTIVITIES",
+    skipChart: true,
+    skipResponses: true,
+    displayMeaningNotScore: true,
+    meaningRowLabel: "EUROQOL: Usual Activities",
+  },
+
   "CIRG-CNICS-EXCHANGE-SEX": {
     key: "CIRG-CNICS-EXCHANGE-SEX",
     insturmentName: "Exchange Sex",
@@ -1313,19 +785,166 @@ const questionnaireConfigsRaw = {
     disableHeaderRowSubtitle: true,
     skipChart: true,
   },
-  "CIRG-CNICS-MINI": {
-    key: "CIRG-CNICS-MINI",
-    instrumentName: "MINI Score",
-    title: "MINI Score",
-    subtitle: "Past 12 months",
-    minimumScore: 0,
-    maximumScore: 7,
-    scoringQuestionId: "MINI-score",
-    meaningQuestionId: "MINI-score-interpretation",
-    excludeQuestionLinkIdPatterns: ["MINI-score-ignoring-skipped"],
+
+  "CIRG-CNICS-FINANCIAL": {
+    key: "CIRG-CNICS-FINANCIAL",
+    instrumentName: "CNICS Financial Situation Questionnaire",
+    title: "Financial Situation",
+    questionnaireMatchMode: "fuzzy",
+    highSeverityScoreCutoff: 1,
+    comparisonToAlert: "higher",
+    displayMeaningNotScore: true,
     linkIdMatchMode: "strict",
-    chartParams: { ...CHART_CONFIG.default, title: "MINI Score", minimumYValue: 0, maximumYValue: 7, xLabel: "" },
+    fallbackScoreMap: {
+      "FINANCIAL-0-0": 1,
+      "FINANCIAL-0-1": 0,
+      "FINANCIAL-0-2": 0,
+      "FINANCIAL-0-3": 0,
+    },
+    alertQuestionId: "FINANCIAL-critical-flag",
+    meaningQuestionId: "FINANCIAL-score-label",
+    skipResponses: true,
+    skipChart: true,
   },
+
+  "CIRG-CNICS-FOOD": {
+    key: "CIRG-CNICS-FOOD",
+    instrumentName: "CNICS Food Security Questionnaire",
+    title: "Food Security",
+    subtitle: "Past 12 months",
+    questionnaireMatchMode: "fuzzy",
+    displayMeaningNotScore: true,
+    scoringQuestionId: "FOOD-score",
+    alertQuestionId: "FOOD-critical-flag",
+    meaningQuestionId: "FOOD-score-label",
+    linkIdMatchMode: "strict",
+    skipChart: true,
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      const meaningResponse = responses.find((response) => linkIdEquals(response.id, "FOOD-score-label", "strict"));
+      const meaningAnswer =
+        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
+      return meaningAnswer ? capitalizeFirstLetterSafe(String(meaningAnswer)) : "";
+    },
+  },
+
+  "CIRG-CNICS-FROP-Com": {
+    key: "CIRG-CNICS-FROP-Com",
+    instrumentName: "Falls Risk for Older People in the Community (FROP-Com)",
+    title: "Falls",
+    subtitle: "Past 12 months",
+    questionnaireMatchMode: "fuzzy",
+    displayMeaningNotScore: true,
+    linkIdMatchMode: "strict",
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      let arrMeaning = [];
+      const fallResponse = responses.find((response) => linkIdEquals(response.id, "FROP-Com-0", "strict"));
+      const numFalls = fallResponse?.answer != null && fallResponse.answer !== undefined ? fallResponse.answer : null;
+      if (numFalls !== null) {
+        arrMeaning.push(`Number of falls: ${numFalls.replace(/\bfalls?\b/g, "").trim()}`);
+      }
+      const edVisitResponse = responses.find((response) => linkIdEquals(response.id, "FROP-Com-1", "strict"));
+      const edVisit =
+        edVisitResponse?.answer != null && edVisitResponse.answer !== undefined ? edVisitResponse.answer : null;
+      if (edVisit !== null) {
+        arrMeaning.push(`E/D visit: ${edVisit}`);
+      }
+      return arrMeaning.join("|");
+    },
+    skipMeaningScoreRow: true,
+    skipChart: true,
+  },
+
+  "CIRG-CNICS-HIV-STIGMA": {
+    key: "CIRG-CNICS-HIV-STIGMA",
+    instrumentName: "HIV Stigma",
+    title: "HIV Stigma",
+    alertQuestionId: "HIV-STIGMA-SCORE-CRITICAL",
+    scoringQuestionId: "HIV-STIGMA-SCORE",
+    linkIdMatchMode: "strict",
+    showNumAnsweredWithScore: true,
+    totalAnsweredQuestionId: "HIV-STIGMA-SCORE-NUM-ANSWERED",
+    noteFunction: (questionnaire) => {
+      if (!questionnaire) return "";
+      const matchedItem = questionnaire.item.find((o) => o.linkId === "HIV-STIGMA-SCORE");
+      return matchedItem?.text;
+    },
+    severityBands: [
+      { min: 4, label: "high", meaning: "High Stigma" },
+      { min: 0, label: "low", meaning: "" },
+    ],
+    highSeverityScoreCutoff: 4,
+    chartParams: { ...CHART_CONFIG.default, title: "HIV Stigma Score", xLabel: "" },
+  },
+
+  "CIRG-CNICS-HOUSING": {
+    key: "CIRG-CNICS-HOUSING",
+    instrumentName: "CNICS Housing Measure",
+    title: "Housing",
+    subtitle: "Past month",
+    questionnaireMatchMode: "fuzzy",
+    displayMeaningNotScore: true,
+    linkIdMatchMode: "strict",
+    meaningQuestionId: "HOUSING-1",
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      const housingResponse = responses.find((response) => linkIdEquals(response.id, "HOUSING-1", "strict"));
+      const housingAnswer =
+        housingResponse?.answer != null && housingResponse.answer !== undefined ? housingResponse.answer : null;
+      return housingAnswer;
+    },
+    skipMeaningScoreRow: true,
+    skipChart: true,
+  },
+
+  "CIRG-CNICS-IPV4": {
+    key: "CIRG-CNICS-IPV4",
+    instrumentName: "IPV-4",
+    title: "Concern for IPV",
+    subtitle: "Past year",
+    questionnaireMatchMode: "fuzzy",
+    linkIdMatchMode: "strict",
+    highSeverityScoreCutoff: 1,
+    displayMeaningNotScore: true,
+    fallbackScoreMap: {
+      "ipv4-1-0": 1,
+      "ipv4-1-1": 0,
+      "ipv4-2-0": 1,
+      "ipv4-2-1": 0,
+      "ipv4-3-0": 1,
+      "ipv4-3-1": 0,
+      "ipv4-4-0": 1,
+      "ipv4-4-1": 0,
+    },
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      if (!severity || severity === "low") return "";
+      const answerMapping = {
+        "IPV4-1": "Felt trapped",
+        "IPV4-2": "Fearful of harm",
+        "IPV4-3": "Sexual violence",
+        "IPV4-4": "Physical violence",
+      };
+      const answers = responses
+        .filter((response) => {
+          return (
+            (response.answer != null &&
+              response.answer !== undefined &&
+              linkIdEquals(response.linkId, "IPV4-1", "strict")) ||
+            linkIdEquals(response.linkId, "IPV4-2", "strict") ||
+            linkIdEquals(response.linkId, "IPV4-3", "strict") ||
+            linkIdEquals(response.linkId, "IPV4-4", "strict")
+          );
+        })
+        .map((response) => answerMapping[response.linkId]);
+      return answers.join("|");
+    },
+    alertQuestionId: "IPV4-critical",
+    meaningRowLabel: "Summary",
+    skipChart: true,
+  },
+
   "CIRG-CNICS-MAPSS-SF": {
     key: "CIRG-CNICS-MAPSS-SF",
     instrumentName: "Social Support",
@@ -1346,110 +965,27 @@ const questionnaireConfigsRaw = {
       return meaningAnswer ? capitalizeFirstLetterSafe(String(meaningAnswer)) : "";
     },
   },
-  //TODO, implement those
-  "CIRG-IDU": {
-    key: "CIRG-IDU",
-    instrumentName: "IDU",
-    title: "IDU",
-  },
-  "CIRG-CONCURRENT-IDU": {
-    key: "CIRG-CONCURRENT-IDU",
-    instrumentName: "Concurrent IDU",
-    title: "Concurrent IDU",
-  },
-  "CIRG-NALOXONE-ACCESS": {
-    key: "CIRG-NALOXONE-ACCESS",
-    instrumentName: "Naloxone Access",
-    title: "Naloxone Access",
-  },
-  "CIRG-FENTANYL-STRIP-ACCESS": {
-    key: "CIRG-FENTANYL-STRIP-ACCESS",
-    instrumentName: "Fentanyl Test Strip Access",
-    title: "Fentanyl Test Strip Access",
-  },
-  "CIRG-SEXUAL-PARTNERS": {
-    key: "CIRG-SEXUAL-PARTNERS",
-    instrumentName: "Number of Sexual Partners",
-    deriveFrom: {
-      hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
-      linkId: "SEXUAL-RISK-SCORE-NUM-PARTNERS", // the single item to keep
-    },
-    columns: [
-      {
-        linkId: "SEXUAL-RISK-SCORE-NUM-PARTNERS",
-        id: "result",
-      },
-    ],
-    title: "# of Sex Partners",
-    subtitle: "Past 3 months",
-    skipMeaningScoreRow: true,
-    skipChart: true,
-  },
-  "CIRG-PARTNER-CONTEXT": {
-    key: "CIRG-PARTNER-CONTEXT",
-    instrumentName: "Sexual Partner Context",
-    title: "Sexual Partner Context",
-    subtitle: "Past 3 months",
-    deriveFrom: {
-      hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
-      linkIds: [
-        "SEXUAL-RISK-SCORE-PARTNERS-GENDERS",
-        "SEXUAL-RISK-SCORE-PARTNERS-HIV-NEG-PREP",
-        "SEXUAL-RISK-SCORE-PARTNERS-HIV-UNKNOWN",
-      ],
-    },
-    columns: [
-      {
-        linkId: "SEXUAL-RISK-SCORE-PARTNERS-GENDERS",
-        id: "result",
-      },
-      {
-        linkId: "SEXUAL-RISK-SCORE-PARTNERS-HIV-NEG-PREP",
-        id: "result",
-      },
-      {
-        linkId: "SEXUAL-RISK-SCORE-PARTNERS-HIV-UNKNOWN",
-        id: "result",
-      },
-    ],
-    fallbackMeaningFunc: function (severity, responses) {
-      if (isEmptyArray(responses)) return "";
-      let arrResponses = [];
 
-      // gender
-      const genderSexResponse = responses.find((response) =>
-        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-PARTNERS-GENDERS", "strict"),
-      );
-      const genderSexAnswer =
-        genderSexResponse?.answer != null && genderSexResponse.answer !== undefined ? genderSexResponse.answer : null;
-      if (genderSexAnswer && String(genderSexAnswer).toLowerCase() !== "tbd") arrResponses.push(genderSexAnswer);
-
-      // PREP
-      const prepSexResponse = responses.find((response) =>
-        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-PARTNERS-HIV-NEG-PREP", "strict"),
-      );
-      const prepSexAnswer =
-        prepSexResponse?.answer != null && prepSexResponse.answer !== undefined ? prepSexResponse.answer : null;
-      if (prepSexAnswer && String(prepSexAnswer).toLowerCase() !== "tbd") arrResponses.push(prepSexAnswer);
-
-      // HIV unknown
-      const hivUnknownResponse = responses.find((response) =>
-        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-PARTNERS-HIV-UNKNOWN", "strict"),
-      );
-      const hivUnknownAnswer =
-        hivUnknownResponse?.answer != null && hivUnknownResponse.answer !== undefined
-          ? hivUnknownResponse.answer
-          : null;
-      if (hivUnknownAnswer && String(hivUnknownAnswer).toLowerCase() !== "tbd") arrResponses.push(hivUnknownAnswer);
-
-      return arrResponses.join("|");
-    },
-    displayMeaningNotScore: true,
-    skipResponses: true,
-    meaningRowLabel: "Sexual Partner Context (Past 3 months)",
+  "CIRG-CNICS-MINI": {
+    key: "CIRG-CNICS-MINI",
+    instrumentName: "MINI Score",
+    title: "MINI Score",
+    subtitle: "Past 12 months",
+    minimumScore: 0,
+    maximumScore: 7,
+    scoringQuestionId: "MINI-score",
+    meaningQuestionId: "MINI-score-interpretation",
+    excludeQuestionLinkIdPatterns: ["MINI-score-ignoring-skipped"],
     linkIdMatchMode: "strict",
-    skipChart: true,
+    chartParams: {
+      ...CHART_CONFIG.default,
+      title: "MINI Score",
+      minimumYValue: 0,
+      maximumYValue: 7,
+      xLabel: "",
+    },
   },
+
   "CIRG-CNICS-SEXUAL-RISK": {
     key: "CIRG-CNICS-SEXUAL-RISK",
     instrumentName: "Unprotected Sex",
@@ -1516,108 +1052,510 @@ const questionnaireConfigsRaw = {
     skipChart: true,
   },
 
-  "CIRG-UNPROTECTED-ANAL-SEX": {
-    key: "CIRG-UNPRTECTED-ANAL-SEX",
-    instrumentName: "Unprotected Sex",
-    title: "Unprotected Anal Sex",
-    subtitle: "Past 3 months",
+  "CIRG-CNICS-Smoking": {
+    key: "CIRG-CNICS-Smoking",
+    instrumentName: "CNICS Smoking",
+    title: "Nicotine Use",
+    questionnaireMatchMode: "fuzzy",
+    displayMeaningNotScore: true,
+    linkIdMatchMode: "strict",
+    excludeQuestionLinkIdPatterns: ["summary"],
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      let arrMeaning = [];
+      const tobaccoUseResponse = responses.find((response) =>
+        linkIdEquals(response.id, "Smoking-Tobacco-Cigs-Summary", "strict"),
+      );
+      const eCigUseResponse = responses.find((response) => linkIdEquals(response.id, "E-Cigarettes-Summary", "strict"));
+      const tobaccoUseAnswer =
+        tobaccoUseResponse?.answer != null && tobaccoUseResponse.answer !== undefined
+          ? tobaccoUseResponse.answer
+          : null;
+      const eCigUseAnswer =
+        eCigUseResponse?.answer != null && eCigUseResponse.answer !== undefined ? eCigUseResponse.answer : null;
+      if (tobaccoUseAnswer) {
+        arrMeaning.push("Tobacco cigarettes: " + tobaccoUseAnswer);
+      }
+      if (eCigUseAnswer) {
+        arrMeaning.push("E-Cigarettes: " + eCigUseAnswer);
+      }
+      return arrMeaning.join("|");
+    },
+    meaningRowLabel: "Summary",
+    skipChart: true,
+  },
+
+  "CIRG-CNICS-Symptoms": {
+    key: "CIRG-CNICS-Symptoms",
+    instrumentName: "CNICS Symptoms Checklist",
+    title: "Current Symptoms",
+    subtitle: "From {date} assessment",
+    questionnaireMatchMode: "fuzzy",
+    linkIdMatchMode: "strict",
+    displayMeaningNotScore: true,
+    meaningRowLabel: "Summary",
+    disableHeaderRowSubtitle: true,
+    columns: [
+      {
+        linkId: "Symptoms-bothers-a-lot",
+        id: "bothersALot",
+      },
+      {
+        linkId: "Symptoms-bothers-some",
+        id: "bothersSome",
+      },
+    ],
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      const arrMeaning = [];
+      const bothersALotResponse = responses.find((response) =>
+        linkIdEquals(response.id, "Symptoms-bothers-a-lot", "strict"),
+      );
+      const bothersALotAnswer =
+        bothersALotResponse?.answer != null && bothersALotResponse.answer !== undefined
+          ? bothersALotResponse.answer
+          : null;
+      const bothersSomeResponse = responses.find((response) =>
+        linkIdEquals(response.id, "Symptoms-bothers-some", "strict"),
+      );
+      const bothersSomeAnswer =
+        bothersSomeResponse?.answer != null && bothersSomeResponse.answer !== undefined
+          ? bothersSomeResponse.answer
+          : null;
+      if (bothersALotAnswer) {
+        arrMeaning.push("Bothers a lot: " + bothersALotAnswer);
+      }
+      if (bothersSomeAnswer) {
+        arrMeaning.push("Bothers some: " + bothersSomeAnswer);
+      }
+      return arrMeaning.join("|");
+    },
+    skipChart: true,
+  },
+
+  "CIRG-CONCURRENT-IDU": {
+    key: "CIRG-CONCURRENT-IDU",
+    instrumentName: "Concurrent IDU",
+    title: "Concurrent IDU",
+  },
+
+  "CIRG-CP-ECOG": {
+    key: "CIRG-CP-ECOG",
+    questionnaireId: "CIRG-CP-ECOG",
+    questionnaireName: "cp-ecog",
+    instrumentName: "CP-ECOG",
+    title: "CP-ECOG",
+    questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/cp-ecog",
+    scoringQuestionId: "cp-ecog-total-score",
+    maximumScore: 48,
+    questionnaireMatchMode: "fuzzy",
+    questionLinkIds: [
+      "/89286-9/89146-5",
+      "/89286-9/89149-9",
+      "/89287-7/89172-1",
+      "/89287-7/89138-2",
+      "/89288-5/89154-9",
+      "/89288-5/89165-5",
+      "/89289-3/89143-2",
+      "/89289-3/89140-8",
+      "/89290-1/89158-0",
+      "/89290-1/89173-9",
+      "/89285-1/89141-6",
+      "/89285-1/89171-3",
+    ],
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 48, xLabel: "" },
+  },
+
+  "CIRG-ECOG12": {
+    key: "CIRG-ECOG12",
+    questionnaireId: "CIRG-ECOG12",
+    questionnaireName: "ecog12",
+    instrumentName: "ECOG-12",
+    title: "ECOG-12",
+    questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/ecog12",
+    scoringQuestionId: "ecog12-total-score",
+    maximumScore: 48,
+    questionnaireMatchMode: "fuzzy",
+    questionLinkIds: [
+      "/89286-9/89146-5",
+      "/89286-9/89149-9",
+      "/89287-7/89172-1",
+      "/89287-7/89138-2",
+      "/89288-5/89154-9",
+      "/89288-5/89165-5",
+      "/89289-3/89143-2",
+      "/89289-3/89140-8",
+      "/89290-1/89158-0",
+      "/89290-1/89173-9",
+      "/89285-1/89141-6",
+      "/89285-1/89171-3",
+    ],
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 48, xLabel: "" },
+  },
+
+  "CIRG-FENTANYL-STRIP-ACCESS": {
+    key: "CIRG-FENTANYL-STRIP-ACCESS",
+    instrumentName: "Fentanyl Test Strip Access",
+    title: "Fentanyl Test Strip Access",
+  },
+
+  "CIRG-GAD7": {
+    key: "CIRG-GAD7",
+    questionnaireId: "CIRG-GAD7",
+    questionnaireName: "gad7",
+    instrumentName: "GAD-7",
+    questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/gad7",
+    scoringQuestionId: "/70274-6",
+    maximumScore: 21,
+    questionLinkIds: ["/69725-0", "/68509-9", "/69733-4", "/69734-2", "/69735-9", "/69689-8", "/69736-7"],
+    questionnaireMatchMode: "fuzzy",
+    severityBands: [
+      { min: 15, label: "high", meaning: "severe anxiety" },
+      { min: 10, label: "moderate", meaning: "moderate anxiety" },
+      { min: 5, label: "mild", meaning: "mild anxiety" },
+      { min: 0, label: "low", meaning: "minimal anxiety" },
+    ],
+    // optional (defaults to top band min = 15 anyway)
+    highSeverityScoreCutoff: 15,
+    mediumSeverityScoreCutoff: 10,
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 21, xLabel: "", dotColor: null },
+  },
+
+  "CIRG-GDS": {
+    key: "CIRG-GDS",
+    questionnaireId: "CIRG-GDS",
+    questionnaireName: "gds",
+    instrumentName: "GDS",
+    questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/gds",
+    scoringQuestionId: "/48545-8",
+    maximumScore: 15,
+    questionnaireMatchMode: "fuzzy",
+    questionLinkIds: [
+      "/48512-8",
+      "/48513-6",
+      "/48514-4",
+      "/48515-1",
+      "/48518-5",
+      "/48519-3",
+      "/48520-1",
+      "/48521-9",
+      "/48523-5",
+      "/48525-0",
+      "/48526-8",
+      "/48528-4",
+      "/48532-6",
+      "/48533-4",
+      "/48534-2",
+    ],
+    chartParams: { ...CHART_CONFIG.default, minimumYValue: 0, maximumYValue: 15, xLabel: "" },
+  },
+
+  //TODO, implement those
+
+  "CIRG-IDU": {
+    key: "CIRG-IDU",
+    instrumentName: "IDU",
+    title: "IDU",
+  },
+
+  "CIRG-LAST-MISSED-DOSE": {
+    key: "CIRG-LAST-MISSED-DOSE",
+    title: "Last Missed Dose",
+    subtitle: "Past 4 weeks",
+    instrumentName: "Last Missed Dose",
     deriveFrom: {
-      hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
-      linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-ANAL", // the single item to keep
+      hostIds: ["CIRG-CNICS-ARV"], // one or many hosts
+      linkId: "ARV-last-missed", // the single item to keep
     },
     columns: [
       {
-        linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-ANAL",
+        linkId: "ARV-last-missed",
         id: "result",
       },
     ],
-    valueFormatter: (val) =>
-      String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : val,
-    fallbackMeaningFunc: function (severity, responses) {
-      if (isEmptyArray(responses)) return "";
-      const meaningResponse = responses.find((response) =>
-        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED-ANAL", "strict"),
-      );
-      const meaningAnswer =
-        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
-      if (String(meaningAnswer).toLowerCase() === "true") return "Yes";
-      else if (String(meaningAnswer).toLowerCase() === "false") return "No";
-      return meaningAnswer;
-    },
-    displayMeaningNotScore: true,
-    skipResponses: true,
-    meaningRowLabel: "Unprotected Anal Sex",
-    linkIdMatchMode: "strict",
+    skipMeaningScoreRow: true,
     skipChart: true,
   },
-  "CIRG-UNPROTECTED-ORAL-SEX": {
-    key: "CIRG-UNPROTECTED-ORAL-SEX",
-    instrumentName: "Unprotected Sex",
-    title: "Unprotected Oral Sex",
+
+  "CIRG-MINICOG": {
+    key: "CIRG-MINICOG",
+    questionnaireId: "CIRG-MINICOG",
+    questionnaireName: "MINICOG",
+    instrumentName: "MINI-COG",
+    questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/minicog",
+    recallLinkIds: ["/recall-1", "/recall-2", "/recall-3"],
+    clockLinkId: "/clock",
+    // What counts as "correct" for recall (pick your reality):
+    recallCorrectCodes: ["correct", "present", "Y"], // if coded
+    recallCorrectStrings: ["correct", "present", "yes"], // if strings
+    // Clock scoring: map whichever value you use to 0 or 2
+    clockScoreMap: {
+      normal: 2,
+      abnormal: 0,
+      2: 2,
+      0: 0,
+    },
+    // Total severity bands for Mini-Cog
+    severityBands: [
+      { min: 3, label: "low", meaning: "unlikely impairment" },
+      { min: 0, label: "high", meaning: "possible impairment" }, // catch-all for 0–2
+    ],
+    highSeverityScoreCutoff: 2, // flag when total ≤ 2 (common rule)
+    comparisonToAlert: "lower",
+    questionnaireMatchMode: "fuzzy",
+    chartParams: { ...CHART_CONFIG.default, dotColor: null },
+  },
+
+  "CIRG-NALOXONE-ACCESS": {
+    key: "CIRG-NALOXONE-ACCESS",
+    instrumentName: "Naloxone Access",
+    title: "Naloxone Access",
+  },
+
+  "CIRG-PARTNER-CONTEXT": {
+    key: "CIRG-PARTNER-CONTEXT",
+    instrumentName: "Sexual Partner Context",
+    title: "Sexual Partner Context",
     subtitle: "Past 3 months",
     deriveFrom: {
       hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
-      linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-ORAL", // the single item to keep
+      linkIds: [
+        "SEXUAL-RISK-SCORE-PARTNERS-GENDERS",
+        "SEXUAL-RISK-SCORE-PARTNERS-HIV-NEG-PREP",
+        "SEXUAL-RISK-SCORE-PARTNERS-HIV-UNKNOWN",
+      ],
     },
     columns: [
       {
-        linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-ORAL",
+        linkId: "SEXUAL-RISK-SCORE-PARTNERS-GENDERS",
+        id: "result",
+      },
+      {
+        linkId: "SEXUAL-RISK-SCORE-PARTNERS-HIV-NEG-PREP",
+        id: "result",
+      },
+      {
+        linkId: "SEXUAL-RISK-SCORE-PARTNERS-HIV-UNKNOWN",
         id: "result",
       },
     ],
-    valueFormatter: (val) =>
-      String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : val,
     fallbackMeaningFunc: function (severity, responses) {
       if (isEmptyArray(responses)) return "";
-      const meaningResponse = responses.find((response) =>
-        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED-ORAL", "strict"),
+      let arrResponses = [];
+
+      // gender
+      const genderSexResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-PARTNERS-GENDERS", "strict"),
       );
-      const meaningAnswer =
-        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
-      if (String(meaningAnswer).toLowerCase() === "true") return "Yes";
-      else if (String(meaningAnswer).toLowerCase() === "false") return "No";
-      return meaningAnswer;
+      const genderSexAnswer =
+        genderSexResponse?.answer != null && genderSexResponse.answer !== undefined ? genderSexResponse.answer : null;
+      if (genderSexAnswer && String(genderSexAnswer).toLowerCase() !== "tbd") arrResponses.push(genderSexAnswer);
+
+      // PREP
+      const prepSexResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-PARTNERS-HIV-NEG-PREP", "strict"),
+      );
+      const prepSexAnswer =
+        prepSexResponse?.answer != null && prepSexResponse.answer !== undefined ? prepSexResponse.answer : null;
+      if (prepSexAnswer && String(prepSexAnswer).toLowerCase() !== "tbd") arrResponses.push(prepSexAnswer);
+
+      // HIV unknown
+      const hivUnknownResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-PARTNERS-HIV-UNKNOWN", "strict"),
+      );
+      const hivUnknownAnswer =
+        hivUnknownResponse?.answer != null && hivUnknownResponse.answer !== undefined
+          ? hivUnknownResponse.answer
+          : null;
+      if (hivUnknownAnswer && String(hivUnknownAnswer).toLowerCase() !== "tbd") arrResponses.push(hivUnknownAnswer);
+
+      return arrResponses.join("|");
     },
     displayMeaningNotScore: true,
     skipResponses: true,
-    meaningRowLabel: "Unprotected Oral Sex",
+    meaningRowLabel: "Sexual Partner Context (Past 3 months)",
     linkIdMatchMode: "strict",
     skipChart: true,
   },
-  "CIRG-UNPROTECTED-VAGINAL-SEX": {
-    key: "CIRG-UNPROTECTED-VAGINAL-SEX",
-    instrumentName: "Unprotected Sex",
-    title: "Unprotected Vaginal Sex",
-    subtitle: "Past 3 months",
+
+  "CIRG-PC-PTSD-5": {
+    key: "CIRG-PC-PTSD-5",
+    questionnaireId: "CIRG-PC-PTSD-5",
+    questionnaireName: "CIRG-PC-PTSD-5",
+    instrumentName: "The Primary Care PTSD Screen for DSM-5 [PC-PTSD-5]",
+    title: "PTSD Symptoms",
+    subtitle: "Past month",
+    //  skipMeaningScoreRow: true,
+    skipChart: true,
+    meaningQuestionId: "PC-PTSD-5-SCORE-SYMPTOMS",
+    displayMeaningNotScore: true,
+    linkIdMatchMode: "strict",
+    excludeQuestionLinkIdPatterns: ["102017-1"],
+    questionnaireMatchMode: "fuzzy",
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      const meaningResponse = responses.find((response) =>
+        linkIdEquals(response.id, "PC-PTSD-5-SCORE-SYMPTOMS", "strict"),
+      );
+      const meaningAnswer =
+        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
+      return meaningAnswer?.split(",").join("|");
+    },
+    meaningRowLabel: "Summary (Symptoms endorsed in the past month)",
+    disableHeaderRowSubtitle: true,
+  },
+
+  "CIRG-PHQ9": {
+    key: "CIRG-PHQ9",
+    questionnaireId: "CIRG-PHQ9",
+    questionnaireName: "phq9",
+    instrumentName: "Patient Health Questionnaire-9 (PHQ-9)",
+    title: "PHQ-9",
+    subtitle: "Last two weeks",
+    questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/phq9",
+    scoringQuestionId: "/44261-6",
+    note: PHQ9_ADMIN_NOTE,
+    subScoringQuestions: [
+      {
+        key: "PHQ-2",
+        linkId: "/55758-7",
+      },
+    ],
+    maximumScore: 27,
+    linkIdMatchMode: "fuzzy",
+    questionLinkIds: [
+      "/55758-7",
+      "/44250-9",
+      "/44255-8",
+      "/44259-0",
+      "/44254-1",
+      "/44251-7",
+      "/44258-2",
+      "/44252-5",
+      "/44253-3",
+      "/44260-8",
+      //"/69722-7",
+      //"/44261-6",
+      //"/55758-7",
+    ],
+    itemTextByLinkId: {
+      "/55758-7": "PHQ-2 total score",
+      "/44261-6": "PHQ-9 total score",
+    },
+    questionnaireMatchMode: "fuzzy",
+    highSeverityScoreCutoff: 20,
+    mediumSeverityScoreCutoff: 10,
+    severityBands: [
+      { min: 20, label: "high", meaning: "Severe depression" },
+      { min: 15, label: "moderately high", meaning: "Moderately severe depression" },
+      { min: 10, label: "moderate", meaning: "Moderate depression" },
+      { min: 5, label: "mild", meaning: "Mild depression" },
+      { min: 0, label: "low", meaning: "Minimal depression" },
+    ],
+    showNumAnsweredWithScore: true,
+    chartParams: {
+      ...CHART_CONFIG.default,
+      title: "PHQ-9 Score",
+      minimumYValue: 0,
+      maximumYValue: 27,
+      xLabel: "",
+      connectNulls: true,
+      dotColor: null,
+      splitBySource: true,
+    },
+  },
+
+  "CIRG-SEXUAL-PARTNERS": {
+    key: "CIRG-SEXUAL-PARTNERS",
+    instrumentName: "Number of Sexual Partners",
     deriveFrom: {
       hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
-      linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-VAGINAL", // the single item to keep
+      linkId: "SEXUAL-RISK-SCORE-NUM-PARTNERS", // the single item to keep
     },
     columns: [
       {
-        linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-VAGINAL",
+        linkId: "SEXUAL-RISK-SCORE-NUM-PARTNERS",
         id: "result",
       },
     ],
-    valueFormatter: (val) =>
-      String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : val,
-    fallbackMeaningFunc: function (severity, responses) {
-      if (isEmptyArray(responses)) return "";
-      const meaningResponse = responses.find((response) =>
-        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED-VAGINAL", "strict"),
-      );
-      const meaningAnswer =
-        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
-      if (String(meaningAnswer).toLowerCase() === "true") return "Yes";
-      else if (String(meaningAnswer).toLowerCase() === "false") return "No";
-      return meaningAnswer;
-    },
-    displayMeaningNotScore: true,
-    skipResponses: true,
-    meaningRowLabel: "Unprotected Vaginal Sex",
-    linkIdMatchMode: "strict",
+    title: "# of Sex Partners",
+    subtitle: "Past 3 months",
+    skipMeaningScoreRow: true,
     skipChart: true,
   },
+
+  "CIRG-SHORTNESS-OF-BREATH": {
+    title: "Shortness of breath",
+  },
+
+  "CIRG-SI": {
+    key: "CIRG-SI",
+    instrumentName: "Suicide Ideation",
+    title: "Suicide Ideation",
+    subtitle: "Last two weeks",
+    scoringQuestionId: PHQ9_SI_QUESTION_LINK_ID,
+    fallbackScoreMap: PHQ9_SI_ANSWER_SCORE_MAPPINGS,
+    highSeverityScoreCutoff: 3,
+    mediumSeverityScoreCutoff: 2,
+    comparisonToAlert: "higher",
+    severityBands: [
+      { min: 3, label: "high", meaning: "Nearly every day" },
+      { min: 2, label: "moderate", meaning: "More than half the days" },
+      { min: 1, label: "mild", meaning: "Several days" },
+      { min: 0, label: "low", meaning: "Not at all" },
+    ],
+    minimumScore: 0,
+    maximumScore: 3,
+    deriveFrom: {
+      hostIds: ["CIRG-PHQ9"], // one or many hosts
+      linkId: PHQ9_SI_QUESTION_LINK_ID, // the single item to keep
+    },
+    chartParams: {
+      ...CHART_CONFIG.default,
+      title: "Suicide Ideation",
+      minimumYValue: 0,
+      maximumYValue: 3,
+      xLabel: "",
+      yLabel: "value",
+      type: "barchart",
+      dotColor: null,
+    },
+  },
+
+  "CIRG-SLUMS": {
+    key: "CIRG-SLUMS",
+    questionnaireId: "CIRG-SLUMS",
+    questionnaireName: "slums",
+    instrumentName: "SLUMS",
+    questionnaireUrl: "http://www.cdc.gov/ncbddd/fasd/slums",
+    scoringQuestionId: "/71492-3", // total score item
+    questionLinkIds: ["/71492-3"],
+    maximumScore: 30,
+    comparisonToAlert: "lower",
+    questionnaireMatchMode: "fuzzy",
+    // No questionLinkIds needed—SLUMS uses a single total-score field
+    chartParams: { ...CHART_CONFIG.default, title: "SLUMS", minimumYValue: 0, maximumYValue: 30, xLabel: "" },
+  },
+
+  "CIRG-SRS": {
+    key: "CIRG-SRS",
+    title: "Self Rating Scale (SRS)",
+    subtitle: "Past 4 weeks",
+    instrumentName: "Self Rating Scale (SRS)",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-ARV"], // one or many hosts
+      linkId: "ARV-SRS", // the single item to keep
+    },
+    columns: [
+      {
+        linkId: "SARV-SRS",
+        id: "result",
+      },
+    ],
+    skipMeaningScoreRow: true,
+    skipChart: true,
+  },
+
   "CIRG-STI": {
     key: "CIRG-STI",
     instrumentName: "STI",
@@ -1653,28 +1591,147 @@ const questionnaireConfigsRaw = {
     alertQuestionId: "SEXUAL-RISK-SCORE-STI-EXPOSURE",
     skipChart: true,
   },
-  "CIRG-CNICS-HIV-STIGMA": {
-    key: "CIRG-CNICS-HIV-STIGMA",
-    instrumentName: "HIV Stigma",
-    title: "HIV Stigma",
-    alertQuestionId: "HIV-STIGMA-SCORE-CRITICAL",
-    scoringQuestionId: "HIV-STIGMA-SCORE",
-    linkIdMatchMode: "strict",
-    showNumAnsweredWithScore: true,
-    totalAnsweredQuestionId: "HIV-STIGMA-SCORE-NUM-ANSWERED",
-    noteFunction: (questionnaire) => {
-      if (!questionnaire) return "";
-      const matchedItem = questionnaire.item.find(o => o.linkId === "HIV-STIGMA-SCORE");
-      return matchedItem?.text;
+
+  "CIRG-UNPROTECTED-ANAL-SEX": {
+    key: "CIRG-UNPRTECTED-ANAL-SEX",
+    instrumentName: "Unprotected Sex",
+    title: "Unprotected Anal Sex",
+    subtitle: "Past 3 months",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
+      linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-ANAL", // the single item to keep
     },
-    severityBands: [
-      { min: 4, label: "high", meaning: "High Stigma" },
-      { min: 0, label: "low", meaning: ""},
+    columns: [
+      {
+        linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-ANAL",
+        id: "result",
+      },
     ],
-    highSeverityScoreCutoff: 4,
-    chartParams: { ...CHART_CONFIG.default, title: "HIV Stigma Score", xLabel: "" }
+    valueFormatter: (val) =>
+      String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : val,
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      const meaningResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED-ANAL", "strict"),
+      );
+      const meaningAnswer =
+        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
+      if (String(meaningAnswer).toLowerCase() === "true") return "Yes";
+      else if (String(meaningAnswer).toLowerCase() === "false") return "No";
+      return meaningAnswer;
+    },
+    displayMeaningNotScore: true,
+    skipResponses: true,
+    meaningRowLabel: "Unprotected Anal Sex",
+    linkIdMatchMode: "strict",
+    skipChart: true,
+  },
+
+  "CIRG-UNPROTECTED-ORAL-SEX": {
+    key: "CIRG-UNPROTECTED-ORAL-SEX",
+    instrumentName: "Unprotected Sex",
+    title: "Unprotected Oral Sex",
+    subtitle: "Past 3 months",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
+      linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-ORAL", // the single item to keep
+    },
+    columns: [
+      {
+        linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-ORAL",
+        id: "result",
+      },
+    ],
+    valueFormatter: (val) =>
+      String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : val,
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      const meaningResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED-ORAL", "strict"),
+      );
+      const meaningAnswer =
+        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
+      if (String(meaningAnswer).toLowerCase() === "true") return "Yes";
+      else if (String(meaningAnswer).toLowerCase() === "false") return "No";
+      return meaningAnswer;
+    },
+    displayMeaningNotScore: true,
+    skipResponses: true,
+    meaningRowLabel: "Unprotected Oral Sex",
+    linkIdMatchMode: "strict",
+    skipChart: true,
+  },
+
+  "CIRG-UNPROTECTED-VAGINAL-SEX": {
+    key: "CIRG-UNPROTECTED-VAGINAL-SEX",
+    instrumentName: "Unprotected Sex",
+    title: "Unprotected Vaginal Sex",
+    subtitle: "Past 3 months",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-SEXUAL-RISK"], // one or many hosts
+      linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-VAGINAL", // the single item to keep
+    },
+    columns: [
+      {
+        linkId: "SEXUAL-RISK-SCORE-UNPROTECTED-VAGINAL",
+        id: "result",
+      },
+    ],
+    valueFormatter: (val) =>
+      String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : val,
+    fallbackMeaningFunc: function (severity, responses) {
+      if (isEmptyArray(responses)) return "";
+      const meaningResponse = responses.find((response) =>
+        linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED-VAGINAL", "strict"),
+      );
+      const meaningAnswer =
+        meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
+      if (String(meaningAnswer).toLowerCase() === "true") return "Yes";
+      else if (String(meaningAnswer).toLowerCase() === "false") return "No";
+      return meaningAnswer;
+    },
+    displayMeaningNotScore: true,
+    skipResponses: true,
+    meaningRowLabel: "Unprotected Vaginal Sex",
+    linkIdMatchMode: "strict",
+    skipChart: true,
+  },
+
+  "CIRG-VAS": {
+    key: "CIRG-VAS",
+    title: "Percent ART taken",
+    subtitle: "Past 4 weeks",
+    instrumentName: "VAS",
+    scoringQuestionId: "ARV-VAS",
+    deriveFrom: {
+      hostIds: ["CIRG-CNICS-ARV"], // one or many hosts
+      linkId: "ARV-VAS", // the single item to keep
+    },
+    columns: [
+      {
+        linkId: "ARV-VAS",
+        id: "result",
+      },
+    ],
+    valueFormatter: (value) => (!isNil(value) ? `${value} ${String(value).includes("%") ? "" : "%"}` : value),
+    chartParams: {
+      ...CHART_CONFIG.default,
+      title: "Percent ART Taken",
+      minimumYValue: 0,
+      maximumYValue: 100,
+      xLabel: "",
+      yLabel: "value",
+      tooltipValueFormatter: (value) => (!isNil(value) ? `${value} ${String(value).includes("%") ? "" : "%"}` : value),
+      type: "barchart",
+    },
+    skipResponses: true,
+    meaningRowLabel: "Visual Analog Scale % (Past 4 weeks)",
   },
 };
+
+console.log("sorted ", Object.fromEntries(
+  Object.entries(questionnaireConfigsRaw).sort(([a], [b]) => a.localeCompare(b))
+))
 
 export const getConfigForQuestionnaire = (id) => {
   return (
