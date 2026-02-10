@@ -1666,7 +1666,12 @@ const questionnaireConfigsRaw = {
       if (!questionnaire) return "";
       const matchedItem = questionnaire.item.find(o => o.linkId === "HIV-STIGMA-SCORE");
       return matchedItem?.text;
-    }
+    },
+    severityBands: [
+      { min: 4, label: "high", meaning: "High Stigma" },
+      { min: 0, label: "low", meaning: ""},
+    ],
+    highSeverityScoreCutoff: 4
   },
 };
 
