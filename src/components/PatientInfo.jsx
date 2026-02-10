@@ -21,7 +21,7 @@ export default function PatientInfo(props) {
     return patientObj.age ?? "--";
   };
   const renderMRN = () => {
-    if (!patientObj.mrn) return "--";
+    if (!patientObj.mrn) return "";
     return (
       <Box>
         <Typography component="span" sx={{ color: "muted.main", marginLeft: "2px" }} variant="body2">

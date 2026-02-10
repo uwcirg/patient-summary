@@ -24,6 +24,7 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
 
   const parts = String(meaning).includes("|") ? String(meaning).split("|") : [String(meaning)];
   const cellClass = alert ? "text-danger" : warning ? "text-warning" : "";
+  const partsContainSemiColon = parts?.filter((part) => part.includes(":"));
 
   return (
     <Box className={`meaning-wrapper ${className}`.trim()}>
@@ -46,7 +47,7 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
         }
 
         // Plain text: if it contains "label: value", render as Stack
-        const pair = splitOnFirstColon(s);
+        const pair = partsContainSemiColon?.length > 1 ? splitOnFirstColon(s) : null;
         if (pair) {
           return (
             <Stack
@@ -57,7 +58,7 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
               justifyContent="flex-start"
               alignItems="flex-end"
               sx={{
-                borderBottom: index !== parts.length - 1 ? "1px solid #ececec" : "none",
+                borderBottom: index !== parts.length - 1 ? "1px solid #f4f5f5" : "none",
                 paddingBottom: "4px",
               }}
             >

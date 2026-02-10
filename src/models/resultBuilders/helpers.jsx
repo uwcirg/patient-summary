@@ -383,7 +383,6 @@ export function defaultAnswerMapperFromObservation(obs) {
   return null;
 }
 
-
 /**
  * Generates a unique grouping key for observations
  * Falls back to UUID instead of "unknown" to prevent incorrect grouping
@@ -912,6 +911,7 @@ export function getResponseColumns(data) {
         const config = rowData?.config;
         const normalizedClean = normalizeStr(q);
         const isQuestion =
+          rowData?.isWeightedLabel ||
           normalizeStr(q) === normalizeStr(config?.title) ||
           (IS_QUESTION_COLUMN_KEYWORDS.some(
             (keyword) => normalizedClean === keyword || normalizedClean.includes(keyword),

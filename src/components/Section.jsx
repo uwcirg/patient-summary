@@ -47,7 +47,7 @@ export default function Section({ section, data }) {
     >
       {renderAnchorElement()}
       {section.standalone && (
-        <Paper className="section-wrapper" sx={{ padding: (theme) => theme.spacing(1) }}>
+        <Paper className="section-wrapper" sx={{ padding: (theme) => theme.spacing(1) }} elevation={0}>
           {section.component(data)}
         </Paper>
       )}

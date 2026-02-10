@@ -528,6 +528,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return out;
   }
 
+  readOrdinalExt(opt) {
+    const ext = (opt.extension || []).find((e) => e.url === "http://hl7.org/fhir/StructureDefinition/ordinalValue");
+    return this.answerPrimitive(ext);
+  }
+
   getAnswerValueByExtension(questionnaire, code) {
     if (!questionnaire?.item) {
       //console.warn("getAnswerValueByExtension: questionnaire or questionnaire.item is missing.");
@@ -538,16 +543,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       return null;
     }
     let found = null;
-    const readOrdinalExt = (opt) => {
-      const ext = (opt.extension || []).find((e) => e.url === "http://hl7.org/fhir/StructureDefinition/ordinalValue");
-      return this.answerPrimitive(ext);
-    };
     const walk = (items = []) => {
       for (const it of items) {
         for (const opt of it.answerOption || []) {
           const c = opt.valueCoding;
           if (c?.code === code) {
-            const fromExt = readOrdinalExt(opt);
+            const fromExt = this.readOrdinalExt(opt);
             if (fromExt != null) {
               found = fromExt;
               return;
@@ -621,6 +622,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       // Prefer human display for codings
       const coding = this.answerCoding(item);
       if (coding) {
+        const fromExt = this.readOrdinalExt(coding);
+        if (fromExt != null && isNumber(fromExt)) return fromExt;
         const normalizedCode = coding.code != null ? String(coding.code).toLowerCase() : null;
         return coding.display ?? (normalizedCode ? fallbackScoreMap[normalizedCode] : null) ?? null;
       }
@@ -767,6 +770,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     if (totalItems === 0 && score != null) totalItems = 1;
     if (totalAnsweredItems === 0 && score != null) totalAnsweredItems = 1;
+    if (totalAnsweredItems === 0 && config?.totalAnsweredQuestionId) {
+      totalAnsweredItems = this.getAnswerByResponseLinkId(config?.totalAnsweredQuestionId, flat);
+    }
 
     return { ...stats, score, subScores, scoringQuestionScore, totalAnsweredItems, totalItems };
   }
@@ -878,7 +884,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       }
     }
     if (!questionText) return "";
-    return stripHtmlTags((questionText).replace(/\s*\([^)]*\)/g, "").trim());;
+    return stripHtmlTags(questionText.replace(/\s*\([^)]*\)/g, "").trim());
   }
   _hasResponseData(data) {
     return !isEmptyArray(data) && !!data.find((item) => !isEmptyArray(item.responses));
@@ -913,13 +919,17 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   _formatScoringSummaryData = (data, opts = {}) => {
     if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
     const subtitle = opts?.config?.subtitle ? getNormalizedRowTitleDisplay(opts?.config?.subtitle, data[0]) : "";
-    const note = opts?.config?.note ? opts?.config?.note : null;
     const scoreParams = getScoreParamsFromResponses(data, opts?.config);
     const dataProps = { responses: data[0].responses, ...data[0], ...scoreParams };
     const displayMeaningOnly = this._hasMeaningOnlyData(data);
     const responseColumns = getResponseColumns(data, data[0]);
     const tableResponseData = opts?.tableResponseData ?? this._formatTableResponseData(data);
     const { patientBundle, questionnaireResponse, questionnaire, ...rest } = data[0];
+    const note = opts?.config?.note
+      ? opts?.config?.note
+      : opts?.config.noteFunction
+        ? opts?.config.noteFunction(questionnaire)
+        : null;
     return {
       ...rest,
       ...scoreParams,
@@ -1138,6 +1148,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
               : ""),
           id: `question_${data.map((o) => o.id).join("")}`,
           config: resolvedConfig,
+          isWeightedLabel: true,
         };
         for (const item of data) {
           questionRow[item.id] = {
@@ -1158,6 +1169,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         question: meaningRowLabel,
         id: `meaning_${data.map((o) => o.id).join("")}`,
         config: resolvedConfig,
+        isWeightedLabel: true,
       };
       for (const item of data) {
         meaningRow[item.id] = {
@@ -1171,6 +1183,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         question: meaningRowLabel,
         id: `score_${data.map((o) => o.id).join("")}`,
         config: resolvedConfig,
+        isWeightedLabel: true,
       };
       for (const item of data) {
         scoringRow[item.id] = {
@@ -1679,19 +1692,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (chartData && chartConfig?.dataFormatter) {
       chartData = chartConfig.dataFormatter(chartData);
     }
-    //const dateArray = !isEmptyArray(chartData) ? chartData?.map((dataPoint) => dataPoint.date) : [];
-    // const uniqueDates = !isEmptyArray(dateArray) ? [...new Set(dateArray)] : [];
-    // xDomain = getDateDomain(uniqueDates, { padding: uniqueDates.length <= 2 ? 0.15 : 0.05 });
-    // const datesToUse = uniqueDates.filter((item) => {
-    //   const timestamp = item instanceof Date ? item.getTime() : new Date(item).getTime();
-    //   return timestamp > CUT_OFF_TIMESTAMP;
-    // });
-    // const hasOlderData = !!uniqueDates.find((item) => {
-    //   const timestamp = item instanceof Date ? item.getTime() : new Date(item).getTime();
-    //   return timestamp < CUT_OFF_TIMESTAMP;
-    // });
-    // const minTimestamp = Math.min(...datesToUse);
-    // const truncationTimestamp = hasOlderData ? dayjs(new Date(minTimestamp)).subtract(1, "month").valueOf() : null;
     const { chartParams, ...rest } = config ?? {};
     const chartDataParams = { ...rest, ...chartConfig, ...chartParams, xDomain };
     const dedupeByDateLatest = (arr) => {

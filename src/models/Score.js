@@ -10,14 +10,15 @@ class Score {
   }
   static range = ["high", "moderate", "moderately high"];
   isHigh() {
-    return this.severity === "high";
+    return this.severity === "high" || !!this.scoreParams?.alert;
   }
   isModerate() {
-    return this.severity === "moderate" || this.severity === "moderately high";
+    return this.severity === "moderate" || this.severity === "moderately high" || !!this.scoreParams?.warning;
   }
 
   isInRange() {
-    return Score.range.indexOf(this.severity) !== -1;
+
+    return this.isHigh() || this.isModerate() || Score.range.indexOf(this.severity) !== -1;
   }
   
   get currentScore() {

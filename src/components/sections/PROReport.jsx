@@ -47,6 +47,7 @@ export default function PROReport() {
               md: "50%",
               lg: "50%",
             },
+            maxWidth: "100%"
           }}
         />
         <Box
@@ -58,6 +59,7 @@ export default function PROReport() {
               lg: 0,
             },
           }}
+          maxWidth={"100%"}
         >
           {!isEmptyArray(table.charts) &&
             table.charts.map((chartData, index) => {
@@ -90,10 +92,11 @@ export default function PROReport() {
                 id={`panel-${table.id}-header`}
                 sx={{
                   minHeight: "42px",
-                  backgroundColor: "#e8eaf6",
+                  backgroundColor: "#f2f3f9",
                   [`& .${accordionSummaryClasses.expandIconWrapper}.${accordionSummaryClasses.expanded}`]: {
-                    transform: "rotate(90deg)",
+                    transform: "rotate(-90deg)",
                   },
+                  borderBottom: "1px solid #FFF"
                 }}
               >
                 <Typography variant="body1" component="h3" className="section-subtitle">
@@ -101,7 +104,7 @@ export default function PROReport() {
                 </Typography>
               </AccordionSummary>
             )}
-            <AccordionDetails>
+            <AccordionDetails sx={{padding: "16px"}}>
               <Box>
                 {table.layout === "simple" && (
                   <ScoringSummary

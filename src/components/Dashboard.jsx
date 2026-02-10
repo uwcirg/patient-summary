@@ -32,11 +32,16 @@ export default function Dashboard() {
       );
     });
   };
-  // eslint-disable-next-line
-  const MemoizedSection = React.memo(function MemoizedSection({ section, data }) {
+  const MemoizedSection = React.memo(
     // eslint-disable-next-line
-    return <Section section={section} data={data} key={`section_${section.id}`}></Section>;
-  });
+    function MemoizedSection({ section, data }) {
+      // eslint-disable-next-line
+      return <Section section={section} data={data} key={`section_${section.id}`}></Section>;
+    },
+    (prevProps, nextProps) => {
+      return prevProps?.section.id === nextProps.section?.id;
+    },
+  );
   MemoizedSection.proptypes = {
     section: PropTypes.element,
     data: PropTypes.object,
@@ -58,10 +63,10 @@ export default function Dashboard() {
           ),
           sx: {
             "& .MuiAccordionSummary-root": {
-              backgroundColor: "error.main"
-            }
+              backgroundColor: "error.main",
+            },
           },
-          icon: () => <ErrorIcon></ErrorIcon>
+          icon: () => <ErrorIcon></ErrorIcon>,
         }}
       ></Section>
     );

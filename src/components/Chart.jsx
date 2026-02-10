@@ -4,28 +4,38 @@ import Error from "./ErrorComponent";
 import BarChart from "./graphs/BarCharts";
 import LineChart from "./graphs/LineCharts";
 
-const Chart = (props) => {
-  const eligibleCharts = ["linechart", "barchart"];
-  const chartRef = useRef();
-  const { key, ...rest } = props.data;
-  return (
-    <div
-      className="chart__container"
-      style={{
-        width: {
-          sm: "100%",
-          md: "50%",
-        },
-      }}
-      ref={chartRef}
-    >
-      {props.type === "linechart" && <LineChart {...rest}></LineChart>}
-      {props.type === "barchart" && <BarChart {...rest}></BarChart>}
-      {eligibleCharts.indexOf(props.type) === -1 && <Error message="Graph type specified is not available."></Error>}
-      {/* other types of graph go here */}
-    </div>
-  );
-};
+const Chart = React.memo(
+  (props) => {
+    const eligibleCharts = ["linechart", "barchart"];
+    const chartRef = useRef();
+    const { key, ...rest } = props.data;
+    return (
+      <div
+        className="chart__container"
+        style={{
+          width: {
+            sm: "100%",
+            md: "50%",
+          },
+        }}
+        ref={chartRef}
+      >
+        {props.type === "linechart" && <LineChart {...rest}></LineChart>}
+        {props.type === "barchart" && <BarChart {...rest}></BarChart>}
+        {eligibleCharts.indexOf(props.type) === -1 && <Error message="Graph type specified is not available."></Error>}
+        {/* other types of graph go here */}
+      </div>
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.type === nextProps.type &&
+      (prevProps.data?.id === nextProps.data?.id || prevProps.data?.key === nextProps.data?.key) &&
+      prevProps.data?.data === nextProps.data?.data
+    );
+  },
+);
+
 Chart.propTypes = {
   data: PropTypes.shape({
     key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
@@ -53,4 +63,5 @@ Chart.propTypes = {
   }),
   type: PropTypes.string.isRequired,
 };
+Chart.displayName = Chart;
 export default Chart;

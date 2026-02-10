@@ -6,7 +6,7 @@ $app-background-color: #faf9fa;
 $summary-container-background-color: #fff;
 $default-print-background-color: #fff;
 $default-print-color: #444;
-$row-background-color: #f3f5f5;
+$row-background-color: #f8fafa;
 $success-color: #1d771d;
 $danger-background-color: #f3e2e233;
 $warning-background-color: #f7d0b01a;
@@ -200,13 +200,13 @@ p {
       border-bottom: 0;
     }
   }
-  tr:has(.text-readonly .read-only) {
+  tr:has(.text-readonly),
+  tr:has(.read-only) {
     td {
       border-left: 0 !important;
       color: $muted-text-color;
       line-height: 1.5;
       padding: 10px 16px !important;
-      font-style: italic;
       font-weight: 500 !important;
       background-color: $row-background-color !important;
       border-right: 0 !important;

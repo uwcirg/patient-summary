@@ -193,7 +193,7 @@ export const report_config = {
                     tableData={row?.tableResponseData}
                     columns={row?.responseColumns}
                     questionnaire={row.questionnaire}
-                    buttonStyle={{ width: "100%", maxWidth: 108 }}
+                    buttonStyle={{ width: "100%", maxWidth: 88 }}
                   />
                 );
               },
@@ -250,7 +250,7 @@ export const report_config = {
           title: "Psychosocial Concerns and Quality of Life",
           layout: "two-columns",
           hiddenColumns: ["numAnswered", "comparison"],
-          dataKeysToMatch: ["CIRG-CNICS-MAPSS-SF", "CIRG-HIV-Stigma", "CIRG-PC-PTSD-5"],
+          dataKeysToMatch: ["CIRG-CNICS-MAPSS-SF", "CIRG-CNICS-HIV-STIGMA", "CIRG-PC-PTSD-5"],
           // tableStyle: {
           //   width: "auto",
           // },

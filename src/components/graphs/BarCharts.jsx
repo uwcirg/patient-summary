@@ -20,7 +20,7 @@ import {
   ALERT_COLOR,
   adjustBrightness,
   buildClampedThinnedTicks,
-  CUT_OFF_YEARS_AGO
+  CUT_OFF_YEARS_AGO,
 } from "@config/chart_config";
 import CustomSourceTooltip from "./CustomSourceTooltip";
 import { useDismissableOverlay } from "@/hooks/useDismissableOverlay";
@@ -45,7 +45,6 @@ export default function BarCharts(props) {
     data = [],
   } = props;
 
- 
   const wrapperRef = React.useRef(null);
   const [forceHide, setForceHide] = React.useState(false);
   const [locked, setLocked] = React.useState(false); // sticky open (touch)
@@ -266,7 +265,7 @@ export default function BarCharts(props) {
   const renderYAxis = () => {
     const padding = 0.5;
     const yDomain = maxYValue ? [minYValue, maxYValue + padding] : [minYValue, "auto"];
-    return <YAxis domain={yDomain} minTickGap={4} stroke="#FFF" tick={false} width={10} />;
+    return <YAxis domain={yDomain} minTickGap={4} stroke="#FFF" tick={false} width={5} />;
   };
 
   const TooltipWrapper = ({ active, payload, coordinate }) => {
@@ -384,12 +383,13 @@ export default function BarCharts(props) {
       <Box
         sx={{
           width: {
-            xs: 420,
+            xs: 400,
             sm: chartWidth || 580,
             md: mdChartWidth || chartWidth || 580,
             lg: lgChartWidth || chartWidth || 580,
           },
-          height: 250,
+          height: 240,
+          maxWidth: "100%",
         }}
         ref={wrapperRef}
         className="chart-wrapper"
@@ -428,12 +428,12 @@ export default function BarCharts(props) {
           }
         }}
       >
-        <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={30}>
+        <ResponsiveContainer width="100%" maxWidth="100%" height="100%" minWidth={100} minHeight={30}>
           <BarChart
             margin={{
-              top: 28,
-              right: 20,
-              left: 20,
+              top: 10,
+              right: 24,
+              left: 24,
               bottom: 10,
             }}
             data={parsed}

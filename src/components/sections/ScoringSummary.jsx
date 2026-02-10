@@ -87,10 +87,12 @@ export default function ScoringSummary(props) {
       </Stack>
     ),
     answered: (row) => {
-      if (row.totalAnsweredItems != null) {
+      if (row.totalAnsweredItems != null || row.note) {
         return (
           <Stack direction={"row"}>
-            <Box>{`${row.totalAnsweredItems} question${row.totalAnsweredItems > 1 ? "s" : ""} answered`}</Box>
+            {row.totalAnsweredItems && (
+              <Box>{`${row.totalAnsweredItems} question${row.totalAnsweredItems > 1 ? "s" : ""} answered`}</Box>
+            )}
             {row.note && (
               <InfoDialog
                 title={`About ${row.title} Scoring`}
@@ -181,7 +183,7 @@ export default function ScoringSummary(props) {
             tableData={row?.tableResponseData}
             columns={row?.responseColumns}
             questionnaire={row.questionnaire}
-            buttonStyle={{ width: "100%", maxWidth: 108 }}
+            buttonStyle={{ width: "100%", maxWidth: 88 }}
           />
         ) : (
           <Typography component="h3" variant="subtitle2" sx={{ textAlign: "left" }}>

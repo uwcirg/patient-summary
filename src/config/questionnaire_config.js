@@ -221,7 +221,8 @@ function bootstrapInstrumentConfigMap(map) {
  * @param {string} [meaningQuestionId] linkId of question that contains meaning/label for the score
  * @param {string} [meaningRowLabel] label for the meaning row in responses table
  * @param {number} [minimumScore] minimum possible score
- * @param {string} [note] information note about the instrument, displayed with info icon
+ * @param {string} [note] information note about the instrument score, displayed with info icon
+ * @param {function} [noteFunction] function that will return a text for the note about the instrument score, displayed with info icon
  * @param {boolean} [nullScoreAllowed] if true, a null score is allowed (not an error)
  * @param {string} [questionnaireId] key or id of the Questionnaire FHIR resource
  * @param {string} [questionnaireMatchMode] 'strict'|'fuzzy' - used when matching a Questionnaire FHIR resource to this config
@@ -243,6 +244,7 @@ function bootstrapInstrumentConfigMap(map) {
  * @param {string} [subtitle] subtitle to show under title in questionnaire header
  * @param {string} [title] (from Questionnaire resource)
  * @param {function} [tooltipValueFormatter] function to format y value in tooltip
+ * @param {string} [totalAnsweredQuestionId] question Id for the number of answered questions
  * @param {function} [valueFormatter] function to format response value for display
  * @param {object[]} [yLineFields] additional line fields to show in chart
  */
@@ -308,7 +310,7 @@ const questionnaireConfigsRaw = {
     meaningQuestionId: "ASSIST-3mo-score",
     meaningRowLabel: "Substances Reported (Past 3 months)",
     nullScoreAllowed: true,
-    questionRowLabel: "Detailed Questions",
+    questionRowLabel: "Detailed Responses",
     fallbackScoreMap: {
       "assist-10-0": 0,
       "assist-10-1": 1,
@@ -1651,10 +1653,20 @@ const questionnaireConfigsRaw = {
     alertQuestionId: "SEXUAL-RISK-SCORE-STI-EXPOSURE",
     skipChart: true,
   },
-  "CIRG-HIV-STIGMA": {
-    key: "CIRG-HIV-STIGMA",
+  "CIRG-CNICS-HIV-STIGMA": {
+    key: "CIRG-CNICS-HIV-STIGMA",
     instrumentName: "HIV Stigma",
     title: "HIV Stigma",
+    alertQuestionId: "HIV-STIGMA-SCORE-CRITICAL",
+    scoringQuestionId: "HIV-STIGMA-SCORE",
+    inkIdMatchMode: "strict",
+    showNumAnsweredWithScore: true,
+    totalAnsweredQuestionId: "HIV-STIGMA-SCORE-NUM-ANSWERED",
+    noteFunction: (questionnaire) => {
+      if (!questionnaire) return "";
+      const matchedItem = questionnaire.item.find(o => o.linkId === "HIV-STIGMA-SCORE");
+      return matchedItem?.text;
+    }
   },
 };
 
