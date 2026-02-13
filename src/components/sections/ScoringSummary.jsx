@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
-import Alert from "@mui/material/Alert";
 import Link from "@mui/material/Link";
 import Box from "@mui/material/Box";
 import Table from "@mui/material/Table";
@@ -11,333 +10,438 @@ import TableHead from "@mui/material/TableHead";
 import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
 import Stack from "@mui/material/Stack";
-import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
-import NorthIcon from "@mui/icons-material/North";
-import SouthIcon from "@mui/icons-material/South";
+import Typography from "@mui/material/Typography";
 import Scoring from "@components/Score";
-import Questionnaire from "@models/Questionnaire";
-import { isEmptyArray, isNumber, scrollToAnchor, getLocaleDateStringFromDate } from "@util";
+import { isEmptyArray, scrollToAnchor } from "@util";
+import InfoDialog from "../InfoDialog";
+import ResponsesViewer from "../ResponsesViewer";
+import Meaning from "../Meaning";
+import { getNoDataDisplay } from "../../models/resultBuilders/helpers";
+
+// tiny helper to read nested keys like "provider.name"
+const getByPath = (obj, path) => {
+  if (typeof path !== "string") return undefined;
+  return path.split(".").reduce((acc, key) => (acc == null ? acc : acc[key]), obj);
+};
 
 export default function ScoringSummary(props) {
   const theme = useTheme();
-  const bgColor =
-    theme && theme.palette && theme.palette.lightest && theme.palette.lightest.main
-      ? theme.palette.lightest.main
-      : "#FFF";
-  const linkColor =
-    theme && theme.palette && theme.palette.link && theme.palette.link.main ? theme.palette.link.main : "blue";
-  const borderColor =
-    theme && theme.palette && theme.palette.border && theme.palette.border.main ? theme.palette.border.main : "#FFF";
-  const { summaryData } = props;
-  const hasNoResponses = (responses) => isEmptyArray(responses);
-  const responsesHasScore = (responses) => {
-    if (hasNoResponses(responses)) return false;
-    return responses.some((result) => isNumber(result.score));
-  };
-  const getInstrumentShortName = (id) => {
-    const matchedQuestionnaire =
-      summaryData[id] && summaryData[id].questionnaire ? summaryData[id].questionnaire : null;
-    const qo = new Questionnaire(matchedQuestionnaire, id);
-    return qo.shortName ?? qo.displayName;
-  };
-  const hasList = () =>
-    summaryData &&
-    Object.keys(summaryData).length > 0 &&
-    Object.keys(summaryData).some((key) => {
-      return responsesHasScore(summaryData[key].responses);
-    });
-  const getSortedResponses = (rdata) => {
-    if (hasNoResponses(rdata)) return [];
-    return rdata.sort((a, b) => {
-      const aTime = new Date(a.date).getTime();
-      const bTime = new Date(b.date).getTime();
-      return bTime - aTime;
-    });
-  };
-  const getResponsesByIndex = (rdata, index) => {
-    const sortedResponses = getSortedResponses(rdata);
-    if (hasNoResponses(sortedResponses)) return null;
-    return sortedResponses[index];
+  const { data, disableLinks, hiddenColumns = [], columns = [] } = props;
+
+  const hiddenColumnIdsInMobile = ["numAnswered"];
+
+  const isColVisible = (id) => {
+    if (id === "measure") return true;
+    const isVisible = !hiddenColumns?.includes(id);
+    //console.log(`Column ${id}: hiddenColumns =`, hiddenColumns, `isVisible =`, isVisible);
+    return isVisible;
   };
 
-  const getCurrentResponses = (rdata) => {
-    return getResponsesByIndex(rdata, 0);
-  };
-
-  const getPrevResponses = (rdata) => {
-    return getResponsesByIndex(rdata, 1);
-  };
-
-  const getPrevScoreByInstrument = (rdata) => {
-    const responses = getPrevResponses(rdata);
-    if (!responses || !responses.date) return parseInt(null);
-    return parseInt(responses.score);
-  };
-
-  const getCurrentScoreByInstrument = (rdata) => {
-    const responses = getCurrentResponses(rdata);
-    if (!responses || !responses.date) return parseInt(null);
-    const score = responses.score;
-    return isNumber(score) ? score : "--";
-  };
-  const getDisplayIcon = (rdata) => {
-    const currentResponses = getCurrentResponses(rdata);
-    const comparisonToAlert = currentResponses ? currentResponses.comparisonToAlert : ""; // display alert if score is lower/higher than previous
-    const currentScore = getCurrentScoreByInstrument(rdata);
-    const prevScore = getPrevScoreByInstrument(rdata);
-    const iconProps = {
-      fontSize: "small",
-      sx: { verticalAlign: "middle" },
-    };
-    //console.log("current score ", currentScore, " prev score ", prevScore);
-    if (!isNumber(prevScore) || !isNumber(currentScore)) return "--";
-    if (isNumber(prevScore)) {
-      if (comparisonToAlert === "lower") {
-        if (currentScore < prevScore) return <SouthIcon color="error" {...iconProps}></SouthIcon>;
-        if (currentScore > prevScore) return <NorthIcon color="success" {...iconProps}></NorthIcon>;
-        return <HorizontalRuleIcon {...iconProps}></HorizontalRuleIcon>;
-      } else {
-        if (currentScore > prevScore) return <NorthIcon color="error" {...iconProps}></NorthIcon>;
-        if (currentScore < prevScore) return <SouthIcon color="success" {...iconProps}></SouthIcon>;
-        return <HorizontalRuleIcon {...iconProps}></HorizontalRuleIcon>;
-      }
-    } else {
-      if (isNumber(currentScore)) return <HorizontalRuleIcon color="info" {...iconProps}></HorizontalRuleIcon>;
-      return null;
-    }
-  };
   const handleClick = (e, anchorElementId) => {
     e.preventDefault();
     scrollToAnchor(anchorElementId);
   };
-  const getScoreList = () => {
-    if (!hasList()) return [];
-    return Object.keys(summaryData);
-  };
 
-  const getMostRecentEntry = (summaryData) => {
-    return getResponsesByIndex(summaryData.responses, 0);
-  };
-
-  const displayScoreRange = (summaryData) => {
-    const mostRecentEntry = getMostRecentEntry(summaryData);
-    if (!mostRecentEntry) return null;
-    const scoringParams = mostRecentEntry.scoringParams;
-    if (!scoringParams) return null;
-    if (!scoringParams.maximumScore) return null;
-    const minScore = scoringParams.minimumScore ? scoringParams.minimumScore : 0;
-    const maxScore = scoringParams.maximumScore;
-    return `( ${minScore} - ${maxScore} )`;
-  };
-
-  const displayLastAssessed = (summaryData) => {
-    const mostRecentEntry = getMostRecentEntry(summaryData);
-    if (!mostRecentEntry) return "--";
-    if (!mostRecentEntry.date) return "--";
-    return getLocaleDateStringFromDate(mostRecentEntry.date);
-  };
-
-  const displayNumAnswered = (summaryData) => {
-    const mostRecentEntry = getMostRecentEntry(summaryData);
-    if (!mostRecentEntry) return "--";
-    const totalItems = mostRecentEntry.totalItems;
-    const totalAnsweredItems = mostRecentEntry.totalAnsweredItems;
-    if (!totalItems || !totalAnsweredItems) return "--";
-    return `${totalAnsweredItems} / ${totalItems}`;
-  };
-
-  const displayScoreMeaning = (summaryData) => {
-    const mostRecentEntry = getMostRecentEntry(summaryData);
-    if (!mostRecentEntry) return "--";
-    return mostRecentEntry.scoreMeaning;
-  };
-
-  const scoreList = getScoreList();
-  const defaultTableCellProps = {
-    size: "small",
-  };
+  // -------- styles
+  const defaultTableCellProps = { size: "small" };
   const defaultHeaderCellProps = {
     ...defaultTableCellProps,
     align: "center",
     variant: "head",
   };
-  const cellWhiteSpaceStyle = {
-    wordBreak: "break-word",
-    whiteSpace: "normal",
-  };
-  const cellStyle = {
-    borderRight: `1px solid ${borderColor}`,
-    whiteSpace: "nowrap",
+  const cellWhiteSpaceStyle = { wordBreak: "break-word", whiteSpace: "normal" };
+  const baseCellStyle = {
+    borderRight: `1px solid`,
+    borderColor: "border.main",
+    whiteSpace: { xs: "normal", sm: "nowrap" }, // allow wrapping on phones
     lineHeight: 1.4,
-    fontSize: "0.8rem",
-    padding: theme.spacing(0.5, 1),
+    fontSize: { xs: "0.75rem", sm: "0.8rem" }, // slightly smaller on xs
+    wordBreak: "break-word",
+    padding: theme.spacing(1),
     verticalAlign: "top",
     ...cellWhiteSpaceStyle,
   };
-  const fixedCellStyle = {
-    ...cellStyle,
-    ...{
-      position: "sticky",
-      left: 0,
-      zIndex: 1,
-      backgroundColor: "#FFF",
+  const stickyStyle = {
+    position: "sticky",
+    left: 0,
+    zIndex: 1,
+    backgroundColor: "#FFF",
+  };
+
+  // -------- reusable default cell renderers
+  const defaultRenderers = {
+    text: (row, value) => (
+      <>
+        {value && (
+          <span className={row.alert ? "text-error" : row.warning ? "text-warning" : !value ? "muted-text" : ""}>
+            {value}
+          </span>
+        )}
+        {!value && getNoDataDisplay()}
+      </>
+    ),
+    date: (row) => (
+      <Stack direction={"column"} spacing={1} alignItems={"space-between"} justifyContent={"space-between"}>
+        <Box>{row.displayDate}</Box>
+        {row.source && <Box className="muted-text source-container">{row.source}</Box>}
+      </Stack>
+    ),
+    answered: (row) => {
+      if (row.totalAnsweredItems != null || row.note) {
+        return (
+          <Stack direction={"row"}>
+            {row.totalAnsweredItems && (
+              <Box>{`${row.totalAnsweredItems} question${row.totalAnsweredItems > 1 ? "s" : ""} answered`}</Box>
+            )}
+            {row.note && (
+              <InfoDialog
+                title={`About ${row.title} Scoring`}
+                content={row.note}
+                buttonTitle={`Click to learn more about ${row.title} scoring`}
+                allowHtml={true}
+                buttonSize="small"
+                buttonIconProps={{
+                  fontSize: "small",
+                }}
+              />
+            )}
+          </Stack>
+        );
+      }
+      return null;
+    },
+    score: (row) => {
+      return (
+        <Stack
+          direction="column"
+          spacing={0.75}
+          justifyContent="space-between"
+          alignItems="flex-start"
+          sx={{ width: "100%" }}
+          className="score-wrapper"
+        >
+          <Scoring
+            score={row.score}
+            scoreParams={{ ...row, ...(row.scoringParams ?? {}) }}
+            justifyContent="space-between"
+          />
+          <Box className="no-wrap-text muted-text" sx={{ fontSize: "0.7rem" }}>
+            {row.scoreRangeDisplay}
+          </Box>
+        </Stack>
+      );
     },
   };
-  const renderTableHeaderRow = () => (
+
+  // -------- original columns ------------
+  const DEFAULT_COLUMNS = [
+    {
+      id: "measure",
+      header: "Measure",
+      sticky: true,
+      align: "left",
+      headerProps: {
+        sx: {
+          ...stickyStyle,
+          minHeight: { xs: theme.spacing(4), sm: "auto" },
+          backgroundColor: "lightest.main",
+          textAlign: "left",
+        },
+        ...defaultHeaderCellProps,
+      },
+      cellProps: {
+        sx: {
+          ...baseCellStyle,
+          ...stickyStyle,
+          fontWeight: 500,
+          borderBottom: `1px solid`,
+          borderBottomColor: "border.main",
+          verticalAlign: "top",
+          textAlign: "left",
+          minWidth: "128px",
+        },
+        size: "small",
+      },
+      renderCell: (row) => {
+        const title = row.rowTitle ?? row.title;
+        return !disableLinks ? (
+          <Link
+            onClick={(e) => handleClick(e, row.key)}
+            underline="none"
+            sx={{ color: "link.main", cursor: "pointer" }}
+            href={`#${row.key}`}
+            className="instrument-link"
+          >
+            {title} {row.subtitle ? row.subtitle : ""}
+          </Link>
+        ) : props.enableResponsesViewer && !isEmptyArray(row?.tableResponseData) ? (
+          <ResponsesViewer
+            title={title}
+            subtitle={row.subtitle}
+            note={row.note}
+            responsesTileTitle={row.rowTitle}
+            tableData={row?.tableResponseData}
+            columns={row?.responseColumns}
+            questionnaire={row.questionnaire}
+            buttonStyle={{ width: "100%", maxWidth: 88 }}
+          />
+        ) : (
+          <Typography component="h3" variant="subtitle2" sx={{ textAlign: "left" }}>
+            {title}
+          </Typography>
+        );
+      },
+    },
+    {
+      id: "numAnswered",
+      header: "Answered",
+      align: "center",
+      width: "15%",
+      headerProps: {
+        sx: {
+          ...baseCellStyle,
+        },
+        ...defaultHeaderCellProps,
+      },
+      cellProps: { sx: { ...baseCellStyle, whiteSpace: "nowrap" } },
+      size: "small",
+      renderCell: (row) =>
+        row.numAnsweredDisplay
+          ? row.numAnsweredDisplay
+          : row.hasData != null && !row.hasData
+            ? getNoDataDisplay()
+            : defaultRenderers.text(row, ""),
+    },
+    {
+      id: "scoreMeaning",
+      header: "Score / Meaning",
+      align: "left",
+      headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps, align: "left" },
+      cellProps: {
+        sx: {
+          ...baseCellStyle,
+          // allow wrapping so score + meaning can stack
+          whiteSpace: "normal",
+        },
+        size: "small",
+      },
+      renderCell: (row) => (
+        <Stack sx={{ width: "100%" }} spacing={1.25} alignItems={"flex-start"} justifyContent={"flex-start"}>
+          {!row.displayMeaningNotScore && defaultRenderers.score(row)}
+          {row.showNumAnsweredWithScore && defaultRenderers.answered(row)}
+          <Meaning id={row.id ?? row.key} meaning={row.meaning} alert={row.alert} warning={row.warning} />
+        </Stack>
+      ),
+    },
+
+    {
+      id: "lastAssessed",
+      header: "Last Done",
+      align: "center",
+      type: "date",
+      headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
+      cellProps: { sx: baseCellStyle, size: "small" },
+      accessor: (row) => row.lastAssessed ?? row.date ?? "",
+    },
+    {
+      id: "comparison",
+      header: "Change from Last",
+      align: "center",
+      headerProps: { sx: { ...baseCellStyle, borderRightWidth: 0 }, ...defaultHeaderCellProps },
+      cellProps: { sx: { ...baseCellStyle, borderRightWidth: 0 }, size: "small" },
+      renderCell: (row) => row.comparisonIcon,
+    },
+  ];
+
+  // ----- merge defaults with user-provided columns by id, and use
+  // the `columns` prop as the primary ordering when provided
+  const userColumns = Array.isArray(columns) ? columns : [];
+
+  const defaultById = Object.fromEntries(DEFAULT_COLUMNS.map((c) => [c.id, c]));
+  const userById = Object.fromEntries(userColumns.map((c) => [c.id, c]));
+
+  const mergeColumn = (defaultCol, userCol) => {
+    if (!defaultCol && !userCol) return null;
+    // Start with whichever exists
+    let merged = defaultCol ? { ...defaultCol, ...(userCol || {}) } : { ...userCol };
+
+    // If a new accessor or type but no renderCell is suppllied,
+    // drop the default renderCell to let type/accessor drive rendering.
+    if (userCol && (userCol.accessor || userCol.type) && !userCol.renderCell) {
+      delete merged.renderCell;
+    }
+    return merged;
+  };
+
+  // Build a map of all effective columns by id (defaults + extra columns)
+  const effectiveById = {};
+  const allIds = new Set([...Object.keys(defaultById), ...Object.keys(userById)]);
+  for (const id of allIds) {
+    effectiveById[id] = mergeColumn(defaultById[id], userById[id]);
+  }
+
+  // 1) Columns in the order specified (for both defaults and extras)
+  const orderedFromUser = userColumns.map((c) => effectiveById[c.id]).filter(Boolean);
+
+  // 2) Any remaining default columns that are left,
+  //     in their original DEFAULT_COLUMNS order
+  const remainingDefaults = DEFAULT_COLUMNS.filter((c) => !userById[c.id])
+    .map((c) => effectiveById[c.id])
+    .filter(Boolean);
+
+  const EFFECTIVE_COLUMNS = [...orderedFromUser, ...remainingDefaults];
+
+  // ----- visible columns with fallback when everything is hidden
+  const allVisibleColumns = EFFECTIVE_COLUMNS.filter((c) => isColVisible(c.id));
+  const firstColumn = EFFECTIVE_COLUMNS.find((c) => c.id === "measure") || EFFECTIVE_COLUMNS[0];
+
+  const NO_DATA_COLUMN = {
+    id: "__noData",
+    header: "No Data",
+    align: "center",
+    headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
+    cellProps: { sx: baseCellStyle, size: "small" },
+    renderCell: () => (
+      <Box className="muted-text text-center" sx={{ fontStyle: "italic" }}>
+        {getNoDataDisplay()}
+      </Box>
+    ),
+  };
+
+  const visibleColumns =
+    allVisibleColumns.length === 0
+      ? firstColumn
+        ? [firstColumn, NO_DATA_COLUMN]
+        : [NO_DATA_COLUMN]
+      : allVisibleColumns;
+
+  // ----- table sections
+  const renderTableHeader = () => (
     <TableHead>
-      <TableRow sx={{ backgroundColor: bgColor }}>
-        <TableCell
-          sx={{
-            ...fixedCellStyle,
-            ...{
-              minHeight: {
-                xs: theme.spacing(4),
-                sm: "auto",
-              },
-              backgroundColor: bgColor,
-            },
-          }}
-          {...defaultHeaderCellProps}
-        ></TableCell>
-        <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
-          Date
-        </TableCell>
-        <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
-          Score
-        </TableCell>
-        <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
-          # <br /> Answered
-        </TableCell>
-        <TableCell sx={cellStyle} {...defaultHeaderCellProps}>
-          Meaning
-        </TableCell>
-        <TableCell variant="head" sx={{ ...cellStyle, borderRightWidth: 0 }} {...defaultTableCellProps}>
-          Compared <br /> to <br />
-          Last
-        </TableCell>
+      <TableRow sx={{ backgroundColor: "lightest.main" }}>
+        {visibleColumns.map((col) => (
+          <TableCell
+            key={`header_${col.id}`}
+            {...defaultHeaderCellProps}
+            align={col.align || defaultHeaderCellProps.align}
+            {...(col.headerProps || {})}
+            sx={{
+              ...baseCellStyle,
+              ...(col.sticky ? stickyStyle : {}),
+              ...(col.headerProps?.sx || {}),
+              ...(col.width ? { width: col.width } : {}),
+              ...(hiddenColumnIdsInMobile.indexOf(col.id) !== -1
+                ? { display: { xs: "none", md: "table-cell" } } // hide some columns on small devices
+                : {}),
+            }}
+          >
+            {col.header}
+          </TableCell>
+        ))}
       </TableRow>
     </TableHead>
   );
 
-  const renderInstrumentLinkCell = (key) => (
-    <TableCell
-      sx={{
-        ...fixedCellStyle,
-        ...{
-          fontWeight: 500,
-          borderBottom: `2px solid ${borderColor}`,
-        },
-      }}
-      size="small"
-    >
-      <Link
-        onClick={(e) => handleClick(e, key)}
-        underline="none"
-        sx={{ color: linkColor, cursor: "pointer" }}
-        href={`#${key}`}
-        className="instrument-link"
-      >
-        {getInstrumentShortName(key)}
-      </Link>
-    </TableCell>
-  );
+  const renderCell = (col, row) => {
+    let value =
+      typeof col.accessor === "function"
+        ? col.accessor(row)
+        : typeof col.accessor === "string"
+          ? getByPath(row, col.accessor)
+          : undefined;
+    if (typeof col.formatter === "function") {
+      value = col.formatter(row, value);
+    }
 
-  const renderScoreCell = (key) => (
-    <TableCell align="left" size="small" className="score-cell" sx={cellStyle}>
-      <Stack
-        direction={"column"}
-        spacing={1}
-        justifyContent={"space-between"}
-        alignItems={"center"}
-        sx={{ width: "100%" }}
-      >
-        <Scoring
-          score={getCurrentScoreByInstrument(summaryData[key].responses)}
-          scoreParams={getMostRecentEntry(summaryData[key])}
-          justifyContent="space-between"
-        ></Scoring>
-        <Box className="no-wrap-text muted-text" sx={{ fontSize: "0.7rem" }}>
-          {displayScoreRange(summaryData[key])}
-        </Box>
-      </Stack>
-    </TableCell>
-  );
-
-  const renderLastAssessedCell = (key) => (
-    <TableCell align="center" size="small" sx={cellStyle}>
-      {displayLastAssessed(summaryData[key])}
-    </TableCell>
-  );
-
-  const renderNumAnsweredCell = (key) => (
-    <TableCell align="center" size="small" sx={cellStyle}>
-      {displayNumAnswered(summaryData[key])}
-    </TableCell>
-  );
-
-  const renderScoreMeaningCell = (key) => (
-    <TableCell align="center" size="small" className="capitalized-text" sx={cellStyle}>
-      {displayScoreMeaning(summaryData[key])}
-    </TableCell>
-  );
-
-  const renderComparedToLastCell = (key) => (
-    <TableCell align="center" size="small" sx={{ ...cellStyle, borderRightWidth: 0 }}>
-      {getDisplayIcon(summaryData[key].responses)}
-    </TableCell>
-  );
+    if (typeof col.renderCell === "function") return col.renderCell(row, value);
+    if (col.type && defaultRenderers[col.type]) return defaultRenderers[col.type](row, value);
+    return <>{value ?? "—"}</>;
+  };
 
   const renderTableBody = () => {
+    const dataToUse = Array.isArray(data) ? data : data ? [data] : [];
+    const hasData = dataToUse.length > 0;
     return (
       <TableBody>
-        {scoreList.map((key, index) => (
-          <TableRow key={`{summary_${index}}`}>
-            {renderInstrumentLinkCell(key)}
-            {renderLastAssessedCell(key)}
-            {renderScoreCell(key)}
-            {renderNumAnsweredCell(key)}
-            {renderScoreMeaningCell(key)}
-            {renderComparedToLastCell(key)}
+        {hasData ? (
+          dataToUse.map((row, index) => {
+            const noRowData = isEmptyArray(row.tableResponseData);
+            return (
+              <TableRow key={`summary_${row.key || index}_${index}`}>
+                {visibleColumns.map((col, colIndex) => (
+                  <TableCell
+                    key={`cell_${col.id}_${row.key || index}`}
+                    {...defaultTableCellProps}
+                    align={col.align || "left"}
+                    {...(col.cellProps || {})}
+                    sx={{
+                      ...baseCellStyle,
+                      ...(col.sticky ? stickyStyle : {}),
+                      ...(col.cellProps?.sx || {}),
+                      ...(hiddenColumnIdsInMobile.indexOf(col.id) !== -1
+                        ? { display: { xs: "none", md: "table-cell" } } // hide some columns on small devices
+                        : {}),
+                    }}
+                  >
+                    {noRowData && colIndex > 0 ? props.emptyMessage || getNoDataDisplay() : renderCell(col, row)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            );
+          })
+        ) : (
+          <TableRow>
+            <TableCell
+              colSpan={visibleColumns.length}
+              align="center"
+              sx={{
+                ...baseCellStyle,
+                // remove sticky styling for the merged cell
+                position: "static",
+                backgroundColor: "transparent",
+                fontStyle: "italic",
+                color: "text.secondary",
+              }}
+            >
+              {props.emptyMessage || getNoDataDisplay()}
+            </TableCell>
           </TableRow>
-        ))}
+        )}
       </TableBody>
     );
   };
 
   const renderSummary = () => {
-    if (!hasList())
-      return (
-        <Box sx={{ padding: theme.spacing(1, 0.5) }}>
-          <Alert severity="warning">No score summary available</Alert>
-        </Box>
-      );
     return (
       <TableContainer
         className="table-container"
         sx={{
           padding: 0,
           height: "100%",
-          maxWidth: {
-            xs: "420px",
-            sm: "100%",
-          },
-          position: {
-            xs: "initial",
-            sm: "relative",
-          },
-          marginLeft: {
-            sm: 0,
-          },
+          overflowX: "auto",
+          overflowY: "hidden",
+          maxWidth: "100%",
+          position: { xs: "static", sm: "relative" },
+          marginLeft: { sm: 0 },
           borderRadius: 0,
+          alignSelf: "stretch",
         }}
       >
         <Table
-          sx={{ border: `1px solid ${borderColor}`, tableLayout: "fixed", width: "100%", height: "100%" }}
+          sx={{
+            borderStyle: "solid",
+            borderWidth: "1px",
+            borderColor: "border.main",
+            tableLayout: { xs: "auto", sm: "fixed" },
+            width: "100%",
+            height: "100%",
+            ...(props.tableStyle ?? {}),
+          }}
           size="small"
           aria-label="scoring summary table"
           className="scoring-summary-table"
         >
-          {renderTableHeaderRow()}
+          {renderTableHeader()}
           {renderTableBody()}
         </Table>
       </TableContainer>
@@ -345,20 +449,35 @@ export default function ScoringSummary(props) {
   };
 
   return (
-    <Stack
-      className="scoring-summary-container"
-      spacing={1}
-      direction="column"
-      sx={{
-        alignSelf: "stretch",
-        height: "100%",
-      }}
-    >
+    <Stack className="scoring-summary-container" spacing={1} direction="column" sx={props.containerStyle ?? {}}>
       {renderSummary()}
     </Stack>
   );
 }
 
+const columnShape = PropTypes.shape({
+  id: PropTypes.string.isRequired,
+  header: PropTypes.node,
+  accessor: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+  renderCell: PropTypes.func, // (row, value) => node
+  headerProps: PropTypes.object,
+  cellProps: PropTypes.object,
+  sticky: PropTypes.bool,
+  width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  align: PropTypes.oneOf(["left", "center", "right"]),
+  type: PropTypes.oneOf(["text", "date", "score"]),
+});
+
 ScoringSummary.propTypes = {
-  summaryData: PropTypes.object,
+  data: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+  disableLinks: PropTypes.bool,
+  enableResponsesViewer: PropTypes.bool,
+  hiddenColumns: PropTypes.arrayOf(
+    PropTypes.oneOf(["id", "source", "measure", "lastAssessed", "score", "numAnswered", "scoreMeaning", "comparison"]),
+  ),
+  columns: PropTypes.arrayOf(columnShape),
+  emptyMessage: PropTypes.string,
+  tableStyle: PropTypes.object,
+  containerStyle: PropTypes.object,
+  questionnaires: PropTypes.array,
 };

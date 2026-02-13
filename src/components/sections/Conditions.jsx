@@ -1,33 +1,13 @@
 import * as React from "react";
 import PropTypes from "prop-types";
-import { useTheme } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
-import MaterialTable from "@material-table/core";
-import TableContainer from "@mui/material/TableContainer";
-import Condition from "@/models/Condition";
 import Error from "@/components/ErrorComponent";
+import DataTable from "@/components/DataTable";
 import { isEmptyArray } from "@/util";
 
 export default function Conditions(props) {
-  const theme = useTheme();
-  const bgColor =
-    theme && theme.palette && theme.palette.lightest && theme.palette.lightest.main
-      ? theme.palette.lightest.main
-      : "#FFF";
   const { data } = props;
-  const getData = (data) => {
-    if (!data) return null;
-    const goodData = Condition.getGoodData(data);
-    return goodData
-      .map((item) => {
-        const o = new Condition(item);
-        return o.toObj();
-      })
-      .sort((a, b) => {
-        return new Date(b.onsetDateTime).getTime() - new Date(a.onsetDateTime).getTime();
-      });
-  };
-  const results = getData(data);
+
   const columns = [
     {
       title: "ID",
@@ -58,6 +38,7 @@ export default function Conditions(props) {
         ),
     },
   ];
+
   const renderPrintView = (data) => {
     const displayColumns = columns.filter((column) => !column.hidden);
     return (
@@ -83,41 +64,22 @@ export default function Conditions(props) {
       </table>
     );
   };
+
   if (data?.error) {
     return <Error message={data.error}></Error>;
   }
-  if (isEmptyArray(results))
+
+  if (isEmptyArray(data))
     return (
       <Alert severity="warning" className="condition-no-data">
         No recorded condition
       </Alert>
     );
+
   return (
     <>
-      <TableContainer
-        className="print-hidden"
-        sx={{
-          maxWidth: {
-            xs: "460px",
-            sm: "100%",
-          },
-        }}
-      >
-        <MaterialTable
-          columns={columns}
-          data={getData(data)}
-          options={{
-            search: false,
-            showTitle: false,
-            toolbar: false,
-            padding: "dense",
-            headerStyle: {
-              backgroundColor: bgColor,
-            },
-          }}
-        ></MaterialTable>
-      </TableContainer>
-      <div className="print-only">{renderPrintView(results)}</div>
+      <DataTable columns={columns} data={data} />
+      <div className="print-only">{renderPrintView(data)}</div>
     </>
   );
 }

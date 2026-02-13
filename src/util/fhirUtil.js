@@ -1,5 +1,5 @@
-import { getEnv, getSectionsToShow, isEmptyArray, isNil } from "./index.js";
-import { DEFAULT_OBSERVATION_CATEGORIES } from "@/consts/index.js";
+import { getEnv, getSectionsToShow, isEmptyArray, isNil, hasValue, isNumber } from "./index.js";
+import { DEFAULT_OBSERVATION_CATEGORIES, FLOWSHEET_CODE_IDS, FLOWSHEET_SYSTEM } from "@/consts/index.js";
 
 /*
  * @param client, FHIR client object
@@ -56,20 +56,21 @@ export function processPage(client, resources = []) {
 
 export function getFHIRResourceTypesToLoad() {
   const sections = getSectionsToShow();
-  const resourceTypes = sections.map((section) => section.resources).flat();
-  if (isEmptyArray(resourceTypes)) return ["Questionnaire", "QuestionnaireResponse"];
+  const resourceTypes = sections
+    .map((section) => section.resources)
+    .filter((resource) => !!resource)
+    .flat();
   return [...new Set(resourceTypes)];
 }
 
 export function getFHIRResourceQueryParams(resourceType, options) {
   if (!resourceType) return null;
-  let paramsObj = {
-    _sort: "-_lastUpdated",
-  };
+  let paramsObj = {};
   const queryOptions = options ? options : {};
   const envCategory = getEnv("REACT_APP_FHIR_CAREPLAN_CATEGORY");
   const envObCategories = getEnv("REACT_APP_FHIR_OBSERVATION_CATEGORIES");
   const observationCategories = envObCategories ? envObCategories : DEFAULT_OBSERVATION_CATEGORIES;
+
   switch (String(resourceType).toLowerCase()) {
     case "careplan":
       if (queryOptions.patientId) {
@@ -79,18 +80,27 @@ export function getFHIRResourceQueryParams(resourceType, options) {
         paramsObj["category:text"] = envCategory;
       }
       break;
-    case "questionnaire":
-      if (!isEmptyArray(queryOptions.questionnaireList)) {
-        let qList = queryOptions.questionnaireList.join(",");
-        paramsObj[queryOptions.exactMatchById ? "_id" : "name:contains"] = qList;
+
+    case "questionnaire": {
+      const list = queryOptions.questionnaireList || [];
+      if (!isEmptyArray(list)) {
+        if (queryOptions.exactMatchById) {
+          // Expect caller to give a single id; we use the first one.
+          paramsObj["_id"] = list[0];
+        } else {
+          paramsObj["name:contains"] = list.join(",");
+        }
       }
       break;
+    }
+
     case "observation":
       paramsObj["category"] = observationCategories;
       if (queryOptions.patientId) {
         paramsObj["patient"] = `Patient/${queryOptions.patientId}`;
       }
       break;
+
     default:
       if (queryOptions.patientId) {
         paramsObj["patient"] = `Patient/${queryOptions.patientId}`;
@@ -100,28 +110,63 @@ export function getFHIRResourceQueryParams(resourceType, options) {
 }
 
 export function getFHIRResourcePath(patientId, resourceType, options) {
-  const { resourcePath } = getFHIRResourcePaths(patientId, resourceType, options)[0];
+  if (!resourceType) return "";
+  const { resourcePath } = getFHIRResourcePaths(patientId, [resourceType], options)[0];
   return resourcePath;
 }
 
 export function getFHIRResourcePaths(patientId, resourceTypesToLoad, options) {
   if (!patientId) return [];
   if (isEmptyArray(resourceTypesToLoad)) return [];
-  return resourceTypesToLoad.map((resource) => {
-    let path = `/${resource}`;
-    const paramsObj = getFHIRResourceQueryParams(resource, {
-      ...(options ? options : {}),
-      patientId: patientId,
+
+  return resourceTypesToLoad
+    .filter((resource) => !!resource)
+    .flatMap((resource) => {
+      const resourceLower = String(resource).toLowerCase();
+
+      // SPECIAL CASE: Questionnaire + exactMatchById -> build one path per id
+      if (resourceLower === "questionnaire" && options?.exactMatchById && !isEmptyArray(options.questionnaireList)) {
+        return options.questionnaireList.map((qid) => {
+          let path = `/${resource}`;
+          const paramsObj = getFHIRResourceQueryParams(resource, {
+            ...options,
+            questionnaireList: [qid], // single id
+            patientId,
+          });
+
+          if (paramsObj && !isEmptyArray(Object.keys(paramsObj))) {
+            const searchParams = new URLSearchParams(paramsObj);
+            if (Array.from(searchParams).length) {
+              path += "?" + searchParams.toString();
+            }
+          }
+
+          return {
+            resourceType: resource,
+            resourcePath: path,
+          };
+        });
+      }
+
+      // default behavior for everything else
+      let path = `/${resource}`;
+      const paramsObj = getFHIRResourceQueryParams(resource, {
+        ...(options ? options : {}),
+        patientId,
+      });
+
+      if (paramsObj && !isEmptyArray(Object.keys(paramsObj))) {
+        const searchParams = new URLSearchParams(paramsObj);
+        if (searchParams && Array.from(searchParams).length) {
+          path = path + "?" + searchParams.toString();
+        }
+      }
+
+      return {
+        resourceType: resource,
+        resourcePath: path,
+      };
     });
-    if (paramsObj) {
-      const searchParams = new URLSearchParams(paramsObj);
-      path = path + "?" + searchParams.toString();
-    }
-    return {
-      resourceType: resource,
-      resourcePath: path,
-    };
-  });
 }
 
 export function getResourcesByResourceType(patientBundle, resourceType) {
@@ -141,7 +186,7 @@ export function getResourceTypesFromResources(resources) {
 }
 
 export function getQuestionnairesByCarePlan(arrCarePlans) {
-  if (!arrCarePlans) return [];
+  if (isEmptyArray(arrCarePlans)) return [];
   let activities = [];
   arrCarePlans.forEach((item) => {
     if (item.resource.activity) {
@@ -161,7 +206,7 @@ export function getQuestionnairesByCarePlan(arrCarePlans) {
 export function getFhirResourcesFromQueryResult(result) {
   let bundle = [];
   if (!result) return [];
-  if (result.resourceType === "Bundle" && result.entry) {
+  if (result.resourceType === "Bundle" && !isEmptyArray(result.entry)) {
     result.entry.forEach((o) => {
       if (o && o.resource) bundle.push({ resource: o.resource });
     });
@@ -182,22 +227,24 @@ export function conceptCode(c) {
   if (!c || isEmptyArray(c.coding)) return null;
   const codings = c.coding;
   for (let i = 0; i < codings.length; i++) {
-    const code = codings[i]?.code ?? (codings[i]?.code?.value ? codings[i]?.code?.value : codings[i]?.code);
+    const code = codings[i]?.code ?? (codings[i]?.code?.value ? codings[i]?.code?.value : null);
     if (code) return code;
   }
   return null;
 }
+
 export function conceptText(c) {
   if (!c) return null;
   if (typeof c.text === "string" && c.text.trim()) return c.text;
   if (c.text?.value) return c.text.value;
+  if (c.code?.text) return c.code.text;
   const codings = !isEmptyArray(c.coding) ? c.coding : [];
   for (let i = 0; i < codings.length; i++) {
-    const d = codings[i]?.display ?? (codings[i]?.display?.value ? codings[i]?.display?.value : codings[i]?.display);
+    const d = codings[i]?.display ?? (codings[i]?.display?.value ? codings[i]?.display?.value : "");
     if (d) return d;
   }
   for (let i = 0; i < codings.length; i++) {
-    const code = codings[i]?.code ?? (codings[i]?.code?.value ? codings[i]?.code?.value : codings[i]?.code);
+    const code = codings[i]?.code ?? (codings[i]?.code?.value ? codings[i]?.code?.value : "");
     if (code) return code;
   }
   return null;
@@ -236,17 +283,42 @@ export function formatValueQuantity({ value, unit }, fallbackText) {
 
 export function getValueText(O) {
   if (!O) return null;
-  if (O.valueCodeableConcept) return conceptText(O.valueCodeableConcept);
+  if (!isNil(O.code)) return conceptText(O.code);
+  if (!isNil(O.valueCodeableConcept)) return conceptCode(O.valueCodeableConcept);
   if (!isNil(O.valueString)) return String(O.valueString);
   if (!isNil(O.valueDecimal)) return String(O.valueDecimal);
   if (!isNil(O.valueInteger)) return String(O.valueInteger);
+  if (!isNil(O.valueDate)) return String(O.valueDate);
   if (!isNil(O.valueDateTime)) return String(O.valueDateTime);
   if (!isNil(O.valueBoolean)) return String(O.valueBoolean);
-  if (O.value && typeof O.value === "object" && "value" in O.value && typeof O.value.value !== "object") {
-    return String(O.value.value);
+  if (O.value && typeof O.value !== "object") {
+    return String(O.value);
   }
   return null;
 }
+export const getValueFromResource = (resourceItem) => {
+  const n = resourceItem?.valueQuantity ? Number(resourceItem?.valueQuantity?.value ?? undefined) : undefined;
+  if (isFinite(n)) {
+    return {
+      valueQuantity: resourceItem["valueQuantity"],
+    };
+  }
+  const key = [
+    "valueCodeableConcept",
+    "valueCoding",
+    "valueString",
+    "valueDecimal",
+    "valueInteger",
+    "valueDate",
+    "valueDateTime",
+    "valueBoolean",
+    "valueReference",
+    "valueUri",
+  ].find((k) => !isNil(resourceItem?.[k]));
+
+  return key ? { [key]: resourceItem[key] } : undefined;
+};
+
 export function getValueBlockFromQuantity(O) {
   if (!O) {
     return {
@@ -255,8 +327,8 @@ export function getValueBlockFromQuantity(O) {
     };
   }
   const q = O.valueQuantity ?? (O.value && typeof O.value === "object" && "value" in O.value ? O.value : null);
-  if (!q) return { value: null, unit: O.valueCodeableConcept ? null : null };
-  return { value: q.value ?? null, unit: O.valueCodeableConcept ? null : (q.unit ?? q.code ?? null) };
+  if (!q) return { value: null, unit: O.code ? null : null };
+  return { value: q.value ?? null, unit: O.code ? null : (q.unit ?? null) };
 }
 
 export function getValueDisplayWithRef(valueStr, rangeSummary) {
@@ -298,4 +370,86 @@ export function getComponentValues(components = []) {
       displayValueWithRef,
     };
   });
+}
+
+export function getDefaultQuestionItemText(linkId, index) {
+  if (!linkId) return "";
+  const codeBit = String(linkId).match(/(\d+-\d)$/)?.[1]; // grabs "44250-9" if present
+  if (!codeBit || !isNumber(index)) return "";
+  return (isNumber(index) ? `Question ${index}` : "") + (codeBit ? " " + codeBit : "");
+}
+
+export function getQuestionnaireItemByLinkId(questionnaire, linkId, mode = "strict") {
+  if (!questionnaire) return null;
+  if (isEmptyArray(questionnaire.item)) return null;
+  return questionnaire.item?.find((o) => linkIdEquals(o.linkId, linkId, mode));
+}
+
+export function makeQuestionItem(linkId, text, answerOptions) {
+  return {
+    linkId: normalizeLinkId(linkId),
+    type: !isEmptyArray(answerOptions) ? getQuestionItemType(answerOptions[0]) : "string",
+    text: text,
+    ...(!isEmptyArray(answerOptions) ? { answerOption: answerOptions } : {}),
+  };
+}
+
+// infer a sensible FHIR item.type from one example answer option
+export function getQuestionItemType(answerOption) {
+  if (!answerOption) return "string";
+  const key = Object.keys(answerOption).find((k) => k.startsWith("value"));
+  return key ? key.slice(5).replace(/^[A-Z]/, (c) => c.toLowerCase()) : "string";
+}
+
+export const getFlowsheetSystem = () => {
+  const envSystem = getEnv("REACT_APP_FLOWSHEET_SYSTEM");
+  if (envSystem) return String(envSystem).trim();
+  return FLOWSHEET_SYSTEM;
+};
+
+export const getFlowsheetIdFromOb = (item) => {
+  const coding = item?.code?.coding;
+  if (!coding) return null;
+  const matchIds = getFlowsheetCodeIds();
+  return coding.find((c) => matchIds.indexOf(c.code) !== -1)?.code;
+};
+
+export function getCodeableCodesFromObservation(obResources) {
+  if (isEmptyArray(obResources)) return [];
+  const matches = [];
+
+  for (const obs of obResources) {
+    if (!obs?.code?.coding) continue;
+
+    for (const coding of obs.code.coding) {
+      if (coding.code) {
+        matches.push(coding.code);
+      }
+    }
+  }
+
+  return [...new Set(matches)];
+}
+
+export function getValidObservationsForQRs(obResources) {
+  const systemCodes = getFlowsheetCodeIds();
+  return obResources?.filter((o) => o.code?.coding?.find((item) => systemCodes.indexOf(item.code) !== -1));
+}
+
+export function getFlowsheetCodeIds() {
+  const systemCodes = getEnv("REACT_APP_FLOWSHEET_CODE_IDS");
+  if (systemCodes)
+    return systemCodes
+      .split(",")
+      .filter((item) => hasValue(item))
+      .map((item) => normalizeLinkId(item));
+  return FLOWSHEET_CODE_IDS;
+}
+
+export function getFlowSheetObservationURLS(patientId) {
+  if (!patientId) return [];
+  const codeIds = getFlowsheetCodeIds();
+  const queryCodes = codeIds.map(encodeURIComponent).join(",");
+  if (!queryCodes) return [];
+  return [`Observation?patient=${patientId}&code=${queryCodes}`];
 }

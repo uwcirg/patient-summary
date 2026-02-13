@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -6,66 +6,24 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Questionnaire from "@models/Questionnaire";
-import { hasData, isEmptyArray } from "@util";
+import { hasData } from "@util";
 import Error from "./ErrorComponent";
 import QuestionnaireInfo from "./QuestionnaireInfo";
-import Responses from "./Responses";
 import Chart from "./Chart";
+import ScoringSummary from "./sections/ScoringSummary";
 import { QUESTIONNAIRE_ANCHOR_ID_PREFIX } from "@/consts";
 
 export default function Summary(props) {
-  const { questionnaireId, data } = props;
-  const summaryReducer = (summary, action) => {
-    if (action.type === "reset") {
-      return {
-        responses: [],
-        chartConfig: [],
-        chartData: [],
-        error: "",
-        loading: false,
-      };
-    }
-    if (action.type === "update") {
-      return {
-        ...action.payload,
-        loading: false,
-      };
-    }
-    if (action.type === "error") {
-      return {
-        ...summary,
-        loading: false,
-        [action.type]: action.payload,
-      };
-    }
-    return {
-      ...summary,
-      [action.type]: action.payload,
-    };
-  };
-  const [summary, dispatch] = useReducer(summaryReducer, {
-    responses: [],
-    chartData: [],
-    chartConfig: [],
-    error: "",
-    loading: true,
-  });
-  const hasChart = hasData(summary.chartData);
+  const { questionnaireId, data: summary } = props;
+  const hasChart = hasData(summary?.chartData);
   const anchorElementStyle = {
     position: "relative",
     top: -64,
     height: 2,
     width: 2,
   };
-  const shouldDisplayResponses = () => !summary.loading && !summary.error;
-
-  const formatChartData = (data) => {
-    if (summary.chartConfig && summary.chartConfig.dataFormatter) return summary.chartConfig.dataFormatter(data);
-    return data;
-  };
-
+  const shouldDisplayResponses = () => !summary || (summary && !summary.error);
   const getAnchorElementId = () => QUESTIONNAIRE_ANCHOR_ID_PREFIX;
-  const hasResponses = () => !isEmptyArray(summary.responses);
 
   const renderLoader = () =>
     summary.loading && (
@@ -74,6 +32,7 @@ export default function Summary(props) {
       </Stack>
     );
   const renderError = () =>
+    summary &&
     !!summary.error && (
       <Box sx={{ marginBottom: 1 }}>
         <Error message={summary.error}></Error>
@@ -82,7 +41,7 @@ export default function Summary(props) {
   const renderAnchor = () => <div id={`${getAnchorElementId()}_${questionnaireId}`} style={anchorElementStyle}></div>;
   const renderTitle = () => {
     let questionnaireTitle = questionnaireId;
-    const qo = new Questionnaire(data?.questionnaire, questionnaireId);
+    const qo = new Questionnaire(summary?.questionnaire, questionnaireId);
     questionnaireTitle = qo.displayName;
     return (
       <Typography variant="h6" component="h3" color="accent" sx={{ marginBottom: 1 }} className="questionnaire-title">
@@ -90,40 +49,41 @@ export default function Summary(props) {
       </Typography>
     );
   };
-  const renderSummary = () =>
-    shouldDisplayResponses() && (
-      <Stack direction="column" spacing={1} alignItems="flex-start" className="response-summary" flexWrap={"wrap"}>
+  const renderSummary = () => {
+    if (!shouldDisplayResponses()) return null;
+    return (
+      <Stack
+        direction="row"
+        spacing={1}
+        alignItems="flex-start"
+        className="response-summary"
+        flexWrap={{
+          xs: "wrap",
+          sm: "wrap",
+          md: "nowrap",
+        }}
+      >
+        <ScoringSummary
+          data={summary?.scoringSummaryData}
+          disableLinks={true}
+          enableResponsesViewer={true}
+          containerStyle={{ alignSelf: "stretch" }}
+        ></ScoringSummary>
         {hasChart && (
           <Chart
-            type={summary.chartConfig.type}
+            type={summary?.chartType}
             data={{
-              ...summary.chartConfig,
-              data: formatChartData(summary.chartData),
+              ...(summary?.chartData ?? {}),
+              title: "",
+              lgChartWidth: 520,
             }}
           ></Chart>
         )}
-        {!hasResponses() && <Alert severity="warning">No recorded responses</Alert>}
-        {hasResponses() && (
-          <Responses
-            data={summary.responses}
-            questionnaireId={questionnaireId}
-            questionnaireJson={summary.questionnaire}
-          ></Responses>
-        )}
       </Stack>
     );
+  };
 
-  useEffect(() => {
-    if (!summary.loading) return;
-    if (data && data.error) {
-      dispatch({
-        type: "error",
-        payload: data.error,
-      });
-      return;
-    }
-    dispatch({ type: "update", payload: data });
-  }, [data, summary.loading]);
+  const renderAlert = () => <Alert severity="warning">No summary data</Alert>;
 
   return (
     <>
@@ -141,15 +101,20 @@ export default function Summary(props) {
       >
         <Stack direction="row" spacing={1} alignItems="flex-start">
           {/* questionnaire title */}
-          <div>{renderTitle()}</div>
-          <QuestionnaireInfo questionnaireJson={data.questionnaire}></QuestionnaireInfo>
+          <div className="questionnaire-title-container">{renderTitle()}</div>
+          <QuestionnaireInfo questionnaireJson={summary?.questionnaire}></QuestionnaireInfo>
         </Stack>
-        {/* error message */}
-        {renderError()}
-        {/* loading indicator */}
-        {renderLoader()}
-        {/* chart & responses */}
-        {renderSummary()}
+        {!summary && renderAlert()}
+        {summary && (
+          <>
+            {/* error message */}
+            {renderError()}
+            {/* loading indicator */}
+            {renderLoader()}
+            {/* chart & responses */}
+            {renderSummary()}
+          </>
+        )}
       </Stack>
     </>
   );

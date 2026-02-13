@@ -26,13 +26,14 @@ export default defineConfig({
           return true;
         }
       },
-    }),
+    })
   ],
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),
       "@components": resolve(__dirname, "./src/components"),
       "@config": resolve(__dirname, "./src/config"),
+      "@consts": resolve(__dirname, "./src/consts"),
       "@context": resolve(__dirname, "./src/context"),
       "@models": resolve(__dirname, "./src/models"),
       "@util": resolve(__dirname, "./src/util"),

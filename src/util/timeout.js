@@ -214,6 +214,8 @@ var Timeout = function (options) {
     }
   }
   function init() {
+    const dashboardLocation = getEnvDashboardURL();
+    if (!dashboardLocation) return;
     waitForDOMIntervalId = setInterval(function () {
       if (isDOMReady()) {
         fetchEnvData().then(() => {

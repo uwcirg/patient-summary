@@ -18,11 +18,11 @@ describe("Testing SectionList component", () => {
 
   it("Renders section list component with list given - check default Questionnaire Responses section", () => {
     render(<SectionList list={DEFAULT_SECTIONS} expanded={true} />);
-    expect(screen.getByText("Questionnaire Responses")).toBeInTheDocument();
+    expect(screen.getByText("PRO Report")).toBeInTheDocument();
   });
 
   it.skip("Renders section list component with list given - check default Observations section", () => {
     render(<SectionList list={DEFAULT_SECTIONS} expanded={true} />);
-    expect(screen.getByText("Observations")).toBeInTheDocument();
+    expect(screen.getByText("Observations")).toBeFalsy();
   });
 });

@@ -7,8 +7,11 @@ import { isEmptyArray } from "@/util";
 import { COLORS, LEGEND_ICON_TYPES } from "@/config/chart_config";
 
 export default function LineCharts(props) {
-  const { data, keys = [] } = props;
+  let { data, keys = [] } = props;
   let visStates = {};
+  if (isEmptyArray(keys)) {
+    keys = [...new Set(data?.map((o) => o.key))];
+  }
   keys.forEach((key) => (visStates[key] = true));
   function reducer(state, action) {
     if (!action.key) return state;
@@ -37,6 +40,7 @@ export default function LineCharts(props) {
         boxShadow:
           "0px 2px 1px -1px rgba(0, 0, 0, 0.2), 0px 1px 1px 0px rgba(0, 0, 0, 0.14), 0px 1px 3px 0px rgba(0, 0, 0, 0.12)",
       }}
+      className={keys.length > 1 ? "multiple" : "single"}
     >
       <LineChart data={data} margin={{ top: 25, right: 64, left: 20, bottom: 24 }} width={730} height={420}>
         <CartesianGrid strokeDasharray="2 2" />
@@ -50,13 +54,23 @@ export default function LineCharts(props) {
           tick={{ style: { fontSize: "12px", fontWeight: 500 }, dy: 4, dx: -4 }}
         />
         <YAxis type="number" tick={{ fontWeight: 500, fontSize: "12px" }} width={32} />
-        <Tooltip />
+        <Tooltip
+          itemStyle={{ fontSize: "10px" }}
+          labelStyle={{ fontSize: "10px" }}
+          animationBegin={500}
+          animationDuration={550}
+          labelFormatter={(value, data) => {
+            if (!isEmptyArray(data) && value > 0) return new Date(value).toISOString().substring(0, 10);
+            return "";
+          }}
+        />
         <Legend
           align="left"
           verticalAlign="middle"
           layout="vertical"
           iconSize={12}
           onClick={handleLegendClick}
+          className={keys.length > 1 ? "multple" : "single"}
         ></Legend>
         {keys.map((key, index) => {
           return (
@@ -72,7 +86,7 @@ export default function LineCharts(props) {
               animationBegin={400}
               strokeWidth={2}
               connectNulls={true}
-              hide={!state[key]}
+              hide={keys.length > 1 ? !state[key] : false}
             />
           );
         })}

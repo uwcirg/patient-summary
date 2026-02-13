@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import ChartConfig from "@config/chart_config";
-import defaultSections from "@config/sections_config";
+import defaultSections, { sections } from "@config/sections_config";
 import { DEFAULT_TOOLBAR_HEIGHT, QUESTIONNAIRE_ANCHOR_ID_PREFIX, queryNeedPatientBanner } from "@/consts";
 
 export const shortDateRE = /^\d{4}-\d{2}-\d{2}$/; // matches '2012-04-05'
@@ -33,14 +33,44 @@ export function getCorrectedISODate(dateString) {
 
 export function getDisplayQTitle(questionnaireId) {
   if (!questionnaireId) return "";
-  return String(questionnaireId.replace(/cirg-/gi, "")).toUpperCase();
+  return String(questionnaireId.replace(/cirg-/gi, "").replace(/_/g, " "));
 }
 
 export function isValidDate(date) {
-  return date && Object.prototype.toString.call(date) === "[object Date]" && !isNaN(date);
+  // If it's already a Date object, check if it's valid
+  if (Object.prototype.toString.call(date) === "[object Date]") {
+    return !isNaN(date);
+  }
+
+  // If it's a string, try to parse it
+  if (typeof date === "string") {
+    const parsed = new Date(date);
+    return !isNaN(parsed);
+  }
+
+  return false;
+}
+
+/**
+ * Validates and formats datetime string to minute precision
+ *
+ * @param {string} dtString - ISO datetime string
+ * @returns {string} Formatted datetime (YYYY-MM-DDTHH:MM) or original if invalid
+ */
+export function trimToMinutes(dtString) {
+  // date validation
+  if (!dtString) return dtString;
+  const d = new Date(dtString);
+  if (isNaN(d.getTime())) {
+    console.warn(`trimToMinutes: Invalid date string "${dtString}"`);
+    return dtString;
+  }
+  //return d.toISOString().slice(0, 16);
+  return dayjs(dtString).format("YYYY-MM-DDTHH:mm");
 }
 
 export function getChartConfig(questionnaireId) {
+  if (!questionnaireId) return ChartConfig["default"];
   const qChartConfig = ChartConfig[questionnaireId.toLowerCase()];
   if (qChartConfig) return { ...ChartConfig["default"], ...qChartConfig };
   const matchItems = Object.values(ChartConfig);
@@ -53,13 +83,25 @@ export function getChartConfig(questionnaireId) {
   return ChartConfig["default"];
 }
 
+export function getEnvAboutContent() {
+  return getEnv("REACT_APP_ABOUT_CONTENT");
+}
+
+export function getEnvAppTitle() {
+  return getEnv("REACT_APP_TITLE") || "CNICS HIV Patient Reported Outcomes Summary";
+}
+
 export function getEnvQuestionnaireList() {
   const configList = getEnv("REACT_APP_QUESTIONNAIRES");
   if (configList)
-    return configList
-      .split(",")
-      .filter((item) => item)
-      .map((item) => item.trim());
+    return [
+      ...new Set(
+        configList
+          .split(",")
+          .filter((item) => item)
+          .map((item) => item.trim()),
+      ),
+    ];
   return [];
 }
 
@@ -68,13 +110,15 @@ export function getSectionsToShow() {
   if (!configSections) return defaultSections;
   let sectionsToShow = [];
   const targetSections = configSections.split(",").map((item) => {
+    if (!item) return null;
     item = String(item).trim().toLowerCase();
     return item;
   });
-  defaultSections.forEach((section) => {
+  sections.forEach((section) => {
     if (targetSections.indexOf(section.id.toLowerCase()) !== -1) sectionsToShow.push(section);
   });
-  return sectionsToShow;
+  if (!isEmptyArray(sectionsToShow)) return sectionsToShow;
+  return defaultSections;
 }
 export function imageOK(img) {
   if (!img) {
@@ -112,7 +156,7 @@ export function isInViewport(element) {
 }
 
 export function hasData(arrObj) {
-  return !isEmptyArray(arrObj);
+  return !isEmptyArray(arrObj?.data);
 }
 
 export function getTomorrow() {
@@ -124,6 +168,19 @@ export function callback(callbackFunc, params) {
   callbackFunc(params);
 }
 
+export function toAbsoluteUrl(path) {
+  try {
+    const base =
+      (typeof window !== "undefined" && window.location?.origin) ||
+      (typeof document !== "undefined" && document.baseURI) ||
+      (typeof import.meta !== "undefined" && import.meta.env?.BASE_URL) ||
+      "http://localhost"; // test fallback
+    return new URL(path, base).toString();
+  } catch {
+    // Absolute already or cannot resolve — just return as-is
+    return path;
+  }
+}
 export async function fetchEnvData() {
   return new Promise((resolve) => {
     const nodeEnvs = getNodeProcessEnvs();
@@ -228,6 +285,19 @@ export function isNumber(target) {
   return target != null;
 }
 
+export function objectToString(value) {
+  if (typeof value === "object" && value !== null) {
+    // If it's a plain object, stringify it
+    if (Object.prototype.toString.call(value) === "[object Object]") {
+      return JSON.stringify(value);
+    } else {
+      // Handle other object types (e.g., Array, Date) if needed
+      return value.toString(); // Fallback to default toString for other objects
+    }
+  }
+  return value;
+}
+
 export function shouldShowPatientInfo(client) {
   // from query string
   if (sessionStorage.getItem(queryNeedPatientBanner) !== null) {
@@ -242,6 +312,8 @@ export function shouldShowPatientInfo(client) {
   return String(getEnv("REACT_APP_DISABLE_HEADER")).toLowerCase() !== "true";
 }
 export function shouldShowNav() {
+  const sections = getSectionsToShow();
+  if (isEmptyArray(sections) || sections.length === 1) return false;
   return String(getEnv("REACT_APP_DISABLE_NAV")).toLowerCase() !== "true";
 }
 export function getAppHeight() {
@@ -303,7 +375,7 @@ export function getLocaleDateStringFromDate(dateString, format) {
 }
 
 export function hasValue(value) {
-  return value != null && value !== "" && typeof value !== "undefined";
+  return value != null && String(value) !== "" && typeof value !== "undefined";
 }
 
 export function isEmptyArray(o) {
@@ -312,6 +384,18 @@ export function isEmptyArray(o) {
 
 export function isNil(v) {
   return v == null || v === "";
+}
+
+export function isNonEmptyString(v) {
+  return typeof v === "string" && v.trim() !== "";
+}
+export function hasContent(v) {
+  if (Array.isArray(v)) return v.length > 0;
+  if (v && typeof v === "object") return Object.keys(v).length > 0;
+  return v != null && (!isNonEmptyString(v) ? v !== "" : true);
+}
+export function firstNonEmpty(...vals) {
+  return vals.find((v) => isNonEmptyString(v));
 }
 
 export function coalesce(...vals) {
@@ -324,6 +408,13 @@ export function toMaybeDate(s) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+/** Strict numeric coercion, returns number or null (never NaN). */
+export function toFiniteNumber(v) {
+  if (v == null) return null;
+  const n = typeof v === "string" && v.trim() !== "" ? Number(v) : typeof v === "number" ? v : NaN;
+  return Number.isFinite(n) ? n : null;
+}
+
 export function toMillis(s) {
   if (!s) return 0;
   const t = Date.parse(s);
@@ -331,7 +422,7 @@ export function toMillis(s) {
 }
 
 export function normalizeStr(s) {
-  return (s ?? "").toString().trim().toLowerCase();
+  return stripHtmlTags((s ?? "").toString().trim().toLowerCase());
 }
 
 export function fuzzyMatch(a, b) {
@@ -349,4 +440,90 @@ export async function isImagefileExist(url) {
     console.log(error);
     return false; // Request failed or URL is invalid
   }
+}
+// https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid
+export function generateUUID() {
+  // Public Domain/MIT
+  var d = new Date().getTime(); //Timestamp
+  var d2 = (typeof performance !== "undefined" && performance.now && performance.now() * 1000) || 0; //Time in microseconds since page-load or 0 if unsupported
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    var r = Math.random() * 16; //random number between 0 and 16
+    if (d > 0) {
+      //Use timestamp until depleted
+      r = (d + r) % 16 | 0;
+      d = Math.floor(d / 16);
+    } else {
+      //Use microseconds since page-load if supported
+      r = (d2 + r) % 16 | 0;
+      d2 = Math.floor(d2 / 16);
+    }
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
+export function debounce(fn, delay) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
+// shallow check for plain objects
+export const isPlainObject = (v) =>
+  v != null && !Array.isArray(v) && typeof v === "object" && Object.getPrototypeOf(v) === Object.prototype;
+
+// deep merge that preserves functions and arrays (arrays are replaced by override)
+export function deepMerge(base = {}, override = {}) {
+  const out = { ...(base ?? {}) };
+  for (const key of Object.keys(override ?? {})) {
+    const bv = out[key];
+    const ov = override[key];
+    if (isPlainObject(bv) && isPlainObject(ov)) out[key] = deepMerge(bv, ov);
+    else out[key] = ov; // functions, arrays, primitives: take override by reference/value
+  }
+  return out;
+}
+
+export function removeParentheses(text) {
+  return text.replace(/\s*\([^)]*\)/g, "").trim();
+}
+
+export function isDemoDataEnabled() {
+  // TODO FIX this
+  // if (String(getEnv("REACT_APP_CONF_API_URL")).toLowerCase().includes("dev")) return true;
+  return String(getEnv("REACT_APP_ENABLE_DEMO_DATA")).toLowerCase() === "true";
+}
+
+const domParser = new DOMParser();
+export function hasHtmlTags(text) {
+  if (!text) return false;
+  const doc = domParser.parseFromString(text, "text/html");
+  // Check if the body contains any child elements (excluding script tags)
+  return doc.body.children.length > 0;
+}
+export function stripHtmlTags(html) {
+  if (!html) return html;
+  const doc = domParser.parseFromString(html, "text/html");
+  return doc.body.textContent || "";
+}
+export function removeNullValuesFromObject(obj) {
+  if (!obj) return null;
+  const filtered = Object.fromEntries(Object.entries(obj).filter(([_, value]) => value !== null));
+  return Object.keys(filtered).length === 0 ? null : filtered;
+}
+export function chunkArray(array, size = 3) {
+  if (!array) return [];
+  const chunks = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
+export function capitalizeFirstLetterSafe(text) {
+  if (!text) return "";
+  if (typeof text !== "string" || text.length === 0) return text;
+  const textStr = String(text).replace(/"/g, "").trim();
+  return textStr.charAt(0).toUpperCase() + textStr.slice(1).toLowerCase();
 }

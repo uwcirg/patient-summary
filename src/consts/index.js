@@ -12,3 +12,157 @@ export const DEFAULT_ACCORDION_HEADER_HEIGHT = 64;
 export const DEFAULT_TOOLBAR_HEIGHT = 48;
 export const DEFAULT_OBSERVATION_CATEGORIES =
   "social-history,vital-signs,imaging,laboratory,procedure,survey,exam,therapy,activity,smartdata";
+// uses numeric valueQuantity 0..3, maps to LOINC codings, e.g. PHQ9
+export const DEFAULT_VAL_TO_LOIN_CODE = {
+  0: { system: "http://loinc.org", code: "LA6568-5", display: "Not at all" },
+  1: { system: "http://loinc.org", code: "LA6569-3", display: "Several days" },
+  2: { system: "http://loinc.org", code: "LA6570-1", display: "More than half the days" },
+  3: { system: "http://loinc.org", code: "LA6571-9", display: "Nearly every day" },
+  "not at all": { system: "http://loinc.org", code: "LA6568-5", display: "Not at all" },
+  "several days": { system: "http://loinc.org", code: "LA6569-3", display: "Several days" },
+  "more than half the days": { system: "http://loinc.org", code: "LA6570-1", display: "More than half the days" },
+  "nearly every day": { system: "http://loinc.org", code: "LA6571-9", display: "Nearly every day" },
+};
+// --- questionnaire response answer code -> value maps ---
+export const DEFAULT_FALLBACK_SCORE_MAPS = {
+  default: {
+    "LA6568-5": 0,
+    "LA6569-3": 1,
+    "LA6570-1": 2,
+    "LA6571-9": 3,
+    "la6568-5": 0,
+    "la6569-3": 1,
+    "la6570-1": 2,
+    "la6571-9": 3,
+    0: 0,
+    1: 1,
+    2: 2,
+    3: 3,
+    "not at all": 0,
+    "several days": 1,
+    "more than half the days": 2,
+    "nearly every day": 3,
+    never: 0,
+    "once or twice": 1,
+    monthly: 2,
+    weekly: 3,
+    "daily or almost daily": 4,
+  },
+};
+// defaultAnswerOptions are what get rendered into the Questionnaire item.answerOption
+export const DEFAULT_ANSWER_OPTIONS = [0, 1, 2, 3].map((n) => ({ valueCoding: DEFAULT_VAL_TO_LOIN_CODE[n] }));
+export const LOIN_SYSTEM = "http://loinc.org";
+export const FLOWSHEET_SYSTEM = "http://open.epic.com/FHIR/StructureDefinition/observation-flowsheet-id";
+// code IDS from UCSD Test system; these will be different in PROD, use config, REACT_APP_FLOWSHEET_CODE_IDS
+export const FLOWSHEET_CODE_IDS = [
+  "tdYjwfyJvuW4IRAhjwoPFeA0",
+  "tcfuT6l6w588Qqjcx6cXqxw0",
+  "tags.2ubhSPRHJcPwj9A-9A0",
+  "tbX6Ca3KWexbQqjSTR.gb5w0",
+  "t0-c.j3CMZhmoM0Qd8ZtPmA0",
+  "tUvwUAzzAo2GM-83FWMNMBA0",
+  "t9ed6G2pi.iZGhA9T0KKSXQ0",
+  "tKyPjZXsY.fwUg8kQpgnrGg0",
+  "teN3kKw8NMBIF9ZU7Nd-9pQ0",
+  "tnU0icMggWEcRhksuu4hJ3A0",
+  "tcspRW.3lXOnl6nYHXrx3Rg0",
+  "tAcMJ6d9AZFqpzWcp-YjG6Q0",
+];
+
+export const PHQ9_SI_QUESTION_LINK_ID = "44260-8";
+
+export const PHQ9_SI_ANSWER_SCORE_MAPPINGS = DEFAULT_FALLBACK_SCORE_MAPS.default; // extended if needed
+
+export const PHQ9_ADMIN_NOTE = `
+  <div>
+    <p><strong>Please note: PHQ-9 administration differs by system</strong>:</p>
+
+    <p><strong>EPIC</strong></p>
+    <ul>
+      <li>Items 1 - 2 are used for initial screening</li>
+      <li>Items 3 - 9 are administered only if the screening score is ≥3</li>
+    </ul>
+
+    <p><strong>CNICS PRO</strong></p>
+    <ul>
+      <li>Remote completion: items 1 - 8</li>
+      <li>In-person completion: items 1 - 9</li>
+      <li>Items may be skipped</li>
+      <li>A total PHQ-9 score is calculated only if ≥7 items are answered</li>
+    </ul>
+  </div>
+`.trim();
+
+/**
+ * Medical condition codes used in questionnaire processing
+ */
+export const CONDITION_CODES = {
+  LOWER_EDUCATION: "Z55.5",
+};
+
+/**
+ * Questionnaire identifiers
+ */
+export const QUESTIONNAIRE_IDS = {
+  SLUMS: "CIRG_SLUMS",
+  CIDAS: "CIRG-C-IDAS",
+};
+
+/**
+ * Link IDs for specific questionnaire items
+ */
+export const LINK_IDS = {
+  CIDAS_SUICIDE: "cs-idas-15",
+  MINICOG_RECALL: "minicog-question1",
+  MINICOG_CLOCK: "minicog-question2",
+  MINICOG_TOTAL: "minicog-total-score",
+};
+
+/**
+ * Hidden link IDs for Mini-Cog display
+ */
+export const MINICOG_HIDDEN_IDS = new Set([
+  "introduction",
+  "minicog-question1-instruction",
+  "minicog-question2-instruction",
+  "minicog-total-score-explanation",
+  "minicog-questionnaire-footnote",
+]);
+
+/**
+ * Default severity cutoffs
+ */
+export const SEVERITY_CUTOFFS = {
+  SLUMS_LOW_EDUCATION: 19,
+  SLUMS_HIGH_EDUCATION: 20,
+  CIDAS_HIGH_SEVERITY: 18,
+  CIDAS_SUICIDE_THRESHOLD: 1,
+  MINICOG_HIGH_SEVERITY: 3,
+};
+
+/**
+ * Scoring parameters
+ */
+export const SCORING_PARAMS = {
+  CIDAS_MAXIMUM_SCORE: 36,
+  MINICOG_MAXIMUM_SCORE: 5,
+  MINICOG_RECALL_MAX: 3,
+  MINICOG_CLOCK_SCORE: 2,
+};
+// pattern in link Id to check to determine whether a questionnaire item is not a response item
+export const EXCLUDED_LINK_ID_KEYWORDS = ["introduction", "ignore", "header", "score-label", "critical-flag"];
+
+export const IS_QUESTION_COLUMN_KEYWORDS = [
+  "score",
+  "meaning",
+  "summary",
+  "visual analog scale",
+  "status",
+  "detailed question",
+  "questions",
+  "question",
+  "detailed questions",
+  "total"
+];
+
+export const EMPTY_CELL_STRING = "-";

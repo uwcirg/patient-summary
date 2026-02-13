@@ -17,7 +17,7 @@ export default function FloatingNavButton() {
   ));
   BoxRef.displayName = "BoxRef";
   const FabRef = forwardRef((props, ref) => (
-    <Fab ref={ref} {...props} className="back-to-top">
+    <Fab ref={ref} {...props} className="back-to-top print-hidden">
       {props.children}
     </Fab>
   ));
@@ -46,11 +46,11 @@ export default function FloatingNavButton() {
       size="medium"
       sx={{
         position: "fixed",
-        bottom: (theme) => theme.spacing(1),
+        bottom: (theme) => theme.spacing(2),
         right: (theme) => theme.spacing(3),
         zIndex: (theme) => theme.zIndex.drawer - 1,
         borderColor: (theme) => theme.palette.primary.main,
-        borderWidth: "2px",
+        borderWidth: "3px",
         borderStyle: "solid"
       }}
       onClick={(e) => {

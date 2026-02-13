@@ -8,6 +8,7 @@ import IconButton from "@mui/material/IconButton";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
 import { Divider } from "@mui/material";
 import Grow from "@mui/material/Grow";
+import InfoIcon from "@mui/icons-material/InfoOutlined";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import MenuItem from "@mui/material/MenuItem";
@@ -21,32 +22,40 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MoreIcon from "@mui/icons-material/MoreVert";
 import PrintIcon from "@mui/icons-material/LocalPrintshopOutlined";
 import DashboardIcon from "@mui/icons-material/DashboardOutlined";
-import { isImagefileExist, getEnv, getEnvProjectId, getSectionsToShow, imageOK, scrollToElement } from "../util";
-import PatientInfo from "../components/PatientInfo";
+import {
+  isImagefileExist,
+  getEnvAppTitle,
+  getEnvProjectId,
+  getSectionsToShow,
+  imageOK,
+  scrollToElement,
+  toAbsoluteUrl,
+} from "../util";
 import { FhirClientContext } from "../context/FhirClientContext";
+import About from "../components/About";
+import PatientInfo from "../components/PatientInfo";
 
 export default function Header(props) {
   const theme = useTheme();
   const { patient } = useContext(FhirClientContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const anchorRef = useRef(null);
   const desktopImgRef = useRef(null);
   const mobileImgRef = useRef(null);
   const sections = getSectionsToShow();
-  const hasSections = sections && sections.length > 0;
+  const shouldShowSections = sections && sections.length > 1;
 
   const { returnURL, inEHR } = props;
   const getDesktopImgSrc = async () => {
-    const url = `/assets/${getEnvProjectId()}/img/logo.png`;
-    const isOkay = await isImagefileExist(url);
-    if (isOkay) return url;
-    return `/assets/default/img/logo.png`;
+    const projectUrl = toAbsoluteUrl(`/assets/${getEnvProjectId()}/img/logo.png`);
+    const ok = await isImagefileExist(projectUrl).catch(() => false);
+    return ok ? projectUrl : toAbsoluteUrl(`/assets/default/img/logo.png`);
   };
   const getMobileImgSrc = async () => {
-    const url = `/assets/${getEnvProjectId()}/img/logo_mobile.png`;
-    const isOkay = await isImagefileExist(url);
-    if (isOkay) return url;
-    return `/assets/default/img/logo_mobile.png`;
+    const projectUrl = toAbsoluteUrl(`/assets/${getEnvProjectId()}/img/logo_mobile.png`);
+    const ok = await isImagefileExist(projectUrl).catch(() => false);
+    return ok ? projectUrl : toAbsoluteUrl(`/assets/default/img/logo_mobile.png`);
   };
   const handleImageLoaded = (e) => {
     if (!e.target) {
@@ -62,15 +71,15 @@ export default function Header(props) {
   const shouldHideReturnButton = () => !returnURL || inEHR;
 
   const renderTitle = () => {
-    const appTitle = getEnv("REACT_APP_TITLE") || "Patient Summary";
+    const appTitle = getEnvAppTitle();
     return (
       <>
         <Typography
-          variant="h4"
+          variant="h5"
           component="h1"
           color="primary"
           sx={{
-            fontSize: inEHR ? "1.6rem" : "1.8rem",
+            fontSize: "1.3rem",
             display: inEHR ? "block" : { xs: "none", sm: "none", md: "block" },
           }}
           className="print-hidden"
@@ -107,7 +116,7 @@ export default function Header(props) {
               }}
             >
               <img
-                className="header-logo ghost"
+                className="logo header-logo ghost"
                 ref={desktopImgRef}
                 alt={"project logo"}
                 style={{
@@ -140,7 +149,7 @@ export default function Header(props) {
                 alt={"project logo"}
                 onLoad={handleImageLoaded}
                 onError={handleImageLoaded}
-                className="ghost"
+                className="logo ghost"
                 style={{
                   cursor: "pointer",
                   height: 40,
@@ -152,6 +161,23 @@ export default function Header(props) {
       );
   };
   const renderPatientInfo = () => <PatientInfo patient={patient}></PatientInfo>;
+  const renderAboutButton = (props) => {
+    return (
+      <Button
+        className="print-hidden"
+        onClick={() => setAboutModalOpen(true)}
+        startIcon={<InfoIcon></InfoIcon>}
+        size="medium"
+        variant="outlined"
+        sx={{
+          backgroundColor: "#FFF",
+        }}
+        {...props}
+      >
+        About
+      </Button>
+    );
+  };
   const renderPrintButton = (props) => {
     return (
       <Button
@@ -206,6 +232,7 @@ export default function Header(props) {
       >
         {!shouldHideReturnButton() && renderReturnButton()}
         {renderPrintButton()}
+        {renderAboutButton()}
       </Stack>
     );
   };
@@ -264,19 +291,28 @@ export default function Header(props) {
                       <Divider></Divider>
                     </Box>
                   )}
-                  {hasSections &&
-                    sections.map((section) => (
+                  {shouldShowSections &&
+                    sections.map((section, index) => (
                       <MenuItem
-                        onClick={() => scrollToElement(section.anchorElementId)}
-                        key={`${section.anchorElementId}_item`}
+                        onClick={(e) => {
+                          scrollToElement(`anchor_${section.id.toLowerCase()}`);
+                          handleMobileMenuClose(e);
+                        }}
+                        key={`${section.id ?? index}_menuitem`}
                       >
                         <ListItemIcon>{section.icon({ fontSize: "small" })}</ListItemIcon>
                         <ListItemText>{section.title}</ListItemText>
                       </MenuItem>
                     ))}
-                  {hasSections && <Divider></Divider>}
+                  {shouldShowSections && <Divider sx={{ display: "none" }}></Divider>}
                   <MenuItem>
                     {renderPrintButton({
+                      variant: "text",
+                    })}
+                  </MenuItem>
+                  <Divider></Divider>
+                  <MenuItem>
+                    {renderAboutButton({
                       variant: "text",
                     })}
                   </MenuItem>
@@ -288,6 +324,9 @@ export default function Header(props) {
       </Popper>
     </>
   );
+  const renderAboutModal = () => {
+    return <About open={aboutModalOpen} onClose={() => setAboutModalOpen(false)}></About>;
+  };
   const handleMobileMenuClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) {
       return;
@@ -307,13 +346,10 @@ export default function Header(props) {
     }
   };
 
-  const handleWindowResize = () => {
-    setMobileMenuOpen(false);
-  };
-
   useEffect(() => {
-    window.addEventListener("resize", () => handleWindowResize());
-    return window.removeEventListener("resize", handleWindowResize, true);
+    const onResize = () => setMobileMenuOpen(false);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   useEffect(() => {
@@ -357,6 +393,7 @@ export default function Header(props) {
               {renderDesktopMenu()}
             </Stack>
             {renderMobileMenu()}
+            {renderAboutModal()}
           </Stack>
         </Toolbar>
       </AppBar>

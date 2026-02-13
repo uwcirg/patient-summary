@@ -4,57 +4,47 @@ import MedicalInformationIcon from "@mui/icons-material/MedicalInformationOutlin
 import FactCheckIcon from "@mui/icons-material/FactCheckOutlined";
 import SummarizeIcon from "@mui/icons-material/SummarizeOutlined";
 import Box from "@mui/material/Box";
-import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import { isEmptyArray } from "@util";
+import Loader from "@components/Loader";
 
 const renderLoader = () => (
-  <Stack
-    direction="row"
-    spacing={1}
-    alignItems="center"
-    sx={{
-      marginTop: (theme) => theme.spacing(1),
-      marginBottom: (theme) => theme.spacing(1),
-    }}
-  >
-    <Box color="primary">Retrieving content ...</Box>
-    <CircularProgress color="primary" size={24}></CircularProgress>
-  </Stack>
+  <Loader message="Retrieving content..." styles={{ position: "relative", width: "auto", height: "auto" }}></Loader>
 );
 
-const renderScoringSummary = (props) => {
-  const summaryData = props.summaryData?.data || {};
+const renderScoringSummary = ({allScoringSummaryData, allChartData, chartKeys}) => {
   const ScoreSummary = lazy(() => import("../components/sections/ScoringSummary"));
   const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
-  const chartData = props.allChartData;
-  const chartKeys = [...new Set(chartData?.map((o) => o.key))];
   return (
     <Suspense fallback={renderLoader()}>
       <Stack
         spacing={1}
-        direction={`${!isEmptyArray(chartData) && chartData.length < 20 ? "row" : "column"}`}
-        alignItems={"center"}
+        direction={`${!isEmptyArray(allChartData) && allChartData.length < 20 ? "row" : "column"}`}
+        alignItems={"top"}
         sx={{
+          gap: (theme) => theme.spacing(1),
           marginLeft: (theme) => theme.spacing(1),
           marginRight: (theme) => theme.spacing(1),
-          gap: (theme) => theme.spacing(1),
         }}
         flexWrap={"wrap"}
+        className="score-summary-wrapper"
       >
-        <Box
-          sx={{
-            flex: {
-              xs: "auto",
-              sm: "auto",
-              md: "auto",
-              lg: 2,
-            },
-            width: "100%",
-          }}
-        >
-          <ChartSummary data={chartData} keys={chartKeys}></ChartSummary>
-        </Box>
+        {!isEmptyArray(allChartData) && chartKeys.length > 1 && (
+          <Box
+            sx={{
+              flex: {
+                xs: "auto",
+                sm: "auto",
+                md: "auto",
+                lg: 2,
+              },
+              width: "100%",
+            }}
+            className="chart-container-wrapper"
+          >
+            <ChartSummary data={allChartData} keys={chartKeys}></ChartSummary>
+          </Box>
+        )}
         <Box
           sx={{
             flex: {
@@ -63,12 +53,20 @@ const renderScoringSummary = (props) => {
               md: "auto",
               lg: 2.5,
             },
-            alignSelf: "stretch",
           }}
         >
-          <ScoreSummary summaryData={summaryData}></ScoreSummary>
+          <ScoreSummary data={allScoringSummaryData} disableLinks={true}></ScoreSummary>
         </Box>
       </Stack>
+    </Suspense>
+  );
+};
+
+const renderProReport = (props) => {
+  const ProReport = lazy(() => import("../components/sections/PROReport"));
+  return (
+    <Suspense fallback={renderLoader()}>
+      <ProReport {...props}></ProReport>
     </Suspense>
   );
 };
@@ -77,7 +75,7 @@ const renderConditions = (props) => {
   const Conditions = lazy(() => import("../components/sections/Conditions"));
   return (
     <Suspense fallback={renderLoader()}>
-      <Conditions data={props.evalData?.Condition}></Conditions>
+      <Conditions data={props?.Condition}></Conditions>
     </Suspense>
   );
 };
@@ -85,29 +83,33 @@ const renderObservations = (props) => {
   const Observation = lazy(() => import("../components/sections/Observations"));
   return (
     <Suspense fallback={renderLoader()}>
-      <Observation data={props.evalData?.Observation}></Observation>
+      <Observation data={props?.Observation}></Observation>
     </Suspense>
   );
 };
-const renderSummaries = ({ questionnaireKeys, summaryData }) => {
+const renderSummaries = (props) => {
   const Summaries = lazy(() => import("../components/sections/Summaries"));
-  return (
-    <Suspense fallback={renderLoader()}>
-      {<Summaries questionnaireKeys={questionnaireKeys} summaryData={summaryData}></Summaries>}
-    </Suspense>
-  );
+  return <Suspense fallback={renderLoader()}>{<Summaries {...props}></Summaries>}</Suspense>;
 };
 
 const DEFAULT_RESOURCES = ["Questionnaire", "QuestionnaireResponse"];
 
-const sections = [
+export const sections = [
   {
     id: "scoreSummary",
     title: "Score Summary",
-    //library: defaultInterventionLibrary,
-    resources: [...DEFAULT_RESOURCES, "Condition"],
+    resources: DEFAULT_RESOURCES,
     icon: (props) => <SummarizeIcon fontSize="medium" color="primary" {...props}></SummarizeIcon>,
     component: (props) => renderScoringSummary(props),
+    //default: true,
+  },
+  {
+    id: "proReport",
+    title: "PRO Report",
+    resources: DEFAULT_RESOURCES,
+    icon: (props) => <BallotIcon fontSize="medium" color="primary" {...props}></BallotIcon>,
+    component: (props) => renderProReport(props),
+    standalone: true,
     default: true,
   },
   {
@@ -116,7 +118,7 @@ const sections = [
     resources: DEFAULT_RESOURCES,
     icon: (props) => <BallotIcon fontSize="medium" color="primary" {...props}></BallotIcon>,
     component: (props) => renderSummaries(props),
-    default: true,
+    //default: true,
   },
   {
     id: "conditions",
@@ -124,7 +126,7 @@ const sections = [
     resources: ["Condition"],
     icon: (props) => <MedicalInformationIcon fontSize="medium" color="primary" {...props}></MedicalInformationIcon>,
     component: (props) => renderConditions(props),
-    default: true
+    //default: true,
   },
   {
     id: "observations",
@@ -132,7 +134,7 @@ const sections = [
     resources: ["Observation"],
     icon: (props) => <FactCheckIcon fontSize="medium" color="primary" {...props}></FactCheckIcon>,
     component: (props) => renderObservations(props),
-    default: true
+    //default: true,
   },
 ];
 const DEFAULT_SECTIONS = sections.filter((item) => !!item.default);

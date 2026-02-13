@@ -2,30 +2,22 @@ import React from "react";
 import PropTypes from "prop-types";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
-import ErrorIcon from "@mui/icons-material/Error";
-import WarningIcon from "@mui/icons-material/ReportProblem";
-import { isNumber } from "@util";
-import ScoreSeverity from "@models/ScoreSeverity";
+import AlertIcon from "@mui/icons-material/ReportProblem";
+import Score from "@models/Score";
 
 export default function Scoring(props) {
   const { score, justifyContent, alignItems, scoreParams } = props;
-  const getScoreSeverity = () =>
-    scoreParams && scoreParams.scoreSeverity ? String(scoreParams.scoreSeverity).toLowerCase() : null;
-  const getAlertNote = () => (scoreParams && scoreParams.alertNote ? scoreParams.alertNote : null);
-  const scoreSeverity = getScoreSeverity();
-  const oSeverity = new ScoreSeverity(scoreSeverity, scoreParams);
-  const alertNote = getAlertNote();
-  const getScoreDisplay = () => <span data-testid="score">{isNumber(score) ? score : "--"}</span>;
-
+  const oScore = new Score(score, scoreParams);
+  const getScoreDisplay = () => oScore.displayValue;
   // display alert icon for score that has high severity
-  if (oSeverity.isInRange()) {
+  if (oScore.isInRange()) {
     const renderIcon = () => {
-      if (oSeverity.isHigh())
+      if (oScore.isHigh())
         return (
-          <ErrorIcon color={oSeverity.iconColorClass} fontSize="small" className={oSeverity.iconClass}></ErrorIcon>
+          <AlertIcon color={oScore.iconColorClass} fontSize="small" className={oScore.iconClass}></AlertIcon>
         );
       return (
-        <WarningIcon color={oSeverity.iconColorClass} fontSize="small" className={oSeverity.iconClass}></WarningIcon>
+        <AlertIcon color={oScore.iconColorClass} fontSize="small" className={oScore.iconClass}></AlertIcon>
       );
     };
     return (
@@ -34,14 +26,15 @@ export default function Scoring(props) {
         spacing={0.5}
         justifyContent={justifyContent || "flex-start"}
         alignItems={alignItems || "center"}
+        className="score-container"
       >
-        <div className={`${oSeverity.textColorClass}`}>{getScoreDisplay()}</div>
-        {alertNote && (
-          <Tooltip title={alertNote} placement="top" arrow>
+        <div className={`${oScore.textColorClass}`}>{getScoreDisplay()}</div>
+        {oScore.alertNote && (
+          <Tooltip title={oScore.alertNote} placement="top" arrow>
             {renderIcon()}
           </Tooltip>
         )}
-        {!alertNote && renderIcon()}
+        {!oScore.alertNote && renderIcon()}
       </Stack>
     );
   }

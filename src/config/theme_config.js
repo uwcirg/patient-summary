@@ -1,5 +1,5 @@
 import { createTheme } from "@mui/material/styles";
-import { grey, deepPurple, blue, indigo, orange} from "@mui/material/colors";
+import { grey, deepPurple, blue, indigo, orange, red} from "@mui/material/colors";
 import { getEnvProjectId } from "@/util";
 const defaultOptions = {
   breakpoints: {
@@ -17,6 +17,10 @@ const defaultOptions = {
   typography: {
     subtitle1: {
       fontWeight: 500,
+      fontSize: "0.875rem",
+    },
+    subtitle2: {
+      fontSize: "0.875rem",
     },
   },
 };
@@ -25,10 +29,10 @@ export const themes = {
     ...defaultOptions,
     palette: {
       background: {
-        main: "#f7f6f9",
+        main: "#FaFaFa",
       },
       lightest: {
-        main: "#f7f7f8",
+        main: "#fafafa",
       },
       lighter: {
         main: indigo[50],
@@ -54,9 +58,18 @@ export const themes = {
       muted: {
         main: grey[700],
       },
-      border: {
-        main: "#ececec",
+      muter: {
+        main: grey[400]
       },
+      border: {
+        main: grey[200],
+      },
+      error: {
+        main: red[900]
+      },
+      warning: {
+        main: orange[900]
+      }
     },
   }),
   dcw: createTheme({
