@@ -3,7 +3,11 @@ import { getResourcesByResourceType, linkIdEquals } from "@util/fhirUtil";
 import CIRG_ADL_IADL from "./questionnaire_configs/CIRG_ADL_IADL";
 import CIRG_BEHAV5 from "./questionnaire_configs/CIRG_BEHAV5";
 import CIRG_C_IDAS from "./questionnaire_configs/CIRG_C_IDAS";
-import CIRG_CNICS_ARV, { CIRG_CNICS_ARV_MISSED_DOSE, CIRG_CNICS_ARV_SRS, CIRG_CNICS_ARV_VAS } from "./questionnaire_configs/CIRG_CNICS_ARV";
+import CIRG_CNICS_ARV, {
+  CIRG_CNICS_ARV_MISSED_DOSE,
+  CIRG_CNICS_ARV_SRS,
+  CIRG_CNICS_ARV_VAS,
+} from "./questionnaire_configs/CIRG_CNICS_ARV";
 import CIRG_CNICS_ASSIST from "./questionnaire_configs/CIRG_CNICS_ASSIST";
 import CIRG_CNICS_ASSIS_OD from "./questionnaire_configs/CIRG_CNICS_ASSIS_OD";
 import CIRG_CNICS_ASSIST_POLYSUB from "./questionnaire_configs/CIRG_CNICS_ASSIST_POLYSUB";
@@ -24,7 +28,14 @@ import CIRG_CNICS_HOUSING from "./questionnaire_configs/CIRG_CNICS_HOUSING";
 import CIRG_CNICS_IPV4 from "./questionnaire_configs/CIRG_CNICS_IPV4";
 import CIRG_CNICS_MAPSS_SF from "./questionnaire_configs/CIRG_CNICS_MAPSS_SF";
 import CIRG_CNICS_MINI from "./questionnaire_configs/CIRG_CNICS_MINI";
-import CIRG_CNICS_SEXUAL_RISK, { CIRG_SEXUAL_PARTNER_CONTEXT, CIRG_SEXUAL_PARTNERS, CIRG_STI, CIRG_UNPROTECTED_ANAL_SEX, CIRG_UNPROTECTED_ORAL_SEX, CIRG_UNPROTECTED_VAGINAL_SEX } from "./questionnaire_configs/CIRG_CNICS_SEXUAL_RISK";
+import CIRG_CNICS_SEXUAL_RISK, {
+  CIRG_SEXUAL_PARTNER_CONTEXT,
+  CIRG_SEXUAL_PARTNERS,
+  CIRG_STI,
+  CIRG_UNPROTECTED_ANAL_SEX,
+  CIRG_UNPROTECTED_ORAL_SEX,
+  CIRG_UNPROTECTED_VAGINAL_SEX,
+} from "./questionnaire_configs/CIRG_CNICS_SEXUAL_RISK";
 import CIRG_CNICS_SMOKING from "./questionnaire_configs/CIRG_CNICS_SMOKING";
 import CIRG_CNICS_SYMPTOMS from "./questionnaire_configs/CIRG_CNICS_SYMPTOMS";
 import CIRG_CP_ECOG from "./questionnaire_configs/CIRG_CP_ECOG";
@@ -36,7 +47,6 @@ import CIRG_PC_PTSD_5 from "./questionnaire_configs/CIRG_PC_PTSD_5";
 import CIRG_PHQ9, { CIRG_SI } from "./questionnaire_configs/CIRG_PHQ9";
 import CIRG_SLUMS from "./questionnaire_configs/CIRG_SLUMS";
 import QuestionnaireScoringBuilder from "@/models/resultBuilders/QuestionnaireScoringBuilder";
-
 
 function normalizeInstrumentConfigKeys(config) {
   if (!config || typeof config !== "object") return config;
