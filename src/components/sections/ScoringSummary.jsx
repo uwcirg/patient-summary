@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
 import Link from "@mui/material/Link";
@@ -18,100 +18,207 @@ import ResponsesViewer from "../ResponsesViewer";
 import Meaning from "../Meaning";
 import { getNoDataDisplay } from "../../models/resultBuilders/helpers";
 
-// tiny helper to read nested keys like "provider.name"
+// ─── Module-level constants ───────────────────────────────────────────────────
+const HIDDEN_COLUMN_IDS_IN_MOBILE = ["numAnswered"];
+
+const DEFAULT_TABLE_CELL_PROPS = { size: "small" };
+const DEFAULT_HEADER_CELL_PROPS = {
+  ...DEFAULT_TABLE_CELL_PROPS,
+  align: "center",
+  variant: "head",
+};
+const CELL_WHITESPACE_STYLE = { wordBreak: "break-word", whiteSpace: "normal" };
+
+const STICKY_STYLE = {
+  position: "sticky",
+  left: 0,
+  zIndex: 1,
+  backgroundColor: "#FFF",
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 const getByPath = (obj, path) => {
   if (typeof path !== "string") return undefined;
   return path.split(".").reduce((acc, key) => (acc == null ? acc : acc[key]), obj);
 };
 
-export default function ScoringSummary(props) {
+const normalizeToArray = (data) => {
+  if (Array.isArray(data)) return data;
+  if (data) return [data];
+  return [];
+};
+
+const getTextClassName = (row) => {
+  if (row.alert) return "text-error";
+  if (row.warning) return "text-warning";
+  return "";
+};
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+function TableHeader({ visibleColumns, baseCellStyle }) {
+  return (
+    <TableHead>
+      <TableRow sx={{ backgroundColor: "lightest.main" }}>
+        {visibleColumns.map((col) => (
+          <TableCell
+            key={`header_${col.id}`}
+            {...DEFAULT_HEADER_CELL_PROPS}
+            align={col.align || DEFAULT_HEADER_CELL_PROPS.align}
+            {...(col.headerProps || {})}
+            sx={{
+              ...baseCellStyle,
+              ...(col.sticky ? STICKY_STYLE : {}),
+              ...(col.headerProps?.sx || {}),
+              ...(col.width ? { width: col.width } : {}),
+              ...(HIDDEN_COLUMN_IDS_IN_MOBILE.includes(col.id)
+                ? { display: { xs: "none", md: "table-cell" } }
+                : {}),
+            }}
+          >
+            {col.header}
+          </TableCell>
+        ))}
+      </TableRow>
+    </TableHead>
+  );
+}
+
+TableHeader.propTypes = {
+  visibleColumns: PropTypes.array.isRequired,
+  baseCellStyle: PropTypes.object.isRequired,
+};
+
+function TableBodyRows({ visibleColumns, dataToUse, baseCellStyle, emptyMessage, renderCell }) {
+  const hasData = dataToUse.length > 0;
+
+  return (
+    <TableBody>
+      {hasData ? (
+        dataToUse.map((row, index) => {
+          const noRowData = isEmptyArray(row.tableResponseData);
+          return (
+            <TableRow key={`summary_${row.key || index}_${index}`}>
+              {visibleColumns.map((col, colIndex) => (
+                <TableCell
+                  key={`cell_${col.id}_${row.key || index}`}
+                  {...DEFAULT_TABLE_CELL_PROPS}
+                  align={col.align || "left"}
+                  {...(col.cellProps || {})}
+                  sx={{
+                    ...baseCellStyle,
+                    ...(col.sticky ? STICKY_STYLE : {}),
+                    ...(col.cellProps?.sx || {}),
+                    ...(HIDDEN_COLUMN_IDS_IN_MOBILE.includes(col.id)
+                      ? { display: { xs: "none", md: "table-cell" } }
+                      : {}),
+                  }}
+                >
+                  {noRowData && colIndex > 0 ? emptyMessage || getNoDataDisplay() : renderCell(col, row)}
+                </TableCell>
+              ))}
+            </TableRow>
+          );
+        })
+      ) : (
+        <TableRow>
+          <TableCell
+            colSpan={visibleColumns.length}
+            align="center"
+            sx={{
+              ...baseCellStyle,
+              position: "static",
+              backgroundColor: "transparent",
+              fontStyle: "italic",
+              color: "text.secondary",
+            }}
+          >
+            {emptyMessage || getNoDataDisplay()}
+          </TableCell>
+        </TableRow>
+      )}
+    </TableBody>
+  );
+}
+
+TableBodyRows.propTypes = {
+  visibleColumns: PropTypes.array.isRequired,
+  dataToUse: PropTypes.array.isRequired,
+  baseCellStyle: PropTypes.object.isRequired,
+  emptyMessage: PropTypes.string,
+  renderCell: PropTypes.func.isRequired,
+};
+
+// ─── Main component ───────────────────────────────────────────────────────────
+export default function ScoringSummary({
+  data,
+  disableLinks,
+  enableResponsesViewer,
+  hiddenColumns = [],
+  columns = [],
+  emptyMessage,
+  tableStyle,
+  containerStyle,
+}) {
   const theme = useTheme();
-  const { data, disableLinks, hiddenColumns = [], columns = [] } = props;
 
-  const hiddenColumnIdsInMobile = ["numAnswered"];
+  // ---- styles (theme-dependent, memoized)
+  const baseCellStyle = useMemo(
+    () => ({
+      borderRight: "1px solid",
+      borderColor: "border.main",
+      whiteSpace: { xs: "normal", sm: "nowrap" },
+      lineHeight: 1.4,
+      fontSize: { xs: "0.75rem", sm: "0.8rem" },
+      padding: theme.spacing(1),
+      verticalAlign: "top",
+      ...CELL_WHITESPACE_STYLE,
+    }),
+    [theme]
+  );
 
-  const isColVisible = (id) => {
-    if (id === "measure") return true;
-    const isVisible = !hiddenColumns?.includes(id);
-    //console.log(`Column ${id}: hiddenColumns =`, hiddenColumns, `isVisible =`, isVisible);
-    return isVisible;
-  };
+  // ---- renderers (memoized; depend on disableLinks + enableResponsesViewer)
+  const defaultRenderers = useMemo(
+    () => ({
+      text: (row, value) =>
+        value ? (
+          <span className={getTextClassName(row)}>{value}</span>
+        ) : (
+          getNoDataDisplay()
+        ),
 
-  const handleClick = (e, anchorElementId) => {
-    e.preventDefault();
-    scrollToAnchor(anchorElementId);
-  };
+      date: (row) => (
+        <Stack direction="column" spacing={1} alignItems="space-between" justifyContent="space-between">
+          <Box>{row.displayDate}</Box>
+          {row.source && <Box className="muted-text source-container">{row.source}</Box>}
+        </Stack>
+      ),
 
-  // -------- styles
-  const defaultTableCellProps = { size: "small" };
-  const defaultHeaderCellProps = {
-    ...defaultTableCellProps,
-    align: "center",
-    variant: "head",
-  };
-  const cellWhiteSpaceStyle = { wordBreak: "break-word", whiteSpace: "normal" };
-  const baseCellStyle = {
-    borderRight: `1px solid`,
-    borderColor: "border.main",
-    whiteSpace: { xs: "normal", sm: "nowrap" }, // allow wrapping on phones
-    lineHeight: 1.4,
-    fontSize: { xs: "0.75rem", sm: "0.8rem" }, // slightly smaller on xs
-    wordBreak: "break-word",
-    padding: theme.spacing(1),
-    verticalAlign: "top",
-    ...cellWhiteSpaceStyle,
-  };
-  const stickyStyle = {
-    position: "sticky",
-    left: 0,
-    zIndex: 1,
-    backgroundColor: "#FFF",
-  };
+      // "answered" is used directly inside scoreMeaning's renderCell, not via type dispatch.
+      // Kept here for co-location but not exposed as a column type in columnShape.
+      answered: (row) => {
+        if (row.totalAnsweredItems != null || row.note) {
+          return (
+            <Stack direction="row">
+              {row.totalAnsweredItems && (
+                <Box>{`${row.totalAnsweredItems} question${row.totalAnsweredItems > 1 ? "s" : ""} answered`}</Box>
+              )}
+              {row.note && (
+                <InfoDialog
+                  title={`About ${row.title} Scoring`}
+                  content={row.note}
+                  buttonTitle={`Click to learn more about ${row.title} scoring`}
+                  allowHtml={true}
+                  buttonSize="small"
+                  buttonIconProps={{ fontSize: "small" }}
+                />
+              )}
+            </Stack>
+          );
+        }
+        return null;
+      },
 
-  // -------- reusable default cell renderers
-  const defaultRenderers = {
-    text: (row, value) => (
-      <>
-        {value && (
-          <span className={row.alert ? "text-error" : row.warning ? "text-warning" : !value ? "muted-text" : ""}>
-            {value}
-          </span>
-        )}
-        {!value && getNoDataDisplay()}
-      </>
-    ),
-    date: (row) => (
-      <Stack direction={"column"} spacing={1} alignItems={"space-between"} justifyContent={"space-between"}>
-        <Box>{row.displayDate}</Box>
-        {row.source && <Box className="muted-text source-container">{row.source}</Box>}
-      </Stack>
-    ),
-    answered: (row) => {
-      if (row.totalAnsweredItems != null || row.note) {
-        return (
-          <Stack direction={"row"}>
-            {row.totalAnsweredItems && (
-              <Box>{`${row.totalAnsweredItems} question${row.totalAnsweredItems > 1 ? "s" : ""} answered`}</Box>
-            )}
-            {row.note && (
-              <InfoDialog
-                title={`About ${row.title} Scoring`}
-                content={row.note}
-                buttonTitle={`Click to learn more about ${row.title} scoring`}
-                allowHtml={true}
-                buttonSize="small"
-                buttonIconProps={{
-                  fontSize: "small",
-                }}
-              />
-            )}
-          </Stack>
-        );
-      }
-      return null;
-    },
-    score: (row) => {
-      return (
+      score: (row) => (
         <Stack
           direction="column"
           spacing={0.75}
@@ -129,169 +236,169 @@ export default function ScoringSummary(props) {
             {row.scoreRangeDisplay}
           </Box>
         </Stack>
-      );
-    },
-  };
-
-  // -------- original columns ------------
-  const DEFAULT_COLUMNS = [
-    {
-      id: "measure",
-      header: "Measure",
-      sticky: true,
-      align: "left",
-      headerProps: {
-        sx: {
-          ...stickyStyle,
-          minHeight: { xs: theme.spacing(4), sm: "auto" },
-          backgroundColor: "lightest.main",
-          textAlign: "left",
-        },
-        ...defaultHeaderCellProps,
-      },
-      cellProps: {
-        sx: {
-          ...baseCellStyle,
-          ...stickyStyle,
-          fontWeight: 500,
-          borderBottom: `1px solid`,
-          borderBottomColor: "border.main",
-          verticalAlign: "top",
-          textAlign: "left",
-          minWidth: "128px",
-        },
-        size: "small",
-      },
-      renderCell: (row) => {
-        const title = row.rowTitle ?? row.title;
-        return !disableLinks ? (
-          <Link
-            onClick={(e) => handleClick(e, row.key)}
-            underline="none"
-            sx={{ color: "link.main", cursor: "pointer" }}
-            href={`#${row.key}`}
-            className="instrument-link"
-          >
-            {title} {row.subtitle ? row.subtitle : ""}
-          </Link>
-        ) : props.enableResponsesViewer && !isEmptyArray(row?.tableResponseData) ? (
-          <ResponsesViewer
-            title={title}
-            subtitle={row.subtitle}
-            note={row.note}
-            responsesTileTitle={row.rowTitle}
-            tableData={row?.tableResponseData}
-            columns={row?.responseColumns}
-            questionnaire={row.questionnaire}
-            buttonStyle={{ width: "100%", maxWidth: 88 }}
-          />
-        ) : (
-          <Typography component="h3" variant="subtitle2" sx={{ textAlign: "left" }}>
-            {title}
-          </Typography>
-        );
-      },
-    },
-    {
-      id: "numAnswered",
-      header: "Answered",
-      align: "center",
-      width: "15%",
-      headerProps: {
-        sx: {
-          ...baseCellStyle,
-        },
-        ...defaultHeaderCellProps,
-      },
-      cellProps: { sx: { ...baseCellStyle, whiteSpace: "nowrap" } },
-      size: "small",
-      renderCell: (row) =>
-        row.numAnsweredDisplay
-          ? row.numAnsweredDisplay
-          : row.hasData != null && !row.hasData
-            ? getNoDataDisplay()
-            : defaultRenderers.text(row, ""),
-    },
-    {
-      id: "scoreMeaning",
-      header: "Score / Meaning",
-      align: "left",
-      headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps, align: "left" },
-      cellProps: {
-        sx: {
-          ...baseCellStyle,
-          // allow wrapping so score + meaning can stack
-          whiteSpace: "normal",
-        },
-        size: "small",
-      },
-      renderCell: (row) => (
-        <Stack sx={{ width: "100%" }} spacing={1.25} alignItems={"flex-start"} justifyContent={"flex-start"}>
-          {!row.displayMeaningNotScore && defaultRenderers.score(row)}
-          {row.showNumAnsweredWithScore && defaultRenderers.answered(row)}
-          <Meaning id={row.id ?? row.key} meaning={row.meaning} alert={row.alert} warning={row.warning} />
-        </Stack>
       ),
-    },
+    }),
+    [] // no deps: renderers don't close over changing props directly
+  );
 
-    {
-      id: "lastAssessed",
-      header: "Last Done",
-      align: "center",
-      type: "date",
-      headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
-      cellProps: { sx: baseCellStyle, size: "small" },
-      accessor: (row) => row.lastAssessed ?? row.date ?? "",
-    },
-    {
-      id: "comparison",
-      header: "Change from Last",
-      align: "center",
-      headerProps: { sx: { ...baseCellStyle, borderRightWidth: 0 }, ...defaultHeaderCellProps },
-      cellProps: { sx: { ...baseCellStyle, borderRightWidth: 0 }, size: "small" },
-      renderCell: (row) => row.comparisonIcon,
-    },
-  ];
-
-  // ----- merge defaults with user-provided columns by id, and use
-  // the `columns` prop as the primary ordering when provided
-  const userColumns = Array.isArray(columns) ? columns : [];
-
-  const defaultById = Object.fromEntries(DEFAULT_COLUMNS.map((c) => [c.id, c]));
-  const userById = Object.fromEntries(userColumns.map((c) => [c.id, c]));
-
-  const mergeColumn = (defaultCol, userCol) => {
-    if (!defaultCol && !userCol) return null;
-    // Start with whichever exists
-    let merged = defaultCol ? { ...defaultCol, ...(userCol || {}) } : { ...userCol };
-
-    // If a new accessor or type but no renderCell is suppllied,
-    // drop the default renderCell to let type/accessor drive rendering.
-    if (userCol && (userCol.accessor || userCol.type) && !userCol.renderCell) {
-      delete merged.renderCell;
-    }
-    return merged;
+  const handleClick = (e, anchorElementId) => {
+    e.preventDefault();
+    scrollToAnchor(anchorElementId);
   };
 
-  // Build a map of all effective columns by id (defaults + extra columns)
-  const effectiveById = {};
-  const allIds = new Set([...Object.keys(defaultById), ...Object.keys(userById)]);
-  for (const id of allIds) {
-    effectiveById[id] = mergeColumn(defaultById[id], userById[id]);
-  }
+  // ---- DEFAULT_COLUMNS (memoized; depends on theme, disableLinks, enableResponsesViewer, baseCellStyle)
+  const DEFAULT_COLUMNS = useMemo(
+    () => [
+      {
+        id: "measure",
+        header: "Measure",
+        sticky: true,
+        align: "left",
+        headerProps: {
+          sx: {
+            ...STICKY_STYLE,
+            minHeight: { xs: theme.spacing(4), sm: "auto" },
+            backgroundColor: "lightest.main",
+            textAlign: "left",
+          },
+          ...DEFAULT_HEADER_CELL_PROPS,
+        },
+        cellProps: {
+          sx: {
+            ...baseCellStyle,
+            ...STICKY_STYLE,
+            fontWeight: 500,
+            borderBottom: "1px solid",
+            borderBottomColor: "border.main",
+            verticalAlign: "top",
+            textAlign: "left",
+            minWidth: "128px",
+          },
+          size: "small",
+        },
+        renderCell: (row) => {
+          const title = row.rowTitle ?? row.title;
+          if (!disableLinks) {
+            return (
+              <Link
+                onClick={(e) => handleClick(e, row.key)}
+                underline="none"
+                sx={{ color: "link.main", cursor: "pointer" }}
+                href={`#${row.key}`}
+                className="instrument-link"
+              >
+                {title} {row.subtitle ?? ""}
+              </Link>
+            );
+          }
+          if (enableResponsesViewer && !isEmptyArray(row?.tableResponseData)) {
+            return (
+              <ResponsesViewer
+                title={title}
+                subtitle={row.subtitle}
+                note={row.note}
+                responsesTileTitle={row.rowTitle}
+                tableData={row?.tableResponseData}
+                columns={row?.responseColumns}
+                questionnaire={row.questionnaire}
+                buttonStyle={{ width: "100%", maxWidth: 88 }}
+              />
+            );
+          }
+          return (
+            <Typography component="h3" variant="subtitle2" sx={{ textAlign: "left" }}>
+              {title}
+            </Typography>
+          );
+        },
+      },
+      {
+        id: "numAnswered",
+        header: "Answered",
+        align: "center",
+        width: "15%",
+        headerProps: { sx: { ...baseCellStyle }, ...DEFAULT_HEADER_CELL_PROPS },
+        cellProps: { sx: { ...baseCellStyle, whiteSpace: "nowrap" } },
+        size: "small",
+        renderCell: (row) =>
+          row.numAnsweredDisplay
+            ? row.numAnsweredDisplay
+            : row.hasData != null && !row.hasData
+              ? getNoDataDisplay()
+              : defaultRenderers.text(row, ""),
+      },
+      {
+        id: "scoreMeaning",
+        header: "Score / Meaning",
+        align: "left",
+        headerProps: { sx: baseCellStyle, ...DEFAULT_HEADER_CELL_PROPS, align: "left" },
+        cellProps: { sx: { ...baseCellStyle, whiteSpace: "normal" }, size: "small" },
+        renderCell: (row) => (
+          <Stack sx={{ width: "100%" }} spacing={1.25} alignItems="flex-start" justifyContent="flex-start">
+            {!row.displayMeaningNotScore && defaultRenderers.score(row)}
+            {row.showNumAnsweredWithScore && defaultRenderers.answered(row)}
+            <Meaning id={row.id ?? row.key} meaning={row.meaning} alert={row.alert} warning={row.warning} />
+          </Stack>
+        ),
+      },
+      {
+        id: "lastAssessed",
+        header: "Last Done",
+        align: "center",
+        type: "date",
+        headerProps: { sx: baseCellStyle, ...DEFAULT_HEADER_CELL_PROPS },
+        cellProps: { sx: baseCellStyle, size: "small" },
+        accessor: (row) => row.lastAssessed ?? row.date ?? "",
+      },
+      {
+        id: "comparison",
+        header: "Change from Last",
+        align: "center",
+        headerProps: { sx: { ...baseCellStyle, borderRightWidth: 0 }, ...DEFAULT_HEADER_CELL_PROPS },
+        cellProps: { sx: { ...baseCellStyle, borderRightWidth: 0 }, size: "small" },
+        renderCell: (row) => row.comparisonIcon,
+      },
+    ],
+    [theme, baseCellStyle, disableLinks, enableResponsesViewer, defaultRenderers]
+  );
 
-  // 1) Columns in the order specified (for both defaults and extras)
-  const orderedFromUser = userColumns.map((c) => effectiveById[c.id]).filter(Boolean);
+  // ---- column merging (memoized; depends on columns + DEFAULT_COLUMNS)
+  const EFFECTIVE_COLUMNS = useMemo(() => {
+    const userColumns = Array.isArray(columns) ? columns : [];
+    const defaultById = Object.fromEntries(DEFAULT_COLUMNS.map((c) => [c.id, c]));
+    const userById = Object.fromEntries(userColumns.map((c) => [c.id, c]));
 
-  // 2) Any remaining default columns that are left,
-  //     in their original DEFAULT_COLUMNS order
-  const remainingDefaults = DEFAULT_COLUMNS.filter((c) => !userById[c.id])
-    .map((c) => effectiveById[c.id])
-    .filter(Boolean);
+    const mergeColumn = (defaultCol, userCol) => {
+      if (!defaultCol && !userCol) return null;
+      const merged = defaultCol ? { ...defaultCol, ...(userCol || {}) } : { ...userCol };
+      // If a new accessor or type but no renderCell is supplied,
+      // drop the default renderCell to let type/accessor drive rendering.
+      if (userCol && (userCol.accessor || userCol.type) && !userCol.renderCell) {
+        delete merged.renderCell;
+      }
+      return merged;
+    };
 
-  const EFFECTIVE_COLUMNS = [...orderedFromUser, ...remainingDefaults];
+    const effectiveById = {};
+    const allIds = new Set([...Object.keys(defaultById), ...Object.keys(userById)]);
+    for (const id of allIds) {
+      effectiveById[id] = mergeColumn(defaultById[id], userById[id]);
+    }
 
-  // ----- visible columns with fallback when everything is hidden
+    const orderedFromUser = userColumns.map((c) => effectiveById[c.id]).filter(Boolean);
+    const remainingDefaults = DEFAULT_COLUMNS.filter((c) => !userById[c.id])
+      .map((c) => effectiveById[c.id])
+      .filter(Boolean);
+
+    return [...orderedFromUser, ...remainingDefaults];
+  }, [columns, DEFAULT_COLUMNS]);
+
+  // ---- column visibility
+  const isColVisible = (id) => {
+    if (id === "measure") return true;
+    return !hiddenColumns?.includes(id);
+  };
+
   const allVisibleColumns = EFFECTIVE_COLUMNS.filter((c) => isColVisible(c.id));
   const firstColumn = EFFECTIVE_COLUMNS.find((c) => c.id === "measure") || EFFECTIVE_COLUMNS[0];
 
@@ -299,7 +406,7 @@ export default function ScoringSummary(props) {
     id: "__noData",
     header: "No Data",
     align: "center",
-    headerProps: { sx: baseCellStyle, ...defaultHeaderCellProps },
+    headerProps: { sx: baseCellStyle, ...DEFAULT_HEADER_CELL_PROPS },
     cellProps: { sx: baseCellStyle, size: "small" },
     renderCell: () => (
       <Box className="muted-text text-center" sx={{ fontStyle: "italic" }}>
@@ -315,33 +422,7 @@ export default function ScoringSummary(props) {
         : [NO_DATA_COLUMN]
       : allVisibleColumns;
 
-  // ----- table sections
-  const renderTableHeader = () => (
-    <TableHead>
-      <TableRow sx={{ backgroundColor: "lightest.main" }}>
-        {visibleColumns.map((col) => (
-          <TableCell
-            key={`header_${col.id}`}
-            {...defaultHeaderCellProps}
-            align={col.align || defaultHeaderCellProps.align}
-            {...(col.headerProps || {})}
-            sx={{
-              ...baseCellStyle,
-              ...(col.sticky ? stickyStyle : {}),
-              ...(col.headerProps?.sx || {}),
-              ...(col.width ? { width: col.width } : {}),
-              ...(hiddenColumnIdsInMobile.indexOf(col.id) !== -1
-                ? { display: { xs: "none", md: "table-cell" } } // hide some columns on small devices
-                : {}),
-            }}
-          >
-            {col.header}
-          </TableCell>
-        ))}
-      </TableRow>
-    </TableHead>
-  );
-
+  // ---- cell rendering
   const renderCell = (col, row) => {
     let value =
       typeof col.accessor === "function"
@@ -349,6 +430,7 @@ export default function ScoringSummary(props) {
         : typeof col.accessor === "string"
           ? getByPath(row, col.accessor)
           : undefined;
+
     if (typeof col.formatter === "function") {
       value = col.formatter(row, value);
     }
@@ -358,61 +440,10 @@ export default function ScoringSummary(props) {
     return <>{value ?? "—"}</>;
   };
 
-  const renderTableBody = () => {
-    const dataToUse = Array.isArray(data) ? data : data ? [data] : [];
-    const hasData = dataToUse.length > 0;
-    return (
-      <TableBody>
-        {hasData ? (
-          dataToUse.map((row, index) => {
-            const noRowData = isEmptyArray(row.tableResponseData);
-            return (
-              <TableRow key={`summary_${row.key || index}_${index}`}>
-                {visibleColumns.map((col, colIndex) => (
-                  <TableCell
-                    key={`cell_${col.id}_${row.key || index}`}
-                    {...defaultTableCellProps}
-                    align={col.align || "left"}
-                    {...(col.cellProps || {})}
-                    sx={{
-                      ...baseCellStyle,
-                      ...(col.sticky ? stickyStyle : {}),
-                      ...(col.cellProps?.sx || {}),
-                      ...(hiddenColumnIdsInMobile.indexOf(col.id) !== -1
-                        ? { display: { xs: "none", md: "table-cell" } } // hide some columns on small devices
-                        : {}),
-                    }}
-                  >
-                    {noRowData && colIndex > 0 ? props.emptyMessage || getNoDataDisplay() : renderCell(col, row)}
-                  </TableCell>
-                ))}
-              </TableRow>
-            );
-          })
-        ) : (
-          <TableRow>
-            <TableCell
-              colSpan={visibleColumns.length}
-              align="center"
-              sx={{
-                ...baseCellStyle,
-                // remove sticky styling for the merged cell
-                position: "static",
-                backgroundColor: "transparent",
-                fontStyle: "italic",
-                color: "text.secondary",
-              }}
-            >
-              {props.emptyMessage || getNoDataDisplay()}
-            </TableCell>
-          </TableRow>
-        )}
-      </TableBody>
-    );
-  };
+  const dataToUse = normalizeToArray(data);
 
-  const renderSummary = () => {
-    return (
+  return (
+    <Stack className="scoring-summary-container" spacing={1} direction="column" sx={containerStyle ?? {}}>
       <TableContainer
         className="table-container"
         sx={{
@@ -435,22 +466,22 @@ export default function ScoringSummary(props) {
             tableLayout: { xs: "auto", sm: "fixed" },
             width: "100%",
             height: "100%",
-            ...(props.tableStyle ?? {}),
+            ...(tableStyle ?? {}),
           }}
           size="small"
           aria-label="scoring summary table"
           className="scoring-summary-table"
         >
-          {renderTableHeader()}
-          {renderTableBody()}
+          <TableHeader visibleColumns={visibleColumns} baseCellStyle={baseCellStyle} />
+          <TableBodyRows
+            visibleColumns={visibleColumns}
+            dataToUse={dataToUse}
+            baseCellStyle={baseCellStyle}
+            emptyMessage={emptyMessage}
+            renderCell={renderCell}
+          />
         </Table>
       </TableContainer>
-    );
-  };
-
-  return (
-    <Stack className="scoring-summary-container" spacing={1} direction="column" sx={props.containerStyle ?? {}}>
-      {renderSummary()}
     </Stack>
   );
 }
@@ -465,6 +496,7 @@ const columnShape = PropTypes.shape({
   sticky: PropTypes.bool,
   width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   align: PropTypes.oneOf(["left", "center", "right"]),
+  // "answered" is intentionally excluded — it is not dispatched via type, only called directly
   type: PropTypes.oneOf(["text", "date", "score"]),
 });
 
@@ -473,7 +505,7 @@ ScoringSummary.propTypes = {
   disableLinks: PropTypes.bool,
   enableResponsesViewer: PropTypes.bool,
   hiddenColumns: PropTypes.arrayOf(
-    PropTypes.oneOf(["id", "source", "measure", "lastAssessed", "score", "numAnswered", "scoreMeaning", "comparison"]),
+    PropTypes.oneOf(["id", "source", "measure", "lastAssessed", "score", "numAnswered", "scoreMeaning", "comparison"])
   ),
   columns: PropTypes.arrayOf(columnShape),
   emptyMessage: PropTypes.string,

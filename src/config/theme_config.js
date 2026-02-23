@@ -1,5 +1,5 @@
 import { createTheme } from "@mui/material/styles";
-import { grey, deepPurple, blue, indigo, orange, red} from "@mui/material/colors";
+import { grey, deepPurple, lightBlue, indigo, orange, red} from "@mui/material/colors";
 import { getEnvProjectId } from "@/util";
 const defaultOptions = {
   breakpoints: {
@@ -53,7 +53,7 @@ export const themes = {
         main: grey[800],
       },
       link: {
-        main: blue[700],
+        main: lightBlue[900],
       },
       muted: {
         main: grey[700],

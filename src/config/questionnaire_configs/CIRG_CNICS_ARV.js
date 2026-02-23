@@ -50,5 +50,5 @@ export const CIRG_CNICS_ARV_VAS = {
     type: "barchart",
   },
   skipResponses: true,
-  meaningRowLabel: "Visual Analog Scale % (Past 4 weeks)",
+  meaningRowLabel: "Visual Analog Scale %",
 };

@@ -6,20 +6,14 @@ import AlertIcon from "@mui/icons-material/ReportProblem";
 import Score from "@models/Score";
 
 export default function Scoring(props) {
-  const { score, justifyContent, alignItems, scoreParams } = props;
-  const oScore = new Score(score, scoreParams);
-  const getScoreDisplay = () => oScore.displayValue;
-  // display alert icon for score that has high severity
+  const { score, justifyContent, alignItems, scoreParams, instrumentId } = props;
+  const oScore = new Score(score, scoreParams, instrumentId);
+
   if (oScore.isInRange()) {
-    const renderIcon = () => {
-      if (oScore.isHigh())
-        return (
-          <AlertIcon color={oScore.iconColorClass} fontSize="small" className={oScore.iconClass}></AlertIcon>
-        );
-      return (
-        <AlertIcon color={oScore.iconColorClass} fontSize="small" className={oScore.iconClass}></AlertIcon>
-      );
-    };
+    const renderIcon = () => (
+      <AlertIcon color={oScore.iconColorClass} fontSize="small" className={oScore.iconClass} />
+    );
+
     return (
       <Stack
         direction="row"
@@ -28,18 +22,21 @@ export default function Scoring(props) {
         alignItems={alignItems || "center"}
         className="score-container"
       >
-        <div className={`${oScore.textColorClass}`}>{getScoreDisplay()}</div>
-        {oScore.alertNote && (
-          <Tooltip title={oScore.alertNote} placement="top" arrow>
-            {renderIcon()}
-          </Tooltip>
+        <div className={oScore.textColorClass}>{oScore.displayValue}</div>
+        {oScore.isHigh() && (
+          oScore.alertNote
+            ? (
+              <Tooltip title={oScore.alertNote} placement="top" arrow>
+                <span>{renderIcon()}</span>
+              </Tooltip>
+            )
+            : renderIcon()
         )}
-        {!oScore.alertNote && renderIcon()}
       </Stack>
     );
   }
 
-  return getScoreDisplay();
+  return oScore.displayValue;
 }
 
 Scoring.propTypes = {

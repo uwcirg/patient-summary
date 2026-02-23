@@ -10,6 +10,8 @@ $row-background-color: #f8fafa;
 $success-color: #1d771d;
 $danger-background-color: #f3e2e233;
 $warning-background-color: #f7d0b01a;
+$thumb-color: #a0a3b2;
+$thumb-background-color: #eef1f6;
 $header-height: 52px;
 
 html {
@@ -20,6 +22,10 @@ html,
 body {
   height: 100%;
 }
+* {
+  letter-spacing: clamp(-0.05em, calc((1em - 1rem) / -10), 0em);
+}
+
 #root {
   height: 100%;
 }
@@ -29,6 +35,31 @@ body {
   font-family: "Roboto", sans-serif;
   font-size: 14px !important;
   background-color: $app-background-color;
+}
+/* Standard properties for Firefox */
+body {
+  scrollbar-width: thin; /* auto | thin | none */
+  scrollbar-color: $thumb-color $thumb-background-color; /* thumb color track color */
+}
+
+/* Pseudo-elements for Chrome, Safari, Edge, Opera */
+body::-webkit-scrollbar {
+  width: 8px; /* thickness of the vertical scrollbar */
+  height: 8px; /* thickness of the horizontal scrollbar */
+}
+
+body::-webkit-scrollbar-track {
+  background: $thumb-background-color; /* color of the track (background) */
+  border-radius: 4px;
+}
+
+body::-webkit-scrollbar-thumb {
+  background: $thumb-color; /* color of the thumb (draggable handle) */
+  border-radius: 4px;
+}
+
+body::-webkit-scrollbar-thumb:hover {
+  background: $thumb-background-color;
 }
 main {
   min-height: calc(100vh - $header-height);
@@ -147,6 +178,7 @@ p {
     th {
       white-space: pre-line;
       font-size: 0.8rem;
+      padding: 2px 8px !important;
     }
   }
 }
@@ -159,6 +191,11 @@ p {
 .scoring-summary-table {
   th {
     font-weight: 400 !important;
+  }
+  tr:not(:last-of-type) {
+    td {
+      border-bottom-color: #e5e4e4 !important;
+    }
   }
 }
 .responses-container,
@@ -207,10 +244,9 @@ p {
       color: $muted-text-color;
       line-height: 1.5;
       padding: 10px 16px !important;
-      font-weight: 500 !important;
       background-color: $row-background-color !important;
       border-right: 0 !important;
-       &:last-of-type {
+      &:last-of-type {
         border-right: 1px solid $border-color !important;
       }
     }
@@ -219,15 +255,23 @@ p {
     td {
       background-color: #fff !important;
       line-height: 1.5;
-      padding: 10px 16px !important;
+      padding: 4px 8px !important;
+    }
+  }
+  tr:has(.question-cell) {
+    td {
+      padding-top: 12px !important;
+    }
+    td:not(:last-of-type) {
+      border-right: 0 !important;
     }
   }
 }
 
 .table-cell-item {
+  word-break: normal;
   &:not(:last-of-type) {
     margin-bottom: 4px;
-    word-break: normal;
   }
   &.table-cell-item-stack:not(:last-of-type) {
     margin-bottom: 6px;
@@ -319,9 +363,9 @@ p {
   }
 }
 .source-container {
-  font-size: 0.725rem;
+  font-size: 0.7rem;
   color: $muted-text-color;
-  margin-top: 8px;
+  margin-top: 4px !important;
 }
 
 @media print {
@@ -519,7 +563,8 @@ p {
     border: 1px solid $border-color !important;
     box-shadow: none !important;
     max-height: 100% !important;
-    th, td {
+    th,
+    td {
       text-align: left !important;
       padding: 4px !important;
       font-size: 10px;

@@ -44,7 +44,7 @@ export default {
     return arrResponses.join("|");
   },
   skipResponses: true,
-  meaningRowLabel: "Unprotected Sex (Past 3 months)",
+  meaningRowLabel: "Unprotected Sex",
 };
 
 export const CIRG_SEXUAL_PARTNER_CONTEXT = {
@@ -82,7 +82,6 @@ export const CIRG_SEXUAL_PARTNER_CONTEXT = {
       .filter(Boolean)
       .join("|");
   },
-  meaningRowLabel: "Sexual Partner Context (Past 3 months)",
 };
 
 export const CIRG_SEXUAL_PARTNERS = {
@@ -110,7 +109,6 @@ export const CIRG_STI = {
   valueFormatter: (val) =>
     String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : "",
   fallbackMeaningFunc: makeBooleanMeaningFunc("SEXUAL-RISK-SCORE-STI-EXPOSURE"),
-  meaningRowLabel: "Concern for STI Exposure (Last 3 months)",
   alertQuestionId: "SEXUAL-RISK-SCORE-STI-EXPOSURE",
 };
 

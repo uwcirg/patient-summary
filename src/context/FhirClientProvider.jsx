@@ -7,14 +7,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { FhirClientContext } from "./FhirClientContext";
 import { queryPatientIdKey } from "@/consts";
 import ErrorComponent from "@/components/ErrorComponent";
-import {
-  addMamotoTracking,
-  getClientSessionKey,
-  getEnv,
-  getUserId,
-} from "@/util";
+import { addMamotoTracking, getClientSessionKey, getEnv, getUserId } from "@/util";
 import { writeToLog } from "@/util/log";
-
 
 export default function FhirClientProvider(props) {
   const reducer = (state, action) => {
@@ -78,7 +72,7 @@ export default function FhirClientProvider(props) {
               {
                 authSessionID: getClientSessionKey(client),
                 text: "auth session started",
-              }
+              },
             );
             dispatch({
               client: client,
@@ -96,7 +90,7 @@ export default function FhirClientProvider(props) {
         dispatch({
           error: error,
         });
-      }
+      },
     );
   }, []);
 

@@ -158,11 +158,6 @@ export const IS_QUESTION_COLUMN_KEYWORDS = [
   "summary",
   "visual analog scale",
   "status",
-  "detailed question",
-  "questions",
-  "question",
-  "detailed questions",
-  "total"
 ];
 
 export const EMPTY_CELL_STRING = "-";

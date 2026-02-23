@@ -19,13 +19,14 @@ import FhirResultBuilder from "./FhirResultBuilder";
 import {
   buildQuestionnaire,
   calculateQuestionnaireScore,
+  dedupeByDateLatest,
   getComparisonDisplayIconByRow,
   getNormalizedRowTitleDisplay,
   getNumAnsweredDisplayByRow,
   getResponseColumns,
   getScoreParamsFromResponses,
   getScoreRangeDisplayByRow,
-  getQuestionnaireFromRowData,
+  getQuestionnaireFromDerivedHostIds,
   summarizeCIDASHelper,
   summarizeMiniCogHelper,
   summarizeSLUMHelper,
@@ -64,7 +65,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
    * @param {string} config.questionnaireName
    * @param {string} config.questionnaireUrl
    * @param {string|null} config.scoringQuestionId
-   * @param {Object} [config.scoringParams]
    * @param {string[]} [config.questionLinkIds]
    * @param {Object}[config.subScoringQuestions]
    * @param {'strict'|'fuzzy'} [config.questionnaireMatchMode]
@@ -101,7 +101,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       questionnaireUrl: config.questionnaireUrl ?? "",
       scoringQuestionId: normalizeLinkId(config.scoringQuestionId) ?? "",
       subScoringQuestions: config.subScoringQuestions,
-      scoringParams: config.scoringParams ?? {},
       questionLinkIds: normalizeLinkIdArray(config.questionLinkIds),
       questionnaireMatchMode: config.questionnaireMatchMode ?? "fuzzy",
       linkIdMatchMode: config.linkIdMatchMode ?? "fuzzy",
@@ -113,11 +112,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
     this.patientBundle = patientBundle || null;
 
+    this._bundleVersion = 0;
+
     // Add cache for bundle grouping
     this._bundleGroupsCache = null;
     this._bundleCacheKey = null;
-    this._cacheTimestamp = null;
-    this._CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
     // Add questionnaire index cache
     this._questionnaireIndexCache = null;
@@ -148,23 +147,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
    * Generate a cache key for a bundle to detect if it has changed
    * @private
    */
-  _getBundleCacheKey(bundleOverride) {
-    const bundle = bundleOverride || this.patientBundle;
-    if (!bundle) return null;
-
-    // Add a hash of entry IDs or use a timestamp
-    if (Array.isArray(bundle)) {
-      const ids = bundle
-        .slice(0, 5)
-        .map((b) => b?.id || b?.resource?.id)
-        .join("|");
-      return `array_${bundle.length}_${ids}_${bundle[bundle.length - 1]?.id}`;
-    }
-
-    const entryCount = bundle.entry?.length || 0;
-    const bundleId = bundle.id || "no-id";
-    const lastUpdated = bundle.meta?.lastUpdated || Date.now();
-    return `bundle_${bundleId}_${entryCount}_${lastUpdated}`;
+  _getBundleCacheKey() {
+    return this._bundleVersion;
   }
   _bundleEntries(bundleOverride) {
     const b = bundleOverride || this.patientBundle;
@@ -205,7 +189,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const cacheKeyWithOptions = `${currentCacheKey}_completed_${completedOnly}`;
 
     // Return cached result if bundle hasn't changed
-    if (this._bundleCacheKey === cacheKeyWithOptions && this._bundleGroupsCache && this._isCacheValid()) {
+    if (this._bundleCacheKey === cacheKeyWithOptions && this._bundleGroupsCache) {
       return this._bundleGroupsCache;
     }
 
@@ -243,11 +227,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return groups;
   }
 
-  _isCacheValid() {
-    if (!this._cacheTimestamp) return false;
-    return Date.now() - this._cacheTimestamp < this._CACHE_TTL;
-  }
-
   /**
    * Clear the bundle grouping cache (call this if you know the bundle has changed)
    * @public
@@ -265,6 +244,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
    */
   updatePatientBundle(newBundle) {
     this.patientBundle = newBundle;
+    this._bundleVersion++;
     this.clearBundleCache();
   }
 
@@ -354,9 +334,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     if (qIndex[c]) return qIndex[c];
     const byName = normalizeStr(c);
     if (byName && qIndex[byName]) return qIndex[byName];
-    if (!c.includes("/") && qIndex[c]) {
-      return qIndex[canonical];
-    }
     return null;
   }
 
@@ -411,7 +388,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
   isNonScoreLinkId(linkId, config = {}) {
     if (!linkId) return false;
-    if (config?.questionLinkIds?.indexOf(linkId) !== -1) return true;
     const subScoreQuestionIds = !isEmptyArray(config?.subScoringQuestions)
       ? config.subScoringQuestions.map((o) => o.linkId)
       : [];
@@ -461,7 +437,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         console.warn("flattenResponseItems: max depth exceeded, possible circular reference");
         return;
       }
-      depth++;
       for (const it of arr || []) {
         out.push(it);
         if (!isEmptyArray(it.item)) walk(it.item);
@@ -822,8 +797,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         instrumentName: config?.instrumentName ?? this.questionnaireIDFromQR(qr),
         date: qr.authored ?? null,
         displayDate: getLocaleDateStringFromDate(qr.authored),
-        columnDisplayDate:
-          `${getLocaleDateStringFromDate(qr.authored, "YYYY-MM-DD HH:mm")} ${source ? "\n\r" + source : ""}`.trim(),
+        columnDisplayDate: getLocaleDateStringFromDate(qr.authored, "YYYY-MM-DD HH:mm"),
         source,
         responses,
         score,
@@ -835,7 +809,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         authoredDate: qr.authored,
         lastUpdated: qr.meta?.lastUpdated,
         config: config,
-        questionnaire,
+        questionnaire: questionnaire
+          ? questionnaire
+          : getQuestionnaireFromDerivedHostIds(
+              config?.deriveFrom?.hostIds,
+              getResourcesByResourceType(this.patientBundle, "Questionnaire"),
+            )??this._loadQuestionnaire(qr.questionnaire, null, this.patientBundle),
         questionnaireResponse: qr,
         patientBundle: this.patientBundle,
       };
@@ -902,7 +881,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return !isEmptyArray(data) && this._hasResponseData(data) && !!match;
   }
 
-  _formatPrintColumnChunks = (columns = [], chunkSize = 3) => {
+  _formatPrintColumnChunks(columns = [], chunkSize = 3) {
     if (!columns) return [];
     const [header, ...rest] = columns;
     const chunks = [];
@@ -914,9 +893,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     }
 
     return chunks;
-  };
+  }
 
-  _formatScoringSummaryData = (data, opts = {}) => {
+  _formatScoringSummaryData(data, opts = {}) {
     if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
     const subtitle = opts?.config?.subtitle ? getNormalizedRowTitleDisplay(opts?.config?.subtitle, data[0]) : "";
     const scoreParams = getScoreParamsFromResponses(data, opts?.config);
@@ -946,13 +925,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       responseColumns,
       printColumnChunks: this._formatPrintColumnChunks(responseColumns, 3),
       tableResponseData,
-      questionnaire: !questionnaire
-        ? getQuestionnaireFromRowData(data[0], getResourcesByResourceType(this.patientBundle, "Questionnaire"))
-        : questionnaire,
+      questionnaire,
     };
-  };
+  }
 
-  _formatTableResponseData = (data, config) => {
+  _formatTableResponseData(data, config) {
     if (isEmptyArray(data) || !this._hasResponseData(data)) return null;
 
     const formattedData = data.map((item) => {
@@ -1060,6 +1037,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     // ============================================================================
 
     let result = [];
+    const rowSubtitle = resolvedConfig?.subtitle ? getNormalizedRowTitleDisplay(resolvedConfig.subtitle) : "";
     if (!resolvedConfig?.skipResponses) {
       result = [...questionLinkIds]
         .map((questionId) => {
@@ -1107,20 +1085,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
             if (responseMap && sample?.id) {
               matchedResponse = responseMap.get(sample.id);
             }
-
-            // console.log("DEBUG: Looking for match");
-            // console.log("  sample.id:", sample?.id);
-            // console.log("  normalized:", normalizeLinkId(sample?.id));
-            // console.log("  dataItem.id:", dataItem.id);
-
             // Fuzzy match using pre-built
             if (!matchedResponse && sample?.id) {
               const dataFuzzyMap = fuzzyMatchIndex.get(dataItem.id);
-              // console.log("  fuzzyMap keys:", dataFuzzyMap ? Array.from(dataFuzzyMap.keys()) : "no fuzzyMap");
-              // console.log(
-              //   "  dataItem.responses linkIds:",
-              //   (data.find((d) => d.id === dataItem.id)?.responses || []).map((r) => r.id),
-              // );
               if (dataFuzzyMap) {
                 // Try with canonical normalization (consistent with how we built the index)
                 const canonicalSampleId = normalizeLinkId(sample.id);
@@ -1139,21 +1106,18 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
       // Add header row
       if (!isEmptyArray(result)) {
-        const questionRowLabel = resolvedConfig?.questionRowLabel ? resolvedConfig.questionRowLabel : "Questions";
+        const questionRowLabel = resolvedConfig?.questionRowLabel ? resolvedConfig.questionRowLabel : "Responses";
         const questionRow = {
-          question:
-            questionRowLabel +
-            (resolvedConfig?.subtitle && !resolvedConfig.disableHeaderRowSubtitle
-              ? "\n ( " + getNormalizedRowTitleDisplay(resolvedConfig.subtitle) + " )"
-              : ""),
+          question: questionRowLabel,
+          subtitle: !resolvedConfig.disableHeaderRowSubtitle ? rowSubtitle : "",
           id: `question_${data.map((o) => o.id).join("")}`,
           config: resolvedConfig,
           isWeightedLabel: true,
+          isQuestionRow: true,
         };
         for (const item of data) {
           questionRow[item.id] = {
-            score: " ",
-            meaning: null,
+            isQuestionRow: true,
           };
         }
         result.unshift(questionRow);
@@ -1170,6 +1134,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         id: `meaning_${data.map((o) => o.id).join("")}`,
         config: resolvedConfig,
         isWeightedLabel: true,
+        subtitle: rowSubtitle,
       };
       for (const item of data) {
         meaningRow[item.id] = {
@@ -1184,6 +1149,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         id: `score_${data.map((o) => o.id).join("")}`,
         config: resolvedConfig,
         isWeightedLabel: true,
+        subtitle: rowSubtitle,
       };
       for (const item of data) {
         scoringRow[item.id] = {
@@ -1196,7 +1162,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     }
 
     return result;
-  };
+  }
 
   async _loadQuestionnaire(canonical, questionnaireLoader, bundleOverride) {
     if (questionnaireLoader) {
@@ -1636,7 +1602,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
             requireAllLinkIds,
           });
 
-          questionnaireResponses = derivedQuestionnaireResponses;
+          const resolvedResponses = hasHostMatch ? derivedQuestionnaireResponses : questionnaireResponses;
+          questionnaireResponses = resolvedResponses;
         }
       }
     }
@@ -1694,11 +1661,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     }
     const { chartParams, ...rest } = config ?? {};
     const chartDataParams = { ...rest, ...chartConfig, ...chartParams, xDomain };
-    const dedupeByDateLatest = (arr) => {
-      const map = new Map();
-      arr.forEach((item) => map.set(item.date, item));
-      return [...map.values()];
-    };
     const useData = dedupeByDateLatest(evaluationData);
     const tableResponseData = this._formatTableResponseData(useData, config);
     const scoringSummaryData = this._formatScoringSummaryData(useData, {

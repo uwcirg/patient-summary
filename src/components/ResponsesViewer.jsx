@@ -35,7 +35,7 @@ export default function ResponsesViewer({
         direction={"column"}
         justifyContent={"flex-start"}
         alignItems={"flex-start"}
-        gap={1}
+        gap={1.25}
       >
         <Box sx={{ width: "100%" }}>
           <Typography

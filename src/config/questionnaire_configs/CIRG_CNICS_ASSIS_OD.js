@@ -4,7 +4,6 @@ export default {
   instrumentName: "CNICS ASSIST Overdose",
   title: "Overdose",
   subtitle: "Past 6 months",
-  disableHeaderRowSubtitle: true,
   questionnaireMatchMode: "strict",
   highSeverityScoreCutoff: 1,
   comparisonToAlert: "higher",
@@ -20,5 +19,5 @@ export default {
     { min: 1, label: "high", meaning: "Yes, overdose" },
     { min: 0, label: "low", meaning: "No overdose" },
   ],
-  meaningRowLabel: "Summary (Past 6 months)",
+  meaningRowLabel: "Summary",
 };

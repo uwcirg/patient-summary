@@ -13,8 +13,7 @@ import Paper from "@mui/material/Paper";
 
 export default function DataTable({ columns, data, maxWidth }) {
   const theme = useTheme();
-  const bgColor =
-    theme?.palette?.lightest?.main ?? "#FFF";
+  const bgColor = theme?.palette?.lightest?.main ?? "#FFF";
 
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
@@ -44,9 +43,7 @@ export default function DataTable({ columns, data, maxWidth }) {
       const bValue = b[orderBy] ?? "";
 
       if (typeof aValue === "string" && typeof bValue === "string") {
-        return order === "asc"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
+        return order === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
       }
 
       if (aValue < bValue) {
@@ -69,10 +66,7 @@ export default function DataTable({ columns, data, maxWidth }) {
 
   const visibleColumns = columns.filter((column) => !column.hidden);
   const sortedData = sortData(data, orderBy, order);
-  const paginatedData = sortedData?.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
+  const paginatedData = sortedData?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
     <TableContainer
@@ -105,7 +99,11 @@ export default function DataTable({ columns, data, maxWidth }) {
           {paginatedData.map((row, rowIndex) => (
             <TableRow key={`row_${row.id}_${rowIndex}`}>
               {visibleColumns.map((column, colIndex) => (
-                <TableCell key={`cell_${row.id}_${rowIndex}_${colIndex}`}>
+                <TableCell
+                  key={`cell_${row.id}_${rowIndex}_${colIndex}`}
+                  className={column.cellClass ?? ""}
+                  style={column.cellStyle ?? {}}
+                >
                   {renderCellContent(column, row)}
                 </TableCell>
               ))}
@@ -132,10 +130,12 @@ DataTable.propTypes = {
       title: PropTypes.string.isRequired,
       field: PropTypes.string.isRequired,
       hidden: PropTypes.bool,
+      cellStyle: PropTypes.object,
+      cellClass: PropTypes.string,
       emptyValue: PropTypes.string,
       emptyText: PropTypes.string,
       render: PropTypes.func,
-    })
+    }),
   ).isRequired,
   data: PropTypes.array.isRequired,
   maxWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
