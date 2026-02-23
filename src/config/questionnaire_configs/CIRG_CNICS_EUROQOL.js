@@ -12,7 +12,7 @@ export const CIRG_CNICS_EUROQOL_ANXIETY_DEPRESSION = makeEuroqolDerivedConfig(
 export const CIRG_CNICS_EUROQOL_EUROQOL_5 = makeEuroqolDerivedConfig(
   "EUROQOL-5",
   "Overall Health State",
-  "EUROQOL: Overall health state (0% - 100%)",
+  "EUROQOL: Overall health state",
   {
     instrumentName: "CIRG-CNICS-EUROQOL-EUROQOL-5",
     subtitle: "( 0% - 100% )",

@@ -95,7 +95,7 @@ export function summarizeSLUMHelper(ctx, questionnaireResponses, questionnaire, 
       }
     }
 
-    let responses = ctx.formattedResponses(questionnaire?.item ?? null, flat);
+    let responses = ctx.formattedResponses(questionnaire?.item ?? [], flat);
     if (isEmptyArray(responses)) responses = ctx.responsesOnly(flat);
 
     return {
@@ -395,7 +395,7 @@ function getObservationGroupingKey(observation) {
     observation.effectiveDateTime ||
     observation.issued ||
     observation.encounter?.reference ||
-    `${conceptText(observation.code) ?? "noid"}` // Prevent grouping unrelated observations
+    `${conceptText(observation.code) ?? generateUUID()}` // Prevent grouping unrelated observations
   );
 }
 
@@ -475,6 +475,20 @@ export function observationsToQuestionnaireResponse(group, config = {}) {
   };
 }
 
+function groupObservationsByKey(observations) {
+  const byGroup = new Map();
+  for (const o of observations || []) {
+    const key = getObservationGroupingKey(o);
+    const group = byGroup.get(key);
+    if (group) {
+      group.push(o);
+    } else {
+      byGroup.set(key, [o]);
+    }
+  }
+  return byGroup;
+}
+
 /**
  * Converts multiple FHIR Observations to QuestionnaireResponses
  * Groups observations by effectiveDateTime/issued/encounter
@@ -489,21 +503,7 @@ export function observationsToQuestionnaireResponses(observationResources, confi
   const observations = getValidObservationsForQRs(observationResources);
 
   /** Group observations using improved grouping key */
-  const groupBy = (observations) => {
-    const byGroup = new Map();
-    for (const o of observations || []) {
-      const key = getObservationGroupingKey(o);
-      const group = byGroup.get(key);
-      if (group) {
-        group.push(o);
-      } else {
-        byGroup.set(key, [o]);
-      }
-    }
-    return byGroup;
-  };
-
-  const groupByKey = groupBy(observations || []);
+  const groupByKey = groupObservationsByKey(observations || []);
   const out = [];
 
   for (const [, group] of groupByKey.entries()) {
@@ -513,6 +513,13 @@ export function observationsToQuestionnaireResponses(observationResources, confi
 
   return out.sort((a, b) => new Date(a.authored ?? 0) - new Date(b.authored ?? 0));
 }
+
+export const dedupeByDateLatest = (arr) => {
+  if (isEmptyArray(arr)) return [];
+  const map = new Map();
+  arr.forEach((item) => map.set(item.date, item));
+  return [...map.values()];
+};
 
 /**
  * Sorts response data by newest date first
@@ -714,7 +721,7 @@ export function getAlertFromMostRecentResponse(current, config = {}) {
     );
   }
 
-  let alert =
+  const alert =
     isNumber(current?.score) &&
     config?.highSeverityScoreCutoff != null &&
     current.score >= config?.highSeverityScoreCutoff;
@@ -763,7 +770,7 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   const warning =
     isNumber(score) && config?.mediumSeverityScoreCutoff != null && score >= config?.mediumSeverityScoreCutoff;
 
-  const scoringParams = {
+  return {
     ...config,
     score,
     scoreSeverity,
@@ -779,23 +786,16 @@ export function getScoreParamsFromResponses(responses, config = {}) {
     comparisonToAlert,
     source,
   };
-
-  return {
-    ...scoringParams,
-    scoringParams: scoringParams,
-  };
 }
-export function getQuestionnaireFromRowData(rowData, qResources = []) {
-  if (!rowData) return null;
-  if (rowData.questionnaire) return rowData.questionnaire;
-  const id = rowData.deriveFrom && rowData.deriveFrom.hostIds ? rowData.deriveFrom.hostIds : null;
+export function getQuestionnaireFromDerivedHostIds(hostIds, qResources = []) {
+  if (!hostIds) return null;
   const matchedResources = getResourcesByResourceType(qResources, "questionnaire");
-  if (!id || isEmptyArray(matchedResources)) return null;
-  if (Array.isArray(id)) {
-    if (!isEmptyArray(id)) return matchedResources.find((q) => id[0].includes(q?.id));
-    return null;
+  if (isEmptyArray(matchedResources)) return null;
+  if (Array.isArray(hostIds)) {
+    if (isEmptyArray(hostIds)) return null;
+    return matchedResources.find((q) => hostIds.some((id) => id === q?.id)) ?? null;
   }
-  return matchedResources.find((q) => id.includes(q?.id));
+  return matchedResources.find((q) => hostIds.includes(q?.id));
 }
 
 export function getComparisonDisplayIconByRow(row, iconProps = {}) {
@@ -920,9 +920,12 @@ export function getResponseColumns(data) {
 
         if (typeof q === "string" && isQuestion) {
           return (
-            <span className={`${isQuestion ? "question-row" : ""}`}>
-              <b>{q}</b>
-            </span>
+            <Stack flexDirection={"column"} gap={0.25} className={`${isQuestion ? "question-row" : ""}`}>
+              <div>
+                <b>{q}</b>
+              </div>
+              {rowData.subtitle && <Typography variant="caption">{rowData.subtitle}</Typography>}
+            </Stack>
           );
         }
         // // fall back to normalized string if not a plain string
@@ -930,49 +933,56 @@ export function getResponseColumns(data) {
         return q;
       },
     },
-    ...dates.map((item, index) => ({
-      id: `date_${item.id}_${index}`,
-      title: item.columnDisplayDate,
-      field: item.id, // the row is expected to have row[item.id]
-      cellStyle: {
-        minWidth: "148px",
-        borderRight: "1px solid #ececec",
-      },
-      render: (rowData) => {
-        const rowDataItem = rowData?.[item.id];
-        if (rowData.readOnly) return <span className="text-readonly"></span>;
-        // explicit placeholders prevent React from trying to render objects
-        if (
-          rowDataItem == null ||
-          String(rowDataItem) === "" ||
-          String(rowDataItem) === "null" ||
-          String(rowDataItem) === "undefined"
-        )
-          return EMPTY_CELL_STRING;
-        if (rowDataItem.hasMeaningOnly) {
-          const { key, ...rest } = rowDataItem;
-          if (!rowDataItem.meaning) return EMPTY_CELL_STRING;
-          return <Meaning {...rest}></Meaning>;
-        }
-        // numeric score path
-        if (rowDataItem.score != null) {
-          const { key, ...params } = rowDataItem.scoringParams ?? {};
-          return (
-            <Stack gap={1} className="score-wrapper">
-              <Scoring
-                // instrumentId is optional; provide if we have it on the cell
-                instrumentId={rowDataItem.instrumentId}
-                score={rowDataItem.score}
-                // pass only the params object; Scoring already expects an object here
-                scoreParams={{ ...rowDataItem, ...params }}
-              />
-              {rowDataItem.scoringParams && <Meaning {...params}></Meaning>}
-            </Stack>
-          );
-        }
-        return normalize(rowDataItem);
-      },
-    })),
+    ...dates.map((item, index) => {
+      const cellClass = `${item.readOnly ? "readOnly" : ""}`;
+      return {
+        id: `date_${item.id}_${index}`,
+        title: item.columnDisplayDate,
+        source: item.source,
+        field: item.id, // the row is expected to have row[item.id]
+        cellStyle: {
+          minWidth: "148px",
+          borderRight: "1px solid #ececec",
+          padding: "6px 8px",
+        },
+        cellClass: cellClass,
+        render: (rowData) => {
+          const rowDataItem = rowData?.[item.id];
+          // explicit placeholders prevent React from trying to render objects
+          if (
+            rowDataItem == null ||
+            String(rowDataItem) === "" ||
+            String(rowDataItem) === "null" ||
+            String(rowDataItem) === "undefined"
+          )
+            return EMPTY_CELL_STRING;
+          if (rowDataItem.isQuestionRow) {
+            return <span className="question-cell"></span>;
+          }
+          if (rowDataItem.hasMeaningOnly) {
+            const { key, ...rest } = rowDataItem;
+            if (!rowDataItem.meaning) return EMPTY_CELL_STRING;
+            return <Meaning {...rest}></Meaning>;
+          }
+          // numeric score path
+          if (rowDataItem.score != null) {
+            return (
+              <Stack gap={1} className="score-wrapper">
+                <Scoring
+                  // instrumentId is optional; provide if we have it on the cell
+                  instrumentId={rowDataItem.instrumentId}
+                  score={rowDataItem.score}
+                  // pass only the params object; Scoring already expects an object here
+                  scoreParams={{ ...rowDataItem}}
+                />
+                {rowDataItem.meaning && <Meaning {...rowDataItem}></Meaning>}
+              </Stack>
+            );
+          }
+          return normalize(rowDataItem);
+        },
+      };
+    }),
   ];
 }
 
@@ -982,11 +992,11 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
     console.error("buildReportData: Invalid report_config structure");
     return skeleton || { sections: [] };
   }
-  skeleton.sections.forEach((section) => {
+  for (const section of skeleton.sections) {
     const tables = section.tables;
     if (isEmptyArray(tables)) {
       console.warn("buildReportData: No tables found in section", section);
-      return true;
+      continue;
     }
     const keysToMatch = tables.map((table) => table.dataKeysToMatch ?? []).flat();
     const arrDates = keysToMatch.flatMap((key) => {
@@ -1038,7 +1048,6 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
         });
         if (chartData) {
           charts.push({
-            ...(chartData?.scoringParams ?? {}),
             ...(chartData ?? {}),
             truncationTimestamp,
             xDomain,
@@ -1048,6 +1057,6 @@ export function buildReportData({ summaryData = {}, bundle = [] }) {
       table.rows = rows;
       table.charts = charts;
     });
-  });
+  }
   return skeleton;
 }

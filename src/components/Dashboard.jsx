@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -13,64 +13,57 @@ import Version from "./Version";
 import FloatingNavButton from "./FloatingNavButton";
 import useFetchResources from "@/hooks/useFetchResources";
 
+const MemoizedSection = React.memo(function MemoizedSection({ section, data }) {
+  return <Section section={section} data={data}></Section>;
+});
+
+MemoizedSection.propTypes = {
+  section: PropTypes.object,
+  data: PropTypes.object,
+};
+
+const ERROR_SECTION_BASE = {
+  id: "applicationError",
+  title: "Application Errors",
+  sx: {
+    "& .MuiAccordionSummary-root": {
+      backgroundColor: "error.main",
+    },
+  },
+  icon: () => <ErrorIcon />,
+};
+
 export default function Dashboard() {
   const { hasError, errorMessages, errorSeverity, fatalError, isReady, toBeLoadedResources, ...otherResults } =
     useFetchResources();
+  const data = useMemo(() => ({ ...otherResults }), [otherResults]);
   const sectionsToShow = getSectionsToShow();
 
-  const renderSections = () => {
+  const renderSections = useCallback(() => {
     if (isEmptyArray(sectionsToShow)) return <Alert severity="warning">No section to show.</Alert>;
-    return sectionsToShow.map((section) => {
-      return (
-        <MemoizedSection
-          section={section}
-          data={{
-            ...otherResults,
-          }}
-          key={`section_${section.id}`}
-        ></MemoizedSection>
-      );
-    });
-  };
-  const MemoizedSection = React.memo(
-    // eslint-disable-next-line
-    function MemoizedSection({ section, data }) {
-      // eslint-disable-next-line
-      return <Section section={section} data={data} key={`section_${section.id}`}></Section>;
-    },
-    (prevProps, nextProps) => {
-      return prevProps?.section.id === nextProps.section?.id;
-    },
-  );
-  MemoizedSection.proptypes = {
-    section: PropTypes.element,
-    data: PropTypes.object,
-  };
+    return sectionsToShow.map((section) => (
+      <MemoizedSection section={section} data={data} key={`section_${section.id}`} />
+    ));
+  }, [sectionsToShow, data]);
 
-  const renderError = () => {
-    return (
-      <Section
-        section={{
-          id: "applicationError",
-          title: "Application Errors",
-          body: (
-            <ErrorComponent
-              message={errorMessages}
-              severity={errorSeverity}
-              sx={{ padding: (theme) => theme.spacing(0, 2) }}
-              icon={false}
-            ></ErrorComponent>
-          ),
-          sx: {
-            "& .MuiAccordionSummary-root": {
-              backgroundColor: "error.main",
-            },
-          },
-          icon: () => <ErrorIcon></ErrorIcon>,
-        }}
-      ></Section>
-    );
-  };
+  const errorSection = useMemo(
+    () => ({
+      ...ERROR_SECTION_BASE,
+      body: (
+        <ErrorComponent
+          message={errorMessages}
+          severity={errorSeverity}
+          sx={{ padding: (theme) => theme.spacing(0, 2) }}
+          icon={false}
+        />
+      ),
+    }),
+    [errorMessages, errorSeverity],
+  );
+
+  const renderError = useCallback(() => {
+    return <Section section={errorSection} />;
+  }, [errorSection]);
 
   const mainStackStyleProps = {
     position: "relative",
@@ -98,7 +91,7 @@ export default function Dashboard() {
               {hasError && renderError()}
               {!fatalError && renderSections()}
             </section>
-            <Version></Version>
+            <Version />
           </Stack>
         </>
       )}

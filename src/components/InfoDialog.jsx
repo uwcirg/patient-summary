@@ -110,7 +110,7 @@ export default function InfoDialog(props) {
               color: "#FFF",
             }}
           >
-           {title}
+            {title}
           </DialogTitle>
         )}
 

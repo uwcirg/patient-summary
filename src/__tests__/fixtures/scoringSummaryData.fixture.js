@@ -1,19 +1,17 @@
 // Helper to make a response item in the same shape the code expects
 const mkResp = ({
-  date,                       // ISO date string
-  score,                      // number
-  totalItems = null,          // number | null
-  totalAnsweredItems = null,  // number | null
-  scoringParams = null,       // { minimumScore?: number, maximumScore?: number } | null
-  scoreMeaning = null,        // string | null (e.g., "mild", "moderate")
-  comparisonToAlert = "",     // "" | "higher" | "lower" (semantic coloring hint)
-  extra = {},                 // any additional properties that will pass through
+  date, // ISO date string
+  score, // number
+  totalItems = null, // number | null
+  totalAnsweredItems = null, // number | null
+  scoreMeaning = null, // string | null (e.g., "mild", "moderate")
+  comparisonToAlert = "", // "" | "higher" | "lower" (semantic coloring hint)
+  extra = {}, // any additional properties that will pass through
 } = {}) => ({
   date,
   score,
   totalItems,
   totalAnsweredItems,
-  scoringParams,
   scoreMeaning,
   comparisonToAlert,
   ...extra,
@@ -35,7 +33,8 @@ export const scoringSummaryDataFixture = {
         score: 12,
         totalItems: 9,
         totalAnsweredItems: 9,
-        scoringParams: { minimumScore: 0, maximumScore: 27 },
+        minimumScore: 0,
+        maximumScore: 10,
         scoreMeaning: "moderate",
         // If higher is "worse" for PHQ-9, comparisons where score rises could be error-aligned
         comparisonToAlert: "higher",
@@ -45,7 +44,8 @@ export const scoringSummaryDataFixture = {
         score: 8,
         totalItems: 9,
         totalAnsweredItems: 9,
-        scoringParams: { minimumScore: 0, maximumScore: 27 },
+        minimumScore: 0,
+        maximumScore: 27,
         scoreMeaning: "mild",
         comparisonToAlert: "higher",
       }),
@@ -67,7 +67,8 @@ export const scoringSummaryDataFixture = {
         score: 5,
         totalItems: 7,
         totalAnsweredItems: 6, // user skipped one item
-        scoringParams: { minimumScore: 0, maximumScore: 21 },
+        minimumScore: 0,
+        maximumScore: 21,
         scoreMeaning: "mild",
         comparisonToAlert: "higher",
       }),
@@ -98,7 +99,8 @@ export const scoringSummaryDataFixture = {
         score: 3,
         totalItems: 2,
         totalAnsweredItems: 2,
-        scoringParams: { minimumScore: 0, maximumScore: 5 },
+        minimumScore: 0,
+        maximumScore: 5,
         scoreMeaning: "low",
         comparisonToAlert: "lower",
       }),
@@ -107,7 +109,8 @@ export const scoringSummaryDataFixture = {
         score: 2,
         totalItems: 2,
         totalAnsweredItems: 2,
-        scoringParams: { minimumScore: 0, maximumScore: 5 },
+        minimumScore: 0,
+        maximumScore: 5,
         scoreMeaning: "high", // e.g., "possible impairment"
         comparisonToAlert: "lower",
       }),
@@ -133,7 +136,8 @@ export const scoringSummaryDataFixture = {
         score: 7,
         totalItems: 10,
         totalAnsweredItems: 10,
-        scoringParams: { minimumScore: 0, maximumScore: 10 },
+        minimumScore: 0,
+        maximumScore: 10,
         scoreMeaning: "moderate",
         comparisonToAlert: "higher",
       }),

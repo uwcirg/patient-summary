@@ -1,37 +1,42 @@
+import React, { useContext, useMemo } from "react";
 import PropTypes from "prop-types";
-import React, { useContext } from "react";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
-import "../style/App.scss";
 import { FhirClientContext } from "../context/FhirClientContext";
-import {
-  getEnvDashboardURL,
-  getSectionsToShow,
-  shouldShowPatientInfo,
-  shouldShowNav,
-} from "../util";
+import { getEnvDashboardURL, getSectionsToShow, shouldShowPatientInfo, shouldShowNav } from "../util";
 import Header from "./Header";
 import SideNav from "./SideNav";
+import "../style/App.scss";
 
 export default function Content({ children }) {
-  const sections = getSectionsToShow();
   const { client } = useContext(FhirClientContext);
-  const showPatientInfo = shouldShowPatientInfo(client);
+  const sections = useMemo(() => getSectionsToShow(), []);
+  const showPatientInfo = useMemo(() => shouldShowPatientInfo(client), [client]);
+  const showNav = useMemo(() => shouldShowNav(), []);
+
+  if (!client) return null;
+
   return (
-    client && (
-      <Box sx={{ display: "flex" }}>
-        <Header returnURL={getEnvDashboardURL()} inEHR={!showPatientInfo} />
-        {shouldShowNav() && <SideNav sections={sections}></SideNav>}
-        <Box component="main" sx={{ flexGrow: 1 }}>
-          <Toolbar variant="dense" />
-          {children}
-          {/* add other components as needed */}
-        </Box>
+    <Box sx={{ display: "flex" }}>
+      <Header returnURL={getEnvDashboardURL()} inEHR={!showPatientInfo} />
+
+      {showNav && <SideNav sections={sections} />}
+
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3, // Consider adding padding here if not in children
+          width: { sm: `calc(100% - ${showNav ? "240px" : "0px"})` }, // Visual stability
+        }}
+      >
+        <Toolbar variant="dense" />
+        {children}
       </Box>
-    )
+    </Box>
   );
 }
 
 Content.propTypes = {
-  children: PropTypes.oneOfType([PropTypes.element, PropTypes.array]),
+  children: PropTypes.node,
 };

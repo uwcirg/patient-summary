@@ -44,18 +44,20 @@ const DEFAULT_QUERY_PARAMS = {
 };
 
 // Single-flight cache for phase-1 (per patient+run)
-const PHASE1_FLIGHTS = new Map();
-function runPhase1Once(key, fn) {
-  if (PHASE1_FLIGHTS.has(key)) return PHASE1_FLIGHTS.get(key);
+const PHASE1_FLIGHTS = new WeakMap();
+function runPhase1Once(client, key, fn) {
+  if (!PHASE1_FLIGHTS.has(client)) PHASE1_FLIGHTS.set(client, new Map());
+  const flights = PHASE1_FLIGHTS.get(client);
+
+  if (flights.has(key)) return flights.get(key);
   const p = (async () => {
     try {
       return await fn();
     } finally {
-      // Clean up after settling to prevent memory leaks
-      setTimeout(() => PHASE1_FLIGHTS.delete(key), 5000);
+      setTimeout(() => flights.delete(key), 5000);
     }
   })();
-  PHASE1_FLIGHTS.set(key, p);
+  flights.set(key, p);
   return p;
 }
 
@@ -231,6 +233,36 @@ function reducer(state, action) {
   return state;
 }
 
+const INITIAL_BASE_STATE = {
+  questionnaireList: [],
+  questionnaires: [],
+  questionnaireResponses: [],
+  exactMatchById: String(getEnv("REACT_APP_EPIC_QUERIES")) === "true",
+  summaries: {},
+  complete: false,
+  error: false,
+  errorMessage: "",
+};
+
+function createInitialState(configuredTypeSet, plannedExtras, isFromEpic) {
+  const items = [];
+  const wantQ = shouldTrack(configuredTypeSet, QUESTIONNAIRE_DATA_KEY);
+  const wantQR = shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
+
+  if (wantQ) items.push({ id: QUESTIONNAIRE_DATA_KEY, title: QUESTIONNAIRE_DATA_KEY, complete: false, error: false });
+  if (wantQR) {
+    items.push({ id: QUESTIONNAIRE_RESPONSES_DATA_KEY, title: QUESTIONNAIRE_RESPONSES_DATA_KEY, complete: false });
+    items.push({ id: OBSERVATION_DATA_KEY, title: OBSERVATION_DATA_KEY, complete: false });
+  }
+  for (const t of plannedExtras) items.push({ id: t, title: t, complete: false, error: false });
+  items.push({ id: SUMMARY_DATA_KEY, title: "Response Summary Data", complete: false, data: null });
+
+  return {
+    base: { ...INITIAL_BASE_STATE, exactMatchById: isFromEpic },
+    loader: items,
+  };
+}
+
 // -----------------------------------------------------------------------------
 // Hook
 // -----------------------------------------------------------------------------
@@ -242,37 +274,11 @@ export default function useFetchResources() {
   const plannedExtras = useMemo(() => computePlannedExtras(configuredTypesRaw), [configuredTypesRaw]);
   const { client, patient } = useContext(FhirClientContext);
 
-  // unified reducer + state
-  const initialBaseState = {
-    questionnaireList: [],
-    questionnaires: [],
-    questionnaireResponses: [],
-    exactMatchById: isFromEpic,
-    summaries: {},
-    complete: false,
-    error: false,
-    errorMessage: "",
-  };
-
-  const getInitTrackItems = () => {
-    const items = [];
-    const wantQ = shouldTrack(configuredTypeSet, QUESTIONNAIRE_DATA_KEY);
-    const wantQR = shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
-
-    if (wantQ) items.push({ id: QUESTIONNAIRE_DATA_KEY, title: QUESTIONNAIRE_DATA_KEY, complete: false, error: false });
-    if (wantQR) {
-      items.push({ id: QUESTIONNAIRE_RESPONSES_DATA_KEY, title: QUESTIONNAIRE_RESPONSES_DATA_KEY, complete: false });
-      items.push({ id: OBSERVATION_DATA_KEY, title: OBSERVATION_DATA_KEY, complete: false });
-    }
-
-    // Add planned extras (excluding Q/QR/blocked already handled)
-    for (const t of plannedExtras) items.push({ id: t, title: t, complete: false, error: false });
-
-    // Always track summary
-    items.push({ id: SUMMARY_DATA_KEY, title: "Response Summary Data", complete: false, data: null });
-    return items;
-  };
-  const [state, dispatch] = useReducer(reducer, { base: initialBaseState, loader: getInitTrackItems() });
+  const [state, dispatch] = useReducer(
+    reducer,
+    undefined, // no initial value
+    () => createInitialState(configuredTypeSet, plannedExtras, isFromEpic), // <-- lazy initializer
+  );
 
   // stable scoped dispatchers
   const dispatchBase = useCallback((action) => dispatch({ ...action, scope: "base" }), [dispatch]);
@@ -281,6 +287,7 @@ export default function useFetchResources() {
   const base = state.base;
   const toBeLoadedResources = state.loader;
 
+  const [bundleEntries, setBundleEntries] = useState([]);
   const [extraTypes, setExtraTypes] = useState([]);
   const [fatalError, setFatalError] = useState(null);
 
@@ -290,37 +297,17 @@ export default function useFetchResources() {
   // refresh bump controls recomputation of configured types
   const [bump, setBump] = useState(0);
 
-  // Memoized getSummaries with simple caching
-  const summariesCache = useRef(new Map());
-  const getSummariesMemoized = useCallback((bundle) => {
-    // Create a simple cache key based on bundle entry count and first/last resource ids
-    const cacheKey = `${bundle.length}-${bundle[0]?.resource?.id || ""}-${bundle[bundle.length - 1]?.resource?.id || ""}`;
-
-    if (summariesCache.current.has(cacheKey)) {
-      return summariesCache.current.get(cacheKey);
-    }
-
-    const result = getSummaries(bundle);
-
-    // Keep cache size reasonable (only store last 10 results)
-    if (summariesCache.current.size > 10) {
-      const firstKey = summariesCache.current.keys().next().value;
-      summariesCache.current.delete(firstKey);
-    }
-
-    summariesCache.current.set(cacheKey, result);
-    return result;
-  }, []);
-
   // refresh
   const refresh = useCallback(() => {
     dispatchBase({ type: "RESET" });
     dispatchLoader({ type: "RESET" });
     setFatalError(null);
     setExtraTypes([]);
-    if (pid) PHASE1_FLIGHTS.delete(`${pid}::${bump}`);
+    if (pid && client) {
+      PHASE1_FLIGHTS.get(client)?.delete(`${pid}::${bump}`);
+    }
     setBump((x) => x + 1);
-  }, [pid, bump, dispatchBase, dispatchLoader]);
+  }, [pid, bump, client, dispatchBase, dispatchLoader]);
 
   // Bundle + eval results (kept in ref to avoid re-renders during accumulation)
   const patientBundle = useRef({
@@ -358,7 +345,7 @@ export default function useFetchResources() {
         throw new Error(msg);
       }
 
-      return runPhase1Once(phase1Key, async () => {
+      return runPhase1Once(client, phase1Key, async () => {
         const preloadList = getEnvQuestionnaireList();
         const hasPreload = !isEmptyArray(preloadList);
 
@@ -391,7 +378,7 @@ export default function useFetchResources() {
         }
         if (wantObs) {
           const obURLs = getFlowSheetObservationURLS(pid);
-          obURLs.map((url) => {
+          obURLs.forEach((url) => {
             phase1Tasks.push({
               id: OBSERVATION_DATA_KEY,
               promise: client.request(
@@ -554,6 +541,7 @@ export default function useFetchResources() {
 
         // Keep needed extras pending (ensure rows exist)
         if (!isEmptyArray(extrasWanted)) {
+          setBundleEntries([...patientBundle.current.entry]);
           dispatchLoader({
             type: "UPSERT_MANY",
             items: extrasWanted.map((t) => ({ id: t, title: t, complete: false, error: false })),
@@ -568,10 +556,11 @@ export default function useFetchResources() {
 
         // If nothing to fetch, summary can finalize now
         if (isEmptyArray(extrasWanted)) {
+          setBundleEntries([...patientBundle.current.entry]);
           dispatchLoader({
             type: "COMPLETE",
             id: SUMMARY_DATA_KEY,
-            data: getSummariesMemoized(patientBundle.current.entry),
+            data: getSummaries(patientBundle.current.entry),
           });
           return;
         }
@@ -597,10 +586,10 @@ export default function useFetchResources() {
     !isEmptyArray(extraTypes) &&
     !isEmptyArray(toBeLoadedResources);
 
-  const loadedFHIRDataRef = useRef([]);
-
   const getFhirResources = useCallback(async () => {
-    loadedFHIRDataRef.current = [];
+    // Local array — not shared across concurrent calls
+    const loadedFHIRData = [];
+
     const paths = getFHIRResourcePaths(pid, extraTypes, {
       questionnaireList: base.questionnaireList,
       exactMatchById: base.exactMatchById,
@@ -610,11 +599,11 @@ export default function useFetchResources() {
       client
         .request(
           { url: p.resourcePath, header: NO_CACHE_HEADER },
-          { pageLimit: 0, onPage: processPage(client, loadedFHIRDataRef.current) },
+          { pageLimit: 0, onPage: processPage(client, loadedFHIRData) },
         )
         .then(() => {
           dispatchLoader({ type: "COMPLETE", id: p.resourceType });
-          return loadedFHIRDataRef.current;
+          return loadedFHIRData;
         })
         .catch((e) => {
           dispatchLoader({ type: "ERROR", id: p.resourceType, errorMessage: e?.message });
@@ -654,7 +643,7 @@ export default function useFetchResources() {
         dispatchLoader({
           type: "COMPLETE",
           id: SUMMARY_DATA_KEY,
-          data: getSummariesMemoized(patientBundle.current.entry),
+          data: getSummaries(patientBundle.current.entry),
         });
       },
       onError: (e) => {
@@ -701,12 +690,12 @@ export default function useFetchResources() {
         summaryData: demoData,
       });
     }
-   // if (!summaryData?.data) return null;
+    // if (!summaryData?.data) return null;
     return buildReportData({
       summaryData: summaryData?.data,
-      bundle: patientBundle.current.entry,
+      bundle: bundleEntries,
     });
-  }, [summaryData?.data]);
+  }, [summaryData?.data, bundleEntries]);
 
   const allScoringSummaryData = useMemo(
     () =>
@@ -724,7 +713,6 @@ export default function useFetchResources() {
   const chartKeys = useMemo(() => [...new Set(allChartData?.map((o) => getDisplayQTitle(o.key)))], [allChartData]);
 
   const loaderErrors = useMemo(() => state.loader.filter((r) => r?.error), [state.loader]);
-  const baseData = useMemo(() => base, [base]);
 
   // error message collection
   const errorMessages = useMemo(() => {
@@ -749,10 +737,7 @@ export default function useFetchResources() {
 
   if (isReady) {
     console.log("summaryData ", summaryData);
-    // console.log("evalData ", patientBundle.current.evalResults);
-    // console.log("scoringSummaryData ", scoringSummaryData);
     console.log("reportData ", reportData);
-    //console.log("bundle ", patientBundle.current.entry);
   }
 
   return {
@@ -767,11 +752,11 @@ export default function useFetchResources() {
     toBeLoadedResources,
 
     // base (phase 1)
-    questionnaireList: baseData?.questionnaireList,
-    questionnaires: baseData.questionnaires,
-    questionnaireResponses: baseData.questionnaireResponses,
-    summaries: baseData.summaries,
-    summaryKeys: Object.keys(baseData.summaries),
+    questionnaireList: base.questionnaireList,
+    questionnaires: base.questionnaires,
+    questionnaireResponses: base.questionnaireResponses,
+    summaries: base.summaries,
+    summaryKeys: Object.keys(base.summaries),
 
     // phase 2
     evalData: patientBundle.current.evalResults,

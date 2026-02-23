@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import DOMPurify from "dompurify";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -13,16 +14,20 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
-/**
- * Auto-generate simple columns array from the first row of data
- */
+// ─── Module-level constants ───────────────────────────────────────────────────
+const Z_HEADER = 3;
+const Z_FIRST_COL = 2;
+const Z_CORNER = 4;
+const STICKY_FIRST_COL_LEFT = 0;
+const BORDER_COLOR = "#f4f0f0";
+const READONLY_BG_COLOR = "#f7f9f9";
+const FIRST_COL_BG_COLOR = "#fff";
+const TABLE_MAX_HEIGHT = "calc(100vh - 120px)";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function buildBasicColumns(tableData) {
   if (!Array.isArray(tableData) || tableData.length === 0) return [];
-  const first = tableData[0];
-  return Object.keys(first).map((key) => ({
-    title: key,
-    field: key,
-  }));
+  return Object.keys(tableData[0]).map((key) => ({ title: key, field: key }));
 }
 
 const safeGet = (row, field) => {
@@ -44,11 +49,17 @@ function normalizeCell(v) {
   }
 }
 
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function ResponsesTable({
   tableData = [],
   title,
   columns,
-  buildColumns, // optional: () => columns[]
+  /**
+   * Optional function to build columns dynamically.
+   * Should be memoized by the caller (e.g. via useMemo or useCallback)
+   * to avoid unnecessary recomputation on every render.
+   */
+  buildColumns,
   headerBgColor = "#FFF",
   containerStyle,
   wrapDefaultRender = true,
@@ -56,16 +67,7 @@ export default function ResponsesTable({
   stickyHeader = true,
 }) {
   const theme = useTheme();
-  const STICKY_FIRST_COL_LEFT = 0;
-  const Z_HEADER = 3;
-  const Z_FIRST_COL = 2;
-  const Z_CORNER = 4; // top-left cell (header + first col)
-  const BORDER_COLOR = "#f4f0f0";
 
-  // resolve columns in priority order:
-  // 1) explicit columns prop
-  // 2) buildColumns() if provided
-  // 3) basic columns inferred from data
   const resolvedColumns = useMemo(() => {
     if (Array.isArray(columns) && columns.length > 0) return columns;
 
@@ -77,14 +79,12 @@ export default function ResponsesTable({
     return buildBasicColumns(tableData);
   }, [columns, buildColumns, tableData]);
 
-  // Apply safe default render unless column.render exists
   const safeColumns = useMemo(() => {
     const cols = Array.isArray(resolvedColumns) ? resolvedColumns : [];
     if (!wrapDefaultRender) return cols;
 
     return cols.map((col) => {
       if (typeof col?.render === "function") return col;
-
       return {
         ...col,
         render: (rowData) => normalizeCell(safeGet(rowData, col.field)),
@@ -93,6 +93,7 @@ export default function ResponsesTable({
   }, [resolvedColumns, wrapDefaultRender]);
 
   return (
+    // Outer Box handles layout only — scroll is owned by TableContainer
     <Box
       className="responses-container"
       sx={{
@@ -102,8 +103,6 @@ export default function ResponsesTable({
         width: "100%",
         [theme.breakpoints.up("md")]: { width: "95%" },
         [theme.breakpoints.up("lg")]: { width: "85%" },
-        overflowX: "auto",
-        overflowY: "auto",
         position: "relative",
         ...(containerStyle || {}),
       }}
@@ -112,50 +111,47 @@ export default function ResponsesTable({
         <Typography
           variant="subtitle2"
           component="h3"
-          sx={{
-            marginBottom: 1,
-          }}
+          sx={{ marginBottom: 1 }}
         >
-          {title}
+          <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(title) }} />
         </Typography>
       )}
+
       <TableContainer
         className="table-container"
         component={Paper}
         elevation={1}
         sx={{
-          maxHeight: "calc(100vh - 120px)", // leave room for AppBar
+          maxHeight: TABLE_MAX_HEIGHT,
           overflowY: "auto",
           overflowX: "auto",
         }}
       >
         <Table size={dense ? "small" : "medium"} stickyHeader={stickyHeader}>
           <TableHead>
-            <TableRow hover={false}>
+            <TableRow>
               {safeColumns.map((col, colIndex) => {
                 const isFirstCol = colIndex === 0;
-
                 return (
                   <TableCell
                     key={col.field ?? col.title ?? colIndex}
                     align={col.align || "left"}
+                    variant="head"
                     sx={{
                       backgroundColor: headerBgColor,
                       top: 0,
                       zIndex: isFirstCol ? Z_CORNER : Z_HEADER,
-
                       ...(isFirstCol
-                        ? {
-                            position: "sticky",
-                            left: STICKY_FIRST_COL_LEFT,
-                          }
+                        ? { position: "sticky", left: STICKY_FIRST_COL_LEFT }
                         : { borderRight: `1px solid ${BORDER_COLOR}` }),
-
                       ...(col.headerStyle || {}),
                     }}
-                    variant="head"
                   >
+                    {/* Column titles are developer-supplied, rendered as plain text */}
                     {col.title}
+                    {col.source && (
+                      <span className="source-container">{col.source}</span>
+                    )}
                   </TableCell>
                 );
               })}
@@ -164,14 +160,16 @@ export default function ResponsesTable({
 
           <TableBody>
             {(tableData ?? []).map((row, rowIndex) => (
-              <TableRow key={row?.id ?? rowIndex} hover={false}>
+              <TableRow key={row?.id ?? rowIndex}>
                 {safeColumns.map((col, colIndex) => {
                   const content =
                     typeof col.render === "function"
                       ? col.render(row, rowIndex)
                       : normalizeCell(safeGet(row, col.field));
                   const isFirstCol = colIndex === 0;
-                  if (col.spanFullRow || row.readOnly) {
+
+                  // row.readOnly: the entire row spans all columns with readonly styling
+                  if (row.readOnly) {
                     if (isFirstCol) {
                       return (
                         <TableCell
@@ -179,7 +177,7 @@ export default function ResponsesTable({
                           colSpan={safeColumns.length}
                           className="read-only"
                           sx={{
-                            backgroundColor: "#f7f9f9",
+                            backgroundColor: READONLY_BG_COLOR,
                             ...(col.readonlyCellStyle || {}),
                           }}
                         >
@@ -189,6 +187,23 @@ export default function ResponsesTable({
                     }
                     return null;
                   }
+
+                  // col.spanFullRow: this column's content spans all columns for this row
+                  if (col.spanFullRow) {
+                    if (isFirstCol) {
+                      return (
+                        <TableCell
+                          key={`${row?.id ?? rowIndex}-spanfull`}
+                          colSpan={safeColumns.length}
+                          sx={{ ...(col.cellStyle || {}) }}
+                        >
+                          {content}
+                        </TableCell>
+                      );
+                    }
+                    return null;
+                  }
+
                   return (
                     <TableCell
                       key={`${row?.id ?? rowIndex}-${col.field ?? col.title ?? colIndex}`}
@@ -199,7 +214,7 @@ export default function ResponsesTable({
                               position: "sticky",
                               left: STICKY_FIRST_COL_LEFT,
                               zIndex: Z_FIRST_COL,
-                              backgroundColor: "#fff",
+                              backgroundColor: FIRST_COL_BG_COLOR,
                             }
                           : { borderRight: `1px solid ${BORDER_COLOR}` }),
                         ...(col.cellStyle || {}),
@@ -226,7 +241,15 @@ export default function ResponsesTable({
 
 ResponsesTable.propTypes = {
   tableData: PropTypes.array,
-  columns: PropTypes.array, // [{ title, field, render?, align?, headerSx?, cellSx? }]
+  /**
+   * Explicit columns array. Takes priority over buildColumns and auto-inference.
+   * Shape: [{ title, field, render?, align?, headerStyle?, cellStyle?, readonlyCellStyle?, source?, spanFullRow? }]
+   */
+  columns: PropTypes.array,
+  /**
+   * Function that returns a columns array. Used if columns prop is not provided.
+   * Should be memoized by the caller to avoid unnecessary recomputation.
+   */
   buildColumns: PropTypes.func,
   headerBgColor: PropTypes.string,
   containerStyle: PropTypes.object,

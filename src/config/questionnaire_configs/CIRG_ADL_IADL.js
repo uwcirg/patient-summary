@@ -1,4 +1,5 @@
 import { BASE_CONFIG } from "@config/questionnaire_config_helpers";
+
 export default {
   ...BASE_CONFIG,
   questionnaireId: "CIRG-ADL-IADL",

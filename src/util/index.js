@@ -280,9 +280,8 @@ export function getEnvDashboardURL() {
 }
 
 export function isNumber(target) {
-  if (isNaN(target)) return false;
-  if (typeof target === "number") return true;
-  return target != null;
+  if (target == null || target === "") return false;
+  return !isNaN(Number(target));
 }
 
 export function objectToString(value) {

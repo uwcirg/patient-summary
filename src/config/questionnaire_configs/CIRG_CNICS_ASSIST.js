@@ -13,9 +13,8 @@ export default {
   minimumScore: 0,
   maximumScore: 4,
   meaningQuestionId: "ASSIST-3mo-score",
-  meaningRowLabel: "Substances Reported (Past 3 months)",
+  meaningRowLabel: "Substances Reported",
   nullScoreAllowed: true,
-  questionRowLabel: "Detailed Responses",
   fallbackScoreMap: {
     "assist-10-0": 0,
     "assist-10-1": 1,
