@@ -15,7 +15,7 @@ export default {
     return matchedItem?.text;
   },
   severityBands: [
-    { min: 4, label: "high", meaning: "High Stigma" },
+    { min: 4, label: "high", meaning: "Stigma Suggested" },
     { min: 0, label: "low", meaning: "" },
   ],
   highSeverityScoreCutoff: 4,
