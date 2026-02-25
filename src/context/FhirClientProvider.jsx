@@ -73,7 +73,7 @@ export default function FhirClientProvider(props) {
               ["authSessionStarted", "device"],
               {
                 subject: `Patient/${result.id}`,
-                user: { username: userId },
+                agent:  {type: "user", who: userId, "user-agent": deviceInfo},
               },
               {
                 authSessionID: getClientSessionKey(client),
