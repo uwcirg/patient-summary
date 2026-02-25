@@ -7,7 +7,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { FhirClientContext } from "./FhirClientContext";
 import { queryPatientIdKey } from "@/consts";
 import ErrorComponent from "@/components/ErrorComponent";
-import { addMamotoTracking, getClientSessionKey, getEnv, getUserId } from "@/util";
+import { addMatomoTracking, getClientSessionKey, getEnv, getUserId } from "@/util";
 import { writeToLog } from "@/util/log";
 
 export default function FhirClientProvider(props) {
@@ -67,7 +67,7 @@ export default function FhirClientProvider(props) {
             const deviceSize =
               typeof window !== "undefined" ? window.screen.width + "x" + window.screen.height : "unknown";
             const browserSize = window.innerWidth + "x" + window.innerHeight;
-            addMamotoTracking(userId);
+            addMatomoTracking(userId);
             writeToLog(
               "info",
               ["authSessionStarted", "device"],

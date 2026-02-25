@@ -342,7 +342,7 @@ export function parseJwt(token) {
   );
   return JSON.parse(jsonPayload);
 }
-export function addMamotoTracking(userId) {
+export function addMatomoTracking(userId) {
   if (document.querySelector("#matomoScript")) return;
   const siteId = getEnv("REACT_APP_MATOMO_SITE_ID");
   // no site ID specified, not proceeding
