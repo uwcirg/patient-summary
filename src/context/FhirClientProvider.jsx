@@ -63,6 +63,7 @@ export default function FhirClientProvider(props) {
           .then((result) => {
             console.log("Patient loaded.");
             const userId = getUserId(client);
+            const deviceInfo = typeof window !== "undefined" ? window.navigator.userAgent : "unknown";
             const deviceSize =
               typeof window !== "undefined" ? window.screen.width + "x" + window.screen.height : "unknown";
             const browserSize = window.innerWidth + "x" + window.innerHeight;
@@ -76,7 +77,7 @@ export default function FhirClientProvider(props) {
               },
               {
                 authSessionID: getClientSessionKey(client),
-                text: `auth session started : device=${deviceSize}, browser=${browserSize}`,
+                text: `auth session started : device=${deviceInfo}, deviceSize=${deviceSize}, browserSize=${browserSize}`,
               },
             );
             dispatch({
