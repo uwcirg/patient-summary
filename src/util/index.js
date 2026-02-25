@@ -322,6 +322,9 @@ export function getUserId(client) {
   if (!client) return null;
   if (client.user && client.user.id) return client.user.id;
   const accessToken = parseJwt(client.getState("tokenResponse.access_token"));
+  if (!accessToken) return null;
+  if (accessToken.profile) return accessToken.profile;
+  if (accessToken.fhirUser) return accessToken.fhirUser;
   if (accessToken) return accessToken["preferred_username"];
   return null;
 }

@@ -62,16 +62,21 @@ export default function FhirClientProvider(props) {
         getPatient(client)
           .then((result) => {
             console.log("Patient loaded.");
-            addMamotoTracking(getUserId(client));
+            const userId = getUserId(client);
+            const deviceSize =
+              typeof window !== "undefined" ? window.screen.width + "x" + window.screen.height : "unknown";
+            const browserSize = window.innerWidth + "x" + window.innerHeight;
+            addMamotoTracking(userId);
             writeToLog(
               "info",
-              ["authSessionStarted"],
+              ["authSessionStarted", "device"],
               {
                 subject: `Patient/${result.id}`,
+                user: { username: userId },
               },
               {
                 authSessionID: getClientSessionKey(client),
-                text: "auth session started",
+                text: `auth session started : device=${deviceSize}, browser=${browserSize}`,
               },
             );
             dispatch({
