@@ -15,6 +15,7 @@ export default function Loader({ message, styles, children }) {
         backgroundColor: "#FFF",
         marginLeft: "auto",
         marginRight: "auto",
+        top: 0,
         left: 0,
         zIndex: (theme) => theme.zIndex.drawer + 1,
         padding: (theme) => theme.spacing(2, 2),
@@ -23,7 +24,7 @@ export default function Loader({ message, styles, children }) {
     >
       <Stack
         sx={{
-          marginTop: 1,
+          marginTop: 8,
           marginBottom: 4,
           padding: 2,
         }}
