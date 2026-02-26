@@ -7,7 +7,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { FhirClientContext } from "./FhirClientContext";
 import { queryPatientIdKey } from "@/consts";
 import ErrorComponent from "@/components/ErrorComponent";
-import { addMamotoTracking, getClientSessionKey, getEnv, getUserId } from "@/util";
+import { addMatomoTracking, getClientSessionKey, getEnv, getUserId } from "@/util";
 import { writeToLog } from "@/util/log";
 
 export default function FhirClientProvider(props) {
@@ -62,16 +62,22 @@ export default function FhirClientProvider(props) {
         getPatient(client)
           .then((result) => {
             console.log("Patient loaded.");
-            addMamotoTracking(getUserId(client));
+            const userId = getUserId(client);
+            const deviceInfo = typeof window !== "undefined" ? window.navigator.userAgent : "unknown";
+            const deviceSize =
+              typeof window !== "undefined" ? window.screen.width + "x" + window.screen.height : "unknown";
+            const browserSize = window.innerWidth + "x" + window.innerHeight;
+            addMatomoTracking(userId);
             writeToLog(
               "info",
-              ["authSessionStarted"],
+              ["authSessionStarted", "device"],
               {
                 subject: `Patient/${result.id}`,
+                agent:  {type: "user", who: userId, "user-agent": deviceInfo},
               },
               {
                 authSessionID: getClientSessionKey(client),
-                text: "auth session started",
+                text: `auth session started : device=${deviceInfo}, deviceSize=${deviceSize}, browserSize=${browserSize}`,
               },
             );
             dispatch({

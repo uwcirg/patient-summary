@@ -322,6 +322,9 @@ export function getUserId(client) {
   if (!client) return null;
   if (client.user && client.user.id) return client.user.id;
   const accessToken = parseJwt(client.getState("tokenResponse.access_token"));
+  if (!accessToken) return null;
+  if (accessToken.profile) return accessToken.profile;
+  if (accessToken.fhirUser) return accessToken.fhirUser;
   if (accessToken) return accessToken["preferred_username"];
   return null;
 }
@@ -339,7 +342,7 @@ export function parseJwt(token) {
   );
   return JSON.parse(jsonPayload);
 }
-export function addMamotoTracking(userId) {
+export function addMatomoTracking(userId) {
   if (document.querySelector("#matomoScript")) return;
   const siteId = getEnv("REACT_APP_MATOMO_SITE_ID");
   // no site ID specified, not proceeding
