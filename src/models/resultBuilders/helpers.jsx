@@ -756,7 +756,7 @@ export function getScoreParamsFromResponses(responses, config = {}) {
   const current = getMostRecentResponseRow(responses);
   const prev = getPreviousResponseRowWithScore(responses);
 
-  const curScore = current.score != null ? current.score : null;
+  const curScore = current?.score != null ? current.score : null;
   const prevScore = prev?.score != null ? prev.score : null;
   const minScore = isNumber(config?.minimumScore) ? config?.minimumScore : 0;
   const maxScore = isNumber(config?.maximumScore) ? config?.maximumScore : null;

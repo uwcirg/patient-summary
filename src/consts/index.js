@@ -157,7 +157,6 @@ export const IS_QUESTION_COLUMN_KEYWORDS = [
   "meaning",
   "summary",
   "visual analog scale",
-  "status",
 ];
 
 export const EMPTY_CELL_STRING = "-";

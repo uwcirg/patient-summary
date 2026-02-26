@@ -53,7 +53,7 @@ const TwoColumns = React.memo(function TwoColumns({ table }) {
   );
 });
 TwoColumns.propTypes = {
-  table: React.object,
+  table: PropTypes.object,
 };
 
 // --- TableItem component ---

@@ -148,9 +148,9 @@ export default function ResponsesTable({
                     }}
                   >
                     {/* Column titles are developer-supplied, rendered as plain text */}
-                    {col.title}
+                    <Box>{col.title}</Box>
                     {col.source && (
-                      <span className="source-container">{col.source}</span>
+                      <Box className="source-container">{col.source}</Box>
                     )}
                   </TableCell>
                 );

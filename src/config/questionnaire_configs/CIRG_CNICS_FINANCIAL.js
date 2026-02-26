@@ -15,5 +15,5 @@ export default {
   },
   alertQuestionId: "FINANCIAL-critical-flag",
   meaningQuestionId: "FINANCIAL-score-label",
-  skipResponses: true,
+  skipMeaningScoreRow: true,
 };
