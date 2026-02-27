@@ -9,27 +9,15 @@ export default {
   scoringQuestionId: "HIV-STIGMA-SCORE",
   showNumAnsweredWithScore: true,
   totalAnsweredQuestionId: "HIV-STIGMA-SCORE-NUM-ANSWERED",
-  fallbackScoreMap: {
-    "HIV-STIGMA-0-0": "Strongly disagree",
-    "HIV-STIGMA-0-1": "Disagree",
-    "HIV-STIGMA-0-2": "Neither disagree nor agree",
-    "HIV-STIGMA-0-3": "Agree",
-    "HIV-STIGMA-0-4": "Strongly agree",
-    "HIV-STIGMA-1-0": "Strongly disagree",
-    "HIV-STIGMA-1-1": "Disagree",
-    "HIV-STIGMA-1-2": "Neither disagree nor agree",
-    "HIV-STIGMA-1-3": "Agree",
-    "HIV-STIGMA-1-4": "Strongly agree",
-    "HIV-STIGMA-2-0": "Strongly disagree",
-    "HIV-STIGMA-2-1": "Disagree",
-    "HIV-STIGMA-2-2": "Neither disagree nor agree",
-    "HIV-STIGMA-2-3": "Agree",
-    "HIV-STIGMA-2-4": "Strongly agree",
-    "HIV-STIGMA-3-0": "Strongly disagree",
-    "HIV-STIGMA-3-1": "Disagree",
-    "HIV-STIGMA-3-2": "Neither disagree nor agree",
-    "HIV-STIGMA-3-3": "Agree",
-    "HIV-STIGMA-3-4": "Strongly agree", 
+  valueFormatter: (val) => {
+    const mappings = {
+      1: "Strongly disagree",
+      2: "Disagree",
+      3: "Neither disagree nor agree",
+      4: "Agree",
+      5: "Strongly agree"
+    };
+    return mappings[val] || val;
   },
   noteFunction: (questionnaire) => {
     if (!questionnaire) return "";
