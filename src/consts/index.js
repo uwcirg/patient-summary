@@ -159,4 +159,8 @@ export const IS_QUESTION_COLUMN_KEYWORDS = [
   "visual analog scale",
 ];
 
+export const NOT_TO_SHOW_CODE_DISPLAY_VALUES = [
+  "%(WIDGET)"
+];
+
 export const EMPTY_CELL_STRING = "-";

@@ -38,6 +38,7 @@ import {
   DEFAULT_VAL_TO_LOIN_CODE,
   EXCLUDED_LINK_ID_KEYWORDS,
   EMPTY_CELL_STRING,
+  NOT_TO_SHOW_CODE_DISPLAY_VALUES,
 } from "@/consts";
 import questionnaireConfig from "@/config/questionnaire_config";
 import {
@@ -598,7 +599,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const coding = this.answerCoding(item);
       if (coding) {
         const normalizedCode = coding.code != null ? String(coding.code).toLowerCase() : null;
-        const displayValue = coding.display ?? (normalizedCode ? fallbackScoreMap[normalizedCode] : null);
+        const codeDisplay = NOT_TO_SHOW_CODE_DISPLAY_VALUES.includes(coding.display) ? null : coding.display;
+        const displayValue = codeDisplay ?? (normalizedCode ? fallbackScoreMap[normalizedCode] : null);
         if (isNonEmptyString(displayValue)) return displayValue;
         const fromExt = this.readOrdinalExt(coding);
         if (fromExt != null && isNumber(fromExt)) return fromExt;
