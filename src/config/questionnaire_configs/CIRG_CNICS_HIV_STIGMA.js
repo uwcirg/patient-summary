@@ -9,6 +9,16 @@ export default {
   scoringQuestionId: "HIV-STIGMA-SCORE",
   showNumAnsweredWithScore: true,
   totalAnsweredQuestionId: "HIV-STIGMA-SCORE-NUM-ANSWERED",
+  valueFormatter: (val) => {
+    const mappings = {
+      1: "Strongly disagree",
+      2: "Disagree",
+      3: "Neither disagree nor agree",
+      4: "Agree",
+      5: "Strongly agree"
+    };
+    return mappings[val] || val;
+  },
   noteFunction: (questionnaire) => {
     if (!questionnaire) return "";
     const matchedItem = questionnaire.item.find((o) => o.linkId === "HIV-STIGMA-SCORE");
