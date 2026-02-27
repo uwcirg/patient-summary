@@ -44,7 +44,7 @@ export default {
     return arrResponses.join("|");
   },
   skipResponses: true,
-  meaningRowLabel: "Unprotected Sex",
+  meaningRowLabel: "Responses",
 };
 
 export const CIRG_SEXUAL_PARTNER_CONTEXT = {
@@ -110,6 +110,7 @@ export const CIRG_STI = {
     String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : "",
   fallbackMeaningFunc: makeBooleanMeaningFunc("SEXUAL-RISK-SCORE-STI-EXPOSURE"),
   alertQuestionId: "SEXUAL-RISK-SCORE-STI-EXPOSURE",
+  meaningRowLabel: "Responses"
 };
 
 export const CIRG_UNPROTECTED_ANAL_SEX = makeSexualRiskDerivedConfig(

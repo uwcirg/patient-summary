@@ -702,6 +702,16 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
   };
 }
 
+
+export function normalizeBooleanAnswerResponse (answer) {
+      if (typeof answer === "boolean") return answer;
+      if (typeof answer === "string") {
+        const normalized = normalizeStr(answer);
+        return normalized === "yes" || normalized === "true";
+      }
+      return false;
+    }
+
 /**
  * Determines if most recent response triggers an alert
  *
@@ -713,12 +723,9 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
  */
 export function getAlertFromMostRecentResponse(current, config = {}) {
   if (!current) return false;
-
-  if (config?.alertQuestionId) {
-    return !!(
-      current?.responses?.find((o) => linkIdEquals(o.id, config?.alertQuestionId, config?.linkIdMatchMode))?.answer ??
-      false
-    );
+  if (config?.alertQuestionId){
+    const alertQuestionResponse = current?.responses?.find((o) => linkIdEquals(o.id, config?.alertQuestionId, config?.linkIdMatchMode))?.answer;
+    return normalizeBooleanAnswerResponse(alertQuestionResponse);
   }
 
   const alert =

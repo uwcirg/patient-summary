@@ -7,6 +7,6 @@ export default {
   columns: [{ linkId: "EXCHANGE-SEX-SCORE-PAST-3-MONTHS", id: "result" }],
   fallbackMeaningFunc: makeBooleanMeaningFunc("EXCHANGE-SEX-SCORE-PAST-3-MONTHS"),
   meaningQuestionId: "EXCHANGE-SEX-SCORE-PAST-3-MONTHS",
-  meaningRowLabel: "Exchange Sex (Past 3 months)",
+  meaningRowLabel: "Summary",
   disableHeaderRowSubtitle: true,
 };
