@@ -52,7 +52,7 @@ export const CIRG_SEXUAL_PARTNER_CONTEXT = {
   instrumentName: "Sexual Partner Context",
   title: "Sexual Partner Context",
   subtitle: "Past 3 months",
-  skipResponses: true,
+  skipMeaningScoreRow: true,
   deriveFrom: {
     hostIds: ["CIRG-CNICS-SEXUAL-RISK"],
     linkIds: [

@@ -597,10 +597,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       // Prefer human display for codings
       const coding = this.answerCoding(item);
       if (coding) {
+        const normalizedCode = coding.code != null ? String(coding.code).toLowerCase() : null;
+        const displayValue = coding.display ?? (normalizedCode ? fallbackScoreMap[normalizedCode] : null);
+        if (isNonEmptyString(displayValue)) return displayValue;
         const fromExt = this.readOrdinalExt(coding);
         if (fromExt != null && isNumber(fromExt)) return fromExt;
-        const normalizedCode = coding.code != null ? String(coding.code).toLowerCase() : null;
-        return coding.display ?? (normalizedCode ? fallbackScoreMap[normalizedCode] : null) ?? null;
+        return null;
       }
 
       // Then any primitive value[x]
@@ -1069,13 +1071,12 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
             question = this._getQuestion(questionnaireItem, resolvedConfig);
           }
           row.question = question ? question : `Question ${questionId}`;
-
           row.source = sample?.source;
           row.readOnly = sample?.readOnly || false;
           row.isValueExpression = sample?.isValueExpression || false;
           row.isHelp = sample?.isHelp || false;
           row.config = resolvedConfig;
-
+      
           // answer retrieval
           for (const dataItem of formattedData) {
             let matchedResponse = null;
@@ -1097,7 +1098,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
 
             const rowAnswer = matchedResponse ? this._getAnswer(matchedResponse, resolvedConfig) : null;
             row[dataItem.id] = rowAnswer;
-            row[`${dataItem.id}_data`] = getScoreParamsFromResponses([dataItem], resolvedConfig);
+            row[`${dataItem.id}_scoreParams`] = getScoreParamsFromResponses([dataItem], resolvedConfig);
           }
 
           return row;

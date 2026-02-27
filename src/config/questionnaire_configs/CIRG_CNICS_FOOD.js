@@ -18,4 +18,5 @@ export default {
       meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
     return meaningAnswer ? capitalizeFirstLetterSafe(String(meaningAnswer)) : "";
   },
+  meaningRowLabel: "Summary",
 };
