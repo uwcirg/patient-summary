@@ -21,7 +21,7 @@ export const report_config = {
             "CIRG-CNICS-FINANCIAL",
             "CIRG-CNICS-HOUSING",
             "CIRG-CNICS-FROP-Com",
-            "CIRG-Shortness-of-Breath",
+          //  "CIRG-Shortness-of-Breath",
           ],
           hiddenColumns: ["numAnswered"],
         },
