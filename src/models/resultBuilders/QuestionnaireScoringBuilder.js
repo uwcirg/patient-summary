@@ -599,8 +599,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const coding = this.answerCoding(item);
       if (coding) {
         const normalizedCode = coding.code != null ? String(coding.code).toLowerCase() : null;
+        const normalizedFallbackValue = normalizedCode ? fallbackScoreMap[normalizedCode] : null;
         const codeDisplay = NOT_TO_SHOW_CODE_DISPLAY_VALUES.includes(coding.display) ? null : coding.display;
-        const displayValue = codeDisplay ?? (normalizedCode ? fallbackScoreMap[normalizedCode] : null);
+        const displayValue = normalizedFallbackValue ?? codeDisplay;
         if (isNonEmptyString(displayValue)) return displayValue;
         const fromExt = this.readOrdinalExt(coding);
         if (fromExt != null && isNumber(fromExt)) return fromExt;
