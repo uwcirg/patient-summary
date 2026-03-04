@@ -378,15 +378,24 @@ p {
     margin: 1mm 1mm 1mm 1mm;
   }
   header {
+    position: relative !important;
     box-shadow: none !important;
     border: 0 !important;
     .logo {
       height: 32px !important;
     }
   }
+  footer {
+    position: relative !important;
+    background-color: #FFF !important;
+    box-shadow: none !important;
+  }
   html,
   body {
     font-size: 12px;
+  }
+  main {
+    background-color: #FFF !important;
   }
   h1,
   h2 {
@@ -505,6 +514,7 @@ p {
     }
   }
   .MuiToolbar-root {
+    min-height: 0 !important;
     background-color: $default-print-background-color !important;
     box-shadow: none !important;
   }
