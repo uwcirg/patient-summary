@@ -106,7 +106,7 @@ TableItem.propTypes = {
 // --- PrintChunks component ---
 const PrintChunks = React.memo(function PrintChunks({ section }) {
   return (
-    <Box className="print-only">
+    <Box className="print-only print-table-chunk">
       {section.tables.flatMap((table) =>
         (table.rows ?? []).flatMap((row) =>
           (row.printColumnChunks ?? []).map((chunk, i) => (
@@ -151,7 +151,7 @@ export default function PROReport() {
   return (
     <>
       {sections}
-      <Box className="print-only history-block">{printTables}</Box>
+      <Box className="print-only history-block print-chunks-history">{printTables}</Box>
     </>
   );
 }

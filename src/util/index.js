@@ -1,7 +1,16 @@
 import dayjs from "dayjs";
 import ChartConfig from "@config/chart_config";
 import defaultSections, { sections } from "@config/sections_config";
+<<<<<<< Updated upstream
 import { DEFAULT_TOOLBAR_HEIGHT, QUESTIONNAIRE_ANCHOR_ID_PREFIX, queryNeedPatientBanner } from "@/consts";
+=======
+import {
+  DEFAULT_TOOLBAR_HEIGHT,
+  HELP_HTML_TEXT,
+  QUESTIONNAIRE_ANCHOR_ID_PREFIX,
+  queryNeedPatientBanner,
+} from "@/consts";
+>>>>>>> Stashed changes
 
 export const shortDateRE = /^\d{4}-\d{2}-\d{2}$/; // matches '2012-04-05'
 export const dateREZ =
@@ -452,11 +461,11 @@ export function generateUUID() {
     var r = Math.random() * 16; //random number between 0 and 16
     if (d > 0) {
       //Use timestamp until depleted
-      r = (d + r) % 16 | 0;
+      r = ((d + r) % 16) | 0;
       d = Math.floor(d / 16);
     } else {
       //Use microseconds since page-load if supported
-      r = (d2 + r) % 16 | 0;
+      r = ((d2 + r) % 16) | 0;
       d2 = Math.floor(d2 / 16);
     }
     return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
@@ -528,4 +537,94 @@ export function capitalizeFirstLetterSafe(text) {
   if (typeof text !== "string" || text.length === 0) return text;
   const textStr = String(text).replace(/"/g, "").trim();
   return textStr.charAt(0).toUpperCase() + textStr.slice(1).toLowerCase();
+}
+
+export function captureFullHTML() {
+  // 1. Force-expand all collapsed MUI accordions
+  const collapseEls = document.querySelectorAll(".MuiCollapse-root");
+  const originalStyles = Array.from(collapseEls).map((el) => ({
+    el,
+    height: el.style.height,
+    overflow: el.style.overflow,
+    visibility: el.style.visibility,
+  }));
+
+  collapseEls.forEach((el) => {
+    el.style.height = "auto";
+    el.style.overflow = "visible";
+    el.style.visibility = "visible";
+  });
+
+  // 2. Capture the HTML
+  const rootEl = document.getElementById("root");
+  const styles = Array.from(document.styleSheets)
+    .flatMap((sheet) => {
+      try {
+        return Array.from(sheet.cssRules).map((r) => r.cssText);
+      } catch {
+        return [];
+      }
+    })
+    .join("\n");
+
+  const html = `<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      ${styles}
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .MuiCollapse-root { height: auto !important; overflow: visible !important; visibility: visible !important; }
+      .MuiCollapse-hidden { height: auto !important; visibility: visible !important; }
+      .MuiAccordionDetails-root { display: block !important; }
+      button, .floating-nav-button { display: none !important; }
+      body { background: white !important; padding: 16px; }
+      svg, canvas { max-width: 100% !important; overflow: visible !important; }
+      section, .MuiAccordion-root, table { break-inside: avoid; page-break-inside: avoid; }
+      .print-chunks-history { display: block !important;}
+      .print-table-chunk {display: block !important;}
+    </style>
+  </head>
+  <body>${rootEl?.innerHTML ?? ""}</body>
+</html>`;
+
+  // 3. Restore accordion states so user's UI is unaffected
+  originalStyles.forEach(({ el, height, overflow, visibility }) => {
+    el.style.height = height;
+    el.style.overflow = overflow;
+    el.style.visibility = visibility;
+  });
+
+  return html;
+}
+
+export function getSnapshotDocRefId(patientId) {
+  return `proreport-snapshot-${patientId}`;
+}
+
+export async function saveHTMLToFHIR(client, patientId) {
+  if (!client || !patientId) return null;
+  const html = captureFullHTML();
+  const encoded = btoa(unescape(encodeURIComponent(html)));
+  const resourceId = getSnapshotDocRefId(patientId);
+
+  const docRef = {
+    resourceType: "DocumentReference",
+    id: resourceId, // required for PUT
+    status: "current",
+    subject: { reference: `Patient/${patientId}` },
+    date: new Date().toISOString(),
+    description: "PRO report UI snapshot",
+    content: [
+      {
+        attachment: {
+          contentType: "text/html",
+          data: encoded,
+          title: "Report HTML Snapshot",
+          creation: new Date().toISOString(),
+        },
+      },
+    ],
+  };
+  // PUT will create-or-update in place — no duplicate resources
+  return await client.update(docRef);
 }
