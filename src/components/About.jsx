@@ -12,9 +12,6 @@ export default function AboutModal({ open, onClose }) {
         <Box>
           <Typography variant="h5">UCSD CNICS PRO Summary</Typography>
           <p>
-            Information: <a href="https://sites.uab.edu/cnics/">here</a>
-          </p>
-          <p>
             Contact: <a href="mailto:cnicspros@cirg.uw.edu">cnicspros@cirg.uw.edu</a>
           </p>
           <Stack flexDirection={"row"} justifyContent={"space-between"} alignItems={"center"}>
