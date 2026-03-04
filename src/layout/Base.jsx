@@ -27,7 +27,7 @@ export default function Content({ children }) {
           component="main"
           sx={{
             flexGrow: 1,
-            p: 3, // Consider adding padding here if not in children
+            p: (theme) => theme.spacing(1),
             width: { sm: `calc(100% - ${showNav ? "240px" : "0px"})` }, // Visual stability
           }}
         >
