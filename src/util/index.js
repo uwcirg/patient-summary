@@ -535,22 +535,7 @@ export function capitalizeFirstLetterSafe(text) {
 }
 
 export function captureFullHTML() {
-  // 1. Force-expand all collapsed MUI accordions
-  const collapseEls = document.querySelectorAll(".MuiCollapse-root");
-  const originalStyles = Array.from(collapseEls).map((el) => ({
-    el,
-    height: el.style.height,
-    overflow: el.style.overflow,
-    visibility: el.style.visibility,
-  }));
-
-  collapseEls.forEach((el) => {
-    el.style.height = "auto";
-    el.style.overflow = "visible";
-    el.style.visibility = "visible";
-  });
-
-  // 2. Capture the HTML
+  // Capture the HTML
   const rootEl = document.getElementById("root");
   const styles = Array.from(document.styleSheets)
     .flatMap((sheet) => {
@@ -562,32 +547,18 @@ export function captureFullHTML() {
     })
     .join("\n");
 
+  // this allows tables in detail modal to be captured as separate tables
   const html = `<!DOCTYPE html>
 <html>
   <head>
     <style>
       ${styles}
-      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      .MuiCollapse-root { height: auto !important; overflow: visible !important; visibility: visible !important; }
-      .MuiCollapse-hidden { height: auto !important; visibility: visible !important; }
-      .MuiAccordionDetails-root { display: block !important; }
-      button, .floating-nav-button { display: none !important; }
-      body { background: white !important; padding: 16px; }
-      svg, canvas { max-width: 100% !important; overflow: visible !important; }
-      section, .MuiAccordion-root, table { break-inside: avoid; page-break-inside: avoid; }
       .print-chunks-history { display: block !important;}
       .print-table-chunk {display: block !important;}
     </style>
   </head>
   <body>${rootEl?.innerHTML ?? ""}</body>
 </html>`;
-
-  // 3. Restore accordion states so user's UI is unaffected
-  originalStyles.forEach(({ el, height, overflow, visibility }) => {
-    el.style.height = height;
-    el.style.overflow = overflow;
-    el.style.visibility = visibility;
-  });
 
   return html;
 }
