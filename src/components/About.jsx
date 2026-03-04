@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import DOMPurify from "dompurify";
-import { Box, Button, Stack, Typography } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
 import { getEnvAboutContent } from "../util";
 import SimpleModal from "./SimpleModal";
 
@@ -10,7 +10,7 @@ export default function AboutModal({ open, onClose }) {
     <SimpleModal open={open} onClose={() => onClose(false)} sx={{ maxWidth: 600, padding: 1}}>
       <Stack gap={2}>
         <Typography variant="h5">UCSD CNICS PRO Summary</Typography>
-        {content && <Box dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }} />}
+        {content && <Typography variant="body1" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }} />}
         <Stack flexDirection={"row"} justifyContent={"flex-end"} alignItems={"center"}>
           <Button variant="text" fontSize="small" onClick={onClose}>
             Close
