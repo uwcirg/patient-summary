@@ -1,7 +1,8 @@
 import dayjs from "dayjs";
 import ChartConfig from "@config/chart_config";
 import defaultSections, { sections } from "@config/sections_config";
-import { DEFAULT_TOOLBAR_HEIGHT, QUESTIONNAIRE_ANCHOR_ID_PREFIX, queryNeedPatientBanner } from "@/consts";
+import { DEFAULT_TOOLBAR_HEIGHT, HELP_HTML_TEXT, QUESTIONNAIRE_ANCHOR_ID_PREFIX, queryNeedPatientBanner } from "@/consts";
+
 
 export const shortDateRE = /^\d{4}-\d{2}-\d{2}$/; // matches '2012-04-05'
 export const dateREZ =
@@ -84,7 +85,7 @@ export function getChartConfig(questionnaireId) {
 }
 
 export function getEnvAboutContent() {
-  return getEnv("REACT_APP_ABOUT_CONTENT");
+  return getEnv("REACT_APP_ABOUT_CONTENT") || HELP_HTML_TEXT;
 }
 
 export function getEnvAppTitle() {

@@ -171,7 +171,7 @@ p {
   border-spacing: 0 !important;
   thead {
     th:first-of-type {
-      z-index: 999 !important;
+      z-index: 10 !important;
       left: 0;
       border-right: 1px solid $border-color;
     }

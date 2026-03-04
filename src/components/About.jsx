@@ -1,27 +1,22 @@
 import PropTypes from "prop-types";
+import DOMPurify from "dompurify";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import { getEnvAboutContent } from "../util";
 import SimpleModal from "./SimpleModal";
-import Version from "./Version";
+
 export default function AboutModal({ open, onClose }) {
   const content = getEnvAboutContent();
   return (
-    <SimpleModal open={open} onClose={() => onClose(false)}>
-      {content && <div dangerouslySetInnerHTML={{ __html: content }} />}
-      {!content && (
-        <Box>
-          <Typography variant="h5">UCSD CNICS PRO Summary</Typography>
-          <p>
-            Contact: <a href="mailto:cnicspros@cirg.uw.edu">cnicspros@cirg.uw.edu</a>
-          </p>
-          <Stack flexDirection={"row"} justifyContent={"space-between"} alignItems={"center"}>
-            <Version />
-            <Button variant="text" fontSize="small" onClick={onClose} sx={{mt: 1.5}}>
-              Close
-            </Button>
-          </Stack>
-        </Box>
-      )}
+    <SimpleModal open={open} onClose={() => onClose(false)} sx={{ maxWidth: 600, padding: 1}}>
+      <Stack gap={2}>
+        <Typography variant="h5">UCSD CNICS PRO Summary</Typography>
+        {content && <Box dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }} />}
+        <Stack flexDirection={"row"} justifyContent={"flex-end"} alignItems={"center"}>
+          <Button variant="text" fontSize="small" onClick={onClose}>
+            Close
+          </Button>
+        </Stack>
+      </Stack>
     </SimpleModal>
   );
 }
