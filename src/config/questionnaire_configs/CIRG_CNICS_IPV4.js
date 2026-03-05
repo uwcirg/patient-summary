@@ -33,6 +33,7 @@ export default {
         return (
           (response.answer != null &&
             response.answer !== undefined &&
+            String(response.answer) === "yes" &&
             linkIdEquals(response.linkId, "IPV4-1", "strict")) ||
           linkIdEquals(response.linkId, "IPV4-2", "strict") ||
           linkIdEquals(response.linkId, "IPV4-3", "strict") ||
