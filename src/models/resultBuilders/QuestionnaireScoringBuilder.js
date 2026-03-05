@@ -586,8 +586,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
   getAnswerItemDisplayValue(answerItem, opts = {}) {
     if (answerItem == null) return null;
 
-    const fallbackScoreMap = normalizeObjectKeys(opts?.fallbackScoreMap ?? this.fallbackScoreMap);
-
     // Helper to handle a *single* answer item
     const getSingleDisplayValue = (item) => {
       if (item == null) return null;
@@ -598,9 +596,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       // Prefer human display for codings
       const coding = this.answerCoding(item);
       if (coding) {
-        const normalizedCode = coding.code != null ? String(coding.code).toLowerCase() : null;
         const codeDisplay = NOT_TO_SHOW_CODE_DISPLAY_VALUES.includes(coding.display) ? null : coding.display;
-        const displayValue = codeDisplay ?? (normalizedCode ? fallbackScoreMap[normalizedCode] : null);
+        const displayValue = codeDisplay ?? null;
         if (isNonEmptyString(displayValue)) return displayValue;
         const fromExt = this.readOrdinalExt(coding);
         if (fromExt != null && isNumber(fromExt)) return fromExt;
