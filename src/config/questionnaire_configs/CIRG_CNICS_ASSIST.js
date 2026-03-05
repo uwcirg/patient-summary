@@ -69,10 +69,15 @@ export default {
   },
   fallbackMeaningFunc: function (severity, responses) {
     if (isEmptyArray(responses)) return "";
-    const meaningResponse = responses.find((response) => linkIdEquals(response.id, "ASSIST-3mo-score", "strict"));
+    const meaningResponse = responses.find((response) => linkIdEquals(response.linkId, "ASSIST-3mo-score", "strict"));
     const meaningAnswer =
       meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
-    return meaningAnswer?.split(",").join("|");
+    return meaningAnswer
+      ? meaningAnswer
+          .split(",")
+          .map((s) => s.trim())
+          .join("|")
+      : "";
   },
   subScoringQuestions: [
     { key: "ASSIST-10", linkId: "ASSIST-10" },

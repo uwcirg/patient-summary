@@ -616,7 +616,7 @@ export function meaningFromSeverity(sev, config = {}, responses = [], summaryObj
   }
 
   const valueFromMeaningQuestionId = (responses || []).find((o) =>
-    linkIdEquals(o.id, config?.meaningQuestionId, config?.linkIdMatchMode),
+    linkIdEquals(o.linkId, config?.meaningQuestionId, config?.linkIdMatchMode),
   )?.answer;
 
   if (valueFromMeaningQuestionId != null) return String(valueFromMeaningQuestionId).replace(/"/g, "");
@@ -724,7 +724,7 @@ export function normalizeBooleanAnswerResponse (answer) {
 export function getAlertFromMostRecentResponse(current, config = {}) {
   if (!current) return false;
   if (config?.alertQuestionId){
-    const alertQuestionResponse = current?.responses?.find((o) => linkIdEquals(o.id, config?.alertQuestionId, config?.linkIdMatchMode))?.answer;
+    const alertQuestionResponse = current?.responses?.find((o) => linkIdEquals(o.linkId, config?.alertQuestionId, config?.linkIdMatchMode))?.answer;
     return normalizeBooleanAnswerResponse(alertQuestionResponse);
   }
 

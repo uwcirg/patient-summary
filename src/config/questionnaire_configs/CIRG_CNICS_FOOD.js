@@ -13,7 +13,7 @@ export default {
   meaningQuestionId: "FOOD-score-label",
   fallbackMeaningFunc: function (severity, responses) {
     if (isEmptyArray(responses)) return "";
-    const meaningResponse = responses.find((response) => linkIdEquals(response.id, "FOOD-score-label", "strict"));
+    const meaningResponse = responses.find((response) => linkIdEquals(response.linkId, "FOOD-score-label", "strict"));
     const meaningAnswer =
       meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
     return meaningAnswer ? capitalizeFirstLetterSafe(String(meaningAnswer)) : "";
