@@ -549,7 +549,7 @@ export default function LineCharts(props) {
     }
 
     const domain = maxYValue ? [minYValue ?? 0, maxYValue] : [minYValue ?? 0, "auto"];
-    const ticks = yTicks || (maxYValue ? range(minYValue ?? 0, maxYValue) : range(minYValue ?? 0, 50));
+    const ticks = yTicks || (maxYValue ? range(minYValue ?? 0, maxYValue ?? 50) : range(minYValue ?? 0, 50));
 
     return {
       yDomainToUse: domain,
