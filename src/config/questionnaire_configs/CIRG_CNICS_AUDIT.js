@@ -20,20 +20,20 @@ export default {
     if (isEmptyArray(responses)) return "";
     let arrMeaning = [];
     const scoreToReportResponse = responses.find((response) =>
-      linkIdEquals(response.id, "AUDIT-qnr-to-report", "strict"),
+      linkIdEquals(response.linkId, "AUDIT-qnr-to-report", "strict"),
     );
-    const scoreToReport = scoreToReportResponse ? scoreToReportResponse.answer : null;
+    const scoreToReport = scoreToReportResponse ? String(scoreToReportResponse.answer).toUpperCase() : null;
     const interpretationResponse = responses.find((response) =>
       linkIdEquals(
-        response.id,
+        response.linkId,
         scoreToReport === "AUDIT-C" ? "AUDIT-C-score-interpretation" : "AUDIT-score-interpretation",
         "strict",
       ),
     );
     const interpretation = interpretationResponse ? interpretationResponse.answer : null;
-    const auditCResponse = responses.find((response) => linkIdEquals(response.id, "AUDIT-C-score", "strict"));
+    const auditCResponse = responses.find((response) => linkIdEquals(response.linkId, "AUDIT-C-score", "strict"));
     const auditCScore = auditCResponse ? parseInt(auditCResponse.answer, 10) : null;
-    const auditResponse = responses.find((response) => linkIdEquals(response.id, "AUDIT-score", "strict"));
+    const auditResponse = responses.find((response) => linkIdEquals(response.linkId, "AUDIT-score", "strict"));
     const auditScore = auditResponse ? parseInt(auditResponse.answer, 10) : null;
     if (scoreToReport === "AUDIT-C" && auditCScore != null) {
       arrMeaning.push(auditCScore + " (AUDIT-C)");

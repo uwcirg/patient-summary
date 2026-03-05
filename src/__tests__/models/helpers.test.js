@@ -1,7 +1,232 @@
 import { describe, it, expect } from "vitest";
-import { observationsToQuestionnaireResponse } from "../../models/resultBuilders/helpers.jsx";
+import {
+  observationsToQuestionnaireResponse,
+  getAlertFromMostRecentResponse,
+  meaningFromSeverity,
+} from "../../models/resultBuilders/helpers.jsx";
 import questionnaireConfigs from "../../config/questionnaire_config.js";
 
+describe("Alert from Responses", () => {
+  it("return correct alert boolean from IPV-4", () => {
+    const result = getAlertFromMostRecentResponse(
+      {
+        responses: [
+          {
+            linkId: "IPV4-critical",
+            answer: "true",
+          },
+        ],
+      },
+      questionnaireConfigs["CIRG-CNICS-IPV4"],
+    );
+    expect(result).toEqual(true);
+  });
+  it("return correct alert boolean from CIRG-CNICS-FOOD", () => {
+    const result = getAlertFromMostRecentResponse(
+      {
+        responses: [
+          {
+            linkId: "FOOD-critical-flag",
+            answer: "false",
+          },
+        ],
+      },
+      questionnaireConfigs["CIRG-CNICS-FOOD"],
+    );
+    expect(result).toEqual(false);
+  });
+  it("return correct alert boolean from CIRG-CNICS-HIV-STIGMA", () => {
+    const result = getAlertFromMostRecentResponse(
+      {
+        responses: [
+          {
+            linkId: "HIV-STIGMA-SCORE-CRITICAL",
+            answer: "true",
+          },
+        ],
+      },
+      questionnaireConfigs["CIRG-CNICS-HIV-STIGMA"],
+    );
+    expect(result).toEqual(true);
+  });
+});
+
+describe("Meaning from Severity", () => {
+  it("return correct meaning via fallbackMeaning Func from IPV4 (multiple answers)", () => {
+    const result = meaningFromSeverity("", questionnaireConfigs["CIRG-CNICS-IPV4"], [
+      {
+        linkId: "IPV4-1",
+        answer: "Yes",
+      },
+      {
+        linkId: "IPV4-2",
+        answer: "No",
+      },
+      {
+        linkId: "IPV4-3",
+        answer: "Yes",
+      },
+      {
+        linkId: "IPV4-4",
+        answer: "Yes",
+      },
+      {
+        id: "IPV4-critical",
+        answer: "-",
+      },
+    ]);
+    expect(result).toEqual("Felt trapped|Sexual violence|Physical violence");
+  });
+  it("return correct meaning via fallbackMeaning Func from IPV4 (one answer)", () => {
+    const result = meaningFromSeverity("", questionnaireConfigs["CIRG-CNICS-IPV4"], [
+      {
+        linkId: "IPV4-1",
+        answer: "No",
+      },
+      {
+        linkId: "IPV4-2",
+        answer: "Yes",
+      },
+      {
+        linkId: "IPV4-3",
+        answer: "No",
+      },
+      {
+        linkId: "IPV4-4",
+        answer: "No",
+      },
+      {
+        id: "IPV4-critical",
+        answer: "-",
+      },
+    ]);
+    expect(result).toEqual("Fearful of harm");
+  });
+  it("return correct meaning via fallbackMeaning Func from CIRG-CNICS-FOOD", () => {
+    const result = meaningFromSeverity("", questionnaireConfigs["CIRG-CNICS-FOOD"], [
+      {
+        linkId: "FOOD-score-label",
+        answer: "Very Low Food Security",
+      },
+    ]);
+    expect(result).toEqual("Very low food security");
+  });
+  it("return correct meaning via fallbackMeaning Func from CIRG_STI", () => {
+    const result1 = meaningFromSeverity("", questionnaireConfigs["CIRG-STI"], [
+      {
+        linkId: "SEXUAL-RISK-SCORE-STI-EXPOSURE",
+        answer: "Yes",
+      },
+    ]);
+    const result2 = meaningFromSeverity("", questionnaireConfigs["CIRG-STI"], [
+      {
+        linkId: "SEXUAL-RISK-SCORE-STI-EXPOSURE",
+        answer: "true",
+      },
+    ]);
+    const result3 = meaningFromSeverity("", questionnaireConfigs["CIRG-STI"], [
+      {
+        linkId: "SEXUAL-RISK-SCORE-STI-EXPOSURE",
+        answer: "No",
+      },
+    ]);
+    const result4 = meaningFromSeverity("", questionnaireConfigs["CIRG-STI"], [
+      {
+        linkId: "SEXUAL-RISK-SCORE-STI-EXPOSURE",
+        answer: "false",
+      },
+    ]);
+    expect(result1).toEqual("Yes");
+    expect(result2).toEqual("Yes");
+    expect(result3).toEqual("No");
+    expect(result4).toEqual("No");
+  });
+  it("return correct meaning via fallbackMeaning Func from CIRG-PC-PTSD-5", () => {
+    const result = meaningFromSeverity("", questionnaireConfigs["CIRG-PC-PTSD-5"], [
+      {
+        linkId: "PC-PTSD-5-SCORE-SYMPTOMS",
+        answer: "Intrusive Thoughts, Avoidance, Hypervigilance, Numb/Detached",
+      },
+    ]);
+    expect(result).toEqual("Intrusive Thoughts|Avoidance|Hypervigilance|Numb/Detached");
+  });
+
+  it("return correct meaning via fallbackMeaning Func from CIRG-CNICS-AUDIT", () => {
+    const result = meaningFromSeverity("", questionnaireConfigs["CIRG-CNICS-AUDIT"], [
+      {
+        linkId: "AUDIT-qnr-to-report",
+        answer: "AUDIT",
+      },
+      {
+        linkId: "AUDIT-score",
+        answer: "23",
+      },
+      {
+        linkId: "AUDIT-C-score",
+        answer: "8",
+      },
+    ]);
+    const result2 = meaningFromSeverity("", questionnaireConfigs["CIRG-CNICS-AUDIT"], [
+      {
+        linkId: "AUDIT-qnr-to-report",
+        answer: "AUDIT-C",
+      },
+      {
+        linkId: "AUDIT-score",
+        answer: "23",
+      },
+      {
+        linkId: "AUDIT-C-score",
+        answer: "8",
+      },
+    ]);
+
+    expect(result).toEqual("23 (AUDIT)");
+    expect(result2).toEqual("8 (AUDIT-C)");
+  });
+  //CIRG-CNICS-ASSIST
+  it("return correct meaning via fallbackMeaning Func from CIRG-CNICS-ASSIST", () => {
+    const result = meaningFromSeverity("", questionnaireConfigs["CIRG-CNICS-ASSIST"], [
+      {
+        linkId: "ASSIST-3mo-score",
+        answer: "Cocaine/Crack, Methamphetamine, Fentanyl",
+      },
+    ]);
+    expect(result).toEqual("Cocaine/Crack|Methamphetamine|Fentanyl");
+  });
+
+  //"CIRG-CNICS-EXCHANGE-SEX"
+  it("return correct meaning via fallbackMeaning Func from CIRG-CNICS-EXCHANGE-SEX", () => {
+    const result = meaningFromSeverity("", questionnaireConfigs["CIRG-CNICS-EXCHANGE-SEX"], [
+      {
+        linkId: "EXCHANGE-SEX-SCORE-PAST-3-MONTHS",
+        answer: "No",
+      },
+    ]);
+    const result2 = meaningFromSeverity("", questionnaireConfigs["CIRG-CNICS-EXCHANGE-SEX"], [
+      {
+        linkId: "EXCHANGE-SEX-SCORE-PAST-3-MONTHS",
+        answer: "Yes",
+      },
+    ]);
+    const result3 = meaningFromSeverity("", questionnaireConfigs["CIRG-CNICS-EXCHANGE-SEX"], [
+      {
+        linkId: "EXCHANGE-SEX-SCORE-PAST-3-MONTHS",
+        answer: "true",
+      },
+    ]);
+    const result4 = meaningFromSeverity("", questionnaireConfigs["CIRG-CNICS-EXCHANGE-SEX"], [
+      {
+        linkId: "EXCHANGE-SEX-SCORE-PAST-3-MONTHS",
+        answer: "false",
+      },
+    ]);
+    expect(result).toEqual("No");
+    expect(result2).toEqual("Yes");
+    expect(result3).toEqual("Yes");
+    expect(result4).toEqual("No");
+  });
+});
 describe("Observations To QuestionnaireResponses", () => {
   it("return correct valueQuantity answer value from obs matched id in PHQ9", () => {
     const group = [
@@ -39,7 +264,7 @@ describe("Observations To QuestionnaireResponses", () => {
       {
         valueQuantity: {
           value: 3,
-        }
+        },
       },
     ]);
   });

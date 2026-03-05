@@ -8,7 +8,7 @@ import {
 } from "@config/questionnaire_config_helpers";
 import { isEmptyArray } from "@util";
 import { linkIdEquals } from "@util/fhirUtil";
-
+import {normalizeBooleanAnswerResponse } from "@models/resultBuilders/helpers"
 export default {
   ...MEANING_ONLY,
   instrumentName: "Unprotected Sex",
@@ -19,7 +19,7 @@ export default {
   fallbackMeaningFunc: function (severity, responses) {
     if (isEmptyArray(responses)) return "";
     const mainResponse = responses.find((response) =>
-      linkIdEquals(response.id, "SEXUAL-RISK-SCORE-UNPROTECTED", "strict"),
+      linkIdEquals(response.linkId, "SEXUAL-RISK-SCORE-UNPROTECTED", "strict"),
     );
     const mainResponseAnswer =
       mainResponse?.answer != null && mainResponse.answer !== undefined ? mainResponse.answer : null;
@@ -34,11 +34,13 @@ export default {
     ];
 
     for (const { linkId, label } of sexTypes) {
-      const resp = responses.find((response) => linkIdEquals(response.id, linkId, "strict"));
+      const resp = responses.find((response) => linkIdEquals(response.linkId, linkId, "strict"));
       const answer = resp?.answer != null && resp.answer !== undefined ? resp.answer : null;
-      if (String(answer).toLowerCase() === "true") arrResponses.push(`${label}: Yes`);
-      else if (String(answer).toLowerCase() === "false") arrResponses.push(`${label}: No`);
-      else arrResponses.push(`${label}: ${answer ? answer : "-"}`);
+      if (answer !== null) {
+        const boolAnswer = normalizeBooleanAnswerResponse(answer);
+        if (boolAnswer) arrResponses.push(`${label}: Yes`);
+        else arrResponses.push(`${label}: No`);
+      } else arrResponses.push("-");
     }
 
     return arrResponses.join("|");
@@ -75,7 +77,7 @@ export const CIRG_SEXUAL_PARTNER_CONTEXT = {
     ];
     return fields
       .map((linkId) => {
-        const resp = responses.find((response) => linkIdEquals(response.id, linkId, "strict"));
+        const resp = responses.find((response) => linkIdEquals(response.linkId, linkId, "strict"));
         const answer = resp?.answer != null && resp.answer !== undefined ? resp.answer : null;
         return answer && String(answer).toLowerCase() !== "tbd" ? answer : null;
       })
@@ -107,7 +109,7 @@ export const CIRG_STI = {
   },
   columns: [{ linkId: "SEXUAL-RISK-SCORE-STI-EXPOSURE", id: "result" }],
   valueFormatter: (val) =>
-    String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : "",
+    String(val).toLowerCase() === "true" ? "Yes" : String(val).toLowerCase() === "false" ? "No" : val,
   fallbackMeaningFunc: makeBooleanMeaningFunc("SEXUAL-RISK-SCORE-STI-EXPOSURE"),
   alertQuestionId: "SEXUAL-RISK-SCORE-STI-EXPOSURE",
   meaningRowLabel: "Responses"

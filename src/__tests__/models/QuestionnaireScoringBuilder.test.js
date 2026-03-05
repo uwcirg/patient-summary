@@ -45,6 +45,18 @@ const QR_VC = mkQR({
   items: [{ linkId: "q1", answer: [{ valueCoding: { display: "ok" } }] }],
 });
 
+const QR_VC_EXT = mkQR({
+  id: "r_valueCode",
+  questionnaire: Q.url,
+  authored: "2020-01-01T00:00:00Z",
+  items: [{ linkId: "q1", answer: [{ valueCoding: { "extension": [
+                    {
+                      "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue",
+                      "valueDecimal": 1
+                    }
+                  ], display: "yes" } }] }],
+});
+
 const QR_STRING = mkQR({
   id: "r_valueString",
   questionnaire: Q.url,
@@ -57,6 +69,13 @@ const QR_INTEGER = mkQR({
   questionnaire: Q.url,
   authored: "2020-01-01T00:00:00Z",
   items: [{ linkId: "q1", answer: [{ valueInteger: 12 }] }],
+});
+
+const QR_BOOLEAN = mkQR({
+  id: "r_valueBoolean",
+  questionnaire: Q.url,
+  authored: "2020-01-01T00:00:00Z",
+  items: [{ linkId: "q1", answer: [{ valueBoolean: true }] }],
 });
 
 const BUNDLE = { resourceType: "Bundle", entry: [{ resource: Q }, { resource: QR0 }, { resource: QR1 }] };
@@ -105,6 +124,34 @@ describe("QuestionnaireScoringBuilder", () => {
     const override = { resourceType: "Bundle", entry: [{ resource: QR_VC }] };
     const summaries = b.summariesFromBundle(Q, { completedOnly: true }, override);
     expect(summaries?.responseData[0]?.responses[0].answer).toEqual("ok");
+  });
+
+  it("correct valueCode answer value using display that includes extension, fuzzy match", () => {
+    const b = new QuestionnaireScoringBuilder(
+      {
+        questionnaireId: Q.id,
+        questionnaireName: Q.name,
+        questionnaireUrl: Q.url,
+      },
+      BUNDLE,
+    );
+    const override = { resourceType: "Bundle", entry: [{ resource: QR_VC_EXT }] };
+    const summaries = b.summariesFromBundle(Q, { completedOnly: true }, override);
+    expect(summaries?.responseData[0]?.responses[0].answer).toEqual("yes");
+  });
+
+  it("correct valueBoolean, fuzzy match", () => {
+    const b = new QuestionnaireScoringBuilder(
+      {
+        questionnaireId: Q.id,
+        questionnaireName: Q.name,
+        questionnaireUrl: Q.url,
+      },
+      BUNDLE,
+    );
+    const override = { resourceType: "Bundle", entry: [{ resource: QR_BOOLEAN }] };
+    const summaries = b.summariesFromBundle(Q, { completedOnly: true }, override);
+    expect(summaries?.responseData[0]?.responses[0].answer).toEqual("true");
   });
 
   it("correct valueString answer value, fuzzy match", () => {

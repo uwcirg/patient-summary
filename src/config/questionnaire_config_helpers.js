@@ -44,7 +44,7 @@ export const MEANING_ONLY = {
 export function makeBooleanMeaningFunc(linkId) {
   return function (severity, responses) {
     if (isEmptyArray(responses)) return "";
-    const r = responses.find((response) => linkIdEquals(response.id, linkId, "strict"));
+    const r = responses.find((response) => linkIdEquals(response.linkId, linkId, "strict"));
     const answer = r?.answer != null && r.answer !== undefined ? r.answer : null;
     if (String(answer).toLowerCase() === "true") return "Yes";
     if (String(answer).toLowerCase() === "false") return "No";
