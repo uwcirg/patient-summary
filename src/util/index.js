@@ -257,6 +257,7 @@ export function scrollToElement(elementId) {
 export function range(start, end) {
     const startToUse = start == null || isNaN(start) || start > end ? 0: start;
   const endToUse = end == null || isNaN(end) ? 50: end;
+  console.log("start ", startToUse, " end ", endToUse);
   return new Array(endToUse - startToUse + 1).fill(undefined).map((_, i) => i + startToUse);
 }
 
