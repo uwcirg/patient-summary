@@ -149,7 +149,7 @@ export default function LineCharts(props) {
       const dotKey = `${payload.id}_${dataKey || yFieldKey}`;
       setHoveredDotKey(dotKey);
 
-      const meaningRaw = showTooltipMeaning ? payload.meaning ?? payload.scoreMeaning ?? payload.label : "";
+      const meaningRaw = showTooltipMeaning ? (payload.meaning ?? payload.scoreMeaning ?? payload.label) : "";
       const meaning = meaningRaw ? meaningRaw.replace(/\|/g, "\n") : null;
 
       setSourceTooltip({
@@ -544,12 +544,16 @@ export default function LineCharts(props) {
 
       return {
         yDomainToUse: [min - padding, max + padding],
-        yTicksToUse: yTicks || range(min, max),
+        yTicksToUse: yTicks || range(Math.floor(min), Math.ceil(max)),
       };
     }
 
     const domain = maxYValue ? [minYValue ?? 0, maxYValue] : [minYValue ?? 0, "auto"];
-    const ticks = yTicks || (maxYValue ? range(minYValue ?? 0, maxYValue ?? 50) : range(minYValue ?? 0, 50));
+    const ticks =
+      yTicks ||
+      (maxYValue
+        ? range(Math.floor(minYValue ?? 0), Math.ceil(maxYValue ?? 50))
+        : range(Math.floor(minYValue ?? 0), 50));
 
     return {
       yDomainToUse: domain,
@@ -1158,7 +1162,7 @@ export default function LineCharts(props) {
             xs: xsChartHeight ? xsChartHeight : 280, // Increased height for small screens
             sm: chartHeight ? chartHeight : 240,
           },
-          maxWidth: "100%"
+          maxWidth: "100%",
         }}
         className={`chart-wrapper ${wrapperClass ? wrapperClass : ""}`}
         onPointerDown={(e) => {
