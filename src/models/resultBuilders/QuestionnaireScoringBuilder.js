@@ -599,9 +599,8 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       const coding = this.answerCoding(item);
       if (coding) {
         const normalizedCode = coding.code != null ? String(coding.code).toLowerCase() : null;
-        const normalizedFallbackValue = normalizedCode ? fallbackScoreMap[normalizedCode] : null;
         const codeDisplay = NOT_TO_SHOW_CODE_DISPLAY_VALUES.includes(coding.display) ? null : coding.display;
-        const displayValue = normalizedFallbackValue ?? codeDisplay;
+        const displayValue = codeDisplay ?? (normalizedCode ? fallbackScoreMap[normalizedCode] : null);
         if (isNonEmptyString(displayValue)) return displayValue;
         const fromExt = this.readOrdinalExt(coding);
         if (fromExt != null && isNumber(fromExt)) return fromExt;
@@ -816,10 +815,10 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
         config: config,
         questionnaire: questionnaire
           ? questionnaire
-          : getQuestionnaireFromDerivedHostIds(
+          : (getQuestionnaireFromDerivedHostIds(
               config?.deriveFrom?.hostIds,
               getResourcesByResourceType(this.patientBundle, "Questionnaire"),
-            )??this._loadQuestionnaire(qr.questionnaire, null, this.patientBundle),
+            ) ?? this._loadQuestionnaire(qr.questionnaire, null, this.patientBundle)),
         questionnaireResponse: qr,
         patientBundle: this.patientBundle,
       };
@@ -1079,7 +1078,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           row.isValueExpression = sample?.isValueExpression || false;
           row.isHelp = sample?.isHelp || false;
           row.config = resolvedConfig;
-      
+
           // answer retrieval
           for (const dataItem of formattedData) {
             let matchedResponse = null;
