@@ -174,7 +174,7 @@ export default function Header(props) {
         }}
         {...props}
       >
-        About
+        About / Help
       </Button>
     );
   };
