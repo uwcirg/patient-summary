@@ -1154,7 +1154,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       for (const item of data) {
         scoringRow[item.id] = {
           ...getScoreParamsFromResponses([item], resolvedConfig),
-          score: resolvedConfig?.valueFormatter ? resolvedConfig.valueFormatter(item.score) : item.score,
+          score: resolvedConfig?.valueFormatter ? resolvedConfig.valueFormatter(item.score, {context: "score"}) : item.score,
           meaning: item.meaning,
         };
       }
