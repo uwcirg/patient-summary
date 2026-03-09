@@ -15,11 +15,16 @@ export default {
   fallbackMeaningFunc: function (severity, responses) {
     if (isEmptyArray(responses)) return "";
     const meaningResponse = responses.find((response) =>
-      linkIdEquals(response.id, "PC-PTSD-5-SCORE-SYMPTOMS", "strict"),
+      linkIdEquals(response.linkId, "PC-PTSD-5-SCORE-SYMPTOMS", "strict"),
     );
     const meaningAnswer =
       meaningResponse?.answer != null && meaningResponse.answer !== undefined ? meaningResponse.answer : null;
-    return meaningAnswer?.split(",").join("|");
+    return meaningAnswer
+      ? meaningAnswer
+          .split(",")
+          .map((s) => s.trim())
+          .join("|")
+      : "";
   },
   meaningRowLabel: "Summary (Symptoms endorsed in the past month)",
   disableHeaderRowSubtitle: true,

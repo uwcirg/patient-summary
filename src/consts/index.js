@@ -152,15 +152,10 @@ export const SCORING_PARAMS = {
 // pattern in link Id to check to determine whether a questionnaire item is not a response item
 export const EXCLUDED_LINK_ID_KEYWORDS = ["introduction", "ignore", "header", "score-label", "critical-flag"];
 
-export const IS_QUESTION_COLUMN_KEYWORDS = [
-  "score",
-  "meaning",
-  "summary",
-  "visual analog scale",
-];
+export const IS_QUESTION_COLUMN_KEYWORDS = ["score", "meaning", "summary", "visual analog scale"];
 
-export const NOT_TO_SHOW_CODE_DISPLAY_VALUES = [
-  "%(WIDGET)"
-];
+export const NOT_TO_SHOW_CODE_DISPLAY_VALUES = ["%(WIDGET)"];
 
 export const EMPTY_CELL_STRING = "-";
+export const HELP_HTML_TEXT =
+  'If you have questions about this system, email Bill Lober MD, MS at <a href="mailto:cnics-pros@uw.edu">cnics-pros@uw.edu</a>.';

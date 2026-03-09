@@ -1,6 +1,5 @@
 import { MEANING_ONLY } from "@config/questionnaire_config_helpers";
 import { isEmptyArray } from "@util";
-import { linkIdEquals } from "@util/fhirUtil";
 
 export default {
   ...MEANING_ONLY,
@@ -21,7 +20,6 @@ export default {
   },
   fallbackMeaningFunc: function (severity, responses) {
     if (isEmptyArray(responses)) return "";
-    if (!severity || severity === "low") return "";
     const answerMapping = {
       "IPV4-1": "Felt trapped",
       "IPV4-2": "Fearful of harm",
@@ -33,10 +31,8 @@ export default {
         return (
           (response.answer != null &&
             response.answer !== undefined &&
-            linkIdEquals(response.linkId, "IPV4-1", "strict")) ||
-          linkIdEquals(response.linkId, "IPV4-2", "strict") ||
-          linkIdEquals(response.linkId, "IPV4-3", "strict") ||
-          linkIdEquals(response.linkId, "IPV4-4", "strict")
+            String(response.answer).toLowerCase() === "yes" &&
+            answerMapping[response.linkId])
         );
       })
       .map((response) => answerMapping[response.linkId]);
@@ -45,3 +41,4 @@ export default {
   alertQuestionId: "IPV4-critical",
   meaningRowLabel: "Summary",
 };
+

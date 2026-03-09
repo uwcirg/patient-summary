@@ -9,7 +9,6 @@ import ErrorComponent from "./ErrorComponent";
 import Loader from "./Loader";
 import ProgressIndicator from "./ProgressIndicator";
 import Section from "./Section";
-import Version from "./Version";
 import FloatingNavButton from "./FloatingNavButton";
 import useFetchResources from "@/hooks/useFetchResources";
 import { FhirClientContext } from "@/context/FhirClientContext";
@@ -122,7 +121,6 @@ export default function Dashboard() {
               {hasError && renderError()}
               {!fatalError && renderSections()}
             </section>
-            <Version />
           </Stack>
         </>
       )}

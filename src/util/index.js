@@ -3,6 +3,7 @@ import ChartConfig from "@config/chart_config";
 import defaultSections, { sections } from "@config/sections_config";
 import {
   DEFAULT_TOOLBAR_HEIGHT,
+  HELP_HTML_TEXT,
   QUESTIONNAIRE_ANCHOR_ID_PREFIX,
   queryNeedPatientBanner,
 } from "@/consts";
@@ -88,7 +89,7 @@ export function getChartConfig(questionnaireId) {
 }
 
 export function getEnvAboutContent() {
-  return getEnv("REACT_APP_ABOUT_CONTENT");
+  return getEnv("REACT_APP_ABOUT_CONTENT") || HELP_HTML_TEXT;
 }
 
 export function getEnvAppTitle() {
@@ -259,7 +260,10 @@ export function scrollToElement(elementId) {
 }
 
 export function range(start, end) {
-  return new Array(end - start + 1).fill(undefined).map((_, i) => i + start);
+  const startToUse = start == null || isNaN(start) || start > end ? 0 : Math.ceil(start);
+  const endToUse = end == null || isNaN(end) ? 50 : Math.floor(end);
+  if (startToUse > endToUse) return [];
+  return new Array(endToUse - startToUse + 1).fill(undefined).map((_, i) => i + startToUse);
 }
 
 /*
@@ -535,8 +539,11 @@ export function capitalizeFirstLetterSafe(text) {
 }
 
 export function captureFullHTML() {
-  // Capture the HTML
   const rootEl = document.getElementById("root");
+  const origin = window.location.origin;
+  const baseHref = `${origin}/`;
+
+  // Collect styles
   const styles = Array.from(document.styleSheets)
     .flatMap((sheet) => {
       try {
@@ -547,15 +554,62 @@ export function captureFullHTML() {
     })
     .join("\n");
 
-  // this allows tables in detail modal to be captured as separate tables
+  // Collect <script> tags — rewrite relative src to absolute
+  const scripts = Array.from(document.scripts)
+    .map((script) => {
+      if (script.src) {
+        const absoluteSrc = new URL(script.src, baseHref).href;
+        const attrs = [
+          `src="${absoluteSrc}"`,
+          script.type ? `type="${script.type}"` : "",
+          script.defer ? "defer" : "",
+          script.async ? "async" : "",
+          script.noModule ? "nomodule" : "",
+          script.crossOrigin != null ? `crossorigin="${script.crossOrigin}"` : "",
+        ]
+          .filter(Boolean)
+          .join(" ");
+        return `<script ${attrs}></script>`;
+      } else if (script.textContent.trim()) {
+        const type = script.type ? `type="${script.type}"` : "";
+        return `<script ${type}>${script.textContent}</script>`;
+      }
+      return null;
+    })
+    .filter(Boolean)
+    .join("\n");
+
+  // Collect <link rel="modulepreload"> and <link rel="stylesheet"> tags
+  // rewrite relative href to absolute
+  const links = Array.from(
+    document.querySelectorAll("link[rel='modulepreload'], link[rel='stylesheet'], link[rel='preload']"),
+  )
+    .map((link) => {
+      const absoluteHref = new URL(link.href, baseHref).href;
+      const attrs = [
+        `rel="${link.rel}"`,
+        `href="${absoluteHref}"`,
+        link.crossOrigin != null ? `crossorigin="${link.crossOrigin}"` : "",
+        link.as ? `as="${link.as}"` : "",
+        link.type ? `type="${link.type}"` : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+      return `<link ${attrs}>`;
+    })
+    .join("\n");
+
   const html = `<!DOCTYPE html>
 <html>
   <head>
+    <base href="${baseHref}">
     <style>
       ${styles}
-      .print-chunks-history { display: block !important;}
-      .print-table-chunk {display: block !important;}
+      .print-chunks-history { display: block !important; }
+      .print-table-chunk { display: block !important; }
     </style>
+    ${links}
+    ${scripts}
   </head>
   <body>${rootEl?.innerHTML ?? ""}</body>
 </html>`;
