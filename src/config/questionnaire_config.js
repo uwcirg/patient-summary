@@ -278,6 +278,7 @@ function bootstrapInstrumentConfigMap(map) {
  * @param {string[]} [recallCorrectStrings] for Mini-Cog: string answers that count as correct for recall items
  * @param {string[]} [recallLinkIds] for Mini-Cog: linkIds for recall items
  * @param {string|null} [scoringQuestionId] linkId of the question used for scoring
+ * @param {function} [scoreValueFormatter] function to format score for display
  * @param {boolean} [showNumAnsweredWithScore] if true, show number of answered only when score is present
  * @param {{min:number,label:string,meaning?:string}[]} [severityBands]
  * @param {boolean} [skipChart] if true, do not render chart for this questionnaire
@@ -289,7 +290,7 @@ function bootstrapInstrumentConfigMap(map) {
  * @param {string} [title] (from Questionnaire resource)
  * @param {function} [tooltipValueFormatter] function to format y value in tooltip
  * @param {string} [totalAnsweredQuestionId] question Id for the number of answered questions
- * @param {function} [valueFormatter] function to format response value for display
+ * @param {function} [valueFormatter] function to format response value for display, does not apply to score
  * @param {object[]} [yLineFields] additional line fields to show in chart
  */
 const questionnaireConfigsRaw = {
