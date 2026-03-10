@@ -1,10 +1,95 @@
 import { describe, it, expect } from "vitest";
 import {
+  calculateQuestionnaireScore,
   observationsToQuestionnaireResponse,
   getAlertFromMostRecentResponse,
   meaningFromSeverity,
+  severityFromScore,
 } from "../../models/resultBuilders/helpers.jsx";
 import questionnaireConfigs from "../../config/questionnaire_config.js";
+import QuestionnaireScoringBuilder from "../../models/resultBuilders/QuestionnaireScoringBuilder";
+
+const mkQR = ({ id, questionnaire, authored, status = "completed", items = [] }) => ({
+  resourceType: "QuestionnaireResponse",
+  id,
+  status,
+  questionnaire,
+  authored,
+  item: items,
+  meta: { lastUpdated: authored },
+});
+const mkQ = ({ id, url, name, item = [] }) => ({ resourceType: "Questionnaire", id, url, name, item });
+const PHQ_Q = mkQ({
+  id: "CIRG-PHQ9",
+  url: "http://loinc.org/phq9",
+  name: "CIRG-PHQ9",
+  item: [{ linkId: "44261-6", text: "score", type: "decimal", code: [{ code: 44261 - 6 }] }],
+});
+
+const PHQ_QR_SCORE_ITEM = [{ linkId: "44261-6", answer: [{ valueDecimal: 16 }] }];
+const PHQ_QR = mkQR({
+  id: "PHQ_9_score",
+  questionnaire: "Questionnaire/CIRG-PHQ9",
+  authored: "2026-03-01T00:00:00Z",
+  items: PHQ_QR_SCORE_ITEM,
+});
+
+const ARV_Q = mkQ({
+  id: "CIRG-VAS",
+  name: "CIRG-VAS",
+  item: [{ linkId: "ARV-VAS", type: "integer", readOnly: true }],
+});
+const ARV_QR_SCORE_ITEM = [{ linkId: "ARV-VAS", answer: [{ valueInteger: 36 }] }];
+const ARV_QR = mkQR({
+  id: "ARV_score",
+  questionnaire: "Questionniare/CIRG-VAS",
+  items: ARV_QR_SCORE_ITEM,
+});
+
+const BUNDLE = {
+  resourceType: "Bundle",
+  entry: [{ resource: PHQ_Q }, { resource: ARV_Q }, { resource: PHQ_QR }, { resource: ARV_QR }],
+};
+
+describe("Score calculation", () => {
+  it("return correct score from PHQ9", () => {
+    const b = new QuestionnaireScoringBuilder(questionnaireConfigs["CIRG-PHQ9"], BUNDLE);
+    const result = calculateQuestionnaireScore(PHQ_Q, PHQ_QR_SCORE_ITEM, questionnaireConfigs["CIRG-PHQ9"], b);
+    const { score } = result;
+    expect(score).toBe(16);
+  });
+  it("return correct score from ARV", () => {
+    const b = new QuestionnaireScoringBuilder(questionnaireConfigs["CIRG-VAS"], BUNDLE);
+    const result = calculateQuestionnaireScore(ARV_Q, ARV_QR_SCORE_ITEM, questionnaireConfigs["CIRG-VAS"], b);
+    const { score } = result;
+    expect(score).toBe(36);
+  });
+});
+
+describe("Severity from Score", () => {
+  it("return correct severity from PHQ9 score", () => {
+    let severity = severityFromScore(16, questionnaireConfigs["CIRG-PHQ9"]);
+    expect(severity).toEqual("moderately high");
+    severity = severityFromScore(10, questionnaireConfigs["CIRG-PHQ9"]);
+    expect(severity).toEqual("moderate");
+    severity = severityFromScore(5, questionnaireConfigs["CIRG-PHQ9"]);
+    expect(severity).toEqual("mild");
+  });
+  //CIRG-CNICS-ASSIST-OD
+  it("return correct severity from CNICS ASSIST OD", () => {
+    let severity = severityFromScore(1, questionnaireConfigs["CIRG-CNICS-ASSIST-OD"]);
+    expect(severity).toEqual("high");
+    severity = severityFromScore(0, questionnaireConfigs["CIRG-CNICS-ASSIST-OD"]);
+    expect(severity).toEqual("low");
+  });
+  //CIRG-CNICS-HIV-STIGMA
+  it("return correct severity from CIRG HIV STIGMA", () => {
+    let severity = severityFromScore(4, questionnaireConfigs["CIRG-CNICS-HIV-STIGMA"]);
+    expect(severity).toEqual("high");
+    severity = severityFromScore(0, questionnaireConfigs["CIRG-CNICS-HIV-STIGMA"]);
+    expect(severity).toEqual("low");
+  });
+});
 
 describe("Alert from Responses", () => {
   it("return correct alert boolean from IPV-4", () => {

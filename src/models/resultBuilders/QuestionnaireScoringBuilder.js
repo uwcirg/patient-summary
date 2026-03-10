@@ -37,7 +37,6 @@ import {
   DEFAULT_FALLBACK_SCORE_MAPS,
   DEFAULT_VAL_TO_LOIN_CODE,
   EXCLUDED_LINK_ID_KEYWORDS,
-  EMPTY_CELL_STRING,
   NOT_TO_SHOW_CODE_DISPLAY_VALUES,
 } from "@/consts";
 import questionnaireConfig from "@/config/questionnaire_config";
@@ -665,7 +664,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (!this.isResponseQuestionItem(q, configToUse)) returnObject.readOnly = true;
       if (this.isValueExpressionQuestionItem(q)) returnObject.isValueExpression = true;
       if (this.isHelpQuestionItem(q)) returnObject.isHelp = true;
-      returnObject.question = this._getQuestion(matchedResponseItem, configToUse) ?? q.text ?? `Question ${q.linkId}`;
+      returnObject.question = this._getQuestion(q, configToUse) ?? q.text ?? `Question ${q.linkId}`;
       returnObject.text = matchedResponseItem?.text ? matchedResponseItem?.text : "";
       return returnObject;
     });
@@ -761,11 +760,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       if (!col?.id) continue;
       const matchItem = qrItems.find((it) => this.isLinkIdEquals(it.linkId, col.linkId));
       const value = this._getAnswer(matchItem, config);
-      const displayValue = (col?.label ? col.label + ": " : "") + (!isNil(value) ? value : EMPTY_CELL_STRING);
+      const displayValue = (col?.label ? col.label + ": " : "") + (!isNil(value) ? value : "");
       out[col.id] =
         (out[col.id] ? out[col.id] + "\n" : "") +
         (config?.valueFormatter ? config?.valueFormatter(displayValue) : displayValue) +
-        (col.extraLine ? "\n" : "");
+        (displayValue && col.extraLine ? "\n" : "");
     }
     return out;
   }
@@ -829,11 +828,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     return !!x && typeof x.then === "function";
   }
   _getAnswer(responseItem, config) {
-    if (!responseItem) return EMPTY_CELL_STRING;
+    if (!responseItem) return "";
     // tiny safe normalizer to avoid raw objects rendering
     const normalize = (v) => {
       if (typeof v === "string" || typeof v === "number") {
-        if (String(v).toLowerCase() === "tbd") return EMPTY_CELL_STRING;
+        if (String(v).toLowerCase() === "tbd") return "";
         return v;
       }
       if (Array.isArray(v)) return v.join(", ");
@@ -842,7 +841,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     const ansItem = responseItem?.answer;
     const answer = this.getAnswerItemDisplayValue(ansItem, config);
     const displayText = config?.valueFormatter ? config.valueFormatter(answer) : answer;
-    return !isNil(displayText) ? stripHtmlTags(normalize(displayText)) : EMPTY_CELL_STRING;
+    return !isNil(displayText) ? stripHtmlTags(normalize(displayText)) : "";
   }
   _getQuestion(responseItem, configToUse) {
     if (!responseItem) return null;
@@ -1064,7 +1063,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
             resolvedConfig?.linkIdMatchMode,
           );
           if (sample && !sample?.readOnly) {
-            question = this._getQuestion(sample, resolvedConfig);
+            question = sample.question;
           }
           if (!question && questionnaireItem) {
             question = this._getQuestion(questionnaireItem, resolvedConfig);
@@ -1154,8 +1153,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       for (const item of data) {
         scoringRow[item.id] = {
           ...getScoreParamsFromResponses([item], resolvedConfig),
-          score: resolvedConfig?.valueFormatter ? resolvedConfig.valueFormatter(item.score, {context: "score"}) : item.score,
-          meaning: item.meaning,
+          score: resolvedConfig?.scoreValueFormatter ? resolvedConfig.scoreValueFormatter(item.score) : item.score,
         };
       }
       result.unshift(scoringRow);

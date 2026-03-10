@@ -9,8 +9,7 @@ export default {
   scoringQuestionId: "HIV-STIGMA-SCORE",
   showNumAnsweredWithScore: true,
   totalAnsweredQuestionId: "HIV-STIGMA-SCORE-NUM-ANSWERED",
-  valueFormatter: (val, params) => {
-    if (params && params.context === "score") return val;
+  valueFormatter: (val) => {
     const mappings = {
       1: "Strongly disagree",
       2: "Disagree",

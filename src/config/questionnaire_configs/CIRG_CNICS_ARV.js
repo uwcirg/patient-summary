@@ -39,6 +39,7 @@ export const CIRG_CNICS_ARV_VAS = {
   },
   columns: [{ linkId: "ARV-VAS", id: "result" }],
   valueFormatter: percentValueFormatter,
+  scoreValueFormatter: percentValueFormatter,
   chartParams: {
     ...CHART_CONFIG.default,
     title: "Percent ART Taken",

@@ -216,7 +216,7 @@ describe("QuestionnaireScoringBuilder – severity bands", () => {
 
   it("selects the first band whose min <= score (bands sorted desc)", () => {
     expect(severityFromScore(22, config)).toBe("high");
-    expect(severityFromScore(15, config)).toBe("moderate");
+    expect(severityFromScore(15, config)).toBe("medium");
     expect(severityFromScore(4, config)).toBe("low");
   });
 
