@@ -16,7 +16,7 @@ export default function Footer() {
         left: 0,
         width: "100%",
         pt: 0.5,
-        pb: 1,
+        pb: 0.5,
         px: 2,
         zIndex: 50,
         backgroundColor: (theme) => theme.palette.lighter.main,
@@ -26,7 +26,6 @@ export default function Footer() {
     >
       <Typography
         variant="body2"
-        color="text.secondary"
         dangerouslySetInnerHTML={{ __html: DomPurify.sanitize(HELP_HTML_TEXT) }}
       />
       <Version />
