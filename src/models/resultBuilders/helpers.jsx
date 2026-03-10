@@ -615,12 +615,11 @@ export function meaningFromSeverity(sev, config = {}, responses = [], summaryObj
     return config.fallbackMeaningFunc(sev, responses, summaryObject);
   }
 
-  const valueFromMeaningQuestionId = (responses || []).find((o) =>
+  const valueFromMeaningQuestionId = config?.meaningQuestionId ? (responses || []).find((o) =>
     linkIdEquals(o.linkId, config?.meaningQuestionId, config?.linkIdMatchMode),
-  )?.answer;
+  )?.answer : null;
 
   if (valueFromMeaningQuestionId != null) return String(valueFromMeaningQuestionId).replace(/"/g, "");
-
   const bands = config?.severityBands;
   return bands?.find((b) => b.label === sev)?.meaning ?? null;
 }

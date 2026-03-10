@@ -56,7 +56,7 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
               direction="row"
               spacing={0.25}
               justifyContent="flex-start"
-              alignItems="flex-end"
+              alignItems="flex-start"
               sx={{
                 borderBottom: index !== parts.length - 1 ? "1px solid #f4f5f5" : "none",
                 paddingBottom: "4px",
