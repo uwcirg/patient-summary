@@ -585,18 +585,20 @@ export function getPreviousResponseRowWithScore(rdata = []) {
  */
 export function severityFromScore(score, config = {}) {
   if (!isNumber(score)) return "";
+  let severity = "";
+  const bands = config?.severityBands;
+  if (!isEmptyArray(bands)) {
+    for (const band of bands) {
+      if (severity) break;
+      if (score >= (band.min ?? 0)) severity = band.label;
+    }
+  }
+  if (severity) return severity;
+
   if (config?.highSeverityScoreCutoff != null && score >= config.highSeverityScoreCutoff) return "high";
   if (config?.mediumSeverityScoreCutoff != null && score >= config.mediumSeverityScoreCutoff) return "moderate";
 
-  const bands = config?.severityBands;
-  if (isEmptyArray(bands) || !isNumber(score)) return "low";
-
-  // Bands assumed sorted desc by min
-  for (const band of bands) {
-    if (score >= (band.min ?? 0)) return band.label;
-  }
-
-  return bands[bands.length - 1]?.label ?? "low";
+  return "low";
 }
 
 /**
@@ -615,9 +617,9 @@ export function meaningFromSeverity(sev, config = {}, responses = [], summaryObj
     return config.fallbackMeaningFunc(sev, responses, summaryObject);
   }
 
-  const valueFromMeaningQuestionId = config?.meaningQuestionId ? (responses || []).find((o) =>
-    linkIdEquals(o.linkId, config?.meaningQuestionId, config?.linkIdMatchMode),
-  )?.answer : null;
+  const valueFromMeaningQuestionId = config?.meaningQuestionId
+    ? (responses || []).find((o) => linkIdEquals(o.linkId, config?.meaningQuestionId, config?.linkIdMatchMode))?.answer
+    : null;
 
   if (valueFromMeaningQuestionId != null) return String(valueFromMeaningQuestionId).replace(/"/g, "");
   const bands = config?.severityBands;
@@ -686,7 +688,6 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
       const k = def?.key ?? def?.linkId;
       const linkId = def?.linkId;
       if (!k || !linkId) continue;
-
       const v = ctx.getScoringByResponseItem(questionnaire, responseItemsFlat, linkId, config);
       subScores[k] = v ?? null;
     }
@@ -701,15 +702,14 @@ export function calculateQuestionnaireScore(questionnaire, responseItemsFlat, co
   };
 }
 
-
-export function normalizeBooleanAnswerResponse (answer) {
-      if (typeof answer === "boolean") return answer;
-      if (typeof answer === "string") {
-        const normalized = normalizeStr(answer);
-        return normalized === "yes" || normalized === "true";
-      }
-      return false;
-    }
+export function normalizeBooleanAnswerResponse(answer) {
+  if (typeof answer === "boolean") return answer;
+  if (typeof answer === "string") {
+    const normalized = normalizeStr(answer);
+    return normalized === "yes" || normalized === "true";
+  }
+  return false;
+}
 
 /**
  * Determines if most recent response triggers an alert
@@ -722,8 +722,10 @@ export function normalizeBooleanAnswerResponse (answer) {
  */
 export function getAlertFromMostRecentResponse(current, config = {}) {
   if (!current) return false;
-  if (config?.alertQuestionId){
-    const alertQuestionResponse = current?.responses?.find((o) => linkIdEquals(o.linkId, config?.alertQuestionId, config?.linkIdMatchMode))?.answer;
+  if (config?.alertQuestionId) {
+    const alertQuestionResponse = current?.responses?.find((o) =>
+      linkIdEquals(o.linkId, config?.alertQuestionId, config?.linkIdMatchMode),
+    )?.answer;
     return normalizeBooleanAnswerResponse(alertQuestionResponse);
   }
 
@@ -965,8 +967,8 @@ export function getResponseColumns(data) {
           if (rowDataItem.isQuestionRow) {
             return <span className="question-cell"></span>;
           }
+          const { key, ...rest } = rowDataItem;
           if (rowDataItem.hasMeaningOnly) {
-            const { key, ...rest } = rowDataItem;
             if (!rowDataItem.meaning) return EMPTY_CELL_STRING;
             return <Meaning {...rest}></Meaning>;
           }
@@ -979,9 +981,9 @@ export function getResponseColumns(data) {
                   instrumentId={rowDataItem.instrumentId}
                   score={rowDataItem.score}
                   // pass only the params object; Scoring already expects an object here
-                  scoreParams={{ ...rowDataItem}}
+                  scoreParams={{ ...rowDataItem }}
                 />
-                {rowDataItem.meaning && <Meaning {...rowDataItem}></Meaning>}
+                <Meaning {...rest}></Meaning>
               </Stack>
             );
           }

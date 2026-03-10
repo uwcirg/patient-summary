@@ -3,8 +3,35 @@ import {
   observationsToQuestionnaireResponse,
   getAlertFromMostRecentResponse,
   meaningFromSeverity,
+  severityFromScore,
 } from "../../models/resultBuilders/helpers.jsx";
 import questionnaireConfigs from "../../config/questionnaire_config.js";
+
+describe("Severity from Score", () => {
+  it("return correct severity from PHQ9 score", () => {
+    let severity = severityFromScore(16, questionnaireConfigs["CIRG-PHQ9"]);
+    expect(severity).toEqual("moderately high");
+    severity = severityFromScore(10, questionnaireConfigs["CIRG-PHQ9"]);
+    expect(severity).toEqual("moderate");
+    severity = severityFromScore(5, questionnaireConfigs["CIRG-PHQ9"]);
+    expect(severity).toEqual("mild");
+  });
+  //CIRG-CNICS-ASSIST-OD
+  it("return correct severity from CNICS ASSIST OD", () => {
+    let severity = severityFromScore(1, questionnaireConfigs["CIRG-CNICS-ASSIST-OD"]);
+    expect(severity).toEqual("high");
+    severity = severityFromScore(0, questionnaireConfigs["CIRG-CNICS-ASSIST-OD"]);
+    expect(severity).toEqual("low");
+  });
+  //CIRG-CNICS-HIV-STIGMA
+  it("return correct severity from CIRG HIV STIGMA", () => {
+    let severity = severityFromScore(4, questionnaireConfigs["CIRG-CNICS-HIV-STIGMA"]);
+    expect(severity).toEqual("high");
+    severity = severityFromScore(0, questionnaireConfigs["CIRG-CNICS-HIV-STIGMA"]);
+    expect(severity).toEqual("low");
+  });
+
+});
 
 describe("Alert from Responses", () => {
   it("return correct alert boolean from IPV-4", () => {
