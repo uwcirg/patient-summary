@@ -53,8 +53,8 @@ export default {
     xLabel: "",
     scoringQuestionId: "AUDIT-score",
     yLineFields: [
-      { key: "AUDIT-C-score", color: "#498C8A", strokeWidth: 1, legendType: "line", strokeOpacity: 0.6 },
-      { key: "AUDIT-score", color: "#600876", strokeWidth: 1, strokeOpacity: 0.6, legendType: "line" },
+      { key: "AUDIT-C-score", color: "#FF8C00", strokeWidth: 1, legendType: "line", strokeOpacity: 0.6 },
+      { key: "AUDIT-score", color: "#0000FF", strokeWidth: 1, strokeOpacity: 0.6, legendType: "line" },
     ],
     showTooltipMeaning: false,
   },
