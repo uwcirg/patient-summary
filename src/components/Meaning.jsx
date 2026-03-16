@@ -1,6 +1,7 @@
 // Meaning.jsx
 import React from "react";
 import PropTypes from "prop-types";
+import AlertIcon from "@mui/icons-material/ReportProblem";
 import DOMPurify from "dompurify";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
@@ -24,6 +25,7 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
 
   const parts = String(meaning).includes("|") ? String(meaning).split("|") : [String(meaning)];
   const cellClass = alert ? "text-danger" : warning ? "text-warning" : "";
+  const colorSeverity = alert ? "error": (warning ? "warning" : "");
   const partsContainSemiColon = parts?.filter((part) => part.includes(":"));
 
   return (
@@ -74,9 +76,10 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
 
         // Default rendering
         return (
-          <Box className={`table-cell-item ${cellClass}`} key={key}>
-            {s}
-          </Box>
+          <Stack direction={"row"} alignItems={"center"} key={key} spacing={1}>
+            <Box className={`table-cell-item ${cellClass}`}>{s}</Box>
+            {colorSeverity && <AlertIcon fontSize="small" color={colorSeverity}></AlertIcon>}
+          </Stack>
         );
       })}
     </Box>
