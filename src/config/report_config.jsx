@@ -2,6 +2,7 @@ import { Box, Stack } from "@mui/material";
 import { getNoDataDisplay } from "@models/resultBuilders/helpers";
 import { getLocaleDateStringFromDate, isEmptyArray } from "@util";
 import ResponsesViewer from "@components/ResponsesViewer";
+import Meaning from "@components/Meaning";
 
 export const report_config = {
   sections: [
@@ -90,7 +91,7 @@ export const report_config = {
           id: "table_art_adherence",
           layout: "two-columns",
           dataKeysToMatch: ["CIRG-SRS", "CIRG-Last-Missed-Dose", "CIRG-VAS"],
-          title: "Antiretroviral (ART) Adherence",
+          title: "Adherence to Antiretroviral Therapy (ART)",
           hiddenColumns: ["id", "source", "numAnswered", "scoreMeaning", "comparison"],
           columns: [
             {
@@ -215,16 +216,15 @@ export const report_config = {
                 if (!isEmptyArray(values)) {
                   return (
                     <Stack direction={"column"} gap={0.5}>
-                      {values.map((value, index) => (
-                        <span className={`${row?.alert ? "text-danger" : ""}`} key={`${row.key}_value_${index}`}>
-                          {value}
-                        </span>
-                      ))}
+                      {values.map((value, index) => {
+                        const {key, ...rest} = row;
+                        return <Meaning key={`${key}_value_${index}`} {...rest} meaning={value}/>
+                      })}
                     </Stack>
                   );
                 }
                 if (row?.meaning) {
-                  return <span className={`${row?.alert ? "text-danger" : ""}`}>{row.meaning}</span>;
+                  return <Meaning {...row}/>
                 }
                 return getNoDataDisplay();
               },
