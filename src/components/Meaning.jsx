@@ -29,7 +29,7 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
   const partsContainSemiColon = parts?.filter((part) => part.includes(":"));
 
   return (
-    <Box className={`meaning-wrapper ${className}`.trim()}>
+    <Stack className={`meaning-wrapper ${className}`.trim()} direction={"column"} gap={1}>
       {parts.map((m, index) => {
         const key = `${id ?? "row"}_meaning_${index}`;
         const s = String(m ?? "");
@@ -82,7 +82,7 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
           </Stack>
         );
       })}
-    </Box>
+    </Stack>
   );
 }
 

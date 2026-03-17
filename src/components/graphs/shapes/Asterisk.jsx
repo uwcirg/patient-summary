@@ -1,30 +1,28 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-const Cross = (props) => {
+const Asterisk = (props) => {
   const { cx, cy, stroke, width = 10, height = 10, isHovered = false } = props;
   return (
     <svg
-      x={cx - 5}
-      y={cy - 5}
+      x={cx - width / 2}
+      y={cy - height / 2}
       width={isHovered ? width * 1.2 : width}
       height={isHovered ? height * 1.2 : height}
-      viewBox="0 0 20 20"
+      viewBox="0 0 24 24"
       fill={stroke}
     >
-      <line x1="0" y1="10" x2="20" y2="10" stroke={stroke} strokeWidth="6" />
-      <line x1="10" y1="0" x2="10" y2="20" stroke={stroke} strokeWidth="6" />
+      <path d="M11,2 L13,2 L13,8 L19,4 L21,7 L15,11 L21,15 L19,18 L13,14 L13,22 L11,22 L11,14 L5,18 L3,15 L9,11 L3,7 L5,4 L11,8 Z" />
     </svg>
   );
 };
+export default Asterisk;
 
-export default Cross;
-
-Cross.propTypes = {
+Asterisk.propTypes = {
   cx: PropTypes.number,
   cy: PropTypes.number,
+  stroke: PropTypes.string,
   width: PropTypes.number,
   height: PropTypes.number,
-  stroke: PropTypes.string,
   isHovered: PropTypes.bool,
 };

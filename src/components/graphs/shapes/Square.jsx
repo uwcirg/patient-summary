@@ -2,13 +2,24 @@ import React from "react";
 import PropTypes from "prop-types";
 
 const Square = (props) => {
-  const { cx, cy, stroke } = props;
-  return <rect x={cx - 5} y={cy - 5} width="8" height="8" fill={stroke} />;
+  const { cx, cy, stroke, width = 6, height = 6, isHovered = false } = props;
+  return (
+    <rect
+      x={cx - width / 2}
+      y={cy - height / 2}
+      width={isHovered ? width * 1.2 : width}
+      height={isHovered ? height * 1.2 : height}
+      fill={stroke}
+    />
+  );
 };
 export default Square;
 
 Square.propTypes = {
   cx: PropTypes.number,
   cy: PropTypes.number,
+  width: PropTypes.number,
+  height: PropTypes.number,
   stroke: PropTypes.string,
+  isHovered: PropTypes.bool,
 };

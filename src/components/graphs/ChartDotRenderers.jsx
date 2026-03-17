@@ -1,7 +1,36 @@
 import React from "react";
 import { ALERT_COLOR, SUCCESS_COLOR, getDotColor } from "@config/chart_config";
 import SourceDot from "./SourceDot";
+import { getShape } from "./shapes";
 import { isEmptyArray } from "@/util";
+
+export const renderShapeDot = (props) => {
+  const { cx, cy, stroke, radius, shape, isActive, isHovered, payload, index } = props;
+  const keyToUse = `dot-${isActive ? "active-" : ""}${payload?.id}_${index}`;
+  const shapeProps = {
+    cx: cx,
+    cy: cy,
+    radius: radius,
+    stroke: stroke,
+    isHovered: isHovered
+  };
+  if (shape) {
+    return getShape(shape, shapeProps);
+  }
+
+  return (
+    <circle
+      key={keyToUse}
+      cx={cx}
+      cy={cy}
+      r={radius}
+      fill={stroke}
+      stroke="#fff"
+      strokeWidth={2}
+      pointerEvents="none"
+    />
+  );
+};
 /**
  * Determines the base color for a dot based on severity
  * @param {Object} payload - Data point payload
@@ -49,9 +78,11 @@ export const renderChartDot = (props, config) => {
     isActive = false,
     isHovered = false,
     params = {},
+    shape,
+    disableSources = false,
     // optional tuning knobs:
     hitRadiusMultiplier = 1.25, // how much bigger than visual dot
-    minHitRadius = 2,          // minimum hit target in px (great for iPad)
+    minHitRadius = 2, // minimum hit target in px (great for iPad)
   } = config;
 
   // Determine visual radius
@@ -65,7 +96,7 @@ export const renderChartDot = (props, config) => {
   // Build the visible dot element (same logic you already have)
   let visibleDot = null;
 
-  if (!isEmptyArray(sources)) {
+  if (!disableSources && !isEmptyArray(sources)) {
     visibleDot = (
       <g pointerEvents="none">
         <SourceDot
@@ -87,33 +118,14 @@ export const renderChartDot = (props, config) => {
   } else {
     const baseColor = getSeverityBaseColor(payload, value, dotColor);
     const color = getDotColor(payload, baseColor);
-
-    visibleDot = (
-      <circle
-        key={`dot-${isActive ? "active-" : ""}${payload?.id}_${index}`}
-        cx={cx}
-        cy={cy}
-        r={visualR}
-        fill={color}
-        stroke="#fff"
-        strokeWidth={2}
-        pointerEvents="none"
-      />
-    );
+    visibleDot = renderShapeDot({ cx: cx, cy: cy, radius: visualR, stroke: color, shape, isActive, isHovered, payload, index });
   }
 
   // Wrap with hit target
   return (
     <g key={`dotwrap-${isActive ? "active-" : ""}${payload?.id}_${index}`}>
       {/* invisible hit target */}
-      <circle
-        cx={cx}
-        cy={cy}
-        r={hitR}
-        fill="transparent"
-        stroke="transparent"
-        style={{ pointerEvents: "all" }}
-      />
+      <circle cx={cx} cy={cy} r={hitR} fill="transparent" stroke="transparent" style={{ pointerEvents: "all" }} />
       {visibleDot}
     </g>
   );
