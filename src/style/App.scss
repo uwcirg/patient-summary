@@ -218,14 +218,13 @@ td {
   td:has(.text-error) {
     background-color: $danger-background-color;
   }
-  tr:has(.no-data-wrapper) {
-    td {
-      //  border-right: 0 !important;
-      font-weight: 400 !important;
-      color: $muted-text-color;
-      font-style: italic;
-      text-align: left;
-    }
+
+  td:has(.no-data-wrapper) {
+    //  border-right: 0 !important;
+    font-weight: 400 !important;
+    color: $muted-text-color;
+    font-style: italic;
+    text-align: left;
   }
 }
 .responses-container {
