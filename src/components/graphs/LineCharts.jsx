@@ -716,7 +716,7 @@ export default function LineCharts(props) {
             dot={(dotProps) => {
               const dotKey = `${dotProps.payload?.id}_${item.key}`;
               const isHovered = hoveredDotKey === dotKey;
-              const CustomDot = createDotRenderer({ ...lineDotConfig, isHovered: isHovered, disableSources: hasMultipleYFields });
+              const CustomDot = createDotRenderer({ ...lineDotConfig, isHovered: isHovered});
               const { key, ...rest } = dotProps;
               return (
                 <g

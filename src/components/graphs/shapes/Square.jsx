@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 
 const Square = (props) => {
-  const { cx, cy, stroke, width = 6, height = 6, isHovered = false } = props;
+  const { cx, cy, stroke, width = 7, height = 7, isHovered = false } = props;
   return (
     <rect
       x={cx - width / 2}

@@ -182,6 +182,11 @@ p {
     }
   }
 }
+td {
+  .MuiSvgIcon-root {
+    font-size: 1rem !important;
+  }
+}
 .meaning-item {
   white-space: pre-line;
 }

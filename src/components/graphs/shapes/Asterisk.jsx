@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 
 const Asterisk = (props) => {
-  const { cx, cy, stroke, width = 10, height = 10, isHovered = false } = props;
+  const { cx, cy, stroke, width = 12, height = 12, isHovered = false } = props;
   return (
     <svg
       x={cx - width / 2}

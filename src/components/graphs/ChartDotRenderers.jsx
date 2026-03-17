@@ -79,7 +79,6 @@ export const renderChartDot = (props, config) => {
     isHovered = false,
     params = {},
     shape,
-    disableSources = false,
     // optional tuning knobs:
     hitRadiusMultiplier = 1.25, // how much bigger than visual dot
     minHitRadius = 2, // minimum hit target in px (great for iPad)
@@ -96,7 +95,7 @@ export const renderChartDot = (props, config) => {
   // Build the visible dot element (same logic you already have)
   let visibleDot = null;
 
-  if (!disableSources && !isEmptyArray(sources)) {
+  if (!shape && !isEmptyArray(sources)) {
     visibleDot = (
       <g pointerEvents="none">
         <SourceDot
