@@ -1,12 +1,8 @@
 import dayjs from "dayjs";
 import ChartConfig from "@config/chart_config";
 import defaultSections, { sections } from "@config/sections_config";
-import {
-  DEFAULT_TOOLBAR_HEIGHT,
-  HELP_HTML_TEXT,
-  QUESTIONNAIRE_ANCHOR_ID_PREFIX,
-  queryNeedPatientBanner,
-} from "@/consts";
+import { DEFAULT_TOOLBAR_HEIGHT, HELP_HTML_TEXT, QUESTIONNAIRE_ANCHOR_ID_PREFIX, queryNeedPatientBanner } from "@/consts";
+
 
 export const shortDateRE = /^\d{4}-\d{2}-\d{2}$/; // matches '2012-04-05'
 export const dateREZ =
@@ -260,8 +256,8 @@ export function scrollToElement(elementId) {
 }
 
 export function range(start, end) {
-  const startToUse = start == null || isNaN(start) || start > end ? 0 : Math.ceil(start);
-  const endToUse = end == null || isNaN(end) ? 50 : Math.floor(end);
+  const startToUse = start == null || isNaN(start) || start > end ? 0: Math.ceil(start);
+  const endToUse = end == null || isNaN(end) ? 50: Math.floor(end);
   if (startToUse > endToUse) return [];
   return new Array(endToUse - startToUse + 1).fill(undefined).map((_, i) => i + startToUse);
 }
@@ -460,11 +456,11 @@ export function generateUUID() {
     var r = Math.random() * 16; //random number between 0 and 16
     if (d > 0) {
       //Use timestamp until depleted
-      r = ((d + r) % 16) | 0;
+      r = (d + r) % 16 | 0;
       d = Math.floor(d / 16);
     } else {
       //Use microseconds since page-load if supported
-      r = ((d2 + r) % 16) | 0;
+      r = (d2 + r) % 16 | 0;
       d2 = Math.floor(d2 / 16);
     }
     return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
@@ -536,115 +532,4 @@ export function capitalizeFirstLetterSafe(text) {
   if (typeof text !== "string" || text.length === 0) return text;
   const textStr = String(text).replace(/"/g, "").trim();
   return textStr.charAt(0).toUpperCase() + textStr.slice(1).toLowerCase();
-}
-
-export function captureFullHTML() {
-  const rootEl = document.getElementById("root");
-  const origin = window.location.origin;
-  const baseHref = `${origin}/`;
-
-  // Collect styles
-  const styles = Array.from(document.styleSheets)
-    .flatMap((sheet) => {
-      try {
-        return Array.from(sheet.cssRules).map((r) => r.cssText);
-      } catch {
-        return [];
-      }
-    })
-    .join("\n");
-
-  // Collect <script> tags — rewrite relative src to absolute
-  const scripts = Array.from(document.scripts)
-    .map((script) => {
-      if (script.src) {
-        const absoluteSrc = new URL(script.src, baseHref).href;
-        const attrs = [
-          `src="${absoluteSrc}"`,
-          script.type ? `type="${script.type}"` : "",
-          script.defer ? "defer" : "",
-          script.async ? "async" : "",
-          script.noModule ? "nomodule" : "",
-          script.crossOrigin != null ? `crossorigin="${script.crossOrigin}"` : "",
-        ]
-          .filter(Boolean)
-          .join(" ");
-        return `<script ${attrs}></script>`;
-      } else if (script.textContent.trim()) {
-        const type = script.type ? `type="${script.type}"` : "";
-        return `<script ${type}>${script.textContent}</script>`;
-      }
-      return null;
-    })
-    .filter(Boolean)
-    .join("\n");
-
-  // Collect <link rel="modulepreload"> and <link rel="stylesheet"> tags
-  // rewrite relative href to absolute
-  const links = Array.from(
-    document.querySelectorAll("link[rel='modulepreload'], link[rel='stylesheet'], link[rel='preload']"),
-  )
-    .map((link) => {
-      const absoluteHref = new URL(link.href, baseHref).href;
-      const attrs = [
-        `rel="${link.rel}"`,
-        `href="${absoluteHref}"`,
-        link.crossOrigin != null ? `crossorigin="${link.crossOrigin}"` : "",
-        link.as ? `as="${link.as}"` : "",
-        link.type ? `type="${link.type}"` : "",
-      ]
-        .filter(Boolean)
-        .join(" ");
-      return `<link ${attrs}>`;
-    })
-    .join("\n");
-
-  const html = `<!DOCTYPE html>
-<html>
-  <head>
-    <base href="${baseHref}">
-    <style>
-      ${styles}
-      .print-chunks-history { display: block !important; }
-      .print-table-chunk { display: block !important; }
-    </style>
-    ${links}
-    ${scripts}
-  </head>
-  <body>${rootEl?.innerHTML ?? ""}</body>
-</html>`;
-
-  return html;
-}
-
-export function getSnapshotDocRefId(patientId) {
-  return `proreport-snapshot-${patientId}`;
-}
-
-export async function saveHTMLToFHIR(client, patientId) {
-  if (!client || !patientId) return null;
-  const html = captureFullHTML();
-  const encoded = btoa(unescape(encodeURIComponent(html)));
-  const resourceId = getSnapshotDocRefId(patientId);
-
-  const docRef = {
-    resourceType: "DocumentReference",
-    id: resourceId, // required for PUT
-    status: "current",
-    subject: { reference: `Patient/${patientId}` },
-    date: new Date().toISOString(),
-    description: "PRO report UI snapshot",
-    content: [
-      {
-        attachment: {
-          contentType: "text/html",
-          data: encoded,
-          title: "Report HTML Snapshot",
-          creation: new Date().toISOString(),
-        },
-      },
-    ],
-  };
-  // PUT will create-or-update in place — no duplicate resources
-  return await client.update(docRef);
 }
