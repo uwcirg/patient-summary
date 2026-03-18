@@ -11,9 +11,6 @@ export const CIRG_CNICS_ARV_MISSED_DOSE = makeArvDerivedConfig(
   "ARV-last-missed",
   "Last Missed Dose",
   "Last Missed Dose",
-  {
-    subtitle: "Past 4 weeks",
-  },
 );
 
 export const CIRG_CNICS_ARV_SRS = makeArvDerivedConfig(
@@ -30,7 +27,7 @@ export const CIRG_CNICS_ARV_SRS = makeArvDerivedConfig(
 export const CIRG_CNICS_ARV_VAS = {
   ...BASE_CONFIG,
   title: "Percent ART taken",
-  subtitle: "Past 4 weeks",
+  subtitle: "Past 30 days",
   instrumentName: "VAS",
   scoringQuestionId: "ARV-VAS",
   deriveFrom: {
