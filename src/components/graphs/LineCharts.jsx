@@ -677,6 +677,7 @@ export default function LineCharts(props) {
           dotColor: item.color, // Use the line's color as the dot color
           dotRadius: item.dotRadius ?? dotRadius,
           activeDotRadius: item.activeDotRadius ?? activeDotRadius,
+          shape: item.shape
         };
 
         // Use custom opacity if provided, otherwise default to 0.5
@@ -715,7 +716,7 @@ export default function LineCharts(props) {
             dot={(dotProps) => {
               const dotKey = `${dotProps.payload?.id}_${item.key}`;
               const isHovered = hoveredDotKey === dotKey;
-              const CustomDot = createDotRenderer({ ...lineDotConfig, isHovered });
+              const CustomDot = createDotRenderer({ ...lineDotConfig, isHovered: isHovered});
               const { key, ...rest } = dotProps;
               return (
                 <g

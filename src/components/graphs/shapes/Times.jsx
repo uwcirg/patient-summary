@@ -1,26 +1,24 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-const Cross = (props) => {
+const Times = (props) => {
   const { cx, cy, stroke, width = 10, height = 10, isHovered = false } = props;
   return (
     <svg
-      x={cx - 5}
-      y={cy - 5}
+      x={cx - width / 2}
+      y={cy - height / 2}
       width={isHovered ? width * 1.2 : width}
       height={isHovered ? height * 1.2 : height}
-      viewBox="0 0 20 20"
+      viewBox="0 0 24 24"
       fill={stroke}
     >
-      <line x1="0" y1="10" x2="20" y2="10" stroke={stroke} strokeWidth="6" />
-      <line x1="10" y1="0" x2="10" y2="20" stroke={stroke} strokeWidth="6" />
+      <path d="M4,2 L12,10 L20,2 L22,4 L14,12 L22,20 L20,22 L12,14 L4,22 L2,20 L10,12 L2,4 Z" />
     </svg>
   );
 };
+export default Times;
 
-export default Cross;
-
-Cross.propTypes = {
+Times.propTypes = {
   cx: PropTypes.number,
   cy: PropTypes.number,
   width: PropTypes.number,

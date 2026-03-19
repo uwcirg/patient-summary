@@ -12,7 +12,7 @@ import TableRow from "@mui/material/TableRow";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Scoring from "@components/Score";
-import { isEmptyArray, scrollToAnchor } from "@util";
+import { isEmptyArray, isNil, scrollToAnchor } from "@util";
 import InfoDialog from "../InfoDialog";
 import ResponsesViewer from "../ResponsesViewer";
 import Meaning from "../Meaning";
@@ -70,9 +70,7 @@ function TableHeader({ visibleColumns, baseCellStyle }) {
               ...(col.sticky ? STICKY_STYLE : {}),
               ...(col.headerProps?.sx || {}),
               ...(col.width ? { width: col.width } : {}),
-              ...(HIDDEN_COLUMN_IDS_IN_MOBILE.includes(col.id)
-                ? { display: { xs: "none", md: "table-cell" } }
-                : {}),
+              ...(HIDDEN_COLUMN_IDS_IN_MOBILE.includes(col.id) ? { display: { xs: "none", md: "table-cell" } } : {}),
             }}
           >
             {col.header}
@@ -173,18 +171,13 @@ export default function ScoringSummary({
       verticalAlign: "top",
       ...CELL_WHITESPACE_STYLE,
     }),
-    [theme]
+    [theme],
   );
 
   // ---- renderers (memoized; depend on disableLinks + enableResponsesViewer)
   const defaultRenderers = useMemo(
     () => ({
-      text: (row, value) =>
-        value ? (
-          <span className={getTextClassName(row)}>{value}</span>
-        ) : (
-          getNoDataDisplay()
-        ),
+      text: (row, value) => (value ? <span className={getTextClassName(row)}>{value}</span> : getNoDataDisplay()),
 
       date: (row) => (
         <Stack direction="column" spacing={1} alignItems="space-between" justifyContent="space-between">
@@ -198,7 +191,7 @@ export default function ScoringSummary({
       answered: (row) => {
         if (row.totalAnsweredItems != null || row.note) {
           return (
-            <Stack direction="row">
+            <Stack direction="row" alignItems={"center"}>
               {row.totalAnsweredItems && (
                 <Box>{`${row.totalAnsweredItems} question${row.totalAnsweredItems > 1 ? "s" : ""} answered`}</Box>
               )}
@@ -238,7 +231,7 @@ export default function ScoringSummary({
         </Stack>
       ),
     }),
-    [] // no deps: renderers don't close over changing props directly
+    [], // no deps: renderers don't close over changing props directly
   );
 
   const handleClick = (e, anchorElementId) => {
@@ -333,13 +326,16 @@ export default function ScoringSummary({
         align: "left",
         headerProps: { sx: baseCellStyle, ...DEFAULT_HEADER_CELL_PROPS, align: "left" },
         cellProps: { sx: { ...baseCellStyle, whiteSpace: "normal" }, size: "small" },
-        renderCell: (row) => (
-          <Stack sx={{ width: "100%" }} spacing={1.25} alignItems="flex-start" justifyContent="flex-start">
-            {!row.displayMeaningNotScore && defaultRenderers.score(row)}
-            {row.showNumAnsweredWithScore && defaultRenderers.answered(row)}
-            <Meaning id={row.id ?? row.key} meaning={row.meaning} alert={row.alert} warning={row.warning} />
-          </Stack>
-        ),
+        renderCell: (row) => {
+          if (isNil(row.score) && isNil(row.meaning)) return getNoDataDisplay();
+          return (
+            <Stack sx={{ width: "100%" }} spacing={1.25} alignItems="flex-start" justifyContent="flex-start">
+              {!row.displayMeaningNotScore && defaultRenderers.score(row)}
+              {row.showNumAnsweredWithScore && defaultRenderers.answered(row)}
+              <Meaning id={row.id ?? row.key} meaning={row.meaning} alert={row.alert} warning={row.warning} />
+            </Stack>
+          );
+        },
       },
       {
         id: "lastAssessed",
@@ -359,7 +355,7 @@ export default function ScoringSummary({
         renderCell: (row) => row.comparisonIcon,
       },
     ],
-    [theme, baseCellStyle, disableLinks, enableResponsesViewer, defaultRenderers]
+    [theme, baseCellStyle, disableLinks, enableResponsesViewer, defaultRenderers],
   );
 
   // ---- column merging (memoized; depends on columns + DEFAULT_COLUMNS)
@@ -505,7 +501,7 @@ ScoringSummary.propTypes = {
   disableLinks: PropTypes.bool,
   enableResponsesViewer: PropTypes.bool,
   hiddenColumns: PropTypes.arrayOf(
-    PropTypes.oneOf(["id", "source", "measure", "lastAssessed", "score", "numAnswered", "scoreMeaning", "comparison"])
+    PropTypes.oneOf(["id", "source", "measure", "lastAssessed", "score", "numAnswered", "scoreMeaning", "comparison"]),
   ),
   columns: PropTypes.arrayOf(columnShape),
   emptyMessage: PropTypes.string,

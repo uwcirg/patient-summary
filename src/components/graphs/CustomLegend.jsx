@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Switch } from "@mui/material";
 import { hexToRgba } from "@config/chart_config";
+import { renderShapeDot } from "./ChartDotRenderers";
 
 const CustomLegend = ({
   sources,
@@ -15,8 +16,8 @@ const CustomLegend = ({
   linesWithData,
   legendIconType,
 }) => {
-  const hasCnics = sources.includes("CNICS") || sources.includes("cnics");
-  const hasEpic = sources.includes("EPIC") || sources.includes("epic");
+  const hasCnics = enableLineSwitches ? false : sources.includes("CNICS") || sources.includes("cnics");
+  const hasEpic = enableLineSwitches ? false : sources.includes("EPIC") || sources.includes("epic");
   let items = [];
 
   const iconSize = isSmallScreen ? 12 : 16;
@@ -212,8 +213,7 @@ const CustomLegend = ({
               const lineColor = hexToRgba(lineField.color ?? "#444", 1);
               const lineLabel = lineField.label || lineField.key;
               const strokeDasharray = lineField.strokeDasharray || "0";
-              const iconType = lineField.legendType || legendIconType || "line";
-
+              const iconType = lineField.legendType ? lineField.legendType : legendIconType;
               return (
                 <div
                   key={`item-${index}`}
@@ -259,20 +259,19 @@ const CustomLegend = ({
                     />
                   )}
                   <svg width={iconSize} height={iconSize} style={{ marginRight: 4, flexShrink: 0 }}>
-                    {iconType === "circle" ? (
-                      <circle
-                        cx={iconSize / 2}
-                        cy={iconSize / 2}
-                        r={isSmallScreen ? 3 : 4}
-                        fill={lineColor}
-                        stroke="#fff"
-                        strokeWidth="1.5"
-                      />
-                    ) : (
+                    {iconType &&
+                      renderShapeDot({
+                        shape: iconType,
+                        cx: iconSize / 2,
+                        cy: iconSize / 2,
+                        radius: isSmallScreen ? 3 : 4,
+                        stroke: lineColor,
+                      })}
+                    {!iconType && (
                       <line
                         x1="0"
                         y1={iconSize / 2}
-                        x2={iconSize - 4}
+                        x2={iconSize - 2}
                         y2={iconSize / 2}
                         stroke={lineColor}
                         strokeWidth={2.5}
