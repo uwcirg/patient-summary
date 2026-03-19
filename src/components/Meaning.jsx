@@ -1,11 +1,10 @@
-// Meaning.jsx
 import React from "react";
 import PropTypes from "prop-types";
 import AlertIcon from "@mui/icons-material/ReportProblem";
 import DOMPurify from "dompurify";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
-import { hasHtmlTags } from "@util";
+import { hasHtmlTags, isEmptyArray } from "@util";
 
 function splitOnFirstColon(text) {
   const idx = text.indexOf(":");
@@ -25,11 +24,12 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
 
   const parts = String(meaning).includes("|") ? String(meaning).split("|") : [String(meaning)];
   const cellClass = alert ? "text-danger" : warning ? "text-warning" : "";
-  const colorSeverity = alert ? "error": (warning ? "warning" : "");
+  const colorSeverity = alert ? "error" : warning ? "warning" : "";
   const partsContainSemiColon = parts?.filter((part) => part.includes(":"));
+  const isMultiples = !isEmptyArray(parts) && parts.length > 1;
 
   return (
-    <Stack className={`meaning-wrapper ${className}`.trim()} direction={"column"} gap={1}>
+    <Stack className={`meaning-wrapper ${className}`.trim()} direction={"column"} gap={1} sx={{ width: "100%" }}>
       {parts.map((m, index) => {
         const key = `${id ?? "row"}_meaning_${index}`;
         const s = String(m ?? "");
@@ -76,7 +76,13 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
 
         // Default rendering
         return (
-          <Stack direction={"row"} alignItems={"center"} key={key} spacing={1}>
+          <Stack
+            direction={"row"}
+            alignItems={"center"}
+            key={key}
+            spacing={1}
+            justifyContent={isMultiples ? "space-between" : "flex-start"}
+          >
             <Box className={`table-cell-item ${cellClass}`}>{s}</Box>
             {colorSeverity && <AlertIcon fontSize="small" color={colorSeverity}></AlertIcon>}
           </Stack>

@@ -169,6 +169,7 @@ export default function ScoringSummary({
       fontSize: { xs: "0.75rem", sm: "0.8rem" },
       padding: theme.spacing(1),
       verticalAlign: "top",
+      minWidth: "72px",
       ...CELL_WHITESPACE_STYLE,
     }),
     [theme],
