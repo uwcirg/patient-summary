@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 
 const Star = (props) => {
   const { cx, cy, stroke, width = 12, height = 12, isHovered = false } = props;
-  console.log("isHovered ", isHovered)
   return (
     <svg
       x={cx - width / 2}
