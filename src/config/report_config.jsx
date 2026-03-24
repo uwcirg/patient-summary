@@ -263,6 +263,7 @@ export const report_config = {
           dataKeysToMatch: [
             "CIRG-CNICS-EUROQOL-SELF-CARE",
             "CIRG-CNICS-EUROQOL-USUAL-ACTIVITIES",
+            "CIRG-CNICS-EUROQOL-MOBILITY",
             "CIRG-CNICS-EUROQOL-PAIN-DISCOMFORT",
             "CIRG-CNICS-EUROQOL-ANXIETY-DEPRESSION",
             "CIRG-CNICS-EUROQOL-EUROQOL-5",
