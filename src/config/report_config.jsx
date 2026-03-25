@@ -261,6 +261,7 @@ export const report_config = {
           layout: "two-columns",
           hiddenColumns: ["numAnswered", "comparison"],
           dataKeysToMatch: [
+            "CIRG-CNICS-EUROQOL-MOBILITY",
             "CIRG-CNICS-EUROQOL-SELF-CARE",
             "CIRG-CNICS-EUROQOL-USUAL-ACTIVITIES",
             "CIRG-CNICS-EUROQOL-PAIN-DISCOMFORT",

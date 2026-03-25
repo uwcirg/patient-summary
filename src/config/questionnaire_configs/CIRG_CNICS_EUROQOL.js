@@ -37,3 +37,9 @@ export const CIRG_CNICS_EUROQOL_USUAL_ACTIVITIES = makeEuroqolDerivedConfig(
   "Usual Activities",
   "EUROQOL: Usual Activities",
 );
+
+export const CIRG_CNICS_EUROQOL_MOBILITY = makeEuroqolDerivedConfig(
+  "EUROQOL-SCORE-MOBILITY",
+  "Mobility",
+  "EUROQOL: Mobility",
+);
