@@ -161,8 +161,8 @@ export default {
       key: "ASSIST-18",
       label: "Inhalants",
       color: "#061658",
-      shape: "asterisk",
-      legendType: "asterisk",
+      shape: "pentagon",
+      legendType: "pentagon",
     },
     {
       ...SUBSTANCE_USE_LINE_PROPS,

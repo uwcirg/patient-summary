@@ -4,6 +4,9 @@ import Rectangle from "./Rectangle";
 import Cross from "./Cross";
 import Star from "./Star";
 import Diamond from "./Diamond";
+import Octagon from "./Octagon";
+import Parallelogram from "./Parallelogram";
+import Pentagon from "./Pentagon";
 import Ring from "./Ring";
 import Triangle from "./Triangle";
 import Wye from "./Wye";
@@ -19,6 +22,12 @@ export const getShape = (shape, props) => {
       return <Cross key={key} {...otherProps}></Cross>;
     case "diamond":
       return <Diamond key={key} {...otherProps}></Diamond>;
+    case "parallelogram":
+      return <Parallelogram key={key} {...otherProps}></Parallelogram>;
+    case "pentagon":
+      return <Pentagon key={key} {...otherProps}></Pentagon>;
+    case "octagon":
+      return <Octagon key={key} {...otherProps}></Octagon>
     case "rect":
     case "rectangle":
       return <Rectangle key={key} {...otherProps}></Rectangle>;

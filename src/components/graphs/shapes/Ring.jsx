@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 
 const Ring = (props) => {
   const { cx, cy, stroke, radius } = props;
-  return <circle cx={cx} cy={cy} r={radius || 4} stroke={stroke} strokeWidth={2} fill="none" />;
+  return <circle cx={cx} cy={cy} r={radius || 3} stroke={stroke} strokeWidth={2} fill="none" />;
 };
 export default Ring;
 
