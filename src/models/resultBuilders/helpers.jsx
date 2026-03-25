@@ -623,7 +623,7 @@ export function meaningFromSeverity(sev, config = {}, responses = [], summaryObj
 
   if (valueFromMeaningQuestionId != null) return String(valueFromMeaningQuestionId).replace(/"/g, "");
   const bands = config?.severityBands;
-  return bands?.find((b) => b.label === sev)?.meaning ?? null;
+  return bands?.find((b) => b.label === sev)?.meaning ?? sev;
 }
 
 /**
