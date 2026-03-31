@@ -46,7 +46,9 @@ export default function Header(props) {
   const sections = getSectionsToShow();
   const shouldShowSections = sections && sections.length > 1;
   const { returnURL, inEHR } = props;
-  const locationEvent = () => window.location.href = returnURL ?? "/";
+  // return URL is provided when launching the app via FEMR, e.g. dashboard URL
+  const LOCATION_URL = returnURL ? returnURL + "/clear_session" : null;
+  const locationEvent = () => window.location.href = LOCATION_URL?? "/";
   const getDesktopImgSrc = async () => {
     const projectUrl = toAbsoluteUrl(`/assets/${getEnvProjectId()}/img/logo.png`);
     const ok = await isImagefileExist(projectUrl).catch(() => false);
@@ -200,7 +202,7 @@ export default function Header(props) {
       <Box className="print-hidden">
         <Button
           color="primary"
-          href={returnURL}
+          href={LOCATION_URL}
           className="btn-return-url"
           startIcon={<ArrowBackIcon></ArrowBackIcon>}
           size="medium"
