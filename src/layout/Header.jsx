@@ -45,8 +45,8 @@ export default function Header(props) {
   const mobileImgRef = useRef(null);
   const sections = getSectionsToShow();
   const shouldShowSections = sections && sections.length > 1;
-
   const { returnURL, inEHR } = props;
+  const locationEvent = () => window.location.href = returnURL ?? "/";
   const getDesktopImgSrc = async () => {
     const projectUrl = toAbsoluteUrl(`/assets/${getEnvProjectId()}/img/logo.png`);
     const ok = await isImagefileExist(projectUrl).catch(() => false);
@@ -109,7 +109,7 @@ export default function Header(props) {
             }}
           >
             <button
-              onClick={() => (window.location = returnURL + "/clear_session")}
+              onClick={locationEvent}
               style={{
                 background: "none",
                 border: 0,
@@ -138,7 +138,7 @@ export default function Header(props) {
             }}
           >
             <button
-              onClick={() => (window.location = returnURL + "/clear_session")}
+              onClick={locationEvent}
               style={{
                 background: "none",
                 border: 0,
@@ -200,7 +200,7 @@ export default function Header(props) {
       <Box className="print-hidden">
         <Button
           color="primary"
-          href={returnURL + "/clear_session"}
+          href={returnURL}
           className="btn-return-url"
           startIcon={<ArrowBackIcon></ArrowBackIcon>}
           size="medium"
