@@ -47,7 +47,7 @@ export default function Header(props) {
   const shouldShowSections = sections && sections.length > 1;
   const { returnURL, inEHR } = props;
   // return URL is provided when launching the app via FEMR, e.g. dashboard URL
-  const LOCATION_URL = returnURL ? returnURL + "/clear_session" : null;
+  const LOCATION_URL = returnURL ? returnURL : null;
   const locationEvent = () => window.location.href = LOCATION_URL?? "/";
   const getDesktopImgSrc = async () => {
     const projectUrl = toAbsoluteUrl(`/assets/${getEnvProjectId()}/img/logo.png`);
