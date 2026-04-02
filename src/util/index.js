@@ -287,6 +287,10 @@ export function getEnvDashboardURL() {
   return getEnv("REACT_APP_DASHBOARD_URL");
 }
 
+export function getEnvHelpEmail() {
+  return getEnv("REACT_APP_HELP_EMAIL") || "cnics-pros@uw.edu";
+}
+
 export function isNumber(target) {
   if (target == null || target === "") return false;
   return !isNaN(Number(target));

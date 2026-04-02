@@ -21,7 +21,7 @@ import {
 import QuestionnaireScoringBuilder from "@models/resultBuilders/QuestionnaireScoringBuilder";
 import demoData from "@/data/demoData";
 import { FhirClientContext } from "@/context/FhirClientContext";
-import { NO_CACHE_HEADER } from "@/consts";
+import { NO_CACHE_HEADER, ERROR_HELP_TEXT, SOFT_ERROR_KEY  } from "@/consts";
 
 // -----------------------------------------------------------------------------
 // Constants
@@ -71,6 +71,11 @@ const toStringArray = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === "s
 const safeDateMs = (d) => {
   const ms = new Date(d ?? "").getTime();
   return Number.isFinite(ms) ? ms : 0;
+};
+
+const extractSoftErrors = (resources) => {
+  if (isEmptyArray(resources)) return [];
+  return resources.filter((r) => r && typeof r[SOFT_ERROR_KEY] === "string").map((r) => r[SOFT_ERROR_KEY]);
 };
 
 function uniqueNormalized(list) {
@@ -398,6 +403,7 @@ export default function useFetchResources() {
             if (res.status === "fulfilled") {
               dispatchLoader({ type: "COMPLETE", id });
             } else {
+              console.log("Request error for", id, res.reason);
               dispatchLoader({
                 type: "ERROR",
                 id,
@@ -405,6 +411,17 @@ export default function useFetchResources() {
               });
             }
           });
+          const softErrorSources = [
+            { id: QUESTIONNAIRE_RESPONSES_DATA_KEY, resources: qrResources },
+            { id: OBSERVATION_DATA_KEY, resources: obResources },
+          ];
+          for (const { id, resources } of softErrorSources) {
+            const softErrs = extractSoftErrors(resources);
+            if (softErrs.length) {
+              console.log("Soft errors found in resources for", id, softErrs);
+              dispatchLoader({ type: "ERROR", id, errorMessage: ERROR_HELP_TEXT });
+            }
+          }
         }
 
         // Filter matched QRs by Questionnaire/id presence
@@ -480,9 +497,20 @@ export default function useFetchResources() {
 
             const anySuccess = qResults.some((r) => r.status === "fulfilled");
             if (anySuccess) {
-              dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
+              const softErrs = extractSoftErrors(qResources);
+              if (softErrs.length) {
+                console.log("Soft errors found in Questionnaire resources ", softErrs);
+                dispatchLoader({
+                  type: "ERROR",
+                  id: QUESTIONNAIRE_DATA_KEY,
+                  errorMessage: ERROR_HELP_TEXT,
+                });
+              } else {
+                dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
+              }
             } else {
               const firstErr = qResults.find((r) => r.status === "rejected");
+              console.log("Questionnaire request errors ", firstErr?.reason?.message || firstErr);
               dispatchLoader({
                 type: "ERROR",
                 id: QUESTIONNAIRE_DATA_KEY,
@@ -602,7 +630,14 @@ export default function useFetchResources() {
           { pageLimit: 0, onPage: processPage(client, loadedFHIRData) },
         )
         .then(() => {
-          dispatchLoader({ type: "COMPLETE", id: p.resourceType });
+          const softErrs = extractSoftErrors(loadedFHIRData);
+          console.log(`Loaded resources for ${p.resourceType} with ${softErrs.length} soft errors.`);
+          console.log("Soft errors: ", softErrs);
+          if (softErrs.length) {
+            dispatchLoader({ type: "ERROR", id: p.resourceType, errorMessage: ERROR_HELP_TEXT});
+          } else {
+            dispatchLoader({ type: "COMPLETE", id: p.resourceType });
+          }
           return loadedFHIRData;
         })
         .catch((e) => {

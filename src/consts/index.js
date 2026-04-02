@@ -1,3 +1,5 @@
+import { getEnvHelpEmail } from "../util";
+
 export const QUESTIONNAIRE_ANCHOR_ID_PREFIX = "questionnaireAnchor";
 export const queryPatientIdKey = "launch_queryPatientId";
 export const queryNeedPatientBanner = "launch_queryNeedPatientBanner";
@@ -157,5 +159,6 @@ export const IS_QUESTION_COLUMN_KEYWORDS = ["score", "meaning", "summary", "visu
 export const NOT_TO_SHOW_CODE_DISPLAY_VALUES = ["%(WIDGET)"];
 
 export const EMPTY_CELL_STRING = "-";
-export const HELP_HTML_TEXT =
-  'If you have questions about this system, email Bill Lober MD, MS at <a href="mailto:cnics-pros@uw.edu">cnics-pros@uw.edu</a>.';
+export const HELP_HTML_TEXT = `If you have questions about this system, email Bill Lober MD, MS at <a href="mailto:${getEnvHelpEmail()}">${getEnvHelpEmail()}</a>.`;
+export const ERROR_HELP_TEXT = `This patient does not yet have data reported from the CNICS PRO system. If the patient has indeed completed a CNICS PRO assessment, please write to <a href="mailto:${getEnvHelpEmail()}">${getEnvHelpEmail()}</a> for help.`;
+export const SOFT_ERROR_KEY = "warning";
