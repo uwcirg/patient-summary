@@ -53,8 +53,8 @@ export default function Launch() {
       const patientId = urlParams.get("patient");
       console.log("patient id from url query string: ", patientId);
       //retrieve need patient banner querystring if any
-      const needPatientBanner = urlParams.get("need_patient_banner");
-      console.log("need_patient_banner from url query string: ", needPatientBanner);
+      const needPatientBannerFromUrl = urlParams.get("need_patient_banner");
+      console.log("need_patient_banner from url query string: ", needPatientBannerFromUrl);
       console.log("Auth url ", authURL);
       fetchContextJson(authURL)
         .then((json) => {
@@ -68,9 +68,12 @@ export default function Launch() {
             sessionStorage.setItem(queryPatientIdKey, patientId);
           }
 
-          if (needPatientBanner !== null) {
-            json.need_patient_banner = needPatientBanner;
-            sessionStorage.setItem(queryNeedPatientBanner, needPatientBanner);
+          if (needPatientBannerFromUrl !== null) {
+            json.need_patient_banner = needPatientBannerFromUrl;
+            sessionStorage.setItem(queryNeedPatientBanner, needPatientBannerFromUrl);
+          } else if ("need_patient_banner" in json) {
+            // if need_patient_banner is specified in context json, save to session storage so it can be used in app
+            sessionStorage.setItem(queryNeedPatientBanner, json.need_patient_banner);
           }
 
           // allow client id to be configurable
