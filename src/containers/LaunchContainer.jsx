@@ -15,9 +15,8 @@ const fetchContextJson = async (authURL) => {
     return {
       clientId: "patient_summary_client",
       scope: "profile roles email patient/*.read",
-      // default to not show patient banner, can be overridden
-      // cannot seem to override this when testing against SMART healthIT launcher though
-      need_patient_banner: false,
+      // default to show patient banner, can be overridden by query string or auth url response
+      need_patient_banner: true,
     };
   }
   const response = await fetch(authURL, {
