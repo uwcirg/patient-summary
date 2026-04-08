@@ -662,7 +662,7 @@ export default function useFetchResources() {
     for (const res of settled)
       if (res.status === "fulfilled") bundle = [...bundle, ...getFhirResourcesFromQueryResult(res.value)];
     return bundle;
-  }, [client, pid, extraTypes, base.questionnaireList, base.exactMatchById, dispatchLoader]);
+  }, [client, pid, extraTypes, base.questionnaireList, base.exactMatchById, dispatchLoader, ERROR_HELP_TEXT]);
 
   useQuery(
     ["extra-fhir-resources", pid, extraTypes.join(","), bump],
