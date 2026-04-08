@@ -11,7 +11,15 @@ import {
   getFHIRResourceTypesToLoad,
   getFHIRResourcePaths,
 } from "@util/fhirUtil";
-import { fuzzyMatch, getEnvQuestionnaireList, getDisplayQTitle, getEnv, isDemoDataEnabled, isEmptyArray } from "@util";
+import {
+  fuzzyMatch,
+  getEnvQuestionnaireList,
+  getDisplayQTitle,
+  getEnv,
+  getEnvHelpEmail,
+  isDemoDataEnabled,
+  isEmptyArray,
+} from "@util";
 import questionnaireConfigs from "@config/questionnaire_config";
 import {
   buildQuestionnaire,
@@ -21,7 +29,7 @@ import {
 import QuestionnaireScoringBuilder from "@models/resultBuilders/QuestionnaireScoringBuilder";
 import demoData from "@/data/demoData";
 import { FhirClientContext } from "@/context/FhirClientContext";
-import { NO_CACHE_HEADER, ERROR_HELP_TEXT, SOFT_ERROR_KEY  } from "@/consts";
+import { NO_CACHE_HEADER, SOFT_ERROR_KEY } from "@/consts";
 
 // -----------------------------------------------------------------------------
 // Constants
@@ -272,6 +280,7 @@ function createInitialState(configuredTypeSet, plannedExtras, isFromEpic) {
 // Hook
 // -----------------------------------------------------------------------------
 export default function useFetchResources() {
+  const ERROR_HELP_TEXT = `This patient does not yet have data reported from the CNICS PRO system. If the patient has indeed completed a CNICS PRO assessment, please write to <a href="mailto:${getEnvHelpEmail()}">${getEnvHelpEmail()}</a> for help.`;
   const isFromEpic = String(getEnv("REACT_APP_EPIC_QUERIES")) === "true";
   // recompute configured types when mounted (config is static at runtime)
   const configuredTypesRaw = useMemo(() => getFHIRResourceTypesToLoad().flat().map(String).filter(Boolean), []);
@@ -634,7 +643,7 @@ export default function useFetchResources() {
           console.log(`Loaded resources for ${p.resourceType} with ${softErrs.length} soft errors.`);
           console.log("Soft errors: ", softErrs);
           if (softErrs.length) {
-            dispatchLoader({ type: "ERROR", id: p.resourceType, errorMessage: ERROR_HELP_TEXT});
+            dispatchLoader({ type: "ERROR", id: p.resourceType, errorMessage: ERROR_HELP_TEXT });
           } else {
             dispatchLoader({ type: "COMPLETE", id: p.resourceType });
           }
