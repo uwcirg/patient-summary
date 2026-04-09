@@ -311,14 +311,16 @@ export function shouldShowPatientInfo(client) {
     return String(sessionStorage.getItem(queryNeedPatientBanner)) === "true";
   }
   const clientState = client ? client.getState() : null;
-  if (clientState && clientState.need_patient_banner !== undefined) {
-    return String(clientState.need_patient_banner).toLowerCase() === "true";
-  }
-  if (clientState && clientState.tokenResponse && clientState.tokenResponse.need_patient_banner !== undefined) {
-    return String(clientState.tokenResponse.need_patient_banner).toLowerCase() === "true";
-  }
-  if (clientState && clientState["token_data"] && clientState["token_data"].need_patient_banner !== undefined) {
-    return String(clientState["token_data"].need_patient_banner).toLowerCase() === "true";
+  if (clientState) {
+    if (clientState.need_patient_banner !== undefined) {
+      return String(clientState.need_patient_banner).toLowerCase() === "true";
+    }
+    if (clientState.tokenResponse && clientState.tokenResponse.need_patient_banner !== undefined) {
+      return String(clientState.tokenResponse.need_patient_banner).toLowerCase() === "true";
+    }
+    if (clientState["token_data"] && clientState["token_data"].need_patient_banner !== undefined) {
+      return String(clientState["token_data"].need_patient_banner).toLowerCase() === "true";
+    }
   }
   return String(getEnv("REACT_APP_DISABLE_HEADER")).toLowerCase() !== "true";
 }
