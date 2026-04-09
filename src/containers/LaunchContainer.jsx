@@ -15,9 +15,8 @@ const fetchContextJson = async (authURL) => {
     return {
       clientId: "patient_summary_client",
       scope: "profile roles email patient/*.read",
-      // default to not show patient banner, can be overridden
-      // cannot seem to override this when testing against SMART healthIT launcher though
-      need_patient_banner: false,
+      // default to show patient banner, can be overridden by query string or auth url response
+      //need_patient_banner: false,
     };
   }
   const response = await fetch(authURL, {
@@ -53,8 +52,8 @@ export default function Launch() {
       const patientId = urlParams.get("patient");
       console.log("patient id from url query string: ", patientId);
       //retrieve need patient banner querystring if any
-      const needPatientBanner = urlParams.get("need_patient_banner");
-      console.log("need_patient_banner from url query string: ", needPatientBanner);
+      const needPatientBannerFromUrl = urlParams.get("need_patient_banner");
+      console.log("need_patient_banner from url query string: ", needPatientBannerFromUrl);
       console.log("Auth url ", authURL);
       fetchContextJson(authURL)
         .then((json) => {
@@ -68,9 +67,15 @@ export default function Launch() {
             sessionStorage.setItem(queryPatientIdKey, patientId);
           }
 
-          if (needPatientBanner !== null) {
-            json.need_patient_banner = needPatientBanner;
-            sessionStorage.setItem(queryNeedPatientBanner, needPatientBanner);
+          if (needPatientBannerFromUrl !== null) {
+            json.need_patient_banner = needPatientBannerFromUrl;
+            sessionStorage.setItem(queryNeedPatientBanner, needPatientBannerFromUrl);
+          } else if ("need_patient_banner" in json) {
+            // if need_patient_banner is specified in context json, save to session storage so it can be used in app
+            sessionStorage.setItem(queryNeedPatientBanner, json.need_patient_banner);
+          } else if ("token_data" in json && "need_patient_banner" in json.token_data) {
+            // also check token_data which is used in some auth server implementations
+            sessionStorage.setItem(queryNeedPatientBanner, json.token_data.need_patient_banner);
           }
 
           // allow client id to be configurable

@@ -310,11 +310,17 @@ export function shouldShowPatientInfo(client) {
   if (sessionStorage.getItem(queryNeedPatientBanner) !== null) {
     return String(sessionStorage.getItem(queryNeedPatientBanner)) === "true";
   }
-  // check token response,
-  const tokenResponse = client ? client.getState("tokenResponse") : null;
-  //check need_patient_banner launch context parameter
-  if (tokenResponse && tokenResponse["need_patient_banner"]) {
-    return String(tokenResponse["need_patient_banner"]).toLowerCase() === "true";
+  const clientState = client ? client.getState() : null;
+  if (clientState) {
+    if (clientState.need_patient_banner !== undefined) {
+      return String(clientState.need_patient_banner).toLowerCase() === "true";
+    }
+    if (clientState.tokenResponse && clientState.tokenResponse.need_patient_banner !== undefined) {
+      return String(clientState.tokenResponse.need_patient_banner).toLowerCase() === "true";
+    }
+    if (clientState["token_data"] && clientState["token_data"].need_patient_banner !== undefined) {
+      return String(clientState["token_data"].need_patient_banner).toLowerCase() === "true";
+    }
   }
   return String(getEnv("REACT_APP_DISABLE_HEADER")).toLowerCase() !== "true";
 }
