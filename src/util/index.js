@@ -317,6 +317,9 @@ export function shouldShowPatientInfo(client) {
   if (clientState && clientState.tokenResponse && clientState.tokenResponse.need_patient_banner !== undefined) {
     return String(clientState.tokenResponse.need_patient_banner).toLowerCase() === "true";
   }
+  if (clientState && clientState["token_data"] && clientState["token_data"].need_patient_banner !== undefined) {
+    return String(clientState["token_data"].need_patient_banner).toLowerCase() === "true";
+  }
   return String(getEnv("REACT_APP_DISABLE_HEADER")).toLowerCase() !== "true";
 }
 export function shouldShowNav() {

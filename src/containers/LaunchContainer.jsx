@@ -16,7 +16,7 @@ const fetchContextJson = async (authURL) => {
       clientId: "patient_summary_client",
       scope: "profile roles email patient/*.read",
       // default to show patient banner, can be overridden by query string or auth url response
-      need_patient_banner: true,
+      //need_patient_banner: false,
     };
   }
   const response = await fetch(authURL, {
@@ -73,6 +73,9 @@ export default function Launch() {
           } else if ("need_patient_banner" in json) {
             // if need_patient_banner is specified in context json, save to session storage so it can be used in app
             sessionStorage.setItem(queryNeedPatientBanner, json.need_patient_banner);
+          } else if ("token_data" in json && "need_patient_banner" in json.token_data) {
+            // also check token_data which is used in some auth server implementations
+            sessionStorage.setItem(queryNeedPatientBanner, json.token_data.need_patient_banner);
           }
 
           // allow client id to be configurable
