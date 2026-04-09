@@ -1,4 +1,5 @@
 import * as React from "react";
+import DomPurify from "dompurify";
 import PropTypes from "prop-types";
 import Alert from "@mui/material/Alert";
 
@@ -14,7 +15,7 @@ export default function Error(props) {
         return (
           <ul>
             {message.map((m, index) => (
-              <li key={`errormessage_${index}`}>{m}</li>
+              <li key={`errormessage_${index}`} dangerouslySetInnerHTML={{ __html: DomPurify.sanitize(m) }}></li>
             ))}
           </ul>
         );
@@ -35,7 +36,7 @@ export default function Error(props) {
     <div className="error-container">
       {isString && (
         <Alert {...alertParams}>
-          <div dangerouslySetInnerHTML={{ __html: messageToBeRendered }}></div>
+          <div dangerouslySetInnerHTML={{ __html: DomPurify.sanitize(messageToBeRendered) }}></div>
         </Alert>
       )}
       {!isString && <Alert {...alertParams}>{messageToBeRendered}</Alert>}

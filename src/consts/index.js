@@ -157,5 +157,4 @@ export const IS_QUESTION_COLUMN_KEYWORDS = ["score", "meaning", "summary", "visu
 export const NOT_TO_SHOW_CODE_DISPLAY_VALUES = ["%(WIDGET)"];
 
 export const EMPTY_CELL_STRING = "-";
-export const HELP_HTML_TEXT =
-  'If you have questions about this system, email Bill Lober MD, MS at <a href="mailto:cnics-pros@uw.edu">cnics-pros@uw.edu</a>.';
+export const SOFT_ERROR_KEY = "warning";

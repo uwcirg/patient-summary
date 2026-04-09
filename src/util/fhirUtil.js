@@ -1,5 +1,5 @@
 import { getEnv, getSectionsToShow, isEmptyArray, isNil, hasValue, isNumber } from "./index.js";
-import { DEFAULT_OBSERVATION_CATEGORIES, FLOWSHEET_CODE_IDS, FLOWSHEET_SYSTEM } from "@/consts/index.js";
+import { DEFAULT_OBSERVATION_CATEGORIES, FLOWSHEET_CODE_IDS, FLOWSHEET_SYSTEM, SOFT_ERROR_KEY  } from "@/consts/index.js";
 
 /*
  * @param client, FHIR client object
@@ -22,6 +22,10 @@ function getRequestURL(client, uri = "") {
 
 export function processPage(client, resources = []) {
   return (bundle) => {
+    if (bundle && typeof bundle[SOFT_ERROR_KEY] === "string") {
+      resources.push(bundle);
+      return;
+    }
     if (bundle && bundle.link && bundle.link.some((l) => l.relation === "self" && l.url != null)) {
       bundle.link = bundle.link.map((o) => {
         if (!o.url) return o;

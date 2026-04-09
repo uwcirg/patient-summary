@@ -3,7 +3,6 @@ import ChartConfig from "@config/chart_config";
 import defaultSections, { sections } from "@config/sections_config";
 import {
   DEFAULT_TOOLBAR_HEIGHT,
-  HELP_HTML_TEXT,
   QUESTIONNAIRE_ANCHOR_ID_PREFIX,
   queryNeedPatientBanner,
 } from "@/consts";
@@ -89,7 +88,7 @@ export function getChartConfig(questionnaireId) {
 }
 
 export function getEnvAboutContent() {
-  return getEnv("REACT_APP_ABOUT_CONTENT") || HELP_HTML_TEXT;
+  return getEnv("REACT_APP_ABOUT_CONTENT");
 }
 
 export function getEnvAppTitle() {
@@ -285,6 +284,10 @@ export function getEnvSystemType() {
 
 export function getEnvDashboardURL() {
   return getEnv("REACT_APP_DASHBOARD_URL");
+}
+
+export function getEnvHelpEmail() {
+  return getEnv("REACT_APP_HELP_EMAIL") || "cnics-pros@uw.edu";
 }
 
 export function isNumber(target) {
