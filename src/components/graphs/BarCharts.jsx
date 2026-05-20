@@ -431,7 +431,7 @@ export default function BarCharts(props) {
         <ResponsiveContainer width="100%" maxWidth="100%" height="100%" minWidth={100} minHeight={30}>
           <BarChart
             margin={{
-              top: 10,
+              top: 14,
               right: 24,
               left: 24,
               bottom: 10,

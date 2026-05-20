@@ -367,20 +367,17 @@ export default function useFetchResources() {
         let obResources = [];
         let qResources = [];
 
-        // What we intend to fetch in phase-1
         const wantQ =
           hasPreload ||
           shouldTrack(configuredTypeSet, QUESTIONNAIRE_DATA_KEY) ||
           shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
-        const wantQR = wantQ || shouldTrack(configuredTypeSet, QUESTIONNAIRE_RESPONSES_DATA_KEY);
-        const wantObs = wantQ || wantQR;
 
-        const exactMatchById = !hasPreload || isFromEpic;
+        const phase1ExactMatchById = !hasPreload || isFromEpic;
 
-        // --- Build phase-1 tasks (QR + Obs in parallel; Q also in parallel if preload list is known) ---
+        // --- Build phase-1 tasks (QR + Obs in parallel) ---
         const phase1Tasks = [];
 
-        if (wantQR) {
+        if (wantQ) {
           phase1Tasks.push({
             id: QUESTIONNAIRE_RESPONSES_DATA_KEY,
             promise: client.request(
@@ -389,8 +386,7 @@ export default function useFetchResources() {
             ),
             onErrorMessage: "QuestionnaireResponse request failed",
           });
-        }
-        if (wantObs) {
+
           const obURLs = getFlowSheetObservationURLS(pid);
           obURLs.forEach((url) => {
             phase1Tasks.push({
@@ -404,7 +400,7 @@ export default function useFetchResources() {
           });
         }
 
-        // --- Execute phase-1 in parallel ---
+        // --- Execute QR + Obs in parallel ---
         if (phase1Tasks.length) {
           const results = await Promise.allSettled(phase1Tasks.map((t) => t.promise));
           results.forEach((res, i) => {
@@ -438,38 +434,12 @@ export default function useFetchResources() {
           ? qrResources.filter((it) => it && it.questionnaire && it.questionnaire.split("/")[1])
           : [];
 
-        // initially populated with pre-load questionnaire list
-        let qIds = [...preloadList];
-        const syntheticQs = [],
-          syntheticQRs = [];
-
-        if (wantObs && !isEmptyArray(obResources)) {
-          const obsCodes = getCodeableCodesFromObservation(obResources);
-          if (!isEmptyArray(obsCodes)) {
-            for (const [key, cfg] of Object.entries(questionnaireConfigs || {})) {
-              if (!cfg) continue;
-              if (hasPreload && !preloadList.find((q) => fuzzyMatch(q, key))) continue;
-              const cfgLinkIds = toStringArray([...(cfg.questionLinkIds ?? [])]);
-              const hit = cfgLinkIds.find((linkId) => obsCodes.includes(normalizeLinkId(linkId)));
-              if (!hit) continue;
-              const builtQ = buildQuestionnaire(obResources, cfg);
-              const builtQRs = observationsToQuestionnaireResponses(obResources, cfg) || [];
-              console.log("matching cfg ", cfg);
-              console.log("builtQ ", builtQ);
-              console.log("builtQRs ", builtQRs);
-              syntheticQs.push(builtQ);
-              syntheticQRs.push(...builtQRs);
-              if (cfg.questionnaireId) qIds.push(cfg.questionnaireId);
-            }
-          }
-        }
-        // Determine Questionnaire list & fetch (if not already fetched via preload parallel path)
+        // Derive qListToLoad from QR-matched ids + preloadList.
+        // extraQIds will be populated after Q fetch (obs-matching runs after qResources is ready).
         const matchedQIds = matchedQRs?.map((it) => it.questionnaire?.split("/")[1]) ?? [];
-        const uniqueQIds = [...new Set([...qIds, ...matchedQIds])];
+        const uniqueQIds = [...new Set([...preloadList, ...matchedQIds])];
         const qListToLoad = hasPreload ? preloadList : uniqueQIds;
         console.log("qListToLoad ", qListToLoad);
-
-        matchedQRs = [...matchedQRs, ...syntheticQRs];
 
         if (wantQ) {
           if (isEmptyArray(qListToLoad)) {
@@ -477,12 +447,12 @@ export default function useFetchResources() {
           } else {
             let qPaths = [];
 
-            if (exactMatchById) {
+            if (phase1ExactMatchById) {
               // 1 request per Questionnaire id
               qPaths = qListToLoad.map((qid) =>
                 getFHIRResourcePath(pid, QUESTIONNAIRE_DATA_KEY, {
                   questionnaireList: [qid], // IMPORTANT: single id only
-                  exactMatchById,
+                  exactMatchById: phase1ExactMatchById,
                 }),
               );
             } else {
@@ -490,7 +460,7 @@ export default function useFetchResources() {
               qPaths = [
                 getFHIRResourcePath(pid, QUESTIONNAIRE_DATA_KEY, {
                   questionnaireList: qListToLoad,
-                  exactMatchById,
+                  exactMatchById: phase1ExactMatchById,
                 }),
               ];
             }
@@ -529,6 +499,58 @@ export default function useFetchResources() {
           }
         }
 
+        // Obs-matching runs here — after Q fetch — so qResources is fully populated.
+        // Match obs codes against item codes on the fetched Questionnaire resource for each config,
+        // falling back to cfg.questionLinkIds if no Questionnaire was found in qResources.
+        const syntheticQs = [],
+          syntheticQRs = [];
+
+        if (wantQ && !isEmptyArray(obResources)) {
+          const obsCodes = getCodeableCodesFromObservation(obResources);
+          if (!isEmptyArray(obsCodes)) {
+            for (const [key, cfg] of Object.entries(questionnaireConfigs || {})) {
+              if (!cfg) continue;
+              if (hasPreload && !preloadList.find((q) => fuzzyMatch(q, key))) continue;
+
+              // Find the fetched Questionnaire resource matching this config's id.
+              const matchedQResource = cfg.questionnaireId
+                ? qResources.find(
+                    (r) => (r?.resource?.id ?? r?.id) === cfg.questionnaireId,
+                  )
+                : null;
+
+              // Extract all item codes from the Questionnaire (one level deep).
+              const qItemCodes = matchedQResource
+                ? (matchedQResource.resource?.item ?? matchedQResource.item ?? [])
+                    .filter((item) => item.type !== "group" && item.type !== "display")
+                    .flatMap((item) => item.code ?? [])
+                    .map((c) => c.code)
+                    .filter(Boolean)
+                : [];
+
+              // Match: prefer Questionnaire item codes; fall back to cfg.questionLinkIds.
+              const hit =
+                qItemCodes.length > 0
+                  ? qItemCodes.find((code) => obsCodes.includes(code))
+                  : toStringArray([...(cfg.questionLinkIds ?? [])]).find((linkId) =>
+                      obsCodes.includes(normalizeLinkId(linkId)),
+                    );
+
+              if (!hit) continue;
+
+              const builtQ = buildQuestionnaire(obResources, cfg);
+              const builtQRs = observationsToQuestionnaireResponses(obResources, cfg) || [];
+              console.log("matching cfg ", cfg);
+              console.log("builtQ ", builtQ);
+              console.log("builtQRs ", builtQRs);
+              syntheticQs.push(builtQ);
+              syntheticQRs.push(...builtQRs);
+            }
+          }
+        }
+
+        matchedQRs = [...matchedQRs, ...syntheticQRs];
+
         let questionnaires = [
           ...getFhirResourcesFromQueryResult(syntheticQs),
           ...getFhirResourcesFromQueryResult(qResources),
@@ -546,7 +568,7 @@ export default function useFetchResources() {
           questionnaires,
           questionnaireResponses,
           qListToLoad,
-          exactMatchById: exactMatchById,
+          exactMatchById: phase1ExactMatchById,
         };
       });
     },
@@ -683,7 +705,6 @@ export default function useFetchResources() {
       ...DEFAULT_QUERY_PARAMS,
       enabled: readyForExtras,
       onSuccess: () => {
-        // Removed setTimeout - React 18 batches automatically
         dispatchLoader({
           type: "COMPLETE",
           id: SUMMARY_DATA_KEY,
@@ -734,7 +755,6 @@ export default function useFetchResources() {
         summaryData: demoData,
       });
     }
-    // if (!summaryData?.data) return null;
     return buildReportData({
       summaryData: summaryData?.data,
       bundle: bundleEntries,

@@ -481,21 +481,21 @@ export default function LineCharts(props) {
 
     if (isSmallScreen) {
       return {
-        top: 20 + extraTopMargin,
+        top: 24 + extraTopMargin,
         right: 14,
         left: 14,
         bottom: 10,
       };
     } else if (isMediumScreen) {
       return {
-        top: 12 + extraTopMargin,
+        top: 16 + extraTopMargin,
         right: 18 + extraCategoryMargin,
         left: 18 + extraCategoryMargin,
         bottom: 10,
       };
     }
     return {
-      top: 10 + extraTopMargin,
+      top: 14 + extraTopMargin,
       right: 24 + extraCategoryMargin,
       left: 24 + extraCategoryMargin,
       bottom: 10,

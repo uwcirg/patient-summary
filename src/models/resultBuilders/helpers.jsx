@@ -498,12 +498,14 @@ function groupObservationsByKey(observations) {
  * @returns {Array<Object>} Array of QuestionnaireResponse resources sorted by authored date
  */
 export function observationsToQuestionnaireResponses(observationResources, config = {}) {
+  // console.log("Original observation resources:", observationResources);
   if (isEmptyArray(observationResources)) return [];
 
   const observations = getValidObservationsForQRs(observationResources);
+  const observationsToProcess = isEmptyArray(observations) ? observationResources : observations;
 
   /** Group observations using improved grouping key */
-  const groupByKey = groupObservationsByKey(observations || []);
+  const groupByKey = groupObservationsByKey(observationsToProcess || []);
   const out = [];
 
   for (const [, group] of groupByKey.entries()) {

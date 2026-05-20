@@ -1,5 +1,5 @@
 import { getEnv, getSectionsToShow, isEmptyArray, isNil, hasValue, isNumber } from "./index.js";
-import { DEFAULT_OBSERVATION_CATEGORIES, FLOWSHEET_CODE_IDS, FLOWSHEET_SYSTEM, SOFT_ERROR_KEY  } from "@/consts/index.js";
+import { DEFAULT_OBSERVATION_CATEGORIES, FLOWSHEET_SYSTEM, SOFT_ERROR_KEY } from "@/consts/index.js";
 
 /*
  * @param client, FHIR client object
@@ -437,7 +437,24 @@ export function getCodeableCodesFromObservation(obResources) {
 
 export function getValidObservationsForQRs(obResources) {
   const systemCodes = getFlowsheetCodeIds();
-  return obResources?.filter((o) => o.code?.coding?.find((item) => systemCodes.indexOf(item.code) !== -1));
+  const flowsheetSystemKeys = [
+    getFlowsheetSystem() ?? "http://loinc.org",
+    "flowsheetId",
+    "flowsheet-id",
+    "flowsheetCode",
+    "flowsheet-code",
+    "flowsheetIdentifier",
+    "flowsheet-identifier",
+  ];
+  if (!isEmptyArray(systemCodes))
+    return (
+      obResources?.filter((o) =>
+        o.code?.coding?.find(
+          (item) => systemCodes.indexOf(item.code) !== -1 || flowsheetSystemKeys.includes(item.system),
+        ),
+      ) ?? []
+    );
+  return obResources?.filter((o) => o.code?.coding?.find((item) => flowsheetSystemKeys.includes(item.system))) ?? [];
 }
 
 export function getFlowsheetCodeIds() {
@@ -447,13 +464,18 @@ export function getFlowsheetCodeIds() {
       .split(",")
       .filter((item) => hasValue(item))
       .map((item) => normalizeLinkId(item));
-  return FLOWSHEET_CODE_IDS;
+  return [];
+  // return FLOWSHEET_CODE_IDS;
 }
 
 export function getFlowSheetObservationURLS(patientId) {
   if (!patientId) return [];
   const codeIds = getFlowsheetCodeIds();
-  const queryCodes = codeIds.map(encodeURIComponent).join(",");
-  if (!queryCodes) return [];
-  return [`Observation?patient=${patientId}&code=${queryCodes}`];
+  const queryCodes = codeIds?.map(encodeURIComponent)?.join(",");
+  if (queryCodes)
+    return [
+      `Observation?patient=${patientId}&code=${queryCodes}`,
+      `Observation?patient=${patientId}&category=vital-signs`,
+    ];
+  return [`Observation?patient=${patientId}`];
 }
