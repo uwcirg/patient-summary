@@ -227,6 +227,10 @@ td {
     text-align: left;
   }
 }
+.text-warning + svg,
+.text-danger + svg {
+  opacity: 0.8;
+}
 .responses-container {
   position: relative;
   margin-bottom: 16px;

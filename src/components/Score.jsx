@@ -18,7 +18,7 @@ export default function Scoring(props) {
       <Stack
         direction="row"
         spacing={1}
-        justifyContent={justifyContent || "flex-start"}
+        justifyContent={justifyContent || "space-between"}
         alignItems={alignItems || "center"}
         className="score-container"
       >

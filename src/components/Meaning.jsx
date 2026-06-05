@@ -4,7 +4,7 @@ import AlertIcon from "@mui/icons-material/ReportProblem";
 import DOMPurify from "dompurify";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
-import { hasHtmlTags, isEmptyArray } from "@util";
+import { hasHtmlTags} from "@util";
 
 function splitOnFirstColon(text) {
   const idx = text.indexOf(":");
@@ -26,7 +26,7 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
   const cellClass = alert ? "text-danger" : warning ? "text-warning" : "";
   const colorSeverity = alert ? "error" : warning ? "warning" : "";
   const partsContainSemiColon = parts?.filter((part) => part.includes(":"));
-  const isMultiples = !isEmptyArray(parts) && parts.length > 1;
+  // const isMultiples = !isEmptyArray(parts) && parts.length > 1;
 
   return (
     <Stack className={`meaning-wrapper ${className}`.trim()} direction={"column"} gap={1} sx={{ width: "100%" }}>
@@ -81,7 +81,8 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
             alignItems={"center"}
             key={key}
             spacing={1}
-            justifyContent={isMultiples ? "space-between" : "flex-start"}
+           // justifyContent={isMultiples ? "space-between" : "flex-start"}
+           justifyContent="space-between"
           >
             <Box className={`table-cell-item ${cellClass}`}>{s}</Box>
             {colorSeverity && <AlertIcon fontSize="small" color={colorSeverity}></AlertIcon>}
