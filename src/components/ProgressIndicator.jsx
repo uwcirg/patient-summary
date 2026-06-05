@@ -26,7 +26,7 @@ export default function ProgressIndicator({ resources, sx }) {
         top: theme.spacing(4),
         zIndex: theme.zIndex.drawer + 1,
         padding: theme.spacing(2, 2),
-        ...sx,
+        ...(typeof sx === "function" ? sx(theme) : sx),
       })}
     >
       <Stack

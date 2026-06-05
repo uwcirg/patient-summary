@@ -46,9 +46,9 @@ export default function FloatingNavButton() {
       size="medium"
       sx={theme => ({
         position: "fixed",
-        bottom: theme.spacing(2),
+        bottom: theme.spacing(8),
         right: theme.spacing(3),
-        zIndex: theme.zIndex.drawer - 1,
+        zIndex: theme.zIndex.drawer + 2,
         borderColor: theme.palette.primary.main,
         borderWidth: "3px",
         borderStyle: "solid"

@@ -173,6 +173,7 @@ export default function Header(props) {
         variant="outlined"
         sx={{
           backgroundColor: "#FFF",
+          display: "none" // hide about button for now since the content is not ready, can be turned on when needed
         }}
         {...props}
       >
@@ -312,7 +313,7 @@ export default function Header(props) {
                       variant: "text",
                     })}
                   </MenuItem>
-                  <Divider></Divider>
+                  {/* <Divider></Divider> */}
                   <MenuItem>
                     {renderAboutButton({
                       variant: "text",
