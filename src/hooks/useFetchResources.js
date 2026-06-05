@@ -282,7 +282,7 @@ function createInitialState(configuredTypeSet, plannedExtras, isFromEpic) {
 export default function useFetchResources() {
   const ERROR_HELP_TEXT = `This patient does not yet have data reported from the CNICS PRO system. If the patient has indeed completed a CNICS PRO assessment, please write to <a href="mailto:${getEnvHelpEmail()}">${getEnvHelpEmail()}</a> for help.`;
   const isFromEpic = String(getEnv("REACT_APP_EPIC_QUERIES")) === "true";
-
+  // recompute configured types when mounted (config is static at runtime)
   const configuredTypesRaw = useMemo(() => getFHIRResourceTypesToLoad().flat().map(String).filter(Boolean), []);
   const configuredTypeSet = useMemo(() => new Set(configuredTypesRaw.map(normalizeType)), [configuredTypesRaw]);
   const plannedExtras = useMemo(() => computePlannedExtras(configuredTypesRaw), [configuredTypesRaw]);
@@ -291,7 +291,7 @@ export default function useFetchResources() {
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     createInitialState(configuredTypeSet, plannedExtras, isFromEpic),
   );
-
+  // stable scoped dispatchers
   const dispatchBase = useCallback((action) => dispatch({ ...action, scope: "base" }), [dispatch]);
   const dispatchLoader = useCallback((action) => dispatch({ ...action, scope: "loader" }), [dispatch]);
 
@@ -301,9 +301,9 @@ export default function useFetchResources() {
   const [bundleEntries, setBundleEntries] = useState([]);
   const [extraTypes, setExtraTypes] = useState([]);
   const [fatalError, setFatalError] = useState(null);
-
+  // stable patient id
   const pid = useMemo(() => (isNonEmptyString(patient?.id) ? String(patient.id) : null), [patient?.id]);
-
+  // refresh bump controls recomputation of configured types
   const [bump, setBump] = useState(0);
 
   const refresh = useCallback(() => {
@@ -317,6 +317,7 @@ export default function useFetchResources() {
     setBump((x) => x + 1);
   }, [pid, bump, client, dispatchBase, dispatchLoader]);
 
+  // Bundle + eval results (kept in ref to avoid re-renders during accumulation)
   const patientBundle = useRef({
     resourceType: "Bundle",
     id: "resource-bundle",
@@ -380,6 +381,7 @@ export default function useFetchResources() {
 
         const phase1ExactMatchById = !hasPreload || isFromEpic;
 
+        // --- Build phase-1 tasks (QR + Obs in parallel) ---
         const phase1Tasks = [];
 
         if (wantQ) {
@@ -433,11 +435,12 @@ export default function useFetchResources() {
             }
           }
         }
-
+        // Filter matched QRs by Questionnaire/id presence
         let matchedQRs = !isEmptyArray(qrResources)
           ? qrResources.filter((it) => it && it.questionnaire && it.questionnaire.split("/")[1])
           : [];
-
+        // Derive qListToLoad from QR-matched ids + preloadList.
+        // extraQIds will be populated after Q fetch (obs-matching runs after qResources is ready).
         const matchedQIds = matchedQRs?.map((it) => it.questionnaire?.split("/")[1]) ?? [];
         const uniqueQIds = [...new Set([...preloadList, ...matchedQIds])];
         const qListToLoad = hasPreload ? preloadList : uniqueQIds;
@@ -457,6 +460,7 @@ export default function useFetchResources() {
                 }),
               );
             } else {
+              // non-Epic / fuzzy name search can still use a single search
               qPaths = [
                 getFHIRResourcePath(pid, QUESTIONNAIRE_DATA_KEY, {
                   questionnaireList: qListToLoad,
@@ -499,6 +503,9 @@ export default function useFetchResources() {
           }
         }
 
+        // Obs-matching runs here — after Q fetch — so qResources is fully populated.
+        // Match obs codes against item codes on the fetched Questionnaire resource for each config,
+        // falling back to cfg.questionLinkIds if no Questionnaire was found in qResources.
         const syntheticQs = [],
           syntheticQRs = [];
 
@@ -509,10 +516,11 @@ export default function useFetchResources() {
               if (!cfg) continue;
               if (hasPreload && !preloadList.find((q) => fuzzyMatch(q, key))) continue;
 
+              // Find the fetched Questionnaire resource matching this config's id.
               const matchedQResource = cfg.questionnaireId
                 ? qResources.find((r) => (r?.resource?.id ?? r?.id) === cfg.questionnaireId)
                 : null;
-
+              // Extract all item codes from the Questionnaire (one level deep).
               const qItemCodes = matchedQResource
                 ? (matchedQResource.resource?.item ?? matchedQResource.item ?? [])
                     .filter((item) => item.type !== "group" && item.type !== "display")
@@ -520,7 +528,7 @@ export default function useFetchResources() {
                     .map((c) => c.code)
                     .filter(Boolean)
                 : [];
-
+              // Match: prefer Questionnaire item codes; fall back to cfg.questionLinkIds.
               const hit =
                 qItemCodes.length > 0
                   ? qItemCodes.find((code) => obsCodes.includes(code))
@@ -550,6 +558,7 @@ export default function useFetchResources() {
         questionnaires = Array.from(new Map(questionnaires.map((item) => [item.resource.id, item])).values());
         const questionnaireResponses = getFhirResourcesFromQueryResult(matchedQRs);
 
+        // seed bundle
         patientBundle.current = {
           ...patientBundle.current,
           entry: [{ resource: patient }, ...(questionnaireResponses ?? []), ...(questionnaires ?? [])],
@@ -588,6 +597,7 @@ export default function useFetchResources() {
       "patient",
     ];
 
+    // Which extras are actually needed after phase-1 results
     const extrasWanted = plannedExtras.filter((t) => !haveTypes.includes(normalizeType(t)));
 
     if (!isEmptyArray(extrasWanted)) {
@@ -611,6 +621,7 @@ export default function useFetchResources() {
       return;
     }
 
+    // Drive phase-2 list
     setExtraTypes(extrasWanted);
   }, [phase1Query.isSuccess, phase1Query.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -633,6 +644,7 @@ export default function useFetchResources() {
     !isEmptyArray(toBeLoadedResources);
 
   const getFhirResources = useCallback(async () => {
+    // Local array — not shared across concurrent calls
     const loadedFHIRData = [];
 
     const paths = getFHIRResourcePaths(pid, extraTypes, {
@@ -713,7 +725,7 @@ export default function useFetchResources() {
   const phase2DoneOrSkipped =
     isEmptyArray(toBeLoadedResources) || !toBeLoadedResources.find((o) => !o.complete) || !!fatalError;
   const isReady = base.complete && (phase2DoneOrSkipped || isEmptyArray(extraTypes)) && !base.error;
-
+  // depend on specific values instead of entire array
   const summaryDataItem = toBeLoadedResources.find((r) => r.id === SUMMARY_DATA_KEY);
   const summaryData = useMemo(() => {
     if (!summaryDataItem || !summaryDataItem.data || summaryDataItem.error) return null;
@@ -762,7 +774,7 @@ export default function useFetchResources() {
   const chartKeys = useMemo(() => [...new Set(allChartData?.map((o) => getDisplayQTitle(o.key)))], [allChartData]);
 
   const loaderErrors = useMemo(() => state.loader.filter((r) => r?.error), [state.loader]);
-
+  // error message collection
   const errorMessages = useMemo(() => {
     const errors = [];
     if (base.error) errors.push(base.errorMessage);
@@ -796,6 +808,7 @@ export default function useFetchResources() {
     fatalError,
     hasError,
     summaryError: base.error,
+    // to be loaded resources tracking
     toBeLoadedResources,
 
     // base (phase 1)
