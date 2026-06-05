@@ -44,15 +44,15 @@ export default function FloatingNavButton() {
       color="primary"
       aria-label="add"
       size="medium"
-      sx={{
+      sx={theme => ({
         position: "fixed",
-        bottom: (theme) => theme.spacing(2),
-        right: (theme) => theme.spacing(3),
-        zIndex: (theme) => theme.zIndex.drawer - 1,
-        borderColor: (theme) => theme.palette.primary.main,
+        bottom: theme.spacing(2),
+        right: theme.spacing(3),
+        zIndex: theme.zIndex.drawer - 1,
+        borderColor: theme.palette.primary.main,
         borderWidth: "3px",
         borderStyle: "solid"
-      }}
+      })}
       onClick={(e) => {
         e.stopPropagation();
         if (!anchorRef.current) return;

@@ -32,7 +32,13 @@ const accordionSummarySx = {
 // --- TwoColumns component ---
 const TwoColumns = React.memo(function TwoColumns({ table }) {
   return (
-    <Stack direction="row" alignItems="flex-start" className="response-summary" sx={{ flexWrap: flexWrapConfig }}>
+    <Stack
+      direction="row"
+      className="response-summary"
+      sx={{
+        alignItems: "flex-start",
+        flexWrap: flexWrapConfig
+      }}>
       <ScoringSummary
         {...table}
         data={table.rows}
@@ -40,7 +46,11 @@ const TwoColumns = React.memo(function TwoColumns({ table }) {
         enableResponsesViewer={true}
         containerStyle={containerStyleConfig}
       />
-      <Box sx={{ marginTop: marginTopConfig }} maxWidth="100%">
+      <Box
+        sx={{
+          maxWidth: "100%",
+          marginTop: marginTopConfig
+        }}>
         {!isEmptyArray(table.charts) &&
           table.charts.map((chartData, index) => {
             if (isEmptyArray(chartData?.data)) return null;
@@ -66,7 +76,15 @@ const TableItem = React.memo(function TableItem({ table, section }) {
         elevation={multipleTables ? 1 : 0}
         square
         defaultExpanded
-        sx={{ marginLeft: multipleTables ? "8px" : 0, marginRight: multipleTables ? "8px" : 0 }}
+        sx={[multipleTables ? {
+          marginLeft: "8px"
+        } : {
+          marginLeft: 0
+        }, multipleTables ? {
+          marginRight: "8px"
+        } : {
+          marginRight: 0
+        }]}
       >
         {table.title && (
           <AccordionSummary

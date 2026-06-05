@@ -31,12 +31,13 @@ export default function ResponsesViewer({
   return (
     <>
       <Stack
-        sx={{ height: "100%" }}
         direction={"column"}
-        justifyContent={"flex-start"}
-        alignItems={"flex-start"}
-        gap={1.25}
-      >
+        sx={{
+          justifyContent: "flex-start",
+          alignItems: "flex-start",
+          gap: 1.25,
+          height: "100%"
+        }}>
         <Box sx={{ width: "100%" }}>
           <Typography
             component="h3"
@@ -57,19 +58,22 @@ export default function ResponsesViewer({
           onClick={() => setOpen(true)}
           variant="outlined"
           className="print-hidden"
-          sx={{ fontSize: "0.8rem", ...((typeof buttonStyle === "object" && buttonStyle) || {}) }}
+          sx={[{
+            fontSize: "0.8rem"
+          }, (typeof buttonStyle === "object" && buttonStyle) || {}]}
         >
           {buttonLabel}
         </Button>
       </Stack>
-
       {/* Full-screen dialog */}
       <Dialog
         fullScreen
         open={open}
         onClose={() => setOpen(false)}
-        TransitionComponent={Transition}
         transitionDuration={{ enter: 500, exit: 500 }}
+        slots={{
+          transition: Transition
+        }}
       >
         <AppBar sx={{ position: "relative", minHeight: "48px" }}>
           <Toolbar>
@@ -78,7 +82,12 @@ export default function ResponsesViewer({
             </IconButton>
 
             <Typography sx={{ ml: 2, flex: 1 }} variant="h5" component="h2">
-              <Stack gap={1} alignItems={"center"} direction={"row"}>
+              <Stack
+                direction={"row"}
+                sx={{
+                  gap: 1,
+                  alignItems: "center"
+                }}>
                 {title}
                 {questionnaire && (
                   <QuestionnaireInfo

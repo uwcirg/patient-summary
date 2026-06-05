@@ -29,7 +29,13 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
   // const isMultiples = !isEmptyArray(parts) && parts.length > 1;
 
   return (
-    <Stack className={`meaning-wrapper ${className}`.trim()} direction={"column"} gap={1} sx={{ width: "100%" }}>
+    <Stack
+      className={`meaning-wrapper ${className}`.trim()}
+      direction={"column"}
+      sx={{
+        gap: 1,
+        width: "100%"
+      }}>
       {parts.map((m, index) => {
         const key = `${id ?? "row"}_meaning_${index}`;
         const s = String(m ?? "");
@@ -57,13 +63,16 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
               className={`table-cell-item table-cell-item-stack ${cellClass}`}
               direction="row"
               spacing={0.25}
-              justifyContent="flex-start"
-              alignItems="flex-start"
-              sx={{
-                borderBottom: index !== parts.length - 1 ? "1px solid #f4f5f5" : "none",
-                paddingBottom: "4px",
-              }}
-            >
+              sx={[{
+                justifyContent: "flex-start",
+                alignItems: "flex-start"
+              }, {
+                paddingBottom: "4px"
+              }, index !== parts.length - 1 ? {
+                borderBottom: "1px solid #f4f5f5"
+              } : {
+                borderBottom: "none"
+              }]}>
               <Box component="span" sx={{ flex: 1 }}>
                 {pair.left}:
               </Box>
@@ -78,12 +87,12 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
         return (
           <Stack
             direction={"row"}
-            alignItems={"center"}
             key={key}
             spacing={1}
-           // justifyContent={isMultiples ? "space-between" : "flex-start"}
-           justifyContent="space-between"
-          >
+            sx={{
+              alignItems: "center",
+              justifyContent: "space-between"
+            }}>
             <Box className={`table-cell-item ${cellClass}`}>{s}</Box>
             {colorSeverity && <AlertIcon fontSize="small" color={colorSeverity}></AlertIcon>}
           </Stack>

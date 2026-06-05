@@ -30,7 +30,13 @@ export default function Section({ section, data }) {
     ></Box>
   );
   const renderSectionTitle = () => (
-    <Stack spacing={1} direction={"row"} justifyContent={"center"} alignItems={"center"}>
+    <Stack
+      spacing={1}
+      direction={"row"}
+      sx={{
+        justifyContent: "center",
+        alignItems: "center"
+      }}>
       {section.icon && section.icon({ color: "#FFF" })}
       <Typography className="section-title" variant="h6" component="h2" id={`${sectionId}_title`}>
         {section.title}
@@ -47,7 +53,9 @@ export default function Section({ section, data }) {
     >
       {renderAnchorElement()}
       {section.standalone && (
-        <Paper className="section-wrapper" sx={{ padding: (theme) => theme.spacing(1) }} elevation={0}>
+        <Paper className="section-wrapper" sx={theme => ({
+          padding: theme.spacing(1)
+        })} elevation={0}>
           {section.component(data)}
         </Paper>
       )}
@@ -56,15 +64,14 @@ export default function Section({ section, data }) {
           key={`section_${sectionId}`}
           disableGutters={true}
           defaultExpanded={section.expanded ? section.expanded : true}
-          sx={{
+          sx={[{
             "& .MuiAccordionSummary-content": {
               margin: 0,
             },
             "& .MuiPaper-root": {
               borderRadius: 0,
-            },
-            ...(section.sx ?? {}),
-          }}
+            }
+          }, section.sx ?? {}]}
         >
           <AccordionSummary
             expandIcon={<ExpandMoreIcon sx={{ color: "#FFF" }} className="print-hidden" />}

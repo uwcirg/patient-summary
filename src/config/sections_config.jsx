@@ -20,15 +20,15 @@ const renderScoringSummary = ({allScoringSummaryData, allChartData, chartKeys}) 
       <Stack
         spacing={1}
         direction={`${!isEmptyArray(allChartData) && allChartData.length < 20 ? "row" : "column"}`}
-        alignItems={"top"}
-        sx={{
-          gap: (theme) => theme.spacing(1),
-          marginLeft: (theme) => theme.spacing(1),
-          marginRight: (theme) => theme.spacing(1),
-        }}
-        flexWrap={"wrap"}
         className="score-summary-wrapper"
-      >
+        sx={[{
+          alignItems: "top",
+          flexWrap: "wrap"
+        }, theme => ({
+          gap: theme.spacing(1),
+          marginLeft: theme.spacing(1),
+          marginRight: theme.spacing(1)
+        })]}>
         {!isEmptyArray(allChartData) && chartKeys.length > 1 && (
           <Box
             sx={{

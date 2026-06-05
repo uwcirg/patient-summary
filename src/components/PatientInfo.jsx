@@ -62,13 +62,17 @@ export default function PatientInfo(props) {
   if (!patient) return null;
   return (
     <Box className="patientinfo-container" sx={{ marginLeft: theme.spacing(1), padding: theme.spacing(0.25, 0, 0.25) }}>
-      <Stack spacing={1} direction="row" alignItems="center">
+      <Stack spacing={1} direction="row" sx={{
+        alignItems: "center"
+      }}>
         <Typography component="span" className="patient-name" sx={{ fontWeight: 500 }}>
           {getPatientName()}
         </Typography>
         {renderMRN()}
       </Stack>
-      <Stack spacing={1} direction="row" alignItems="center" className="patient-dob-container">
+      <Stack spacing={1} direction="row" className="patient-dob-container" sx={{
+        alignItems: "center"
+      }}>
         {renderDOB()}
         {renderAge()}
       </Stack>

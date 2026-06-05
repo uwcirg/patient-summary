@@ -96,16 +96,15 @@ export default function ResponsesTable({
     // Outer Box handles layout only — scroll is owned by TableContainer
     <Box
       className="responses-container"
-      sx={{
+      sx={[{
         borderRadius: 0,
         mx: "auto",
         p: theme.spacing(2),
         width: "100%",
         [theme.breakpoints.up("md")]: { width: "95%" },
         [theme.breakpoints.up("lg")]: { width: "85%" },
-        position: "relative",
-        ...(containerStyle || {}),
-      }}
+        position: "relative"
+      }, containerStyle || {}]}
     >
       {title && (
         <Typography
@@ -116,7 +115,6 @@ export default function ResponsesTable({
           <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(title) }} />
         </Typography>
       )}
-
       <TableContainer
         className="table-container"
         component={Paper}
@@ -137,15 +135,14 @@ export default function ResponsesTable({
                     key={col.field ?? col.title ?? colIndex}
                     align={col.align || "left"}
                     variant="head"
-                    sx={{
+                    sx={[{
                       backgroundColor: headerBgColor,
-                      top: 0,
-                      zIndex: isFirstCol ? Z_CORNER : Z_HEADER,
-                      ...(isFirstCol
-                        ? { position: "sticky", left: STICKY_FIRST_COL_LEFT }
-                        : { borderRight: `1px solid ${BORDER_COLOR}` }),
-                      ...(col.headerStyle || {}),
-                    }}
+                      top: 0
+                    }, isFirstCol ? {
+                      zIndex: Z_CORNER
+                    } : {
+                      zIndex: Z_HEADER
+                    }, (isFirstCol ? { position: "sticky", left: STICKY_FIRST_COL_LEFT } : { borderRight: `1px solid ${BORDER_COLOR}` }), col.headerStyle || {}]}
                   >
                     {/* Column titles are developer-supplied, rendered as plain text */}
                     <Box>{col.title}</Box>
@@ -176,10 +173,9 @@ export default function ResponsesTable({
                           key={`${row?.id ?? rowIndex}-readonly`}
                           colSpan={safeColumns.length}
                           className="read-only"
-                          sx={{
-                            backgroundColor: READONLY_BG_COLOR,
-                            ...(col.readonlyCellStyle || {}),
-                          }}
+                          sx={[{
+                            backgroundColor: READONLY_BG_COLOR
+                          }, col.readonlyCellStyle || {}]}
                         >
                           {content}
                         </TableCell>
@@ -195,7 +191,7 @@ export default function ResponsesTable({
                         <TableCell
                           key={`${row?.id ?? rowIndex}-spanfull`}
                           colSpan={safeColumns.length}
-                          sx={{ ...(col.cellStyle || {}) }}
+                          sx={[col.cellStyle || {}]}
                         >
                           {content}
                         </TableCell>
@@ -208,17 +204,12 @@ export default function ResponsesTable({
                     <TableCell
                       key={`${row?.id ?? rowIndex}-${col.field ?? col.title ?? colIndex}`}
                       align={col.align || "left"}
-                      sx={{
-                        ...(isFirstCol
-                          ? {
-                              position: "sticky",
-                              left: STICKY_FIRST_COL_LEFT,
-                              zIndex: Z_FIRST_COL,
-                              backgroundColor: FIRST_COL_BG_COLOR,
-                            }
-                          : { borderRight: `1px solid ${BORDER_COLOR}` }),
-                        ...(col.cellStyle || {}),
-                      }}
+                      sx={[(isFirstCol ? {
+                            position: "sticky",
+                            left: STICKY_FIRST_COL_LEFT,
+                            zIndex: Z_FIRST_COL,
+                            backgroundColor: FIRST_COL_BG_COLOR,
+                          } : { borderRight: `1px solid ${BORDER_COLOR}` }), col.cellStyle || {}]}
                     >
                       {content}
                     </TableCell>

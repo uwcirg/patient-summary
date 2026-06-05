@@ -27,7 +27,13 @@ export default function Summary(props) {
 
   const renderLoader = () =>
     summary.loading && (
-      <Stack alignItems={"center"} direction="row" justifyContent={"flex-start"} spacing={2}>
+      <Stack
+        direction="row"
+        spacing={2}
+        sx={{
+          alignItems: "center",
+          justifyContent: "flex-start"
+        }}>
         <LinearProgress sx={{ width: "300px", marginTop: 6, paddingLeft: 4, paddingRight: 4 }}></LinearProgress>
       </Stack>
     );
@@ -55,14 +61,16 @@ export default function Summary(props) {
       <Stack
         direction="row"
         spacing={1}
-        alignItems="flex-start"
         className="response-summary"
-        flexWrap={{
-          xs: "wrap",
-          sm: "wrap",
-          md: "nowrap",
-        }}
-      >
+        sx={{
+          alignItems: "flex-start",
+
+          flexWrap: {
+            xs: "wrap",
+            sm: "wrap",
+            md: "nowrap",
+          }
+        }}>
         <ScoringSummary
           data={summary?.scoringSummaryData}
           disableLinks={true}
@@ -93,13 +101,15 @@ export default function Summary(props) {
         className="summary"
         id={`summary_${questionnaireId}`}
         direction="column"
-        sx={{
+        sx={theme => ({
           paddingBottom: 4,
-          paddingLeft: (theme) => theme.spacing(2),
-          paddingRight: (theme) => theme.spacing(2),
-        }}
+          paddingLeft: theme.spacing(2),
+          paddingRight: theme.spacing(2)
+        })}
       >
-        <Stack direction="row" spacing={1} alignItems="flex-start">
+        <Stack direction="row" spacing={1} sx={{
+          alignItems: "flex-start"
+        }}>
           {/* questionnaire title */}
           <div className="questionnaire-title-container">{renderTitle()}</div>
           <QuestionnaireInfo questionnaireJson={summary?.questionnaire}></QuestionnaireInfo>

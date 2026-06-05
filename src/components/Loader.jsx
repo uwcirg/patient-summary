@@ -7,7 +7,7 @@ import {getAppHeight} from "@util";
 export default function Loader({ message, styles, children }) {
   return (
     <Box
-      sx={{
+      sx={[theme => ({
         position: "fixed",
         width: "100%",
         height: "100%",
@@ -17,32 +17,33 @@ export default function Loader({ message, styles, children }) {
         marginRight: "auto",
         top: 0,
         left: 0,
-        zIndex: (theme) => theme.zIndex.drawer + 1,
-        padding: (theme) => theme.spacing(2, 2),
-        ...(styles ?? {}),
-      }}
+        zIndex: theme.zIndex.drawer + 1,
+        padding: theme.spacing(2, 2)
+      }), styles ?? {}]}
     >
       <Stack
-        sx={{
-          marginTop: 8,
-          marginBottom: 4,
-          padding: 2,
-        }}
-        alignItems={{
-          xs: "flex-start",
-          sm: "center",
-        }}
         direction="column"
         spacing={2}
         className="progress-container"
-      >
+        sx={{
+          alignItems: {
+            xs: "flex-start",
+            sm: "center",
+          },
+
+          marginTop: 8,
+          marginBottom: 4,
+          padding: 2
+        }}>
         <Stack
           direction="row"
           spacing={2}
-          justifyContent="center"
-          alignItems="center"
-          sx={{ fontSize: "1.1rem", marginBottom: 1.25 }}
-        >
+          sx={{
+            justifyContent: "center",
+            alignItems: "center",
+            fontSize: "1.1rem",
+            marginBottom: 1.25
+          }}>
           <div>{message ? message : "Please wait ..."}</div>
           <CircularProgress color="info"></CircularProgress>
         </Stack>

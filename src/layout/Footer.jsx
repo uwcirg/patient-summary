@@ -8,10 +8,11 @@ export default function Footer() {
   return (
     <Stack
       component="footer"
-      alignItems="center"
-      justifyContent="space-between"
-      gap={0.5}
-      sx={{
+      sx={[{
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 0.5
+      }, theme => ({
         position: "fixed",
         bottom: 0,
         left: 0,
@@ -20,11 +21,10 @@ export default function Footer() {
         pb: 0.5,
         px: 2,
         zIndex: 50,
-        backgroundColor: (theme) => theme.palette.lighter.main,
+        backgroundColor: theme.palette.lighter.main,
         boxShadow:
-          "0px -2px 1px -1px rgba(0,0,0,0.2),0px -1px 1px 0px rgba(0,0,0,0.14), 0px -1px 3px 0px rgba(0,0,0,0.12)",
-      }}
-    >
+          "0px -2px 1px -1px rgba(0,0,0,0.2),0px -1px 1px 0px rgba(0,0,0,0.14), 0px -1px 3px 0px rgba(0,0,0,0.12)"
+      })]}>
       <Typography
         variant="body2"
         dangerouslySetInnerHTML={{ __html: DomPurify.sanitize(HELP_HTML_TEXT) }}

@@ -135,7 +135,6 @@ const CustomLegend = ({
           <span style={{ fontSize: isSmallScreen ? 9 : 10, color: "#444" }}>{it.label}</span>
         </div>
       ))}
-
       {showLineItems && (
         <div
           style={{
@@ -163,7 +162,7 @@ const CustomLegend = ({
                 onChange={handleToggleAll}
                 size="small"
                 className="print-hidden"
-                sx={{
+                sx={[{
                   width: 30,
                   height: 16,
                   padding: 0,
@@ -172,12 +171,11 @@ const CustomLegend = ({
                     padding: 0,
                     margin: "2px",
                     "&.Mui-checked": {
-                      transform: isSmallScreen ? "translateX(16px)" : "translateX(16px)",
                       color: "#fff",
                       "& + .MuiSwitch-track": {
                         backgroundColor: "#4f4f52",
                         opacity: 0.8,
-                      },
+                      }
                     },
                   },
                   "& .MuiSwitch-thumb": {
@@ -189,7 +187,19 @@ const CustomLegend = ({
                     opacity: 1,
                     backgroundColor: "#ccc",
                   },
-                }}
+                }, isSmallScreen ? {
+                  "& .MuiSwitch-switchBase": {
+                    "&.Mui-checked": {
+                      transform: "translateX(16px)"
+                    }
+                  }
+                } : {
+                  "& .MuiSwitch-switchBase": {
+                    "&.Mui-checked": {
+                      transform: "translateX(16px)"
+                    }
+                  }
+                }]}
               />
               <span style={{ fontSize: 10, fontWeight: 500 }}>{allLinesVisible ? "Show All" : "Hide All"}</span>
             </div>
@@ -229,7 +239,7 @@ const CustomLegend = ({
                       onChange={() => onToggleLine?.(lineKey)}
                       size="small"
                       className="print-hidden"
-                      sx={{
+                      sx={[{
                         width: 30,
                         height: 16,
                         padding: 0,
@@ -238,12 +248,11 @@ const CustomLegend = ({
                           padding: 0,
                           margin: "2px",
                           "&.Mui-checked": {
-                            transform: isSmallScreen ? "translateX(16px)" : "translateX(16px)",
                             color: "#fff",
                             "& + .MuiSwitch-track": {
                               backgroundColor: lineColor,
                               opacity: 0.8,
-                            },
+                            }
                           },
                         },
                         "& .MuiSwitch-thumb": {
@@ -255,7 +264,19 @@ const CustomLegend = ({
                           opacity: 1,
                           backgroundColor: "#ccc",
                         },
-                      }}
+                      }, isSmallScreen ? {
+                        "& .MuiSwitch-switchBase": {
+                          "&.Mui-checked": {
+                            transform: "translateX(16px)"
+                          }
+                        }
+                      } : {
+                        "& .MuiSwitch-switchBase": {
+                          "&.Mui-checked": {
+                            transform: "translateX(16px)"
+                          }
+                        }
+                      }]}
                     />
                   )}
                   <svg width={iconSize} height={iconSize} style={{ marginRight: 4, flexShrink: 0 }}>

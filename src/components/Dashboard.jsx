@@ -58,7 +58,9 @@ export default function Dashboard() {
         <ErrorComponent
           message={errorMessages}
           severity={errorSeverity}
-          sx={{ padding: (theme) => theme.spacing(0, 2) }}
+          sx={theme => ({
+            padding: theme.spacing(0, 2)
+          })}
           icon={false}
         />
       ),
@@ -108,11 +110,13 @@ export default function Dashboard() {
         <Loader>
           <ProgressIndicator
             resources={toBeLoadedResources}
-            sx={{ position: "relative", padding: (theme) => theme.spacing(0, 2) }}
+            sx={theme => ({
+              position: "relative",
+              padding: theme.spacing(0, 2)
+            })}
           ></ProgressIndicator>
         </Loader>
       )}
-
       {isReady && (
         <>
           <FloatingNavButton></FloatingNavButton>

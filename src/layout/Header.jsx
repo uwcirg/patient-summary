@@ -217,21 +217,21 @@ export default function Header(props) {
   const renderDesktopMenu = () => {
     return (
       <Stack
-        flexDirection="row"
-        flexGrow={1}
-        justifyContent="flex-end"
-        alignItems="center"
         sx={{
+          flexDirection: "row",
+          flexGrow: 1,
+          justifyContent: "flex-end",
+          alignItems: "center",
           columnGap: theme.spacing(1.5),
+
           display: {
             xs: "none",
             sm: "none",
             md: "none",
             lg: "none",
             xl: "inline-flex",
-          },
-        }}
-      >
+          }
+        }}>
         {!shouldHideReturnButton() && renderReturnButton()}
         {renderPrintButton()}
         {renderAboutButton()}
@@ -368,13 +368,13 @@ export default function Header(props) {
     <>
       <AppBar position="fixed" elevation={1} sx={{ paddingRight: "0 !important", paddingLeft: "0 !important" }}>
         <Toolbar
-          sx={{
+          sx={theme => ({
             backgroundColor: theme.palette.lighter ? theme.palette.lighter.main : "#FFF",
             color: theme.palette.secondary ? theme.palette.secondary.main : "#444",
-            zIndex: (theme) => theme.zIndex.drawer + 1,
+            zIndex: theme.zIndex.drawer + 1,
             paddingLeft: theme.spacing(2),
-            paddingRight: theme.spacing(2),
-          }}
+            paddingRight: theme.spacing(2)
+          })}
           disableGutters
           variant="dense"
         >
@@ -385,12 +385,18 @@ export default function Header(props) {
               sm: 1,
               md: 1.25,
             }}
-            alignItems="center"
-            sx={{ width: "100%" }}
-          >
+            sx={{
+              alignItems: "center",
+              width: "100%"
+            }}>
             {renderLogo()}
             {renderTitle()}
-            <Stack direction={"row"} sx={{ flex: "1 1" }} alignItems="center">
+            <Stack
+              direction={"row"}
+              sx={{
+                alignItems: "center",
+                flex: "1 1"
+              }}>
               {!inEHR && renderPatientInfo()}
               {renderDesktopMenu()}
             </Stack>

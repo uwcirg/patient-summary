@@ -406,7 +406,12 @@ export default function LineCharts(props) {
   };
 
   const renderTitle = () => (
-    <Stack direction="row" alignItems="center" justifyContent={"center"}>
+    <Stack
+      direction="row"
+      sx={{
+        alignItems: "center",
+        justifyContent: "center"
+      }}>
       <Typography variant="subtitle1" component="h4" color="secondary" sx={{ textAlign: "center" }}>
         {title}
       </Typography>
@@ -1152,19 +1157,31 @@ export default function LineCharts(props) {
       {renderTitle()}
       <Box
         ref={wrapperRef}
-        sx={{
+        sx={[{
           width: {
             xs: MIN_CHART_WIDTH,
             sm: chartWidth || 580,
             md: mdChartWidth || chartWidth || 580,
             lg: lgChartWidth || chartWidth || 580,
           },
+          maxWidth: "100%"
+        }, xsChartHeight ? {
           height: {
-            xs: xsChartHeight ? xsChartHeight : 280, // Increased height for small screens
-            sm: chartHeight ? chartHeight : 240,
-          },
-          maxWidth: "100%",
-        }}
+            xs: xsChartHeight
+          }
+        } : {
+          height: {
+            xs: 280
+          }
+        }, chartHeight ? {
+          height: {
+            sm: chartHeight
+          }
+        } : {
+          height: {
+            sm: 240
+          }
+        }]}
         className={`chart-wrapper ${wrapperClass ? wrapperClass : ""}`}
         onPointerDown={(e) => {
           pointerTypeRef.current = e.pointerType || pointerTypeRef.current;

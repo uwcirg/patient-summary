@@ -15,7 +15,7 @@ export default function ProgressIndicator({ resources, sx }) {
   if (total === 0) return false;
   return (
     <Box
-      sx={{
+      sx={(theme) => ({
         position: "fixed",
         width: "100%",
         height: "100%",
@@ -23,47 +23,60 @@ export default function ProgressIndicator({ resources, sx }) {
         marginLeft: "auto",
         marginRight: "auto",
         left: 0,
-        zIndex: (theme) => theme.zIndex.drawer + 1,
-        padding: (theme) => theme.spacing(2, 2),
-        ...sx
-      }}
+        top: theme.spacing(4),
+        zIndex: theme.zIndex.drawer + 1,
+        padding: theme.spacing(2, 2),
+        ...sx,
+      })}
     >
       <Stack
+        direction="column"
+        spacing={2}
+        className="progress-container"
         sx={{
+          alignItems: {
+            xs: "flex-start",
+            sm: "center",
+          },
+
           marginTop: 1,
           marginBottom: 4,
           padding: 2,
         }}
-        alignItems={{
-          xs: "flex-start",
-          sm: "center",
-        }}
-        direction="column"
-        spacing={2}
-        className="progress-container"
       >
         <Stack
           direction="row"
           spacing={2}
-          justifyContent="center"
-          alignItems="center"
-          sx={{ fontSize: "1.1rem", marginBottom: 1.25 }}
+          sx={{
+            justifyContent: "center",
+            alignItems: "center",
+            fontSize: "1.1rem",
+            marginBottom: 1.25,
+          }}
         >
           <div>Loading ...</div>
           <div>
             <b>{Math.ceil((loaded / total) * 100)} %</b>
           </div>
         </Stack>
-        <Stack direction="column" alignItems="flex-start" spacing={1}>
+        <Stack
+          direction="column"
+          spacing={1}
+          sx={{
+            alignItems: "flex-start",
+          }}
+        >
           {resources.map((resource, index) => {
             const { title, name, id } = resource;
-            const displayName = title || name || `Resource ${id??index+1}`;
+            const displayName = title || name || `Resource ${id ?? index + 1}`;
             return (
               <Stack
                 direction="row"
                 spacing={2}
-                justifyContent="flex-start"
                 key={`resource_${resource}_${index}`}
+                sx={{
+                  justifyContent: "flex-start",
+                }}
               >
                 <Typography
                   variant="body1"
@@ -72,18 +85,14 @@ export default function ProgressIndicator({ resources, sx }) {
                       resource.error
                         ? theme.palette.error.main
                         : resource.complete
-                        ? theme.palette.success.main
-                        : theme.palette.warning.main,
+                          ? theme.palette.success.main
+                          : theme.palette.warning.main,
                   }}
                 >
                   {String(displayName).toUpperCase()}
                 </Typography>
-                {resource.complete && resource.error && (
-                  <CloseIcon color="error"></CloseIcon>
-                )}
-                {resource.complete && !resource.error && (
-                  <CheckIcon color="success"></CheckIcon>
-                )}
+                {resource.complete && resource.error && <CloseIcon color="error"></CloseIcon>}
+                {resource.complete && !resource.error && <CheckIcon color="success"></CheckIcon>}
               </Stack>
             );
           })}

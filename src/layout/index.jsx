@@ -38,7 +38,9 @@ export default function Index({ children }) {
   }, [ready]);
   if (!ready)
     return (
-      <Stack spacing={2} direction="row" style={{ padding: "24px" }} alignItems="center">
+      <Stack spacing={2} direction="row" style={{ padding: "24px" }} sx={{
+        alignItems: "center"
+      }}>
         <CircularProgress></CircularProgress>
         <Typography variant="body1">Loading environment variables ...</Typography>
       </Stack>

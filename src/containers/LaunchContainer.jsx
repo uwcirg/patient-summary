@@ -103,7 +103,14 @@ export default function Launch() {
     <ThemeProvider theme={getTheme()}>
       {error && <ErrorComponent message={error}></ErrorComponent>}
       {!error && (
-        <Stack spacing={2} direction="row" sx={{ padding: (theme) => theme.spacing(3) }} alignItems="center">
+        <Stack
+          spacing={2}
+          direction="row"
+          sx={[{
+            alignItems: "center"
+          }, theme => ({
+            padding: theme.spacing(3)
+          })]}>
           <CircularProgress></CircularProgress>
           <div>Launching ...</div>
         </Stack>
