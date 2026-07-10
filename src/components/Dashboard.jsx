@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useRef, useMemo } from "react";
+import React, { useContext, useEffect, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -13,14 +13,19 @@ import FloatingNavButton from "./FloatingNavButton";
 import useFetchResources from "@/hooks/useFetchResources";
 import { FhirClientContext } from "@/context/FhirClientContext";
 
-const MemoizedSection = React.memo(function MemoizedSection({ section, data }) {
-  return <Section section={section} data={data}></Section>;
-});
+// ---------------------------------------------------------------------------
+// Constants — hoisted to avoid recreation on every render
+// ---------------------------------------------------------------------------
+const APP_HEIGHT = getAppHeight();
 
-MemoizedSection.propTypes = {
-  section: PropTypes.object,
-  data: PropTypes.object,
+const MAIN_STACK_STYLE = {
+  position: "relative",
+  maxWidth: "1200px",
+  minHeight: APP_HEIGHT,
+  margin: "auto",
 };
+
+const SECTION_STYLE = { minHeight: APP_HEIGHT };
 
 const ERROR_SECTION_BASE = {
   id: "applicationError",
@@ -33,24 +38,91 @@ const ERROR_SECTION_BASE = {
   icon: () => <ErrorIcon />,
 };
 
-let debounceTimer = null;
+// ---------------------------------------------------------------------------
+// MemoizedSection
+// ---------------------------------------------------------------------------
+const MemoizedSection = React.memo(function MemoizedSection({ section, data }) {
+  return <Section section={section} data={data} />;
+});
 
+MemoizedSection.propTypes = {
+  section: PropTypes.object,
+  data: PropTypes.object,
+};
+
+// ---------------------------------------------------------------------------
+// Dashboard
+// ---------------------------------------------------------------------------
 export default function Dashboard() {
-  const { hasError, errorMessages, errorSeverity, fatalError, isReady, toBeLoadedResources, ...otherResults } =
-    useFetchResources();
-  const data = useMemo(() => ({ ...otherResults }), [otherResults]);
-  const sectionsToShow = getSectionsToShow();
+  const {
+    // status
+    isReady,
+    hasError,
+    errorMessages,
+    errorSeverity,
+    fatalError,
+    toBeLoadedResources,
+
+    // named values sections consume explicitly
+    allScoringSummaryData,
+    allChartData,
+    chartKeys,
+    reportData,
+    questionnaires,
+    questionnaireResponses,
+    summaries,
+
+    // dynamic evalResults keys (Condition, Observation, etc.)
+    evalData,
+  } = useFetchResources();
+
   const { client, patient } = useContext(FhirClientContext);
+
   const hasSavedSnapshot = useRef(false);
   const sectionsRef = useRef(null);
+  const debounceTimerRef = useRef(null);
 
-  const renderSections = useCallback(() => {
-    if (isEmptyArray(sectionsToShow)) return <Alert severity="warning">No section to show.</Alert>;
+  // Stable flat object passed into every Section — only recomputes when a
+  // constituent value changes, not on every render.
+  // evalData is memoized in the hook so it won't cause unnecessary recomputes.
+  const data = useMemo(
+    () => ({
+      allScoringSummaryData,
+      allChartData,
+      chartKeys,
+      reportData,
+      questionnaires,
+      questionnaireResponses,
+      summaries,
+      // spread dynamic keys last so named keys above take precedence
+      ...evalData,
+    }),
+    [
+      allScoringSummaryData,
+      allChartData,
+      chartKeys,
+      reportData,
+      questionnaires,
+      questionnaireResponses,
+      summaries,
+      evalData,
+    ],
+  );
+
+  // Section config is static at runtime — compute once
+  const sectionsToShow = useMemo(() => getSectionsToShow(), []);
+
+  // Memoize rendered sections — avoids re-running map when data hasn't changed
+  const sectionElements = useMemo(() => {
+    if (isEmptyArray(sectionsToShow)) {
+      return <Alert severity="warning">No section to show.</Alert>;
+    }
     return sectionsToShow.map((section) => (
       <MemoizedSection section={section} data={data} key={`section_${section.id}`} />
     ));
   }, [sectionsToShow, data]);
 
+  // Memoize error section config — body only changes when messages/severity change
   const errorSection = useMemo(
     () => ({
       ...ERROR_SECTION_BASE,
@@ -58,9 +130,7 @@ export default function Dashboard() {
         <ErrorComponent
           message={errorMessages}
           severity={errorSeverity}
-          sx={theme => ({
-            padding: theme.spacing(0, 2)
-          })}
+          sx={(theme) => ({ padding: theme.spacing(0, 2) })}
           icon={false}
         />
       ),
@@ -68,16 +138,11 @@ export default function Dashboard() {
     [errorMessages, errorSeverity],
   );
 
-  const renderError = useCallback(() => {
-    return <Section section={errorSection} />;
-  }, [errorSection]);
-
-  const mainStackStyleProps = {
-    position: "relative",
-    maxWidth: "1200px",
-    minHeight: getAppHeight(),
-    margin: "auto",
-  };
+  // Memoize rendered error element — avoids re-creating JSX on unrelated renders
+  const errorSectionElement = useMemo(
+    () => (hasError ? <Section section={errorSection} /> : null),
+    [hasError, errorSection],
+  );
 
   useEffect(() => {
     if (!isReady || hasSavedSnapshot.current || !sectionsRef.current) return;
@@ -85,8 +150,8 @@ export default function Dashboard() {
     // MutationObserver watches for actual DOM changes in the sections container,
     // so we only snapshot after child content (charts, tables) is truly in the DOM
     const observer = new MutationObserver(() => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = setTimeout(() => {
         requestAnimationFrame(() => {
           if (hasSavedSnapshot.current) return;
           hasSavedSnapshot.current = true;
@@ -104,26 +169,27 @@ export default function Dashboard() {
 
     return () => observer.disconnect();
   }, [isReady, client, patient]);
+
   return (
     <Box className="app">
       {!isReady && (
         <Loader>
           <ProgressIndicator
             resources={toBeLoadedResources}
-            sx={theme => ({
+            sx={(theme) => ({
               position: "relative",
-              padding: theme.spacing(0, 2)
+              padding: theme.spacing(0, 2),
             })}
-          ></ProgressIndicator>
+          />
         </Loader>
       )}
       {isReady && (
         <>
-          <FloatingNavButton></FloatingNavButton>
-          <Stack className="summaries" sx={mainStackStyleProps}>
-            <section ref={sectionsRef} style={{ minHeight: getAppHeight() }}>
-              {hasError && renderError()}
-              {!fatalError && renderSections()}
+          <FloatingNavButton />
+          <Stack className="summaries" sx={MAIN_STACK_STYLE}>
+            <section ref={sectionsRef} style={SECTION_STYLE}>
+              {errorSectionElement}
+              {!fatalError && sectionElements}
             </section>
           </Stack>
         </>

@@ -1,5 +1,5 @@
 # TODO update to newer version: Active LTS or Current
-FROM node:22 as dev
+FROM node:26 as dev
 
 # cache hack (very fragile): initially only copy list of project dependencies
 COPY --chown=node:node package.json package-lock.json /opt/node/

@@ -25,10 +25,10 @@ import {
   buildClampedThinnedTicks,
 } from "@config/chart_config";
 import InfoDialog from "@components/InfoDialog";
+import ChartDot from "./ChartDot";
 import CustomLegend from "./CustomLegend";
 import CustomSourceTooltip from "./CustomSourceTooltip";
 import NullDot from "./NullDot";
-import { createDotRenderer } from "./ChartDotRenderers";
 import { useDismissableOverlay } from "@/hooks/useDismissableOverlay";
 import { generateUUID, isEmptyArray, range } from "@/util";
 
@@ -93,8 +93,8 @@ export default function LineCharts(props) {
   const hideTimerRef = React.useRef(null);
   const pointerTypeRef = React.useRef("mouse"); // 'mouse' | 'touch' | 'pen'
   const lastShowAtRef = React.useRef(0);
-  const [locked, setLocked] = React.useState(false); // tap-to-lock on touch
-  const [hoveredDotKey, setHoveredDotKey] = useState(null);
+  const hoveredDotKeyRef = React.useRef(null);
+  const dotListenersRef = React.useRef(new Map());
 
   // Add tooltip state for source-based rendering
   const [sourceTooltip, setSourceTooltip] = useState({
@@ -120,11 +120,28 @@ export default function LineCharts(props) {
 
   const hasMultipleYFields = useCallback(() => yLineFields && yLineFields.length > 0, [yLineFields]);
 
+  const lockedRef = React.useRef(false);
+  const [locked, _setLocked] = React.useState(false);
+  const setLocked = React.useCallback((val) => {
+    lockedRef.current = val;
+    _setLocked(val);
+  }, []);
+
   const hideTooltip = React.useCallback(() => {
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+
+    if (hoveredDotKeyRef.current) {
+      dotListenersRef.current.get(hoveredDotKeyRef.current)?.(false);
+      hoveredDotKeyRef.current = null;
+    }
+
+    setSourceTooltip((prev) => {
+      if (!prev.visible && !lockedRef.current) return prev;
+      return { visible: false, position: { x: 0, y: 0 }, data: null, payload: null };
+    });
+
     setLocked(false);
-    setSourceTooltip({ visible: false, position: { x: 0, y: 0 }, data: null, payload: null });
-  }, []);
+  }, [setLocked]);
 
   const { isScrolling } = useDismissableOverlay({ wrapperRef, onDismiss: hideTooltip });
 
@@ -133,21 +150,24 @@ export default function LineCharts(props) {
     (e, payload, lineName, dataKey, lineColor) => {
       if (isScrolling.current) return;
       pointerTypeRef.current = e?.pointerType || pointerTypeRef.current;
-
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
 
       const pt = e?.touches?.[0] || e?.changedTouches?.[0];
       const x = e?.clientX ?? pt?.clientX ?? e?.pageX ?? 0;
       const y = e?.clientY ?? pt?.clientY ?? e?.pageY ?? 0;
 
-      // If touch, lock so tiny moves won't flicker
       if (pointerTypeRef.current === "touch") setLocked(true);
-
       lastShowAtRef.current = Date.now();
 
-      // Create unique key for this dot
-      const dotKey = `${payload.id}_${dataKey || yFieldKey}`;
-      setHoveredDotKey(dotKey);
+      const newDotKey = `${payload.id}_${dataKey || yFieldKey}`;
+
+      // Notify previously hovered dot to unhover
+      if (hoveredDotKeyRef.current && hoveredDotKeyRef.current !== newDotKey) {
+        dotListenersRef.current.get(hoveredDotKeyRef.current)?.(false);
+      }
+      // Notify new dot to hover
+      dotListenersRef.current.get(newDotKey)?.(true);
+      hoveredDotKeyRef.current = newDotKey;
 
       const meaningRaw = showTooltipMeaning ? (payload.meaning ?? payload.scoreMeaning ?? payload.label) : "";
       const meaning = meaningRaw ? meaningRaw.replace(/\|/g, "\n") : null;
@@ -167,19 +187,14 @@ export default function LineCharts(props) {
         payload,
       });
     },
-    [xFieldKey, yFieldKey, isScrolling, showTooltipMeaning],
+    [xFieldKey, yFieldKey, isScrolling, showTooltipMeaning, setLocked],
   );
-
   const handleDotMouseLeave = React.useCallback(() => {
     if (pointerTypeRef.current === "touch" && locked) return;
-
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
 
     hideTimerRef.current = setTimeout(() => {
-      const dt = Date.now() - lastShowAtRef.current;
-      // grace window prevents flicker when pointer slips off dot briefly
-      if (dt > 120) {
-        setHoveredDotKey(null);
+      if (Date.now() - lastShowAtRef.current > 120) {
         hideTooltip();
       }
     }, 80);
@@ -410,8 +425,10 @@ export default function LineCharts(props) {
       direction="row"
       sx={{
         alignItems: "center",
-        justifyContent: "center"
-      }}>
+        justifyContent: "center",
+      }}
+      gap={1}
+    >
       <Typography variant="subtitle1" component="h4" color="secondary" sx={{ textAlign: "center" }}>
         {title}
       </Typography>
@@ -486,21 +503,21 @@ export default function LineCharts(props) {
 
     if (isSmallScreen) {
       return {
-        top: 24 + extraTopMargin,
+        top: 28 + extraTopMargin,
         right: 14,
         left: 14,
         bottom: 10,
       };
     } else if (isMediumScreen) {
       return {
-        top: 16 + extraTopMargin,
+        top: 20 + extraTopMargin,
         right: 18 + extraCategoryMargin,
         left: 18 + extraCategoryMargin,
         bottom: 10,
       };
     }
     return {
-      top: 14 + extraTopMargin,
+      top: 16 + extraTopMargin,
       right: 24 + extraCategoryMargin,
       left: 24 + extraCategoryMargin,
       bottom: 10,
@@ -682,7 +699,7 @@ export default function LineCharts(props) {
           dotColor: item.color, // Use the line's color as the dot color
           dotRadius: item.dotRadius ?? dotRadius,
           activeDotRadius: item.activeDotRadius ?? activeDotRadius,
-          shape: item.shape
+          shape: item.shape,
         };
 
         // Use custom opacity if provided, otherwise default to 0.5
@@ -720,37 +737,20 @@ export default function LineCharts(props) {
             legendType={item.legendType ? item.legendType : "line"}
             dot={(dotProps) => {
               const dotKey = `${dotProps.payload?.id}_${item.key}`;
-              const isHovered = hoveredDotKey === dotKey;
-              const CustomDot = createDotRenderer({ ...lineDotConfig, isHovered: isHovered});
-              const { key, ...rest } = dotProps;
               return (
-                <g
-                  key={`${dotProps.payload?.id}_${dotProps.payload?.key}_multiline_dot`}
-                  onPointerDown={(e) => {
-                    e.stopPropagation();
-                    handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color);
+                <ChartDot
+                  key={dotKey}
+                  dotProps={dotProps}
+                  dotConfig={lineDotConfig}
+                  dotKey={dotKey}
+                  dotListenersRef={dotListenersRef}
+                  onEnter={(e) =>
+                    handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color)
+                  }
+                  onLeave={(e) => {
+                    if ((e.pointerType || pointerTypeRef.current) === "mouse") handleDotMouseLeave();
                   }}
-                  onPointerMove={(e) => {
-                    e.stopPropagation();
-                    handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color);
-                  }}
-                  onPointerEnter={(e) => {
-                    e.stopPropagation();
-                    handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color);
-                  }}
-                  onPointerLeave={(e) => {
-                    if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                      e.stopPropagation();
-                      handleDotMouseLeave();
-                    }
-                  }}
-                  onPointerCancel={(e) => {
-                    e.stopPropagation();
-                    handleDotMouseLeave();
-                  }}
-                >
-                  <CustomDot {...rest} />
-                </g>
+                />
               );
             }}
             connectNulls={!!connectNulls}
@@ -780,39 +780,19 @@ export default function LineCharts(props) {
         dataKey={yFieldKey}
         stroke={theme.palette.muter.main}
         dot={(dotProps) => {
-          const CustomDot = createDotRenderer({
-            ...dotConfig,
-            isHovered: hoveredDotKey === `${dotProps.payload?.id}_${yFieldKey}`,
-          });
-          const { key, ...rest } = dotProps;
+          const dotKey = `${dotProps.payload?.id}_${yFieldKey}`;
           return (
-            <g
-              key={`${dotProps.payload?.id}_${dotProps.payload?.key}_singleline_dot`}
-              onPointerDown={(e) => {
-                e.stopPropagation();
-                handleDotMouseEnter(e, dotProps.payload);
+            <ChartDot
+              key={dotKey}
+              dotProps={dotProps}
+              dotConfig={dotConfig}
+              dotKey={dotKey}
+              dotListenersRef={dotListenersRef}
+              onEnter={(e) => handleDotMouseEnter(e, dotProps.payload)}
+              onLeave={(e) => {
+                if ((e.pointerType || pointerTypeRef.current) === "mouse") handleDotMouseLeave();
               }}
-              onPointerEnter={(e) => {
-                e.stopPropagation();
-                handleDotMouseEnter(e, dotProps.payload);
-              }}
-              onPointerMove={(e) => {
-                e.stopPropagation();
-                handleDotMouseEnter(e, dotProps.payload);
-              }}
-              onPointerLeave={(e) => {
-                if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                  e.stopPropagation();
-                  handleDotMouseLeave();
-                }
-              }}
-              onPointerCancel={(e) => {
-                e.stopPropagation();
-                handleDotMouseLeave();
-              }}
-            >
-              <CustomDot {...rest} />
-            </g>
+            />
           );
         }}
         strokeWidth={strokeWidth ? strokeWidth : 1}
@@ -853,7 +833,7 @@ export default function LineCharts(props) {
             const keyPostFix = "null_multi";
             // Create unique key for this null dot
             const dotKey = `${payload?.id}_${keyPostFix}`;
-            const isHovered = hoveredDotKey === dotKey;
+            const isHovered = hoveredDotKeyRef.current === dotKey;
 
             return (
               <g
@@ -919,7 +899,7 @@ export default function LineCharts(props) {
           const { cx, cy, payload, index } = dotProps;
           const keyPostFix = "null_single";
           const dotKey = `${payload?.id}_${keyPostFix}`;
-          const isHovered = hoveredDotKey === dotKey;
+          const isHovered = hoveredDotKeyRef.current === dotKey;
 
           return (
             <g
@@ -1008,39 +988,19 @@ export default function LineCharts(props) {
           fill={faintStroke}
           strokeWidth={strokeWidth ? strokeWidth : isSmallScreen ? 1 : 1.5}
           dot={(dotProps) => {
-            const CustomDot = createDotRenderer({
-              ...lineDotConfig,
-              isHovered: hoveredDotKey === `${dotProps.payload?.id}_${yFieldKey}`,
-            });
-            const { key, ...rest } = dotProps;
+            const dotKey = `${dotProps.payload?.id}_${yFieldKey}`;
             return (
-              <g
-                key={`${dotProps.payload?.id}_${dotProps.payload?.key}_dot`}
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                  handleDotMouseEnter(e, dotProps.payload);
+              <ChartDot
+                key={dotKey}
+                dotProps={dotProps}
+                dotConfig={lineDotConfig}
+                dotKey={dotKey}
+                dotListenersRef={dotListenersRef}
+                onEnter={(e) => handleDotMouseEnter(e, dotProps.payload)}
+                onLeave={(e) => {
+                  if ((e.pointerType || pointerTypeRef.current) === "mouse") handleDotMouseLeave();
                 }}
-                onPointerEnter={(e) => {
-                  e.stopPropagation();
-                  handleDotMouseEnter(e, dotProps.payload);
-                }}
-                onPointerMove={(e) => {
-                  e.stopPropagation();
-                  handleDotMouseEnter(e, dotProps.payload);
-                }}
-                onPointerLeave={(e) => {
-                  if ((e.pointerType || pointerTypeRef.current) === "mouse") {
-                    e.stopPropagation();
-                    handleDotMouseLeave();
-                  }
-                }}
-                onPointerCancel={(e) => {
-                  e.stopPropagation();
-                  handleDotMouseLeave();
-                }}
-              >
-                <CustomDot {...rest} />
-              </g>
+              />
             );
           }}
           connectNulls={!!connectNulls}
@@ -1157,38 +1117,45 @@ export default function LineCharts(props) {
       {renderTitle()}
       <Box
         ref={wrapperRef}
-        sx={[{
-          width: {
-            xs: MIN_CHART_WIDTH,
-            sm: chartWidth || 580,
-            md: mdChartWidth || chartWidth || 580,
-            lg: lgChartWidth || chartWidth || 580,
+        sx={[
+          {
+            width: {
+              xs: MIN_CHART_WIDTH,
+              sm: chartWidth || 580,
+              md: mdChartWidth || chartWidth || 580,
+              lg: lgChartWidth || chartWidth || 580,
+            },
+            maxWidth: "100%",
           },
-          maxWidth: "100%"
-        }, xsChartHeight ? {
-          height: {
-            xs: xsChartHeight
-          }
-        } : {
-          height: {
-            xs: 280
-          }
-        }, chartHeight ? {
-          height: {
-            sm: chartHeight
-          }
-        } : {
-          height: {
-            sm: 240
-          }
-        }]}
+          xsChartHeight
+            ? {
+                height: {
+                  xs: xsChartHeight,
+                },
+              }
+            : {
+                height: {
+                  xs: 280,
+                },
+              },
+          chartHeight
+            ? {
+                height: {
+                  sm: chartHeight,
+                },
+              }
+            : {
+                height: {
+                  sm: 240,
+                },
+              },
+        ]}
         className={`chart-wrapper ${wrapperClass ? wrapperClass : ""}`}
         onPointerDown={(e) => {
           pointerTypeRef.current = e.pointerType || pointerTypeRef.current;
           // tap inside chart (not a dot) closes on touch
           if (pointerTypeRef.current === "touch") {
-            setLocked(false);
-            handleDotMouseLeave();
+            hideTooltip();
           }
         }}
         onPointerLeave={(e) => {

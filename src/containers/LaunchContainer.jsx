@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import FHIR from "fhirclient";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -11,16 +11,13 @@ import "../style/App.scss";
 
 const fetchContextJson = async (authURL) => {
   if (!authURL) {
-    // default, if no auth url provided
     return {
       clientId: "patient_summary_client",
       scope: "profile roles email patient/*.read",
-      // default to show patient banner, can be overridden by query string or auth url response
-      //need_patient_banner: false,
     };
   }
+
   const response = await fetch(authURL, {
-    // include cookies in request
     credentials: "include",
   }).catch((e) => {
     console.log(e);
@@ -41,77 +38,74 @@ const fetchContextJson = async (authURL) => {
 };
 
 export default function Launch() {
-  const [error, setError] = React.useState("");
-  React.useEffect(() => {
-    fetchEnvData().then((results) => {
-      console.log("environment variables ", results);
-      const backendURL = getEnv("REACT_APP_CONF_API_URL");
-      const authURL = backendURL ? `${backendURL}/auth/auth-info` : "";
-      const urlParams = new URLSearchParams(window.location.search);
-      //retrieve patient id from URL querystring if any
-      const patientId = urlParams.get("patient");
-      console.log("patient id from url query string: ", patientId);
-      //retrieve need patient banner querystring if any
-      const needPatientBannerFromUrl = urlParams.get("need_patient_banner");
-      console.log("need_patient_banner from url query string: ", needPatientBannerFromUrl);
-      console.log("Auth url ", authURL);
-      fetchContextJson(authURL)
-        .then((json) => {
-          if (!json) {
-            setError("No valid context json specified");
-            return;
-          }
-          if (patientId) {
-            // only do this IF patient id comes from url queryString
-            json.patientId = patientId;
-            sessionStorage.setItem(queryPatientIdKey, patientId);
-          }
+  const [error, setError] = useState(null);
 
-          if (needPatientBannerFromUrl !== null) {
-            json.need_patient_banner = needPatientBannerFromUrl;
-            sessionStorage.setItem(queryNeedPatientBanner, needPatientBannerFromUrl);
-          } else if ("need_patient_banner" in json) {
-            // if need_patient_banner is specified in context json, save to session storage so it can be used in app
-            sessionStorage.setItem(queryNeedPatientBanner, json.need_patient_banner);
-          } else if ("token_data" in json && "need_patient_banner" in json.token_data) {
-            // also check token_data which is used in some auth server implementations
-            sessionStorage.setItem(queryNeedPatientBanner, json.token_data.need_patient_banner);
-          }
+  useEffect(() => {
+    async function launch() {
+      try {
+        const results = await fetchEnvData();
+        console.log("environment variables ", results);
 
-          // allow client id to be configurable
-          const envClientId = getEnv("REACT_APP_CLIENT_ID");
-          if (envClientId) json.clientId = envClientId;
+        const backendURL = getEnv("REACT_APP_CONF_API_URL");
+        const authURL = backendURL ? `${backendURL}/auth/auth-info` : "";
 
-          // allow auth scopes to be updated via environment variable
-          // see https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html
-          const envAuthScopes = getEnv("REACT_APP_AUTH_SCOPES");
-          if (envAuthScopes) json.scope = envAuthScopes;
+        const urlParams = new URLSearchParams(window.location.search);
+        const patientId = urlParams.get("patient");
+        console.log("patient id from url query string: ", patientId);
 
-          sessionStorage.setItem("launchContextJson", JSON.stringify(json));
+        const needPatientBannerFromUrl = urlParams.get("need_patient_banner");
+        console.log("need_patient_banner from url query string: ", needPatientBannerFromUrl);
+        console.log("Auth url ", authURL);
 
-          console.log("launch context json ", json);
-          FHIR.oauth2.authorize(json).catch((e) => {
-            console.log("FHIR auth error ", e);
-            setError("Fhir auth error. see console for detail.");
-          });
-        })
-        .catch((error) => setError(error?.message));
-    });
+        const json = await fetchContextJson(authURL);
+
+        if (!json) {
+          setError("No valid context json specified");
+          return;
+        }
+
+        if (patientId) {
+          json.patientId = patientId;
+          sessionStorage.setItem(queryPatientIdKey, patientId);
+        }
+
+        if (needPatientBannerFromUrl !== null) {
+          json.need_patient_banner = needPatientBannerFromUrl;
+          sessionStorage.setItem(queryNeedPatientBanner, needPatientBannerFromUrl);
+        } else if ("need_patient_banner" in json) {
+          sessionStorage.setItem(queryNeedPatientBanner, json.need_patient_banner);
+        } else if ("token_data" in json && "need_patient_banner" in json.token_data) {
+          sessionStorage.setItem(queryNeedPatientBanner, json.token_data.need_patient_banner);
+        }
+
+        const envClientId = getEnv("REACT_APP_CLIENT_ID");
+        if (envClientId) json.clientId = envClientId;
+
+        // see https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html
+        const envAuthScopes = getEnv("REACT_APP_AUTH_SCOPES");
+        if (envAuthScopes) json.scope = envAuthScopes;
+
+        sessionStorage.setItem("launchContextJson", JSON.stringify(json));
+        console.log("launch context json ", json);
+
+        await FHIR.oauth2.authorize(json).catch((e) => {
+          console.log("FHIR auth error ", e);
+          throw new Error("Fhir auth error. see console for detail.");
+        });
+      } catch (e) {
+        setError(e?.message ?? "Unknown error");
+      }
+    }
+
+    launch();
   }, []);
 
   return (
     <ThemeProvider theme={getTheme()}>
-      {error && <ErrorComponent message={error}></ErrorComponent>}
+      {error && <ErrorComponent message={error} />}
       {!error && (
-        <Stack
-          spacing={2}
-          direction="row"
-          sx={[{
-            alignItems: "center"
-          }, theme => ({
-            padding: theme.spacing(3)
-          })]}>
-          <CircularProgress></CircularProgress>
+        <Stack spacing={2} direction="row" sx={[{ alignItems: "center" }, (theme) => ({ padding: theme.spacing(3) })]}>
+          <CircularProgress />
           <div>Launching ...</div>
         </Stack>
       )}

@@ -24,6 +24,82 @@ import {
 } from "@config/chart_config";
 import CustomSourceTooltip from "./CustomSourceTooltip";
 import { useDismissableOverlay } from "@/hooks/useDismissableOverlay";
+const TooltipWrapper = React.memo(function TooltipWrapper({
+  active,
+  payload,
+  coordinate,
+  wrapperRef,
+  lockedRef,
+  forceHideRef,
+  lastActiveAtRef,
+  pointerTypeRef,
+  xFieldKey,
+  yFieldKey,
+  yLabel,
+  tooltipValueFormatter,
+}) {
+  const isTouch = pointerTypeRef.current === "touch";
+
+  if (isTouch && lockedRef.current) {
+    if (!payload || !payload[0]) return null;
+  } else {
+    if (active) {
+      lastActiveAtRef.current = Date.now();
+    } else {
+      if (Date.now() - lastActiveAtRef.current >= 80) return null;
+    }
+    if (!payload || !payload[0]) return null;
+  }
+
+  const entry = payload[0].payload;
+  const originalTimestamp = entry.originalTimestamp ?? entry[xFieldKey];
+  const rect = wrapperRef.current?.getBoundingClientRect();
+  const vx = rect ? rect.left + (coordinate?.x ?? 0) : 0;
+  const vy = rect ? rect.top + (coordinate?.y ?? 0) : 0;
+
+  return (
+    <CustomSourceTooltip
+      visible={!forceHideRef.current && (active || (pointerTypeRef.current === "touch" && lockedRef.current))}
+      position={{ x: vx, y: vy }}
+      positionType="fixed"
+      data={{
+        date: originalTimestamp,
+        value: entry[yFieldKey],
+        source: entry.source,
+        isNull: entry[yFieldKey] == null,
+        meaning: entry.meaning,
+      }}
+      payload={entry}
+      tooltipValueFormatter={tooltipValueFormatter}
+      xFieldKey={xFieldKey}
+      yFieldKey={yFieldKey}
+      yLabel={yLabel}
+      showMeaning={true}
+    />
+  );
+});
+
+TooltipWrapper.propTypes = {
+  active: PropTypes.bool,
+  coordinate: PropTypes.shape({
+    x: PropTypes.number,
+    y: PropTypes.number,
+  }),
+  payload: PropTypes.arrayOf(
+    PropTypes.shape({
+      payload: PropTypes.object,
+    }),
+  ),
+  wrapperRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  lockedRef: PropTypes.shape({ current: PropTypes.bool }),
+  forceHideRef: PropTypes.shape({ current: PropTypes.bool }),
+  lastActiveAtRef: PropTypes.shape({ current: PropTypes.number }),
+  pointerTypeRef: PropTypes.shape({ current: PropTypes.string }),
+  xFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  yFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  yLabel: PropTypes.string,
+  tooltipValueFormatter: PropTypes.func,
+};
 
 export default function BarCharts(props) {
   const {
@@ -46,8 +122,8 @@ export default function BarCharts(props) {
   } = props;
 
   const wrapperRef = React.useRef(null);
-  const [forceHide, setForceHide] = React.useState(false);
-  const [locked, setLocked] = React.useState(false); // sticky open (touch)
+  const lockedRef = React.useRef(false);
+  const forceHideRef = React.useRef(false);
   const pointerTypeRef = React.useRef("mouse"); // 'mouse' | 'touch' | 'pen'
   const hideTimerRef = React.useRef(null);
   const lastActiveAtRef = React.useRef(0);
@@ -59,16 +135,16 @@ export default function BarCharts(props) {
 
   const hideTooltip = React.useCallback(() => {
     clearHideTimer();
-    setLocked(false);
-    setForceHide(true);
+    lockedRef.current = false;
+    forceHideRef.current = true;
   }, []);
-
-  useDismissableOverlay({ wrapperRef, onDismiss: hideTooltip });
 
   const showTooltip = React.useCallback(() => {
     clearHideTimer();
-    setForceHide(false);
+    forceHideRef.current = false;
   }, []);
+
+  useDismissableOverlay({ wrapperRef, onDismiss: hideTooltip });
 
   const getBarColor = (entry, baseColor) => {
     // If no duplicates on this day, use base color
@@ -268,87 +344,23 @@ export default function BarCharts(props) {
     return <YAxis domain={yDomain} minTickGap={4} stroke="#FFF" tick={false} width={5} />;
   };
 
-  const TooltipWrapper = ({ active, payload, coordinate }) => {
-    const isTouch = pointerTypeRef.current === "touch";
-
-    // Touch + locked: ignore active jitter as long as we have a payload
-    if (isTouch && locked) {
-      if (!payload || !payload[0]) return null; // nothing to show
-    } else {
-      // Mouse (or unlocked touch): debounce brief active=false transitions
-      if (active) {
-        lastActiveAtRef.current = Date.now();
-      } else {
-        const dt = Date.now() - lastActiveAtRef.current;
-        if (dt < 80) {
-          // treat as still active to prevent flicker
-        } else {
-          return null;
-        }
-      }
-
-      if (!payload || !payload[0]) return null;
-    }
-
-    const entry = payload[0].payload;
-    const originalTimestamp = entry.originalTimestamp ?? entry[xFieldKey];
-
-    const rect = wrapperRef.current?.getBoundingClientRect();
-    const vx = rect ? rect.left + (coordinate?.x ?? 0) : 0;
-    const vy = rect ? rect.top + (coordinate?.y ?? 0) : 0;
-
-    return (
-      <CustomSourceTooltip
-        visible={!forceHide && (active || (pointerTypeRef.current === "touch" && locked))}
-        position={{ x: vx, y: vy }}
-        positionType="fixed"
-        data={{
-          date: originalTimestamp,
-          value: entry[yFieldKey],
-          source: entry.source,
-          isNull: entry[yFieldKey] == null,
-          meaning: entry.meaning,
-        }}
-        payload={entry}
-        tooltipValueFormatter={tooltipValueFormatter}
+  const renderTooltipContent = React.useCallback(
+    (p) => (
+      <TooltipWrapper
+        {...p}
+        wrapperRef={wrapperRef}
+        lockedRef={lockedRef}
+        forceHideRef={forceHideRef}
+        lastActiveAtRef={lastActiveAtRef}
+        pointerTypeRef={pointerTypeRef}
         xFieldKey={xFieldKey}
         yFieldKey={yFieldKey}
         yLabel={yLabel}
-        showMeaning={true}
+        tooltipValueFormatter={tooltipValueFormatter}
       />
-    );
-  };
-
-  TooltipWrapper.propTypes = {
-    active: PropTypes.bool,
-    label: PropTypes.any,
-    coordinate: PropTypes.shape({
-      x: PropTypes.number,
-      y: PropTypes.number,
-    }),
-    payload: PropTypes.arrayOf(
-      PropTypes.shape({
-        payload: PropTypes.shape({
-          originalTimestamp: PropTypes.number,
-          [xFieldKey]: PropTypes.number,
-          [yFieldKey]: PropTypes.any,
-          source: PropTypes.string,
-          meaning: PropTypes.string,
-          highSeverityScoreCutoff: PropTypes.number,
-        }),
-      }),
     ),
-  };
-  const renderToolTip = () => {
-    return (
-      <Tooltip
-        trigger="hover"
-        content={(p) => <TooltipWrapper {...p} />}
-        wrapperStyle={{ pointerEvents: "none" }}
-        isAnimationActive={false}
-      />
-    );
-  };
+    [xFieldKey, yFieldKey, yLabel, tooltipValueFormatter],
+  );
 
   const renderTruncationLine = () => {
     if (!wasTruncated || !truncationDate) {
@@ -373,8 +385,8 @@ export default function BarCharts(props) {
   };
 
   React.useEffect(() => {
-    setForceHide(false);
-    setLocked(false);
+    forceHideRef.current = false;
+    lockedRef.current = false;
   }, [data]);
 
   return (
@@ -395,37 +407,26 @@ export default function BarCharts(props) {
         className="chart-wrapper"
         onPointerEnter={(e) => {
           pointerTypeRef.current = e.pointerType || "mouse";
-          if (pointerTypeRef.current === "mouse") {
-            showTooltip();
-          }
+          if (pointerTypeRef.current === "mouse") showTooltip();
         }}
         onPointerDown={(e) => {
           pointerTypeRef.current = e.pointerType || "mouse";
           e.stopPropagation();
-
-          // Touch: tap locks it open (no hover flicker)
           if (pointerTypeRef.current === "touch") {
-            setLocked(true);
-            showTooltip();
+            lockedRef.current = true;
+            forceHideRef.current = false;
           } else {
-            // Mouse: just ensure it's visible
-            setLocked(false);
-            showTooltip();
+            lockedRef.current = false;
+            forceHideRef.current = false;
           }
         }}
         onPointerMove={(e) => {
           pointerTypeRef.current = e.pointerType || pointerTypeRef.current;
-          // For mouse, ensure tooltip is shown when moving over chart
-          if (pointerTypeRef.current === "mouse") {
-            showTooltip();
-          }
+          if (pointerTypeRef.current === "mouse") showTooltip();
         }}
         onPointerLeave={(e) => {
           pointerTypeRef.current = e.pointerType || pointerTypeRef.current;
-          // Mouse only: allow leaving to hide
-          if (pointerTypeRef.current === "mouse") {
-            hideTooltip(); // Use hideTooltip directly instead of setting a timer
-          }
+          if (pointerTypeRef.current === "mouse") hideTooltip();
         }}
       >
         <ResponsiveContainer width="100%" maxWidth="100%" height="100%" minWidth={100} minHeight={30}>
@@ -443,10 +444,13 @@ export default function BarCharts(props) {
             {renderTruncationLine()}
             {renderXAxis()}
             {renderYAxis()}
-            {renderToolTip()}
+            <Tooltip
+              content={renderTooltipContent}
+              wrapperStyle={{ pointerEvents: "none" }}
+              isAnimationActive={false}
+            />
             <Bar dataKey={yFieldKey} maxBarSize={dynamicBarSize} barCategoryGap="20%" minPointSize={4}>
               {parsed.map((entry, index) => {
-                // eslint-disable-next-line
                 const baseColor = entry[yFieldKey] >= entry.highSeverityScoreCutoff ? ALERT_COLOR : SUCCESS_COLOR;
                 const barColor = getBarColor(entry, baseColor);
 

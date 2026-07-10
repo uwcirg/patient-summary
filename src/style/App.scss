@@ -13,6 +13,10 @@ $warning-background-color: #f7d0b01a;
 $thumb-color: #a0a3b2;
 $thumb-background-color: #eef1f6;
 $header-height: 52px;
+$buttonBoxShadow:
+  rgba(0, 0, 0, 0.2) 0px 3px 1px -2px,
+  rgba(0, 0, 0, 0.14) 0px 2px 2px 0px,
+  rgba(0, 0, 0, 0.12) 0px 1px 5px 0px;
 
 html {
   scrollbar-gutter: stable; /* Reserve space to prevent shifts */
@@ -380,6 +384,9 @@ td {
   color: $muted-text-color;
   margin-top: 4px !important;
 }
+.info-button {
+  box-shadow: $buttonBoxShadow !important;
+}
 
 @media print {
   @page {
@@ -395,7 +402,7 @@ td {
   }
   footer {
     position: relative !important;
-    background-color: #FFF !important;
+    background-color: #fff !important;
     box-shadow: none !important;
   }
   html,
@@ -403,7 +410,7 @@ td {
     font-size: 12px;
   }
   main {
-    background-color: #FFF !important;
+    background-color: #fff !important;
   }
   h1,
   h2 {

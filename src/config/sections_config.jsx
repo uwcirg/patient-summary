@@ -11,10 +11,9 @@ import Loader from "@components/Loader";
 const renderLoader = () => (
   <Loader message="Retrieving content..." styles={{ position: "relative", width: "auto", height: "auto" }}></Loader>
 );
-
+const ScoreSummary = lazy(() => import("../components/sections/ScoringSummary"));
+const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
 const renderScoringSummary = ({allScoringSummaryData, allChartData, chartKeys}) => {
-  const ScoreSummary = lazy(() => import("../components/sections/ScoringSummary"));
-  const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
   return (
     <Suspense fallback={renderLoader()}>
       <Stack
@@ -61,34 +60,32 @@ const renderScoringSummary = ({allScoringSummaryData, allChartData, chartKeys}) 
     </Suspense>
   );
 };
-
+const ProReport = lazy(() => import("../components/sections/PROReport"));
 const renderProReport = (props) => {
-  const ProReport = lazy(() => import("../components/sections/PROReport"));
   return (
     <Suspense fallback={renderLoader()}>
       <ProReport {...props}></ProReport>
     </Suspense>
   );
 };
-
+const Conditions = lazy(() => import("../components/sections/Conditions"));
 const renderConditions = (props) => {
-  const Conditions = lazy(() => import("../components/sections/Conditions"));
   return (
     <Suspense fallback={renderLoader()}>
       <Conditions data={props?.Condition}></Conditions>
     </Suspense>
   );
 };
+const Observation = lazy(() => import("../components/sections/Observations"));
 const renderObservations = (props) => {
-  const Observation = lazy(() => import("../components/sections/Observations"));
   return (
     <Suspense fallback={renderLoader()}>
       <Observation data={props?.Observation}></Observation>
     </Suspense>
   );
 };
+const Summaries = lazy(() => import("../components/sections/Summaries"));
 const renderSummaries = (props) => {
-  const Summaries = lazy(() => import("../components/sections/Summaries"));
   return <Suspense fallback={renderLoader()}>{<Summaries {...props}></Summaries>}</Suspense>;
 };
 

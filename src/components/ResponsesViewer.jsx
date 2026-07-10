@@ -93,7 +93,7 @@ export default function ResponsesViewer({
                   <QuestionnaireInfo
                     questionnaireJson={questionnaire}
                     note={note}
-                    buttonSize="small"
+                    buttonSize="medium"
                   ></QuestionnaireInfo>
                 )}
               </Stack>
