@@ -277,7 +277,6 @@ function reducer(state, action) {
   }
 
   // Combines base RESULTS + loader COMPLETE_MANY into a single state update,
-  // avoiding the two sequential dispatches that caused intermediate renders.
   if (actionType === "RESULTS_AND_COMPLETE") {
     const ids = new Set(action.completeIds ?? []);
     const updatedLoader = state.loader.map((r) =>
