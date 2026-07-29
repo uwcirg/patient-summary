@@ -187,7 +187,8 @@ export default function LineCharts(props) {
         payload,
       });
     },
-    [xFieldKey, yFieldKey, isScrolling, showTooltipMeaning, setLocked],
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+    [xFieldKey, yFieldKey, isScrolling, isScrolling.current, showTooltipMeaning, setLocked],
   );
   const handleDotMouseLeave = React.useCallback(() => {
     if (pointerTypeRef.current === "touch" && locked) return;
@@ -745,6 +746,10 @@ export default function LineCharts(props) {
                   dotKey={dotKey}
                   dotListenersRef={dotListenersRef}
                   onEnter={(e) =>
+                    // handleDotMouseEnter is only ever invoked from ChartDot's real
+                    // onPointerEnter/onPointerMove/onPointerDown DOM handlers (see ChartDot.jsx), never
+                    // synchronously during ChartDot's own render, so the ref read inside it is render-safe.
+                    // eslint-disable-next-line react-hooks/refs
                     handleDotMouseEnter(e, dotProps.payload, item.label ?? item.key, item.key, item.color)
                   }
                   onLeave={(e) => {

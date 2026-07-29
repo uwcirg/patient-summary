@@ -40,7 +40,7 @@ export default function Header(props) {
   const { patient } = useContext(FhirClientContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
-  const anchorRef = useRef(null);
+  const [anchorEl, setAnchorEl] = React.useState(null);
   const desktopImgRef = useRef(null);
   const mobileImgRef = useRef(null);
   const sections = getSectionsToShow();
@@ -251,7 +251,6 @@ export default function Header(props) {
             xl: "none",
           },
         }}
-        ref={anchorRef}
         aria-controls={mobileMenuOpen ? "composition-menu" : undefined}
         aria-expanded={mobileMenuOpen ? "true" : undefined}
         aria-haspopup="true"
@@ -263,7 +262,7 @@ export default function Header(props) {
       </IconButton>
       <Popper
         open={mobileMenuOpen}
-        anchorEl={anchorRef.current}
+        anchorEl={anchorEl}
         role={undefined}
         placement="bottom-start"
         transition
@@ -331,13 +330,14 @@ export default function Header(props) {
     return <About open={aboutModalOpen} onClose={() => setAboutModalOpen(false)}></About>;
   };
   const handleMobileMenuClose = (event) => {
-    if (anchorRef.current && anchorRef.current.contains(event.target)) {
+    if (anchorEl && anchorEl.contains(event.target)) {
       return;
     }
 
     setMobileMenuOpen(false);
   };
-  const handleMobileMenuToggle = () => {
+  const handleMobileMenuToggle = (event) => {
+    setAnchorEl(anchorEl ? null : event.currentTarget);
     setMobileMenuOpen((prevOpen) => !prevOpen);
   };
   const handleListKeyDown = (event) => {

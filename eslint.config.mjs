@@ -12,6 +12,7 @@ export default [
   pluginJs.configs.recommended,
   pluginReact.configs.flat.recommended,
   pluginJsxAlly.flatConfigs.recommended,
+  reactHooks.configs.flat["recommended-latest"],
   pluginImport.flatConfigs.recommended,
   eslintConfigPrettier,
   {
@@ -33,9 +34,7 @@ export default [
       globals: {
         vi: true,
       },
-      "import/ignore": [
-        "src/util/*.js$"
-      ]
+      "import/ignore": ["src/util/*.js$"],
     },
     rules: {
       "react-hooks/rules-of-hooks": "error",
@@ -57,7 +56,7 @@ export default [
       "import/no-duplicates": "error",
       "import/default": "off",
       "import/no-named-as-default": "off",
-      "import/no-named-as-default-member": "off"
+      "import/no-named-as-default-member": "off",
     },
   },
 ];

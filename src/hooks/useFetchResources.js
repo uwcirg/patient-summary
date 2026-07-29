@@ -252,6 +252,30 @@ function reducer(state, action) {
     }
   }
 
+  if (scope === "bundle") {
+    switch (actionType) {
+      // Phase 1 seeds/replaces the base entry list (patient + QR + Q resources)
+      case "SEED":
+        return {
+          ...state,
+          bundle: { ...state.bundle, entry: action.entry ?? state.bundle.entry },
+        };
+      // Phase 2 appends additional resources and merges eval results
+      case "APPEND":
+        return {
+          ...state,
+          bundle: {
+            entry: [...state.bundle.entry, ...(action.entry ?? [])],
+            evalResults: { ...state.bundle.evalResults, ...(action.evalResults ?? {}) },
+          },
+        };
+      case "RESET":
+        return { ...state, bundle: { entry: [], evalResults: {} } };
+      default:
+        return state;
+    }
+  }
+
   // Combines base RESULTS + loader COMPLETE_MANY into a single state update,
   // avoiding the two sequential dispatches that caused intermediate renders.
   if (actionType === "RESULTS_AND_COMPLETE") {
@@ -277,7 +301,16 @@ function reducer(state, action) {
       error: false,
       errorMessage: "",
     };
-    return { ...state, base: newBase, loader: updatedLoader };
+    return {
+      ...state,
+      base: newBase,
+      loader: updatedLoader,
+      extraTypes: action.extraTypes !== undefined ? action.extraTypes : state.extraTypes,
+    };
+  }
+
+  if (actionType === "SET_EXTRA_TYPES") {
+    return { ...state, extraTypes: action.extraTypes ?? [] };
   }
 
   if (actionType === "RESET_ALL") {
@@ -293,6 +326,8 @@ function reducer(state, action) {
         errorMessage: "",
       },
       loader: [],
+      bundle: { entry: [], evalResults: {} },
+      extraTypes: [],
     };
   }
 
@@ -326,6 +361,8 @@ function createInitialState(configuredTypeSet, plannedExtras, isFromEpic) {
   return {
     base: { ...INITIAL_BASE_STATE, exactMatchById: isFromEpic },
     loader: items,
+    bundle: { entry: [], evalResults: {} },
+    extraTypes: [],
   };
 }
 
@@ -351,37 +388,29 @@ export default function useFetchResources() {
   // stable scoped dispatchers
   const dispatchBase = useCallback((action) => dispatch({ ...action, scope: "base" }), [dispatch]);
   const dispatchLoader = useCallback((action) => dispatch({ ...action, scope: "loader" }), [dispatch]);
+  const dispatchBundle = useCallback((action) => dispatch({ ...action, scope: "bundle" }), [dispatch]);
 
   const base = state.base;
   const toBeLoadedResources = state.loader;
+  const extraTypes = state.extraTypes;
 
-  const [bundleEntries, setBundleEntries] = useState([]);
-  const [extraTypes, setExtraTypes] = useState([]);
   const [fatalError, setFatalError] = useState(null);
   // stable patient id
-  const pid = useMemo(() => (isNonEmptyString(patient?.id) ? String(patient.id) : null), [patient?.id]);
+  const pid = useMemo(() => (isNonEmptyString(patient?.id) ? String(patient?.id) : null), [patient?.id]);
   // refresh bump controls recomputation of configured types
   const [bump, setBump] = useState(0);
 
   const refresh = useCallback(() => {
     dispatchBase({ type: "RESET" });
     dispatchLoader({ type: "RESET" });
+    dispatchBundle({ type: "RESET" });
+    dispatch({ type: "SET_EXTRA_TYPES", extraTypes: [] });
     setFatalError(null);
-    setExtraTypes([]);
     if (pid && client) {
       PHASE1_FLIGHTS.get(client)?.delete(`${pid}::${bump}`);
     }
     setBump((x) => x + 1);
-  }, [pid, bump, client, dispatchBase, dispatchLoader]);
-
-  // Bundle + eval results (kept in ref to avoid re-renders during accumulation)
-  const patientBundle = useRef({
-    resourceType: "Bundle",
-    id: "resource-bundle",
-    type: "collection",
-    entry: [],
-    evalResults: {},
-  });
+  }, [pid, bump, client, dispatch, dispatchBase, dispatchLoader, dispatchBundle]);
 
   // ---------------------------------------------------------------------------
   // Phase 1
@@ -403,6 +432,7 @@ export default function useFetchResources() {
   // Stable refs for callbacks used inside queryFn to avoid stale closures
   const dispatchLoaderRef = useRef(dispatchLoader);
   const dispatchBaseRef = useRef(dispatchBase);
+  const dispatchBundleRef = useRef(dispatchBundle);
   const ERROR_HELP_TEXT_REF = useRef(ERROR_HELP_TEXT);
   useEffect(() => {
     dispatchLoaderRef.current = dispatchLoader;
@@ -410,6 +440,9 @@ export default function useFetchResources() {
   useEffect(() => {
     dispatchBaseRef.current = dispatchBase;
   }, [dispatchBase]);
+  useEffect(() => {
+    dispatchBundleRef.current = dispatchBundle;
+  }, [dispatchBundle]);
   useEffect(() => {
     ERROR_HELP_TEXT_REF.current = ERROR_HELP_TEXT;
   }, [ERROR_HELP_TEXT]);
@@ -609,10 +642,10 @@ export default function useFetchResources() {
         const questionnaireResponses = getFhirResourcesFromQueryResult(matchedQRs);
 
         // seed bundle
-        patientBundle.current = {
-          ...patientBundle.current,
+        dispatchBundleRef.current({
+          type: "SEED",
           entry: [{ resource: patient }, ...(questionnaireResponses ?? []), ...(questionnaires ?? [])],
-        };
+        });
 
         return {
           questionnaires,
@@ -645,8 +678,7 @@ export default function useFetchResources() {
 
     if (isEmptyArray(extrasWanted)) {
       // No phase 2 needed — complete everything in one dispatch including summary
-      const summaryData = getSummaries(patientBundle.current.entry);
-      setBundleEntries([...patientBundle.current.entry]);
+      const summaryData = getSummaries(state.bundle.entry);
       dispatch({
         type: "RESULTS_AND_COMPLETE",
         // base fields
@@ -658,13 +690,13 @@ export default function useFetchResources() {
         completeIds: [...extrasSkip, SUMMARY_DATA_KEY],
         summaryData,
         data: [],
+        extraTypes: [],
       });
       return;
     }
 
     // Phase 2 needed — complete base + skipped extras in one dispatch,
     // then drive phase-2 list via state
-    setBundleEntries([...patientBundle.current.entry]);
     dispatch({
       type: "RESULTS_AND_COMPLETE",
       // base fields
@@ -675,6 +707,7 @@ export default function useFetchResources() {
       // loader fields — only complete skipped extras (not summary yet)
       completeIds: extrasSkip,
       data: [],
+      extraTypes: extrasWanted,
     });
 
     // Upsert the extras that ARE needed into the loader
@@ -684,8 +717,6 @@ export default function useFetchResources() {
         items: extrasWanted.map((t) => ({ id: t, title: t, complete: false, error: false })),
       });
     }
-
-    setExtraTypes(extrasWanted);
   }, [phase1Query.isSuccess, phase1Query.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle phase 1 error
@@ -753,11 +784,7 @@ export default function useFetchResources() {
       const evalEntries = extraTypes.map((t) => ({ [t]: new FhirResultBuilder(fhirData).build(t) }));
       const evalResults = Object.assign({}, ...(evalEntries ?? []));
 
-      patientBundle.current = {
-        ...patientBundle.current,
-        entry: [...patientBundle.current.entry, ...fhirData],
-        evalResults: { ...patientBundle.current.evalResults, ...evalResults },
-      };
+      dispatchBundleRef.current({ type: "APPEND", entry: fhirData, evalResults });
       return fhirData;
     },
     ...DEFAULT_QUERY_PARAMS,
@@ -770,7 +797,7 @@ export default function useFetchResources() {
     dispatchLoader({
       type: "COMPLETE",
       id: SUMMARY_DATA_KEY,
-      data: getSummaries(patientBundle.current.entry),
+      data: getSummaries(state.bundle.entry),
     });
   }, [phase2Query.isSuccess]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -823,7 +850,7 @@ export default function useFetchResources() {
 
   const allChartData = useMemo(() => {
     if (!summaryData?.data) return null;
-    const dataToUse = summaryData.data;
+    const dataToUse = summaryData?.data;
     const keys = Object.keys(dataToUse);
     const rows = keys.flatMap((key) => {
       const d = dataToUse[key];
@@ -839,9 +866,9 @@ export default function useFetchResources() {
     }
     return buildReportData({
       summaryData: summaryData?.data,
-      bundle: bundleEntries,
+      bundle: state.bundle.entry,
     });
-  }, [summaryData?.data, bundleEntries]);
+  }, [summaryData?.data, state.bundle.entry]);
 
   const allScoringSummaryData = useMemo(
     () =>
@@ -878,21 +905,12 @@ export default function useFetchResources() {
   const hasError = errorMessages.length > 0;
   const errorSeverity = fatalError ? "error" : "warning";
 
-  // Stabilize evalData — patientBundle.current is a ref mutated in place,
-  // so spreading it directly produces a new object reference each render.
-  const evalData = useMemo(
-    () => patientBundle.current.evalResults ?? {},
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [phase2Query.isSuccess, phase2Query.dataUpdatedAt],
-  );
+  // Sourced directly from reducer state — no memo needed since the reference
+  // only changes when the reducer actually updates it.
+  const evalData = state.bundle.evalResults;
+  const patientBundleEntries = state.bundle.entry;
 
   const summaryKeys = useMemo(() => Object.keys(base.summaries), [base.summaries]);
-
-  const patientBundleEntries = useMemo(
-    () => patientBundle.current.entry,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [phase1Query.isSuccess, phase2Query.isSuccess],
-  );
 
   if (isReady) {
     console.log("summaryData ", summaryData);

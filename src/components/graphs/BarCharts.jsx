@@ -13,7 +13,7 @@ import {
   YAxis,
   ResponsiveContainer,
 } from "recharts";
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useRef, useSyncExternalStore } from "react";
 import {
   calculateXDomain,
   SUCCESS_COLOR,
@@ -24,42 +24,88 @@ import {
 } from "@config/chart_config";
 import CustomSourceTooltip from "./CustomSourceTooltip";
 import { useDismissableOverlay } from "@/hooks/useDismissableOverlay";
+
+// Minimal external store for pointer-interaction state (pointer type, touch-lock,
+// force-hide, tooltip rect, and debounced "recently active" flag). Writes here never
+// trigger a re-render of BarCharts/BarChart — only components that call
+// useSyncExternalStore against this store (i.e. TooltipWrapper) re-render, which keeps
+// pointer-move handling from re-rendering the whole chart while staying render-safe
+// (no ref reads during render).
+function createInteractionStore() {
+  let state = {
+    pointerType: "mouse",
+    locked: false,
+    forceHide: false,
+    recentlyActive: false,
+    rect: null,
+  };
+  const listeners = new Set();
+
+  return {
+    getSnapshot: () => state,
+    setState: (partial) => {
+      state = { ...state, ...partial };
+      listeners.forEach((l) => l());
+    },
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+  };
+}
+
 const TooltipWrapper = React.memo(function TooltipWrapper({
   active,
   payload,
   coordinate,
-  wrapperRef,
-  lockedRef,
-  forceHideRef,
-  lastActiveAtRef,
-  pointerTypeRef,
+  store,
   xFieldKey,
   yFieldKey,
   yLabel,
   tooltipValueFormatter,
 }) {
-  const isTouch = pointerTypeRef.current === "touch";
+  const interaction = useSyncExternalStore(store.subscribe, store.getSnapshot);
+  const hideTimerRef = useRef(null);
 
-  if (isTouch && lockedRef.current) {
+  // Debounce the "recently active" flag so brief gaps in Recharts' own active/inactive
+  // toggling (mouse mode) don't flicker the tooltip. This replaces the old
+  // Date.now()-during-render comparison — the clock read now happens in an effect,
+  // and render just reads the resulting boolean off the store snapshot.
+  useEffect(() => {
+    if (active) {
+      if (hideTimerRef.current) {
+        clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = null;
+      }
+      store.setState({ recentlyActive: true });
+      return;
+    }
+    hideTimerRef.current = setTimeout(() => {
+      store.setState({ recentlyActive: false });
+    }, 80);
+    return () => {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
+  }, [active, store]);
+
+  const isTouch = interaction.pointerType === "touch";
+
+  if (isTouch && interaction.locked) {
     if (!payload || !payload[0]) return null;
   } else {
-    if (active) {
-      lastActiveAtRef.current = Date.now();
-    } else {
-      if (Date.now() - lastActiveAtRef.current >= 80) return null;
-    }
+    if (!interaction.recentlyActive) return null;
     if (!payload || !payload[0]) return null;
   }
 
   const entry = payload[0].payload;
   const originalTimestamp = entry.originalTimestamp ?? entry[xFieldKey];
-  const rect = wrapperRef.current?.getBoundingClientRect();
+  const rect = interaction.rect;
   const vx = rect ? rect.left + (coordinate?.x ?? 0) : 0;
   const vy = rect ? rect.top + (coordinate?.y ?? 0) : 0;
 
   return (
     <CustomSourceTooltip
-      visible={!forceHideRef.current && (active || (pointerTypeRef.current === "touch" && lockedRef.current))}
+      visible={!interaction.forceHide && (active || (isTouch && interaction.locked))}
       position={{ x: vx, y: vy }}
       positionType="fixed"
       data={{
@@ -90,11 +136,11 @@ TooltipWrapper.propTypes = {
       payload: PropTypes.object,
     }),
   ),
-  wrapperRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
-  lockedRef: PropTypes.shape({ current: PropTypes.bool }),
-  forceHideRef: PropTypes.shape({ current: PropTypes.bool }),
-  lastActiveAtRef: PropTypes.shape({ current: PropTypes.number }),
-  pointerTypeRef: PropTypes.shape({ current: PropTypes.string }),
+  store: PropTypes.shape({
+    getSnapshot: PropTypes.func,
+    setState: PropTypes.func,
+    subscribe: PropTypes.func,
+  }),
   xFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yFieldKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   yLabel: PropTypes.string,
@@ -122,29 +168,42 @@ export default function BarCharts(props) {
   } = props;
 
   const wrapperRef = React.useRef(null);
-  const lockedRef = React.useRef(false);
-  const forceHideRef = React.useRef(false);
-  const pointerTypeRef = React.useRef("mouse"); // 'mouse' | 'touch' | 'pen'
-  const hideTimerRef = React.useRef(null);
-  const lastActiveAtRef = React.useRef(0);
-
-  const clearHideTimer = () => {
-    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-    hideTimerRef.current = null;
-  };
+  const [store] = React.useState(() => createInteractionStore());
 
   const hideTooltip = React.useCallback(() => {
-    clearHideTimer();
-    lockedRef.current = false;
-    forceHideRef.current = true;
-  }, []);
-
-  const showTooltip = React.useCallback(() => {
-    clearHideTimer();
-    forceHideRef.current = false;
-  }, []);
+    store.setState({ locked: false, forceHide: true });
+  }, [store]);
 
   useDismissableOverlay({ wrapperRef, onDismiss: hideTooltip });
+
+  // Track the wrapper's viewport rect via ResizeObserver instead of calling
+  // getBoundingClientRect() during render. Rect updates go through the store, so
+  // TooltipWrapper can read the latest rect from its snapshot without touching the DOM
+  // itself. React 19 supports returning a cleanup function directly from a ref callback.
+  const setWrapperRef = React.useCallback(
+    (node) => {
+      wrapperRef.current = node;
+      if (!node) return undefined;
+
+      const updateRect = () => {
+        const r = node.getBoundingClientRect();
+        store.setState({ rect: { left: r.left, top: r.top } });
+      };
+      updateRect();
+
+      const resizeObserver = new ResizeObserver(updateRect);
+      resizeObserver.observe(node);
+      window.addEventListener("scroll", updateRect, true);
+      window.addEventListener("resize", updateRect);
+
+      return () => {
+        resizeObserver.disconnect();
+        window.removeEventListener("scroll", updateRect, true);
+        window.removeEventListener("resize", updateRect);
+      };
+    },
+    [store],
+  );
 
   const getBarColor = (entry, baseColor) => {
     // If no duplicates on this day, use base color
@@ -175,11 +234,6 @@ export default function BarCharts(props) {
     const minSpread = 2 * 60 * 60 * 1000; // Minimum: 2 hours
     const maxSpread = 6 * 24 * 60 * 60 * 1000; // Maximum: 6 days
     const dynamicSpreadWidth = Math.max(minSpread, Math.min(maxSpread, timeRangeMs * 0.005));
-
-    // console.log("BarChart - Dynamic spread calculation:", {
-    //   timeRangeDays: (timeRangeMs / (24 * 60 * 60 * 1000)).toFixed(1),
-    //   spreadWidthHours: (dynamicSpreadWidth / (60 * 60 * 1000)).toFixed(1),
-    // });
 
     // Group by calendar day only (ignoring time and y-value)
     const groups = {};
@@ -348,18 +402,14 @@ export default function BarCharts(props) {
     (p) => (
       <TooltipWrapper
         {...p}
-        wrapperRef={wrapperRef}
-        lockedRef={lockedRef}
-        forceHideRef={forceHideRef}
-        lastActiveAtRef={lastActiveAtRef}
-        pointerTypeRef={pointerTypeRef}
+        store={store}
         xFieldKey={xFieldKey}
         yFieldKey={yFieldKey}
         yLabel={yLabel}
         tooltipValueFormatter={tooltipValueFormatter}
       />
     ),
-    [xFieldKey, yFieldKey, yLabel, tooltipValueFormatter],
+    [store, xFieldKey, yFieldKey, yLabel, tooltipValueFormatter],
   );
 
   const renderTruncationLine = () => {
@@ -385,9 +435,8 @@ export default function BarCharts(props) {
   };
 
   React.useEffect(() => {
-    forceHideRef.current = false;
-    lockedRef.current = false;
-  }, [data]);
+    store.setState({ forceHide: false, locked: false });
+  }, [data, store]);
 
   return (
     <>
@@ -403,33 +452,27 @@ export default function BarCharts(props) {
           height: 240,
           maxWidth: "100%",
         }}
-        ref={wrapperRef}
+        ref={setWrapperRef}
         className="chart-wrapper"
         onPointerEnter={(e) => {
-          pointerTypeRef.current = e.pointerType || "mouse";
-          if (pointerTypeRef.current === "mouse") showTooltip();
+          const pointerType = e.pointerType || "mouse";
+          store.setState(pointerType === "mouse" ? { pointerType, forceHide: false } : { pointerType });
         }}
         onPointerDown={(e) => {
-          pointerTypeRef.current = e.pointerType || "mouse";
+          const pointerType = e.pointerType || "mouse";
           e.stopPropagation();
-          if (pointerTypeRef.current === "touch") {
-            lockedRef.current = true;
-            forceHideRef.current = false;
-          } else {
-            lockedRef.current = false;
-            forceHideRef.current = false;
-          }
+          store.setState({ pointerType, locked: pointerType === "touch", forceHide: false });
         }}
         onPointerMove={(e) => {
-          pointerTypeRef.current = e.pointerType || pointerTypeRef.current;
-          if (pointerTypeRef.current === "mouse") showTooltip();
+          const pointerType = e.pointerType || store.getSnapshot().pointerType;
+          store.setState(pointerType === "mouse" ? { pointerType, forceHide: false } : { pointerType });
         }}
         onPointerLeave={(e) => {
-          pointerTypeRef.current = e.pointerType || pointerTypeRef.current;
-          if (pointerTypeRef.current === "mouse") hideTooltip();
+          const pointerType = e.pointerType || store.getSnapshot().pointerType;
+          store.setState(pointerType === "mouse" ? { pointerType, locked: false, forceHide: true } : { pointerType });
         }}
       >
-        <ResponsiveContainer width="100%" maxWidth="100%" height="100%" minWidth={100} minHeight={30}>
+        <ResponsiveContainer minWidth={100} minHeight={30}>
           <BarChart
             margin={{
               top: 14,
@@ -438,7 +481,7 @@ export default function BarCharts(props) {
               bottom: 10,
             }}
             data={parsed}
-            style={{ width: "100%", maxWidth: "650px", touchAction: "manipulation" }}
+            style={{ maxWidth: "650px", touchAction: "manipulation" }}
           >
             <CartesianGrid strokeDasharray="2 2" horizontal={false} vertical={false} fill="#fdfbfbff" />
             {renderTruncationLine()}
