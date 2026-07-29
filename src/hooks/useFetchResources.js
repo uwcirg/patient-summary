@@ -677,7 +677,6 @@ export default function useFetchResources() {
     const extrasSkip = plannedExtras.filter((t) => !extrasWanted.find((w) => normalizeType(w) === normalizeType(t)));
 
     if (isEmptyArray(extrasWanted)) {
-      // No phase 2 needed — complete everything in one dispatch including summary
       const summaryData = getSummaries(state.bundle.entry);
       dispatch({
         type: "RESULTS_AND_COMPLETE",

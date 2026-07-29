@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from "react";
-import BallotIcon from "@mui/icons-material/BallotOutlined";
+import BallotIcon from "@mui/icons-material/Ballot";
 import MedicalInformationIcon from "@mui/icons-material/MedicalInformationOutlined";
 import FactCheckIcon from "@mui/icons-material/FactCheckOutlined";
 import SummarizeIcon from "@mui/icons-material/SummarizeOutlined";

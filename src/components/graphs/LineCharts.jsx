@@ -425,11 +425,10 @@ export default function LineCharts(props) {
     <Stack
       direction="row"
       sx={{
+        gap: 1,
         alignItems: "center",
-        justifyContent: "center",
-      }}
-      gap={1}
-    >
+        justifyContent: "center"
+      }}>
       <Typography variant="subtitle1" component="h4" color="secondary" sx={{ textAlign: "center" }}>
         {title}
       </Typography>

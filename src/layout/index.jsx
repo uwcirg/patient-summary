@@ -1,28 +1,33 @@
 import PropTypes from "prop-types";
 import React, { useEffect, useState } from "react";
-import { ErrorBoundary } from "react-error-boundary";
+import { ErrorBoundary, getErrorMessage } from "react-error-boundary";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
-import { CircularProgress, Stack, Typography } from "@mui/material";
+import { Button, CircularProgress, Stack, Typography } from "@mui/material";
 import { injectFaviconByProject, fetchEnvData } from "../util";
 import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
 import FhirClientProvider from "../context/FhirClientProvider";
 import Base from "./Base";
 
-function ErrorFallBack({ error }) {
-  if (!error.message) return null;
+function ErrorFallBack({ error, resetErrorBoundary }) {
+  const errorMessage = getErrorMessage(error);
   return (
     <Alert severity="error">
       <AlertTitle>Something went wrong:</AlertTitle>
-      <pre>{error.message}</pre>
+      <pre>{errorMessage}</pre>
       <p>Refresh page and try again</p>
+      <Button onClick={resetErrorBoundary}>Try again</Button>
     </Alert>
   );
 }
+ErrorFallBack.propTypes = {
+  error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+  resetErrorBoundary: PropTypes.func,
+};
 const queryClient = new QueryClient();
 
 export default function Index({ children }) {
@@ -46,12 +51,12 @@ export default function Index({ children }) {
       </Stack>
     );
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallBack}>
+    <ErrorBoundary fallbackRender={ErrorFallBack}>
       <ThemeProvider theme={theme}>
         <QueryClientProvider client={queryClient}>
           <FhirClientProvider>
             <CssBaseline />
-              <Base>{children}</Base>
+            <Base>{children}</Base>
           </FhirClientProvider>
         </QueryClientProvider>
       </ThemeProvider>
