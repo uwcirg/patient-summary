@@ -335,7 +335,8 @@ export default function ScoringSummary({
               sx={{
                 alignItems: "flex-start",
                 justifyContent: "flex-start",
-                width: "100%"
+                width: "100%",
+                flexWrap: "wrap"
               }}>
               {!row.displayMeaningNotScore && defaultRenderers.score(row)}
               {row.showNumAnsweredWithScore && defaultRenderers.answered(row)}

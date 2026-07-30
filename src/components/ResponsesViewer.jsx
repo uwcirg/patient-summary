@@ -62,7 +62,7 @@ export default function ResponsesViewer({
             fontSize: "0.8rem"
           }, (typeof buttonStyle === "object" && buttonStyle) || {}]}
         >
-          {buttonLabel}
+          <span className="button-text">{buttonLabel}</span>
         </Button>
       </Stack>
       {/* Full-screen dialog */}

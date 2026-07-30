@@ -91,8 +91,17 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
             spacing={1}
             sx={{
               alignItems: "center",
-              justifyContent: "space-between"
-            }}>
+              justifyContent: "space-between",
+              flexWrap: {
+                xs: "wrap",
+                sm: "wrap",
+                md: "wrap",
+                lg: "nowrap",
+                xl: "nowrap",
+              },
+              gap: 0.25,
+            }}
+          >
             <Box className={`table-cell-item ${cellClass}`}>{s}</Box>
             {colorSeverity && <AlertIcon fontSize="small" color={colorSeverity}></AlertIcon>}
           </Stack>
