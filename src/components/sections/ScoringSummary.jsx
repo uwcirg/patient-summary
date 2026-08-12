@@ -190,7 +190,8 @@ export default function ScoringSummary({
         if (row.totalAnsweredItems != null || row.note) {
           return (
             <Stack direction="row" sx={{
-              alignItems: "center"
+              alignItems: "center",
+              gap: 1,
             }}>
               {row.totalAnsweredItems && (
                 <Box>{`${row.totalAnsweredItems} question${row.totalAnsweredItems > 1 ? "s" : ""} answered`}</Box>

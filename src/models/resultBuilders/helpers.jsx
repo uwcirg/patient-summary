@@ -24,6 +24,7 @@ import {
   isNumber,
   isPlainObject,
   normalizeStr,
+  normalizeHTMLStr,
   removeNullValuesFromObject,
   trimToMinutes,
 } from "@util";
@@ -920,7 +921,7 @@ export function getResponseColumns(data) {
       render: (rowData) => {
         const q = rowData?.question ?? "";
         const config = rowData?.config;
-        const normalizedClean = normalizeStr(q);
+        const normalizedClean = normalizeHTMLStr(q);
         const isQuestion =
           rowData?.isWeightedLabel ||
           normalizeStr(q) === normalizeStr(config?.title) ||

@@ -50,7 +50,7 @@ export default function Summary(props) {
     const qo = new Questionnaire(summary?.questionnaire, questionnaireId);
     questionnaireTitle = qo.displayName;
     return (
-      <Typography variant="h6" component="h3" color="accent" sx={{ marginBottom: 1 }} className="questionnaire-title">
+      <Typography variant="subtitle2" component="h3" sx={{ marginBottom: 1, fontWeight: "bold" }} className="questionnaire-title">
         {questionnaireTitle}
       </Typography>
     );
@@ -104,11 +104,13 @@ export default function Summary(props) {
         sx={theme => ({
           paddingBottom: 4,
           paddingLeft: theme.spacing(2),
-          paddingRight: theme.spacing(2)
+          paddingRight: theme.spacing(2),
+          gap: theme.spacing(1.5),
         })}
+        
       >
         <Stack direction="row" spacing={1} sx={{
-          alignItems: "flex-start"
+          alignItems: "center",
         }}>
           {/* questionnaire title */}
           <div className="questionnaire-title-container">{renderTitle()}</div>

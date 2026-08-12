@@ -162,6 +162,11 @@ const CustomLegend = ({
                 onChange={handleToggleAll}
                 size="small"
                 className="print-hidden"
+                slotProps={{
+                  input: {
+                    "aria-label": allLinesVisible ? "Hide All Lines" : "Show All Lines",
+                  },
+                }}
                 sx={[{
                   width: 30,
                   height: 16,
@@ -239,6 +244,11 @@ const CustomLegend = ({
                       onChange={() => onToggleLine?.(lineKey)}
                       size="small"
                       className="print-hidden"
+                      slotProps={{
+                        input: {
+                          "aria-label": isVisible ? `Hide ${lineLabel}` : `Show ${lineLabel}`,
+                        },
+                      }}
                       sx={[{
                         width: 30,
                         height: 16,

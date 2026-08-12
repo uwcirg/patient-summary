@@ -78,7 +78,7 @@ export default function Header(props) {
       <>
         <Typography
           variant="h5"
-          component="h1"
+          component="h2"
           color="primary"
           sx={{
             fontSize: "1.3rem",
@@ -122,7 +122,7 @@ export default function Header(props) {
                 ref={desktopImgRef}
                 alt={"project logo"}
                 style={{
-                  height: 40,
+                  width: 40,
                   cursor: "pointer",
                 }}
                 onLoad={handleImageLoaded}

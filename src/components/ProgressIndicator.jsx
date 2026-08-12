@@ -5,13 +5,11 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-
+import CircularProgress from "@mui/material/CircularProgress";
 
 export default function ProgressIndicator({ resources, sx }) {
   const total = resources?.length;
-  const loaded = resources?.filter(
-    (resource) => resource.complete || resource.error
-  ).length;
+  const loaded = resources?.filter((resource) => resource.complete || resource.error).length;
   if (total === 0) return false;
   return (
     <Box
@@ -19,11 +17,12 @@ export default function ProgressIndicator({ resources, sx }) {
         position: "fixed",
         width: "100%",
         height: "100%",
-        backgroundColor: "#FFF",
+        minHeight: "calc(100vh - 132px)",
         marginLeft: "auto",
         marginRight: "auto",
         left: 0,
-        top: theme.spacing(4),
+        top: theme.spacing(2),
+        bottom: 0,
         zIndex: theme.zIndex.drawer + 1,
         padding: theme.spacing(2, 2),
         ...(typeof sx === "function" ? sx(theme) : sx),
@@ -54,7 +53,10 @@ export default function ProgressIndicator({ resources, sx }) {
             marginBottom: 1.25,
           }}
         >
-          <div>Loading ...</div>
+          <Stack direction="row" spacing={1} sx={{ justifyContent: "center", alignItems: "center" }}>
+            <CircularProgress color="info" size={24} role="progressbar"></CircularProgress>
+            <div>Loading Resources...</div>
+          </Stack>
           <div>
             <b>{Math.ceil((loaded / total) * 100)} %</b>
           </div>
@@ -110,7 +112,7 @@ ProgressIndicator.propTypes = {
       name: PropTypes.string,
       title: PropTypes.string,
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    })
+    }),
   ),
-  sx: PropTypes.object
+  sx: PropTypes.object,
 };

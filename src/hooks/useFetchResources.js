@@ -853,7 +853,8 @@ export default function useFetchResources() {
     const rows = keys.flatMap((key) => {
       const d = dataToUse[key];
       if (!d || isEmptyArray(d.chartData?.data)) return [];
-      return d.chartData.data.map((o) => ({ ...o, key, [getDisplayQTitle(key)]: o.score }));
+      // console.log("chartData for ", key, d.chartData?.data);
+      return d.chartData.data.map((o) => ({ ...o, key, [getDisplayQTitle(key)]: !isNaN(o.score) ? Number(o.score) : 0 }));
     });
     return rows.sort((a, b) => safeDateMs(a.date) - safeDateMs(b.date));
   }, [summaryData?.data]);
@@ -954,5 +955,4 @@ export default function useFetchResources() {
   };
 }
 
-// Export reducer for unit tests
-export { reducer };
+export { reducer, normalizeType, SUMMARY_DATA_KEY, QUESTIONNAIRE_DATA_KEY, QUESTIONNAIRE_RESPONSES_DATA_KEY };

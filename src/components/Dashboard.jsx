@@ -6,23 +6,24 @@ import Stack from "@mui/material/Stack";
 import ErrorIcon from "@mui/icons-material/ErrorOutlined";
 import { getAppHeight, getSectionsToShow, isEmptyArray, saveHTMLToFHIR } from "@util";
 import ErrorComponent from "./ErrorComponent";
-import Loader from "./Loader";
 import ProgressIndicator from "./ProgressIndicator";
 import Section from "./Section";
 import FloatingNavButton from "./FloatingNavButton";
-import useFetchResources from "@/hooks/useFetchResources";
+import useFetchResources, {
+  normalizeType,
+  SUMMARY_DATA_KEY,
+  QUESTIONNAIRE_DATA_KEY,
+  QUESTIONNAIRE_RESPONSES_DATA_KEY,
+} from "@/hooks/useFetchResources";
 import { FhirClientContext } from "@/context/FhirClientContext";
 
-// ---------------------------------------------------------------------------
-// Constants — hoisted to avoid recreation on every render
-// ---------------------------------------------------------------------------
 const APP_HEIGHT = getAppHeight();
 
 const MAIN_STACK_STYLE = {
   position: "relative",
   maxWidth: "1200px",
   minHeight: APP_HEIGHT,
-  margin: "auto",
+  margin: "0 auto 52px auto",
 };
 
 const SECTION_STYLE = { minHeight: APP_HEIGHT };
@@ -38,16 +39,35 @@ const ERROR_SECTION_BASE = {
   icon: () => <ErrorIcon />,
 };
 
+// Sections whose resources array includes either of these are also gated on
+// SUMMARY_DATA_KEY completing — their props (allChartData, reportData, etc.)
+// are derived from summaryData, which resolves after these resources do.
+const SUMMARY_DEPENDENT_IDS = new Set([QUESTIONNAIRE_DATA_KEY, QUESTIONNAIRE_RESPONSES_DATA_KEY].map(normalizeType));
+
+function buildSectionReadyMap(sectionsToShow, toBeLoadedResources) {
+  const byId = new Map(toBeLoadedResources.map((r) => [normalizeType(r.id), r]));
+  const map = new Map();
+  for (const section of sectionsToShow) {
+    const resourceIds = section.resources ?? [];
+    const needsSummary = resourceIds.some((r) => SUMMARY_DEPENDENT_IDS.has(normalizeType(r)));
+    const ids = needsSummary ? [...resourceIds, SUMMARY_DATA_KEY] : resourceIds;
+    const ready = isEmptyArray(ids) ? true : ids.every((id) => byId.get(normalizeType(id))?.complete);
+    map.set(section.id, ready);
+  }
+  return map;
+}
+
 // ---------------------------------------------------------------------------
 // MemoizedSection
 // ---------------------------------------------------------------------------
-const MemoizedSection = React.memo(function MemoizedSection({ section, data }) {
-  return <Section section={section} data={data} />;
+const MemoizedSection = React.memo(function MemoizedSection({ section, data, ready }) {
+  return <Section section={section} data={data} ready={ready} />;
 });
 
 MemoizedSection.propTypes = {
   section: PropTypes.object,
   data: PropTypes.object,
+  ready: PropTypes.bool,
 };
 
 // ---------------------------------------------------------------------------
@@ -112,15 +132,27 @@ export default function Dashboard() {
   // Section config is static at runtime — compute once
   const sectionsToShow = useMemo(() => getSectionsToShow(), []);
 
+  // Per-section readiness, derived from which resource types have completed.
+  // Recomputes only when the loader list or section config actually changes.
+  const sectionReadyMap = useMemo(
+    () => buildSectionReadyMap(sectionsToShow, toBeLoadedResources),
+    [sectionsToShow, toBeLoadedResources],
+  );
+
   // Memoize rendered sections — avoids re-running map when data hasn't changed
   const sectionElements = useMemo(() => {
     if (isEmptyArray(sectionsToShow)) {
       return <Alert severity="warning">No section to show.</Alert>;
     }
     return sectionsToShow.map((section) => (
-      <MemoizedSection section={section} data={data} key={`section_${section.id}`} />
+      <MemoizedSection
+        section={section}
+        data={data}
+        ready={sectionReadyMap.get(section.id)}
+        key={`section_${section.id}`}
+      />
     ));
-  }, [sectionsToShow, data]);
+  }, [sectionsToShow, data, sectionReadyMap]);
 
   // Memoize error section config — body only changes when messages/severity change
   const errorSection = useMemo(
@@ -172,8 +204,9 @@ export default function Dashboard() {
 
   return (
     <Box className="app">
-      {!isReady && (
-        <Loader>
+      <FloatingNavButton />
+      <Stack className="summaries" sx={MAIN_STACK_STYLE}>
+        {!isReady && (
           <ProgressIndicator
             resources={toBeLoadedResources}
             sx={(theme) => ({
@@ -181,19 +214,14 @@ export default function Dashboard() {
               padding: theme.spacing(0, 2),
             })}
           />
-        </Loader>
-      )}
-      {isReady && (
-        <>
-          <FloatingNavButton />
-          <Stack className="summaries" sx={MAIN_STACK_STYLE}>
-            <section ref={sectionsRef} style={SECTION_STYLE}>
-              {errorSectionElement}
-              {!fatalError && sectionElements}
-            </section>
-          </Stack>
-        </>
-      )}
+        )}
+        {isReady && (
+          <section ref={sectionsRef} style={SECTION_STYLE}>
+            {errorSectionElement}
+            {!fatalError && sectionElements}
+          </section>
+        )}
+      </Stack>
     </Box>
   );
 }

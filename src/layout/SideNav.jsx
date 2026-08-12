@@ -126,16 +126,18 @@ export default function SideNav (props) {
             sm: "none",
             md: "none",
             lg: "none",
-            xl: "block"
+            xl: "block",
           },
         }}
-        PaperProps={{
-          sx: {
-            backgroundColor: (theme) => theme.palette.background.main,
+        slotProps={{
+          paper: {
+            sx: {
+              backgroundColor: (theme) => theme.palette.background.main,
+            },
           },
         }}
       >
-        <Toolbar variant="dense"/>
+        <Toolbar variant="dense" />
         {renderDrawerHeaderButton()}
         <Divider />
         <Box>

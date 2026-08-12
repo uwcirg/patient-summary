@@ -177,6 +177,7 @@ p {
 .text-danger {
   color: #8d0303;
 }
+
 .MuiTable-root {
   border-collapse: separate !important;
   border-spacing: 0 !important;
@@ -205,6 +206,9 @@ td {
   text-transform: capitalize;
 }
 .scoring-summary-table {
+  .info-button {
+    background-color: #fff !important;
+  }
   th {
     font-weight: 400 !important;
   }
@@ -333,6 +337,10 @@ td {
       cursor: pointer;
       position: relative;
       z-index: 2;
+      border: 1px solid #c7c5c5;
+      &.inactive {
+        border: 1px solid #ececec;
+      }
       &::after {
         content: "✓";
         font-size: 0.6rem;
@@ -393,7 +401,6 @@ td {
 }
 .info-button {
   box-shadow: $buttonBoxShadow !important;
-  background-color: #fff !important;
 }
 
 @media print {
@@ -428,6 +435,14 @@ td {
   h4,
   h5 {
     font-size: 1rem !important;
+  }
+  table {
+    border-collapse: separate !important;
+    border-spacing: 0;
+  }
+  th,
+  td {
+    border: 1px solid $muted-text-color !important; /* forces a solid border */
   }
   .summaries {
     background-color: $summary-container-background-color;
@@ -502,6 +517,7 @@ td {
   .recharts-responsive-container,
   .recharts-legend-item {
     box-shadow: none !important;
+    border: 0 !important;
     &:after {
       display: none;
     }
@@ -509,10 +525,20 @@ td {
   .recharts-responsive-container {
     border: 1px solid #ececec;
     min-height: auto !important;
+    max-width: 100% !important;
+    width: 100%;
+    height: 100%;
+    min-width: 420px;
+    min-height: 380px;
+    .recharts-wrapper {
+      min-height: auto !important;
+      width: 700px !important;
+    }
   }
   .recharts-legend-wrapper {
     left: 4px !important;
     min-height: auto !important;
+    top: 20px !important;
     li {
       box-shadow: none;
       padding: 0;

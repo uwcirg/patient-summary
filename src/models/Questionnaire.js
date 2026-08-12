@@ -1,3 +1,4 @@
+import { Parser, HtmlRenderer } from "commonmark";
 import QuestionnaireScoringBuilder from "./resultBuilders/QuestionnaireScoringBuilder";
 import { getDisplayQTitle, isEmptyArray } from "@/util";
 import { getConfigForQuestionnaire } from "@/config/questionnaire_config";
@@ -34,10 +35,8 @@ class Questionnaire {
   }
   get introText() {
     if (!this.data) return "";
-    // eslint-disable-next-line no-undef
-    const commonmark = require("commonmark");
-    const reader = new commonmark.Parser({ smart: true });
-    const writer = new commonmark.HtmlRenderer({
+    const reader = new Parser({ smart: true });
+    const writer = new HtmlRenderer({
       linebreak: "<br />",
       softbreak: "<br />",
     });

@@ -333,7 +333,7 @@ export function shouldShowNav() {
   return String(getEnv("REACT_APP_DISABLE_NAV")).toLowerCase() !== "true";
 }
 export function getAppHeight() {
-  return `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT}px)`;
+  return `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT * 4}px)`;
 }
 export function getUserId(client) {
   if (!client) return null;
@@ -440,8 +440,12 @@ export function toMillis(s) {
   return Number.isFinite(t) ? t : 0;
 }
 
-export function normalizeStr(s) {
+export function normalizeHTMLStr(s) {
   return stripHtmlTags((s ?? "").toString().trim().toLowerCase());
+}
+
+export function normalizeStr(s) {
+  return String(s ?? "").replace(/\s+/g, "").toLowerCase();
 }
 
 export function fuzzyMatch(a, b) {
@@ -523,6 +527,7 @@ export function hasHtmlTags(text) {
 }
 export function stripHtmlTags(html) {
   if (!html) return html;
+  if (!html.includes("<")) return html; // no markup present, nothing to parse
   const doc = domParser.parseFromString(html, "text/html");
   return doc.body.textContent || "";
 }

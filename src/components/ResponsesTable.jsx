@@ -52,6 +52,7 @@ function normalizeCell(v) {
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function ResponsesTable({
   tableData = [],
+  tableProps = {},
   title,
   columns,
   /**
@@ -96,22 +97,21 @@ export default function ResponsesTable({
     // Outer Box handles layout only — scroll is owned by TableContainer
     <Box
       className="responses-container"
-      sx={[{
-        borderRadius: 0,
-        mx: "auto",
-        p: theme.spacing(2),
-        width: "100%",
-        [theme.breakpoints.up("md")]: { width: "95%" },
-        [theme.breakpoints.up("lg")]: { width: "85%" },
-        position: "relative"
-      }, containerStyle || {}]}
+      sx={[
+        {
+          borderRadius: 0,
+          mx: "auto",
+          p: theme.spacing(2),
+          width: "100%",
+          [theme.breakpoints.up("md")]: { width: "95%" },
+          [theme.breakpoints.up("lg")]: { width: "85%" },
+          position: "relative",
+        },
+        containerStyle || {},
+      ]}
     >
       {title && (
-        <Typography
-          variant="subtitle2"
-          component="h3"
-          sx={{ marginBottom: 1 }}
-        >
+        <Typography variant="subtitle2" component="h3" sx={{ marginBottom: 1 }}>
           <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(title) }} />
         </Typography>
       )}
@@ -125,7 +125,12 @@ export default function ResponsesTable({
           overflowX: "auto",
         }}
       >
-        <Table size={dense ? "small" : "medium"} stickyHeader={stickyHeader}>
+        <Table
+          size={dense ? "small" : "medium"}
+          stickyHeader={stickyHeader}
+          {...{ "aria-label": title ? `${title} table` : "responses table" }}
+          {...tableProps}
+        >
           <TableHead>
             <TableRow>
               {safeColumns.map((col, colIndex) => {
@@ -135,20 +140,27 @@ export default function ResponsesTable({
                     key={col.field ?? col.title ?? colIndex}
                     align={col.align || "left"}
                     variant="head"
-                    sx={[{
-                      backgroundColor: headerBgColor,
-                      top: 0
-                    }, isFirstCol ? {
-                      zIndex: Z_CORNER
-                    } : {
-                      zIndex: Z_HEADER
-                    }, (isFirstCol ? { position: "sticky", left: STICKY_FIRST_COL_LEFT } : { borderRight: `1px solid ${BORDER_COLOR}` }), col.headerStyle || {}]}
+                    sx={[
+                      {
+                        backgroundColor: headerBgColor,
+                        top: 0,
+                      },
+                      isFirstCol
+                        ? {
+                            zIndex: Z_CORNER,
+                          }
+                        : {
+                            zIndex: Z_HEADER,
+                          },
+                      isFirstCol
+                        ? { position: "sticky", left: STICKY_FIRST_COL_LEFT }
+                        : { borderRight: `1px solid ${BORDER_COLOR}` },
+                      col.headerStyle || {},
+                    ]}
                   >
                     {/* Column titles are developer-supplied, rendered as plain text */}
                     <Box>{col.title}</Box>
-                    {col.source && (
-                      <Box className="source-container">{col.source}</Box>
-                    )}
+                    {col.source && <Box className="source-container">{col.source}</Box>}
                   </TableCell>
                 );
               })}
@@ -173,9 +185,12 @@ export default function ResponsesTable({
                           key={`${row?.id ?? rowIndex}-readonly`}
                           colSpan={safeColumns.length}
                           className="read-only"
-                          sx={[{
-                            backgroundColor: READONLY_BG_COLOR
-                          }, col.readonlyCellStyle || {}]}
+                          sx={[
+                            {
+                              backgroundColor: READONLY_BG_COLOR,
+                            },
+                            col.readonlyCellStyle || {},
+                          ]}
                         >
                           {content}
                         </TableCell>
@@ -204,12 +219,17 @@ export default function ResponsesTable({
                     <TableCell
                       key={`${row?.id ?? rowIndex}-${col.field ?? col.title ?? colIndex}`}
                       align={col.align || "left"}
-                      sx={[(isFirstCol ? {
-                            position: "sticky",
-                            left: STICKY_FIRST_COL_LEFT,
-                            zIndex: Z_FIRST_COL,
-                            backgroundColor: FIRST_COL_BG_COLOR,
-                          } : { borderRight: `1px solid ${BORDER_COLOR}` }), col.cellStyle || {}]}
+                      sx={[
+                        isFirstCol
+                          ? {
+                              position: "sticky",
+                              left: STICKY_FIRST_COL_LEFT,
+                              zIndex: Z_FIRST_COL,
+                              backgroundColor: FIRST_COL_BG_COLOR,
+                            }
+                          : { borderRight: `1px solid ${BORDER_COLOR}` },
+                        col.cellStyle || {},
+                      ]}
                     >
                       {content}
                     </TableCell>
@@ -248,4 +268,5 @@ ResponsesTable.propTypes = {
   dense: PropTypes.bool,
   stickyHeader: PropTypes.bool,
   title: PropTypes.string,
+  tableProps: PropTypes.object, // Additional props to pass to the Table component
 };

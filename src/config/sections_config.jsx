@@ -8,26 +8,30 @@ import Stack from "@mui/material/Stack";
 import { isEmptyArray } from "@util";
 import Loader from "@components/Loader";
 
-const renderLoader = () => (
-  <Loader message="Retrieving content..." styles={{ position: "relative", width: "auto", height: "auto" }}></Loader>
+const renderLoader = (isFullScreen) => (
+  <Loader message="Loading Section ..." variant={isFullScreen ? "fullScreen" : "inline"}></Loader>
 );
 const ScoreSummary = lazy(() => import("../components/sections/ScoringSummary"));
 const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
-const renderScoringSummary = ({allScoringSummaryData, allChartData, chartKeys}) => {
+const renderScoringSummary = ({ allScoringSummaryData, allChartData, chartKeys }) => {
   return (
     <Suspense fallback={renderLoader()}>
       <Stack
         spacing={1}
         direction={`${!isEmptyArray(allChartData) && allChartData.length < 20 ? "row" : "column"}`}
         className="score-summary-wrapper"
-        sx={[{
-          alignItems: "top",
-          flexWrap: "wrap"
-        }, theme => ({
-          gap: theme.spacing(1),
-          marginLeft: theme.spacing(1),
-          marginRight: theme.spacing(1)
-        })]}>
+        sx={[
+          {
+            alignItems: "top",
+            flexWrap: "wrap",
+          },
+          (theme) => ({
+            gap: theme.spacing(1),
+            marginLeft: theme.spacing(1),
+            marginRight: theme.spacing(1),
+          }),
+        ]}
+      >
         {!isEmptyArray(allChartData) && chartKeys.length > 1 && (
           <Box
             sx={{
@@ -63,7 +67,7 @@ const renderScoringSummary = ({allScoringSummaryData, allChartData, chartKeys}) 
 const ProReport = lazy(() => import("../components/sections/PROReport"));
 const renderProReport = (props) => {
   return (
-    <Suspense fallback={renderLoader()}>
+    <Suspense fallback={renderLoader(true)}>
       <ProReport {...props}></ProReport>
     </Suspense>
   );
