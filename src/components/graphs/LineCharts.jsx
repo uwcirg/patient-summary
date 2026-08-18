@@ -94,7 +94,6 @@ export default function LineCharts(props) {
   const pointerTypeRef = React.useRef("mouse"); // 'mouse' | 'touch' | 'pen'
   const lastShowAtRef = React.useRef(0);
   const hoveredDotKeyRef = React.useRef(null);
-  const dotListenersRef = React.useRef(new Map());
 
   // Add tooltip state for source-based rendering
   const [sourceTooltip, setSourceTooltip] = useState({
@@ -131,7 +130,6 @@ export default function LineCharts(props) {
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
 
     if (hoveredDotKeyRef.current) {
-      dotListenersRef.current.get(hoveredDotKeyRef.current)?.(false);
       hoveredDotKeyRef.current = null;
     }
 
@@ -148,7 +146,10 @@ export default function LineCharts(props) {
   // Handler for custom tooltip
   const handleDotMouseEnter = useCallback(
     (e, payload, lineName, dataKey, lineColor) => {
-      if (isScrolling.current) return;
+      if (isScrolling.current) {
+        // console.log("blocked by isScrolling.current");
+        return;
+      }
       pointerTypeRef.current = e?.pointerType || pointerTypeRef.current;
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
 
@@ -161,12 +162,6 @@ export default function LineCharts(props) {
 
       const newDotKey = `${payload.id}_${dataKey || yFieldKey}`;
 
-      // Notify previously hovered dot to unhover
-      if (hoveredDotKeyRef.current && hoveredDotKeyRef.current !== newDotKey) {
-        dotListenersRef.current.get(hoveredDotKeyRef.current)?.(false);
-      }
-      // Notify new dot to hover
-      dotListenersRef.current.get(newDotKey)?.(true);
       hoveredDotKeyRef.current = newDotKey;
 
       const meaningRaw = showTooltipMeaning ? (payload.meaning ?? payload.scoreMeaning ?? payload.label) : "";
@@ -190,6 +185,7 @@ export default function LineCharts(props) {
     //eslint-disable-next-line react-hooks/exhaustive-deps
     [xFieldKey, yFieldKey, isScrolling, isScrolling.current, showTooltipMeaning, setLocked],
   );
+
   const handleDotMouseLeave = React.useCallback(() => {
     if (pointerTypeRef.current === "touch" && locked) return;
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
@@ -359,6 +355,15 @@ export default function LineCharts(props) {
     };
   }, [processedData, xFieldKey, truncationTimestamp]);
 
+  // Get unique sources from data
+  const uniqueSources = React.useMemo(() => {
+    const sourceSet = new Set();
+    filteredData.forEach((d) => {
+      if (d.source) sourceSet.add(d.source);
+    });
+    return Array.from(sourceSet);
+  }, [filteredData]);
+
   const linesWithData = React.useMemo(() => {
     if (!filteredData || filteredData.length === 0 || !yLineFields || yLineFields.length === 0) {
       return new Set();
@@ -376,6 +381,40 @@ export default function LineCharts(props) {
 
     return linesFound;
   }, [filteredData, yLineFields]);
+
+  const perLineData = React.useMemo(() => {
+    if (!hasMultipleYFields()) return null;
+
+    const map = {};
+    yLineFields.forEach((item) => {
+      const jitteredXField = `${item.key}_jittered_x`;
+      map[item.key] = filteredData
+        .filter((d) => d[item.key] !== null && d[item.key] !== undefined && !d[item.key].isNull)
+        .map((d) => ({
+          ...d,
+          [xFieldKey]: d[jitteredXField] !== undefined ? d[jitteredXField] : d[xFieldKey],
+          _duplicateIndex: d[`${item.key}_duplicateIndex`],
+          _duplicateCount: d[`${item.key}_duplicateCount`],
+        }));
+    });
+    return map;
+  }, [filteredData, yLineFields, xFieldKey, hasMultipleYFields]);
+
+  const singleLineData = React.useMemo(() => {
+    if (hasMultipleYFields()) return [];
+    return filteredData.filter((d) => d[yFieldKey] !== null && d[yFieldKey] !== undefined);
+  }, [filteredData, yFieldKey, hasMultipleYFields]);
+
+  const dataBySource = React.useMemo(() => {
+    if (uniqueSources.length === 0) return {};
+    const map = {};
+    uniqueSources.forEach((source) => {
+      map[source] = filteredData.filter(
+        (d) => d.source === source && d[yFieldKey] !== null && d[yFieldKey] !== undefined,
+      );
+    });
+    return map;
+  }, [filteredData, yFieldKey, uniqueSources]);
 
   const calculatedXDomain = React.useMemo(() => {
     return calculateXDomain({
@@ -427,8 +466,9 @@ export default function LineCharts(props) {
       sx={{
         gap: 1,
         alignItems: "center",
-        justifyContent: "center"
-      }}>
+        justifyContent: "center",
+      }}
+    >
       <Typography variant="subtitle1" component="h4" color="secondary" sx={{ textAlign: "center" }}>
         {title}
       </Typography>
@@ -705,21 +745,7 @@ export default function LineCharts(props) {
         // Use custom opacity if provided, otherwise default to 0.5
         const strokeOpacity = item.strokeOpacity !== undefined ? item.strokeOpacity : 0.5;
         const faintStroke = hexToRgba(item.color, strokeOpacity);
-
-        // Use jittered x field if it exists, otherwise use regular xFieldKey
-        const jitteredXField = `${item.key}_jittered_x`;
-
-        // Filter out null values for this specific line
-        const lineData = filteredData
-          .filter((d) => d[item.key] !== null && d[item.key] !== undefined && !d[item.key].isNull)
-          .map((d) => ({
-            ...d,
-            // Use jittered x if available, otherwise use original
-            [xFieldKey]: d[jitteredXField] !== undefined ? d[jitteredXField] : d[xFieldKey],
-            // Store duplicate info for this specific line
-            _duplicateIndex: d[`${item.key}_duplicateIndex`],
-            _duplicateCount: d[`${item.key}_duplicateCount`],
-          }));
+        const lineData = perLineData[item.key] || [];
 
         return (
           <Line
@@ -742,8 +768,7 @@ export default function LineCharts(props) {
                   key={dotKey}
                   dotProps={dotProps}
                   dotConfig={lineDotConfig}
-                  dotKey={dotKey}
-                  dotListenersRef={dotListenersRef}
+                  isHovered={hoveredDotKeyRef.current === dotKey}
                   onEnter={(e) =>
                     // handleDotMouseEnter is only ever invoked from ChartDot's real
                     // onPointerEnter/onPointerMove/onPointerDown DOM handlers (see ChartDot.jsx), never
@@ -774,13 +799,11 @@ export default function LineCharts(props) {
       dotRadius,
       activeDotRadius,
     };
-    const lineData = filteredData.filter((d) => d[yFieldKey] !== null && d[yFieldKey] !== undefined);
-
     return (
       <Line
         {...defaultOptions}
         type={lineType ? lineType : "monotone"}
-        data={lineData} // Use filtered data
+        data={singleLineData} // Use filtered data
         dataKey={yFieldKey}
         stroke={theme.palette.muter.main}
         dot={(dotProps) => {
@@ -790,8 +813,7 @@ export default function LineCharts(props) {
               key={dotKey}
               dotProps={dotProps}
               dotConfig={dotConfig}
-              dotKey={dotKey}
-              dotListenersRef={dotListenersRef}
+              isHovered={hoveredDotKeyRef.current === dotKey}
               onEnter={(e) => handleDotMouseEnter(e, dotProps.payload)}
               onLeave={(e) => {
                 if ((e.pointerType || pointerTypeRef.current) === "mouse") handleDotMouseLeave();
@@ -947,14 +969,6 @@ export default function LineCharts(props) {
       />
     );
   };
-  // Get unique sources from data
-  const uniqueSources = React.useMemo(() => {
-    const sourceSet = new Set();
-    filteredData.forEach((d) => {
-      if (d.source) sourceSet.add(d.source);
-    });
-    return Array.from(sourceSet);
-  }, [filteredData]);
 
   const renderLinesBySource = () => {
     if (uniqueSources.length === 0) {
@@ -964,9 +978,7 @@ export default function LineCharts(props) {
     const colorsToUse = sourceColors ? sourceColors : {};
 
     return uniqueSources.map((source, index) => {
-      const sourceData = filteredData.filter(
-        (d) => d.source === source && d[yFieldKey] !== null && d[yFieldKey] !== undefined,
-      );
+      const sourceData = dataBySource[source] || [];
 
       const sourceColor = colorsToUse[source] || theme.palette.muter.main;
       const faintStroke = hexToRgba(sourceColor, 0.6);
@@ -998,8 +1010,7 @@ export default function LineCharts(props) {
                 key={dotKey}
                 dotProps={dotProps}
                 dotConfig={lineDotConfig}
-                dotKey={dotKey}
-                dotListenersRef={dotListenersRef}
+                isHovered={hoveredDotKeyRef.current === dotKey}
                 onEnter={(e) => handleDotMouseEnter(e, dotProps.payload)}
                 onLeave={(e) => {
                   if ((e.pointerType || pointerTypeRef.current) === "mouse") handleDotMouseLeave();

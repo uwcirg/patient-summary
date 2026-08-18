@@ -1,6 +1,5 @@
 import { resolve } from "path";
 import { defineConfig } from "vite";
-//import { nodePolyfills } from "vite-plugin-node-polyfills";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import commonjs from "vite-plugin-commonjs";
 import dynamicImport from "vite-plugin-dynamic-import";
@@ -19,10 +18,6 @@ export default defineConfig({
     }),
     eslintPlugin(),
     dynamicImport(/* options */),
-    // nodePolyfills({
-    //   // include polyfills for the modules that Vite/Rollup warns about
-    //   include: ["events", "timers", "fs"],
-    // }),
     commonjs({
       filter(id) {
         // `node_modules` is exclude by default, so we need to include it explicitly
