@@ -445,7 +445,7 @@ export function normalizeHTMLStr(s) {
 }
 
 export function normalizeStr(s) {
-  return String(s ?? "").replace(/\s+/g, "").toLowerCase();
+  return String(s ?? "").trim().toLowerCase();
 }
 
 export function fuzzyMatch(a, b) {

@@ -89,7 +89,7 @@ const TableItem = React.memo(function TableItem({ table, section }) {
   return (
     <Box className="section-wrapper" sx={sectionWrapperSx} key={table.id}>
       <Accordion
-        disableGutters
+        disableGutters={true}
         elevation={multipleTables ? 1 : 0}
         square
         defaultExpanded

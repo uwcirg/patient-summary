@@ -1220,11 +1220,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       targetQuestionnaireId,
       normalizeAnswerToCoding = (ans) => {
         // Default: map free-text to valueCoding(code/display = lowercased text)
-        if (isNonEmptyString(ans) && DEFAULT_VAL_TO_LOIN_CODE[normalizeStr(ans.toLowerCase())]) {
-          return { valueCoding: DEFAULT_VAL_TO_LOIN_CODE[normalizeStr(ans.toLowerCase())] };
+        if (isNonEmptyString(ans) && DEFAULT_VAL_TO_LOIN_CODE[normalizeStr(ans)]) {
+          return { valueCoding: DEFAULT_VAL_TO_LOIN_CODE[normalizeStr(ans)] };
         }
         const display = String(ans ?? "");
-        const code = display.trim().toLowerCase();
+        const code = normalizeStr(display);
         return { valueCoding: { system: "local/derived", code, display } };
       },
     } = {},
@@ -1326,11 +1326,11 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
       targetQuestionnaireId,
       normalizeAnswerToCoding = (ans) => {
         // Default: map free-text to valueCoding(code/display = lowercased text)
-        if (isNonEmptyString(ans) && DEFAULT_VAL_TO_LOIN_CODE[normalizeStr(ans.toLowerCase())]) {
-          return { valueCoding: DEFAULT_VAL_TO_LOIN_CODE[normalizeStr(ans.toLowerCase())] };
+        if (isNonEmptyString(ans) && DEFAULT_VAL_TO_LOIN_CODE[normalizeStr(ans)]) {
+          return { valueCoding: DEFAULT_VAL_TO_LOIN_CODE[normalizeStr(ans)] };
         }
         const display = String(ans ?? "");
-        const code = display.trim().toLowerCase();
+        const code = normalizeStr(display);
         return { valueCoding: { system: "local/derived", code, display } };
       },
       requireAllLinkIds = false,

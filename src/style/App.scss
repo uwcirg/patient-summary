@@ -296,6 +296,14 @@ td {
   }
 }
 
+.table-pair-items {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
 .table-cell-item {
   word-break: normal;
   &:not(:last-of-type) {

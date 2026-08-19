@@ -60,7 +60,7 @@ export default function Meaning({ id, meaning, alert, warning, className = "" })
           return (
             <Stack
               key={key}
-              className={`table-cell-item table-cell-item-stack ${cellClass}`}
+              className={`table-pair-items table-cell-item table-cell-item-stack ${cellClass}`}
               direction="row"
               spacing={0.25}
               sx={[{
