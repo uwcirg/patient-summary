@@ -381,6 +381,9 @@ describe("QuestionnaireScoringBuilder - Derivation Logic", () => {
         // No normalizeAnswerToCoding provided - should use default
       });
 
+      const isEqual = builder.isLinkIdEquals("/44260-8", "/44260-8");
+      expect(isEqual).toBeTruthy();
+
       // "Several days" is in DEFAULT_VAL_TO_LOIN_CODE, so it should map to LOINC
       expect(result[0].item[0].answer).toEqual([
         {

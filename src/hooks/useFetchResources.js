@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   getFHIRResourcePath,
   getFhirResourcesFromQueryResult,
@@ -188,7 +188,7 @@ function reducer(state, action) {
             ...state,
             base: {
               ...state.base,
-              summaries: action.data || {}, // <- keep base in sync
+              summaries: action.data || {},
             },
             loader: state.loader.map((r) =>
               r.id === action.id ? { ...r, data: action.data ?? r.data, complete: true, error: false } : r,
@@ -201,6 +201,31 @@ function reducer(state, action) {
             r.id === action.id ? { ...r, data: action.data ?? r.data, complete: true, error: false } : r,
           ),
         };
+
+      // Completes multiple loader items in a single dispatch to avoid
+      // intermediate renders between sequential COMPLETE calls.
+      // If SUMMARY_DATA_KEY is in the batch, mirrors summaryData into base.summaries.
+      case "COMPLETE_MANY": {
+        const ids = new Set(action.ids ?? []);
+        const updatedLoader = state.loader.map((r) =>
+          ids.has(r.id)
+            ? {
+                ...r,
+                data: r.id === SUMMARY_DATA_KEY ? (action.summaryData ?? r.data) : (action.data ?? r.data),
+                complete: true,
+                error: false,
+              }
+            : r,
+        );
+        if (ids.has(SUMMARY_DATA_KEY) && action.summaryData !== undefined) {
+          return {
+            ...state,
+            base: { ...state.base, summaries: action.summaryData || {} },
+            loader: updatedLoader,
+          };
+        }
+        return { ...state, loader: updatedLoader };
+      }
 
       case "ERROR":
         return {
@@ -227,6 +252,66 @@ function reducer(state, action) {
     }
   }
 
+  if (scope === "bundle") {
+    switch (actionType) {
+      // Phase 1 seeds/replaces the base entry list (patient + QR + Q resources)
+      case "SEED":
+        return {
+          ...state,
+          bundle: { ...state.bundle, entry: action.entry ?? state.bundle.entry },
+        };
+      // Phase 2 appends additional resources and merges eval results
+      case "APPEND":
+        return {
+          ...state,
+          bundle: {
+            entry: [...state.bundle.entry, ...(action.entry ?? [])],
+            evalResults: { ...state.bundle.evalResults, ...(action.evalResults ?? {}) },
+          },
+        };
+      case "RESET":
+        return { ...state, bundle: { entry: [], evalResults: {} } };
+      default:
+        return state;
+    }
+  }
+
+  // Combines base RESULTS + loader COMPLETE_MANY into a single state update,
+  if (actionType === "RESULTS_AND_COMPLETE") {
+    const ids = new Set(action.completeIds ?? []);
+    const updatedLoader = state.loader.map((r) =>
+      ids.has(r.id)
+        ? {
+            ...r,
+            data: r.id === SUMMARY_DATA_KEY ? (action.summaryData ?? r.data) : (action.data ?? r.data),
+            complete: true,
+            error: false,
+          }
+        : r,
+    );
+    const newBase = {
+      ...state.base,
+      questionnaireList: action.questionnaireList ?? state.base.questionnaireList,
+      questionnaires: action.questionnaires ?? [],
+      questionnaireResponses: action.questionnaireResponses ?? [],
+      exactMatchById: !!action.exactMatchById,
+      summaries: ids.has(SUMMARY_DATA_KEY) ? action.summaryData || {} : state.base.summaries,
+      complete: true,
+      error: false,
+      errorMessage: "",
+    };
+    return {
+      ...state,
+      base: newBase,
+      loader: updatedLoader,
+      extraTypes: action.extraTypes !== undefined ? action.extraTypes : state.extraTypes,
+    };
+  }
+
+  if (actionType === "SET_EXTRA_TYPES") {
+    return { ...state, extraTypes: action.extraTypes ?? [] };
+  }
+
   if (actionType === "RESET_ALL") {
     return {
       base: {
@@ -240,6 +325,8 @@ function reducer(state, action) {
         errorMessage: "",
       },
       loader: [],
+      bundle: { entry: [], evalResults: {} },
+      extraTypes: [],
     };
   }
 
@@ -273,6 +360,8 @@ function createInitialState(configuredTypeSet, plannedExtras, isFromEpic) {
   return {
     base: { ...INITIAL_BASE_STATE, exactMatchById: isFromEpic },
     loader: items,
+    bundle: { entry: [], evalResults: {} },
+    extraTypes: [],
   };
 }
 
@@ -280,7 +369,11 @@ function createInitialState(configuredTypeSet, plannedExtras, isFromEpic) {
 // Hook
 // -----------------------------------------------------------------------------
 export default function useFetchResources() {
-  const ERROR_HELP_TEXT = `This patient does not yet have data reported from the CNICS PRO system. If the patient has indeed completed a CNICS PRO assessment, please write to <a href="mailto:${getEnvHelpEmail()}">${getEnvHelpEmail()}</a> for help.`;
+  const ERROR_HELP_TEXT = useMemo(
+    () =>
+      `This patient does not yet have data reported from the CNICS PRO system. If the patient has indeed completed a CNICS PRO assessment, please write to <a href="mailto:${getEnvHelpEmail()}">${getEnvHelpEmail()}</a> for help.`,
+    [],
+  );
   const isFromEpic = String(getEnv("REACT_APP_EPIC_QUERIES")) === "true";
   // recompute configured types when mounted (config is static at runtime)
   const configuredTypesRaw = useMemo(() => getFHIRResourceTypesToLoad().flat().map(String).filter(Boolean), []);
@@ -288,49 +381,35 @@ export default function useFetchResources() {
   const plannedExtras = useMemo(() => computePlannedExtras(configuredTypesRaw), [configuredTypesRaw]);
   const { client, patient } = useContext(FhirClientContext);
 
-  const [state, dispatch] = useReducer(
-    reducer,
-    undefined, // no initial value
-    () => createInitialState(configuredTypeSet, plannedExtras, isFromEpic), // <-- lazy initializer
+  const [state, dispatch] = useReducer(reducer, undefined, () =>
+    createInitialState(configuredTypeSet, plannedExtras, isFromEpic),
   );
-
   // stable scoped dispatchers
   const dispatchBase = useCallback((action) => dispatch({ ...action, scope: "base" }), [dispatch]);
   const dispatchLoader = useCallback((action) => dispatch({ ...action, scope: "loader" }), [dispatch]);
+  const dispatchBundle = useCallback((action) => dispatch({ ...action, scope: "bundle" }), [dispatch]);
 
   const base = state.base;
   const toBeLoadedResources = state.loader;
+  const extraTypes = state.extraTypes;
 
-  const [bundleEntries, setBundleEntries] = useState([]);
-  const [extraTypes, setExtraTypes] = useState([]);
   const [fatalError, setFatalError] = useState(null);
-
   // stable patient id
-  const pid = useMemo(() => (isNonEmptyString(patient?.id) ? String(patient.id) : null), [patient?.id]);
-
+  const pid = useMemo(() => (isNonEmptyString(patient?.id) ? String(patient?.id) : null), [patient?.id]);
   // refresh bump controls recomputation of configured types
   const [bump, setBump] = useState(0);
 
-  // refresh
   const refresh = useCallback(() => {
     dispatchBase({ type: "RESET" });
     dispatchLoader({ type: "RESET" });
+    dispatchBundle({ type: "RESET" });
+    dispatch({ type: "SET_EXTRA_TYPES", extraTypes: [] });
     setFatalError(null);
-    setExtraTypes([]);
     if (pid && client) {
       PHASE1_FLIGHTS.get(client)?.delete(`${pid}::${bump}`);
     }
     setBump((x) => x + 1);
-  }, [pid, bump, client, dispatchBase, dispatchLoader]);
-
-  // Bundle + eval results (kept in ref to avoid re-renders during accumulation)
-  const patientBundle = useRef({
-    resourceType: "Bundle",
-    id: "resource-bundle",
-    type: "collection",
-    entry: [],
-    evalResults: {},
-  });
+  }, [pid, bump, client, dispatch, dispatchBase, dispatchLoader, dispatchBundle]);
 
   // ---------------------------------------------------------------------------
   // Phase 1
@@ -341,7 +420,6 @@ export default function useFetchResources() {
     phase1KeyRef.current = phase1Key;
   }, [phase1Key]);
 
-  // Clean up phase1 cache on unmount
   useEffect(() => {
     return () => {
       if (phase1Key) {
@@ -350,9 +428,27 @@ export default function useFetchResources() {
     };
   }, [phase1Key]);
 
-  useQuery(
-    ["phase1-qr-obs-q", phase1Key],
-    async () => {
+  // Stable refs for callbacks used inside queryFn to avoid stale closures
+  const dispatchLoaderRef = useRef(dispatchLoader);
+  const dispatchBaseRef = useRef(dispatchBase);
+  const dispatchBundleRef = useRef(dispatchBundle);
+  const ERROR_HELP_TEXT_REF = useRef(ERROR_HELP_TEXT);
+  useEffect(() => {
+    dispatchLoaderRef.current = dispatchLoader;
+  }, [dispatchLoader]);
+  useEffect(() => {
+    dispatchBaseRef.current = dispatchBase;
+  }, [dispatchBase]);
+  useEffect(() => {
+    dispatchBundleRef.current = dispatchBundle;
+  }, [dispatchBundle]);
+  useEffect(() => {
+    ERROR_HELP_TEXT_REF.current = ERROR_HELP_TEXT;
+  }, [ERROR_HELP_TEXT]);
+
+  const phase1Query = useQuery({
+    queryKey: [["phase1-qr-obs-q"], phase1Key],
+    queryFn: async () => {
       if (!client || !isNonEmptyString(pid)) {
         const msg = "No FHIR client or patient ID provided.";
         setFatalError(msg);
@@ -400,22 +496,22 @@ export default function useFetchResources() {
           });
         }
 
-        // --- Execute QR + Obs in parallel ---
         if (phase1Tasks.length) {
           const results = await Promise.allSettled(phase1Tasks.map((t) => t.promise));
           results.forEach((res, i) => {
             const { id, onErrorMessage } = phase1Tasks[i];
             if (res.status === "fulfilled") {
-              dispatchLoader({ type: "COMPLETE", id });
+              dispatchLoaderRef.current({ type: "COMPLETE", id });
             } else {
               console.log("Request error for", id, res.reason);
-              dispatchLoader({
+              dispatchLoaderRef.current({
                 type: "ERROR",
                 id,
                 errorMessage: res.reason?.message || onErrorMessage || `${id} request failed`,
               });
             }
           });
+
           const softErrorSources = [
             { id: QUESTIONNAIRE_RESPONSES_DATA_KEY, resources: qrResources },
             { id: OBSERVATION_DATA_KEY, resources: obResources },
@@ -424,18 +520,15 @@ export default function useFetchResources() {
             const softErrs = extractSoftErrors(resources);
             if (softErrs.length) {
               console.log("Soft errors found in resources for", id, softErrs);
-              dispatchLoader({ type: "ERROR", id, errorMessage: ERROR_HELP_TEXT });
+              dispatchLoaderRef.current({ type: "ERROR", id, errorMessage: ERROR_HELP_TEXT_REF.current });
             }
           }
         }
-
         // Filter matched QRs by Questionnaire/id presence
         let matchedQRs = !isEmptyArray(qrResources)
           ? qrResources.filter((it) => it && it.questionnaire && it.questionnaire.split("/")[1])
           : [];
-
         // Derive qListToLoad from QR-matched ids + preloadList.
-        // extraQIds will be populated after Q fetch (obs-matching runs after qResources is ready).
         const matchedQIds = matchedQRs?.map((it) => it.questionnaire?.split("/")[1]) ?? [];
         const uniqueQIds = [...new Set([...preloadList, ...matchedQIds])];
         const qListToLoad = hasPreload ? preloadList : uniqueQIds;
@@ -443,20 +536,18 @@ export default function useFetchResources() {
 
         if (wantQ) {
           if (isEmptyArray(qListToLoad)) {
-            dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
+            dispatchLoaderRef.current({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
           } else {
             let qPaths = [];
 
             if (phase1ExactMatchById) {
-              // 1 request per Questionnaire id
               qPaths = qListToLoad.map((qid) =>
                 getFHIRResourcePath(pid, QUESTIONNAIRE_DATA_KEY, {
-                  questionnaireList: [qid], // IMPORTANT: single id only
+                  questionnaireList: [qid],
                   exactMatchById: phase1ExactMatchById,
                 }),
               );
             } else {
-              // non-Epic / fuzzy name search can still use a single search
               qPaths = [
                 getFHIRResourcePath(pid, QUESTIONNAIRE_DATA_KEY, {
                   questionnaireList: qListToLoad,
@@ -479,18 +570,18 @@ export default function useFetchResources() {
               const softErrs = extractSoftErrors(qResources);
               if (softErrs.length) {
                 console.log("Soft errors found in Questionnaire resources ", softErrs);
-                dispatchLoader({
+                dispatchLoaderRef.current({
                   type: "ERROR",
                   id: QUESTIONNAIRE_DATA_KEY,
-                  errorMessage: ERROR_HELP_TEXT,
+                  errorMessage: ERROR_HELP_TEXT_REF.current,
                 });
               } else {
-                dispatchLoader({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
+                dispatchLoaderRef.current({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
               }
             } else {
               const firstErr = qResults.find((r) => r.status === "rejected");
               console.log("Questionnaire request errors ", firstErr?.reason?.message || firstErr);
-              dispatchLoader({
+              dispatchLoaderRef.current({
                 type: "ERROR",
                 id: QUESTIONNAIRE_DATA_KEY,
                 errorMessage: firstErr?.reason?.message || "Questionnaire request failed",
@@ -500,8 +591,6 @@ export default function useFetchResources() {
         }
 
         // Obs-matching runs here — after Q fetch — so qResources is fully populated.
-        // Match obs codes against item codes on the fetched Questionnaire resource for each config,
-        // falling back to cfg.questionLinkIds if no Questionnaire was found in qResources.
         const syntheticQs = [],
           syntheticQRs = [];
 
@@ -512,14 +601,9 @@ export default function useFetchResources() {
               if (!cfg) continue;
               if (hasPreload && !preloadList.find((q) => fuzzyMatch(q, key))) continue;
 
-              // Find the fetched Questionnaire resource matching this config's id.
               const matchedQResource = cfg.questionnaireId
-                ? qResources.find(
-                    (r) => (r?.resource?.id ?? r?.id) === cfg.questionnaireId,
-                  )
+                ? qResources.find((r) => (r?.resource?.id ?? r?.id) === cfg.questionnaireId)
                 : null;
-
-              // Extract all item codes from the Questionnaire (one level deep).
               const qItemCodes = matchedQResource
                 ? (matchedQResource.resource?.item ?? matchedQResource.item ?? [])
                     .filter((item) => item.type !== "group" && item.type !== "display")
@@ -527,8 +611,6 @@ export default function useFetchResources() {
                     .map((c) => c.code)
                     .filter(Boolean)
                 : [];
-
-              // Match: prefer Questionnaire item codes; fall back to cfg.questionLinkIds.
               const hit =
                 qItemCodes.length > 0
                   ? qItemCodes.find((code) => obsCodes.includes(code))
@@ -559,10 +641,10 @@ export default function useFetchResources() {
         const questionnaireResponses = getFhirResourcesFromQueryResult(matchedQRs);
 
         // seed bundle
-        patientBundle.current = {
-          ...patientBundle.current,
+        dispatchBundleRef.current({
+          type: "SEED",
           entry: [{ resource: patient }, ...(questionnaireResponses ?? []), ...(questionnaires ?? [])],
-        };
+        });
 
         return {
           questionnaires,
@@ -572,67 +654,75 @@ export default function useFetchResources() {
         };
       });
     },
-    {
-      ...DEFAULT_QUERY_PARAMS,
-      enabled: !!client && !!pid && !base.complete && !base.error && !!phase1Key,
-      onSuccess: (payload) => {
-        if (phase1KeyRef.current !== phase1Key) return; // ignore stale result
-        const { questionnaires, questionnaireResponses, qListToLoad, exactMatchById } = payload || {};
+    ...DEFAULT_QUERY_PARAMS,
+    enabled: !!client && !!pid && !base.complete && !base.error && !!phase1Key,
+  });
 
-        // mark base as completed
-        dispatchBase({
-          type: "RESULTS",
-          questionnaireList: qListToLoad,
-          questionnaires,
-          questionnaireResponses,
-          exactMatchById,
-        });
+  // Handle phase 1 success — collapsed into a single dispatch to avoid
+  // intermediate renders from sequential dispatchBase + dispatchLoader calls.
+  useEffect(() => {
+    if (!phase1Query.isSuccess || !phase1Query.data) return;
+    if (phase1KeyRef.current !== phase1Key) return;
 
-        // compute extra resource types for phase-2
-        const haveTypes = [
-          ...new Set(getResourceTypesFromResources(questionnaires ?? []).map((r) => String(r).toLowerCase())),
-          ...new Set(getResourceTypesFromResources(questionnaireResponses ?? []).map((r) => String(r).toLowerCase())),
-          "patient",
-        ];
+    const { questionnaires, questionnaireResponses, qListToLoad, exactMatchById } = phase1Query.data;
 
-        // Which extras are actually needed after phase-1 results
-        const extrasWanted = plannedExtras.filter((t) => !haveTypes.includes(normalizeType(t)));
+    const haveTypes = [
+      ...new Set(getResourceTypesFromResources(questionnaires ?? []).map((r) => String(r).toLowerCase())),
+      ...new Set(getResourceTypesFromResources(questionnaireResponses ?? []).map((r) => String(r).toLowerCase())),
+      "patient",
+    ];
 
-        // Keep needed extras pending (ensure rows exist)
-        if (!isEmptyArray(extrasWanted)) {
-          setBundleEntries([...patientBundle.current.entry]);
-          dispatchLoader({
-            type: "UPSERT_MANY",
-            items: extrasWanted.map((t) => ({ id: t, title: t, complete: false, error: false })),
-          });
-        }
+    const extrasWanted = plannedExtras.filter((t) => !haveTypes.includes(normalizeType(t)));
+    const extrasSkip = plannedExtras.filter((t) => !extrasWanted.find((w) => normalizeType(w) === normalizeType(t)));
 
-        // Mark *not* needed extras as complete (skipped)
-        const extrasSkip = plannedExtras.filter(
-          (t) => !extrasWanted.find((w) => normalizeType(w) === normalizeType(t)),
-        );
-        for (const t of extrasSkip) dispatchLoader({ type: "COMPLETE", id: t, data: [] });
+    if (isEmptyArray(extrasWanted)) {
+      const summaryData = getSummaries(state.bundle.entry);
+      dispatch({
+        type: "RESULTS_AND_COMPLETE",
+        // base fields
+        questionnaireList: qListToLoad,
+        questionnaires,
+        questionnaireResponses,
+        exactMatchById,
+        // loader fields — complete all skipped extras + summary in one shot
+        completeIds: [...extrasSkip, SUMMARY_DATA_KEY],
+        summaryData,
+        data: [],
+        extraTypes: [],
+      });
+      return;
+    }
 
-        // If nothing to fetch, summary can finalize now
-        if (isEmptyArray(extrasWanted)) {
-          setBundleEntries([...patientBundle.current.entry]);
-          dispatchLoader({
-            type: "COMPLETE",
-            id: SUMMARY_DATA_KEY,
-            data: getSummaries(patientBundle.current.entry),
-          });
-          return;
-        }
+    // Phase 2 needed — complete base + skipped extras in one dispatch,
+    // then drive phase-2 list via state
+    dispatch({
+      type: "RESULTS_AND_COMPLETE",
+      // base fields
+      questionnaireList: qListToLoad,
+      questionnaires,
+      questionnaireResponses,
+      exactMatchById,
+      // loader fields — only complete skipped extras (not summary yet)
+      completeIds: extrasSkip,
+      data: [],
+      extraTypes: extrasWanted,
+    });
 
-        // Drive phase-2 list
-        setExtraTypes(extrasWanted);
-      },
-      onError: (e) => {
-        if (phase1KeyRef.current !== phase1Key) return; // ignore stale error
-        dispatchBase({ type: "ERROR", errorMessage: e?.message ?? String(e) });
-      },
-    },
-  );
+    // Upsert the extras that ARE needed into the loader
+    if (!isEmptyArray(extrasWanted)) {
+      dispatchLoader({
+        type: "UPSERT_MANY",
+        items: extrasWanted.map((t) => ({ id: t, title: t, complete: false, error: false })),
+      });
+    }
+  }, [phase1Query.isSuccess, phase1Query.data]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle phase 1 error
+  useEffect(() => {
+    if (!phase1Query.isError || !phase1Query.error) return;
+    if (phase1KeyRef.current !== phase1Key) return;
+    dispatchBase({ type: "ERROR", errorMessage: phase1Query.error?.message ?? String(phase1Query.error) });
+  }, [phase1Query.isError, phase1Query.error]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------------------------------------------------------------------------
   // Phase 2
@@ -646,7 +736,6 @@ export default function useFetchResources() {
     !isEmptyArray(toBeLoadedResources);
 
   const getFhirResources = useCallback(async () => {
-    // Local array — not shared across concurrent calls
     const loadedFHIRData = [];
 
     const paths = getFHIRResourcePaths(pid, extraTypes, {
@@ -663,7 +752,6 @@ export default function useFetchResources() {
         .then(() => {
           const softErrs = extractSoftErrors(loadedFHIRData);
           console.log(`Loaded resources for ${p.resourceType} with ${softErrs.length} soft errors.`);
-          console.log("Soft errors: ", softErrs);
           if (softErrs.length) {
             dispatchLoader({ type: "ERROR", id: p.resourceType, errorMessage: ERROR_HELP_TEXT });
           } else {
@@ -686,46 +774,67 @@ export default function useFetchResources() {
     return bundle;
   }, [client, pid, extraTypes, base.questionnaireList, base.exactMatchById, dispatchLoader, ERROR_HELP_TEXT]);
 
-  useQuery(
-    ["extra-fhir-resources", pid, extraTypes.join(","), bump],
-    async () => {
+  const phase2Query = useQuery({
+    queryKey: [["extra-fhir-resources"], pid, extraTypes.join(","), bump],
+    queryFn: async () => {
       const fhirData = await getFhirResources();
       const { default: FhirResultBuilder } = await import("@/models/resultBuilders/FhirResultBuilder");
       const evalEntries = extraTypes.map((t) => ({ [t]: new FhirResultBuilder(fhirData).build(t) }));
       const evalResults = Object.assign({}, ...(evalEntries ?? []));
 
-      patientBundle.current = {
-        ...patientBundle.current,
-        entry: [...patientBundle.current.entry, ...fhirData],
-        evalResults: { ...patientBundle.current.evalResults, ...evalResults },
-      };
+      dispatchBundleRef.current({ type: "APPEND", entry: fhirData, evalResults });
       return fhirData;
     },
-    {
-      ...DEFAULT_QUERY_PARAMS,
-      enabled: readyForExtras,
-      onSuccess: () => {
-        dispatchLoader({
-          type: "COMPLETE",
-          id: SUMMARY_DATA_KEY,
-          data: getSummaries(patientBundle.current.entry),
-        });
-      },
-      onError: (e) => {
-        dispatchBase({ type: "ERROR", errorMessage: e?.message ?? String(e) });
-      },
-    },
-  );
+    ...DEFAULT_QUERY_PARAMS,
+    enabled: readyForExtras,
+  });
+
+  // Handle phase 2 success — complete summary in one dispatch
+  useEffect(() => {
+    if (!phase2Query.isSuccess) return;
+    dispatchLoader({
+      type: "COMPLETE",
+      id: SUMMARY_DATA_KEY,
+      data: getSummaries(state.bundle.entry),
+    });
+  }, [phase2Query.isSuccess]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle phase 2 error
+  useEffect(() => {
+    if (!phase2Query.isError || !phase2Query.error) return;
+    dispatchBase({ type: "ERROR", errorMessage: phase2Query.error?.message ?? String(phase2Query.error) });
+  }, [phase2Query.isError, phase2Query.error]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------------------------------------------------------------------------
   // Derived helpers & return payload
   // ---------------------------------------------------------------------------
-  const phase2DoneOrSkipped =
-    isEmptyArray(toBeLoadedResources) || !toBeLoadedResources.find((o) => !o.complete) || !!fatalError;
-  const isReady = base.complete && (phase2DoneOrSkipped || isEmptyArray(extraTypes)) && !base.error;
 
-  // depend on specific values instead of entire array
-  const summaryDataItem = toBeLoadedResources.find((r) => r.id === SUMMARY_DATA_KEY);
+  // If no extras are needed, phase 2 is irrelevant — treat as done immediately.
+  // This prevents toBeLoadedResources updates from oscillating isReady after
+  // base.complete becomes true in the no-phase-2 path.
+  const phase2DoneOrSkipped = useMemo(
+    () =>
+      isEmptyArray(extraTypes) ||
+      isEmptyArray(toBeLoadedResources) ||
+      !toBeLoadedResources.find((o) => !o.complete) ||
+      !!fatalError,
+    [toBeLoadedResources, fatalError, extraTypes],
+  );
+
+  // isReady is a one-way latch when extraTypes is empty:
+  // once base.complete is true and no phase 2 is needed, isReady stays true
+  // regardless of subsequent loader dispatches.
+  const isReady = useMemo(() => {
+    if (!base.complete || base.error) return false;
+    if (isEmptyArray(extraTypes)) return true;
+    return phase2DoneOrSkipped;
+  }, [base.complete, base.error, phase2DoneOrSkipped, extraTypes]);
+
+  const summaryDataItem = useMemo(
+    () => toBeLoadedResources.find((r) => r.id === SUMMARY_DATA_KEY),
+    [toBeLoadedResources],
+  );
+
   const summaryData = useMemo(() => {
     if (!summaryDataItem || !summaryDataItem.data || summaryDataItem.error) return null;
     const keys = Object.keys(summaryDataItem.data);
@@ -739,38 +848,35 @@ export default function useFetchResources() {
 
   const allChartData = useMemo(() => {
     if (!summaryData?.data) return null;
-    const dataToUse = summaryData.data;
+    const dataToUse = summaryData?.data;
     const keys = Object.keys(dataToUse);
     const rows = keys.flatMap((key) => {
       const d = dataToUse[key];
       if (!d || isEmptyArray(d.chartData?.data)) return [];
-      return d.chartData.data.map((o) => ({ ...o, key, [getDisplayQTitle(key)]: o.score }));
+      // console.log("chartData for ", key, d.chartData?.data);
+      return d.chartData.data.map((o) => ({ ...o, key, [getDisplayQTitle(key)]: !isNaN(o.score) ? Number(o.score) : 0 }));
     });
     return rows.sort((a, b) => safeDateMs(a.date) - safeDateMs(b.date));
   }, [summaryData?.data]);
 
   const reportData = useMemo(() => {
     if (isDemoDataEnabled()) {
-      return buildReportData({
-        summaryData: demoData,
-      });
+      return buildReportData({ summaryData: demoData });
     }
     return buildReportData({
       summaryData: summaryData?.data,
-      bundle: bundleEntries,
+      bundle: state.bundle.entry,
     });
-  }, [summaryData?.data, bundleEntries]);
+  }, [summaryData?.data, state.bundle.entry]);
 
   const allScoringSummaryData = useMemo(
     () =>
       Object.keys(summaryData?.data ?? {})
         .filter((key) => !!summaryData?.data[key]?.scoringSummaryData)
-        .map((key) => {
-          return {
-            key,
-            ...summaryData?.data[key].scoringSummaryData,
-          };
-        }),
+        .map((key) => ({
+          key,
+          ...summaryData?.data[key].scoringSummaryData,
+        })),
     [summaryData?.data],
   );
 
@@ -778,7 +884,6 @@ export default function useFetchResources() {
 
   const loaderErrors = useMemo(() => state.loader.filter((r) => r?.error), [state.loader]);
 
-  // error message collection
   const errorMessages = useMemo(() => {
     const errors = [];
     if (base.error) errors.push(base.errorMessage);
@@ -799,13 +904,20 @@ export default function useFetchResources() {
   const hasError = errorMessages.length > 0;
   const errorSeverity = fatalError ? "error" : "warning";
 
+  // Sourced directly from reducer state — no memo needed since the reference
+  // only changes when the reducer actually updates it.
+  const evalData = state.bundle.evalResults;
+  const patientBundleEntries = state.bundle.entry;
+
+  const summaryKeys = useMemo(() => Object.keys(base.summaries), [base.summaries]);
+
   if (isReady) {
     console.log("summaryData ", summaryData);
     console.log("reportData ", reportData);
   }
 
   return {
-    ...(patientBundle.current.evalResults ? patientBundle.current.evalResults : {}),
+    ...evalData,
     isReady,
     errorMessages,
     errorSeverity,
@@ -820,13 +932,13 @@ export default function useFetchResources() {
     questionnaires: base.questionnaires,
     questionnaireResponses: base.questionnaireResponses,
     summaries: base.summaries,
-    summaryKeys: Object.keys(base.summaries),
+    summaryKeys,
 
     // phase 2
-    evalData: patientBundle.current.evalResults,
+    evalData,
 
     // bundle
-    patientBundle: patientBundle.current.entry,
+    patientBundle: patientBundleEntries,
 
     // summary data
     allScoringSummaryData,
@@ -835,7 +947,7 @@ export default function useFetchResources() {
     allChartData,
     chartKeys,
 
-    //reportData
+    // reportData
     reportData,
 
     // controls
@@ -843,5 +955,4 @@ export default function useFetchResources() {
   };
 }
 
-// Export reducer for unit tests
-export { reducer };
+export { reducer, normalizeType, SUMMARY_DATA_KEY, QUESTIONNAIRE_DATA_KEY, QUESTIONNAIRE_RESPONSES_DATA_KEY };

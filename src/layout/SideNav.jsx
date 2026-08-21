@@ -37,32 +37,59 @@ const closedMixin = (theme) => ({
 
 const DrawerHeader = styled("div", {
   shouldForwardProp: (prop) => prop !== "open",
-})(({ theme, open }) => ({
+})(({
+  theme
+}) => ({
   display: "flex",
   alignItems: "center",
-  justifyContent: open ? "flex-end" : "center",
+  justifyContent: "center",
   backgroundColor: "#FFF",
   padding: theme.spacing(1, 1, 0.5),
   // necessary for content to be below app bar
   ...theme.mixins.toolbar,
   minHeight: `${theme.spacing(7)} !important`,
+  variants: [{
+    props: (
+      {
+        open
+      }
+    ) => open,
+    style: {
+      justifyContent: "flex-end"
+    }
+  }]
 }));
 
 const Drawer = styled(MuiDrawer, {
   shouldForwardProp: (prop) => prop !== "open",
-})(({ theme, open }) => ({
+})(({
+  theme
+}) => ({
   width: { MOBILE_DRAWER_WIDTH },
   flexShrink: 0,
   whiteSpace: "nowrap",
   boxSizing: "border-box",
-  ...(open && {
-    ...openedMixin(theme),
-    "& .MuiDrawer-paper": openedMixin(theme),
-  }),
-  ...(!open && {
-    ...closedMixin(theme),
-    "& .MuiDrawer-paper": closedMixin(theme),
-  }),
+  variants: [{
+    props: (
+      {
+        open
+      }
+    ) => open,
+    style: {
+      ...openedMixin(theme),
+      "& .MuiDrawer-paper": openedMixin(theme),
+    }
+  }, {
+    props: (
+      {
+        open
+      }
+    ) => !open,
+    style: {
+      ...closedMixin(theme),
+      "& .MuiDrawer-paper": closedMixin(theme),
+    }
+  }]
 }));
 
 export default function SideNav (props) {
@@ -99,16 +126,18 @@ export default function SideNav (props) {
             sm: "none",
             md: "none",
             lg: "none",
-            xl: "block"
+            xl: "block",
           },
         }}
-        PaperProps={{
-          sx: {
-            backgroundColor: (theme) => theme.palette.background.main,
+        slotProps={{
+          paper: {
+            sx: {
+              backgroundColor: (theme) => theme.palette.background.main,
+            },
           },
         }}
       >
-        <Toolbar variant="dense"/>
+        <Toolbar variant="dense" />
         {renderDrawerHeaderButton()}
         <Divider />
         <Box>

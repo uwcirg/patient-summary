@@ -1,14 +1,12 @@
-import React, { useMemo } from "react";
+import React, { useMemo, lazy, Suspense } from "react";
 import PropTypes from "prop-types";
 import { Accordion, AccordionSummary, AccordionDetails, Box, Stack, Typography } from "@mui/material";
 import { accordionSummaryClasses } from "@mui/material/AccordionSummary";
 import ArrowForwardIosSharpIcon from "@mui/icons-material/ArrowForwardIosSharp";
 import { report_config } from "@config/report_config";
 import { isEmptyArray } from "@util";
-import Chart from "../Chart";
-import ResponsesTable from "../ResponsesTable";
+import Loader from "@components/Loader";
 import Section from "../Section";
-import ScoringSummary from "./ScoringSummary";
 
 // --- Static styles ---
 const sectionWrapperSx = { alignSelf: "stretch" };
@@ -29,23 +27,52 @@ const accordionSummarySx = {
   borderBottom: "1px solid #FFF",
 };
 
+const LazyPrintChunks = lazy(() => import("../PrintChunks"));
+const LazyChart = lazy(() => import("../Chart"));
+const LazyScoringSummary = lazy(() => import("./ScoringSummary"));
+
 // --- TwoColumns component ---
 const TwoColumns = React.memo(function TwoColumns({ table }) {
   return (
-    <Stack direction="row" alignItems="flex-start" className="response-summary" sx={{ flexWrap: flexWrapConfig }}>
-      <ScoringSummary
-        {...table}
-        data={table.rows}
-        disableLinks={true}
-        enableResponsesViewer={true}
-        containerStyle={containerStyleConfig}
-      />
-      <Box sx={{ marginTop: marginTopConfig }} maxWidth="100%">
+    <Stack
+      direction="row"
+      className="response-summary"
+      sx={{
+        alignItems: "flex-start",
+        flexWrap: flexWrapConfig,
+      }}
+    >
+      <Suspense fallback={<Loader message="Loading scoring summary..." variant="inline" styles={{ width: "100%" }} />}>
+        <LazyScoringSummary
+          {...table}
+          data={table.rows}
+          disableLinks={true}
+          enableResponsesViewer={true}
+          containerStyle={containerStyleConfig}
+        />
+      </Suspense>
+      <Box
+        sx={{
+          maxWidth: "100%",
+          marginTop: marginTopConfig,
+        }}
+      >
         {!isEmptyArray(table.charts) &&
           table.charts.map((chartData, index) => {
             if (isEmptyArray(chartData?.data)) return null;
             return (
-              <Chart key={`chart_${table.id}_${chartData?.id}_${index}`} type={chartData?.type} data={chartData} />
+              <Suspense
+                fallback={
+                  <Loader message="Loading chart..." variant="inline" styles={{ width: "100%", minHeight: 240 }} />
+                }
+                key={`chart_container_${table.id}_${chartData?.id}_${index}`}
+              >
+                <LazyChart
+                  key={`chart_${table.id}_${chartData?.id}_${index}`}
+                  type={chartData?.type}
+                  data={chartData}
+                />
+              </Suspense>
             );
           })}
       </Box>
@@ -62,11 +89,26 @@ const TableItem = React.memo(function TableItem({ table, section }) {
   return (
     <Box className="section-wrapper" sx={sectionWrapperSx} key={table.id}>
       <Accordion
-        disableGutters
+        disableGutters={true}
         elevation={multipleTables ? 1 : 0}
         square
         defaultExpanded
-        sx={{ marginLeft: multipleTables ? "8px" : 0, marginRight: multipleTables ? "8px" : 0 }}
+        sx={[
+          multipleTables
+            ? {
+                marginLeft: "8px",
+              }
+            : {
+                marginLeft: 0,
+              },
+          multipleTables
+            ? {
+                marginRight: "8px",
+              }
+            : {
+                marginRight: 0,
+              },
+        ]}
       >
         {table.title && (
           <AccordionSummary
@@ -83,7 +125,7 @@ const TableItem = React.memo(function TableItem({ table, section }) {
         <AccordionDetails sx={{ padding: "16px" }}>
           <Box>
             {table.layout === "simple" && (
-              <ScoringSummary
+              <LazyScoringSummary
                 {...table}
                 data={table.rows}
                 disableLinks={true}
@@ -100,29 +142,6 @@ const TableItem = React.memo(function TableItem({ table, section }) {
 });
 TableItem.propTypes = {
   table: PropTypes.object,
-  section: PropTypes.object,
-};
-
-// --- PrintChunks component ---
-const PrintChunks = React.memo(function PrintChunks({ section }) {
-  return (
-    <Box className="print-only print-table-chunk">
-      {section.tables.flatMap((table) =>
-        (table.rows ?? []).flatMap((row) =>
-          (row.printColumnChunks ?? []).map((chunk, i) => (
-            <ResponsesTable
-              key={`${row.id}_chunk_${i}`}
-              columns={chunk.columns}
-              tableData={row.tableResponseData}
-              title={`${row.title} History${i > 0 ? " (cont'd)" : ""}`}
-            />
-          )),
-        ),
-      )}
-    </Box>
-  );
-});
-PrintChunks.propTypes = {
   section: PropTypes.object,
 };
 
@@ -144,7 +163,12 @@ export default function PROReport() {
   );
 
   const printTables = useMemo(
-    () => report_config.sections.map((section) => <PrintChunks key={section.id} section={section} />),
+    () =>
+      report_config.sections.map((section) => (
+        <Suspense key={section.id} fallback={<Loader message="Loading..." variant="inline" />}>
+          <LazyPrintChunks section={section} />
+        </Suspense>
+      )),
     [],
   );
 

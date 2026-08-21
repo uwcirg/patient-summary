@@ -5,65 +5,80 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-
+import CircularProgress from "@mui/material/CircularProgress";
 
 export default function ProgressIndicator({ resources, sx }) {
   const total = resources?.length;
-  const loaded = resources?.filter(
-    (resource) => resource.complete || resource.error
-  ).length;
+  const loaded = resources?.filter((resource) => resource.complete || resource.error).length;
   if (total === 0) return false;
   return (
     <Box
-      sx={{
+      sx={(theme) => ({
         position: "fixed",
         width: "100%",
         height: "100%",
-        backgroundColor: "#FFF",
+        minHeight: "calc(100vh - 132px)",
         marginLeft: "auto",
         marginRight: "auto",
         left: 0,
-        zIndex: (theme) => theme.zIndex.drawer + 1,
-        padding: (theme) => theme.spacing(2, 2),
-        ...sx
-      }}
+        top: theme.spacing(2),
+        bottom: 0,
+        zIndex: theme.zIndex.drawer + 1,
+        padding: theme.spacing(2, 2),
+        ...(typeof sx === "function" ? sx(theme) : sx),
+      })}
     >
       <Stack
+        direction="column"
+        spacing={2}
+        className="progress-container"
         sx={{
+          alignItems: {
+            xs: "flex-start",
+            sm: "center",
+          },
+
           marginTop: 1,
           marginBottom: 4,
           padding: 2,
         }}
-        alignItems={{
-          xs: "flex-start",
-          sm: "center",
-        }}
-        direction="column"
-        spacing={2}
-        className="progress-container"
       >
         <Stack
           direction="row"
           spacing={2}
-          justifyContent="center"
-          alignItems="center"
-          sx={{ fontSize: "1.1rem", marginBottom: 1.25 }}
+          sx={{
+            justifyContent: "center",
+            alignItems: "center",
+            fontSize: "1.1rem",
+            marginBottom: 1.25,
+          }}
         >
-          <div>Loading ...</div>
+          <Stack direction="row" spacing={1} sx={{ justifyContent: "center", alignItems: "center" }}>
+            <CircularProgress color="info" size={24} role="progressbar"></CircularProgress>
+            <div>Loading Resources...</div>
+          </Stack>
           <div>
             <b>{Math.ceil((loaded / total) * 100)} %</b>
           </div>
         </Stack>
-        <Stack direction="column" alignItems="flex-start" spacing={1}>
+        <Stack
+          direction="column"
+          spacing={1}
+          sx={{
+            alignItems: "flex-start",
+          }}
+        >
           {resources.map((resource, index) => {
             const { title, name, id } = resource;
-            const displayName = title || name || `Resource ${id??index+1}`;
+            const displayName = title || name || `Resource ${id ?? index + 1}`;
             return (
               <Stack
                 direction="row"
                 spacing={2}
-                justifyContent="flex-start"
                 key={`resource_${resource}_${index}`}
+                sx={{
+                  justifyContent: "flex-start",
+                }}
               >
                 <Typography
                   variant="body1"
@@ -72,18 +87,14 @@ export default function ProgressIndicator({ resources, sx }) {
                       resource.error
                         ? theme.palette.error.main
                         : resource.complete
-                        ? theme.palette.success.main
-                        : theme.palette.warning.main,
+                          ? theme.palette.success.main
+                          : theme.palette.warning.main,
                   }}
                 >
                   {String(displayName).toUpperCase()}
                 </Typography>
-                {resource.complete && resource.error && (
-                  <CloseIcon color="error"></CloseIcon>
-                )}
-                {resource.complete && !resource.error && (
-                  <CheckIcon color="success"></CheckIcon>
-                )}
+                {resource.complete && resource.error && <CloseIcon color="error"></CloseIcon>}
+                {resource.complete && !resource.error && <CheckIcon color="success"></CheckIcon>}
               </Stack>
             );
           })}
@@ -101,7 +112,7 @@ ProgressIndicator.propTypes = {
       name: PropTypes.string,
       title: PropTypes.string,
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    })
+    }),
   ),
-  sx: PropTypes.object
+  sx: PropTypes.object,
 };

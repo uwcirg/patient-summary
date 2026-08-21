@@ -5,14 +5,14 @@ import { getShape } from "./shapes";
 import { isEmptyArray } from "@/util";
 
 export const renderShapeDot = (props) => {
-  const { cx, cy, stroke, radius, shape, isActive, isHovered, payload, index } = props;
+  const { cx, cy, stroke, radius, activeDotRadius, shape, isActive, isHovered, payload, index } = props;
   const keyToUse = `dot-${isActive ? "active-" : ""}${payload?.id}_${index}`;
   const shapeProps = {
     cx: cx,
     cy: cy,
-    radius: radius,
+    radius: isHovered || isActive ? activeDotRadius : radius,
     stroke: stroke,
-    isHovered: isHovered
+    isHovered: isHovered,
   };
   if (shape) {
     return getShape(shape, shapeProps);
@@ -23,7 +23,7 @@ export const renderShapeDot = (props) => {
       key={keyToUse}
       cx={cx}
       cy={cy}
-      r={radius}
+      r={isHovered || isActive ? activeDotRadius : radius}
       fill={stroke}
       stroke="#fff"
       strokeWidth={2}
@@ -83,7 +83,6 @@ export const renderChartDot = (props, config) => {
     hitRadiusMultiplier = 1.25, // how much bigger than visual dot
     minHitRadius = 2, // minimum hit target in px (great for iPad)
   } = config;
-
   // Determine visual radius
   let radius;
   if (isHovered || isActive) radius = activeDotRadius || (isSmallScreen ? 5 : 6);
@@ -117,7 +116,18 @@ export const renderChartDot = (props, config) => {
   } else {
     const baseColor = getSeverityBaseColor(payload, value, dotColor);
     const color = getDotColor(payload, baseColor);
-    visibleDot = renderShapeDot({ cx: cx, cy: cy, radius: visualR, stroke: color, shape, isActive, isHovered, payload, index });
+    visibleDot = renderShapeDot({
+      cx: cx,
+      cy: cy,
+      radius: visualR,
+      stroke: color,
+      shape,
+      isActive,
+      isHovered,
+      activeDotRadius,
+      payload,
+      index,
+    });
   }
 
   // Wrap with hit target

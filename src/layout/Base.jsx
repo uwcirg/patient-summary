@@ -25,11 +25,22 @@ export default function Content({ children }) {
 
         <Box
           component="main"
-          sx={{
+          sx={[theme => ({
             flexGrow: 1,
-            p: (theme) => theme.spacing(1),
-            width: { sm: `calc(100% - ${showNav ? "240px" : "0px"})` }, // Visual stability
-          }}
+            p: theme.spacing(1)
+          }), showNav ? {
+            width: {
+              sm: {
+                sm: "240px"
+              }
+            }
+          } : {
+            width: {
+              sm: {
+                sm: "0px"
+              }
+            }
+          }]}
         >
           <Toolbar variant="dense" />
           {children}

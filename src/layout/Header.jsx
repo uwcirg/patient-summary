@@ -40,7 +40,7 @@ export default function Header(props) {
   const { patient } = useContext(FhirClientContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
-  const anchorRef = useRef(null);
+  const [anchorEl, setAnchorEl] = React.useState(null);
   const desktopImgRef = useRef(null);
   const mobileImgRef = useRef(null);
   const sections = getSectionsToShow();
@@ -78,7 +78,7 @@ export default function Header(props) {
       <>
         <Typography
           variant="h5"
-          component="h1"
+          component="h2"
           color="primary"
           sx={{
             fontSize: "1.3rem",
@@ -122,7 +122,7 @@ export default function Header(props) {
                 ref={desktopImgRef}
                 alt={"project logo"}
                 style={{
-                  height: 40,
+                  width: 40,
                   cursor: "pointer",
                 }}
                 onLoad={handleImageLoaded}
@@ -173,6 +173,7 @@ export default function Header(props) {
         variant="outlined"
         sx={{
           backgroundColor: "#FFF",
+          display: "none" // hide about button for now since the content is not ready, can be turned on when needed
         }}
         {...props}
       >
@@ -217,21 +218,21 @@ export default function Header(props) {
   const renderDesktopMenu = () => {
     return (
       <Stack
-        flexDirection="row"
-        flexGrow={1}
-        justifyContent="flex-end"
-        alignItems="center"
         sx={{
+          flexDirection: "row",
+          flexGrow: 1,
+          justifyContent: "flex-end",
+          alignItems: "center",
           columnGap: theme.spacing(1.5),
+
           display: {
             xs: "none",
             sm: "none",
             md: "none",
             lg: "none",
             xl: "inline-flex",
-          },
-        }}
-      >
+          }
+        }}>
         {!shouldHideReturnButton() && renderReturnButton()}
         {renderPrintButton()}
         {renderAboutButton()}
@@ -250,7 +251,6 @@ export default function Header(props) {
             xl: "none",
           },
         }}
-        ref={anchorRef}
         aria-controls={mobileMenuOpen ? "composition-menu" : undefined}
         aria-expanded={mobileMenuOpen ? "true" : undefined}
         aria-haspopup="true"
@@ -262,7 +262,7 @@ export default function Header(props) {
       </IconButton>
       <Popper
         open={mobileMenuOpen}
-        anchorEl={anchorRef.current}
+        anchorEl={anchorEl}
         role={undefined}
         placement="bottom-start"
         transition
@@ -312,7 +312,7 @@ export default function Header(props) {
                       variant: "text",
                     })}
                   </MenuItem>
-                  <Divider></Divider>
+                  {/* <Divider></Divider> */}
                   <MenuItem>
                     {renderAboutButton({
                       variant: "text",
@@ -330,13 +330,14 @@ export default function Header(props) {
     return <About open={aboutModalOpen} onClose={() => setAboutModalOpen(false)}></About>;
   };
   const handleMobileMenuClose = (event) => {
-    if (anchorRef.current && anchorRef.current.contains(event.target)) {
+    if (anchorEl && anchorEl.contains(event.target)) {
       return;
     }
 
     setMobileMenuOpen(false);
   };
-  const handleMobileMenuToggle = () => {
+  const handleMobileMenuToggle = (event) => {
+    setAnchorEl(anchorEl ? null : event.currentTarget);
     setMobileMenuOpen((prevOpen) => !prevOpen);
   };
   const handleListKeyDown = (event) => {
@@ -368,13 +369,13 @@ export default function Header(props) {
     <>
       <AppBar position="fixed" elevation={1} sx={{ paddingRight: "0 !important", paddingLeft: "0 !important" }}>
         <Toolbar
-          sx={{
+          sx={theme => ({
             backgroundColor: theme.palette.lighter ? theme.palette.lighter.main : "#FFF",
             color: theme.palette.secondary ? theme.palette.secondary.main : "#444",
-            zIndex: (theme) => theme.zIndex.drawer + 1,
+            zIndex: theme.zIndex.drawer + 1,
             paddingLeft: theme.spacing(2),
-            paddingRight: theme.spacing(2),
-          }}
+            paddingRight: theme.spacing(2)
+          })}
           disableGutters
           variant="dense"
         >
@@ -385,12 +386,18 @@ export default function Header(props) {
               sm: 1,
               md: 1.25,
             }}
-            alignItems="center"
-            sx={{ width: "100%" }}
-          >
+            sx={{
+              alignItems: "center",
+              width: "100%"
+            }}>
             {renderLogo()}
             {renderTitle()}
-            <Stack direction={"row"} sx={{ flex: "1 1" }} alignItems="center">
+            <Stack
+              direction={"row"}
+              sx={{
+                alignItems: "center",
+                flex: "1 1"
+              }}>
               {!inEHR && renderPatientInfo()}
               {renderDesktopMenu()}
             </Stack>

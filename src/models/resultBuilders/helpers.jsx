@@ -24,6 +24,7 @@ import {
   isNumber,
   isPlainObject,
   normalizeStr,
+  normalizeHTMLStr,
   removeNullValuesFromObject,
   trimToMinutes,
 } from "@util";
@@ -392,10 +393,10 @@ export function defaultAnswerMapperFromObservation(obs) {
  */
 function getObservationGroupingKey(observation) {
   return (
-    observation.effectiveDateTime ||
+    // Prevent grouping unrelated observations
+    (observation.effectiveDateTime ||
     observation.issued ||
-    observation.encounter?.reference ||
-    `${conceptText(observation.code) ?? generateUUID()}` // Prevent grouping unrelated observations
+    observation.encounter?.reference || `${conceptText(observation.code) ?? generateUUID()}`)
   );
 }
 
@@ -845,12 +846,13 @@ export function getNumAnsweredDisplayByRow(row) {
   if (isNumber(totalAnsweredItems) && isNumber(totalItems))
     return (
       <Stack
-        alignItems="center"
-        justifyContent="center"
         spacing={0.4}
         aria-label={`${totalAnsweredItems} of ${totalItems} items answered`}
         role="img"
-      >
+        sx={{
+          alignItems: "center",
+          justifyContent: "center"
+        }}>
         <Typography variant="body2">{totalAnsweredItems}</Typography>
         <Divider flexItem sx={{ width: 24, alignSelf: "auto", backgroundColor: "rgba(132, 129, 129, 0.6)" }} />
         <Typography variant="body2">{totalItems}</Typography>
@@ -919,7 +921,7 @@ export function getResponseColumns(data) {
       render: (rowData) => {
         const q = rowData?.question ?? "";
         const config = rowData?.config;
-        const normalizedClean = normalizeStr(q);
+        const normalizedClean = normalizeHTMLStr(q);
         const isQuestion =
           rowData?.isWeightedLabel ||
           normalizeStr(q) === normalizeStr(config?.title) ||
@@ -930,7 +932,12 @@ export function getResponseColumns(data) {
 
         if (typeof q === "string" && isQuestion) {
           return (
-            <Stack flexDirection={"column"} gap={0.25} className={`${isQuestion ? "question-row" : ""}`}>
+            <Stack
+              className={`${isQuestion ? "question-row" : ""}`}
+              sx={{
+                flexDirection: "column",
+                gap: 0.25
+              }}>
               <div>
                 <b>{q}</b>
               </div>
@@ -977,7 +984,9 @@ export function getResponseColumns(data) {
           // numeric score path
           if (rowDataItem.score != null) {
             return (
-              <Stack gap={1} className="score-wrapper">
+              <Stack className="score-wrapper" sx={{
+                gap: 1
+              }}>
                 <Scoring
                   // instrumentId is optional; provide if we have it on the cell
                   instrumentId={rowDataItem.instrumentId}

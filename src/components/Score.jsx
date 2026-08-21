@@ -18,10 +18,11 @@ export default function Scoring(props) {
       <Stack
         direction="row"
         spacing={1}
-        justifyContent={justifyContent || "space-between"}
-        alignItems={alignItems || "center"}
         className="score-container"
-      >
+        sx={{
+          justifyContent: justifyContent || "space-between",
+          alignItems: alignItems || "center"
+        }}>
         <div className={oScore.textColorClass}>{oScore.displayValue}</div>
         {oScore.isHigh() && (
           oScore.alertNote

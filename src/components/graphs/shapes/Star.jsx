@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 
 const Star = (props) => {
-  const { cx, cy, stroke, width = 12, height = 12, isHovered = false } = props;
+  const { cx = 0, cy = 0, stroke, width = 12, height = 12, isHovered = false } = props;
   return (
     <svg
       x={cx - width / 2}

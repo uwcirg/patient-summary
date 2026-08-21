@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from "react";
-import BallotIcon from "@mui/icons-material/BallotOutlined";
+import BallotIcon from "@mui/icons-material/Ballot";
 import MedicalInformationIcon from "@mui/icons-material/MedicalInformationOutlined";
 import FactCheckIcon from "@mui/icons-material/FactCheckOutlined";
 import SummarizeIcon from "@mui/icons-material/SummarizeOutlined";
@@ -8,26 +8,29 @@ import Stack from "@mui/material/Stack";
 import { isEmptyArray } from "@util";
 import Loader from "@components/Loader";
 
-const renderLoader = () => (
-  <Loader message="Retrieving content..." styles={{ position: "relative", width: "auto", height: "auto" }}></Loader>
+const renderLoader = (isFullScreen) => (
+  <Loader message="Loading Section ..." variant={isFullScreen ? "fullScreen" : "inline"}></Loader>
 );
-
-const renderScoringSummary = ({allScoringSummaryData, allChartData, chartKeys}) => {
-  const ScoreSummary = lazy(() => import("../components/sections/ScoringSummary"));
-  const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
+const ScoreSummary = lazy(() => import("../components/sections/ScoringSummary"));
+const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
+const renderScoringSummary = ({ allScoringSummaryData, allChartData, chartKeys }) => {
   return (
     <Suspense fallback={renderLoader()}>
       <Stack
         spacing={1}
         direction={`${!isEmptyArray(allChartData) && allChartData.length < 20 ? "row" : "column"}`}
-        alignItems={"top"}
-        sx={{
-          gap: (theme) => theme.spacing(1),
-          marginLeft: (theme) => theme.spacing(1),
-          marginRight: (theme) => theme.spacing(1),
-        }}
-        flexWrap={"wrap"}
         className="score-summary-wrapper"
+        sx={[
+          {
+            alignItems: "top",
+            flexWrap: "wrap",
+          },
+          (theme) => ({
+            gap: theme.spacing(1),
+            marginLeft: theme.spacing(1),
+            marginRight: theme.spacing(1),
+          }),
+        ]}
       >
         {!isEmptyArray(allChartData) && chartKeys.length > 1 && (
           <Box
@@ -61,34 +64,32 @@ const renderScoringSummary = ({allScoringSummaryData, allChartData, chartKeys}) 
     </Suspense>
   );
 };
-
+const ProReport = lazy(() => import("../components/sections/PROReport"));
 const renderProReport = (props) => {
-  const ProReport = lazy(() => import("../components/sections/PROReport"));
   return (
-    <Suspense fallback={renderLoader()}>
+    <Suspense fallback={renderLoader(true)}>
       <ProReport {...props}></ProReport>
     </Suspense>
   );
 };
-
+const Conditions = lazy(() => import("../components/sections/Conditions"));
 const renderConditions = (props) => {
-  const Conditions = lazy(() => import("../components/sections/Conditions"));
   return (
     <Suspense fallback={renderLoader()}>
       <Conditions data={props?.Condition}></Conditions>
     </Suspense>
   );
 };
+const Observation = lazy(() => import("../components/sections/Observations"));
 const renderObservations = (props) => {
-  const Observation = lazy(() => import("../components/sections/Observations"));
   return (
     <Suspense fallback={renderLoader()}>
       <Observation data={props?.Observation}></Observation>
     </Suspense>
   );
 };
+const Summaries = lazy(() => import("../components/sections/Summaries"));
 const renderSummaries = (props) => {
-  const Summaries = lazy(() => import("../components/sections/Summaries"));
   return <Suspense fallback={renderLoader()}>{<Summaries {...props}></Summaries>}</Suspense>;
 };
 

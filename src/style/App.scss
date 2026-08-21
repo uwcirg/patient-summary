@@ -13,6 +13,10 @@ $warning-background-color: #f7d0b01a;
 $thumb-color: #a0a3b2;
 $thumb-background-color: #eef1f6;
 $header-height: 52px;
+$buttonBoxShadow:
+  rgba(0, 0, 0, 0.18) 0px 2px 1px -2px,
+  rgba(0, 0, 0, 0.14) 0px 2px 2px 0px,
+  rgba(0, 0, 0, 0.12) 0px 1px 4px 0px;
 
 html {
   scrollbar-gutter: stable; /* Reserve space to prevent shifts */
@@ -70,6 +74,13 @@ main {
   main {
     overflow-x: auto;
   }
+}
+.button-text {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .section-title {
   font-weight: 700 !important;
@@ -166,6 +177,7 @@ p {
 .text-danger {
   color: #8d0303;
 }
+
 .MuiTable-root {
   border-collapse: separate !important;
   border-spacing: 0 !important;
@@ -194,6 +206,9 @@ td {
   text-transform: capitalize;
 }
 .scoring-summary-table {
+  .info-button {
+    background-color: #fff !important;
+  }
   th {
     font-weight: 400 !important;
   }
@@ -281,6 +296,14 @@ td {
   }
 }
 
+.table-pair-items {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
 .table-cell-item {
   word-break: normal;
   &:not(:last-of-type) {
@@ -322,6 +345,10 @@ td {
       cursor: pointer;
       position: relative;
       z-index: 2;
+      border: 1px solid #c7c5c5;
+      &.inactive {
+        border: 1px solid #ececec;
+      }
       &::after {
         content: "✓";
         font-size: 0.6rem;
@@ -380,6 +407,9 @@ td {
   color: $muted-text-color;
   margin-top: 4px !important;
 }
+.info-button {
+  box-shadow: $buttonBoxShadow !important;
+}
 
 @media print {
   @page {
@@ -395,7 +425,7 @@ td {
   }
   footer {
     position: relative !important;
-    background-color: #FFF !important;
+    background-color: #fff !important;
     box-shadow: none !important;
   }
   html,
@@ -403,7 +433,7 @@ td {
     font-size: 12px;
   }
   main {
-    background-color: #FFF !important;
+    background-color: #fff !important;
   }
   h1,
   h2 {
@@ -414,12 +444,20 @@ td {
   h5 {
     font-size: 1rem !important;
   }
+  table {
+    border-collapse: separate !important;
+    border-spacing: 0;
+  }
+  th,
+  td {
+    border: 1px solid $muted-text-color !important; /* forces a solid border */
+  }
   .summaries {
     background-color: $summary-container-background-color;
   }
   .scoring-summary-table {
     // page-break-after: always;
-    overflow: auto;
+    overflow-x: hidden !important;
   }
   .print-hidden {
     display: none !important;
@@ -476,6 +514,7 @@ td {
     width: 100% !important;
     min-width: 100% !important;
     margin-left: 0 !important;
+    overflow-x: hidden !important;
     table {
       th,
       td {
@@ -486,6 +525,7 @@ td {
   .recharts-responsive-container,
   .recharts-legend-item {
     box-shadow: none !important;
+    border: 0 !important;
     &:after {
       display: none;
     }
@@ -493,10 +533,20 @@ td {
   .recharts-responsive-container {
     border: 1px solid #ececec;
     min-height: auto !important;
+    max-width: 100% !important;
+    width: 100%;
+    height: 100%;
+    min-width: 420px;
+    min-height: 380px;
+    .recharts-wrapper {
+      min-height: auto !important;
+      width: 700px !important;
+    }
   }
   .recharts-legend-wrapper {
     left: 4px !important;
     min-height: auto !important;
+    top: 20px !important;
     li {
       box-shadow: none;
       padding: 0;

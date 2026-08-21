@@ -36,7 +36,7 @@ const CHART_CONFIG = {
     dotColor: "#444",
     dotRadius: 4,
     cutoffTimestamp: CUT_OFF_TIMESTAMP_ON_GRAPH,
-    activeDotRadius: 5,
+    activeDotRadius: 6,
     interval: 2,
     lgChartWidth: 588,
     mdChartWidth: 480,

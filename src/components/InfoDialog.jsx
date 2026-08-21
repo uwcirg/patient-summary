@@ -1,15 +1,10 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, Suspense, lazy} from "react";
 import DOMPurify from "dompurify";
 import PropTypes from "prop-types";
-import { useTheme } from "@mui/material/styles";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
 import HelpIcon from "@mui/icons-material/Help";
+
+const LazyDialogContent = lazy(() => import("./InfoDialogContent"));
 
 export default function InfoDialog(props) {
   const {
@@ -32,7 +27,6 @@ export default function InfoDialog(props) {
     sanitizeConfig = {},
   } = props;
 
-  const theme = useTheme();
   const [internalOpen, setInternalOpen] = useState(false);
 
   // Use controlled state if provided, otherwise use internal state
@@ -101,29 +95,18 @@ export default function InfoDialog(props) {
           <ButtonIcon color={buttonColor} {...buttonIconProps} />
         </IconButton>
       )}
-
-      <Dialog open={isOpen} onClose={handleClose} {...dialogProps}>
-        {title && (
-          <DialogTitle
-            sx={{
-              backgroundColor: theme.palette.primary?.main || "#444",
-              color: "#FFF",
-            }}
-          >
-            {title}
-          </DialogTitle>
-        )}
-
-        <DialogContent>
-          <DialogContentText sx={{ marginTop: theme.spacing(3) }}>
-            {allowHtml ? <span dangerouslySetInnerHTML={{ __html: sanitizedContent }} /> : content}
-          </DialogContentText>
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={handleClose}>{closeButtonText}</Button>
-        </DialogActions>
-      </Dialog>
+      <Suspense fallback={<div>Loading...</div>}>
+        <LazyDialogContent
+          open={isOpen}
+          onClose={handleClose}
+          title={title}
+          content={sanitizedContent}
+          closeButtonText={closeButtonText}
+          dialogProps={dialogProps}
+          allowHtml={allowHtml}
+          sanitizeConfig={sanitizeConfig}
+        />
+      </Suspense>
     </>
   );
 }

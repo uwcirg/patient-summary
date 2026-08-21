@@ -73,15 +73,39 @@ export default function LineCharts(props) {
           className={keys.length > 1 ? "multple" : "single"}
         ></Legend>
         {keys.map((key, index) => {
+          const dataKey = key; // matches getDisplayQTitle(key) already used to build the field
           return (
             <Line
               name={key}
-              dataKey={key}
+              dataKey={dataKey}
               stroke={COLORS[index]}
               key={`${key}_line_${index}`}
               legendType={LEGEND_ICON_TYPES[index] ?? "circle"}
-              dot={(props) => getShape(LEGEND_ICON_TYPES[index] ?? "circle", props)}
-              activeDot={(props) => getShape(LEGEND_ICON_TYPES[index] ?? "circle", { ...props, stroke: "#444" })}
+              dot={(dotProps) => {
+                const { value, cx, cy, payload } = dotProps;
+                // payload won't have this series' field at all if the row belongs to a different questionnaire
+                if (payload?.[dataKey] === undefined || value == null || !Number.isFinite(cx) || !Number.isFinite(cy)) {
+                  return null;
+                }
+                return getShape(LEGEND_ICON_TYPES[index] ?? "circle", {
+                  ...dotProps,
+                  stroke: COLORS[index],
+                  width: 10,
+                  height: 10,
+                });
+              }}
+              activeDot={(dotProps) => {
+                const { value, cx, cy, payload } = dotProps;
+                if (payload?.[dataKey] === undefined || value == null || !Number.isFinite(cx) || !Number.isFinite(cy)) {
+                  return null;
+                }
+                return getShape(LEGEND_ICON_TYPES[index] ?? "circle", {
+                  ...dotProps,
+                  stroke: "#444",
+                  width: 12,
+                  height: 12,
+                });
+              }}
               isAnimationActive={false}
               animationBegin={400}
               strokeWidth={2}

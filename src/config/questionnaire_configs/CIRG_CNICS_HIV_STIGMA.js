@@ -21,7 +21,7 @@ export default {
   },
   noteFunction: (questionnaire) => {
     if (!questionnaire) return "";
-    const matchedItem = questionnaire.item.find((o) => o.linkId === "HIV-STIGMA-SCORE");
+    const matchedItem = questionnaire?.item?.find((o) => o.linkId === "HIV-STIGMA-SCORE");
     return matchedItem?.text;
   },
   severityBands: [

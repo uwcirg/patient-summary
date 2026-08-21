@@ -41,14 +41,16 @@ export default function SectionList(props) {
             {expanded && (
               <ListItemText
                 primary={section.title}
-                primaryTypographyProps={{
-                  variant: "subtitle2",
-                  component: "h3",
-                  sx: {
-                    fontWeight: 500,
-                    whiteSpace: "normal",
-                    textWrap: "balance"
-                  },
+                slotProps={{
+                  primary: {
+                    variant: "subtitle2",
+                    component: "h3",
+                    sx: {
+                      fontWeight: 500,
+                      whiteSpace: "normal",
+                      textWrap: "balance"
+                    },
+                  }
                 }}
               />
             )}

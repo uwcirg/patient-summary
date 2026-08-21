@@ -55,7 +55,12 @@ export const report_config = {
                 sx: { verticalAlign: "top", lineHeight: 1.5 },
               },
               renderCell: (row, value) => (
-                <Stack direction={"column"} sx={{ whiteSpace: "pre-line" }} justifyContent={"space-between"}>
+                <Stack
+                  direction={"column"}
+                  sx={{
+                    justifyContent: "space-between",
+                    whiteSpace: "pre-line"
+                  }}>
                   <Box>{value && value.split(",").join("\n")}</Box>
                   {!value && getNoDataDisplay()}
                   {row.source && <Box className="muted-text source-container">{row.source}</Box>}
@@ -71,7 +76,12 @@ export const report_config = {
                 sx: { verticalAlign: "top", lineHeight: 1.5 },
               },
               renderCell: (row, value) => (
-                <Stack direction={"column"} sx={{ whiteSpace: "pre-line" }} justifyContent={"flex-start"}>
+                <Stack
+                  direction={"column"}
+                  sx={{
+                    justifyContent: "flex-start",
+                    whiteSpace: "pre-line"
+                  }}>
                   <Box>{value && value.split(",").join("\n")}</Box>
                   {!value && getNoDataDisplay()}
                   {row.source && <Box className="muted-text source-container">{row.source}</Box>}
@@ -215,7 +225,9 @@ export const report_config = {
                 const values = value ? value.split("\n") : null;
                 if (!isEmptyArray(values)) {
                   return (
-                    <Stack direction={"column"} gap={0.5}>
+                    <Stack direction={"column"} sx={{
+                      gap: 0.5
+                    }}>
                       {values.map((value, index) => {
                         const {key, ...rest} = row;
                         return <Meaning key={`${key}_value_${index}`} {...rest} meaning={value}/>
