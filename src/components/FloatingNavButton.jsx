@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 import Fab from "@mui/material/Fab";
 import Box from "@mui/material/Box";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import { isInViewport } from "../util";
-import { DEFAULT_TOOLBAR_HEIGHT } from "../consts";
+import { isInViewport } from "@util";
+import { DEFAULT_TOOLBAR_HEIGHT } from "@/consts";
 let scrollIntervalId = 0;
 
 export default function FloatingNavButton() {
@@ -17,7 +17,7 @@ export default function FloatingNavButton() {
   ));
   BoxRef.displayName = "BoxRef";
   const FabRef = forwardRef((props, ref) => (
-    <Fab ref={ref} {...props} className="back-to-top">
+    <Fab ref={ref} {...props} className="back-to-top print-hidden">
       {props.children}
     </Fab>
   ));
@@ -44,15 +44,15 @@ export default function FloatingNavButton() {
       color="primary"
       aria-label="add"
       size="medium"
-      sx={{
+      sx={theme => ({
         position: "fixed",
-        bottom: (theme) => theme.spacing(1),
-        right: (theme) => theme.spacing(3),
-        zIndex: (theme) => theme.zIndex.drawer - 1,
-        borderColor: (theme) => theme.palette.primary.main,
-        borderWidth: "2px",
+        bottom: theme.spacing(8),
+        right: theme.spacing(3),
+        zIndex: theme.zIndex.drawer + 2,
+        borderColor: theme.palette.primary.main,
+        borderWidth: "3px",
         borderStyle: "solid"
-      }}
+      })}
       onClick={(e) => {
         e.stopPropagation();
         if (!anchorRef.current) return;

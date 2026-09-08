@@ -1,124 +1,142 @@
 import React, { lazy, Suspense } from "react";
-import BallotIcon from "@mui/icons-material/BallotOutlined";
+import BallotIcon from "@mui/icons-material/Ballot";
 import MedicalInformationIcon from "@mui/icons-material/MedicalInformationOutlined";
 import FactCheckIcon from "@mui/icons-material/FactCheckOutlined";
 import SummarizeIcon from "@mui/icons-material/SummarizeOutlined";
 import Box from "@mui/material/Box";
-import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
-import { getDefaultInterventionLogicLib, getResourceLogicLib} from "../util/elmUtil";
+import { isEmptyArray } from "@util";
+import Loader from "@components/Loader";
 
-const resourceLogicLibrary = getResourceLogicLib()[0];
-const defaultInterventionLibrary = getDefaultInterventionLogicLib();
-
-const renderLoader = () => (
-  <Stack
-    direction="row"
-    spacing={1}
-    alignItems="center"
-    sx={{
-      marginTop: (theme) => theme.spacing(1),
-      marginBottom: (theme) => theme.spacing(1),
-    }}
-  >
-    <Box color="primary">Retrieving content ...</Box>
-    <CircularProgress color="primary" size={24}></CircularProgress>
-  </Stack>
+const renderLoader = (isFullScreen) => (
+  <Loader message="Loading Section ..." variant={isFullScreen ? "fullScreen" : "inline"}></Loader>
 );
-
-const renderScoringSummary = (props) => {
-  const summaryData = props.summaryData?.data || {};
-  const ScoreSummary = lazy(() => import("../components/sections/ScoringSummary"));
-  const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
-  const chartData = props.allChartData;
-  const chartKeys = [...new Set(chartData?.map((o) => o.key))];
+const ScoreSummary = lazy(() => import("../components/sections/ScoringSummary"));
+const ChartSummary = lazy(() => import("../components/graphs/SummaryChart"));
+const renderScoringSummary = ({ allScoringSummaryData, allChartData, chartKeys }) => {
   return (
     <Suspense fallback={renderLoader()}>
       <Stack
         spacing={1}
-        direction={"row"}
-        alignItems={"center"}
-        sx={{
-          marginLeft: (theme) => theme.spacing(1),
-          marginRight: (theme) => theme.spacing(1),
-          gap: (theme) => theme.spacing(1)
-        }}
-        flexWrap={"wrap"}
+        direction={`${!isEmptyArray(allChartData) && allChartData.length < 20 ? "row" : "column"}`}
+        className="score-summary-wrapper"
+        sx={[
+          {
+            alignItems: "top",
+            flexWrap: "wrap",
+          },
+          (theme) => ({
+            gap: theme.spacing(1),
+            marginLeft: theme.spacing(1),
+            marginRight: theme.spacing(1),
+          }),
+        ]}
       >
-        <Box sx={{flex: {
-            xs: "auto",
-            sm: "auto",
-            md: "auto",
-            lg: 2
-          }}}>
-          <ChartSummary data={chartData} keys={chartKeys}></ChartSummary>
-        </Box>
-        <Box sx={{flex: {
-            xs: "auto",
-            sm: "auto",
-            md: "auto",
-            lg: 2.5
-          }}}>
-          <ScoreSummary summaryData={summaryData}></ScoreSummary>
+        {!isEmptyArray(allChartData) && chartKeys.length > 1 && (
+          <Box
+            sx={{
+              flex: {
+                xs: "auto",
+                sm: "auto",
+                md: "auto",
+                lg: 2,
+              },
+              width: "100%",
+            }}
+            className="chart-container-wrapper"
+          >
+            <ChartSummary data={allChartData} keys={chartKeys}></ChartSummary>
+          </Box>
+        )}
+        <Box
+          sx={{
+            flex: {
+              xs: "auto",
+              sm: "auto",
+              md: "auto",
+              lg: 2.5,
+            },
+          }}
+        >
+          <ScoreSummary data={allScoringSummaryData} disableLinks={true}></ScoreSummary>
         </Box>
       </Stack>
     </Suspense>
   );
 };
-
-const renderMedicalHistory = (props) => {
-  const MedicalHistory = lazy(() => import("../components/sections/MedicalHistory"));
+const ProReport = lazy(() => import("../components/sections/PROReport"));
+const renderProReport = (props) => {
   return (
-    <Suspense fallback={renderLoader()}>
-      <MedicalHistory data={props.evalData?.Condition}></MedicalHistory>
+    <Suspense fallback={renderLoader(true)}>
+      <ProReport {...props}></ProReport>
     </Suspense>
   );
 };
+const Conditions = lazy(() => import("../components/sections/Conditions"));
+const renderConditions = (props) => {
+  return (
+    <Suspense fallback={renderLoader()}>
+      <Conditions data={props?.Condition}></Conditions>
+    </Suspense>
+  );
+};
+const Observation = lazy(() => import("../components/sections/Observations"));
 const renderObservations = (props) => {
-  const Observation = lazy(() => import("../components/sections/Observations"));
   return (
     <Suspense fallback={renderLoader()}>
-      <Observation data={props.evalData?.Observation}></Observation>
+      <Observation data={props?.Observation}></Observation>
     </Suspense>
   );
 };
-const renderSummaries = ({ questionnaireKeys, summaryData }) => {
-  const Summaries = lazy(() => import("../components/sections/Summaries"));
-  return (
-    <Suspense fallback={renderLoader()}>
-      {<Summaries questionnaireKeys={questionnaireKeys} summaryData={summaryData}></Summaries>}
-    </Suspense>
-  );
+const Summaries = lazy(() => import("../components/sections/Summaries"));
+const renderSummaries = (props) => {
+  return <Suspense fallback={renderLoader()}>{<Summaries {...props}></Summaries>}</Suspense>;
 };
 
-const DEFAULT_SECTIONS = [
+const DEFAULT_RESOURCES = ["Questionnaire", "QuestionnaireResponse"];
+
+export const sections = [
   {
     id: "scoreSummary",
     title: "Score Summary",
-    library: defaultInterventionLibrary,
+    resources: DEFAULT_RESOURCES,
     icon: (props) => <SummarizeIcon fontSize="medium" color="primary" {...props}></SummarizeIcon>,
     component: (props) => renderScoringSummary(props),
+    //default: true,
   },
   {
-    id: "conditions",
-    title: "Medical History",
-    library: resourceLogicLibrary,
-    icon: (props) => <MedicalInformationIcon fontSize="medium" color="primary" {...props}></MedicalInformationIcon>,
-    component: (props) => renderMedicalHistory(props),
-  },
-  {
-    id: "observations",
-    title: "Clinical / Social History",
-    library: resourceLogicLibrary,
-    icon: (props) => <FactCheckIcon fontSize="medium" color="primary" {...props}></FactCheckIcon>,
-    component: (props) => renderObservations(props),
+    id: "proReport",
+    title: "PRO Report",
+    resources: DEFAULT_RESOURCES,
+    icon: (props) => <BallotIcon fontSize="medium" color="primary" {...props}></BallotIcon>,
+    component: (props) => renderProReport(props),
+    standalone: true,
+    default: true,
   },
   {
     id: "questionnaireResponses",
     title: "Questionnaire Responses",
-    library: defaultInterventionLibrary,
+    resources: DEFAULT_RESOURCES,
     icon: (props) => <BallotIcon fontSize="medium" color="primary" {...props}></BallotIcon>,
     component: (props) => renderSummaries(props),
+    //default: true,
+  },
+  {
+    id: "conditions",
+    title: "Conditions",
+    resources: ["Condition"],
+    icon: (props) => <MedicalInformationIcon fontSize="medium" color="primary" {...props}></MedicalInformationIcon>,
+    component: (props) => renderConditions(props),
+    //default: true,
+  },
+  {
+    id: "observations",
+    title: "Observations",
+    resources: ["Observation"],
+    icon: (props) => <FactCheckIcon fontSize="medium" color="primary" {...props}></FactCheckIcon>,
+    component: (props) => renderObservations(props),
+    //default: true,
   },
 ];
+const DEFAULT_SECTIONS = sections.filter((item) => !!item.default);
 export default DEFAULT_SECTIONS;

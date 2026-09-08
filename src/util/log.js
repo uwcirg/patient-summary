@@ -10,18 +10,18 @@ function getDefaultLogObject() {
   };
 }
 //write to audit log
-// @param level, expect string
+// @param severity, expect string, e.g. 'info', 'error'
 // @param tags, expect array, e.g. ['info']
 // @param body, expect object, e.g. { "projectID": "DCW"}
 // @param message, expect object, e.g. { "text": "ok"}
-export function writeToLog(level, tags, body, message) {
+export function writeToLog(severity, tags, body, message) {
   const confidentialBackendURL = getEnv("REACT_APP_CONF_API_URL");
   if (!confidentialBackendURL) {
     console.log("audit log skipped; confidential backend URL is not set");
     return;
   }
   let postBody = {...getDefaultLogObject(), ...body};
-  if (level) postBody.level = level;
+  if (severity) postBody.severity = severity;
   if (tags) postBody.tags = [...postBody.tags, ...tags];
   if (message)
     postBody.message = {

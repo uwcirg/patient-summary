@@ -1,50 +1,44 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef } from "react";
 import PropTypes from "prop-types";
 import Error from "./ErrorComponent";
+import BarChart from "./graphs/BarCharts";
 import LineChart from "./graphs/LineCharts";
-let resizeChartTimeoutId = 0;
-const Chart = (props) => {
-  const eligibleCharts = ["linechart"];
-  const chartRef = useRef();
-  const CHART_SPACING = 240;
 
-  useEffect(() => {
-    window.addEventListener("resize", () => {
-      clearTimeout(resizeChartTimeoutId);
-      resizeChartTimeoutId = setTimeout(() => {
-        if (chartRef.current) {
-          chartRef.current.style.height =
-            (window.innerHeight - CHART_SPACING) + "px";
-        }
-      }, 250);
-    });
-  }, []);
-  return (
-    <div
-      className="chart__container"
-      style={{
-        width: {
-          sm: "100%",
-          md: "50%",
-        },
-        height: (window.innerHeight - CHART_SPACING) + "px",
-        minHeight:
-          props.data && props.data.chartHeight
-            ? props.data.chartHeight + "px"
-            : "520px",
-      }}
-      ref={chartRef}
-    >
-      {props.type === "linechart" && <LineChart {...props.data}></LineChart>}
-      {eligibleCharts.indexOf(props.type) === -1 && (
-        <Error message="Graph type specified is not available."></Error>
-      )}
-      {/* other types of graph go here */}
-    </div>
-  );
-};
+const Chart = React.memo(
+  (props) => {
+    const eligibleCharts = ["linechart", "barchart"];
+    const chartRef = useRef();
+    const { key, ...rest } = props.data;
+    return (
+      <div
+        className="chart__container"
+        style={{
+          width: {
+            sm: "100%",
+            md: "50%",
+          },
+        }}
+        ref={chartRef}
+      >
+        {props.type === "linechart" && <LineChart {...rest}></LineChart>}
+        {props.type === "barchart" && <BarChart {...rest}></BarChart>}
+        {eligibleCharts.indexOf(props.type) === -1 && <Error message="Graph type specified is not available."></Error>}
+        {/* other types of graph go here */}
+      </div>
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.type === nextProps.type &&
+      (prevProps.data?.id === nextProps.data?.id || prevProps.data?.key === nextProps.data?.key) &&
+      prevProps.data?.data === nextProps.data?.data
+    );
+  },
+);
+
 Chart.propTypes = {
   data: PropTypes.shape({
+    key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     data: PropTypes.array,
     type: PropTypes.string,
@@ -54,6 +48,7 @@ Chart.propTypes = {
     yAxisTitle: PropTypes.string,
     yFieldKey: PropTypes.string,
     yLabel: PropTypes.string,
+    yLabelVisible: PropTypes.bool,
     yDomain: PropTypes.array,
     yTicks: PropTypes.array,
     yTickFormatter: PropTypes.func,
@@ -62,9 +57,11 @@ Chart.propTypes = {
     xFieldKey: PropTypes.string,
     xAxisTitle: PropTypes.string,
     xLabel: PropTypes.string,
+    xLabelVisible: PropTypes.bool,
     dataFormatter: PropTypes.func,
     tooltipLabelFormatter: PropTypes.func,
   }),
   type: PropTypes.string.isRequired,
 };
+Chart.displayName = Chart;
 export default Chart;

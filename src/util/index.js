@@ -1,7 +1,11 @@
 import dayjs from "dayjs";
-import ChartConfig from "../config/chart_config";
-import { DEFAULT_TOOLBAR_HEIGHT, QUESTIONNAIRE_ANCHOR_ID_PREFIX, queryNeedPatientBanner } from "../consts";
-import defaultSections from "../config/sections_config";
+import ChartConfig from "@config/chart_config";
+import defaultSections, { sections } from "@config/sections_config";
+import {
+  DEFAULT_TOOLBAR_HEIGHT,
+  QUESTIONNAIRE_ANCHOR_ID_PREFIX,
+  queryNeedPatientBanner,
+} from "@/consts";
 
 export const shortDateRE = /^\d{4}-\d{2}-\d{2}$/; // matches '2012-04-05'
 export const dateREZ =
@@ -33,14 +37,44 @@ export function getCorrectedISODate(dateString) {
 
 export function getDisplayQTitle(questionnaireId) {
   if (!questionnaireId) return "";
-  return String(questionnaireId.replace(/cirg-/gi, "")).toUpperCase();
+  return String(questionnaireId.replace(/cirg-/gi, "").replace(/_/g, " "));
 }
 
 export function isValidDate(date) {
-  return date && Object.prototype.toString.call(date) === "[object Date]" && !isNaN(date);
+  // If it's already a Date object, check if it's valid
+  if (Object.prototype.toString.call(date) === "[object Date]") {
+    return !isNaN(date);
+  }
+
+  // If it's a string, try to parse it
+  if (typeof date === "string") {
+    const parsed = new Date(date);
+    return !isNaN(parsed);
+  }
+
+  return false;
+}
+
+/**
+ * Validates and formats datetime string to minute precision
+ *
+ * @param {string} dtString - ISO datetime string
+ * @returns {string} Formatted datetime (YYYY-MM-DDTHH:MM) or original if invalid
+ */
+export function trimToMinutes(dtString) {
+  // date validation
+  if (!dtString) return dtString;
+  const d = new Date(dtString);
+  if (isNaN(d.getTime())) {
+    console.warn(`trimToMinutes: Invalid date string "${dtString}"`);
+    return dtString;
+  }
+  //return d.toISOString().slice(0, 16);
+  return dayjs(dtString).format("YYYY-MM-DDTHH:mm");
 }
 
 export function getChartConfig(questionnaireId) {
+  if (!questionnaireId) return ChartConfig["default"];
   const qChartConfig = ChartConfig[questionnaireId.toLowerCase()];
   if (qChartConfig) return { ...ChartConfig["default"], ...qChartConfig };
   const matchItems = Object.values(ChartConfig);
@@ -53,13 +87,25 @@ export function getChartConfig(questionnaireId) {
   return ChartConfig["default"];
 }
 
+export function getEnvAboutContent() {
+  return getEnv("REACT_APP_ABOUT_CONTENT");
+}
+
+export function getEnvAppTitle() {
+  return getEnv("REACT_APP_TITLE") || "CNICS HIV Patient Reported Outcomes Summary";
+}
+
 export function getEnvQuestionnaireList() {
   const configList = getEnv("REACT_APP_QUESTIONNAIRES");
   if (configList)
-    return configList
-      .split(",")
-      .filter((item) => item)
-      .map((item) => item.trim());
+    return [
+      ...new Set(
+        configList
+          .split(",")
+          .filter((item) => item)
+          .map((item) => item.trim()),
+      ),
+    ];
   return [];
 }
 
@@ -68,13 +114,15 @@ export function getSectionsToShow() {
   if (!configSections) return defaultSections;
   let sectionsToShow = [];
   const targetSections = configSections.split(",").map((item) => {
-    item = item.toLowerCase();
+    if (!item) return null;
+    item = String(item).trim().toLowerCase();
     return item;
   });
-  defaultSections.forEach((section) => {
+  sections.forEach((section) => {
     if (targetSections.indexOf(section.id.toLowerCase()) !== -1) sectionsToShow.push(section);
   });
-  return sectionsToShow;
+  if (!isEmptyArray(sectionsToShow)) return sectionsToShow;
+  return defaultSections;
 }
 export function imageOK(img) {
   if (!img) {
@@ -112,7 +160,7 @@ export function isInViewport(element) {
 }
 
 export function hasData(arrObj) {
-  return !isEmptyArray(arrObj);
+  return !isEmptyArray(arrObj?.data);
 }
 
 export function getTomorrow() {
@@ -124,53 +172,56 @@ export function callback(callbackFunc, params) {
   callbackFunc(params);
 }
 
-export function fetchEnvData() {
-  if (window && window["appConfig"] && !isEmptyArray(Object.keys(window["appConfig"]))) {
-    console.log("Window config variables added. ");
-    return;
-  }
-  const setConfig = function (envObj) {
-    if (!envObj) return;
-    if (!window) return;
-    window["appConfig"] = {};
-    //assign window process env variables for access by app
-    //won't be overridden when Node initializing env variables
-    for (var key in envObj) {
-      if (!window["appConfig"][key]) {
-        window["appConfig"][key] = envObj[key];
-      }
-    }
-    console.log("environment variables set ", window["appConfig"]);
-  };
-  var xhr = new XMLHttpRequest();
-  xhr.open("GET", "/env.json", false);
-  xhr.onreadystatechange = function () {
-    if (!xhr.readyState === xhr.DONE) {
-      return;
-    }
-    if (xhr.status !== 200) {
-      console.log("Request failed! ");
-      return;
-    }
-    let envObj;
-    if (xhr.readyState === xhr.DONE) {
-      try {
-        envObj = JSON.parse(xhr.responseText);
-      } catch (e) {
-        console.log("Error parsing response text into json ", e);
-      }
-    }
-    setConfig(envObj);
-  };
+export function toAbsoluteUrl(path) {
   try {
-    xhr.send();
-  } catch (e) {
-    console.log("Request failed to send.  Error: ", e);
+    const base =
+      (typeof window !== "undefined" && window.location?.origin) ||
+      (typeof document !== "undefined" && document.baseURI) ||
+      (typeof import.meta !== "undefined" && import.meta.env?.BASE_URL) ||
+      "http://localhost"; // test fallback
+    return new URL(path, base).toString();
+  } catch {
+    // Absolute already or cannot resolve — just return as-is
+    return path;
   }
-  xhr.ontimeout = function (e) {
-    // XMLHttpRequest timed out.
-    console.log("request to fetch env.json file timed out ", e);
-  };
+}
+export async function fetchEnvData() {
+  return new Promise((resolve) => {
+    const nodeEnvs = getNodeProcessEnvs();
+    if (window && window["appConfig"] && !isEmptyArray(Object.keys(window["appConfig"]))) {
+      console.log("Window config variables added. ");
+      resolve({
+        ...window["appConfig"],
+        ...nodeEnvs,
+      });
+    }
+    const url = "/env.json";
+    if (window) window["appConfig"] = {};
+    fetch(url)
+      .then((response) => response.json())
+      .catch((e) => {
+        console.log(e);
+        resolve(nodeEnvs);
+      })
+      .then((results) => {
+        // assign window process env variables for access by app
+        // won't be overridden when Node initializing env variables
+        const envObj = results ? results : {};
+        if (window) {
+          for (let key in envObj) {
+            window["appConfig"][key] = envObj[key];
+          }
+        }
+        resolve({
+          ...envObj,
+          ...nodeEnvs,
+        });
+      })
+      .catch((e) => {
+        console.log(e);
+        resolve(nodeEnvs);
+      });
+  });
 }
 
 export function getEnv(key) {
@@ -182,12 +233,15 @@ export function getEnv(key) {
   return "";
 }
 
+export function getNodeProcessEnvs() {
+  return typeof import.meta.env !== "undefined" && import.meta.env ? import.meta.env : {};
+}
+
 export function getEnvs() {
   const appConfig = window && window["appConfig"] ? window["appConfig"] : {};
-  const processEnvs = typeof import.meta.env !== "undefined" && import.meta.env ? import.meta.env : {};
   return {
     ...appConfig,
-    ...processEnvs,
+    ...getNodeProcessEnvs(),
   };
 }
 
@@ -205,7 +259,10 @@ export function scrollToElement(elementId) {
 }
 
 export function range(start, end) {
-  return new Array(end - start + 1).fill(undefined).map((_, i) => i + start);
+  const startToUse = start == null || isNaN(start) || start > end ? 0 : Math.ceil(start);
+  const endToUse = end == null || isNaN(end) ? 50 : Math.floor(end);
+  if (startToUse > endToUse) return [];
+  return new Array(endToUse - startToUse + 1).fill(undefined).map((_, i) => i + startToUse);
 }
 
 /*
@@ -229,10 +286,26 @@ export function getEnvDashboardURL() {
   return getEnv("REACT_APP_DASHBOARD_URL");
 }
 
+export function getEnvHelpEmail() {
+  return getEnv("REACT_APP_HELP_EMAIL") || "cnics-pros@uw.edu";
+}
+
 export function isNumber(target) {
-  if (isNaN(target)) return false;
-  if (typeof target === "number") return true;
-  return target != null;
+  if (target == null || target === "") return false;
+  return !isNaN(Number(target));
+}
+
+export function objectToString(value) {
+  if (typeof value === "object" && value !== null) {
+    // If it's a plain object, stringify it
+    if (Object.prototype.toString.call(value) === "[object Object]") {
+      return JSON.stringify(value);
+    } else {
+      // Handle other object types (e.g., Array, Date) if needed
+      return value.toString(); // Fallback to default toString for other objects
+    }
+  }
+  return value;
 }
 
 export function shouldShowPatientInfo(client) {
@@ -240,22 +313,35 @@ export function shouldShowPatientInfo(client) {
   if (sessionStorage.getItem(queryNeedPatientBanner) !== null) {
     return String(sessionStorage.getItem(queryNeedPatientBanner)) === "true";
   }
-  // check token response,
-  const tokenResponse = client ? client.getState("tokenResponse") : null;
-  //check need_patient_banner launch context parameter
-  if (tokenResponse && tokenResponse["need_patient_banner"]) return tokenResponse["need_patient_banner"];
-  return String(getEnv("REACT_APP_DISABLE_HEADER")) !== "true";
+  const clientState = client ? client.getState() : null;
+  if (clientState) {
+    if (clientState.need_patient_banner !== undefined) {
+      return String(clientState.need_patient_banner).toLowerCase() === "true";
+    }
+    if (clientState.tokenResponse && clientState.tokenResponse.need_patient_banner !== undefined) {
+      return String(clientState.tokenResponse.need_patient_banner).toLowerCase() === "true";
+    }
+    if (clientState["token_data"] && clientState["token_data"].need_patient_banner !== undefined) {
+      return String(clientState["token_data"].need_patient_banner).toLowerCase() === "true";
+    }
+  }
+  return String(getEnv("REACT_APP_DISABLE_HEADER")).toLowerCase() !== "true";
 }
 export function shouldShowNav() {
-  return String(getEnv("REACT_APP_DISABLE_NAV")) !== "true";
+  const sections = getSectionsToShow();
+  if (isEmptyArray(sections) || sections.length === 1) return false;
+  return String(getEnv("REACT_APP_DISABLE_NAV")).toLowerCase() !== "true";
 }
 export function getAppHeight() {
-  return `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT}px)`;
+  return `calc(100vh - ${DEFAULT_TOOLBAR_HEIGHT * 4}px)`;
 }
 export function getUserId(client) {
   if (!client) return null;
   if (client.user && client.user.id) return client.user.id;
   const accessToken = parseJwt(client.getState("tokenResponse.access_token"));
+  if (!accessToken) return null;
+  if (accessToken.profile) return accessToken.profile;
+  if (accessToken.fhirUser) return accessToken.fhirUser;
   if (accessToken) return accessToken["preferred_username"];
   return null;
 }
@@ -273,7 +359,7 @@ export function parseJwt(token) {
   );
   return JSON.parse(jsonPayload);
 }
-export function addMamotoTracking(userId) {
+export function addMatomoTracking(userId) {
   if (document.querySelector("#matomoScript")) return;
   const siteId = getEnv("REACT_APP_MATOMO_SITE_ID");
   // no site ID specified, not proceeding
@@ -308,11 +394,64 @@ export function getLocaleDateStringFromDate(dateString, format) {
 }
 
 export function hasValue(value) {
-  return value != null && value !== "" && typeof value !== "undefined";
+  return value != null && String(value) !== "" && typeof value !== "undefined";
 }
 
 export function isEmptyArray(o) {
   return !o || !Array.isArray(o) || !o.length;
+}
+
+export function isNil(v) {
+  return v == null || v === "";
+}
+
+export function isNonEmptyString(v) {
+  return typeof v === "string" && v.trim() !== "";
+}
+export function hasContent(v) {
+  if (Array.isArray(v)) return v.length > 0;
+  if (v && typeof v === "object") return Object.keys(v).length > 0;
+  return v != null && (!isNonEmptyString(v) ? v !== "" : true);
+}
+export function firstNonEmpty(...vals) {
+  return vals.find((v) => isNonEmptyString(v));
+}
+
+export function coalesce(...vals) {
+  return vals.find((v) => !isNil(v));
+}
+
+export function toMaybeDate(s) {
+  if (!s) return null;
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Strict numeric coercion, returns number or null (never NaN). */
+export function toFiniteNumber(v) {
+  if (v == null) return null;
+  const n = typeof v === "string" && v.trim() !== "" ? Number(v) : typeof v === "number" ? v : NaN;
+  return Number.isFinite(n) ? n : null;
+}
+
+export function toMillis(s) {
+  if (!s) return 0;
+  const t = Date.parse(s);
+  return Number.isFinite(t) ? t : 0;
+}
+
+export function normalizeHTMLStr(s) {
+  return stripHtmlTags((s ?? "").toString().trim().toLowerCase());
+}
+
+export function normalizeStr(s) {
+  return String(s ?? "").trim().toLowerCase();
+}
+
+export function fuzzyMatch(a, b) {
+  const A = normalizeStr(a);
+  const B = normalizeStr(b);
+  return A && B ? A.includes(B) || B.includes(A) : false;
 }
 
 export async function isImagefileExist(url) {
@@ -324,4 +463,202 @@ export async function isImagefileExist(url) {
     console.log(error);
     return false; // Request failed or URL is invalid
   }
+}
+// https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid
+export function generateUUID() {
+  // Public Domain/MIT
+  var d = new Date().getTime(); //Timestamp
+  var d2 = (typeof performance !== "undefined" && performance.now && performance.now() * 1000) || 0; //Time in microseconds since page-load or 0 if unsupported
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    var r = Math.random() * 16; //random number between 0 and 16
+    if (d > 0) {
+      //Use timestamp until depleted
+      r = ((d + r) % 16) | 0;
+      d = Math.floor(d / 16);
+    } else {
+      //Use microseconds since page-load if supported
+      r = ((d2 + r) % 16) | 0;
+      d2 = Math.floor(d2 / 16);
+    }
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
+export function debounce(fn, delay) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
+// shallow check for plain objects
+export const isPlainObject = (v) =>
+  v != null && !Array.isArray(v) && typeof v === "object" && Object.getPrototypeOf(v) === Object.prototype;
+
+// deep merge that preserves functions and arrays (arrays are replaced by override)
+export function deepMerge(base = {}, override = {}) {
+  const out = { ...(base ?? {}) };
+  for (const key of Object.keys(override ?? {})) {
+    const bv = out[key];
+    const ov = override[key];
+    if (isPlainObject(bv) && isPlainObject(ov)) out[key] = deepMerge(bv, ov);
+    else out[key] = ov; // functions, arrays, primitives: take override by reference/value
+  }
+  return out;
+}
+
+export function removeParentheses(text) {
+  return text.replace(/\s*\([^)]*\)/g, "").trim();
+}
+
+export function isDemoDataEnabled() {
+  // TODO FIX this
+  // if (String(getEnv("REACT_APP_CONF_API_URL")).toLowerCase().includes("dev")) return true;
+  return String(getEnv("REACT_APP_ENABLE_DEMO_DATA")).toLowerCase() === "true";
+}
+
+const domParser = new DOMParser();
+export function hasHtmlTags(text) {
+  if (!text) return false;
+  const doc = domParser.parseFromString(text, "text/html");
+  // Check if the body contains any child elements (excluding script tags)
+  return doc.body.children.length > 0;
+}
+export function stripHtmlTags(html) {
+  if (!html) return html;
+  if (!html.includes("<")) return html; // no markup present, nothing to parse
+  const doc = domParser.parseFromString(html, "text/html");
+  return doc.body.textContent || "";
+}
+export function removeNullValuesFromObject(obj) {
+  if (!obj) return null;
+  const filtered = Object.fromEntries(Object.entries(obj).filter(([_, value]) => value !== null));
+  return Object.keys(filtered).length === 0 ? null : filtered;
+}
+export function chunkArray(array, size = 3) {
+  if (!array) return [];
+  const chunks = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
+export function capitalizeFirstLetterSafe(text) {
+  if (!text) return "";
+  if (typeof text !== "string" || text.length === 0) return text;
+  const textStr = String(text).replace(/"/g, "").trim();
+  return textStr.charAt(0).toUpperCase() + textStr.slice(1).toLowerCase();
+}
+
+export function captureFullHTML() {
+  const rootEl = document.getElementById("root");
+  const origin = window.location.origin;
+  const baseHref = `${origin}/`;
+
+  // Collect styles
+  const styles = Array.from(document.styleSheets)
+    .flatMap((sheet) => {
+      try {
+        return Array.from(sheet.cssRules).map((r) => r.cssText);
+      } catch {
+        return [];
+      }
+    })
+    .join("\n");
+
+  // Collect <script> tags — rewrite relative src to absolute
+  const scripts = Array.from(document.scripts)
+    .map((script) => {
+      if (script.src) {
+        const absoluteSrc = new URL(script.src, baseHref).href;
+        const attrs = [
+          `src="${absoluteSrc}"`,
+          script.type ? `type="${script.type}"` : "",
+          script.defer ? "defer" : "",
+          script.async ? "async" : "",
+          script.noModule ? "nomodule" : "",
+          script.crossOrigin != null ? `crossorigin="${script.crossOrigin}"` : "",
+        ]
+          .filter(Boolean)
+          .join(" ");
+        return `<script ${attrs}></script>`;
+      } else if (script.textContent.trim()) {
+        const type = script.type ? `type="${script.type}"` : "";
+        return `<script ${type}>${script.textContent}</script>`;
+      }
+      return null;
+    })
+    .filter(Boolean)
+    .join("\n");
+
+  // Collect <link rel="modulepreload"> and <link rel="stylesheet"> tags
+  // rewrite relative href to absolute
+  const links = Array.from(
+    document.querySelectorAll("link[rel='modulepreload'], link[rel='stylesheet'], link[rel='preload']"),
+  )
+    .map((link) => {
+      const absoluteHref = new URL(link.href, baseHref).href;
+      const attrs = [
+        `rel="${link.rel}"`,
+        `href="${absoluteHref}"`,
+        link.crossOrigin != null ? `crossorigin="${link.crossOrigin}"` : "",
+        link.as ? `as="${link.as}"` : "",
+        link.type ? `type="${link.type}"` : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+      return `<link ${attrs}>`;
+    })
+    .join("\n");
+
+  const html = `<!DOCTYPE html>
+<html>
+  <head>
+    <base href="${baseHref}">
+    <style>
+      ${styles}
+      .print-chunks-history { display: block !important; }
+      .print-table-chunk { display: block !important; }
+    </style>
+    ${links}
+    ${scripts}
+  </head>
+  <body>${rootEl?.innerHTML ?? ""}</body>
+</html>`;
+
+  return html;
+}
+
+export function getSnapshotDocRefId(patientId) {
+  return `proreport-snapshot-${patientId}`;
+}
+
+export async function saveHTMLToFHIR(client, patientId) {
+  if (!client || !patientId) return null;
+  const html = captureFullHTML();
+  const encoded = btoa(unescape(encodeURIComponent(html)));
+  const resourceId = getSnapshotDocRefId(patientId);
+
+  const docRef = {
+    resourceType: "DocumentReference",
+    id: resourceId, // required for PUT
+    status: "current",
+    subject: { reference: `Patient/${patientId}` },
+    date: new Date().toISOString(),
+    description: "PRO report UI snapshot",
+    content: [
+      {
+        attachment: {
+          contentType: "text/html",
+          data: encoded,
+          title: "Report HTML Snapshot",
+          creation: new Date().toISOString(),
+        },
+      },
+    ],
+  };
+  // PUT will create-or-update in place — no duplicate resources
+  return await client.update(docRef);
 }

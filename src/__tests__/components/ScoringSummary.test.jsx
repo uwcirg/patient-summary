@@ -7,25 +7,30 @@ import { describe, it, expect } from "vitest";
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import ScoringSummary from "../../components/sections/ScoringSummary";
-import summaryData from "../mockfiles/MockSummaryData.json";
-import summaryData2 from "../mockfiles/MockSummaryData2.json";
+import questionnaireConfigs from "../../config/questionnaire_config";
+//import PHQ9SummaryData from "../mockfiles/MockPHQ9SummaryData.json";
 
 describe("Testing ScoringSummary component", () => {
   it("Renders scoring summary without data", () => {
-    render(<ScoringSummary />);
-    expect(screen.getByText("No score summary available")).toBeInTheDocument();
+    const { container } = render(<ScoringSummary />);
+    const noDataElement = container.querySelector(".no-data-wrapper");
+    expect(noDataElement).toBeInTheDocument();
   });
 
-  it("Renders scoring summary with data", () => {
-    const { container } = render(<ScoringSummary summaryData={summaryData} />);
-    const tableElement = container.querySelector(".scoring-summary-table");
-    expect(tableElement).toBeInTheDocument();
-  });
-
-  it("Renders score cell", () => {
-    const { container } = render(<ScoringSummary summaryData={summaryData2} />);
-    const scoreElement = container.querySelector(".score-cell");
-    const descendant = screen.getByTestId("score");
-    expect(scoreElement).toContainElement(descendant);
+  it("Renders score cell using data as array", () => {
+    render(
+      <ScoringSummary
+        data={[
+          {
+            ...questionnaireConfigs["CIRG-PHQ9"],
+            score: 17,
+            scoreSeverity: "moderate",
+            date: 1712795756000,
+            tableResponseData: [{ score: 17, date: 1712795756000 }],
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("17")).toBeInTheDocument();
   });
 });

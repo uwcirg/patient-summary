@@ -214,22 +214,25 @@ var Timeout = function (options) {
     }
   }
   function init() {
+    const dashboardLocation = getEnvDashboardURL();
+    if (!dashboardLocation) return;
     waitForDOMIntervalId = setInterval(function () {
       if (isDOMReady()) {
-        fetchEnvData();
-        //set logout location
-        setLogoutLocation();
-        //get expiration date/time to determine how long a session is?
-        getSessionTokenInfo();
-        //on page load, check if token is not present?
-        if (hasNoToken()) {
-          handleNoToken();
-          return;
-        }
-        //assign id to the specific countdown timer id for this session
-        initTimeoutIdentifier();
-        //start count down
-        startTimeoutTimer();
+        fetchEnvData().then(() => {
+           //set logout location
+          setLogoutLocation();
+          //get expiration date/time to determine how long a session is?
+          getSessionTokenInfo();
+          //on page load, check if token is not present?
+          if (hasNoToken()) {
+            handleNoToken();
+            return;
+          }
+          //assign id to the specific countdown timer id for this session
+          initTimeoutIdentifier();
+          //start count down
+          startTimeoutTimer();
+        });
       }
     }, 50);
   }

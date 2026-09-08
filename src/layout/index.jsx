@@ -1,45 +1,62 @@
 import PropTypes from "prop-types";
-import React, { useLayoutEffect } from "react";
-import { ErrorBoundary } from "react-error-boundary";
-import { QueryClient, QueryClientProvider } from "react-query";
+import React, { useEffect, useState } from "react";
+import { ErrorBoundary, getErrorMessage } from "react-error-boundary";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
+import { Button, CircularProgress, Stack, Typography } from "@mui/material";
 import { injectFaviconByProject, fetchEnvData } from "../util";
 import { getTheme } from "../config/theme_config";
 import "../style/App.scss";
 import FhirClientProvider from "../context/FhirClientProvider";
-import QuestionnaireListProvider from "../context/QuestionnaireListProvider";
 import Base from "./Base";
 
-function ErrorFallBack({ error }) {
-  if (!error.message) return null;
+function ErrorFallBack({ error, resetErrorBoundary }) {
+  const errorMessage = getErrorMessage(error);
   return (
     <Alert severity="error">
       <AlertTitle>Something went wrong:</AlertTitle>
-      <pre>{error.message}</pre>
+      <pre>{errorMessage}</pre>
       <p>Refresh page and try again</p>
+      <Button onClick={resetErrorBoundary}>Try again</Button>
     </Alert>
   );
 }
+ErrorFallBack.propTypes = {
+  error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+  resetErrorBoundary: PropTypes.func,
+};
 const queryClient = new QueryClient();
 
 export default function Index({ children }) {
-  fetchEnvData();
   const theme = getTheme();
-  useLayoutEffect(() => {
-    injectFaviconByProject();
-  }, []);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (ready) return;
+    fetchEnvData().then((results) => {
+      console.log("Environment variables ", results);
+      injectFaviconByProject();
+      setReady(true);
+    });
+  }, [ready]);
+  if (!ready)
+    return (
+      <Stack spacing={2} direction="row" style={{ padding: "24px" }} sx={{
+        alignItems: "center"
+      }}>
+        <CircularProgress></CircularProgress>
+        <Typography variant="body1">Loading environment variables ...</Typography>
+      </Stack>
+    );
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallBack}>
+    <ErrorBoundary fallbackRender={ErrorFallBack}>
       <ThemeProvider theme={theme}>
         <QueryClientProvider client={queryClient}>
           <FhirClientProvider>
             <CssBaseline />
-            <QuestionnaireListProvider>
-              <Base>{children}</Base>
-            </QuestionnaireListProvider>
+            <Base>{children}</Base>
           </FhirClientProvider>
         </QueryClientProvider>
       </ThemeProvider>

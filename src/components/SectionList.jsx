@@ -6,7 +6,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import { isEmptyArray, scrollToElement } from "../util";
+import { isEmptyArray, scrollToElement } from "@util";
 
 export default function SectionList(props) {
   const theme = useTheme();
@@ -15,9 +15,9 @@ export default function SectionList(props) {
   if (isEmptyArray(renderList)) return false;
   return (
     <List className="sections-list" sx={{ marginTop: theme.spacing(2) }}>
-      {renderList.map((section) => (
+      {renderList.map((section, index) => (
         <ListItem
-          key={`listItem_${section.id}`}
+          key={`listItem_${index}`}
           disablePadding
           sx={{ minHeight: "50px" }}
         >
@@ -41,14 +41,16 @@ export default function SectionList(props) {
             {expanded && (
               <ListItemText
                 primary={section.title}
-                primaryTypographyProps={{
-                  variant: "subtitle2",
-                  component: "h3",
-                  sx: {
-                    fontWeight: 500,
-                    whiteSpace: "normal",
-                    textWrap: "balance"
-                  },
+                slotProps={{
+                  primary: {
+                    variant: "subtitle2",
+                    component: "h3",
+                    sx: {
+                      fontWeight: 500,
+                      whiteSpace: "normal",
+                      textWrap: "balance"
+                    },
+                  }
                 }}
               />
             )}

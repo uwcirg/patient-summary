@@ -1,9 +1,18 @@
-import { getDisplayQTitle, isEmptyArray } from "../util";
-// source Questionnaire FHIR resource
+import { Parser, HtmlRenderer } from "commonmark";
+import QuestionnaireScoringBuilder from "./resultBuilders/QuestionnaireScoringBuilder";
+import { getDisplayQTitle, isEmptyArray } from "@/util";
+import { getConfigForQuestionnaire } from "@/config/questionnaire_config";
+
 class Questionnaire {
-  constructor(dataObj = null, key) {
+  constructor(dataObj = null, key, patientBundle = []) {
     this.data = Object.assign({}, dataObj);
     this.key = key;
+    this.summaryConfig = getConfigForQuestionnaire(this.data?.id) ?? {
+      questionnaireId: this.id,
+      questionnaireName: this.displayName,
+      scoringQuestionId: this.scoreQuestionnId,
+    };
+    this.patientBundle = patientBundle;
   }
   get id() {
     return this.data.id;
@@ -12,7 +21,7 @@ class Questionnaire {
     return this.data.name;
   }
   get shortName() {
-    if (!this.key) return this.data.id;
+    if (!this.key) return getDisplayQTitle(this.data.id);
     const key = getDisplayQTitle(this.key).toUpperCase();
     if (key) return String(key).toUpperCase();
     return this.key;
@@ -22,16 +31,12 @@ class Questionnaire {
     const { id, title, name } = this.data;
     if (title) return title;
     if (name) return name;
-    return `Questionnaire ${
-      id ? getDisplayQTitle(id) : String(this.key).toUpperCase()
-    }`;
+    return `Questionnaire ${id ? getDisplayQTitle(id) : String(this.key).toUpperCase()}`;
   }
   get introText() {
     if (!this.data) return "";
-    // eslint-disable-next-line no-undef
-    const commonmark = require("commonmark");
-    const reader = new commonmark.Parser({ smart: true });
-    const writer = new commonmark.HtmlRenderer({
+    const reader = new Parser({ smart: true });
+    const writer = new HtmlRenderer({
       linebreak: "<br />",
       softbreak: "<br />",
     });
@@ -42,9 +47,7 @@ class Questionnaire {
     }
     if (description) return description;
     const introductionItem = this.data.item
-      ? this.data.item.find(
-          (item) => String(item.linkId).toLowerCase() === "introduction"
-        )
+      ? this.data.item.find((item) => String(item.linkId).toLowerCase() === "introduction")
       : null;
     if (introductionItem) {
       const textElement = introductionItem._text;
@@ -55,6 +58,16 @@ class Questionnaire {
   }
   get interventionLibId() {
     return this.id;
+  }
+  get scoreQuestionnId() {
+    return this.summaryConfig?.scoringQuestionId;
+  }
+  get summaryBuilder() {
+    return new QuestionnaireScoringBuilder(this.summaryConfig, this.patientBundle);
+  }
+
+  summary(bundle) {
+    return this.summaryBuilder.summariesFromBundle(this.data, {}, this.patientBundle ?? bundle);
   }
 }
 export default Questionnaire;

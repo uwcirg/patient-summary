@@ -2,51 +2,42 @@ import React from "react";
 import PropTypes from "prop-types";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
-import ErrorIcon from "@mui/icons-material/Error";
-import WarningIcon from "@mui/icons-material/ReportProblem";
-import { isNumber } from "../util";
-import ScoreSeverity from "../models/ScoreSeverity";
+import AlertIcon from "@mui/icons-material/ReportProblem";
+import Score from "@models/Score";
 
 export default function Scoring(props) {
-  const { score, justifyContent, alignItems, scoreParams } = props;
-  const getScoreSeverity = () =>
-    scoreParams && scoreParams.scoreSeverity ? String(scoreParams.scoreSeverity).toLowerCase() : null;
-  const getAlertNote = () => (scoreParams && scoreParams.alertNote ? scoreParams.alertNote : null);
-  const scoreSeverity = getScoreSeverity();
-  const oSeverity = new ScoreSeverity(scoreSeverity);
-  const alertNote = getAlertNote();
-  const getScoreDisplay = () => <span data-testid="score">{isNumber(score) ? score : "--"}</span>;
+  const { score, justifyContent, alignItems, scoreParams, instrumentId } = props;
+  const oScore = new Score(score, scoreParams, instrumentId);
 
-  // display alert icon for score that has high severity
-  if (oSeverity.isInRange()) {
-    const renderIcon = () => {
-      if (oSeverity.isHigh())
-        return (
-          <ErrorIcon color={oSeverity.iconColorClass} fontSize="small" className={oSeverity.iconClass}></ErrorIcon>
-        );
-      return (
-        <WarningIcon color={oSeverity.iconColorClass} fontSize="small" className={oSeverity.iconClass}></WarningIcon>
-      );
-    };
+  if (oScore.isInRange()) {
+    const renderIcon = () => (
+      <AlertIcon color={oScore.iconColorClass} fontSize="small" className={oScore.iconClass} />
+    );
+
     return (
       <Stack
         direction="row"
-        spacing={0.5}
-        justifyContent={justifyContent || "flex-start"}
-        alignItems={alignItems || "center"}
-      >
-        <div className={`${oSeverity.textColorClass}`}>{getScoreDisplay()}</div>
-        {alertNote && (
-          <Tooltip title={alertNote} placement="top" arrow>
-            {renderIcon()}
-          </Tooltip>
+        spacing={1}
+        className="score-container"
+        sx={{
+          justifyContent: justifyContent || "space-between",
+          alignItems: alignItems || "center"
+        }}>
+        <div className={oScore.textColorClass}>{oScore.displayValue}</div>
+        {oScore.isHigh() && (
+          oScore.alertNote
+            ? (
+              <Tooltip title={oScore.alertNote} placement="top" arrow>
+                <span>{renderIcon()}</span>
+              </Tooltip>
+            )
+            : renderIcon()
         )}
-        {!alertNote && renderIcon()}
       </Stack>
     );
   }
 
-  return getScoreDisplay();
+  return oScore.displayValue;
 }
 
 Scoring.propTypes = {

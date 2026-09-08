@@ -1,8 +1,0 @@
-library:
-  name: CP_ECOG_InterventionLogicLibrary
-  paths: ../../cql
-tests:
-  path: cases/cp-ecog
-options:
-  dumpFiles:
-    enabled: true

@@ -8,6 +8,7 @@ import IconButton from "@mui/material/IconButton";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
 import { Divider } from "@mui/material";
 import Grow from "@mui/material/Grow";
+import InfoIcon from "@mui/icons-material/InfoOutlined";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import MenuItem from "@mui/material/MenuItem";
@@ -21,32 +22,42 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MoreIcon from "@mui/icons-material/MoreVert";
 import PrintIcon from "@mui/icons-material/LocalPrintshopOutlined";
 import DashboardIcon from "@mui/icons-material/DashboardOutlined";
-import { isImagefileExist, getEnv, getEnvProjectId, getSectionsToShow, imageOK, scrollToElement } from "../util";
-import PatientInfo from "../components/PatientInfo";
+import {
+  isImagefileExist,
+  getEnvAppTitle,
+  getEnvProjectId,
+  getSectionsToShow,
+  imageOK,
+  scrollToElement,
+  toAbsoluteUrl,
+} from "../util";
 import { FhirClientContext } from "../context/FhirClientContext";
+import About from "../components/About";
+import PatientInfo from "../components/PatientInfo";
 
 export default function Header(props) {
   const theme = useTheme();
   const { patient } = useContext(FhirClientContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const anchorRef = useRef(null);
+  const [aboutModalOpen, setAboutModalOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = React.useState(null);
   const desktopImgRef = useRef(null);
   const mobileImgRef = useRef(null);
   const sections = getSectionsToShow();
-  const hasSections = sections && sections.length > 0;
-
+  const shouldShowSections = sections && sections.length > 1;
   const { returnURL, inEHR } = props;
+  // return URL is provided when launching the app via FEMR, e.g. dashboard URL
+  const LOCATION_URL = returnURL ? returnURL : null;
+  const locationEvent = () => window.location.href = LOCATION_URL?? "/";
   const getDesktopImgSrc = async () => {
-    const url = `/assets/${getEnvProjectId()}/img/logo.png`;
-    const isOkay = await isImagefileExist(url);
-    if (isOkay) return url;
-    return `/assets/default/img/logo.png`;
+    const projectUrl = toAbsoluteUrl(`/assets/${getEnvProjectId()}/img/logo.png`);
+    const ok = await isImagefileExist(projectUrl).catch(() => false);
+    return ok ? projectUrl : toAbsoluteUrl(`/assets/default/img/logo.png`);
   };
   const getMobileImgSrc = async () => {
-    const url = `/assets/${getEnvProjectId()}/img/logo_mobile.png`;
-    const isOkay = await isImagefileExist(url);
-    if (isOkay) return url;
-    return `/assets/default/img/logo_mobile.png`;
+    const projectUrl = toAbsoluteUrl(`/assets/${getEnvProjectId()}/img/logo_mobile.png`);
+    const ok = await isImagefileExist(projectUrl).catch(() => false);
+    return ok ? projectUrl : toAbsoluteUrl(`/assets/default/img/logo_mobile.png`);
   };
   const handleImageLoaded = (e) => {
     if (!e.target) {
@@ -54,23 +65,23 @@ export default function Header(props) {
     }
     let imageLoaded = imageOK(e.target);
     if (!imageLoaded) {
-      e.target.classList.add("invisible");
+      e.target.classList.add("ghost");
       return;
     }
-    e.target.classList.remove("invisible");
+    e.target.classList.remove("ghost");
   };
   const shouldHideReturnButton = () => !returnURL || inEHR;
 
   const renderTitle = () => {
-    const appTitle = getEnv("REACT_APP_TITLE") || "Patient Summary";
+    const appTitle = getEnvAppTitle();
     return (
       <>
         <Typography
-          variant="h4"
-          component="h1"
+          variant="h5"
+          component="h2"
           color="primary"
           sx={{
-            fontSize: inEHR ? "1.6rem" : "1.8rem",
+            fontSize: "1.3rem",
             display: inEHR ? "block" : { xs: "none", sm: "none", md: "block" },
           }}
           className="print-hidden"
@@ -100,18 +111,18 @@ export default function Header(props) {
             }}
           >
             <button
-              onClick={() => (window.location = returnURL + "/clear_session")}
+              onClick={locationEvent}
               style={{
                 background: "none",
                 border: 0,
               }}
             >
               <img
-                className="header-logo"
+                className="logo header-logo ghost"
                 ref={desktopImgRef}
                 alt={"project logo"}
                 style={{
-                  height: 40,
+                  width: 40,
                   cursor: "pointer",
                 }}
                 onLoad={handleImageLoaded}
@@ -129,7 +140,7 @@ export default function Header(props) {
             }}
           >
             <button
-              onClick={() => (window.location = returnURL + "/clear_session")}
+              onClick={locationEvent}
               style={{
                 background: "none",
                 border: 0,
@@ -140,6 +151,7 @@ export default function Header(props) {
                 alt={"project logo"}
                 onLoad={handleImageLoaded}
                 onError={handleImageLoaded}
+                className="logo ghost"
                 style={{
                   cursor: "pointer",
                   height: 40,
@@ -151,6 +163,24 @@ export default function Header(props) {
       );
   };
   const renderPatientInfo = () => <PatientInfo patient={patient}></PatientInfo>;
+  const renderAboutButton = (props) => {
+    return (
+      <Button
+        className="print-hidden"
+        onClick={() => setAboutModalOpen(true)}
+        startIcon={<InfoIcon></InfoIcon>}
+        size="medium"
+        variant="outlined"
+        sx={{
+          backgroundColor: "#FFF",
+          display: "none" // hide about button for now since the content is not ready, can be turned on when needed
+        }}
+        {...props}
+      >
+        About / Help
+      </Button>
+    );
+  };
   const renderPrintButton = (props) => {
     return (
       <Button
@@ -173,7 +203,7 @@ export default function Header(props) {
       <Box className="print-hidden">
         <Button
           color="primary"
-          href={returnURL + "/clear_session"}
+          href={LOCATION_URL}
           className="btn-return-url"
           startIcon={<ArrowBackIcon></ArrowBackIcon>}
           size="medium"
@@ -188,23 +218,24 @@ export default function Header(props) {
   const renderDesktopMenu = () => {
     return (
       <Stack
-        flexDirection="row"
-        flexGrow={1}
-        justifyContent="flex-end"
-        alignItems="center"
         sx={{
+          flexDirection: "row",
+          flexGrow: 1,
+          justifyContent: "flex-end",
+          alignItems: "center",
           columnGap: theme.spacing(1.5),
+
           display: {
             xs: "none",
             sm: "none",
             md: "none",
             lg: "none",
             xl: "inline-flex",
-          },
-        }}
-      >
+          }
+        }}>
         {!shouldHideReturnButton() && renderReturnButton()}
         {renderPrintButton()}
+        {renderAboutButton()}
       </Stack>
     );
   };
@@ -220,7 +251,6 @@ export default function Header(props) {
             xl: "none",
           },
         }}
-        ref={anchorRef}
         aria-controls={mobileMenuOpen ? "composition-menu" : undefined}
         aria-expanded={mobileMenuOpen ? "true" : undefined}
         aria-haspopup="true"
@@ -232,7 +262,7 @@ export default function Header(props) {
       </IconButton>
       <Popper
         open={mobileMenuOpen}
-        anchorEl={anchorRef.current}
+        anchorEl={anchorEl}
         role={undefined}
         placement="bottom-start"
         transition
@@ -263,19 +293,28 @@ export default function Header(props) {
                       <Divider></Divider>
                     </Box>
                   )}
-                  {hasSections &&
-                    sections.map((section) => (
+                  {shouldShowSections &&
+                    sections.map((section, index) => (
                       <MenuItem
-                        onClick={() => scrollToElement(section.anchorElementId)}
-                        key={`${section.anchorElementId}_item`}
+                        onClick={(e) => {
+                          scrollToElement(`anchor_${section.id.toLowerCase()}`);
+                          handleMobileMenuClose(e);
+                        }}
+                        key={`${section.id ?? index}_menuitem`}
                       >
                         <ListItemIcon>{section.icon({ fontSize: "small" })}</ListItemIcon>
                         <ListItemText>{section.title}</ListItemText>
                       </MenuItem>
                     ))}
-                  {hasSections && <Divider></Divider>}
+                  {shouldShowSections && <Divider sx={{ display: "none" }}></Divider>}
                   <MenuItem>
                     {renderPrintButton({
+                      variant: "text",
+                    })}
+                  </MenuItem>
+                  {/* <Divider></Divider> */}
+                  <MenuItem>
+                    {renderAboutButton({
                       variant: "text",
                     })}
                   </MenuItem>
@@ -287,14 +326,18 @@ export default function Header(props) {
       </Popper>
     </>
   );
+  const renderAboutModal = () => {
+    return <About open={aboutModalOpen} onClose={() => setAboutModalOpen(false)}></About>;
+  };
   const handleMobileMenuClose = (event) => {
-    if (anchorRef.current && anchorRef.current.contains(event.target)) {
+    if (anchorEl && anchorEl.contains(event.target)) {
       return;
     }
 
     setMobileMenuOpen(false);
   };
-  const handleMobileMenuToggle = () => {
+  const handleMobileMenuToggle = (event) => {
+    setAnchorEl(anchorEl ? null : event.currentTarget);
     setMobileMenuOpen((prevOpen) => !prevOpen);
   };
   const handleListKeyDown = (event) => {
@@ -306,13 +349,10 @@ export default function Header(props) {
     }
   };
 
-  const handleWindowResize = () => {
-    setMobileMenuOpen(false);
-  };
-
   useEffect(() => {
-    window.addEventListener("resize", () => handleWindowResize());
-    return window.removeEventListener("resize", handleWindowResize, true);
+    const onResize = () => setMobileMenuOpen(false);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   useEffect(() => {
@@ -329,13 +369,13 @@ export default function Header(props) {
     <>
       <AppBar position="fixed" elevation={1} sx={{ paddingRight: "0 !important", paddingLeft: "0 !important" }}>
         <Toolbar
-          sx={{
+          sx={theme => ({
             backgroundColor: theme.palette.lighter ? theme.palette.lighter.main : "#FFF",
             color: theme.palette.secondary ? theme.palette.secondary.main : "#444",
-            zIndex: (theme) => theme.zIndex.drawer + 1,
+            zIndex: theme.zIndex.drawer + 1,
             paddingLeft: theme.spacing(2),
-            paddingRight: theme.spacing(2),
-          }}
+            paddingRight: theme.spacing(2)
+          })}
           disableGutters
           variant="dense"
         >
@@ -346,16 +386,23 @@ export default function Header(props) {
               sm: 1,
               md: 1.25,
             }}
-            alignItems="center"
-            sx={{ width: "100%" }}
-          >
+            sx={{
+              alignItems: "center",
+              width: "100%"
+            }}>
             {renderLogo()}
             {renderTitle()}
-            <Stack direction={"row"} sx={{ flex: "1 1" }} alignItems="center">
+            <Stack
+              direction={"row"}
+              sx={{
+                alignItems: "center",
+                flex: "1 1"
+              }}>
               {!inEHR && renderPatientInfo()}
               {renderDesktopMenu()}
             </Stack>
             {renderMobileMenu()}
+            {renderAboutModal()}
           </Stack>
         </Toolbar>
       </AppBar>
