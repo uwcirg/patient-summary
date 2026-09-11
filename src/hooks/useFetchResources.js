@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getFHIRResourcePath,
   getFhirResourcesFromQueryResult,
@@ -11,6 +11,12 @@ import {
   getFHIRResourceTypesToLoad,
   getFHIRResourcePaths,
 } from "@util/fhirUtil";
+import {
+  questionnairePersister,
+  questionnaireQueryKey,
+  clearQuestionnaireCache,
+  QUESTIONNAIRE_CACHE_MAX_AGE,
+} from "@util/questionnaireCache";
 import {
   fuzzyMatch,
   getEnvQuestionnaireList,
@@ -381,6 +387,9 @@ export default function useFetchResources() {
   const plannedExtras = useMemo(() => computePlannedExtras(configuredTypesRaw), [configuredTypesRaw]);
   const { client, patient } = useContext(FhirClientContext);
 
+  const queryClient = useQueryClient();
+  const serverUrl = client?.state?.serverUrl ?? null;
+
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     createInitialState(configuredTypeSet, plannedExtras, isFromEpic),
   );
@@ -408,8 +417,51 @@ export default function useFetchResources() {
     if (pid && client) {
       PHASE1_FLIGHTS.get(client)?.delete(`${pid}::${bump}`);
     }
+    // Fire-and-forget; phase 1 re-runs when `bump` changes and will refetch.
+    clearQuestionnaireCache(queryClient).catch((e) => console.warn("Questionnaire cache clear failed", e));
     setBump((x) => x + 1);
-  }, [pid, bump, client, dispatch, dispatchBase, dispatchLoader, dispatchBundle]);
+  }, [pid, bump, client, queryClient, dispatch, dispatchBase, dispatchLoader, dispatchBundle]);
+
+  // Fetches one Questionnaire query (a single id, or the whole list in the
+  // non-exact-match branch) through TanStack Query so the persister can serve
+  // it from IndexedDB. Throws on soft errors so a bad payload is never cached.
+  const fetchQuestionnaireCached = useCallback(
+    async ({ qid, questionnaireList, exactMatchById }) => {
+      const qPath = getFHIRResourcePath(pid, QUESTIONNAIRE_DATA_KEY, {
+        questionnaireList,
+        exactMatchById,
+      });
+      return queryClient.query({
+        queryKey: questionnaireQueryKey({ serverUrl, qid, exactMatchById }),
+        queryFn: async () => {
+          const acc = [];
+          await client.request(
+            { url: qPath, header: NO_CACHE_HEADER },
+            { pageLimit: 0, onPage: processPage(client, acc) },
+          );
+          const softErrs = extractSoftErrors(acc);
+          if (softErrs.length) {
+            const err = new Error(`Soft error(s) in Questionnaire ${qid}: ${softErrs.join("; ")}`);
+            err.soft = true;
+            throw err;
+          }
+          return acc;
+        },
+        persister: questionnairePersister.persisterFn,
+        // Match maxAge so a restored entry isn't immediately refetched in the
+        // background as "stale".
+        staleTime: QUESTIONNAIRE_CACHE_MAX_AGE,
+        gcTime: QUESTIONNAIRE_CACHE_MAX_AGE,
+        retry: false,
+      });
+    },
+    [client, pid, serverUrl, queryClient],
+  );
+  // Keep a ref so the queryFn closure inside phase1Query never goes stale.
+  const fetchQuestionnaireCachedRef = useRef(fetchQuestionnaireCached);
+  useEffect(() => {
+    fetchQuestionnaireCachedRef.current = fetchQuestionnaireCached;
+  }, [fetchQuestionnaireCached]);
 
   // ---------------------------------------------------------------------------
   // Phase 1
@@ -538,46 +590,34 @@ export default function useFetchResources() {
           if (isEmptyArray(qListToLoad)) {
             dispatchLoaderRef.current({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
           } else {
-            let qPaths = [];
+            // One cache entry per questionnaire id in the exact-match branch; one
+            // entry for the whole (sorted) list otherwise.
+            const qJobs = phase1ExactMatchById
+              ? qListToLoad.map((qid) => ({ qid, questionnaireList: [qid] }))
+              : [{ qid: [...qListToLoad].sort().join("+"), questionnaireList: qListToLoad }];
 
-            if (phase1ExactMatchById) {
-              qPaths = qListToLoad.map((qid) =>
-                getFHIRResourcePath(pid, QUESTIONNAIRE_DATA_KEY, {
-                  questionnaireList: [qid],
-                  exactMatchById: phase1ExactMatchById,
-                }),
-              );
-            } else {
-              qPaths = [
-                getFHIRResourcePath(pid, QUESTIONNAIRE_DATA_KEY, {
-                  questionnaireList: qListToLoad,
-                  exactMatchById: phase1ExactMatchById,
-                }),
-              ];
-            }
-
-            const qPromises = qPaths.map((qPath) =>
-              client.request(
-                { url: qPath, header: NO_CACHE_HEADER },
-                { pageLimit: 0, onPage: processPage(client, qResources) },
-              ),
+            const qResults = await Promise.allSettled(
+              qJobs.map((job) => fetchQuestionnaireCachedRef.current({ ...job, exactMatchById: phase1ExactMatchById })),
             );
 
-            const qResults = await Promise.allSettled(qPromises);
+            // qResources is declared above as `let qResources = [];` — populate it here
+            // instead of via processPage so the obs-matching code below is unchanged.
+            for (const r of qResults) {
+              if (r.status === "fulfilled") qResources.push(...r.value);
+            }
 
             const anySuccess = qResults.some((r) => r.status === "fulfilled");
-            if (anySuccess) {
-              const softErrs = extractSoftErrors(qResources);
-              if (softErrs.length) {
-                console.log("Soft errors found in Questionnaire resources ", softErrs);
-                dispatchLoaderRef.current({
-                  type: "ERROR",
-                  id: QUESTIONNAIRE_DATA_KEY,
-                  errorMessage: ERROR_HELP_TEXT_REF.current,
-                });
-              } else {
-                dispatchLoaderRef.current({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
-              }
+            const softErr = qResults.find((r) => r.status === "rejected" && r.reason?.soft);
+
+            if (softErr) {
+              console.log("Soft errors found in Questionnaire resources ", softErr.reason?.message);
+              dispatchLoaderRef.current({
+                type: "ERROR",
+                id: QUESTIONNAIRE_DATA_KEY,
+                errorMessage: ERROR_HELP_TEXT_REF.current,
+              });
+            } else if (anySuccess) {
+              dispatchLoaderRef.current({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
             } else {
               const firstErr = qResults.find((r) => r.status === "rejected");
               console.log("Questionnaire request errors ", firstErr?.reason?.message || firstErr);
@@ -854,7 +894,11 @@ export default function useFetchResources() {
       const d = dataToUse[key];
       if (!d || isEmptyArray(d.chartData?.data)) return [];
       // console.log("chartData for ", key, d.chartData?.data);
-      return d.chartData.data.map((o) => ({ ...o, key, [getDisplayQTitle(key)]: !isNaN(o.score) ? Number(o.score) : 0 }));
+      return d.chartData.data.map((o) => ({
+        ...o,
+        key,
+        [getDisplayQTitle(key)]: !isNaN(o.score) ? Number(o.score) : 0,
+      }));
     });
     return rows.sort((a, b) => safeDateMs(a.date) - safeDateMs(b.date));
   }, [summaryData?.data]);
