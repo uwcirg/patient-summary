@@ -1,10 +1,11 @@
 # run unit tests
 ---
 name: Unit Tests
-on: push
+on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -13,9 +14,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
+          cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run tests
         run: npm run test
