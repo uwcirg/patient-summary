@@ -7,11 +7,12 @@
 
 import { createStore, get, set, del, entries} from "idb-keyval";
 import { experimental_createQueryPersister } from "@tanstack/query-persist-client-core";
+import { getEnv } from "@util";
 
 // Bump this whenever questionnaire_config, QuestionnaireScoringBuilder, or
 // anything else that interprets Questionnaire content changes shape. Every
 // user's cache is discarded on the next load.
-export const QUESTIONNAIRE_CACHE_VERSION = "v1";
+export const QUESTIONNAIRE_CACHE_VERSION = getEnv("REACT_APP_VERSION_STRING") || "v1";
 
 const SEVEN_DAY_MS = 7 * 24 * 60 * 60 * 1000;
 export const QUESTIONNAIRE_CACHE_MAX_AGE = SEVEN_DAY_MS;
