@@ -600,8 +600,7 @@ export default function useFetchResources() {
               qJobs.map((job) => fetchQuestionnaireCachedRef.current({ ...job, exactMatchById: phase1ExactMatchById })),
             );
 
-            // qResources is declared above as `let qResources = [];` — populate it here
-            // instead of via processPage so the obs-matching code below is unchanged.
+            // qResources is declared above — populate it here
             for (const r of qResults) {
               if (r.status === "fulfilled") qResources.push(...r.value);
             }
