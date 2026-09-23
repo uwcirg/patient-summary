@@ -44,6 +44,7 @@ const SUMMARY_DATA_KEY = "summaryData";
 const QUESTIONNAIRE_DATA_KEY = "Questionnaire";
 const QUESTIONNAIRE_RESPONSES_DATA_KEY = "QuestionnaireResponse";
 const OBSERVATION_DATA_KEY = "Observation";
+const CLEAR_CACHE_PARAM = "clearQuestionnaireCache";
 
 const BLOCKED_EXTRA_TYPES = new Set([
   QUESTIONNAIRE_DATA_KEY.toLowerCase(),
@@ -402,6 +403,7 @@ export default function useFetchResources() {
   const toBeLoadedResources = state.loader;
   const extraTypes = state.extraTypes;
 
+  const [cacheReady, setCacheReady] = useState(false);
   const [fatalError, setFatalError] = useState(null);
   // stable patient id
   const pid = useMemo(() => (isNonEmptyString(patient?.id) ? String(patient?.id) : null), [patient?.id]);
@@ -497,6 +499,28 @@ export default function useFetchResources() {
   useEffect(() => {
     ERROR_HELP_TEXT_REF.current = ERROR_HELP_TEXT;
   }, [ERROR_HELP_TEXT]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const url = new URL(window.location.href);
+        if (url.searchParams.get(CLEAR_CACHE_PARAM) === "true") {
+          await clearQuestionnaireCache(queryClient);
+          // Consume the param so a reload doesn't clear again.
+          url.searchParams.delete(CLEAR_CACHE_PARAM);
+          window.history.replaceState(window.history.state, "", url.toString());
+          console.log("Questionnaire cache cleared via URL param");
+        }
+      } catch (e) {
+        console.warn("Questionnaire cache clear failed", e);
+      } finally {
+        if (!cancelled) setCacheReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [queryClient]);
 
   const phase1Query = useQuery({
     queryKey: [["phase1-qr-obs-q"], phase1Key],
@@ -694,7 +718,7 @@ export default function useFetchResources() {
       });
     },
     ...DEFAULT_QUERY_PARAMS,
-    enabled: !!client && !!pid && !base.complete && !base.error && !!phase1Key,
+    enabled: cacheReady && !!client && !!pid && !base.complete && !base.error && !!phase1Key,
   });
 
   // Handle phase 1 success — collapsed into a single dispatch to avoid
