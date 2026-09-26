@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getFHIRResourcePath,
   getFhirResourcesFromQueryResult,
@@ -11,6 +11,12 @@ import {
   getFHIRResourceTypesToLoad,
   getFHIRResourcePaths,
 } from "@util/fhirUtil";
+import {
+  questionnairePersister,
+  questionnaireQueryKey,
+  clearQuestionnaireCache,
+  QUESTIONNAIRE_CACHE_MAX_AGE,
+} from "@util/questionnaireCache";
 import {
   fuzzyMatch,
   getEnvQuestionnaireList,
@@ -38,6 +44,7 @@ const SUMMARY_DATA_KEY = "summaryData";
 const QUESTIONNAIRE_DATA_KEY = "Questionnaire";
 const QUESTIONNAIRE_RESPONSES_DATA_KEY = "QuestionnaireResponse";
 const OBSERVATION_DATA_KEY = "Observation";
+const CLEAR_CACHE_PARAM = "clearQuestionnaireCache";
 
 const BLOCKED_EXTRA_TYPES = new Set([
   QUESTIONNAIRE_DATA_KEY.toLowerCase(),
@@ -313,6 +320,7 @@ function reducer(state, action) {
   }
 
   if (actionType === "RESET_ALL") {
+    if (action.initialState) return action.initialState;
     return {
       base: {
         questionnaireList: [],
@@ -381,6 +389,9 @@ export default function useFetchResources() {
   const plannedExtras = useMemo(() => computePlannedExtras(configuredTypesRaw), [configuredTypesRaw]);
   const { client, patient } = useContext(FhirClientContext);
 
+  const queryClient = useQueryClient();
+  const serverUrl = client?.state?.serverUrl ?? null;
+
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     createInitialState(configuredTypeSet, plannedExtras, isFromEpic),
   );
@@ -393,23 +404,94 @@ export default function useFetchResources() {
   const toBeLoadedResources = state.loader;
   const extraTypes = state.extraTypes;
 
+  const [cacheReady, setCacheReady] = useState(false);
   const [fatalError, setFatalError] = useState(null);
   // stable patient id
   const pid = useMemo(() => (isNonEmptyString(patient?.id) ? String(patient?.id) : null), [patient?.id]);
   // refresh bump controls recomputation of configured types
   const [bump, setBump] = useState(0);
+  const runGenRef = useRef(0);
 
-  const refresh = useCallback(() => {
-    dispatchBase({ type: "RESET" });
-    dispatchLoader({ type: "RESET" });
-    dispatchBundle({ type: "RESET" });
-    dispatch({ type: "SET_EXTRA_TYPES", extraTypes: [] });
+  // Invalidates in-flight runs and restores the initial loader rows.
+  const resetRun = useCallback(() => {
+    runGenRef.current += 1;
+    setBump((x) => x + 1); // every reset gets a fresh phase1/phase2 key, never a reused one
+    dispatch({
+      type: "RESET_ALL",
+      initialState: createInitialState(configuredTypeSet, plannedExtras, isFromEpic),
+    });
     setFatalError(null);
-    if (pid && client) {
-      PHASE1_FLIGHTS.get(client)?.delete(`${pid}::${bump}`);
-    }
-    setBump((x) => x + 1);
-  }, [pid, bump, client, dispatch, dispatchBase, dispatchLoader, dispatchBundle]);
+  }, [configuredTypeSet, plannedExtras, isFromEpic]);
+
+  // Patient switch: without this, base.complete stays true from the previous
+  // patient, so phase 1 never runs for the new one, and old runs could still dispatch.
+  const prevPidRef = useRef(pid);
+  useEffect(() => {
+    const prev = prevPidRef.current;
+    prevPidRef.current = pid;
+    if (prev === pid || prev == null) return; // first load: nothing in flight to invalidate
+    resetRun();
+  }, [pid, resetRun]);
+
+  const refresh = useCallback(
+    async (reloadQuestionnaires = false) => {
+      setCacheReady(false); // keeps phase 1 off until the cache clear finishes
+      if (pid && client) PHASE1_FLIGHTS.get(client)?.delete(`${pid}::${bump}`);
+      resetRun();
+
+      if (reloadQuestionnaires) {
+        try {
+          await clearQuestionnaireCache(queryClient);
+        } catch (e) {
+          console.warn("Questionnaire cache clear failed", e);
+        }
+      }
+
+      setCacheReady(true);
+    },
+    [pid, bump, client, queryClient, resetRun],
+  );
+
+  // Fetches one Questionnaire query (a single id, or the whole list in the
+  // non-exact-match branch) through TanStack Query so the persister can serve
+  // it from IndexedDB. Throws on soft errors so a bad payload is never cached.
+  const fetchQuestionnaireCached = useCallback(
+    async ({ qid, questionnaireList, exactMatchById }) => {
+      const qPath = getFHIRResourcePath(pid, QUESTIONNAIRE_DATA_KEY, {
+        questionnaireList,
+        exactMatchById,
+      });
+      return queryClient.query({
+        queryKey: questionnaireQueryKey({ serverUrl, qid, exactMatchById }),
+        queryFn: async () => {
+          const acc = [];
+          await client.request(
+            { url: qPath, header: NO_CACHE_HEADER },
+            { pageLimit: 0, onPage: processPage(client, acc) },
+          );
+          const softErrs = extractSoftErrors(acc);
+          if (softErrs.length) {
+            const err = new Error(`Soft error(s) in Questionnaire ${qid}: ${softErrs.join("; ")}`);
+            err.soft = true;
+            throw err;
+          }
+          return acc;
+        },
+        persister: questionnairePersister.persisterFn,
+        // Match maxAge so a restored entry isn't immediately refetched in the
+        // background as "stale".
+        staleTime: QUESTIONNAIRE_CACHE_MAX_AGE,
+        gcTime: QUESTIONNAIRE_CACHE_MAX_AGE,
+        retry: false,
+      });
+    },
+    [client, pid, serverUrl, queryClient],
+  );
+  // Keep a ref so the queryFn closure inside phase1Query never goes stale.
+  const fetchQuestionnaireCachedRef = useRef(fetchQuestionnaireCached);
+  useEffect(() => {
+    fetchQuestionnaireCachedRef.current = fetchQuestionnaireCached;
+  }, [fetchQuestionnaireCached]);
 
   // ---------------------------------------------------------------------------
   // Phase 1
@@ -423,10 +505,10 @@ export default function useFetchResources() {
   useEffect(() => {
     return () => {
       if (phase1Key) {
-        PHASE1_FLIGHTS.delete(phase1Key);
+        PHASE1_FLIGHTS.get(client)?.delete(phase1Key);
       }
     };
-  }, [phase1Key]);
+  }, [phase1Key, client]);
 
   // Stable refs for callbacks used inside queryFn to avoid stale closures
   const dispatchLoaderRef = useRef(dispatchLoader);
@@ -445,6 +527,28 @@ export default function useFetchResources() {
   useEffect(() => {
     ERROR_HELP_TEXT_REF.current = ERROR_HELP_TEXT;
   }, [ERROR_HELP_TEXT]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const url = new URL(window.location.href);
+        if (url.searchParams.get(CLEAR_CACHE_PARAM) === "true") {
+          await clearQuestionnaireCache(queryClient);
+          // Consume the param so a reload doesn't clear again.
+          url.searchParams.delete(CLEAR_CACHE_PARAM);
+          window.history.replaceState(window.history.state, "", url.toString());
+          console.log("Questionnaire cache cleared via URL param");
+        }
+      } catch (e) {
+        console.warn("Questionnaire cache clear failed", e);
+      } finally {
+        if (!cancelled) setCacheReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [queryClient]);
 
   const phase1Query = useQuery({
     queryKey: [["phase1-qr-obs-q"], phase1Key],
@@ -454,6 +558,15 @@ export default function useFetchResources() {
         setFatalError(msg);
         throw new Error(msg);
       }
+
+      const runGen = runGenRef.current;
+      const isLive = () => runGenRef.current === runGen;
+      const loaderDispatch = (action) => {
+        if (isLive()) dispatchLoaderRef.current(action);
+      };
+      const bundleDispatch = (action) => {
+        if (isLive()) dispatchBundleRef.current(action);
+      };
 
       return runPhase1Once(client, phase1Key, async () => {
         const preloadList = getEnvQuestionnaireList();
@@ -498,13 +611,14 @@ export default function useFetchResources() {
 
         if (phase1Tasks.length) {
           const results = await Promise.allSettled(phase1Tasks.map((t) => t.promise));
+          if (!isLive()) return null; // stale run — skip the rest of the work
           results.forEach((res, i) => {
             const { id, onErrorMessage } = phase1Tasks[i];
             if (res.status === "fulfilled") {
-              dispatchLoaderRef.current({ type: "COMPLETE", id });
+              loaderDispatch({ type: "COMPLETE", id });
             } else {
               console.log("Request error for", id, res.reason);
-              dispatchLoaderRef.current({
+              loaderDispatch({
                 type: "ERROR",
                 id,
                 errorMessage: res.reason?.message || onErrorMessage || `${id} request failed`,
@@ -520,7 +634,7 @@ export default function useFetchResources() {
             const softErrs = extractSoftErrors(resources);
             if (softErrs.length) {
               console.log("Soft errors found in resources for", id, softErrs);
-              dispatchLoaderRef.current({ type: "ERROR", id, errorMessage: ERROR_HELP_TEXT_REF.current });
+              loaderDispatch({ type: "ERROR", id, errorMessage: ERROR_HELP_TEXT_REF.current });
             }
           }
         }
@@ -536,52 +650,41 @@ export default function useFetchResources() {
 
         if (wantQ) {
           if (isEmptyArray(qListToLoad)) {
-            dispatchLoaderRef.current({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
+            loaderDispatch({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
           } else {
-            let qPaths = [];
+            // One cache entry per questionnaire id in the exact-match branch; one
+            // entry for the whole (sorted) list otherwise.
+            const qJobs = phase1ExactMatchById
+              ? qListToLoad.map((qid) => ({ qid, questionnaireList: [qid] }))
+              : [{ qid: [...qListToLoad].sort().join("+"), questionnaireList: qListToLoad }];
 
-            if (phase1ExactMatchById) {
-              qPaths = qListToLoad.map((qid) =>
-                getFHIRResourcePath(pid, QUESTIONNAIRE_DATA_KEY, {
-                  questionnaireList: [qid],
-                  exactMatchById: phase1ExactMatchById,
-                }),
-              );
-            } else {
-              qPaths = [
-                getFHIRResourcePath(pid, QUESTIONNAIRE_DATA_KEY, {
-                  questionnaireList: qListToLoad,
-                  exactMatchById: phase1ExactMatchById,
-                }),
-              ];
-            }
-
-            const qPromises = qPaths.map((qPath) =>
-              client.request(
-                { url: qPath, header: NO_CACHE_HEADER },
-                { pageLimit: 0, onPage: processPage(client, qResources) },
-              ),
+            const qResults = await Promise.allSettled(
+              qJobs.map((job) => fetchQuestionnaireCachedRef.current({ ...job, exactMatchById: phase1ExactMatchById })),
             );
 
-            const qResults = await Promise.allSettled(qPromises);
+            if (!isLive()) return null;
+
+            // qResources is declared above — populate it here
+            for (const r of qResults) {
+              if (r.status === "fulfilled") qResources.push(...r.value);
+            }
 
             const anySuccess = qResults.some((r) => r.status === "fulfilled");
-            if (anySuccess) {
-              const softErrs = extractSoftErrors(qResources);
-              if (softErrs.length) {
-                console.log("Soft errors found in Questionnaire resources ", softErrs);
-                dispatchLoaderRef.current({
-                  type: "ERROR",
-                  id: QUESTIONNAIRE_DATA_KEY,
-                  errorMessage: ERROR_HELP_TEXT_REF.current,
-                });
-              } else {
-                dispatchLoaderRef.current({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
-              }
+            const softErr = qResults.find((r) => r.status === "rejected" && r.reason?.soft);
+
+            if (softErr) {
+              console.log("Soft errors found in Questionnaire resources ", softErr.reason?.message);
+              loaderDispatch({
+                type: "ERROR",
+                id: QUESTIONNAIRE_DATA_KEY,
+                errorMessage: ERROR_HELP_TEXT_REF.current,
+              });
+            } else if (anySuccess) {
+              loaderDispatch({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
             } else {
               const firstErr = qResults.find((r) => r.status === "rejected");
               console.log("Questionnaire request errors ", firstErr?.reason?.message || firstErr);
-              dispatchLoaderRef.current({
+              loaderDispatch({
                 type: "ERROR",
                 id: QUESTIONNAIRE_DATA_KEY,
                 errorMessage: firstErr?.reason?.message || "Questionnaire request failed",
@@ -641,7 +744,7 @@ export default function useFetchResources() {
         const questionnaireResponses = getFhirResourcesFromQueryResult(matchedQRs);
 
         // seed bundle
-        dispatchBundleRef.current({
+        bundleDispatch({
           type: "SEED",
           entry: [{ resource: patient }, ...(questionnaireResponses ?? []), ...(questionnaires ?? [])],
         });
@@ -655,7 +758,7 @@ export default function useFetchResources() {
       });
     },
     ...DEFAULT_QUERY_PARAMS,
-    enabled: !!client && !!pid && !base.complete && !base.error && !!phase1Key,
+    enabled: cacheReady && !!client && !!pid && !base.complete && !base.error && !!phase1Key,
   });
 
   // Handle phase 1 success — collapsed into a single dispatch to avoid
@@ -735,54 +838,56 @@ export default function useFetchResources() {
     !isEmptyArray(extraTypes) &&
     !isEmptyArray(toBeLoadedResources);
 
-  const getFhirResources = useCallback(async () => {
-    const loadedFHIRData = [];
+  const getFhirResources = useCallback(
+    async (isLive = () => true) => {
+      const paths = getFHIRResourcePaths(pid, extraTypes, {
+        questionnaireList: base.questionnaireList,
+        exactMatchById: base.exactMatchById,
+      });
+      if (!paths.length) return [];
 
-    const paths = getFHIRResourcePaths(pid, extraTypes, {
-      questionnaireList: base.questionnaireList,
-      exactMatchById: base.exactMatchById,
-    });
+      const requests = paths.map((p) => {
+        const acc = []; // per-request: soft errors and results stay scoped to this path
+        return client
+          .request({ url: p.resourcePath, header: NO_CACHE_HEADER }, { pageLimit: 0, onPage: processPage(client, acc) })
+          .then(() => {
+            if (!isLive()) return acc;
+            const softErrs = extractSoftErrors(acc);
+            console.log(`Loaded resources for ${p.resourceType} with ${softErrs.length} soft errors.`);
+            if (softErrs.length) {
+              dispatchLoader({ type: "ERROR", id: p.resourceType, errorMessage: ERROR_HELP_TEXT });
+            } else {
+              dispatchLoader({ type: "COMPLETE", id: p.resourceType });
+            }
+            return acc;
+          })
+          .catch((e) => {
+            if (isLive()) dispatchLoader({ type: "ERROR", id: p.resourceType, errorMessage: e?.message });
+            console.warn("FHIR resource retrieval error for", p.resourceType, e);
+            return [];
+          });
+      });
 
-    const requests = paths.map((p) =>
-      client
-        .request(
-          { url: p.resourcePath, header: NO_CACHE_HEADER },
-          { pageLimit: 0, onPage: processPage(client, loadedFHIRData) },
-        )
-        .then(() => {
-          const softErrs = extractSoftErrors(loadedFHIRData);
-          console.log(`Loaded resources for ${p.resourceType} with ${softErrs.length} soft errors.`);
-          if (softErrs.length) {
-            dispatchLoader({ type: "ERROR", id: p.resourceType, errorMessage: ERROR_HELP_TEXT });
-          } else {
-            dispatchLoader({ type: "COMPLETE", id: p.resourceType });
-          }
-          return loadedFHIRData;
-        })
-        .catch((e) => {
-          dispatchLoader({ type: "ERROR", id: p.resourceType, errorMessage: e?.message });
-          console.warn("FHIR resource retrieval error for", p.resourceType, e);
-          return [];
-        }),
-    );
-
-    if (!requests.length) return [];
-    const settled = await Promise.allSettled(requests);
-    let bundle = [];
-    for (const res of settled)
-      if (res.status === "fulfilled") bundle = [...bundle, ...getFhirResourcesFromQueryResult(res.value)];
-    return bundle;
-  }, [client, pid, extraTypes, base.questionnaireList, base.exactMatchById, dispatchLoader, ERROR_HELP_TEXT]);
+      const settled = await Promise.allSettled(requests);
+      return settled.flatMap((res) => (res.status === "fulfilled" ? getFhirResourcesFromQueryResult(res.value) : []));
+    },
+    [client, pid, extraTypes, base.questionnaireList, base.exactMatchById, dispatchLoader, ERROR_HELP_TEXT],
+  );
 
   const phase2Query = useQuery({
     queryKey: [["extra-fhir-resources"], pid, extraTypes.join(","), bump],
     queryFn: async () => {
-      const fhirData = await getFhirResources();
+      const runGen = runGenRef.current;
+      const isLive = () => runGenRef.current === runGen;
+
+      const fhirData = await getFhirResources(isLive);
+      if (!isLive()) return fhirData;
+
       const { default: FhirResultBuilder } = await import("@/models/resultBuilders/FhirResultBuilder");
       const evalEntries = extraTypes.map((t) => ({ [t]: new FhirResultBuilder(fhirData).build(t) }));
       const evalResults = Object.assign({}, ...(evalEntries ?? []));
 
-      dispatchBundleRef.current({ type: "APPEND", entry: fhirData, evalResults });
+      if (isLive()) dispatchBundleRef.current({ type: "APPEND", entry: fhirData, evalResults });
       return fhirData;
     },
     ...DEFAULT_QUERY_PARAMS,
@@ -854,7 +959,11 @@ export default function useFetchResources() {
       const d = dataToUse[key];
       if (!d || isEmptyArray(d.chartData?.data)) return [];
       // console.log("chartData for ", key, d.chartData?.data);
-      return d.chartData.data.map((o) => ({ ...o, key, [getDisplayQTitle(key)]: !isNaN(o.score) ? Number(o.score) : 0 }));
+      return d.chartData.data.map((o) => ({
+        ...o,
+        key,
+        [getDisplayQTitle(key)]: !isNaN(o.score) ? Number(o.score) : 0,
+      }));
     });
     return rows.sort((a, b) => safeDateMs(a.date) - safeDateMs(b.date));
   }, [summaryData?.data]);

@@ -9,6 +9,7 @@ import ErrorComponent from "./ErrorComponent";
 import ProgressIndicator from "./ProgressIndicator";
 import Section from "./Section";
 import FloatingNavButton from "./FloatingNavButton";
+import RefreshButton from "./RefreshButton";
 import useFetchResources, {
   normalizeType,
   SUMMARY_DATA_KEY,
@@ -94,6 +95,7 @@ export default function Dashboard() {
 
     // dynamic evalResults keys (Condition, Observation, etc.)
     evalData,
+    refresh
   } = useFetchResources();
 
   const { client, patient } = useContext(FhirClientContext);
@@ -205,6 +207,7 @@ export default function Dashboard() {
   return (
     <Box className="app">
       <FloatingNavButton />
+      {isReady && <RefreshButton onClick={() => refresh(true)}/>}
       <Stack className="summaries" sx={MAIN_STACK_STYLE}>
         {!isReady && (
           <ProgressIndicator
