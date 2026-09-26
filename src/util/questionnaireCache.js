@@ -14,8 +14,9 @@ import { getEnv } from "@util";
 // user's cache is discarded on the next load.
 export const QUESTIONNAIRE_CACHE_VERSION = getEnv("REACT_APP_VERSION_STRING") || "v1";
 
-const SEVEN_DAY_MS = 7 * 24 * 60 * 60 * 1000;
-export const QUESTIONNAIRE_CACHE_MAX_AGE = SEVEN_DAY_MS;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+export const QUESTIONNAIRE_CACHE_MAX_AGE = ONE_DAY_MS;
 
 export const QUESTIONNAIRE_QUERY_KEY = "questionnaire";
 
@@ -61,4 +62,3 @@ export async function clearQuestionnaireCache(queryClient) {
   queryClient?.removeQueries({ queryKey: [QUESTIONNAIRE_QUERY_KEY] });
   await questionnairePersister.removeQueries({ queryKey: [QUESTIONNAIRE_QUERY_KEY] });
 }
-
