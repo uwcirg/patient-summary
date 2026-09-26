@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import Fab from "@mui/material/Fab";
-import AutoRenewIcon from "@mui/icons-material/AutoRenew";
+import RefreshIcon from "@mui/icons-material/Refresh";
 
 export default function RefreshButton({ ref, sx, ...props }) {
   return (
@@ -19,7 +19,7 @@ export default function RefreshButton({ ref, sx, ...props }) {
       }
       title="Refresh"
     >
-      <AutoRenewIcon aria-label="Refresh" sx={{ color: "muter.main" }} />
+      <RefreshIcon aria-label="Refresh" sx={{ color: "muter.main" }} />
       {props.children}
     </Fab>
   );
