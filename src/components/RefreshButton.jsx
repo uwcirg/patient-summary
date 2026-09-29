@@ -17,9 +17,9 @@ export default function RefreshButton({ ref, sx, ...props }) {
           window.location.reload();
         })
       }
-      title="Refresh"
+      title="Refresh Data"
     >
-      <RefreshIcon aria-label="Refresh" sx={{ color: "muter.main" }} />
+      <RefreshIcon aria-label="Refresh" sx={{ color: "light.main" }} />
       {props.children}
     </Fab>
   );

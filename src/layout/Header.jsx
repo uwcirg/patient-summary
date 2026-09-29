@@ -81,7 +81,7 @@ export default function Header(props) {
           component="h2"
           color="primary"
           sx={{
-            fontSize: "1.3rem",
+            fontSize: {xs: "1.1rem", sm: "1.2rem", md: "1.3rem"},
             display: inEHR ? "block" : { xs: "none", sm: "none", md: "block" },
           }}
           className="print-hidden"

@@ -1543,6 +1543,7 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     );
     const fromRegistry = keyToUse ? questionnaireConfig[keyToUse] : null;
     const config = fromRegistry ? fromRegistry : this.cfg;
+    
 
     // If this instrument is defined as "derived" from a host instrument,
     // synthesize single-link or multiple links  QRs from the host QRs

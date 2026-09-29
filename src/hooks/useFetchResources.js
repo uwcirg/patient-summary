@@ -642,9 +642,54 @@ export default function useFetchResources() {
         let matchedQRs = !isEmptyArray(qrResources)
           ? qrResources.filter((it) => it && it.questionnaire && it.questionnaire.split("/")[1])
           : [];
+
+        // Obs-matching runs here — after Q fetch — so qResources is fully populated.
+        const syntheticQs = [],
+          syntheticQRs = [];
+
+        if (wantQ && !isEmptyArray(obResources)) {
+          const obsCodes = getCodeableCodesFromObservation(obResources);
+          if (!isEmptyArray(obsCodes)) {
+            for (const [key, cfg] of Object.entries(questionnaireConfigs || {})) {
+              if (!cfg) continue;
+              if (hasPreload && !preloadList.find((q) => fuzzyMatch(q, key))) continue;
+
+              const matchedQResource = cfg.questionnaireId
+                ? qResources.find((r) => (r?.resource?.id ?? r?.id) === cfg.questionnaireId)
+                : null;
+              const qItemCodes = matchedQResource
+                ? (matchedQResource.resource?.item ?? matchedQResource.item ?? [])
+                    .filter((item) => item.type !== "group" && item.type !== "display")
+                    .flatMap((item) => item.code ?? [])
+                    .map((c) => c.code)
+                    .filter(Boolean)
+                : [];
+              const hit =
+                qItemCodes.length > 0
+                  ? qItemCodes.find((code) => obsCodes.includes(code))
+                  : toStringArray([...(cfg.questionLinkIds ?? [])]).find((linkId) =>
+                      obsCodes.includes(normalizeLinkId(linkId)),
+                    );
+
+              if (!hit) continue;
+
+              const builtQ = buildQuestionnaire(obResources, cfg);
+              const builtQRs = observationsToQuestionnaireResponses(obResources, cfg) || [];
+              console.log("matching cfg ", cfg);
+              console.log("builtQ ", builtQ);
+              console.log("builtQRs ", builtQRs);
+              syntheticQs.push(builtQ);
+              syntheticQRs.push(...builtQRs);
+            }
+          }
+        }
+
+        matchedQRs = [...matchedQRs, ...syntheticQRs];
+
         // Derive qListToLoad from QR-matched ids + preloadList.
         const matchedQIds = matchedQRs?.map((it) => it.questionnaire?.split("/")[1]) ?? [];
-        const uniqueQIds = [...new Set([...preloadList, ...matchedQIds])];
+        const syntheticQIds = syntheticQs?.map((it) => it.id) ?? [];
+        const uniqueQIds = [...new Set([...preloadList, ...matchedQIds, ...syntheticQIds])];
         const qListToLoad = hasPreload ? preloadList : uniqueQIds;
         console.log("qListToLoad ", qListToLoad);
 
@@ -692,49 +737,6 @@ export default function useFetchResources() {
             }
           }
         }
-
-        // Obs-matching runs here — after Q fetch — so qResources is fully populated.
-        const syntheticQs = [],
-          syntheticQRs = [];
-
-        if (wantQ && !isEmptyArray(obResources)) {
-          const obsCodes = getCodeableCodesFromObservation(obResources);
-          if (!isEmptyArray(obsCodes)) {
-            for (const [key, cfg] of Object.entries(questionnaireConfigs || {})) {
-              if (!cfg) continue;
-              if (hasPreload && !preloadList.find((q) => fuzzyMatch(q, key))) continue;
-
-              const matchedQResource = cfg.questionnaireId
-                ? qResources.find((r) => (r?.resource?.id ?? r?.id) === cfg.questionnaireId)
-                : null;
-              const qItemCodes = matchedQResource
-                ? (matchedQResource.resource?.item ?? matchedQResource.item ?? [])
-                    .filter((item) => item.type !== "group" && item.type !== "display")
-                    .flatMap((item) => item.code ?? [])
-                    .map((c) => c.code)
-                    .filter(Boolean)
-                : [];
-              const hit =
-                qItemCodes.length > 0
-                  ? qItemCodes.find((code) => obsCodes.includes(code))
-                  : toStringArray([...(cfg.questionLinkIds ?? [])]).find((linkId) =>
-                      obsCodes.includes(normalizeLinkId(linkId)),
-                    );
-
-              if (!hit) continue;
-
-              const builtQ = buildQuestionnaire(obResources, cfg);
-              const builtQRs = observationsToQuestionnaireResponses(obResources, cfg) || [];
-              console.log("matching cfg ", cfg);
-              console.log("builtQ ", builtQ);
-              console.log("builtQRs ", builtQRs);
-              syntheticQs.push(builtQ);
-              syntheticQRs.push(...builtQRs);
-            }
-          }
-        }
-
-        matchedQRs = [...matchedQRs, ...syntheticQRs];
 
         let questionnaires = [
           ...getFhirResourcesFromQueryResult(syntheticQs),
