@@ -1068,7 +1068,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           if (!question && questionnaireItem) {
             question = this._getQuestion(questionnaireItem, resolvedConfig);
           }
-          row.question = question ? question : `Question ${questionId}`;
+          row.question = question
+            ? question
+            : (resolvedConfig?.itemTextByLinkId?.[questionId] ?? `Question ${questionId}`);
           row.source = sample?.source;
           row.readOnly = sample?.readOnly || false;
           row.isValueExpression = sample?.isValueExpression || false;
@@ -1543,7 +1545,6 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
     );
     const fromRegistry = keyToUse ? questionnaireConfig[keyToUse] : null;
     const config = fromRegistry ? fromRegistry : this.cfg;
-    
 
     // If this instrument is defined as "derived" from a host instrument,
     // synthesize single-link or multiple links  QRs from the host QRs
