@@ -9,6 +9,7 @@ import ErrorComponent from "./ErrorComponent";
 import ProgressIndicator from "./ProgressIndicator";
 import Section from "./Section";
 import FloatingNavButton from "./FloatingNavButton";
+import RefreshButton from "./RefreshButton";
 import useFetchResources, {
   normalizeType,
   SUMMARY_DATA_KEY,
@@ -94,6 +95,7 @@ export default function Dashboard() {
 
     // dynamic evalResults keys (Condition, Observation, etc.)
     evalData,
+    refresh,
   } = useFetchResources();
 
   const { client, patient } = useContext(FhirClientContext);
@@ -177,6 +179,21 @@ export default function Dashboard() {
   );
 
   useEffect(() => {
+    if (!refresh) return;
+    const handleKeyDown = (event) => {
+      if (event.shiftKey && event.code === "KeyR") {
+        console.log("Shift + r pressed to refresh data!");
+        refresh(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    // Clean up listener on component unmount
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [refresh]);
+
+  useEffect(() => {
     if (!isReady || hasSavedSnapshot.current || !sectionsRef.current) return;
 
     // MutationObserver watches for actual DOM changes in the sections container,
@@ -205,6 +222,7 @@ export default function Dashboard() {
   return (
     <Box className="app">
       <FloatingNavButton />
+      {isReady && <RefreshButton onClick={() => refresh(true)} />}
       <Stack className="summaries" sx={MAIN_STACK_STYLE}>
         {!isReady && (
           <ProgressIndicator

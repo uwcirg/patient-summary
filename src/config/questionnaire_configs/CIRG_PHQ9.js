@@ -29,8 +29,10 @@ export default {
     "/44260-8",
   ],
   itemTextByLinkId: {
-    "/55758-7": "PHQ-2 total score",
-    "/44261-6": "PHQ-9 total score",
+    "/55758-7": "PHQ-2 total",
+    "/44261-6": "PHQ-9 total",
+    "55758-7": "PHQ-2 total",
+    "44261-6": "PHQ-9 total",
   },
   highSeverityScoreCutoff: 20,
   mediumSeverityScoreCutoff: 10,

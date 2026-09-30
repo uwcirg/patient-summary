@@ -1068,7 +1068,9 @@ export default class QuestionnaireScoringBuilder extends FhirResultBuilder {
           if (!question && questionnaireItem) {
             question = this._getQuestion(questionnaireItem, resolvedConfig);
           }
-          row.question = question ? question : `Question ${questionId}`;
+          row.question = question
+            ? question
+            : (resolvedConfig?.itemTextByLinkId?.[questionId] ?? `Question ${questionId}`);
           row.source = sample?.source;
           row.readOnly = sample?.readOnly || false;
           row.isValueExpression = sample?.isValueExpression || false;

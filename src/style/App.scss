@@ -65,6 +65,11 @@ body::-webkit-scrollbar-thumb {
 body::-webkit-scrollbar-thumb:hover {
   background: $thumb-background-color;
 }
+
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+}
+
 main {
   min-height: calc(100vh - $header-height);
   overflow-x: hidden;

@@ -50,7 +50,6 @@ export default function Loader({ message, styles, variant = "fullScreen", childr
           sx={{
             justifyContent: "center",
             alignItems: "center",
-            fontSize: "1.1rem",
           }}
         >
           <CircularProgress color="info" role="progressbar" aria-label="Loading"></CircularProgress>
