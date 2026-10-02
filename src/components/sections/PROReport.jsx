@@ -49,6 +49,7 @@ const TwoColumns = React.memo(function TwoColumns({ table }) {
           disableLinks={true}
           enableResponsesViewer={true}
           containerStyle={containerStyleConfig}
+          tableStyle={table.tableStyle}
         />
       </Suspense>
       <Box

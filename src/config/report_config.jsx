@@ -22,7 +22,7 @@ export const report_config = {
             "CIRG-CNICS-FINANCIAL",
             "CIRG-CNICS-HOUSING",
             "CIRG-CNICS-FROP-Com",
-          //  "CIRG-Shortness-of-Breath",
+            //  "CIRG-Shortness-of-Breath",
           ],
           hiddenColumns: ["numAnswered"],
         },
@@ -59,8 +59,9 @@ export const report_config = {
                   direction={"column"}
                   sx={{
                     justifyContent: "space-between",
-                    whiteSpace: "pre-line"
-                  }}>
+                    whiteSpace: "pre-line",
+                  }}
+                >
                   <Box>{value && value.split(",").join("\n")}</Box>
                   {!value && getNoDataDisplay()}
                   {row.source && <Box className="muted-text source-container">{row.source}</Box>}
@@ -80,8 +81,9 @@ export const report_config = {
                   direction={"column"}
                   sx={{
                     justifyContent: "flex-start",
-                    whiteSpace: "pre-line"
-                  }}>
+                    whiteSpace: "pre-line",
+                  }}
+                >
                   <Box>{value && value.split(",").join("\n")}</Box>
                   {!value && getNoDataDisplay()}
                   {row.source && <Box className="muted-text source-container">{row.source}</Box>}
@@ -122,6 +124,10 @@ export const report_config = {
           title: "Substance Use",
           layout: "two-columns",
           hiddenColumns: ["comparison", "numAnswered"],
+          tableStyle: {
+            height: "100%",
+            alignSelf: "stretch",
+          },
           dataKeysToMatch: [
             "CIRG-CNICS-Smoking",
             "CIRG-CNICS-AUDIT",
@@ -225,18 +231,21 @@ export const report_config = {
                 const values = value ? value.split("\n") : null;
                 if (!isEmptyArray(values)) {
                   return (
-                    <Stack direction={"column"} sx={{
-                      gap: 0.5
-                    }}>
+                    <Stack
+                      direction={"column"}
+                      sx={{
+                        gap: 0.5,
+                      }}
+                    >
                       {values.map((value, index) => {
-                        const {key, ...rest} = row;
-                        return <Meaning key={`${key}_value_${index}`} {...rest} meaning={value}/>
+                        const { key, ...rest } = row;
+                        return <Meaning key={`${key}_value_${index}`} {...rest} meaning={value} />;
                       })}
                     </Stack>
                   );
                 }
                 if (row?.meaning) {
-                  return <Meaning {...row}/>
+                  return <Meaning {...row} />;
                 }
                 return getNoDataDisplay();
               },
