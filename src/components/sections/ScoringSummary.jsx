@@ -65,9 +65,15 @@ function TableHeader({ visibleColumns, baseCellStyle }) {
             {...DEFAULT_HEADER_CELL_PROPS}
             align={col.align || DEFAULT_HEADER_CELL_PROPS.align}
             {...(col.headerProps || {})}
-            sx={[{
-              ...baseCellStyle
-            }, (col.sticky ? STICKY_STYLE : {}), col.headerProps?.sx || {}, (col.width ? { width: col.width } : {}), (HIDDEN_COLUMN_IDS_IN_MOBILE.includes(col.id) ? { display: { xs: "none", md: "table-cell" } } : {})]}
+            sx={[
+              {
+                ...baseCellStyle,
+              },
+              col.sticky ? STICKY_STYLE : {},
+              col.headerProps?.sx || {},
+              col.width ? { width: col.width } : {},
+              HIDDEN_COLUMN_IDS_IN_MOBILE.includes(col.id) ? { display: { xs: "none", md: "table-cell" } } : {},
+            ]}
           >
             {col.header}
           </TableCell>
@@ -98,9 +104,14 @@ function TableBodyRows({ visibleColumns, dataToUse, baseCellStyle, emptyMessage,
                   {...DEFAULT_TABLE_CELL_PROPS}
                   align={col.align || "left"}
                   {...(col.cellProps || {})}
-                  sx={[{
-                    ...baseCellStyle
-                  }, (col.sticky ? STICKY_STYLE : {}), col.cellProps?.sx || {}, (HIDDEN_COLUMN_IDS_IN_MOBILE.includes(col.id) ? { display: { xs: "none", md: "table-cell" } } : {})]}
+                  sx={[
+                    {
+                      ...baseCellStyle,
+                    },
+                    col.sticky ? STICKY_STYLE : {},
+                    col.cellProps?.sx || {},
+                    HIDDEN_COLUMN_IDS_IN_MOBILE.includes(col.id) ? { display: { xs: "none", md: "table-cell" } } : {},
+                  ]}
                 >
                   {noRowData && colIndex > 0 ? emptyMessage || getNoDataDisplay() : renderCell(col, row)}
                 </TableCell>
@@ -177,8 +188,9 @@ export default function ScoringSummary({
           spacing={1}
           sx={{
             alignItems: "space-between",
-            justifyContent: "space-between"
-          }}>
+            justifyContent: "space-between",
+          }}
+        >
           <Box>{row.displayDate}</Box>
           {row.source && <Box className="muted-text source-container">{row.source}</Box>}
         </Stack>
@@ -189,10 +201,13 @@ export default function ScoringSummary({
       answered: (row) => {
         if (row.totalAnsweredItems != null || row.note) {
           return (
-            <Stack direction="row" sx={{
-              alignItems: "center",
-              gap: 1,
-            }}>
+            <Stack
+              direction="row"
+              sx={{
+                alignItems: "center",
+                gap: 1,
+              }}
+            >
               {row.totalAnsweredItems && (
                 <Box>{`${row.totalAnsweredItems} question${row.totalAnsweredItems > 1 ? "s" : ""} answered`}</Box>
               )}
@@ -220,8 +235,9 @@ export default function ScoringSummary({
           sx={{
             justifyContent: "space-between",
             alignItems: "flex-start",
-            width: "100%"
-          }}>
+            width: "100%",
+          }}
+        >
           <Scoring
             score={row.score}
             scoreParams={{ ...row, ...(row.scoringParams ?? {}) }}
@@ -337,8 +353,9 @@ export default function ScoringSummary({
                 alignItems: "flex-start",
                 justifyContent: "flex-start",
                 width: "100%",
-                flexWrap: "wrap"
-              }}>
+                flexWrap: "wrap",
+              }}
+            >
               {!row.displayMeaningNotScore && defaultRenderers.score(row)}
               {row.showNumAnsweredWithScore && defaultRenderers.answered(row)}
               <Meaning id={row.id ?? row.key} meaning={row.meaning} alert={row.alert} warning={row.warning} />
@@ -464,15 +481,18 @@ export default function ScoringSummary({
         }}
       >
         <Table
-          sx={[{
-            borderStyle: "solid",
-            borderWidth: "1px",
-            borderColor: "border.main",
-            tableLayout: { xs: "auto", sm: "fixed" },
-            width: "calc(100% - 8px)",
-           // width: "100%",
-           // height: "100%"
-          }, tableStyle ?? {}]}
+          sx={{
+            ...{
+              borderStyle: "solid",
+              borderWidth: "1px",
+              borderColor: "border.main",
+              tableLayout: { xs: "auto", sm: "fixed" },
+              width: "calc(100% - 8px)",
+              // width: "100%",
+              // height: "100%"
+            },
+            ...(tableStyle ?? {}),
+          }}
           size="small"
           aria-label="scoring summary table"
           className="scoring-summary-table"

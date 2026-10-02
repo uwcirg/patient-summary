@@ -6,7 +6,6 @@ import dynamicImport from "vite-plugin-dynamic-import";
 import eslintPlugin from "vite-plugin-eslint";
 import babel from "@rolldown/plugin-babel";
 
-
 export default defineConfig({
   // Specify the path at which the application will be deployed on a server. The path MUST end with "/".
   // To deploy at the root path, use "/" or remove the "base" property entirely.
@@ -30,13 +29,13 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": resolve(__dirname, "./src"),
-      "@components": resolve(__dirname, "./src/components"),
-      "@config": resolve(__dirname, "./src/config"),
-      "@consts": resolve(__dirname, "./src/consts"),
-      "@context": resolve(__dirname, "./src/context"),
-      "@models": resolve(__dirname, "./src/models"),
-      "@util": resolve(__dirname, "./src/util"),
+      "@": resolve(import.meta.dirname, "./src"),
+      "@components": resolve(import.meta.dirname, "./src/components"),
+      "@config": resolve(import.meta.dirname, "./src/config"),
+      "@consts": resolve(import.meta.dirname, "./src/consts"),
+      "@context": resolve(import.meta.dirname, "./src/context"),
+      "@models": resolve(import.meta.dirname, "./src/models"),
+      "@util": resolve(import.meta.dirname, "./src/util"),
     },
   },
   build: {
@@ -45,8 +44,8 @@ export default defineConfig({
     // specify rollup options to enable multiple entry points and break chunks up to smaller sizes
     rollupOptions: {
       input: {
-        main: resolve(__dirname, "index.html"),
-        launch: resolve(__dirname, "launch.html"),
+        main: resolve(import.meta.dirname, "index.html"),
+        launch: resolve(import.meta.dirname, "launch.html"),
       },
       output: {
         manualChunks: (id) => {
@@ -66,11 +65,6 @@ export default defineConfig({
     coverage: {
       reporter: ["text", "json", "html"],
       include: ["src/**/*"],
-    },
-  },
-  esbuild: {
-    supported: {
-      "top-level-await": true, //browsers can handle top-level-await features
     },
   },
 });
