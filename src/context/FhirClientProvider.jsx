@@ -1,6 +1,6 @@
-import React, { use, useEffect, useReducer } from "react";
+import React, { use, useEffect, useRef, useReducer } from "react";
 import PropTypes from "prop-types";
-import FHIR from "fhirclient";
+import FHIR from "fhirclient/browser";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -72,7 +72,10 @@ export default function FhirClientProvider(props) {
     error: null,
   });
 
+  const started = useRef(false);
   useEffect(() => {
+    if (started.current) return;
+    started.current = true;
     FHIR.oauth2.ready().then(
       (client) => {
         console.log("Auth complete, client ready.");
