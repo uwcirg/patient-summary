@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import FHIR from "fhirclient/browser";
+import FHIR from "fhirclient";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import { ThemeProvider } from "@mui/material/styles";
