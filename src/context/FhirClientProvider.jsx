@@ -1,6 +1,6 @@
 import React, { use, useEffect, useReducer } from "react";
 import PropTypes from "prop-types";
-import FHIR from "fhirclient";
+import FHIR from "fhirclient/browser";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
