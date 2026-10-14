@@ -642,18 +642,79 @@ export default function useFetchResources() {
         let matchedQRs = !isEmptyArray(qrResources)
           ? qrResources.filter((it) => it && it.questionnaire && it.questionnaire.split("/")[1])
           : [];
+        const qrQIds = matchedQRs.map((it) => it.questionnaire.split("/")[1]);
+
+        // Configs obs-matching may consider, resolved up front so their
+        // Questionnaires are loaded before matching reads item codes.
+        const hasObs = wantQ && !isEmptyArray(obResources);
+        const candidateCfgs = hasObs
+          ? Object.entries(questionnaireConfigs || {}).filter(
+              ([key, cfg]) => cfg && (!hasPreload || preloadList.find((q) => fuzzyMatch(q, key))),
+            )
+          : [];
+        const cfgQIds = candidateCfgs.map(([, cfg]) => cfg.questionnaireId).filter(isNonEmptyString);
+
+        // Required ids drive loader status; speculative ids exist only so
+        // obs-matching can read item codes, and their failures are tolerated.
+        const requiredQIds = hasPreload ? preloadList : [...new Set(qrQIds)];
+        const speculativeQIds = hasPreload ? [] : [...new Set(cfgQIds)].filter((id) => !requiredQIds.includes(id));
+
+        if (wantQ) {
+          const fetchList = [...requiredQIds, ...speculativeQIds];
+          if (isEmptyArray(fetchList)) {
+            loaderDispatch({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
+          } else {
+            const qJobs = phase1ExactMatchById
+              ? fetchList.map((qid) => ({
+                  qid,
+                  questionnaireList: [qid],
+                  speculative: speculativeQIds.includes(qid),
+                }))
+              : [{ qid: [...fetchList].sort().join("+"), questionnaireList: fetchList, speculative: false }];
+
+            const qResults = await Promise.allSettled(
+              qJobs.map(({ speculative, ...job }) =>
+                fetchQuestionnaireCachedRef.current({ ...job, exactMatchById: phase1ExactMatchById }),
+              ),
+            );
+            if (!isLive()) return null;
+
+            qResults.forEach((r, i) => {
+              if (r.status === "fulfilled") qResources.push(...r.value);
+              else if (qJobs[i].speculative) {
+                console.log(`Config Questionnaire ${qJobs[i].qid} not loaded; falling back to questionLinkIds`);
+              }
+            });
+
+            const counted = qResults.filter((_, i) => !qJobs[i].speculative);
+            const softErr = counted.find((r) => r.status === "rejected" && r.reason?.soft);
+            const anySuccess = counted.some((r) => r.status === "fulfilled");
+
+            if (softErr) {
+              console.log("Soft errors found in Questionnaire resources ", softErr.reason?.message);
+              loaderDispatch({ type: "ERROR", id: QUESTIONNAIRE_DATA_KEY, errorMessage: ERROR_HELP_TEXT_REF.current });
+            } else if (anySuccess || isEmptyArray(counted)) {
+              loaderDispatch({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
+            } else {
+              const firstErr = counted.find((r) => r.status === "rejected");
+              console.log("Questionnaire request errors ", firstErr?.reason?.message || firstErr);
+              loaderDispatch({
+                type: "ERROR",
+                id: QUESTIONNAIRE_DATA_KEY,
+                errorMessage: firstErr?.reason?.message || "Questionnaire request failed",
+              });
+            }
+          }
+        }
 
         // Obs-matching runs here — after Q fetch — so qResources is fully populated.
         const syntheticQs = [],
           syntheticQRs = [];
 
-        if (wantQ && !isEmptyArray(obResources)) {
+        if (hasObs) {
           const obsCodes = getCodeableCodesFromObservation(obResources);
           if (!isEmptyArray(obsCodes)) {
-            for (const [key, cfg] of Object.entries(questionnaireConfigs || {})) {
-              if (!cfg) continue;
-              if (hasPreload && !preloadList.find((q) => fuzzyMatch(q, key))) continue;
-
+            for (const [, cfg] of candidateCfgs) {
               const matchedQResource = cfg.questionnaireId
                 ? qResources.find((r) => (r?.resource?.id ?? r?.id) === cfg.questionnaireId)
                 : null;
@@ -686,57 +747,9 @@ export default function useFetchResources() {
 
         matchedQRs = [...matchedQRs, ...syntheticQRs];
 
-        // Derive qListToLoad from QR-matched ids + preloadList.
-        const matchedQIds = matchedQRs?.map((it) => it.questionnaire?.split("/")[1]) ?? [];
-        const syntheticQIds = syntheticQs?.map((it) => it.id) ?? [];
-        const uniqueQIds = [...new Set([...preloadList, ...matchedQIds, ...syntheticQIds])];
-        const qListToLoad = hasPreload ? preloadList : uniqueQIds;
+        const syntheticQIds = syntheticQs.map((q) => q.id);
+        const qListToLoad = hasPreload ? preloadList : [...new Set([...qrQIds, ...syntheticQIds])];
         console.log("qListToLoad ", qListToLoad);
-
-        if (wantQ) {
-          if (isEmptyArray(qListToLoad)) {
-            loaderDispatch({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
-          } else {
-            // One cache entry per questionnaire id in the exact-match branch; one
-            // entry for the whole (sorted) list otherwise.
-            const qJobs = phase1ExactMatchById
-              ? qListToLoad.map((qid) => ({ qid, questionnaireList: [qid] }))
-              : [{ qid: [...qListToLoad].sort().join("+"), questionnaireList: qListToLoad }];
-
-            const qResults = await Promise.allSettled(
-              qJobs.map((job) => fetchQuestionnaireCachedRef.current({ ...job, exactMatchById: phase1ExactMatchById })),
-            );
-
-            if (!isLive()) return null;
-
-            // qResources is declared above — populate it here
-            for (const r of qResults) {
-              if (r.status === "fulfilled") qResources.push(...r.value);
-            }
-
-            const anySuccess = qResults.some((r) => r.status === "fulfilled");
-            const softErr = qResults.find((r) => r.status === "rejected" && r.reason?.soft);
-
-            if (softErr) {
-              console.log("Soft errors found in Questionnaire resources ", softErr.reason?.message);
-              loaderDispatch({
-                type: "ERROR",
-                id: QUESTIONNAIRE_DATA_KEY,
-                errorMessage: ERROR_HELP_TEXT_REF.current,
-              });
-            } else if (anySuccess) {
-              loaderDispatch({ type: "COMPLETE", id: QUESTIONNAIRE_DATA_KEY });
-            } else {
-              const firstErr = qResults.find((r) => r.status === "rejected");
-              console.log("Questionnaire request errors ", firstErr?.reason?.message || firstErr);
-              loaderDispatch({
-                type: "ERROR",
-                id: QUESTIONNAIRE_DATA_KEY,
-                errorMessage: firstErr?.reason?.message || "Questionnaire request failed",
-              });
-            }
-          }
-        }
 
         let questionnaires = [
           ...getFhirResourcesFromQueryResult(syntheticQs),
