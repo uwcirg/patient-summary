@@ -475,7 +475,6 @@ export function getFlowSheetObservationURLS(patientId) {
   if (queryCodes)
     return [
       `Observation?patient=${patientId}&code=${queryCodes}`,
-      `Observation?patient=${patientId}&category=vital-signs`,
     ];
   return [`Observation?patient=${patientId}`];
 }
